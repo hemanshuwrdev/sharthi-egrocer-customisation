@@ -1,0 +1,5 @@
+{
+    "version": "3.0.1",
+    "archive": "RELEASE-3.0.1.zip",
+    "description": "+ [Added] Reports Commission Reports functionality (admin panel) <br/>+ [Added] Delivery Boy salary management page (admin panel, delivery boy panel, partner app (delivery boy)) <br/> + [Added] Purchase price field in product form (admin panel, seller panel, partner app)<br/> + [Added] Image upload support in TinyMCE editor (admin panel)<br/> + [Added] Admin can now cancel individual order items (admin panel, partner app) <br/> + [Improved] Payment gateway testing and performance enhancements (system)<br/>+ [Improved] Notification redirection handling (customer app, partner app, partner app (delivery boy)) <br/> + [Improved] Additional charges calculation and structure (admin panel, customer app, website) <br/> + [Improved] Cart notification system (system) <br/> + [Updated] Date format across the system (admin panel, website, customer app, partner app, partner app (delivery boy)) <br/>+ [Updated] Date format across the system (admin panel, website, customer app, partner app, partner app (delivery boy)) <br/>+ [Fixed] Other improvements and fixes </span>"
+}

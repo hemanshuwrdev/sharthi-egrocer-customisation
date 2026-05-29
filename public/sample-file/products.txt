@@ -1,0 +1,48 @@
+Steps to bulk upload of products
+1. Firstly, read Notes carefully.
+2. Add image from media module and copy path from there.
+3. Create excel file for product as explain below:
+
+        Note - * Indicates Mandatory Fields
+
+        Product Name * -> Name of the product. 
+        Category ID * -> Category ID of the product (You can find Category ID in Categories section).
+        Indicator * -> Empty - None, Veg - Veg, Non-veg - Non-Veg.
+        Manufacturer -> Manufacturer of the product.
+        Made in -> Product Made In country Id (You can find Country ID in Countries section).
+        Is Returnable? * -> No, Yes.
+        Is cancel-able * -> No, Yes.
+        Till which status -> If Is cancelable than till which status (Payment Pending, Received, Processed, Shipped, Out for Delivery).
+        Description * -> Description about product.
+        Main Image * -> Image path of the product (Main image).
+        Seller_id * -> Seller id of the product (can be found in seller table).
+        Product Status (Is approved?) * -> Yes/No or Approved/Not Approved.
+        Brand_id -> Brand ID of the product. Leave 0 if no brand.
+        Max Return Days -> Maximum number of days allowed for return.
+        tax_id -> Leave 0 if no tax. You can find tax_id from taxes section.
+        FSSAI Lic. No. -> FSSAI License Number (14 digits).
+        Barcode -> Barcode for the product.
+        Tags * -> Comma separated tags (ex: snacks,biscuit).
+        Stock Limit Type (Limited/Unlimited) * -> Limited (Stock tracks), Unlimited (No stock tracking).
+        Is COD allowed? * -> No, Yes.
+        Total allowed quantity -> Maximum allowed quantity per customer (number).
+        Active Status * -> Active, Deactive.
+        SEO Meta Title -> Meta Title for Search Engines.
+        SEO Meta Keywords -> Meta Keywords (Comma separated).
+        Schema Markup -> JSON Schema Markup.
+        Meta Description -> Brief description for Search Engines.
+        Other Images -> Comma separated image paths (ex: upload/images/img1.jpg,upload/images/img2.jpg).
+        
+        -> Add following columns for variants of products in succession (refer to sample file).
+        -> For example, for 3 variants, repeat these columns 3 times.
+        
+            Type * -> Type of the variant (packet / loose).
+            Measurement * -> Measurement of the variant.
+            Measurement Unit ID * -> Unit ID for measurement.
+            Price * -> Price of the variant (Must be greater than discounted price).
+            Discounted Price * -> Discounted Price of the variant (0 if no discount).
+            Variant Status * -> Availability/Status (Available, Sold Out).
+            Stock * -> Stock available.(If Type is loose then keep stock same in all varients).
+            Stock Unit ID * -> Unit ID for stock.
+
+        Note - Do not leave fields empty. If you have no value for a specific column, add "0" (zero) or the appropriate default value.

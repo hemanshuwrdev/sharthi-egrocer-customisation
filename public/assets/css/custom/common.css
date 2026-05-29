@@ -1,0 +1,2294 @@
+/*Scrollbar style start*/
+::-webkit-scrollbar {
+    width: 8px;
+    height: 9px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #d7f5ea;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    height: 9px;
+    background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #5e8c7b;
+}
+/*Scrollbar style end*/
+
+.layout-navbar {
+    --navbar-height: 90px;
+}
+.layout-navbar.navbar-fixed {
+    display: block !important;
+}
+.navbar-fixed > header {
+    display: unset;
+    height: var(--navbar-height);
+}
+.navbar-fixed .navbar-top {
+    position: sticky;
+    top: 0;
+    width: inherit;
+    z-index: 9;
+}
+.navbar {
+    background-color: #ffffff;
+
+    height: var(--navbar-height);
+    padding: 0.75rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.form-select:not([multiple]):not([size]) {
+    background-position: right 0.75rem center !important;
+    padding-right: 1.75rem !important;
+    padding-left: 0.75rem !important;
+}
+body.rtl .form-select:not([multiple]):not([size]) {
+    background-position: left 0.75rem center !important;
+    padding-left: 1.75rem !important;
+    padding-right: 0.75rem !important;
+}
+.dropdown-toggle:after {
+    margin-inline-start: 0.255em !important;
+}
+
+.font-size-13 {
+    font-size: 13px;
+}
+.text-primary {
+    color: #607080 !important;
+}
+
+/* toast-style start */
+.toast-header {
+    background-color: #37a279 !important;
+    color: #ffffff !important;
+}
+
+.update_btn {
+    background-color: #37a279;
+    border-color: #37a279;
+}
+
+.update_btn:hover {
+    background-color: #37a279;
+    border-color: #37a279;
+}
+
+#update_description {
+    color: #37a279;
+}
+
+.toast-body {
+    background-color: #ffff;
+}
+
+#update_version {
+    background-color: #107c53 !important;
+    color: #ffffff !important;
+}
+/* toast-style end */
+
+.b-form-tag {
+    background-color: #37a279 !important;
+}
+.b-form-tag-remove {
+    background-color: #f06548 !important;
+}
+
+.body.theme-dark .swal2-styled.swal2-confirm {
+    background-color: #37a279 !important;
+}
+
+.capitalize {
+    text-transform: capitalize;
+}
+
+.custom-image {
+    margin-top: 15px;
+    border-radius: 15px;
+    width: 225px;
+    height: 225px;
+}
+
+.custom-row-image {
+    margin-top: 25px;
+    border-radius: 15px;
+    height: 130px;
+    width: auto;
+    max-width: 470px;
+}
+
+.custom-slider-image {
+    margin-top: 15px;
+    border-radius: 15px;
+    width: 470px;
+    height: 200px;
+}
+
+.image-container {
+    position: relative;
+}
+
+.btn-remove {
+    border-radius: 100px;
+    border: 7px solid #ffffff;
+    background: #f06548;
+    color: #ffffff;
+    font-size: 16px;
+    position: absolute;
+    top: 10px;
+    right: 0;
+}
+
+.btn_refresh {
+    margin-top: 25px;
+}
+
+.btn_tool {
+    margin-top: 25px;
+}
+
+.dropdownOverflow {
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
+#auth #auth-right {
+    background: url(../../images/bg/4853433.jpg),
+        linear-gradient(90deg, #37a27a, #3f5491);
+    height: 100%;
+}
+
+.vue-daterange-picker {
+    max-width: 100%;
+}
+
+select.form-select optgroup {
+    background-color: #37a279;
+    color: #bdbdbd;
+}
+
+select.form-select option,
+select.monthselect option {
+    background-color: #37a279;
+    color: #ffffff;
+}
+
+.daterangepicker {
+    z-index: 9999 !important;
+}
+
+.daterangepicker td.off,
+.daterangepicker td.off.end-date,
+.daterangepicker td.off.in-range,
+.daterangepicker td.off.start-date {
+    background-color: #fff !important;
+    border-color: transparent;
+    color: #999;
+}
+
+.daterangepicker td.active,
+.daterangepicker td.active:hover {
+    background-color: #37a279 !important;
+    border-color: transparent;
+    color: #fff;
+}
+.applyBtn {
+    background-color: #37a279 !important;
+    color: #ffffff;
+}
+.daterangepicker .ranges li.active {
+    background-color: #37a279 !important;
+    color: #fff;
+}
+
+.primary-toggal {
+    color: #37a279;
+}
+
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: #25396f;
+}
+a:hover {
+    color: #37a279;
+}
+.badge:hover {
+    color: #ffffff;
+}
+
+.box-title {
+    color: #37a279;
+}
+
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    background-color: #37a279;
+    color: #fff;
+}
+
+.sidebar-wrapper .menu .sidebar-item.active > .sidebar-link {
+    background-color: #37a279;
+}
+.sidebar-wrapper .menu .submenu .submenu-item.active > a {
+    color: #37a279;
+}
+
+.form-check-input:checked {
+    background-color: #37a279;
+    border-color: #37a279;
+}
+
+nav-pills .nav-link.active {
+    box-shadow: 0 2px 10px rgb(60, 153, 110 / 50%);
+}
+
+.swal2-confirm .swal2-styled {
+    background-color: #37a279;
+}
+
+ul .pagination.pagination-primary li .page-item.active .page-link {
+    background-color: #37a279;
+    border-color: #37a279;
+    color: #fff;
+    z-index: 99;
+}
+
+/*pagination start*/
+.pagination .page-item .page-link:hover {
+    -webkit-transition: all 0.3s linear;
+    transition: all 0.3s linear;
+    border-radius: 0.125rem;
+    background-color: #eee;
+}
+.pagination .page-item.active .page-link:hover {
+    background-color: #37a279;
+}
+
+.pagination .page-item.active .page-link {
+    -webkit-transition: all 0.2s linear;
+    transition: all 0.2s linear;
+    border-radius: 0.125rem;
+    background-color: #37a279;
+    border-color: #37a279;
+    color: #fff;
+}
+
+.pagination .page-item .page-link {
+    -webkit-transition: all 0.3s linear;
+    background-color: transparent;
+    color: #999;
+}
+
+.pagination .page-item.active .page-link {
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16),
+        0 2px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+.btn.btn-light-primary {
+    background-color: #ebf3ff;
+    color: #37a279;
+}
+
+.swal2-styled.swal2-confirm {
+    background-color: #37a279;
+}
+
+.btn-primary {
+    background-color: #37a279;
+    border-color: #37a279;
+    color: #fff;
+}
+.btn-check:focus + .btn-primary,
+.btn-primary:focus,
+.btn-primary:hover {
+    background-color: #37a279;
+    border-color: #37a279;
+    color: #fff;
+}
+.btn-check:focus + .btn-primary,
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(60, 153, 110, 0.5);
+}
+.btn-check:active + .btn-primary,
+.btn-check:checked + .btn-primary,
+.btn-primary.active,
+.btn-primary:active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: #146c43;
+    border-color: #13653f;
+    color: #fff;
+}
+.btn-check:active + .btn-primary:focus,
+.btn-check:checked + .btn-primary:focus,
+.btn-primary.active:focus,
+.btn-primary:active:focus,
+.show > .btn-primary.dropdown-toggle:focus {
+    box-shadow: 0 0 0 0.25rem rgba(60, 153, 110, 0.5);
+}
+.btn-primary.disabled,
+.btn-primary:disabled {
+    background-color: #37a279;
+    border-color: #37a279;
+    color: #fff;
+}
+
+.btn-outline-primary {
+    border-color: #37a279;
+    color: #37a279;
+}
+.btn-outline-primary:hover {
+    background-color: #37a279;
+    border-color: #37a279;
+    color: #fff;
+}
+.btn-check:focus + .btn-outline-primary,
+.btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(60, 153, 110, 0.5);
+}
+.btn-check:active + .btn-outline-primary,
+.btn-check:checked + .btn-outline-primary,
+.btn-outline-primary.active,
+.btn-outline-primary.dropdown-toggle.show,
+.btn-outline-primary:active {
+    background-color: #37a279;
+    border-color: #37a279;
+    color: #fff;
+}
+.btn-check:active + .btn-outline-primary:focus,
+.btn-check:checked + .btn-outline-primary:focus,
+.btn-outline-primary.active:focus,
+.btn-outline-primary.dropdown-toggle.show:focus,
+.btn-outline-primary:active:focus {
+    box-shadow: 0 0 0 0.25rem rgba(60, 153, 153, 0.5);
+}
+.btn-outline-primary.disabled,
+.btn-outline-primary:disabled {
+    background-color: transparent;
+    color: #37a279;
+}
+
+input[type="radio"] {
+    accent-color: #37a279;
+}
+
+input[type="radio"] {
+    background-color: #fff;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-size: contain;
+    border: 3px solid #e1e3ea;
+    color-adjust: exact;
+    height: 1.2em;
+    margin-top: 0.15em;
+    transition: background-color 0.15s ease-in-out,
+        background-position 0.15s ease-in-out, border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+    vertical-align: top;
+    width: 1.2em;
+}
+
+.form-check-input:focus {
+    background-image: unset;
+    border-color: #a7ebcb;
+    box-shadow: 0 0 0 0.25rem rgba(86, 199, 146, 0.25);
+    outline: 0;
+}
+
+.form-control:focus {
+    background-color: #fff;
+    border-color: #a7ebcb;
+    box-shadow: 0 0 0 0.25rem rgba(86, 199, 146, 0.25);
+    outline: 0;
+}
+
+.form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-clip: padding-box;
+    background-color: #fff;
+    border: 1px solid #dce7f1;
+    border-radius: 0.4rem;
+    display: block;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    width: 100%;
+}
+
+input[type="radio"]:checked:before {
+    background: #37a279;
+}
+
+input[type="radio"]:checked {
+    background-color: #37a279;
+}
+
+.file-input {
+    display: none;
+}
+.file-input-div {
+    width: auto;
+    max-height: 300px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    font-weight: 600;
+    font-size: 20px;
+    cursor: pointer;
+    color: #607080;
+    border: 2px dashed #9aa4ae;
+    border-radius: 10px;
+}
+.file-input-div label {
+    color: #607080;
+    word-wrap: break-word;
+    max-width: 100%;
+}
+.bg-gray-100 {
+    background-color: #f7fafc;
+}
+.bg-green-300 {
+    background-color: #9ae6b4;
+    border: 2px solid #37a279;
+}
+
+/*no use start*/
+.drop-zone--over {
+    border-style: solid;
+}
+/*no use end*/
+
+.vue-daterange-picker[data-v-1ebd09d2] {
+    min-width: 80%;
+}
+@media only screen and (min-width: 600px) {
+    .vue-daterange-picker[data-v-1ebd09d2] {
+        min-width: 90%;
+    }
+}
+
+.form-check-input[class*="bg-"] {
+    border: 0;
+}
+.form-check .form-check-input:focus {
+    box-shadow: none;
+}
+
+.form-check .form-check-input.form-check-primary {
+    background-color: #37a279;
+    border-color: #37a279;
+}
+.form-check .form-check-input.form-check-primary:not(:checked) {
+    background-color: transparent;
+    border: 1px solid #ced4da;
+}
+.form-check .form-check-input.form-check-primary.form-check-glow {
+    box-shadow: 0 0 5px #488f8f;
+}
+.form-check .form-check-input.form-check-primary.form-check-glow:not(:checked) {
+    box-shadow: none;
+}
+
+.form-check.form-check-sm .form-check-input {
+    height: 0.9rem;
+    margin-top: 0.3em;
+    width: 0.9rem;
+}
+.form-check.form-check-sm label {
+    font-size: 0.7rem;
+}
+.form-check.form-check-lg .form-check-input {
+    height: 1.5rem;
+    margin-top: 0.3em;
+    width: 1.5rem;
+}
+.form-check.form-check-lg label {
+    font-size: 1rem;
+}
+
+.form-check.form-check-primary .form-check-input {
+    background-color: #37a279;
+    border-color: #37a279;
+}
+
+.logo .container-logo {
+    height: 80px !important;
+    padding: 10px;
+}
+
+/*login style*/
+.auth {
+    background-image: url("../../../images/login-bg.webp");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: top;
+    min-height: 100vh;
+    min-width: 100vw;
+}
+.login-wrapper {
+    min-height: 100vh;
+    min-width: auto;
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 50px 200px;
+    overflow: hidden;
+}
+
+.auth-section {
+    background-color: #ffffff;
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+}
+
+.auth-logo {
+    padding-bottom: 40px;
+}
+.auth-copyright {
+    padding-top: 20px;
+    text-align: center;
+}
+.auth-btn {
+    display: flex;
+    justify-content: center;
+    place-items: center;
+}
+.auth-btn > span {
+    margin-left: 7px;
+}
+.auth-back {
+    margin-top: 15px;
+    margin-left: 20px;
+}
+.auth-card {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    padding: 40px 50px 20px;
+}
+
+.detail-card {
+    background-color: #ffffff;
+    max-width: 60%;
+    overflow-x: hidden;
+    padding: 20px;
+    margin: 0 20px;
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+}
+.content {
+    max-height: 500px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+}
+
+@media (max-width: 600px) {
+    .detail-card {
+        min-width: 280px;
+    }
+    .content {
+        max-height: 380px;
+        overflow-y: scroll;
+    }
+}
+
+/*Dashboard*/
+.dashboard-counter {
+    display: grid;
+    grid-template-columns: auto auto;
+}
+.dashboard-counter .card {
+    padding: 20px;
+}
+
+.products_sold {
+    gap: 0% 4%;
+    display: grid;
+    grid-template-columns: auto;
+}
+.products_sold .card .card-body {
+    padding-bottom: 0px;
+    padding-top: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.products_sold .card .card-body h1 {
+    font-size: 100px;
+}
+
+.stats-icon-big {
+    align-items: center;
+    background-color: #000;
+    display: flex;
+    float: top;
+    border-radius: 50%;
+    height: 6rem;
+    justify-content: center;
+    width: 6rem;
+}
+.stats-icon-big i {
+    color: #fff;
+    font-size: 3rem;
+}
+
+.stats-icon-big.blue {
+    background-color: #406fc6;
+}
+.stats-icon-big.orange {
+    background-color: #fe9670;
+}
+.stats-icon-big.sky {
+    background-color: #56d8f0;
+}
+.stats-icon-big.lightgreen {
+    background-color: #64c77a;
+}
+
+.stats-icon {
+    border-radius: 50%;
+    height: 3.5rem;
+    width: 3.5rem;
+}
+
+.stats-icon.payment_pending {
+    background-color: #ff6d91;
+}
+.stats-icon.received {
+    background-color: #b47bff;
+}
+.stats-icon.processed {
+    background-color: #45bd86;
+}
+.stats-icon.shipped {
+    background-color: #e5c646;
+}
+.stats-icon.outForDelivery {
+    background-color: #494949;
+}
+.stats-icon.delivered {
+    background-color: #ff7f60;
+}
+.stats-icon.cancelled {
+    background-color: #308ceb;
+}
+.stats-icon.returned {
+    background-color: #f060f0;
+}
+/*custom .custom-slider-image*/
+.error {
+    color: red;
+}
+.map_view_mobile {
+    display: none;
+}
+.h-95 {
+    height: 95%;
+}
+.product_category_count h4 {
+    float: none !important;
+}
+.mobile input[type="number"] {
+    -moz-appearance: textfield;
+}
+.mobile input[type="number"]::-webkit-inner-spin-button,
+.mobile input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.card,
+header,
+.sidebar-wrapper {
+    box-shadow: 0 0 20px rgb(0 0 0 / 13%), 0px 0px 20px rgb(0 0 0 / 0%);
+}
+.align-items-center {
+    text-align: center;
+}
+.fslightbox-container {
+    background: linear-gradient(rgba(30, 30, 30, 0.4), black 1810%) !important;
+}
+table img {
+    cursor: pointer;
+}
+.rtl {
+    direction: rtl;
+}
+.vertical-tabs-container {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+}
+.vertical-tabs-container .tab-buttons {
+    display: flex;
+    flex-direction: column; /* Set the direction to column for vertical tabs */
+    width: 20%;
+    flex-shrink: 0;
+}
+.vertical-tabs-container .tab-buttons button {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border: none;
+    background-color: #fff;
+    border: 1px solid #40a27a;
+    border-radius: 10px;
+    font-weight: 600;
+    color: rgba(35, 28, 99, 0.7);
+}
+.vertical-tabs-container .tab-buttons button:hover {
+    background-color: #ddd;
+}
+.vertical-tabs-container .tab-buttons button.active {
+    background-color: #40a27a;
+    color: #fff;
+}
+.vertical-tabs-container > .tab-content {
+    margin-left: 20px;
+    flex: 1;
+    min-width: 0;
+}
+.vertical-tabs-container .tab-content .card {
+    min-height: 590px;
+    width: 100%;
+}
+.vertical-tabs-container form button {
+    margin-top: 10px;
+    padding: 7px 30px;
+}
+.custom-message-width {
+    max-width: 200px; /* Adjust the width as needed */
+}
+.website_maitenance_mode {
+    display: flex;
+    align-items: baseline;
+}
+.social_media option {
+    font-family: "FontAwesome", "sans-serif";
+}
+.all_parents {
+    position: absolute;
+    right: 40px;
+}
+/* Tooltip container */
+.tooltip-icon {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Tooltip text */
+.tooltip-icon .tooltip-text {
+    visibility: hidden;
+    width: 220px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -110px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-weight: normal;
+    font-size: 13px;
+}
+
+/* Tooltip arrow */
+.tooltip-icon .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+/* Show the tooltip when hovering over the icon */
+.tooltip-icon:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+.btn {
+    margin-bottom: 5px;
+}
+.vue-daterange-picker[data-v-1ebd09d2][data-v-9dd554bc] {
+    min-width: 73% !important;
+    max-width: 90% !important;
+    width: 90% !important;
+}
+
+/*Featured section CSS*/
+.style_image {
+    width: 100%;
+    filter: grayscale(50%);
+}
+.radio-img > .style_image {
+    cursor: pointer;
+}
+.radio-img {
+    background: #eff2f5;
+    height: 330px;
+    display: flex !important;
+    align-items: center;
+    border-radius: 10px;
+}
+.radio-img > input {
+    opacity: 0;
+    position: absolute;
+}
+.radio-img > input:checked + .style_image {
+    border: 2px solid #37a279;
+    filter: grayscale(0%) !important;
+}
+/*Featured section end */
+.modal-xxl {
+    max-width: 90% !important;
+}
+.modal-dialog-scrollable .modal-body {
+    overflow-x: hidden;
+}
+.input-group-append .btn {
+    margin-bottom: 0px;
+}
+.view_order .th-width {
+    width: 30% !important;
+}
+.b-table-stacked-md th {
+    width: 118px;
+}
+.sidebar-wrapper .menu .sidebar-link i,
+.sidebar-wrapper .menu .sidebar-link svg {
+    width: 16px;
+    text-align: center;
+}
+
+/*Tablet*/
+@media only screen and (min-width: 768px) and (max-width: 992px) {
+    .dashboard-counter img,
+    .dashboard-counter i {
+        width: 25px;
+        font-size: 23px;
+    }
+    .dashboard-counter .stats-icon-big {
+        padding: 5px;
+        height: 3rem;
+    }
+    .dashboard-counter .py-4-5 {
+        padding-bottom: 0rem !important;
+        padding-top: 0rem !important;
+    }
+    .dashboard-counter h5 {
+        font-size: 13px;
+    }
+    .product_category_count .card {
+        min-height: 350px !important;
+    }
+    .products_sold .card-header {
+        padding: 1.5rem 0px !important;
+    }
+    .products_sold h1 {
+        font-size: 50px !important;
+    }
+    .products_sold .card .card-body {
+        padding: 10px;
+    }
+    .radio-img {
+        height: 170px;
+    }
+}
+/*mobile*/
+@media only screen and (max-width: 880px) {
+    .map_view_mobile {
+        display: block;
+    }
+    .map_view_desktop {
+        display: none;
+    }
+    .vertical-tabs-container .tab-buttons {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    .vertical-tabs-container {
+        display: block;
+    }
+    .vertical-tabs-container .tab-content {
+        margin-left: 0px;
+        width: 100%;
+    }
+    .login-wrapper {
+        display: flex;
+        justify-content: right;
+        padding: 30px;
+    }
+    .auth-card {
+        padding: 20px 20px 20px;
+    }
+    .col-md-3:has(.radio-img) {
+        width: 25% !important;
+    }
+    .radio-img {
+        height: 170px;
+    }
+}
+
+/* ============================================
+   RTL (Right-to-Left) Sidebar Support
+   When body has .rtl class (e.g. Arabic language),
+   sidebar moves to right side and icon-text spacing is adjusted.
+   ============================================ */
+
+/* Sidebar on right side for RTL */
+body.rtl #sidebar.active .sidebar-wrapper,
+body.theme-dark.rtl #sidebar.active .sidebar-wrapper {
+    left: auto;
+    right: 0;
+}
+body.rtl #sidebar:not(.active) .sidebar-wrapper,
+body.theme-dark.rtl #sidebar:not(.active) .sidebar-wrapper {
+    left: auto;
+    right: -300px;
+}
+body.rtl #sidebar:not(.active) ~ #main,
+body.theme-dark.rtl #sidebar:not(.active) ~ #main {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Sidebar transition for RTL - use right instead of left */
+body.rtl .sidebar-wrapper,
+body.theme-dark.rtl .sidebar-wrapper {
+    transition: right 0.5s ease-out, left 0s;
+}
+
+/* Main content margin for RTL - content shifts left to make room for right sidebar */
+body.rtl #main,
+body.theme-dark.rtl #main {
+    margin-left: 0;
+    margin-right: 300px;
+}
+@media screen and (max-width: 1199px) {
+    body.rtl #main,
+    body.theme-dark.rtl #main {
+        margin-right: 0;
+    }
+    body.rtl .sidebar-wrapper,
+    body.theme-dark.rtl .sidebar-wrapper {
+        right: -300px;
+        left: auto;
+    }
+}
+
+/* Extra spacing between icon and text in RTL sidebar menu */
+body.rtl .sidebar-wrapper .menu .sidebar-link,
+body.theme-dark.rtl .sidebar-wrapper .menu .sidebar-link {
+    gap: 0.5rem;
+}
+body.rtl .sidebar-wrapper .menu .sidebar-link span,
+body.theme-dark.rtl .sidebar-wrapper .menu .sidebar-link span {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* RTL: Chevron/dropdown arrow on left side for submenu items */
+body.rtl .sidebar-wrapper .menu .sidebar-item.has-sub .sidebar-link:after,
+body.theme-dark.rtl
+    .sidebar-wrapper
+    .menu
+    .sidebar-item.has-sub
+    .sidebar-link:after {
+    right: auto;
+    left: 15px;
+}
+
+/* RTL: Submenu item hover margin */
+body.rtl .sidebar-wrapper .menu .submenu .submenu-item a:hover,
+body.theme-dark.rtl .sidebar-wrapper .menu .submenu .submenu-item a:hover {
+    margin-left: 0;
+    margin-right: 0.3rem;
+}
+
+
+/* In RTL: remove right-push from nav items */
+body.rtl .navbar .navbar-nav.ms-auto,
+body.theme-dark.rtl .navbar .navbar-nav.ms-auto {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* In RTL: flex-end = left side (logical end in RTL is visual left) */
+body.rtl .navbar .navbar-collapse,
+body.theme-dark.rtl .navbar .navbar-collapse {
+    justify-content: flex-end;
+}
+
+/* In RTL: container - flex-end puts content on visual left */
+body.rtl .navbar .container-fluid,
+body.theme-dark.rtl .navbar .container-fluid {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+/* RTL + mobile (≤768px): hamburger on right, ellipsis on left, space between */
+@media screen and (max-width: 768px) {
+    body.rtl .navbar .container-fluid,
+    body.theme-dark.rtl .navbar .container-fluid {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    /* burger-btn (hamburger) first in order = right side in RTL */
+    body.rtl .navbar .container-fluid .burger-btn,
+    body.theme-dark.rtl .navbar .container-fluid .burger-btn {
+        order: 1;
+    }
+    /* d-flex (ellipsis) and navbar-collapse = left side in RTL */
+    body.rtl .navbar .container-fluid > .d-flex,
+    body.rtl .navbar .container-fluid > .navbar-collapse,
+    body.theme-dark.rtl .navbar .container-fluid > .d-flex,
+    body.theme-dark.rtl .navbar .container-fluid > .navbar-collapse {
+        order: 2;
+    }
+}
+
+/* In RTL: dropdown menu alignment - open towards left (override component styles) */
+body.rtl .navbar .dropdown-menu,
+body.theme-dark.rtl .navbar .dropdown-menu {
+    right: auto !important;
+    left: 0 !important;
+}
+
+
+/* RTL: swap columns - page numbers on left, per page dropdown on right */
+body.rtl .row:has(.b-pagination),
+body.theme-dark.rtl .row:has(.b-pagination) {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+}
+
+/* RTL: remove offset so columns align correctly after swap */
+body.rtl .row:has(.b-pagination) [class*="offset-md"],
+body.theme-dark.rtl .row:has(.b-pagination) [class*="offset-md"] {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* ============================================
+   Sidebar full height on small screens
+   Sidebar should fill viewport height when open on mobile/tablet
+   ============================================ */
+@media screen and (max-width: 1199px) {
+    .sidebar-wrapper,
+    body.theme-dark .sidebar-wrapper {
+        height: 100vh !important;
+        min-height: 100vh;
+        top: 0;
+        bottom: 0;
+    }
+}
+
+/* ============================================
+   Sidebar backdrop - click outside to close on small screens
+   Shown when sidebar is open on mobile/tablet (< 1200px)
+   ============================================ */
+.sidebar-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    height: 100%;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 9;
+}
+
+/* ============================================
+   Breadcrumb: Align right on tablet and above
+   (float-lg-end only kicks in at 992px; extend to 768px)
+   ============================================ */
+@media (min-width: 768px) {
+    .breadcrumb-header.float-lg-end {
+        float: right !important;
+    }
+}
+
+/* ============================================
+   Pagination: Allow wrapping to prevent cut-off
+   ============================================ */
+.b-pagination {
+    flex-wrap: wrap;
+}
+@media (max-width: 1200px) {
+    .b-pagination {
+        justify-content: flex-end;
+    }
+}
+
+/* ============================================
+   Table: Fix last column overflow outside card
+   ============================================ */
+.card-body .table-responsive,
+.card-body > div > .table-responsive {
+    overflow-x: auto;
+}
+/* Ensure b-table without explicit responsive wrapper also scrolls */
+.card-body > table.table,
+.card-body > .b-table-outer-wrapper {
+    overflow-x: auto;
+}
+
+/* ============================================
+   Date Range Picker: Fix cut-off on tablet/mobile/medium screens
+   ============================================ */
+@media (max-width: 1200px) {
+    .daterangepicker {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        max-width: calc(100vw - 20px);
+    }
+    .daterangepicker.drop-up {
+        bottom: auto !important;
+    }
+    .daterangepicker .calendar-table {
+        overflow-x: auto;
+    }
+}
+
+/* ============================================
+   Dropdown / Select: Prevent cut-off on tablet
+   ============================================ */
+@media (max-width: 1200px) {
+    .form-select,
+    select.form-control {
+        max-width: 100%;
+    }
+}
+
+/* ============================================
+   Filter inputs: Gap between stacked inputs on mobile
+   ============================================ */
+@media (max-width: 767px) {
+    .card-body .row.mb-2 > [class*="col"],
+    .card-body .row.mb-2 > .b-col {
+        margin-bottom: 12px;
+    }
+    /* Gap between date picker and filter inputs */
+    .card-body b-col,
+    .card-body .col-md-3,
+    .card-body .col-md-2,
+    .card-body .col-md-1 {
+        margin-bottom: 10px;
+    }
+}
+
+/* ============================================
+   Modal close button: red color
+   ============================================ */
+.modal-header .close,
+.modal .close,
+button.close {
+    color: #dc3545 !important;
+    opacity: 1 !important;
+}
+.modal-header .btn-close {
+    filter: invert(22%) sepia(96%) saturate(2400%) hue-rotate(337deg)
+        brightness(95%) contrast(105%);
+}
+
+/* RTL: modal header – close (X) on the left, title on the right */
+body.rtl .modal-header,
+html.rtl .modal-header,
+body.theme-dark.rtl .modal-header {
+    display: flex !important;
+    /* flex-direction: row-reverse !important; */
+    justify-content: space-between !important;
+}
+body.rtl .modal-header .close,
+body.rtl .modal .close,
+body.rtl .modal-header .btn-close,
+html.rtl .modal-header .close,
+html.rtl .modal .close,
+html.rtl .modal-header .btn-close,
+body.theme-dark.rtl .modal-header .close,
+body.theme-dark.rtl .modal-header .btn-close {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    order: 0;
+    flex-shrink: 0;
+}
+body.rtl .modal-header .modal-title,
+html.rtl .modal-header .modal-title,
+body.theme-dark.rtl .modal-header .modal-title {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: right !important;
+    order: 0;
+    flex: 1 1 auto !important;
+    width: auto !important;
+}
+
+/* ============================================
+   Status / Product Status cards: Fix overflow on tablet/mobile
+   (Cards that appear outside main card layout)
+   ============================================ */
+@media (max-width: 992px) {
+    .col-md-4 > .card,
+    .col-md-3 > .card {
+        margin-bottom: 15px;
+    }
+}
+
+/* ============================================
+   Store Settings: 2x2 grid layout on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .vertical-tabs-container .tab-content .card .row > [class*="col-md-"] {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    /* Full width for store settings rows on tablet */
+    .store-settings-row .col-md-3,
+    .store-settings-row .col-md-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+/* ============================================
+   Search inputs: Full width where needed
+   ============================================ */
+.search-full-width .form-control,
+.search-full-width input {
+    width: 100% !important;
+}
+
+/* ============================================
+   Header right menu: Fix spacing on mobile
+   ============================================ */
+@media (max-width: 991px) {
+    .navbar-nav.ms-auto {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+    }
+    .navbar-nav.ms-auto .nav-item {
+        margin-right: 4px !important;
+    }
+    .navbar-nav.ms-auto .nav-link {
+        padding: 0.25rem 0.4rem;
+    }
+}
+
+/* ============================================
+   Sidebar: Toggle icon rotation for expanded state
+   ============================================ */
+.sidebar-wrapper .menu .sidebar-item.has-sub .sidebar-link:after {
+    transition: transform 0.3s ease;
+}
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link:after {
+    transform: rotate(90deg);
+}
+
+/* ============================================
+   Subscription Plans: Gap between highlighted images
+   ============================================ */
+.subscription-image-row {
+    gap: 15px;
+}
+.subscription-image-row .col-md-3,
+.subscription-image-row .col-md-4 {
+    margin-bottom: 15px;
+}
+.subscription-plan-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+/* ============================================
+   Subscription Notes: Full width card
+   ============================================ */
+.subscription-notes-card {
+    width: 100%;
+}
+
+/* ============================================
+   Subscription Plans: Input placeholder cut-off fix
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .b-form-input,
+    input.form-control {
+        min-width: 0;
+        text-overflow: ellipsis;
+    }
+}
+
+/* ============================================
+   Toggle button label: Full width in FAQs
+   ============================================ */
+.toggle-label-full {
+    display: block;
+    width: 100%;
+}
+
+/* ============================================
+   Language tabs: Active tab underline in primary color
+   Applies to all forms with b-tabs (Edit Product, Units, Category, etc.)
+   Replaces default blue underline with primary (#37a279)
+   ============================================ */
+.nav-tabs .nav-link.active {
+    background-color: transparent !important;
+    color: #37a279 !important;
+    border-bottom-color: transparent !important;
+    position: relative;
+}
+.nav-tabs .nav-link.active:after {
+    background-color: #37a279;
+    border-radius: 0 0 4px 4px;
+    bottom: 0;
+    box-shadow: 0 2px 5px rgba(55, 162, 121, 0.5);
+    content: "";
+    height: 3px;
+    left: 0;
+    position: absolute;
+    width: 100%;
+}
+
+/* ============================================
+   Tab gap: Space between nav tabs and input fields
+   ============================================ */
+.nav-tabs + .tab-content {
+    margin-top: 15px;
+}
+.tab-content .form-group:first-child,
+.tab-content .mb-3:first-child {
+    margin-top: 10px;
+}
+
+/* ============================================
+   Labels overlapping with inputs on tablet: Fix
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .form-label,
+    label.form-label,
+    .col-form-label {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+}
+
+/* ============================================
+   Required fields label: Hide the * Required fields text
+   ============================================ */
+.required-fields-note {
+    display: none !important;
+}
+
+/* ============================================
+   Order Categories: Last card border fix
+   ============================================ */
+.card-group .card:last-child,
+.categories-order .card:last-child {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125) !important;
+}
+
+/* ============================================
+   View Order / Self Pickup Order: Cards full width on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 991px) {
+    .view_order .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* ============================================
+   Orders / Reports Filter section alignment
+   ============================================ */
+@media (min-width: 768px) {
+    .card-body .row.mb-2 {
+        align-items: flex-end;
+    }
+    .card-body .row.mb-2 h6.box-title {
+        margin-bottom: 4px;
+    }
+}
+
+/* ============================================
+   POS: Exit button should be danger color
+   ============================================ */
+.fullscreen-header .btn-primary.exit-pos-btn {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+/* POS: Hold bill tab close button should NOT be danger */
+.pos-tab .pos-tab-close {
+    color: #6c757d;
+    background-color: transparent;
+    border: none;
+}
+
+/* ============================================
+   POS: Mobile layout - search box fix
+   ============================================ */
+@media (max-width: 767px) {
+    .card-header .d-flex {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .card-header .input-group {
+        width: 100%;
+        min-width: 0;
+    }
+    .card-header .me-2 {
+        width: 100%;
+    }
+    .card-header .me-2 select {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   POS: Convert product grid to 1x1 on mobile
+   ============================================ */
+@media (max-width: 576px) {
+    .row.g-3 > .col-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* ============================================
+   Login: Keep card on right (align-items center for vertical centering only)
+   ============================================ */
+.auth .login-wrapper {
+    align-items: center;
+}
+
+/* ============================================
+   User Profile Settings: Label word break
+   ============================================ */
+.user-profile-settings label,
+.settings-form label {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ============================================
+   Subscription FAQs: Toggle button label full width
+   ============================================ */
+.faq-toggle-label {
+    display: inline-block;
+    width: 100%;
+}
+
+/* ============================================
+   Language: Search input full width in supported languages
+   ============================================ */
+.supported-languages-search .form-control,
+.languages-search input {
+    width: 100% !important;
+}
+
+/* ============================================
+   Languages Add: 1x1 grid on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .language-add-form .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* ============================================
+   Withdrawal Requests: Table border on mobile
+   ============================================ */
+@media (max-width: 767px) {
+    .table-bordered,
+    .table-bordered td,
+    .table-bordered th {
+        border: 1px solid #dee2e6 !important;
+    }
+}
+
+/* ============================================
+   Return Requests: Long status text overflow fix
+   ============================================ */
+@media (max-width: 767px) {
+    .table td .badge,
+    .table td span.badge {
+        white-space: normal;
+        word-break: break-word;
+        max-width: 120px;
+        display: inline-block;
+        text-align: center;
+    }
+}
+
+/* ============================================
+   Customers: Search input full width on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .customers-search .form-control,
+    .manage-cities-search .form-control {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   Dashboard: Order Out Lines - center alignment
+   Cards should be center aligned in all views
+   ============================================ */
+.row > [class*="col-12"][class*="col-sm-4"],
+.row > [class*="col-12"][class*="col-sm-6"] {
+    display: flex;
+}
+.row > [class*="col-12"][class*="col-sm-4"] > .card,
+.row > [class*="col-12"][class*="col-sm-6"] > .card {
+    width: 100%;
+}
+/* Center-align the order out lines row */
+.row.g-3 {
+    justify-content: center;
+}
+
+/* ============================================
+   Seller Dashboard: Rounded icon stretch fix on tablet
+   Prevent stats-icon-big from stretching
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .stats-icon-big {
+        flex-shrink: 0;
+        min-width: 3rem;
+        min-height: 3rem;
+    }
+    .stats-icon-big img {
+        max-width: 30px;
+        max-height: 30px;
+    }
+}
+
+/* ============================================
+   Sidebar Header: Logo centered, close button at far right
+   HTML: .sidebar-header > .d-flex[position:relative] > .logo + .toggler[position:absolute;right:0]
+   ============================================ */
+@media (max-width: 1199px) {
+    /* Ensure the d-flex wrapper fills the full sidebar width */
+    .sidebar-header .d-flex {
+        width: 100% !important;
+        min-height: 60px;
+    }
+    /* Logo: take all the flex space and center its content within it */
+    .sidebar-header .logo {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    /* DO NOT override the toggler's position - keep position:absolute;right:0 from inline style */
+}
+
+.card-body .row .form-group {
+    margin-bottom: 0.75rem;
+}
+
+/* ============================================
+   Toggle button vs Radio button fix
+   Ensure form-switch renders as toggle, not radio
+   ============================================ */
+.form-switch .form-check-input {
+    width: 2.5em !important;
+    height: 1.25em !important;
+    border-radius: 2em !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280%2c0%2c0%2c0.25%29'/%3e%3c/svg%3e") !important;
+    background-position: left center !important;
+    transition: background-position 0.15s ease-in-out !important;
+    cursor: pointer;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    border: 2px solid rgba(0, 0, 0, 0.25) !important;
+    background-color: #e9ecef !important;
+}
+.form-switch .form-check-input:checked {
+    background-position: right center !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+    background-color: #37a279 !important;
+    border-color: #37a279 !important;
+}
+/* Override the incorrect radio style for form-switch */
+.form-switch input[type="radio"] {
+    border-radius: 2em !important;
+    background-position: left center !important;
+    width: 2.5em !important;
+    height: 1.25em !important;
+    background-color: #e9ecef !important;
+    border: 2px solid rgba(0, 0, 0, 0.25) !important;
+}
+.form-switch input[type="radio"]:checked {
+    background-position: right center !important;
+    background-color: #37a279 !important;
+    border-color: #37a279 !important;
+}
+
+/* ============================================
+   Role: Permissions table overflow fix on mobile/tablet
+   ============================================ */
+@media (max-width: 1199px) {
+    .permission-table-wrapper,
+    .permissions-table {
+        overflow-x: auto;
+        display: block;
+        width: 100%;
+    }
+    .table-roles {
+        min-width: 600px;
+    }
+}
+
+
+/* ============================================
+   Web Settings: Android/iOS store logo overflow fix
+   ============================================ */
+@media (max-width: 1199px) {
+    .store-logo-img,
+    img[alt*="Android"],
+    img[alt*="iOS"],
+    img[alt*="play store"],
+    img[alt*="app store"] {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    td img,
+    .table td img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+}
+
+/* ============================================
+   Map View: Fix visibility breakpoints
+   Map should show correctly on tablet
+   ============================================ */
+@media only screen and (min-width: 768px) and (max-width: 1199px) {
+    .map_view_mobile {
+        display: block;
+    }
+    .map_view_desktop {
+        display: none;
+    }
+}
+@media only screen and (min-width: 1200px) {
+    .map_view_mobile {
+        display: none;
+    }
+    .map_view_desktop {
+        display: block;
+    }
+}
+
+/* ============================================
+   POS: Pagination fix on all views
+   ============================================ */
+.pos-pagination .b-pagination,
+#pos-section .b-pagination {
+    flex-wrap: wrap;
+}
+@media (max-width: 1199px) {
+    .b-pagination {
+        flex-wrap: wrap !important;
+        justify-content: flex-end;
+    }
+    /* Ensure POS table pagination is always visible */
+    .card-body .row > [class*="col"]:has(.b-pagination) {
+        overflow: visible;
+    }
+}
+
+/* ============================================
+   FrontEnd Home Setting: Input placeholder alignment
+   Placeholder text appears above input - fix vertical alignment
+   ============================================ */
+.form-control::placeholder {
+    line-height: normal;
+    vertical-align: middle;
+}
+input.form-control {
+    line-height: 1.5;
+}
+
+/* ============================================
+   Forgot Password: Remove extra whitespace
+   The page had double nested .auth divs
+   ============================================ */
+.auth > .auth {
+    min-height: 0;
+    background-image: none !important;
+    padding: 0;
+}
+.auth .auth-section {
+    max-width: 420px;
+    width: 100%;
+}
+.auth .login-wrapper {
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* ============================================
+   BREADCRUMB: Remove extra right-side spacing on tablet
+   The float-lg-end only kicks in at 992px; force it at 768px+
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .page-heading .breadcrumb-header {
+        float: right !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* Remove any auto margin that pushes breadcrumb right */
+    .page-heading .row {
+        align-items: center;
+    }
+    .page-heading .col-12.col-md-6.order-md-2 {
+        padding-right: 0 !important;
+    }
+}
+
+/* ============================================
+   TABLE OVERFLOW: All tables - last column stays inside card
+   Covers categories, offer images, features sections, 
+   withdrawal requests, return requests, stock management
+   ============================================ */
+.card .card-body {
+    overflow: hidden;
+}
+.card .card-body .table-responsive {
+    overflow-x: auto !important;
+}
+@media (max-width: 1199px) {
+    /* Any table inside card should scroll, not overflow */
+    .card-body table,
+    .card-body .b-table {
+        min-width: 600px;
+    }
+    /* But tables with stacked="md" on mobile should be exempt */
+    .card-body .b-table[aria-colcount] {
+        min-width: unset;
+    }
+}
+
+/* ============================================
+   ORDERS VIEW DETAILS / SELF PICKUP ORDER DETAILS:
+   Cards full-width on tablet (768px-991px)
+   ============================================ */
+@media (min-width: 768px) and (max-width: 991px) {
+    .view_order .col-md-6,
+    .view_order .col-md-4,
+    .view_order .col-md-8 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ============================================
+   USER PROFILE SETTINGS: 1x1 grid on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .user-profile-settings .col-md-6,
+    .profile-settings-card .col-md-6,
+    .user-profile-form .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .role-form .col-md-6,
+    .add-role-form .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+    .role-form .col-md-4,
+    .add-role-form .col-md-4 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+}
+
+/* ============================================
+   STORE SETTINGS (ALL TABS): Stronger 2x2 grid on tablet
+   Covers: Store Settings, Address, Other, Delivery Boy,
+   App Settings, SMTP, Seller, Login, Card, Refer & Earn
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    /* All form columns inside store settings tabs become 2-col */
+    .vertical-tabs-container .tab-content .card .row > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    /* Third Party API credentials: 1x1 (full width) */
+    .tab-content .third-party-api .col-md-6,
+    .tab-content .third-party-api .col-md-4,
+    .tab-content .third-party-api .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    /* Prevent tiny 1/4 columns from staying small */
+    .vertical-tabs-container .tab-content .card .row > .col-md-3 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    /* Full-width for col-12 */
+    .vertical-tabs-container .tab-content .card .row > .col-md-12,
+    .vertical-tabs-container .tab-content .card .row > .col-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ============================================
+   WEB SETTINGS GENERAL: 2x2 grid on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .web-settings-form .col-md-6,
+    .general-web-settings .col-md-6 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    .web-settings-form .col-md-12,
+    .general-web-settings .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ============================================
+   LANGUAGES ADD: 1x1 grid on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .add-language-form .col-md-6,
+    .add-language-form .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ============================================
+   SELLER ADD / EDIT: Status & Product Status card overflow fix
+   ============================================ */
+@media (max-width: 1199px) {
+    .seller-status-card,
+    .product-status-card {
+        overflow: visible !important;
+        width: 100%;
+    }
+    .add-seller-form .col-md-4,
+    .edit-seller-form .col-md-4 {
+        overflow: visible;
+    }
+}
+
+/* ============================================
+   DELIVERY BOY EDIT: Status card overflow on mobile
+   ============================================ */
+@media (max-width: 767px) {
+    .delivery-boy-status-card,
+    .edit-delivery-boy-form .col-md-4 {
+        overflow: visible !important;
+        width: 100%;
+    }
+}
+
+/* ============================================
+   REQUIRED FIELDS NOTE: Hide everywhere it appears
+   Covers Add/Edit Product, Promo Code, Delivery Boy, Web Settings
+   ============================================ */
+.required-fields-note,
+p.required-note,
+.form-required-note,
+small.required-fields-note {
+    display: none !important;
+}
+/* Hide asterisk-note paragraphs that contain "Required fields" text */
+p:has(> span.text-danger:first-child):not(.keep-required) {
+    display: none !important;
+}
+
+/* ============================================
+   DROPDOWN CUTOFF: Force visible overflow on filter rows
+   (Covers Orders "Drop Down Box" cut-off on tablet)
+   ============================================ */
+.card-body .row.mb-2 {
+    overflow: visible !important;
+}
+.card-body .row.mb-2 > [class*="col"] {
+    overflow: visible !important;
+}
+
+/* ============================================
+   MOBILE FILTER GAP: Better gap between stacked filter inputs
+   Works for b-col (Vue components) too
+   ============================================ */
+@media (max-width: 767px) {
+    .card-body .row > div[class*="col"],
+    .card-body .row > .b-col {
+        margin-bottom: 0.75rem;
+    }
+    .card-body .row > div[class*="col"]:last-child,
+    .card-body .row > .b-col:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* ============================================
+   EMAIL TEMPLATES EDIT / BLOGS: Tab-to-input gap
+   ============================================ */
+.card-body .nav-tabs {
+    margin-bottom: 1rem;
+}
+.card-body .nav-tabs + * {
+    margin-top: 0.75rem;
+}
+
+/* ============================================
+   PRODUCT EDIT/ADD: Labels overlapping on tablet
+   Prevent label text from sitting on top of input
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .form-group > label,
+    .mb-3 > label,
+    .col-form-label {
+        display: block;
+        margin-bottom: 0.35rem;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+}
+
+/* ============================================
+   SIDEBAR: Logo centered, Close button on far right
+   TheContainer.vue HTML structure:
+     .sidebar-header
+       .d-flex.justify-content-center [position:relative]  ← flex container
+         .logo                                              ← flex child
+         .toggler [position:absolute; right:0]              ← abs positioned
+   Fix: make .logo fill all space and center its content
+   ============================================ */
+@media (max-width: 1199px) {
+    /* The inner d-flex wrapper - ensure it fills full width */
+    .sidebar-header .d-flex {
+        width: 100% !important;
+        min-height: 60px;
+        padding: 0 10px;
+    }
+    /* Logo fills the available width and centers its content */
+    .sidebar-header .d-flex .logo {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-width: 0;
+    }
+    /* Toggler stays absolutely positioned at right (keep inline style working) */
+    .sidebar-header .d-flex .toggler {
+        /* Keep position:absolute from inline style - do NOT override */
+        /* Just ensure the icon is large enough to tap */
+        z-index: 1;
+    }
+    .sidebar-header .d-flex .toggler a,
+    .sidebar-header .d-flex .sidebar-hide {
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        font-size: 1.4rem;
+    }
+}
+
+
+/* ============================================
+   SUBSCRIPTION PLANS: Placeholder cut-off in inputs
+   Input values and placeholders fully visible
+   ============================================ */
+.subscription-plan-form input.form-control,
+.subscription-plan-form .form-control {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.subscription-plan-form input.form-control:focus {
+    white-space: normal;
+    overflow: visible;
+}
+
+/* ============================================
+   MANAGE EMAIL / COUNTRY / CUSTOMER WALLET /
+   MANAGE TRANSACTIONS / FAQ: Pagination not cut off
+   ============================================ */
+@media (max-width: 1199px) {
+    /* Row that wraps pagination must not clip */
+    .card-body > .row:has(.b-pagination),
+    .card-body > .b-row:has(.b-pagination) {
+        overflow: visible !important;
+    }
+    /* The column holding pagination extends full width */
+    .card-body .b-pagination {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
+
+/* ============================================
+   HEADER RIGHT MENU: Better spacing on both mobile AND tablet
+   ============================================ */
+@media (max-width: 1199px) {
+    .navbar-nav.ms-auto {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 2px 4px;
+        align-items: center;
+    }
+    .navbar-nav.ms-auto > .nav-item {
+        margin-right: 2px !important;
+    }
+    .navbar-nav.ms-auto > .nav-item > .nav-link {
+        padding: 0.3rem 0.45rem !important;
+    }
+}
+
+/* ============================================
+   HEADER (VERTICAL HEADER) – RTL spacing fixes
+   Bell badge + user menu alignment in RTL
+   ============================================ */
+body.rtl .navbar .nav-item .bi.bi-bell + .badge,
+body.theme-dark.rtl .navbar .nav-item .bi.bi-bell + .badge {
+    /* Move notification bubble closer to bell icon in RTL */
+    left: auto !important;
+    right: 6px !important;
+}
+
+body.rtl .navbar .user-menu .user-name,
+body.theme-dark.rtl .navbar .user-menu .user-name {
+    /* Flip text alignment for username/role in RTL */
+    text-align: left !important;
+    margin-left: 0 !important;
+    margin-right: 0.5rem !important;
+}
+
+body.rtl .navbar .navbar-nav > .nav-item,
+body.theme-dark.rtl .navbar .navbar-nav > .nav-item {
+    /* Ensure consistent, tighter horizontal spacing between header icons in RTL */
+    margin-right: 0.35rem !important;
+    margin-left: 0 !important;
+}
+
+/* Slightly pull theme toggle closer to neighbors in RTL */
+body.rtl .navbar .theme-toggle,
+body.theme-dark.rtl .navbar .theme-toggle {
+    margin-right: 0.15rem !important;
+}
+
+/* RTL: remove extra padding around dark mode label + switch */
+body.rtl .navbar .theme-toggle label,
+body.theme-dark.rtl .navbar .theme-toggle label,
+body.rtl .navbar .theme-toggle .form-check,
+body.theme-dark.rtl .navbar .theme-toggle .form-check {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* ============================================
+   MANAGE CITIES SEARCH / LANGUAGES SUPPORTED:
+   Search input always full width
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    /* Cities search */
+    .manage-cities-search input,
+    .manage-cities-search .form-control,
+    /* Supported languages list search */
+    .supported-languages-search input,
+    .supported-languages-search .form-control,
+    /* Customers search */
+    .customers-search input,
+    .customers-search .form-control {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ============================================
+   ORDER CATEGORIES: Table row borders visible
+   Last card border should show
+   ============================================ */
+.list-group-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125) !important;
+}
+.list-group-item:last-child {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125) !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* ============================================
+   STOCK MANAGEMENT / CATEGORIES:
+   Last Action column overflow fix (stronger)
+   ============================================ */
+@media (max-width: 1199px) {
+    /* Table wrapper must scroll */
+    .card-body .b-table-outer-wrapper,
+    .card-body .table-responsive,
+    .card-body > .row > [class*="col"] > .table-responsive {
+        overflow-x: auto !important;
+        max-width: 100%;
+    }
+    /* All b-tables scroll horizontally */
+    .b-table {
+        display: table !important;
+    }
+}
+
+/* ============================================
+   POS REPORT: Filter section alignment on mobile/tablet  
+   ============================================ */
+@media (max-width: 1199px) {
+    #pos-report .card-body .row.mb-2,
+    .pos-report-filters {
+        align-items: flex-end;
+    }
+}
+@media (max-width: 767px) {
+    #pos-report .card-body .row.mb-2 > [class*="col"],
+    .pos-report-filters > [class*="col"] {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* ============================================
+   SUBSCRIPTION FAQ TOGGLE: Full-width label
+   ============================================ */
+.subscription-faq-form .form-check-label,
+.faq-form .form-check-label {
+    display: inline-block;
+    width: 100%;
+}
+
+/* ============================================
+   TABLE BORDERS: Mobile - ensure borders show on all tables
+   ============================================ */
+@media (max-width: 767px) {
+    .b-table td,
+    .b-table th,
+    table.table td,
+    table.table th {
+        border: 1px solid #dee2e6 !important;
+    }
+}
+
+/* ============================================
+   PANEL LOGIN BACKGROUND TABLE: Overflow fix on tablet
+   (Store Settings -> Store Settings tab)
+   ============================================ */
+@media (max-width: 1199px) {
+    .vertical-tabs-container .tab-content table {
+        max-width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
+    .vertical-tabs-container .tab-content td,
+    .vertical-tabs-container .tab-content th {
+        white-space: nowrap;
+    }
+    .vertical-tabs-container .tab-content td img {
+        max-width: 150px;
+        height: auto;
+    }
+}
+
+/* ============================================
+   PRODUCT FORMS: Full-width col-12 on tablet
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .add-product-form .row > .col-md-12,
+    .edit-product-form .row > .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ============================================
+   BLOGS LIST: Tab-to-input gap (listed separately)
+   ============================================ */
+.blogs-form .nav-tabs + *,
+.edit-blog .nav-tabs + * {
+    margin-top: 1rem;
+}
+
+/* ============================================
+   EMAIL TEMPLATE EDIT: Tab-to-input gap
+   ============================================ */
+.email-template-form .nav-tabs + *,
+.edit-email-template .nav-tabs + * {
+    margin-top: 1rem;
+}
+
+/* ============================================
+   WITHDRAWAL REQUESTS: stacked table mobile fix
+   Scoped to .withdrawal-table wrapper only —
+   no impact on any other table in the project.
+   ============================================ */
+@media (max-width: 767.98px) {
+    /* Label column (left side) */
+    .withdrawal-table .table.b-table.b-table-stacked-md > tbody > tr > [data-label]::before {
+        width: 40% !important;
+        text-align: left !important;
+        padding-right: 0.5rem;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Value column (right side) — override field-level text-center */
+    .withdrawal-table .table.b-table.b-table-stacked-md > tbody > tr > [data-label] {
+        text-align: left !important;
+    }
+}
