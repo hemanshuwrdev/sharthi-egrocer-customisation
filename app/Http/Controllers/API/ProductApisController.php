@@ -852,6 +852,9 @@ class ProductApisController extends Controller
                     $data['status'] = $request->packet_status[$index] ?? 1;
                     $data['stock'] = ($request->is_unlimited_stock == 0) ? $request->packet_stock[$index] : 0;
                     $data['stock_unit_id'] = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
+                    $data['sku'] = isset($request->packet_sku[$index]) ? $request->packet_sku[$index] : null;
+                    $data['secondary_unit_id'] = isset($request->packet_secondary_unit_id[$index]) ? $request->packet_secondary_unit_id[$index] : null;
+                    $data['secondary_unit_value'] = isset($request->packet_secondary_unit_value[$index]) ? $request->packet_secondary_unit_value[$index] : null;
 
                     ProductVariant::insert($data);
                     $variant_id = DB::getPdo()->lastInsertId();
@@ -878,6 +881,9 @@ class ProductApisController extends Controller
                     $data['price'] = $request->loose_price[$index];
                     $data['purchase_price'] = $request->loose_purchase_price ?? 0;
                     $data['discounted_price'] = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
+                    $data['sku'] = isset($request->loose_sku[$index]) ? $request->loose_sku[$index] : null;
+                    $data['secondary_unit_id'] = isset($request->loose_secondary_unit_id[$index]) ? $request->loose_secondary_unit_id[$index] : null;
+                    $data['secondary_unit_value'] = isset($request->loose_secondary_unit_value[$index]) ? $request->loose_secondary_unit_value[$index] : null;
 
                     ProductVariant::insert($data);
                     $variant_id = DB::getPdo()->lastInsertId();
@@ -1265,6 +1271,9 @@ class ProductApisController extends Controller
                     $variant->status = $request->packet_status[$index];
                     $variant->stock = ($request->is_unlimited_stock == 0) ? $request->packet_stock[$index] : 0;
                     $variant->stock_unit_id = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
+                    $variant->sku = isset($request->packet_sku[$index]) ? $request->packet_sku[$index] : null;
+                    $variant->secondary_unit_id = isset($request->packet_secondary_unit_id[$index]) ? $request->packet_secondary_unit_id[$index] : null;
+                    $variant->secondary_unit_value = isset($request->packet_secondary_unit_value[$index]) ? $request->packet_secondary_unit_value[$index] : null;
                     $variant->save();
                     if ($request->hasFile('packet_variant_images_' . $index)) {
                         CommonHelper::uploadProductImages($request->file('packet_variant_images_' . $index), $product->id, $variant->id);
@@ -1293,6 +1302,9 @@ class ProductApisController extends Controller
 
                     $variant->purchase_price = (float) $purchasePrice;
                     $variant->discounted_price = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
+                    $variant->sku = isset($request->loose_sku[$index]) ? $request->loose_sku[$index] : null;
+                    $variant->secondary_unit_id = isset($request->loose_secondary_unit_id[$index]) ? $request->loose_secondary_unit_id[$index] : null;
+                    $variant->secondary_unit_value = isset($request->loose_secondary_unit_value[$index]) ? $request->loose_secondary_unit_value[$index] : null;
                     $variant->save();
                     if ($request->hasFile('loose_variant_images_' . $index)) {
                         CommonHelper::uploadProductImages($request->file('loose_variant_images_' . $index), $product->id, $variant->id);

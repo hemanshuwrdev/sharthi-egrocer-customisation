@@ -497,6 +497,13 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-group">
+                                                <label>{{ __('sku') }}</label>
+                                                <input type="text" class="form-control"
+                                                    placeholder="e.g. SUG-1KG" v-model="input.packet_sku">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
                                                 <label>{{ __('measurement') }} <i class="text-danger">*</i></label>
                                                 <input type="number" step="any" min="0" class="form-control"
                                                     placeholder="0" v-model="input.packet_measurement">
@@ -548,6 +555,24 @@
                                                     <option v-for="(unit, key) in units" :value="unit.id">{{
                                                         unit.short_code }}</option>
                                                 </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('secondary_unit_outer_case_bag') }}</label>
+                                                <select class="form-control form-select"
+                                                    v-model="input.packet_secondary_unit_id">
+                                                    <option value="">{{ __('select_secondary_unit') }}</option>
+                                                    <option v-for="(unit, key) in units" :value="unit.id">{{
+                                                        unit.short_code }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('secondary_unit_value_items_per_case') }}</label>
+                                                <input type="number" step="any" min="0" class="form-control"
+                                                    placeholder="0" v-model="input.packet_secondary_unit_value">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -653,6 +678,31 @@
                                                     <span v-if="input.validationErrorDiscountedPriceLoose"
                                                         class="error">{{
                                                             input.validationErrorDiscountedPriceLoose }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group loose_div">
+                                                    <label>{{ __('sku') }}</label>
+                                                    <input type="text" class="form-control"
+                                                        placeholder="e.g. SUG-1KG-L" v-model="input.loose_sku">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group loose_div">
+                                                    <label>{{ __('secondary_unit_outer_case_bag') }}</label>
+                                                    <select class="form-control form-select"
+                                                        v-model="input.loose_secondary_unit_id">
+                                                        <option value="">{{ __('select_secondary_unit') }}</option>
+                                                        <option v-for="(unit, key) in units" :value="unit.id">{{
+                                                            unit.short_code }}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group loose_div">
+                                                    <label>{{ __('secondary_unit_value_items_per_case') }}</label>
+                                                    <input type="number" step="any" min="0" class="form-control"
+                                                        placeholder="0" v-model="input.loose_secondary_unit_value">
                                                 </div>
                                             </div>
                                             <div class="col-md-12 hidden">
@@ -812,7 +862,7 @@
                                     <!-- Row: Manufacturer, Made in -->
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
-                                            <label>{{ __('manufacturer') }} </label>
+                                            <label>{{ __('manufacturer') }} / Parent Company</label>
                                             <input type="text" class="form-control" v-model="manufacturer"
                                                 :placeholder="__('enter_manufacturer')">
                                         </div>
@@ -1008,7 +1058,7 @@ export default {
             categories: null,
             order_status: null,
 
-            inputs: [{ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '' }],
+            inputs: [{ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '', 'packet_sku': '', 'packet_secondary_unit_id': '', 'packet_secondary_unit_value': '', 'loose_sku': '', 'loose_secondary_unit_id': '', 'loose_secondary_unit_value': '' }],
 
             image: null,
             main_image_path: "",
@@ -1652,9 +1702,9 @@ export default {
         },
         addRow() {
             if (this.type === 'packet') {
-                this.inputs.push({ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '' })
+                this.inputs.push({ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '', 'packet_sku': '', 'packet_secondary_unit_id': '', 'packet_secondary_unit_value': '' })
             } else {
-                this.inputs.push({ 'name': '' })
+                this.inputs.push({ 'name': '', 'loose_sku': '', 'loose_secondary_unit_id': '', 'loose_secondary_unit_value': '' })
             }
         },
         remove(index) {
@@ -2191,6 +2241,9 @@ export default {
                                     'packet_stock': item.stock,
                                     'packet_stock_unit_id': item.stock_unit_id,
                                     'packet_status': item.status,
+                                    'packet_sku': item.sku,
+                                    'packet_secondary_unit_id': item.secondary_unit_id,
+                                    'packet_secondary_unit_value': item.secondary_unit_value,
                                     'images': item.images,
                                 };
                                 vm.inputs.push(variantData);
@@ -2213,6 +2266,9 @@ export default {
                                     'loose_purchase_price': item.purchase_price,
                                     'loose_discounted_price': item.discounted_price,
                                     'packet_stock': item.stock,
+                                    'loose_sku': item.sku,
+                                    'loose_secondary_unit_id': item.secondary_unit_id,
+                                    'loose_secondary_unit_value': item.secondary_unit_value,
                                     'loose_images': item.images,
                                 };
                                 vm.inputs.push(variantData);
@@ -2332,6 +2388,9 @@ export default {
                     formData.append('packet_stock[]', (this.inputs[i].packet_stock != undefined) ? this.inputs[i].packet_stock : 0);
                     formData.append('packet_stock_unit_id[]', (this.inputs[i].packet_stock_unit_id != undefined) ? this.inputs[i].packet_stock_unit_id : 0);
                     formData.append('packet_status[]', (this.inputs[i].packet_status != undefined) ? this.inputs[i].packet_status : 0);
+                    formData.append('packet_sku[]', (this.inputs[i].packet_sku != undefined) ? this.inputs[i].packet_sku : "");
+                    formData.append('packet_secondary_unit_id[]', (this.inputs[i].packet_secondary_unit_id != undefined) ? this.inputs[i].packet_secondary_unit_id : "");
+                    formData.append('packet_secondary_unit_value[]', (this.inputs[i].packet_secondary_unit_value != undefined) ? this.inputs[i].packet_secondary_unit_value : "");
 
                     // Safely handle packet variant images refs (can be undefined when card is hidden in non-default language tab)
                     const packetRef = this.$refs['packet_variant_images_' + i];
@@ -2356,6 +2415,9 @@ export default {
                     formData.append('loose_purchase_price[]', (this.inputs[i].loose_purchase_price != undefined) ? this.inputs[i].loose_purchase_price : 0);
                     formData.append('loose_discounted_price[]', (this.inputs[i].loose_discounted_price != undefined) ? this.inputs[i].loose_discounted_price : 0);
                     formData.append('packet_stock[]', (this.inputs[i].packet_stock != undefined) ? this.inputs[i].packet_stock : 0);
+                    formData.append('loose_sku[]', (this.inputs[i].loose_sku != undefined) ? this.inputs[i].loose_sku : "");
+                    formData.append('loose_secondary_unit_id[]', (this.inputs[i].loose_secondary_unit_id != undefined) ? this.inputs[i].loose_secondary_unit_id : "");
+                    formData.append('loose_secondary_unit_value[]', (this.inputs[i].loose_secondary_unit_value != undefined) ? this.inputs[i].loose_secondary_unit_value : "");
 
                     // Safely handle loose variant images refs (can be undefined when card is hidden in non-default language tab)
                     const looseRef = this.$refs['loose_variant_images_' + i];
@@ -2641,7 +2703,7 @@ export default {
                 categoryOptions: '<option value="">' + __('select_category') + '</option>',
                 till_status: '', cod_allowed_status: 0, max_allowed_quantity: 0,
                 is_approved: 1, tax_included_in_price: 0, status: 1, loose_stock: 0,
-                loose_stock_unit_id: '', inputs: [{ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '' }],
+                loose_stock_unit_id: '', inputs: [{ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '', 'packet_sku': '', 'packet_secondary_unit_id': '', 'packet_secondary_unit_value': '', 'loose_sku': '', 'loose_secondary_unit_id': '', 'loose_secondary_unit_value': '' }],
                 image: null, main_image_path: '', main_image_name: '', other_images: null,
                 images: [], variantImages: {}, deleteImageIds: [], useCustomPrompt: false, customPrompt: '',
                 tagIdsByLanguage: {}, activeLanguageTab: 0

@@ -13,12 +13,16 @@ class ProductVariant extends Model
         'id',
         'product_id',
         'type',
+        'sku',
         'measurement',
         'price',
         'purchase_price',
+        
         'discounted_price',
         'stock',
         'stock_unit_id',
+        'secondary_unit_id',
+        'secondary_unit_value',
         'status',
     ];
     public $timestamps = false;
@@ -41,6 +45,11 @@ class ProductVariant extends Model
     {
 
         return $this->hasOne(Unit::class, 'id', 'stock_unit_id');
+    }
+
+    public function secondaryUnit()
+    {
+        return $this->hasOne(Unit::class, 'id', 'secondary_unit_id');
     }
 
     public function product()
