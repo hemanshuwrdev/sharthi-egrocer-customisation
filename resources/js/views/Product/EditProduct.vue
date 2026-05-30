@@ -497,7 +497,7 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label>{{ __('sku') }}</label>
+                                                <label>{{ __('SKU') }}</label>
                                                 <input type="text" class="form-control"
                                                     placeholder="e.g. SUG-1KG" v-model="input.packet_sku">
                                             </div>
@@ -559,10 +559,10 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label>{{ __('secondary_unit_outer_case_bag') }}</label>
+                                                <label>{{ __('Secondary Unit (Outer Case/Bag)') }}</label>
                                                 <select class="form-control form-select"
                                                     v-model="input.packet_secondary_unit_id">
-                                                    <option value="">{{ __('select_secondary_unit') }}</option>
+                                                    <option value="">{{ __('Select Secondary Unit') }}</option>
                                                     <option v-for="(unit, key) in units" :value="unit.id">{{
                                                         unit.short_code }}</option>
                                                 </select>
@@ -570,7 +570,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label>{{ __('secondary_unit_value_items_per_case') }}</label>
+                                                <label>{{ __('Secondary Unit Value (Items Per Case/Bag)') }}</label>
                                                 <input type="number" step="any" min="0" class="form-control"
                                                     placeholder="0" v-model="input.packet_secondary_unit_value">
                                             </div>
@@ -682,17 +682,17 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('sku') }}</label>
+                                                    <label>{{ __('SKU') }}</label>
                                                     <input type="text" class="form-control"
                                                         placeholder="e.g. SUG-1KG-L" v-model="input.loose_sku">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('secondary_unit_outer_case_bag') }}</label>
+                                                    <label>{{ __('Secondary Unit (Outer Case/Bag)') }}</label>
                                                     <select class="form-control form-select"
                                                         v-model="input.loose_secondary_unit_id">
-                                                        <option value="">{{ __('select_secondary_unit') }}</option>
+                                                        <option value="">{{ __('Select Secondary Unit') }}</option>
                                                         <option v-for="(unit, key) in units" :value="unit.id">{{
                                                             unit.short_code }}</option>
                                                     </select>
@@ -700,7 +700,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('secondary_unit_value_items_per_case') }}</label>
+                                                    <label>{{ __('Secondary Unit Value (Items Per Case/Bag)') }}</label>
                                                     <input type="number" step="any" min="0" class="form-control"
                                                         placeholder="0" v-model="input.loose_secondary_unit_value">
                                                 </div>

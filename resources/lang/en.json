@@ -1544,6 +1544,12 @@
     "salary_deleted_successfully":"Salary Deleted Successfully ",
     "salary_added_successfully" : "Salary Added Successfully",
     "you_wont_be_able_to_revert_this": "You Wont be able to revert this",
-    "yes_delete_it": "Yes, Sure"
-
+    "yes_delete_it": "Yes, Sure",
+    "SKU" : "SKU",
+    "enter_sku": "Enter SKU",
+    "sku_already_exists": "SKU already exists",
+    "invalid_sku": "Invalid SKU. Please enter a valid SKU.",
+    "Secondary Unit (Outer Case/Bag)" : "Secondary Unit (Outer Case/Bag)",
+    "Select Secondary Unit" : "Select Secondary Unit",
+    "Secondary Unit Value (Items Per Case/Bag)" : "Secondary Unit Value (Items Per Case/Bag)"
 }
