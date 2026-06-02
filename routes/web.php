@@ -57,6 +57,7 @@ Route::get('/migration', function () {
     //     '--force' => true,
     //     '--no-interaction' => true,
     // ]);
+    //comment
 
     return redirect('/system_updater');
 });
