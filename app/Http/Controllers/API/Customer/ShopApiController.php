@@ -40,10 +40,11 @@ class ShopApiController extends Controller
         }
 
         $seller_ids = CommonHelper::getSellerIds($request->latitude, $request->longitude);
+        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
 
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : 0;
 
-        $sections = CommonHelper::getSectionWithProduct($seller_ids, $user_id);
+        $sections = CommonHelper::getSectionWithProduct($seller_ids, $user_id, $cityIds);
 
         $sliders = Slider::where('status', 1)->orderBy('id', 'DESC')->get();
         $sliders = $sliders->makeHidden(['image', 'product', 'category', 'created_at', 'updated_at', 'status']);
@@ -106,7 +107,7 @@ class ShopApiController extends Controller
         if ($is_brand_section_in_homepage && $is_brand_section_in_homepage == 1) {
             $count_brand_section_in_homepage = CommonHelper::getCountBrandSectionInHomepage();
             $brands = Brand::where('status', 1)
-                ->whereHas('products', function ($query) use ($seller_ids) {
+                ->whereHas('products', function ($query) use ($seller_ids, $cityIds) {
                     $query->whereIn('products.seller_id', $seller_ids)
                         ->where('products.status', 1)
                         ->where('products.is_approved', 1)
@@ -116,6 +117,23 @@ class ShopApiController extends Controller
                                 ->whereColumn('categories.id', 'products.category_id')
                                 ->where('categories.status', 1);
                         });
+                    if (!empty($cityIds)) {
+                        $query->where(function ($q) use ($cityIds) {
+                            $q->whereNotExists(function ($subquery) use ($cityIds) {
+                                $subquery->select(DB::raw(1))
+                                    ->from('brand_distributor_mappings as bdm')
+                                    ->whereColumn('bdm.brand_id', 'products.brand_id')
+                                    ->whereIn('bdm.city_id', $cityIds);
+                            })
+                            ->orWhereExists(function ($subquery) use ($cityIds) {
+                                $subquery->select(DB::raw(1))
+                                    ->from('brand_distributor_mappings as bdm')
+                                    ->whereColumn('bdm.brand_id', 'products.brand_id')
+                                    ->whereIn('bdm.city_id', $cityIds)
+                                    ->whereColumn('bdm.seller_id', 'products.seller_id');
+                            });
+                        });
+                    }
                 })
                 ->orderBy('id', 'ASC');
             $brands = $brands->limit($count_brand_section_in_homepage)->get();
