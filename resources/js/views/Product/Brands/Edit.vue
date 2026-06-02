@@ -73,6 +73,18 @@
               </div>
             </div>
 
+            <div class="form-group" v-if="lang.is_default">
+              <label>{{ __('overlap_allowed') }}</label>
+              <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
+                :title="__('if_allowed_multiple_distributors_can_sell_this_brand_in_the_same_territory')"></i>
+              <div class="col-md-9 text-left mt-1">
+                <b-form-radio-group v-model="is_overlap_allowed" :options="[
+                  { text: __('no'), 'value': 0 },
+                  { text: __('yes'), 'value': 1 }
+                ]" buttons button-variant="outline-primary" required></b-form-radio-group>
+              </div>
+            </div>
+
           </div>
         </b-tab>
       </b-tabs>
@@ -94,6 +106,7 @@ export default {
     return {
       id: null,
       status: 1,
+      is_overlap_allowed: 1,
       languages: [],
       defaultLanguageId: null,
       activeTab: 0,
@@ -140,6 +153,7 @@ export default {
       this.image = "";
       this.image_url = "";
       this.status = 1;
+      this.is_overlap_allowed = 1;
       this.activeTab = 0;
 
       // re-init empty translations
@@ -230,6 +244,7 @@ export default {
         }
 
         this.status = brand.status;
+        this.is_overlap_allowed = brand.is_overlap_allowed ?? 1;
         this.image_url = brand.image_url || "";
 
         // Ensure all languages are initialized first
@@ -326,6 +341,7 @@ export default {
           fd.append('language_id', lang.id);
           fd.append('name', this.form[lang.id].name);
           fd.append('status', this.status);
+          fd.append('is_overlap_allowed', this.is_overlap_allowed);
 
           if (lang.is_default && this.image) fd.append('image', this.image);
 

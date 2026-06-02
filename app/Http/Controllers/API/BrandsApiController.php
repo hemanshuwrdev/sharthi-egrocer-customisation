@@ -79,6 +79,7 @@ class BrandsApiController extends Controller
         $brand = new Brand();
         $brand->name = $request->name;
         $brand->status = 1;
+        $brand->is_overlap_allowed = $request->has('is_overlap_allowed') ? $request->is_overlap_allowed : 1;
 
 
         if ($request->hasFile('image')) {
@@ -122,6 +123,7 @@ class BrandsApiController extends Controller
         if ($isDefaultLang) {
             $brand->name = $request->name;
             $brand->status = $request->status ?? $brand->status;
+            $brand->is_overlap_allowed = $request->has('is_overlap_allowed') ? $request->is_overlap_allowed : $brand->is_overlap_allowed;
 
             if ($request->hasFile('image')) {
                 if ($brand->image) {

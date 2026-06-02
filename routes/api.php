@@ -59,6 +59,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('notification_read', [\App\Http\Controllers\Controller::class, 'markAsReadNotifications']);
     Route::get('create_slug/{text}', [\App\Http\Controllers\Controller::class, 'createSlug']);
 
+    // Sarthi DDOS Super Admin Customizations
+    Route::group(['prefix' => 'admin'], function () {
+        Route::post('brand-mappings', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'saveBrandMappings']);
+        Route::post('geo-fences', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'saveGeoFences']);
+    });
+
     Route::group(['prefix' => 'categories'], function () {
         Route::get('main', [\App\Http\Controllers\API\CategoryApiController::class, 'getMainCategories']);
         Route::get('active', [\App\Http\Controllers\API\CategoryApiController::class, 'getActiveCategories']);

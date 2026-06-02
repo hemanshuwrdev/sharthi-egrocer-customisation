@@ -1024,6 +1024,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
 
 
 // import InputTag from 'vue-input-tag';
@@ -6280,7 +6281,7 @@ var render = function () {
                                           { staticClass: "form-group" },
                                           [
                                             _c("label", [
-                                              _vm._v(_vm._s(_vm.__("sku"))),
+                                              _vm._v(_vm._s(_vm.__("SKU"))),
                                             ]),
                                             _vm._v(" "),
                                             _c("input", {
@@ -6758,7 +6759,7 @@ var render = function () {
                                               _vm._v(
                                                 _vm._s(
                                                   _vm.__(
-                                                    "secondary_unit_outer_case_bag"
+                                                    "Secondary Unit (Outer Case/Bag)"
                                                   )
                                                 )
                                               ),
@@ -6814,7 +6815,7 @@ var render = function () {
                                                     _vm._v(
                                                       _vm._s(
                                                         _vm.__(
-                                                          "select_secondary_unit"
+                                                          "Select Secondary Unit"
                                                         )
                                                       )
                                                     ),
@@ -6857,7 +6858,7 @@ var render = function () {
                                               _vm._v(
                                                 _vm._s(
                                                   _vm.__(
-                                                    "secondary_unit_value_items_per_case"
+                                                    "Secondary Unit Value (Items Per Case/Bag)"
                                                   )
                                                 )
                                               ),
@@ -7549,7 +7550,7 @@ var render = function () {
                                             },
                                             [
                                               _c("label", [
-                                                _vm._v(_vm._s(_vm.__("sku"))),
+                                                _vm._v(_vm._s(_vm.__("SKU"))),
                                               ]),
                                               _vm._v(" "),
                                               _c("input", {
@@ -7601,7 +7602,7 @@ var render = function () {
                                                 _vm._v(
                                                   _vm._s(
                                                     _vm.__(
-                                                      "secondary_unit_outer_case_bag"
+                                                      "Secondary Unit (Outer Case/Bag)"
                                                     )
                                                   )
                                                 ),
@@ -7658,7 +7659,7 @@ var render = function () {
                                                       _vm._v(
                                                         _vm._s(
                                                           _vm.__(
-                                                            "select_secondary_unit"
+                                                            "Select Secondary Unit"
                                                           )
                                                         )
                                                       ),
@@ -7704,7 +7705,7 @@ var render = function () {
                                                 _vm._v(
                                                   _vm._s(
                                                     _vm.__(
-                                                      "secondary_unit_value_items_per_case"
+                                                      "Secondary Unit Value (Items Per Case/Bag)"
                                                     )
                                                   )
                                                 ),

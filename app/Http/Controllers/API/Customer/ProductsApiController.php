@@ -93,8 +93,9 @@ class ProductsApiController extends Controller
             } else {
                 $seller_ids = is_array($seller_ids) ? $seller_ids : $seller_ids->toArray();
             }
+            $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
             if (!empty($seller_ids)) {
-                $productResult = DB::table('products as p')
+                $productResultQuery = DB::table('products as p')
                     ->leftJoin('product_variants as pv', 'pv.product_id', '=', 'p.id')
                     ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
                     ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
@@ -103,8 +104,27 @@ class ProductsApiController extends Controller
                     ->where('p.status', 1)
                     ->where('c.status', 1)
                     ->where('s.status', 1)
-                    ->whereIn('p.seller_id', $seller_ids)
-                    ->selectRaw('
+                    ->whereIn('p.seller_id', $seller_ids);
+
+                if (!empty($cityIds)) {
+                    $productResultQuery->where(function ($q) use ($cityIds) {
+                        $q->whereNotExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds);
+                        })
+                        ->orWhereExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds)
+                                ->whereColumn('bdm.seller_id', 'p.seller_id');
+                        });
+                    });
+                }
+
+                $productResult = $productResultQuery->selectRaw('
                         MIN(
                             IF(
                                 pv.discounted_price > 0 AND pv.discounted_price != 0,
@@ -392,6 +412,23 @@ class ProductsApiController extends Controller
                 ->where('c.status', 1)
                 ->where('s.status', 1)
                 ->whereIn('p.seller_id', $seller_ids)
+                ->when(!empty($cityIds), function ($q) use ($cityIds) {
+                    $q->where(function ($subq) use ($cityIds) {
+                        $subq->whereNotExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds);
+                        })
+                        ->orWhereExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds)
+                                ->whereColumn('bdm.seller_id', 'p.seller_id');
+                        });
+                    });
+                })
                 // Calculate min/max variant price INCLUDING tax for each product
                 ->selectRaw('
                     MIN(
@@ -788,6 +825,26 @@ class ProductsApiController extends Controller
                 }
             } else {
                 $product->is_deliverable = false;
+            }
+
+            if ($product->is_deliverable) {
+                $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+                if (!empty($cityIds) && $product->brand_id) {
+                    $mappingExists = DB::table('brand_distributor_mappings')
+                        ->where('brand_id', $product->brand_id)
+                        ->whereIn('city_id', $cityIds)
+                        ->exists();
+                    if ($mappingExists) {
+                        $mappedToThisSeller = DB::table('brand_distributor_mappings')
+                            ->where('brand_id', $product->brand_id)
+                            ->whereIn('city_id', $cityIds)
+                            ->where('seller_id', $product->seller_id)
+                            ->exists();
+                        if (!$mappedToThisSeller) {
+                            $product->is_deliverable = false;
+                        }
+                    }
+                }
             }
 
             $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : '';

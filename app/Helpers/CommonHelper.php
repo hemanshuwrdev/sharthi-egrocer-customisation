@@ -849,7 +849,9 @@ class CommonHelper
                 // Check if city_id is a comma-separated string (e.g., '1,2')
                 $q->orWhereRaw('FIND_IN_SET(?, city_id)', [$cityId])
                     // Check if city_id is an individual integer or an array
-                    ->orWhereIn('city_id', $cityIds);
+                    ->orWhereIn('city_id', $cityIds)
+                    // Check managed_territories (Sarthi DDOS Customization)
+                    ->orWhereRaw('FIND_IN_SET(?, managed_territories)', [$cityId]);
             }
         });
 
