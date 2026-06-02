@@ -274,10 +274,6 @@ __webpack_require__.r(__webpack_exports__);
         icon: 'cubes',
         permission: 'product_list',
         submenu: [{
-          name: __('add_product'),
-          icon: 'grid-fill',
-          url: '/seller/manage_products/create'
-        }, {
           name: __('manage_products'),
           icon: 'grid-fill',
           url: '/seller/manage_products'
@@ -289,14 +285,6 @@ __webpack_require__.r(__webpack_exports__);
           name: __('media'),
           icon: 'grid-fill',
           url: '/seller/media'
-        }, {
-          name: __('bulk_upload'),
-          icon: 'grid-fill',
-          url: '/seller/bulk_upload'
-        }, {
-          name: __('bulk_update'),
-          icon: 'grid-fill',
-          url: '/seller/bulk_update'
         }, {
           name: __('taxes'),
           icon: 'grid-fill',

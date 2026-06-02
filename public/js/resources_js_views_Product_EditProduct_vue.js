@@ -1024,6 +1024,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 // import InputTag from 'vue-input-tag';
@@ -3500,30 +3514,30 @@ var render = function () {
               _vm.clone
                 ? [
                     _vm._v(
-                      "\n                            " +
+                      "\n                        " +
                         _vm._s(_vm.__("clone")) +
-                        "\n                        "
+                        "\n                    "
                     ),
                   ]
                 : _vm.id
                 ? [
                     _vm._v(
-                      "\n                            " +
+                      "\n                        " +
                         _vm._s(_vm.__("edit")) +
-                        "\n                        "
+                        "\n                    "
                     ),
                   ]
                 : [
                     _vm._v(
-                      "\n                            " +
+                      "\n                        " +
                         _vm._s(_vm.__("add")) +
-                        "\n                        "
+                        "\n                    "
                     ),
                   ],
               _vm._v(
-                "\n                        " +
+                "\n                    " +
                   _vm._s(_vm.__("product")) +
-                  "\n                    "
+                  "\n                "
               ),
             ],
             2
@@ -3599,30 +3613,30 @@ var render = function () {
                     _vm.clone
                       ? [
                           _vm._v(
-                            "\n                                    " +
+                            "\n                                " +
                               _vm._s(_vm.__("clone")) +
-                              "\n                                "
+                              "\n                            "
                           ),
                         ]
                       : _vm.id
                       ? [
                           _vm._v(
-                            "\n                                    " +
+                            "\n                                " +
                               _vm._s(_vm.__("edit")) +
-                              "\n                                "
+                              "\n                            "
                           ),
                         ]
                       : [
                           _vm._v(
-                            "\n                                    " +
+                            "\n                                " +
                               _vm._s(_vm.__("add")) +
-                              "\n                                "
+                              "\n                            "
                           ),
                         ],
                     _vm._v(
-                      "\n                                " +
+                      "\n                            " +
                         _vm._s(_vm.__("product")) +
-                        "\n                            "
+                        "\n                        "
                     ),
                   ],
                   2
@@ -3767,9 +3781,9 @@ var render = function () {
                                                 },
                                                 [
                                                   _vm._v(
-                                                    "\n                                                    " +
+                                                    "\n                                                " +
                                                       _vm._s(language.name) +
-                                                      "\n                                                "
+                                                      "\n                                            "
                                                   ),
                                                 ]
                                               ),
@@ -3891,11 +3905,11 @@ var render = function () {
                                                   },
                                                   [
                                                     _vm._v(
-                                                      "\n                                                    " +
+                                                      "\n                                                " +
                                                         _vm._s(
                                                           _vm.translateSuccessMessage
                                                         ) +
-                                                        "\n                                                "
+                                                        "\n                                            "
                                                     ),
                                                   ]
                                                 )
@@ -3960,6 +3974,8 @@ var render = function () {
                                                         language.is_default
                                                           ? true
                                                           : undefined,
+                                                      disabled:
+                                                        _vm.isSellerRole,
                                                     },
                                                     domProps: {
                                                       value:
@@ -4247,7 +4263,7 @@ var render = function () {
                                                                             _vm._s(
                                                                               seller.name
                                                                             ) +
-                                                                              "\n                                                                    "
+                                                                              "\n                                                                "
                                                                           ),
                                                                         ]
                                                                       )
@@ -4304,6 +4320,8 @@ var render = function () {
                                                             attrs: {
                                                               id: "tax_id",
                                                               name: "tax_id",
+                                                              disabled:
+                                                                _vm.isSellerRole,
                                                             },
                                                             on: {
                                                               change: function (
@@ -4373,11 +4391,11 @@ var render = function () {
                                                                   },
                                                                   [
                                                                     _vm._v(
-                                                                      "\n                                                                    " +
+                                                                      "\n                                                                " +
                                                                         _vm._s(
                                                                           tax.title
                                                                         ) +
-                                                                        "\n                                                                    (" +
+                                                                        "\n                                                                (" +
                                                                         _vm._s(
                                                                           tax.percentage
                                                                         ) +
@@ -4428,6 +4446,8 @@ var render = function () {
                                                                 "track-by":
                                                                   "id",
                                                                 required: "",
+                                                                disabled:
+                                                                  _vm.isSellerRole,
                                                               },
                                                               scopedSlots:
                                                                 _vm._u(
@@ -4577,7 +4597,8 @@ var render = function () {
                                                                 attrs: {
                                                                   type: "button",
                                                                   disabled:
-                                                                    _vm.isGeneratingAI,
+                                                                    _vm.isGeneratingAI ||
+                                                                    _vm.isSellerRole,
                                                                 },
                                                                 on: {
                                                                   click:
@@ -4605,7 +4626,7 @@ var render = function () {
                                                                         },
                                                                         [
                                                                           _vm._v(
-                                                                            "AI is\n                                                                            generating..."
+                                                                            "AI is\n                                                                        generating..."
                                                                           ),
                                                                         ]
                                                                       ),
@@ -4616,13 +4637,13 @@ var render = function () {
                                                                           "fa fa-magic me-1",
                                                                       }),
                                                                       _vm._v(
-                                                                        "\n                                                                        " +
+                                                                        "\n                                                                    " +
                                                                           _vm._s(
                                                                             _vm.__(
                                                                               "generate_description_with_ai"
                                                                             )
                                                                           ) +
-                                                                          "\n                                                                    "
+                                                                          "\n                                                                "
                                                                       ),
                                                                     ],
                                                               ],
@@ -4652,6 +4673,8 @@ var render = function () {
                                                                     "me-2",
                                                                   attrs: {
                                                                     type: "checkbox",
+                                                                    disabled:
+                                                                      _vm.isSellerRole,
                                                                   },
                                                                   domProps: {
                                                                     checked:
@@ -4790,6 +4813,8 @@ var render = function () {
                                                                     rows: "3",
                                                                     placeholder:
                                                                       "e.g. Write a fun and engaging description focusing on features and benefits",
+                                                                    disabled:
+                                                                      _vm.isSellerRole,
                                                                   },
                                                                   domProps: {
                                                                     value:
@@ -4845,7 +4870,7 @@ var render = function () {
                                                             _vm._s(
                                                               _vm.__("tags")
                                                             ) +
-                                                              " (\n                                                                " +
+                                                              " (\n                                                            " +
                                                               _vm._s(
                                                                 _vm.__(
                                                                   "these_tags_help_you_in_search_result"
@@ -4883,6 +4908,8 @@ var render = function () {
                                                           placeholder:
                                                             "Select Tags",
                                                           "no-add-on-enter": "",
+                                                          disabled:
+                                                            _vm.isSellerRole,
                                                           options:
                                                             _vm.tagsOptions,
                                                           separator: " ,;",
@@ -4964,6 +4991,8 @@ var render = function () {
                                                             "enter_product_description"
                                                           ),
                                                           init: _vm.getEditorConfig(),
+                                                          disabled:
+                                                            _vm.isSellerRole,
                                                         },
                                                         on: {
                                                           input: function (
@@ -5047,6 +5076,8 @@ var render = function () {
                                                                 _vm.__(
                                                                   "enter_manufacturer"
                                                                 ),
+                                                              disabled:
+                                                                _vm.isSellerRole,
                                                             },
                                                             domProps: {
                                                               value:
@@ -5126,6 +5157,8 @@ var render = function () {
                                                                 name: "image",
                                                                 accept:
                                                                   "image/*",
+                                                                disabled:
+                                                                  _vm.isSellerRole,
                                                               },
                                                               on: {
                                                                 change:
@@ -5143,11 +5176,17 @@ var render = function () {
                                                                     function (
                                                                       $event
                                                                     ) {
-                                                                      return _vm.triggerRefClick(
-                                                                        "file_image"
-                                                                      )
+                                                                      !_vm.isSellerRole &&
+                                                                        _vm.triggerRefClick(
+                                                                          "file_image"
+                                                                        )
                                                                     },
-                                                                  drop: _vm.dropFile,
+                                                                  drop: function (
+                                                                    $event
+                                                                  ) {
+                                                                    !_vm.isSellerRole &&
+                                                                      _vm.dropFile
+                                                                  },
                                                                   dragover:
                                                                     _vm.$dragoverFile,
                                                                   dragleave:
@@ -5324,6 +5363,8 @@ var render = function () {
                                                                   "image/*",
                                                                 id: "other_images",
                                                                 multiple: "",
+                                                                disabled:
+                                                                  _vm.isSellerRole,
                                                               },
                                                               on: {
                                                                 change:
@@ -5341,11 +5382,17 @@ var render = function () {
                                                                     function (
                                                                       $event
                                                                     ) {
-                                                                      return _vm.triggerRefClick(
-                                                                        "file_other_images"
-                                                                      )
+                                                                      !_vm.isSellerRole &&
+                                                                        _vm.triggerRefClick(
+                                                                          "file_other_images"
+                                                                        )
                                                                     },
-                                                                  drop: _vm.dropFileOtherImage,
+                                                                  drop: function (
+                                                                    $event
+                                                                  ) {
+                                                                    !_vm.isSellerRole &&
+                                                                      _vm.dropFileOtherImage
+                                                                  },
                                                                   dragover:
                                                                     _vm.$dragoverFile,
                                                                   dragleave:
@@ -5398,7 +5445,7 @@ var render = function () {
                                                                                       "selected_file_name"
                                                                                     )
                                                                                   ) +
-                                                                                    "\n                                                                                " +
+                                                                                    "\n                                                                            " +
                                                                                     _vm._s(
                                                                                       _vm
                                                                                         .images[0]
@@ -5418,7 +5465,7 @@ var render = function () {
                                                                                       .images
                                                                                       .length
                                                                                   ) +
-                                                                                    " files\n                                                                                Selected"
+                                                                                    " files\n                                                                            Selected"
                                                                                 ),
                                                                               ]
                                                                             ),
@@ -5544,38 +5591,40 @@ var render = function () {
                                                                                 _vm._v(
                                                                                   " "
                                                                                 ),
-                                                                                _c(
-                                                                                  "button",
-                                                                                  {
-                                                                                    staticClass:
-                                                                                      "btn btn-sm btn-danger btn-remove",
-                                                                                    attrs:
-                                                                                      {
-                                                                                        type: "button",
-                                                                                      },
-                                                                                    on: {
-                                                                                      click:
-                                                                                        function (
-                                                                                          $event
-                                                                                        ) {
-                                                                                          _vm.removeOtherImage(
-                                                                                            _vm.images.indexOf(
-                                                                                              image
-                                                                                            )
-                                                                                          )
-                                                                                        },
-                                                                                    },
-                                                                                  },
-                                                                                  [
-                                                                                    _c(
-                                                                                      "i",
+                                                                                !_vm.isSellerRole
+                                                                                  ? _c(
+                                                                                      "button",
                                                                                       {
                                                                                         staticClass:
-                                                                                          "fa fa-times-circle",
-                                                                                      }
-                                                                                    ),
-                                                                                  ]
-                                                                                ),
+                                                                                          "btn btn-sm btn-danger btn-remove",
+                                                                                        attrs:
+                                                                                          {
+                                                                                            type: "button",
+                                                                                          },
+                                                                                        on: {
+                                                                                          click:
+                                                                                            function (
+                                                                                              $event
+                                                                                            ) {
+                                                                                              _vm.removeOtherImage(
+                                                                                                _vm.images.indexOf(
+                                                                                                  image
+                                                                                                )
+                                                                                              )
+                                                                                            },
+                                                                                        },
+                                                                                      },
+                                                                                      [
+                                                                                        _c(
+                                                                                          "i",
+                                                                                          {
+                                                                                            staticClass:
+                                                                                              "fa fa-times-circle",
+                                                                                          }
+                                                                                        ),
+                                                                                      ]
+                                                                                    )
+                                                                                  : _vm._e(),
                                                                               ]
                                                                             )
                                                                           : _vm._e()
@@ -5645,38 +5694,40 @@ var render = function () {
                                                                                 _vm._v(
                                                                                   " "
                                                                                 ),
-                                                                                _c(
-                                                                                  "button",
-                                                                                  {
-                                                                                    staticClass:
-                                                                                      "btn btn-sm btn-danger btn-remove",
-                                                                                    attrs:
-                                                                                      {
-                                                                                        type: "button",
-                                                                                      },
-                                                                                    on: {
-                                                                                      click:
-                                                                                        function (
-                                                                                          $event
-                                                                                        ) {
-                                                                                          return _vm.deleteImage(
-                                                                                            index,
-                                                                                            image.id,
-                                                                                            true
-                                                                                          )
-                                                                                        },
-                                                                                    },
-                                                                                  },
-                                                                                  [
-                                                                                    _c(
-                                                                                      "i",
+                                                                                !_vm.isSellerRole
+                                                                                  ? _c(
+                                                                                      "button",
                                                                                       {
                                                                                         staticClass:
-                                                                                          "fa fa-times-circle",
-                                                                                      }
-                                                                                    ),
-                                                                                  ]
-                                                                                ),
+                                                                                          "btn btn-sm btn-danger btn-remove",
+                                                                                        attrs:
+                                                                                          {
+                                                                                            type: "button",
+                                                                                          },
+                                                                                        on: {
+                                                                                          click:
+                                                                                            function (
+                                                                                              $event
+                                                                                            ) {
+                                                                                              return _vm.deleteImage(
+                                                                                                index,
+                                                                                                image.id,
+                                                                                                true
+                                                                                              )
+                                                                                            },
+                                                                                        },
+                                                                                      },
+                                                                                      [
+                                                                                        _c(
+                                                                                          "i",
+                                                                                          {
+                                                                                            staticClass:
+                                                                                              "fa fa-times-circle",
+                                                                                          }
+                                                                                        ),
+                                                                                      ]
+                                                                                    )
+                                                                                  : _vm._e(),
                                                                               ]
                                                                             )
                                                                           : _vm._e()
@@ -5765,9 +5816,9 @@ var render = function () {
                                                 },
                                                 [
                                                   _vm._v(
-                                                    "\n                                                    " +
+                                                    "\n                                                " +
                                                       _vm._s(language.name) +
-                                                      "\n                                                "
+                                                      "\n                                            "
                                                   ),
                                                 ]
                                               ),
@@ -6143,7 +6194,7 @@ var render = function () {
                               _vm._v(
                                 " " +
                                   _vm._s(_vm.__("save")) +
-                                  "\n                                    "
+                                  "\n                                "
                               ),
                               _vm.isLoading
                                 ? _c("b-spinner", {
@@ -6154,15 +6205,17 @@ var render = function () {
                             1
                           ),
                           _vm._v(" "),
-                          _c(
-                            "button",
-                            {
-                              staticClass: "btn btn-danger",
-                              attrs: { type: "button" },
-                              on: { click: _vm.clearForm },
-                            },
-                            [_vm._v(_vm._s(_vm.__("clear")))]
-                          ),
+                          !_vm.isSellerRole
+                            ? _c(
+                                "button",
+                                {
+                                  staticClass: "btn btn-danger",
+                                  attrs: { type: "button" },
+                                  on: { click: _vm.clearForm },
+                                },
+                                [_vm._v(_vm._s(_vm.__("clear")))]
+                              )
+                            : _vm._e(),
                         ],
                         1
                       )
@@ -6209,6 +6262,7 @@ var render = function () {
                                       ],
                                       buttons: "",
                                       "button-variant": "outline-primary",
+                                      disabled: _vm.isSellerRole,
                                     },
                                     model: {
                                       value: _vm.type,
@@ -6248,6 +6302,7 @@ var render = function () {
                                       ],
                                       buttons: "",
                                       "button-variant": "outline-primary",
+                                      disabled: _vm.isSellerRole,
                                     },
                                     model: {
                                       value: _vm.is_unlimited_stock,
@@ -6297,6 +6352,7 @@ var render = function () {
                                               attrs: {
                                                 type: "text",
                                                 placeholder: "e.g. SUG-1KG",
+                                                disabled: _vm.isSellerRole,
                                               },
                                               domProps: {
                                                 value: input.packet_sku,
@@ -6352,6 +6408,7 @@ var render = function () {
                                                 step: "any",
                                                 min: "0",
                                                 placeholder: "0",
+                                                disabled: _vm.isSellerRole,
                                               },
                                               domProps: {
                                                 value: input.packet_measurement,
@@ -6373,210 +6430,248 @@ var render = function () {
                                         ),
                                       ]),
                                       _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-4" }, [
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(_vm.__("price")) +
-                                                  " ( " +
-                                                  _vm._s(_vm.$currency) +
-                                                  " ) "
-                                              ),
+                                      _vm.isSellerRole
+                                        ? _c(
+                                            "div",
+                                            { staticClass: "col-md-4" },
+                                            [
                                               _c(
-                                                "i",
-                                                { staticClass: "text-danger" },
-                                                [_vm._v("*")]
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c("label", [
+                                                    _vm._v(
+                                                      _vm._s(_vm.__("price")) +
+                                                        " ( " +
+                                                        _vm._s(_vm.$currency) +
+                                                        " ) "
+                                                    ),
+                                                    _c(
+                                                      "i",
+                                                      {
+                                                        staticClass:
+                                                          "text-danger",
+                                                      },
+                                                      [_vm._v("*")]
+                                                    ),
+                                                  ]),
+                                                  _vm._v(" "),
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_price,
+                                                        expression:
+                                                          "input.packet_price",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      min: "0",
+                                                      step: "any",
+                                                      placeholder: "0.00",
+                                                      required: "",
+                                                    },
+                                                    domProps: {
+                                                      value: input.packet_price,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_price",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
                                               ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value: input.packet_price,
-                                                  expression:
-                                                    "input.packet_price",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "number",
-                                                min: "0",
-                                                step: "any",
-                                                placeholder: "0.00",
-                                                required: "",
-                                              },
-                                              domProps: {
-                                                value: input.packet_price,
-                                              },
-                                              on: {
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    input,
-                                                    "packet_price",
-                                                    $event.target.value
-                                                  )
-                                                },
-                                              },
-                                            }),
-                                          ]
-                                        ),
-                                      ]),
+                                            ]
+                                          )
+                                        : _vm._e(),
                                       _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-4" }, [
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__("purchase_price")
-                                                ) +
-                                                  " ( " +
-                                                  _vm._s(_vm.$currency) +
-                                                  " )\n                                                    "
-                                              ),
-                                              _c("i", {
-                                                directives: [
-                                                  {
-                                                    name: "b-tooltip",
-                                                    rawName:
-                                                      "v-b-tooltip.hover",
-                                                    modifiers: { hover: true },
-                                                  },
-                                                ],
-                                                staticClass:
-                                                  "fa fa-info-circle text-muted",
-                                                attrs: {
-                                                  title:
-                                                    "This field is used to calculate in your report",
-                                                },
-                                              }),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value:
-                                                    input.packet_purchase_price,
-                                                  expression:
-                                                    "input.packet_purchase_price",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "number",
-                                                min: "0",
-                                                step: "any",
-                                                placeholder: "0.00",
-                                              },
-                                              domProps: {
-                                                value:
-                                                  input.packet_purchase_price,
-                                              },
-                                              on: {
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    input,
-                                                    "packet_purchase_price",
-                                                    $event.target.value
-                                                  )
-                                                },
-                                              },
-                                            }),
-                                          ]
-                                        ),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-4" }, [
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__("discounted_price")
-                                                ) +
-                                                  " ( " +
-                                                  _vm._s(_vm.$currency) +
-                                                  " )"
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value: input.discounted_price,
-                                                  expression:
-                                                    "input.discounted_price",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "number",
-                                                min: "0",
-                                                step: "any",
-                                                placeholder: "0.00",
-                                              },
-                                              domProps: {
-                                                value: input.discounted_price,
-                                              },
-                                              on: {
-                                                input: [
-                                                  function ($event) {
-                                                    if (
-                                                      $event.target.composing
-                                                    ) {
-                                                      return
-                                                    }
-                                                    _vm.$set(
-                                                      input,
-                                                      "discounted_price",
-                                                      $event.target.value
-                                                    )
-                                                  },
-                                                  function ($event) {
-                                                    return _vm.validateDiscountedPrice(
-                                                      input
-                                                    )
-                                                  },
-                                                ],
-                                              },
-                                            }),
-                                            _vm._v(" "),
-                                            input.validationErrorDiscountedPrice
-                                              ? _c(
-                                                  "span",
-                                                  { staticClass: "error" },
-                                                  [
+                                      _vm.isSellerRole
+                                        ? _c(
+                                            "div",
+                                            { staticClass: "col-md-4" },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c("label", [
                                                     _vm._v(
                                                       _vm._s(
-                                                        input.validationErrorDiscountedPrice
-                                                      )
+                                                        _vm.__("purchase_price")
+                                                      ) +
+                                                        " ( " +
+                                                        _vm._s(_vm.$currency) +
+                                                        " )\n                                                "
                                                     ),
-                                                  ]
-                                                )
-                                              : _vm._e(),
-                                          ]
-                                        ),
-                                      ]),
+                                                    _c("i", {
+                                                      directives: [
+                                                        {
+                                                          name: "b-tooltip",
+                                                          rawName:
+                                                            "v-b-tooltip.hover",
+                                                          modifiers: {
+                                                            hover: true,
+                                                          },
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "fa fa-info-circle text-muted",
+                                                      attrs: {
+                                                        title:
+                                                          "This field is used to calculate in your report",
+                                                      },
+                                                    }),
+                                                  ]),
+                                                  _vm._v(" "),
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_purchase_price,
+                                                        expression:
+                                                          "input.packet_purchase_price",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      min: "0",
+                                                      step: "any",
+                                                      placeholder: "0.00",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_purchase_price,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_purchase_price",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
                                       _vm._v(" "),
+                                      _vm.isSellerRole
+                                        ? _c(
+                                            "div",
+                                            { staticClass: "col-md-4" },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c("label", [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__(
+                                                          "discounted_price"
+                                                        )
+                                                      ) +
+                                                        " ( " +
+                                                        _vm._s(_vm.$currency) +
+                                                        " )"
+                                                    ),
+                                                  ]),
+                                                  _vm._v(" "),
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.discounted_price,
+                                                        expression:
+                                                          "input.discounted_price",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      min: "0",
+                                                      step: "any",
+                                                      placeholder: "0.00",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.discounted_price,
+                                                    },
+                                                    on: {
+                                                      input: [
+                                                        function ($event) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            input,
+                                                            "discounted_price",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                        function ($event) {
+                                                          return _vm.validateDiscountedPrice(
+                                                            input
+                                                          )
+                                                        },
+                                                      ],
+                                                    },
+                                                  }),
+                                                  _vm._v(" "),
+                                                  input.validationErrorDiscountedPrice
+                                                    ? _c(
+                                                        "span",
+                                                        {
+                                                          staticClass: "error",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              input.validationErrorDiscountedPrice
+                                                            )
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                ]
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                      _vm._v(" "),
+                                      _vm.isSellerRole &&
                                       _vm.is_unlimited_stock != 1
                                         ? _c(
                                             "div",
@@ -6676,6 +6771,9 @@ var render = function () {
                                                 ],
                                                 staticClass:
                                                   "form-control form-select",
+                                                attrs: {
+                                                  disabled: _vm.isSellerRole,
+                                                },
                                                 on: {
                                                   change: [
                                                     function ($event) {
@@ -6779,6 +6877,9 @@ var render = function () {
                                                 ],
                                                 staticClass:
                                                   "form-control form-select",
+                                                attrs: {
+                                                  disabled: _vm.isSellerRole,
+                                                },
                                                 on: {
                                                   change: function ($event) {
                                                     var $$selectedVal =
@@ -6880,6 +6981,7 @@ var render = function () {
                                                 step: "any",
                                                 min: "0",
                                                 placeholder: "0",
+                                                disabled: _vm.isSellerRole,
                                               },
                                               domProps: {
                                                 value:
@@ -6932,7 +7034,10 @@ var render = function () {
                                                 ],
                                                 staticClass:
                                                   "form-control form-select",
-                                                attrs: { required: "" },
+                                                attrs: {
+                                                  required: "",
+                                                  disabled: _vm.isSellerRole,
+                                                },
                                                 on: {
                                                   change: function ($event) {
                                                     var $$selectedVal =
@@ -7025,6 +7130,7 @@ var render = function () {
                                                   type: "file",
                                                   accept: "image/*",
                                                   multiple: "",
+                                                  disabled: _vm.isSellerRole,
                                                 },
                                                 on: {
                                                   change: function ($event) {
@@ -7042,10 +7148,11 @@ var render = function () {
                                                     "file-input-div bg-gray-100",
                                                   on: {
                                                     click: function ($event) {
-                                                      _vm.$refs[
-                                                        "packet_variant_images_" +
-                                                          k
-                                                      ][0].click()
+                                                      !_vm.isSellerRole &&
+                                                        _vm.$refs[
+                                                          "packet_variant_images_" +
+                                                            k
+                                                        ][0].click()
                                                     },
                                                     dragover: _vm.$dragoverFile,
                                                     dragleave:
@@ -7156,35 +7263,37 @@ var render = function () {
                                                               },
                                                             }),
                                                             _vm._v(" "),
-                                                            _c(
-                                                              "button",
-                                                              {
-                                                                staticClass:
-                                                                  "btn btn-sm btn-danger btn-remove",
-                                                                attrs: {
-                                                                  type: "button",
-                                                                },
-                                                                on: {
-                                                                  click:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      return _vm.deleteImage(
-                                                                        index,
-                                                                        image.id,
-                                                                        false,
-                                                                        k
-                                                                      )
+                                                            !_vm.isSellerRole
+                                                              ? _c(
+                                                                  "button",
+                                                                  {
+                                                                    staticClass:
+                                                                      "btn btn-sm btn-danger btn-remove",
+                                                                    attrs: {
+                                                                      type: "button",
                                                                     },
-                                                                },
-                                                              },
-                                                              [
-                                                                _c("i", {
-                                                                  staticClass:
-                                                                    "fa fa-times-circle",
-                                                                }),
-                                                              ]
-                                                            ),
+                                                                    on: {
+                                                                      click:
+                                                                        function (
+                                                                          $event
+                                                                        ) {
+                                                                          return _vm.deleteImage(
+                                                                            index,
+                                                                            image.id,
+                                                                            false,
+                                                                            k
+                                                                          )
+                                                                        },
+                                                                    },
+                                                                  },
+                                                                  [
+                                                                    _c("i", {
+                                                                      staticClass:
+                                                                        "fa fa-times-circle",
+                                                                    }),
+                                                                  ]
+                                                                )
+                                                              : _vm._e(),
                                                           ]
                                                         )
                                                       : _vm._e()
@@ -7197,7 +7306,7 @@ var render = function () {
                                         ]
                                       ),
                                       _vm._v(" "),
-                                      k === 0
+                                      k === 0 && !_vm.isSellerRole
                                         ? _c(
                                             "div",
                                             {
@@ -7239,7 +7348,7 @@ var render = function () {
                                                       _vm._s(
                                                         _vm.__("add_variant")
                                                       ) +
-                                                      "\n                                            "
+                                                      "\n                                        "
                                                   ),
                                                 ]
                                               ),
@@ -7247,7 +7356,7 @@ var render = function () {
                                           )
                                         : _vm._e(),
                                       _vm._v(" "),
-                                      k !== 0
+                                      k !== 0 && !_vm.isSellerRole
                                         ? _c(
                                             "div",
                                             {
@@ -7291,7 +7400,7 @@ var render = function () {
                                                       _vm._s(
                                                         _vm.__("remove_variant")
                                                       ) +
-                                                      "\n                                            "
+                                                      "\n                                        "
                                                   ),
                                                 ]
                                               ),
@@ -7358,6 +7467,8 @@ var render = function () {
                                                       step: "any",
                                                       min: "0",
                                                       placeholder: "0",
+                                                      disabled:
+                                                        _vm.isSellerRole,
                                                     },
                                                     domProps: {
                                                       value:
@@ -7386,159 +7497,192 @@ var render = function () {
                                           ),
                                         ]),
                                         _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-4" }, [
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "form-group loose_div",
-                                            },
-                                            [
-                                              _c("label", [
-                                                _vm._v(
-                                                  _vm._s(_vm.__("price")) +
-                                                    " ( " +
-                                                    _vm._s(_vm.$currency) +
-                                                    " ): "
-                                                ),
+                                        _vm.isSellerRole
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "col-md-4" },
+                                              [
                                                 _c(
-                                                  "i",
+                                                  "div",
                                                   {
-                                                    staticClass: "text-danger",
+                                                    staticClass:
+                                                      "form-group loose_div",
                                                   },
-                                                  [_vm._v("*")]
-                                                ),
-                                              ]),
-                                              _vm._v(" "),
-                                              _c("input", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value: input.loose_price,
-                                                    expression:
-                                                      "input.loose_price",
-                                                  },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  type: "number",
-                                                  step: "any",
-                                                  min: "0",
-                                                  placeholder: "0.00",
-                                                  required: "",
-                                                },
-                                                domProps: {
-                                                  value: input.loose_price,
-                                                },
-                                                on: {
-                                                  input: function ($event) {
-                                                    if (
-                                                      $event.target.composing
-                                                    ) {
-                                                      return
-                                                    }
-                                                    _vm.$set(
-                                                      input,
-                                                      "loose_price",
-                                                      $event.target.value
-                                                    )
-                                                  },
-                                                },
-                                              }),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-4" }, [
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "form-group loose_div",
-                                            },
-                                            [
-                                              _c(
-                                                "label",
-                                                {
-                                                  attrs: {
-                                                    for: "discounted_price",
-                                                  },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__("discounted_price")
-                                                    ) +
-                                                      " ( " +
-                                                      _vm._s(_vm.$currency) +
-                                                      " ):"
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c("input", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value:
-                                                      input.loose_discounted_price,
-                                                    expression:
-                                                      "input.loose_discounted_price",
-                                                  },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  type: "number",
-                                                  step: "any",
-                                                  min: "0",
-                                                  placeholder: "0.00",
-                                                  id: "discounted_price",
-                                                },
-                                                domProps: {
-                                                  value:
-                                                    input.loose_discounted_price,
-                                                },
-                                                on: {
-                                                  input: [
-                                                    function ($event) {
-                                                      if (
-                                                        $event.target.composing
-                                                      ) {
-                                                        return
-                                                      }
-                                                      _vm.$set(
-                                                        input,
-                                                        "loose_discounted_price",
-                                                        $event.target.value
-                                                      )
-                                                    },
-                                                    function ($event) {
-                                                      return _vm.validateDiscountedPriceLoose(
-                                                        input
-                                                      )
-                                                    },
-                                                  ],
-                                                },
-                                              }),
-                                              _vm._v(" "),
-                                              input.validationErrorDiscountedPriceLoose
-                                                ? _c(
-                                                    "span",
-                                                    { staticClass: "error" },
-                                                    [
+                                                  [
+                                                    _c("label", [
                                                       _vm._v(
                                                         _vm._s(
-                                                          input.validationErrorDiscountedPriceLoose
-                                                        )
+                                                          _vm.__("price")
+                                                        ) +
+                                                          " ( " +
+                                                          _vm._s(
+                                                            _vm.$currency
+                                                          ) +
+                                                          " ): "
                                                       ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
-                                            ]
-                                          ),
-                                        ]),
+                                                      _c(
+                                                        "i",
+                                                        {
+                                                          staticClass:
+                                                            "text-danger",
+                                                        },
+                                                        [_vm._v("*")]
+                                                      ),
+                                                    ]),
+                                                    _vm._v(" "),
+                                                    _c("input", {
+                                                      directives: [
+                                                        {
+                                                          name: "model",
+                                                          rawName: "v-model",
+                                                          value:
+                                                            input.loose_price,
+                                                          expression:
+                                                            "input.loose_price",
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "form-control",
+                                                      attrs: {
+                                                        type: "number",
+                                                        step: "any",
+                                                        min: "0",
+                                                        placeholder: "0.00",
+                                                        required: "",
+                                                      },
+                                                      domProps: {
+                                                        value:
+                                                          input.loose_price,
+                                                      },
+                                                      on: {
+                                                        input: function (
+                                                          $event
+                                                        ) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            input,
+                                                            "loose_price",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                      },
+                                                    }),
+                                                  ]
+                                                ),
+                                              ]
+                                            )
+                                          : _vm._e(),
+                                        _vm._v(" "),
+                                        _vm.isSellerRole
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "col-md-4" },
+                                              [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "form-group loose_div",
+                                                  },
+                                                  [
+                                                    _c(
+                                                      "label",
+                                                      {
+                                                        attrs: {
+                                                          for: "discounted_price",
+                                                        },
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            _vm.__(
+                                                              "discounted_price"
+                                                            )
+                                                          ) +
+                                                            " ( " +
+                                                            _vm._s(
+                                                              _vm.$currency
+                                                            ) +
+                                                            " ):"
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c("input", {
+                                                      directives: [
+                                                        {
+                                                          name: "model",
+                                                          rawName: "v-model",
+                                                          value:
+                                                            input.loose_discounted_price,
+                                                          expression:
+                                                            "input.loose_discounted_price",
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "form-control",
+                                                      attrs: {
+                                                        type: "number",
+                                                        step: "any",
+                                                        min: "0",
+                                                        placeholder: "0.00",
+                                                        id: "discounted_price",
+                                                      },
+                                                      domProps: {
+                                                        value:
+                                                          input.loose_discounted_price,
+                                                      },
+                                                      on: {
+                                                        input: [
+                                                          function ($event) {
+                                                            if (
+                                                              $event.target
+                                                                .composing
+                                                            ) {
+                                                              return
+                                                            }
+                                                            _vm.$set(
+                                                              input,
+                                                              "loose_discounted_price",
+                                                              $event.target
+                                                                .value
+                                                            )
+                                                          },
+                                                          function ($event) {
+                                                            return _vm.validateDiscountedPriceLoose(
+                                                              input
+                                                            )
+                                                          },
+                                                        ],
+                                                      },
+                                                    }),
+                                                    _vm._v(" "),
+                                                    input.validationErrorDiscountedPriceLoose
+                                                      ? _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "error",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                input.validationErrorDiscountedPriceLoose
+                                                              )
+                                                            ),
+                                                          ]
+                                                        )
+                                                      : _vm._e(),
+                                                  ]
+                                                ),
+                                              ]
+                                            )
+                                          : _vm._e(),
                                         _vm._v(" "),
                                         _c("div", { staticClass: "col-md-4" }, [
                                           _c(
@@ -7566,6 +7710,7 @@ var render = function () {
                                                 attrs: {
                                                   type: "text",
                                                   placeholder: "e.g. SUG-1KG-L",
+                                                  disabled: _vm.isSellerRole,
                                                 },
                                                 domProps: {
                                                   value: input.loose_sku,
@@ -7622,6 +7767,9 @@ var render = function () {
                                                   ],
                                                   staticClass:
                                                     "form-control form-select",
+                                                  attrs: {
+                                                    disabled: _vm.isSellerRole,
+                                                  },
                                                   on: {
                                                     change: function ($event) {
                                                       var $$selectedVal =
@@ -7727,6 +7875,7 @@ var render = function () {
                                                   step: "any",
                                                   min: "0",
                                                   placeholder: "0",
+                                                  disabled: _vm.isSellerRole,
                                                 },
                                                 domProps: {
                                                   value:
@@ -7779,6 +7928,7 @@ var render = function () {
                                                     type: "file",
                                                     accept: "image/*",
                                                     multiple: "",
+                                                    disabled: _vm.isSellerRole,
                                                   },
                                                   on: {
                                                     change: function ($event) {
@@ -7799,10 +7949,11 @@ var render = function () {
                                                       "file-input-div bg-gray-100",
                                                     on: {
                                                       click: function ($event) {
-                                                        _vm.$refs[
-                                                          "loose_variant_images_" +
-                                                            k
-                                                        ][0].click()
+                                                        !_vm.isSellerRole &&
+                                                          _vm.$refs[
+                                                            "loose_variant_images_" +
+                                                              k
+                                                          ][0].click()
                                                       },
                                                     },
                                                   },
@@ -7866,35 +8017,37 @@ var render = function () {
                                                                 },
                                                               }),
                                                               _vm._v(" "),
-                                                              _c(
-                                                                "button",
-                                                                {
-                                                                  staticClass:
-                                                                    "btn btn-sm btn-danger btn-remove",
-                                                                  attrs: {
-                                                                    type: "button",
-                                                                  },
-                                                                  on: {
-                                                                    click:
-                                                                      function (
-                                                                        $event
-                                                                      ) {
-                                                                        return _vm.deleteImage(
-                                                                          index,
-                                                                          image.id,
-                                                                          false,
-                                                                          k
-                                                                        )
+                                                              !_vm.isSellerRole
+                                                                ? _c(
+                                                                    "button",
+                                                                    {
+                                                                      staticClass:
+                                                                        "btn btn-sm btn-danger btn-remove",
+                                                                      attrs: {
+                                                                        type: "button",
                                                                       },
-                                                                  },
-                                                                },
-                                                                [
-                                                                  _c("i", {
-                                                                    staticClass:
-                                                                      "fa fa-times-circle",
-                                                                  }),
-                                                                ]
-                                                              ),
+                                                                      on: {
+                                                                        click:
+                                                                          function (
+                                                                            $event
+                                                                          ) {
+                                                                            return _vm.deleteImage(
+                                                                              index,
+                                                                              image.id,
+                                                                              false,
+                                                                              k
+                                                                            )
+                                                                          },
+                                                                      },
+                                                                    },
+                                                                    [
+                                                                      _c("i", {
+                                                                        staticClass:
+                                                                          "fa fa-times-circle",
+                                                                      }),
+                                                                    ]
+                                                                  )
+                                                                : _vm._e(),
                                                             ]
                                                           )
                                                         : _vm._e()
@@ -7941,7 +8094,7 @@ var render = function () {
                                           ]
                                         ),
                                         _vm._v(" "),
-                                        k === 0
+                                        k === 0 && !_vm.isSellerRole
                                           ? _c(
                                               "div",
                                               {
@@ -7983,7 +8136,7 @@ var render = function () {
                                                         _vm._s(
                                                           _vm.__("add_variant")
                                                         ) +
-                                                        "\n                                                "
+                                                        "\n                                            "
                                                     ),
                                                   ]
                                                 ),
@@ -7991,7 +8144,7 @@ var render = function () {
                                             )
                                           : _vm._e(),
                                         _vm._v(" "),
-                                        k !== 0
+                                        k !== 0 && !_vm.isSellerRole
                                           ? _c(
                                               "div",
                                               {
@@ -8039,7 +8192,7 @@ var render = function () {
                                                             "remove_variant"
                                                           )
                                                         ) +
-                                                        "\n                                                "
+                                                        "\n                                            "
                                                     ),
                                                   ]
                                                 ),
@@ -8062,79 +8215,37 @@ var render = function () {
                                   attrs: { id: "loose_stock_div" },
                                 },
                                 [
-                                  _c("div", { staticClass: "col-md-4" }, [
-                                    _c("div", { staticClass: "form-group" }, [
-                                      _c("label", [
-                                        _vm._v(
-                                          _vm._s(_vm.__("purchase_price")) +
-                                            " ( " +
-                                            _vm._s(_vm.$currency) +
-                                            " )\n            "
-                                        ),
-                                        _c("i", {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
-                                            },
-                                          ],
-                                          staticClass:
-                                            "fa fa-info-circle text-muted",
-                                          attrs: {
-                                            title:
-                                              "This field is used to calculate in your report",
-                                          },
-                                        }),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("input", {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value: _vm.loose_purchase_price,
-                                            expression: "loose_purchase_price",
-                                          },
-                                        ],
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "number",
-                                          step: "any",
-                                          min: "0",
-                                          placeholder: "0.00",
-                                        },
-                                        domProps: {
-                                          value: _vm.loose_purchase_price,
-                                        },
-                                        on: {
-                                          input: function ($event) {
-                                            if ($event.target.composing) {
-                                              return
-                                            }
-                                            _vm.loose_purchase_price =
-                                              $event.target.value
-                                          },
-                                        },
-                                      }),
-                                    ]),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("div", { staticClass: "col-md-4" }, [
-                                    _vm.is_unlimited_stock != 1
-                                      ? _c(
+                                  _vm.isSellerRole
+                                    ? _c("div", { staticClass: "col-md-4" }, [
+                                        _c(
                                           "div",
                                           { staticClass: "form-group" },
                                           [
                                             _c("label", [
                                               _vm._v(
-                                                _vm._s(_vm.__("stock")) + " "
+                                                _vm._s(
+                                                  _vm.__("purchase_price")
+                                                ) +
+                                                  " ( " +
+                                                  _vm._s(_vm.$currency) +
+                                                  " )\n                                            "
                                               ),
-                                              _c(
-                                                "i",
-                                                { staticClass: "text-danger" },
-                                                [_vm._v("*")]
-                                              ),
+                                              _c("i", {
+                                                directives: [
+                                                  {
+                                                    name: "b-tooltip",
+                                                    rawName:
+                                                      "v-b-tooltip.hover",
+                                                    modifiers: { hover: true },
+                                                  },
+                                                ],
+                                                staticClass:
+                                                  "fa fa-info-circle text-muted",
+                                                attrs: {
+                                                  title:
+                                                    "This field is used to calculate in your report",
+                                                },
+                                              }),
                                             ]),
                                             _vm._v(" "),
                                             _c("input", {
@@ -8142,8 +8253,10 @@ var render = function () {
                                                 {
                                                   name: "model",
                                                   rawName: "v-model",
-                                                  value: _vm.loose_stock,
-                                                  expression: "loose_stock",
+                                                  value:
+                                                    _vm.loose_purchase_price,
+                                                  expression:
+                                                    "loose_purchase_price",
                                                 },
                                               ],
                                               staticClass: "form-control",
@@ -8151,25 +8264,84 @@ var render = function () {
                                                 type: "number",
                                                 step: "any",
                                                 min: "0",
+                                                placeholder: "0.00",
                                               },
                                               domProps: {
-                                                value: _vm.loose_stock,
+                                                value: _vm.loose_purchase_price,
                                               },
                                               on: {
                                                 input: function ($event) {
                                                   if ($event.target.composing) {
                                                     return
                                                   }
-                                                  _vm.loose_stock =
+                                                  _vm.loose_purchase_price =
                                                     $event.target.value
                                                 },
                                               },
                                             }),
-                                            _c("br"),
                                           ]
-                                        )
-                                      : _vm._e(),
-                                  ]),
+                                        ),
+                                      ])
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.isSellerRole
+                                    ? _c("div", { staticClass: "col-md-4" }, [
+                                        _vm.is_unlimited_stock != 1
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "form-group" },
+                                              [
+                                                _c("label", [
+                                                  _vm._v(
+                                                    _vm._s(_vm.__("stock")) +
+                                                      " "
+                                                  ),
+                                                  _c(
+                                                    "i",
+                                                    {
+                                                      staticClass:
+                                                        "text-danger",
+                                                    },
+                                                    [_vm._v("*")]
+                                                  ),
+                                                ]),
+                                                _vm._v(" "),
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value: _vm.loose_stock,
+                                                      expression: "loose_stock",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                  },
+                                                  domProps: {
+                                                    value: _vm.loose_stock,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.loose_stock =
+                                                        $event.target.value
+                                                    },
+                                                  },
+                                                }),
+                                                _c("br"),
+                                              ]
+                                            )
+                                          : _vm._e(),
+                                      ])
+                                    : _vm._e(),
                                   _vm._v(" "),
                                   _c("div", { staticClass: "col-md-4" }, [
                                     _c("div", { staticClass: "form-group" }, [
@@ -8197,6 +8369,7 @@ var render = function () {
                                             "form-control form-select",
                                           attrs: {
                                             name: "loose_stock_unit_id",
+                                            disabled: _vm.isSellerRole,
                                           },
                                           on: {
                                             change: function ($event) {
@@ -8279,7 +8452,10 @@ var render = function () {
                                           ],
                                           staticClass:
                                             "form-control form-select",
-                                          attrs: { name: "status" },
+                                          attrs: {
+                                            name: "status",
+                                            disabled: _vm.isSellerRole,
+                                          },
                                           on: {
                                             change: function ($event) {
                                               var $$selectedVal =
@@ -8352,138 +8528,151 @@ var render = function () {
                       ]),
                       _vm._v(" "),
                       _c("div", { staticClass: "card-body" }, [
-                        _c("div", { staticClass: "row" }, [
-                          _c("div", { staticClass: "col-md-4" }, [
-                            _c("div", { staticClass: "form-group mb-3" }, [
-                              _c("label", [
-                                _vm._v(_vm._s(_vm.__("category")) + " "),
-                                _c("i", { staticClass: "text-danger" }, [
-                                  _vm._v("*"),
+                        _c(
+                          "div",
+                          { staticClass: "row" },
+                          [
+                            _c(
+                              "div",
+                              {
+                                class: _vm.isSellerRole
+                                  ? "col-md-4"
+                                  : "col-md-3",
+                              },
+                              [
+                                _c("div", { staticClass: "form-group mb-3" }, [
+                                  _c("label", [
+                                    _vm._v(_vm._s(_vm.__("category")) + " "),
+                                    _c("i", { staticClass: "text-danger" }, [
+                                      _vm._v("*"),
+                                    ]),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("select", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.category_id,
+                                        expression: "category_id",
+                                      },
+                                    ],
+                                    staticClass: "form-control form-select",
+                                    attrs: {
+                                      disabled:
+                                        _vm.isSellerRole || !_vm.seller_id,
+                                    },
+                                    domProps: {
+                                      innerHTML: _vm._s(
+                                        _vm.categoryOptionsHtml
+                                      ),
+                                    },
+                                    on: {
+                                      change: function ($event) {
+                                        var $$selectedVal =
+                                          Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function (o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function (o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                        _vm.category_id = $event.target.multiple
+                                          ? $$selectedVal
+                                          : $$selectedVal[0]
+                                      },
+                                    },
+                                  }),
                                 ]),
-                              ]),
-                              _vm._v(" "),
-                              _c("select", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.category_id,
-                                    expression: "category_id",
-                                  },
-                                ],
-                                staticClass: "form-control form-select",
-                                attrs: {
-                                  disabled: !_vm.seller_id && !_vm.isSellerRole,
-                                },
-                                domProps: {
-                                  innerHTML: _vm._s(_vm.categoryOptionsHtml),
-                                },
-                                on: {
-                                  change: function ($event) {
-                                    var $$selectedVal = Array.prototype.filter
-                                      .call(
-                                        $event.target.options,
-                                        function (o) {
-                                          return o.selected
-                                        }
-                                      )
-                                      .map(function (o) {
-                                        var val =
-                                          "_value" in o ? o._value : o.value
-                                        return val
-                                      })
-                                    _vm.category_id = $event.target.multiple
-                                      ? $$selectedVal
-                                      : $$selectedVal[0]
-                                  },
-                                },
-                              }),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-4" }, [
-                            _c("div", { staticClass: "form-group mb-3" }, [
-                              _c("label", [
-                                _vm._v(_vm._s(_vm.__("product_type")) + " "),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "select",
-                                {
-                                  directives: [
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              {
+                                class: _vm.isSellerRole
+                                  ? "col-md-4"
+                                  : "col-md-3",
+                              },
+                              [
+                                _c("div", { staticClass: "form-group mb-3" }, [
+                                  _c("label", [
+                                    _vm._v(
+                                      _vm._s(_vm.__("product_type")) + " "
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "select",
                                     {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.product_type,
-                                      expression: "product_type",
-                                    },
-                                  ],
-                                  staticClass: "form-control form-select",
-                                  on: {
-                                    change: function ($event) {
-                                      var $$selectedVal = Array.prototype.filter
-                                        .call(
-                                          $event.target.options,
-                                          function (o) {
-                                            return o.selected
-                                          }
-                                        )
-                                        .map(function (o) {
-                                          var val =
-                                            "_value" in o ? o._value : o.value
-                                          return val
-                                        })
-                                      _vm.product_type = $event.target.multiple
-                                        ? $$selectedVal
-                                        : $$selectedVal[0]
-                                    },
-                                  },
-                                },
-                                [
-                                  _c("option", { attrs: { value: "" } }, [
-                                    _vm._v(_vm._s(_vm.__("select_type"))),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("option", { attrs: { value: "1" } }, [
-                                    _vm._v(_vm._s(_vm.__("veg"))),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("option", { attrs: { value: "2" } }, [
-                                    _vm._v(_vm._s(_vm.__("non_veg"))),
-                                  ]),
-                                ]
-                              ),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "col-md-4" },
-                            [
-                              _vm.isSellerRole
-                                ? [
-                                    _c("input", {
                                       directives: [
                                         {
                                           name: "model",
                                           rawName: "v-model",
-                                          value: _vm.is_approved,
-                                          expression: "is_approved",
+                                          value: _vm.product_type,
+                                          expression: "product_type",
                                         },
                                       ],
-                                      attrs: { type: "hidden" },
-                                      domProps: { value: _vm.is_approved },
+                                      staticClass: "form-control form-select",
+                                      attrs: { disabled: _vm.isSellerRole },
                                       on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.is_approved = $event.target.value
+                                        change: function ($event) {
+                                          var $$selectedVal =
+                                            Array.prototype.filter
+                                              .call(
+                                                $event.target.options,
+                                                function (o) {
+                                                  return o.selected
+                                                }
+                                              )
+                                              .map(function (o) {
+                                                var val =
+                                                  "_value" in o
+                                                    ? o._value
+                                                    : o.value
+                                                return val
+                                              })
+                                          _vm.product_type = $event.target
+                                            .multiple
+                                            ? $$selectedVal
+                                            : $$selectedVal[0]
                                         },
                                       },
-                                    }),
-                                  ]
-                                : [
+                                    },
+                                    [
+                                      _c("option", { attrs: { value: "" } }, [
+                                        _vm._v(_vm._s(_vm.__("select_type"))),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("option", { attrs: { value: "1" } }, [
+                                        _vm._v(_vm._s(_vm.__("veg"))),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("option", { attrs: { value: "2" } }, [
+                                        _vm._v(_vm._s(_vm.__("non_veg"))),
+                                      ]),
+                                    ]
+                                  ),
+                                ]),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            !_vm.isSellerRole
+                              ? _c(
+                                  "div",
+                                  {
+                                    class: _vm.isSellerRole
+                                      ? "col-md-4"
+                                      : "col-md-3",
+                                  },
+                                  [
                                     _c(
                                       "div",
                                       { staticClass: "form-group mb-3" },
@@ -8509,12 +8698,13 @@ var render = function () {
                                             _c(
                                               "label",
                                               {
-                                                staticClass: "btn btn-primary",
-                                                attrs: {
-                                                  "data-toggle-class":
-                                                    "btn-primary",
-                                                  "data-toggle-passive-class":
-                                                    "btn-default",
+                                                staticClass: "btn",
+                                                class:
+                                                  _vm.is_approved == 1
+                                                    ? "btn-success text-white"
+                                                    : "btn-outline-success",
+                                                staticStyle: {
+                                                  "font-weight": "600",
                                                 },
                                               },
                                               [
@@ -8527,6 +8717,9 @@ var render = function () {
                                                       expression: "is_approved",
                                                     },
                                                   ],
+                                                  staticStyle: {
+                                                    display: "none",
+                                                  },
                                                   attrs: {
                                                     type: "radio",
                                                     value: "1",
@@ -8546,7 +8739,7 @@ var render = function () {
                                                 _vm._v(
                                                   " " +
                                                     _vm._s(_vm.__("approved")) +
-                                                    "\n                                                    "
+                                                    "\n                                            "
                                                 ),
                                               ]
                                             ),
@@ -8554,12 +8747,13 @@ var render = function () {
                                             _c(
                                               "label",
                                               {
-                                                staticClass: "btn btn-danger",
-                                                attrs: {
-                                                  "data-toggle-class":
-                                                    "btn-danger",
-                                                  "data-toggle-passive-class":
-                                                    "btn-default",
+                                                staticClass: "btn",
+                                                class:
+                                                  _vm.is_approved == 0
+                                                    ? "btn-danger text-white"
+                                                    : "btn-outline-danger",
+                                                staticStyle: {
+                                                  "font-weight": "600",
                                                 },
                                               },
                                               [
@@ -8572,6 +8766,9 @@ var render = function () {
                                                       expression: "is_approved",
                                                     },
                                                   ],
+                                                  staticStyle: {
+                                                    display: "none",
+                                                  },
                                                   attrs: {
                                                     type: "radio",
                                                     value: "0",
@@ -8589,11 +8786,11 @@ var render = function () {
                                                   },
                                                 }),
                                                 _vm._v(
-                                                  "\n                                                        " +
+                                                  " " +
                                                     _vm._s(
                                                       _vm.__("not_approved")
                                                     ) +
-                                                    "\n                                                    "
+                                                    "\n                                            "
                                                 ),
                                               ]
                                             ),
@@ -8601,557 +8798,718 @@ var render = function () {
                                         ),
                                       ]
                                     ),
-                                  ],
-                            ],
-                            2
-                          ),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-6" }, [
-                            _c("div", { staticClass: "form-group mb-3" }, [
-                              _c("label", [
-                                _vm._v(
-                                  _vm._s(_vm.__("manufacturer")) +
-                                    " / Parent Company"
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.manufacturer,
-                                    expression: "manufacturer",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: {
-                                  type: "text",
-                                  placeholder: _vm.__("enter_manufacturer"),
-                                },
-                                domProps: { value: _vm.manufacturer },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.manufacturer = $event.target.value
-                                  },
-                                },
-                              }),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-6" }, [
-                            _c(
-                              "div",
-                              { staticClass: "form-group mb-3" },
-                              [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("made_in"))),
-                                ]),
-                                _vm._v(" "),
-                                _c("multiselect", {
-                                  attrs: {
-                                    options: _vm.countries,
-                                    placeholder: _vm.__(
-                                      "select_and_search_country_name"
-                                    ),
-                                    label: "name",
-                                    "track-by": "name",
-                                    required: "",
-                                  },
-                                  scopedSlots: _vm._u(
-                                    [
+                                  ]
+                                )
+                              : [
+                                  _c("input", {
+                                    directives: [
                                       {
-                                        key: "singleLabel",
-                                        fn: function (props) {
-                                          return [
-                                            _c(
-                                              "span",
-                                              { staticClass: "option__desc" },
-                                              [
-                                                _c(
-                                                  "span",
-                                                  {
-                                                    staticClass:
-                                                      "option__title",
-                                                  },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(props.option.name)
-                                                    ),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                          ]
-                                        },
-                                      },
-                                      {
-                                        key: "option",
-                                        fn: function (props) {
-                                          return [
-                                            _c(
-                                              "div",
-                                              { staticClass: "option__desc" },
-                                              [
-                                                _c(
-                                                  "span",
-                                                  {
-                                                    staticClass:
-                                                      "option__title",
-                                                  },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(props.option.name)
-                                                    ),
-                                                  ]
-                                                ),
-                                                _vm._v(" "),
-                                                _c(
-                                                  "span",
-                                                  {
-                                                    staticClass:
-                                                      "option__small",
-                                                  },
-                                                  [
-                                                    _vm._v(
-                                                      "[" +
-                                                        _vm._s(
-                                                          props.option.code
-                                                        ) +
-                                                        "]"
-                                                    ),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                          ]
-                                        },
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.is_approved,
+                                        expression: "is_approved",
                                       },
                                     ],
-                                    null,
-                                    false,
-                                    2573689547
-                                  ),
-                                  model: {
-                                    value: _vm.made_in,
-                                    callback: function ($$v) {
-                                      _vm.made_in = $$v
+                                    attrs: { type: "hidden" },
+                                    domProps: { value: _vm.is_approved },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.is_approved = $event.target.value
+                                      },
                                     },
-                                    expression: "made_in",
-                                  },
-                                }),
-                              ],
-                              1
-                            ),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-4" }, [
-                            _c("div", { staticClass: "form-group mb-3" }, [
-                              _c("label", { attrs: { for: "fssai_lic" } }, [
-                                _vm._v(_vm._s(_vm.__("fssai_lic_no"))),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.fssai_lic_no,
-                                    expression: "fssai_lic_no",
-                                  },
+                                  }),
                                 ],
-                                staticClass: "form-control",
-                                attrs: {
-                                  type: "text",
-                                  id: "fssai_lic",
-                                  placeholder: _vm.__("fssai_lic_no"),
-                                },
-                                domProps: { value: _vm.fssai_lic_no },
-                                on: {
-                                  input: [
-                                    function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.fssai_lic_no = $event.target.value
-                                    },
-                                    _vm.validateFSSAINumber,
-                                  ],
-                                },
-                              }),
-                              _vm._v(" "),
-                              _vm.validationMessage
-                                ? _c("p", { staticStyle: { color: "red" } }, [
-                                    _vm._v(_vm._s(_vm.validationMessage)),
-                                  ])
-                                : _vm.isValid
-                                ? _c("p", { staticStyle: { color: "green" } }, [
-                                    _vm._v(
-                                      "FSSAI License Number is\n                                                valid!"
-                                    ),
-                                  ])
-                                : _vm._e(),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-4" }, [
-                            _c("div", { staticClass: "form-group mb-3" }, [
-                              _c("label", { attrs: { for: "barcode" } }, [
-                                _vm._v(_vm._s(_vm.__("barcode"))),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.barcode,
-                                    expression: "barcode",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: {
-                                  type: "text",
-                                  placeholder: _vm.__("barcode"),
-                                },
-                                domProps: { value: _vm.barcode },
-                                on: {
-                                  input: [
-                                    function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.barcode = $event.target.value
-                                    },
-                                    _vm.validateBarcode,
-                                  ],
-                                },
-                              }),
-                              _vm._v(" "),
-                              _vm.validationBarcodeMessage
-                                ? _c("p", { staticStyle: { color: "red" } }, [
-                                    _vm._v(
-                                      _vm._s(_vm.validationBarcodeMessage)
-                                    ),
-                                  ])
-                                : _vm.isBarcodeValid
-                                ? _c("p", { staticStyle: { color: "green" } }, [
-                                    _vm._v(
-                                      "Barcode is valid!\n                                            "
-                                    ),
-                                  ])
-                                : _vm._e(),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-4" }, [
-                            _c("div", { staticClass: "form-group mb-3" }, [
-                              _c("label", [
-                                _vm._v(
-                                  _vm._s(_vm.__("total_allowed_quantity")) +
-                                    " (" +
-                                    _vm._s(
-                                      _vm.__("keep_blank_if_no_such_limit")
-                                    ) +
-                                    ") "
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.max_allowed_quantity,
-                                    expression: "max_allowed_quantity",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: { type: "number", min: "0" },
-                                domProps: { value: _vm.max_allowed_quantity },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.max_allowed_quantity =
-                                      $event.target.value
-                                  },
-                                },
-                              }),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-4" }, [
+                            _vm._v(" "),
                             _c(
                               "div",
                               {
-                                staticClass:
-                                  "form-group mb-3 d-flex flex-wrap align-items-start gap-2",
+                                class: _vm.isSellerRole
+                                  ? "col-md-4"
+                                  : "col-md-3",
                               },
                               [
-                                _c(
-                                  "div",
-                                  [
-                                    _c("label", [
-                                      _vm._v(_vm._s(_vm.__("is_returnable"))),
-                                    ]),
-                                    _c("br"),
-                                    _vm._v(" "),
-                                    _c("b-form-radio-group", {
-                                      attrs: {
-                                        options: [
-                                          { text: _vm.__("no"), value: 0 },
-                                          { text: _vm.__("yes"), value: 1 },
-                                        ],
-                                        buttons: "",
-                                        "button-variant": "outline-primary",
-                                        required: "",
-                                      },
-                                      model: {
-                                        value: _vm.return_status,
-                                        callback: function ($$v) {
-                                          _vm.return_status = $$v
-                                        },
-                                        expression: "return_status",
-                                      },
-                                    }),
-                                  ],
-                                  1
-                                ),
-                                _vm._v(" "),
-                                _vm.return_status == 1
-                                  ? _c("div", { staticClass: "ms-2" }, [
+                                _c("div", { staticClass: "form-group mb-3" }, [
+                                  _c(
+                                    "label",
+                                    { staticClass: "control-label" },
+                                    [_vm._v(_vm._s(_vm.__("status")))]
+                                  ),
+                                  _c("br"),
+                                  _vm._v(" "),
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass: "btn-group",
+                                      attrs: { id: "status" },
+                                    },
+                                    [
                                       _c(
                                         "label",
-                                        { attrs: { for: "return_day" } },
+                                        {
+                                          staticClass: "btn",
+                                          class:
+                                            _vm.status == 1
+                                              ? "btn-success text-white"
+                                              : "btn-outline-success",
+                                          staticStyle: { "font-weight": "600" },
+                                        },
                                         [
+                                          _c("input", {
+                                            directives: [
+                                              {
+                                                name: "model",
+                                                rawName: "v-model",
+                                                value: _vm.status,
+                                                expression: "status",
+                                              },
+                                            ],
+                                            staticStyle: { display: "none" },
+                                            attrs: {
+                                              type: "radio",
+                                              value: "1",
+                                            },
+                                            domProps: {
+                                              checked: _vm._q(_vm.status, "1"),
+                                            },
+                                            on: {
+                                              change: function ($event) {
+                                                _vm.status = "1"
+                                              },
+                                            },
+                                          }),
                                           _vm._v(
-                                            _vm._s(_vm.__("max_return_days"))
+                                            " " +
+                                              _vm._s(_vm.__("active")) +
+                                              "\n                                            "
                                           ),
                                         ]
                                       ),
                                       _vm._v(" "),
-                                      _c("input", {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value: _vm.return_days,
-                                            expression: "return_days",
-                                          },
-                                        ],
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "number",
-                                          step: "any",
-                                          min: _vm.return_status == 1 ? 1 : 0,
-                                          required:
-                                            _vm.return_status == 1
-                                              ? true
-                                              : undefined,
-                                          id: "return_day",
-                                          placeholder: _vm.__(
-                                            "number_of_days_to_return"
+                                      _c(
+                                        "label",
+                                        {
+                                          staticClass: "btn",
+                                          class:
+                                            _vm.status == 0
+                                              ? "btn-danger text-white"
+                                              : "btn-outline-danger",
+                                          staticStyle: { "font-weight": "600" },
+                                        },
+                                        [
+                                          _c("input", {
+                                            directives: [
+                                              {
+                                                name: "model",
+                                                rawName: "v-model",
+                                                value: _vm.status,
+                                                expression: "status",
+                                              },
+                                            ],
+                                            staticStyle: { display: "none" },
+                                            attrs: {
+                                              type: "radio",
+                                              value: "0",
+                                            },
+                                            domProps: {
+                                              checked: _vm._q(_vm.status, "0"),
+                                            },
+                                            on: {
+                                              change: function ($event) {
+                                                _vm.status = "0"
+                                              },
+                                            },
+                                          }),
+                                          _vm._v(
+                                            " " +
+                                              _vm._s(_vm.__("deactive")) +
+                                              "\n                                            "
                                           ),
-                                        },
-                                        domProps: { value: _vm.return_days },
-                                        on: {
-                                          input: function ($event) {
-                                            if ($event.target.composing) {
-                                              return
-                                            }
-                                            _vm.return_days =
-                                              $event.target.value
-                                          },
-                                        },
-                                      }),
-                                    ])
-                                  : _vm._e(),
+                                        ]
+                                      ),
+                                    ]
+                                  ),
+                                ]),
                               ]
                             ),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-4" }, [
-                            _c(
-                              "div",
-                              {
-                                staticClass:
-                                  "form-group mb-3 d-flex flex-wrap align-items-start gap-2",
-                              },
-                              [
-                                _c(
-                                  "div",
-                                  [
-                                    _c("label", [
-                                      _vm._v(_vm._s(_vm.__("is_cancelable"))),
-                                    ]),
-                                    _c("br"),
-                                    _vm._v(" "),
-                                    _c("b-form-radio-group", {
-                                      attrs: {
-                                        options: [
-                                          { text: _vm.__("no"), value: 0 },
-                                          { text: _vm.__("yes"), value: 1 },
-                                        ],
-                                        buttons: "",
-                                        "button-variant": "outline-primary",
-                                      },
-                                      model: {
-                                        value: _vm.cancelable_status,
-                                        callback: function ($$v) {
-                                          _vm.cancelable_status = $$v
-                                        },
-                                        expression: "cancelable_status",
-                                      },
-                                    }),
-                                  ],
-                                  1
-                                ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-6" }, [
+                              _c("div", { staticClass: "form-group mb-3" }, [
+                                _c("label", [
+                                  _vm._v(
+                                    _vm._s(_vm.__("manufacturer")) +
+                                      " / Parent Company"
+                                  ),
+                                ]),
                                 _vm._v(" "),
-                                _vm.cancelable_status === 1
-                                  ? _c("div", { staticClass: "ms-2" }, [
-                                      _c(
-                                        "label",
-                                        { attrs: { for: "till_status" } },
-                                        [
-                                          _vm._v(
-                                            _vm._s(
-                                              _vm.__("till_which_status")
-                                            ) + " "
-                                          ),
-                                          _c(
-                                            "i",
-                                            { staticClass: "text-danger" },
-                                            [_vm._v("*")]
-                                          ),
-                                        ]
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.manufacturer,
+                                      expression: "manufacturer",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "text",
+                                    placeholder: _vm.__("enter_manufacturer"),
+                                    disabled: _vm.isSellerRole,
+                                  },
+                                  domProps: { value: _vm.manufacturer },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.manufacturer = $event.target.value
+                                    },
+                                  },
+                                }),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-6" }, [
+                              _c(
+                                "div",
+                                { staticClass: "form-group mb-3" },
+                                [
+                                  _c("label", [
+                                    _vm._v(_vm._s(_vm.__("made_in"))),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("multiselect", {
+                                    attrs: {
+                                      options: _vm.countries,
+                                      placeholder: _vm.__(
+                                        "select_and_search_country_name"
                                       ),
-                                      _vm._v(" "),
-                                      _c(
-                                        "select",
+                                      label: "name",
+                                      "track-by": "name",
+                                      required: "",
+                                      disabled: _vm.isSellerRole,
+                                    },
+                                    scopedSlots: _vm._u(
+                                      [
                                         {
+                                          key: "singleLabel",
+                                          fn: function (props) {
+                                            return [
+                                              _c(
+                                                "span",
+                                                { staticClass: "option__desc" },
+                                                [
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "option__title",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          props.option.name
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          },
+                                        },
+                                        {
+                                          key: "option",
+                                          fn: function (props) {
+                                            return [
+                                              _c(
+                                                "div",
+                                                { staticClass: "option__desc" },
+                                                [
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "option__title",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          props.option.name
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "option__small",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        "[" +
+                                                          _vm._s(
+                                                            props.option.code
+                                                          ) +
+                                                          "]"
+                                                      ),
+                                                    ]
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          },
+                                        },
+                                      ],
+                                      null,
+                                      false,
+                                      2573689547
+                                    ),
+                                    model: {
+                                      value: _vm.made_in,
+                                      callback: function ($$v) {
+                                        _vm.made_in = $$v
+                                      },
+                                      expression: "made_in",
+                                    },
+                                  }),
+                                ],
+                                1
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c("div", { staticClass: "form-group mb-3" }, [
+                                _c("label", { attrs: { for: "fssai_lic" } }, [
+                                  _vm._v(_vm._s(_vm.__("fssai_lic_no"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.fssai_lic_no,
+                                      expression: "fssai_lic_no",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "text",
+                                    id: "fssai_lic",
+                                    placeholder: _vm.__("fssai_lic_no"),
+                                    disabled: _vm.isSellerRole,
+                                  },
+                                  domProps: { value: _vm.fssai_lic_no },
+                                  on: {
+                                    input: [
+                                      function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.fssai_lic_no = $event.target.value
+                                      },
+                                      _vm.validateFSSAINumber,
+                                    ],
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _vm.validationMessage
+                                  ? _c("p", { staticStyle: { color: "red" } }, [
+                                      _vm._v(_vm._s(_vm.validationMessage)),
+                                    ])
+                                  : _vm.isValid
+                                  ? _c(
+                                      "p",
+                                      { staticStyle: { color: "green" } },
+                                      [
+                                        _vm._v(
+                                          "FSSAI License Number is\n                                            valid!"
+                                        ),
+                                      ]
+                                    )
+                                  : _vm._e(),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c("div", { staticClass: "form-group mb-3" }, [
+                                _c("label", { attrs: { for: "barcode" } }, [
+                                  _vm._v(_vm._s(_vm.__("barcode"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.barcode,
+                                      expression: "barcode",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "text",
+                                    placeholder: _vm.__("barcode"),
+                                    disabled: _vm.isSellerRole,
+                                  },
+                                  domProps: { value: _vm.barcode },
+                                  on: {
+                                    input: [
+                                      function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.barcode = $event.target.value
+                                      },
+                                      _vm.validateBarcode,
+                                    ],
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _vm.validationBarcodeMessage
+                                  ? _c("p", { staticStyle: { color: "red" } }, [
+                                      _vm._v(
+                                        _vm._s(_vm.validationBarcodeMessage)
+                                      ),
+                                    ])
+                                  : _vm.isBarcodeValid
+                                  ? _c(
+                                      "p",
+                                      { staticStyle: { color: "green" } },
+                                      [
+                                        _vm._v(
+                                          "Barcode is valid!\n                                        "
+                                        ),
+                                      ]
+                                    )
+                                  : _vm._e(),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c("div", { staticClass: "form-group mb-3" }, [
+                                _c("label", [
+                                  _vm._v(
+                                    _vm._s(_vm.__("total_allowed_quantity")) +
+                                      " (" +
+                                      _vm._s(
+                                        _vm.__("keep_blank_if_no_such_limit")
+                                      ) +
+                                      ") "
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.max_allowed_quantity,
+                                      expression: "max_allowed_quantity",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "number",
+                                    min: "0",
+                                    disabled: _vm.isSellerRole,
+                                  },
+                                  domProps: { value: _vm.max_allowed_quantity },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.max_allowed_quantity =
+                                        $event.target.value
+                                    },
+                                  },
+                                }),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c(
+                                "div",
+                                {
+                                  staticClass:
+                                    "form-group mb-3 d-flex flex-wrap align-items-start gap-2",
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    [
+                                      _c("label", [
+                                        _vm._v(_vm._s(_vm.__("is_returnable"))),
+                                      ]),
+                                      _c("br"),
+                                      _vm._v(" "),
+                                      _c("b-form-radio-group", {
+                                        attrs: {
+                                          options: [
+                                            { text: _vm.__("no"), value: 0 },
+                                            { text: _vm.__("yes"), value: 1 },
+                                          ],
+                                          buttons: "",
+                                          "button-variant": "outline-primary",
+                                          required: "",
+                                          disabled: _vm.isSellerRole,
+                                        },
+                                        model: {
+                                          value: _vm.return_status,
+                                          callback: function ($$v) {
+                                            _vm.return_status = $$v
+                                          },
+                                          expression: "return_status",
+                                        },
+                                      }),
+                                    ],
+                                    1
+                                  ),
+                                  _vm._v(" "),
+                                  _vm.return_status == 1
+                                    ? _c("div", { staticClass: "ms-2" }, [
+                                        _c(
+                                          "label",
+                                          { attrs: { for: "return_day" } },
+                                          [
+                                            _vm._v(
+                                              _vm._s(_vm.__("max_return_days"))
+                                            ),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("input", {
                                           directives: [
                                             {
                                               name: "model",
                                               rawName: "v-model",
-                                              value: _vm.till_status,
-                                              expression: "till_status",
+                                              value: _vm.return_days,
+                                              expression: "return_days",
                                             },
                                           ],
-                                          staticClass:
-                                            "form-control form-select",
+                                          staticClass: "form-control",
                                           attrs: {
-                                            id: "till_status",
+                                            type: "number",
+                                            step: "any",
+                                            min: _vm.return_status == 1 ? 1 : 0,
                                             required:
-                                              _vm.cancelable_status === 1
+                                              _vm.return_status == 1
                                                 ? true
                                                 : undefined,
+                                            id: "return_day",
+                                            placeholder: _vm.__(
+                                              "number_of_days_to_return"
+                                            ),
+                                            disabled: _vm.isSellerRole,
                                           },
+                                          domProps: { value: _vm.return_days },
                                           on: {
-                                            change: function ($event) {
-                                              var $$selectedVal =
-                                                Array.prototype.filter
-                                                  .call(
-                                                    $event.target.options,
-                                                    function (o) {
-                                                      return o.selected
-                                                    }
-                                                  )
-                                                  .map(function (o) {
-                                                    var val =
-                                                      "_value" in o
-                                                        ? o._value
-                                                        : o.value
-                                                    return val
-                                                  })
-                                              _vm.till_status = $event.target
-                                                .multiple
-                                                ? $$selectedVal
-                                                : $$selectedVal[0]
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.return_days =
+                                                $event.target.value
                                             },
                                           },
+                                        }),
+                                      ])
+                                    : _vm._e(),
+                                ]
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c(
+                                "div",
+                                {
+                                  staticClass:
+                                    "form-group mb-3 d-flex flex-wrap align-items-start gap-2",
+                                },
+                                [
+                                  _c(
+                                    "div",
+                                    [
+                                      _c("label", [
+                                        _vm._v(_vm._s(_vm.__("is_cancelable"))),
+                                      ]),
+                                      _c("br"),
+                                      _vm._v(" "),
+                                      _c("b-form-radio-group", {
+                                        attrs: {
+                                          options: [
+                                            { text: _vm.__("no"), value: 0 },
+                                            { text: _vm.__("yes"), value: 1 },
+                                          ],
+                                          buttons: "",
+                                          "button-variant": "outline-primary",
+                                          disabled: _vm.isSellerRole,
                                         },
-                                        [
-                                          _c(
-                                            "option",
-                                            { attrs: { value: "" } },
-                                            [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__("select_order_status")
-                                                )
-                                              ),
-                                            ]
-                                          ),
-                                          _vm._v(" "),
-                                          _vm._l(
-                                            _vm.order_status,
-                                            function (status) {
-                                              return _c(
-                                                "option",
-                                                {
-                                                  domProps: {
-                                                    value: status.id,
-                                                  },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.getStatusDisplayName(
-                                                        status
-                                                      )
-                                                    ) +
-                                                      "\n                                                    "
-                                                  ),
-                                                ]
-                                              )
-                                            }
-                                          ),
-                                        ],
-                                        2
-                                      ),
-                                    ])
-                                  : _vm._e(),
-                              ]
-                            ),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-4" }, [
-                            _c(
-                              "div",
-                              { staticClass: "form-group mb-3" },
-                              [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("is_cod_allowed"))),
-                                ]),
-                                _c("br"),
-                                _vm._v(" "),
-                                _c("b-form-radio-group", {
-                                  attrs: {
-                                    options: [
-                                      { text: _vm.__("no"), value: 0 },
-                                      { text: _vm.__("yes"), value: 1 },
+                                        model: {
+                                          value: _vm.cancelable_status,
+                                          callback: function ($$v) {
+                                            _vm.cancelable_status = $$v
+                                          },
+                                          expression: "cancelable_status",
+                                        },
+                                      }),
                                     ],
-                                    buttons: "",
-                                    "button-variant": "outline-primary",
-                                  },
-                                  model: {
-                                    value: _vm.cod_allowed_status,
-                                    callback: function ($$v) {
-                                      _vm.cod_allowed_status = $$v
+                                    1
+                                  ),
+                                  _vm._v(" "),
+                                  _vm.cancelable_status === 1
+                                    ? _c("div", { staticClass: "ms-2" }, [
+                                        _c(
+                                          "label",
+                                          { attrs: { for: "till_status" } },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                _vm.__("till_which_status")
+                                              ) + " "
+                                            ),
+                                            _c(
+                                              "i",
+                                              { staticClass: "text-danger" },
+                                              [_vm._v("*")]
+                                            ),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "select",
+                                          {
+                                            directives: [
+                                              {
+                                                name: "model",
+                                                rawName: "v-model",
+                                                value: _vm.till_status,
+                                                expression: "till_status",
+                                              },
+                                            ],
+                                            staticClass:
+                                              "form-control form-select",
+                                            attrs: {
+                                              id: "till_status",
+                                              required:
+                                                _vm.cancelable_status === 1
+                                                  ? true
+                                                  : undefined,
+                                              disabled: _vm.isSellerRole,
+                                            },
+                                            on: {
+                                              change: function ($event) {
+                                                var $$selectedVal =
+                                                  Array.prototype.filter
+                                                    .call(
+                                                      $event.target.options,
+                                                      function (o) {
+                                                        return o.selected
+                                                      }
+                                                    )
+                                                    .map(function (o) {
+                                                      var val =
+                                                        "_value" in o
+                                                          ? o._value
+                                                          : o.value
+                                                      return val
+                                                    })
+                                                _vm.till_status = $event.target
+                                                  .multiple
+                                                  ? $$selectedVal
+                                                  : $$selectedVal[0]
+                                              },
+                                            },
+                                          },
+                                          [
+                                            _c(
+                                              "option",
+                                              { attrs: { value: "" } },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.__(
+                                                      "select_order_status"
+                                                    )
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _vm._l(
+                                              _vm.order_status,
+                                              function (status) {
+                                                return _c(
+                                                  "option",
+                                                  {
+                                                    domProps: {
+                                                      value: status.id,
+                                                    },
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.getStatusDisplayName(
+                                                          status
+                                                        )
+                                                      ) +
+                                                        "\n                                                "
+                                                    ),
+                                                  ]
+                                                )
+                                              }
+                                            ),
+                                          ],
+                                          2
+                                        ),
+                                      ])
+                                    : _vm._e(),
+                                ]
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c(
+                                "div",
+                                { staticClass: "form-group mb-3" },
+                                [
+                                  _c("label", [
+                                    _vm._v(_vm._s(_vm.__("is_cod_allowed"))),
+                                  ]),
+                                  _c("br"),
+                                  _vm._v(" "),
+                                  _c("b-form-radio-group", {
+                                    attrs: {
+                                      options: [
+                                        { text: _vm.__("no"), value: 0 },
+                                        { text: _vm.__("yes"), value: 1 },
+                                      ],
+                                      buttons: "",
+                                      "button-variant": "outline-primary",
+                                      disabled: _vm.isSellerRole,
                                     },
-                                    expression: "cod_allowed_status",
-                                  },
-                                }),
-                              ],
-                              1
-                            ),
-                          ]),
-                        ]),
+                                    model: {
+                                      value: _vm.cod_allowed_status,
+                                      callback: function ($$v) {
+                                        _vm.cod_allowed_status = $$v
+                                      },
+                                      expression: "cod_allowed_status",
+                                    },
+                                  }),
+                                ],
+                                1
+                              ),
+                            ]),
+                          ],
+                          2
+                        ),
                       ]),
                       _vm._v(" "),
                       _vm.languages.length === 0 ||
@@ -9194,7 +9552,7 @@ var render = function () {
                                   _vm._v(
                                     " " +
                                       _vm._s(_vm.__("save")) +
-                                      "\n                                    "
+                                      "\n                                "
                                   ),
                                   _vm.isLoading
                                     ? _c("b-spinner", {
@@ -9205,15 +9563,17 @@ var render = function () {
                                 1
                               ),
                               _vm._v(" "),
-                              _c(
-                                "button",
-                                {
-                                  staticClass: "btn btn-danger",
-                                  attrs: { type: "button" },
-                                  on: { click: _vm.clearForm },
-                                },
-                                [_vm._v(_vm._s(_vm.__("clear")))]
-                              ),
+                              !_vm.isSellerRole
+                                ? _c(
+                                    "button",
+                                    {
+                                      staticClass: "btn btn-danger",
+                                      attrs: { type: "button" },
+                                      on: { click: _vm.clearForm },
+                                    },
+                                    [_vm._v(_vm._s(_vm.__("clear")))]
+                                  )
+                                : _vm._e(),
                             ],
                             1
                           )

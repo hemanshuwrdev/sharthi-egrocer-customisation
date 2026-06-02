@@ -290,9 +290,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
 
 
 
@@ -365,6 +362,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         "class": 'text-center',
         sortable: true
       }, {
+        key: 'status',
+        label: __('status'),
+        visible: true,
+        "class": 'text-center',
+        sortable: true
+      }, {
         key: 'return_status',
         label: __('return'),
         visible: false,
@@ -408,9 +411,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   },
   computed: {
     visibleFields: function visibleFields() {
-      return this.fields.filter(function (field) {
+      var filteredFields = this.fields.filter(function (field) {
         return field.visible;
       });
+      if (this.$roleSeller === this.login_user.role.name) {
+        filteredFields = filteredFields.filter(function (field) {
+          return field.key !== 'select';
+        });
+      }
+      return filteredFields;
     },
     isSellerRoute: function isSellerRoute() {
       // Use this.$route to access the current route
@@ -616,8 +625,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _this6.totalRows = response.data.total;
       });
     },
-    deleteRecord: function deleteRecord(index, id) {
+    toggleStatus: function toggleStatus(id) {
       var _this7 = this;
+      this.isLoading = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/products/change', {
+        id: id
+      }).then(function (response) {
+        _this7.isLoading = false;
+        if (response.data.status === 1) {
+          _this7.showMessage("success", response.data.message);
+        } else {
+          _this7.showError(response.data.message);
+        }
+        _this7.getRecords();
+      })["catch"](function (error) {
+        _this7.isLoading = false;
+        _this7.showError(__('something_went_wrong'));
+      });
+    },
+    deleteRecord: function deleteRecord(index, id) {
+      var _this8 = this;
       this.$swal.fire({
         title: __('are_you_sure'),
         text: __('you_want_be_able_to_revert_this'),
@@ -629,29 +656,29 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         cancelButtonColor: '#d33'
       }).then(function (result) {
         if (result.value) {
-          _this7.isLoading = true;
+          _this8.isLoading = true;
           var postData = {
             id: id
           };
-          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this7.$apiUrl + '/products/delete', postData).then(function (response) {
-            _this7.isLoading = false;
+          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this8.$apiUrl + '/products/delete', postData).then(function (response) {
+            _this8.isLoading = false;
             var data = response.data;
-            _this7.products.splice(index, 1);
+            _this8.products.splice(index, 1);
             //this.showSuccess(data.message);
-            _this7.showMessage("success", data.message);
+            _this8.showMessage("success", data.message);
           });
         }
       });
     },
     allSelectCheckBox: function allSelectCheckBox() {
-      var _this8 = this;
+      var _this9 = this;
       if (this.all_select === false) {
         this.all_select = true;
         // Get all products from current page (considering filters)
         this.products.forEach(function (product) {
           // Only add if not already selected to avoid duplicates
-          if (!_this8.selectedItems.includes(product.product_variant_id)) {
-            _this8.selectedItems.push(product.product_variant_id);
+          if (!_this9.selectedItems.includes(product.product_variant_id)) {
+            _this9.selectedItems.push(product.product_variant_id);
           }
         });
       } else {
@@ -683,7 +710,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.all_select = false;
     },
     multipleDelete: function multipleDelete() {
-      var _this9 = this;
+      var _this10 = this;
       var uniqueSelectedItems = _toConsumableArray(new Set(this.selectedItems));
       if (uniqueSelectedItems.length !== 0) {
         this.$swal.fire({
@@ -698,17 +725,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }).then(function (result) {
           if (result.value) {
             var ids = uniqueSelectedItems.toString();
-            _this9.isLoading = true;
+            _this10.isLoading = true;
             var postData = {
               ids: ids
             };
-            axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this9.$apiUrl + '/products/multiple_delete', postData).then(function (response) {
-              _this9.isLoading = false;
+            axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this10.$apiUrl + '/products/multiple_delete', postData).then(function (response) {
+              _this10.isLoading = false;
               var data = response.data;
-              _this9.getRecords();
-              _this9.selectedItems = [];
-              _this9.all_select = false;
-              _this9.showMessage("success", data.message);
+              _this10.getRecords();
+              _this10.selectedItems = [];
+              _this10.all_select = false;
+              _this10.showMessage("success", data.message);
             });
           }
         });
@@ -873,28 +900,8 @@ var render = function () {
                 "span",
                 { staticClass: "pull-right" },
                 [
-                  _vm.$roleSeller == _vm.login_user.role.name
+                  _vm.$roleSeller != _vm.login_user.role.name
                     ? [
-                        _c(
-                          "router-link",
-                          {
-                            directives: [
-                              {
-                                name: "b-tooltip",
-                                rawName: "v-b-tooltip.hover",
-                                modifiers: { hover: true },
-                              },
-                            ],
-                            staticClass: "btn btn-primary",
-                            attrs: {
-                              to: "/seller/manage_products/create",
-                              title: "Add Product",
-                            },
-                          },
-                          [_vm._v(_vm._s(_vm.__("add_product")))]
-                        ),
-                      ]
-                    : [
                         _c(
                           "router-link",
                           {
@@ -913,7 +920,8 @@ var render = function () {
                           },
                           [_vm._v(_vm._s(_vm.__("add_product")))]
                         ),
-                      ],
+                      ]
+                    : _vm._e(),
                 ],
                 2
               ),
@@ -923,55 +931,59 @@ var render = function () {
               "div",
               { staticClass: "card-body" },
               [
-                _c("div", { staticClass: "row" }, [
-                  _c(
-                    "div",
-                    { staticClass: "form-group col-md-3" },
-                    [
+                _vm.$roleSeller != _vm.login_user.role.name
+                  ? _c("div", { staticClass: "row" }, [
                       _c(
-                        "b-dropdown",
-                        {
-                          staticClass: "m-2",
-                          attrs: {
-                            size: "sm",
-                            dropright: "",
-                            text: _vm.__("actions"),
-                            "split-variant": "outline-primary",
-                            variant: "primary",
-                            disabled: _vm.selectedItems.length === 0,
-                          },
-                        },
+                        "div",
+                        { staticClass: "form-group col-md-3" },
                         [
                           _c(
-                            "b-dropdown-item",
+                            "b-dropdown",
                             {
-                              attrs: { href: "javascript:void(0);" },
-                              on: { click: _vm.multipleDelete },
+                              staticClass: "m-2",
+                              attrs: {
+                                size: "sm",
+                                dropright: "",
+                                text: _vm.__("actions"),
+                                "split-variant": "outline-primary",
+                                variant: "primary",
+                                disabled: _vm.selectedItems.length === 0,
+                              },
                             },
                             [
                               _c(
-                                "span",
+                                "b-dropdown-item",
                                 {
-                                  staticClass: "text-danger",
-                                  staticStyle: { "font-weight": "bold" },
+                                  attrs: { href: "javascript:void(0);" },
+                                  on: { click: _vm.multipleDelete },
                                 },
                                 [
-                                  _c("i", { staticClass: "fa fa-trash" }),
-                                  _vm._v(
-                                    " " +
-                                      _vm._s(_vm.__("delete_selected_products"))
+                                  _c(
+                                    "span",
+                                    {
+                                      staticClass: "text-danger",
+                                      staticStyle: { "font-weight": "bold" },
+                                    },
+                                    [
+                                      _c("i", { staticClass: "fa fa-trash" }),
+                                      _vm._v(
+                                        " " +
+                                          _vm._s(
+                                            _vm.__("delete_selected_products")
+                                          )
+                                      ),
+                                    ]
                                   ),
                                 ]
                               ),
-                            ]
+                            ],
+                            1
                           ),
                         ],
                         1
                       ),
-                    ],
-                    1
-                  ),
-                ]),
+                    ])
+                  : _vm._e(),
                 _vm._v(" "),
                 _c(
                   "b-row",
@@ -1615,6 +1627,32 @@ var render = function () {
                           },
                         },
                         {
+                          key: "cell(status)",
+                          fn: function (row) {
+                            return [
+                              _c(
+                                "div",
+                                {
+                                  staticClass:
+                                    "form-check form-switch d-flex justify-content-center",
+                                },
+                                [
+                                  _c("input", {
+                                    staticClass: "form-check-input",
+                                    attrs: { type: "checkbox", role: "switch" },
+                                    domProps: { checked: row.item.status == 1 },
+                                    on: {
+                                      change: function ($event) {
+                                        return _vm.toggleStatus(row.item.id)
+                                      },
+                                    },
+                                  }),
+                                ]
+                              ),
+                            ]
+                          },
+                        },
+                        {
                           key: "cell(return_status)",
                           fn: function (row) {
                             return [
@@ -1753,47 +1791,12 @@ var render = function () {
                                                       record: row.item,
                                                     },
                                                   },
-                                                  title: _vm.__("view"),
+                                                  title: _vm.__("view_ratings"),
                                                 },
                                               },
                                               [
                                                 _c("i", {
                                                   staticClass: "fa fa-star",
-                                                }),
-                                              ]
-                                            )
-                                          : _vm._e(),
-                                        _vm._v(" "),
-                                        _vm.$can("product_update")
-                                          ? _c(
-                                              "router-link",
-                                              {
-                                                directives: [
-                                                  {
-                                                    name: "b-tooltip",
-                                                    rawName:
-                                                      "v-b-tooltip.hover",
-                                                    modifiers: { hover: true },
-                                                  },
-                                                ],
-                                                staticClass:
-                                                  "btn btn-success btn-sm",
-                                                attrs: {
-                                                  to: {
-                                                    name: "SellerCloneProduct",
-                                                    params: {
-                                                      id: row.item.id,
-                                                      record: row.item,
-                                                      clone: true,
-                                                    },
-                                                  },
-                                                  title:
-                                                    _vm.__("clone_product"),
-                                                },
-                                              },
-                                              [
-                                                _c("i", {
-                                                  staticClass: "fa fa-clone",
                                                 }),
                                               ]
                                             )
@@ -1933,7 +1936,8 @@ var render = function () {
                                           : _vm._e(),
                                       ],
                                   _vm._v(" "),
-                                  _vm.$can("product_delete")
+                                  _vm.$can("product_delete") &&
+                                  _vm.$roleSeller != _vm.login_user.role.name
                                     ? _c(
                                         "button",
                                         {
