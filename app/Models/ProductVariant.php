@@ -17,6 +17,7 @@ class ProductVariant extends Model
         'measurement',
         'price',
         'purchase_price',
+        
         'discounted_price',
         'stock',
         'stock_unit_id',

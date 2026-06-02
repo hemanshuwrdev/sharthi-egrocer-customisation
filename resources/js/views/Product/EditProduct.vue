@@ -118,7 +118,8 @@
                                                             :placeholder="__('enter_product_name')"
                                                             v-model="translations[language.id].name"
                                                             :required="language.is_default ? true : undefined"
-                                                            @input="handleDefaultLanguageInput('name', language)">
+                                                            @input="handleDefaultLanguageInput('name', language)"
+                                                            :disabled="isSellerRole">
                                                     </div>
 
                                                     <template v-if="language.is_default">
@@ -150,7 +151,8 @@
                                                             <label for="tax_id" class="control-label">{{ __('tax')
                                                                 }}</label>
                                                             <select id="tax_id" name="tax_id"
-                                                                class="form-control form-select" v-model="tax_id">
+                                                                class="form-control form-select" v-model="tax_id"
+                                                                :disabled="isSellerRole">
                                                                 <option value="0">{{ __('select_tax') }}</option>
                                                                 <option v-for="tax in translatedTaxes" :value="tax.id">
                                                                     {{ tax.title }}
@@ -162,7 +164,8 @@
                                                                 <label>{{ __('brands') }}</label>
                                                                 <multiselect v-model="brand" :options="translatedBrands"
                                                                     :placeholder="__('select_and_search_brands')"
-                                                                    label="name" track-by="id" required>
+                                                                    label="name" track-by="id" required
+                                                                    :disabled="isSellerRole">
                                                                     <template slot="singleLabel" slot-scope="props">
                                                                         <span class="option__desc">
                                                                             <span class="option__title">{{
@@ -190,7 +193,7 @@
                                                                 <button type="button"
                                                                     class="btn btn-outline-primary me-3 my-2 ai-generate-btn"
                                                                     @click="generateDescription"
-                                                                    :disabled="isGeneratingAI">
+                                                                    :disabled="isGeneratingAI || isSellerRole">
                                                                     <!-- AI Processing State -->
                                                                     <template v-if="isGeneratingAI">
                                                                         <span class="ai-spinner me-2"></span>
@@ -205,7 +208,7 @@
                                                                 </button>
                                                                 <label class="my-2 d-flex align-items-center">
                                                                     <input type="checkbox" v-model="useCustomPrompt"
-                                                                        class="me-2" />
+                                                                        class="me-2" :disabled="isSellerRole" />
                                                                     <span class="mt-1">{{ __('use_custom_prompt')
                                                                     }}</span>
                                                                 </label>
@@ -217,7 +220,8 @@
                                                                 <label>{{ __('custom_prompt') }}</label>
                                                                 <textarea class="form-control" v-model="customPrompt"
                                                                     rows="3"
-                                                                    placeholder="e.g. Write a fun and engaging description focusing on features and benefits"></textarea>
+                                                                    placeholder="e.g. Write a fun and engaging description focusing on features and benefits"
+                                                                    :disabled="isSellerRole"></textarea>
                                                             </div>
                                                         </div>
                                                     </template>
@@ -237,6 +241,7 @@
                                                                 @input="handleTagInput(language.id, $event)"
                                                                 @change="handleTagInput(language.id, $event)"
                                                                 placeholder="Select Tags" no-add-on-enter
+                                                                :disabled="isSellerRole"
                                                                 :options="tagsOptions" separator=" ,;" :settings="{
                                                                     tags: true,
                                                                     multiple: true,
@@ -256,7 +261,8 @@
                                                             <editor :placeholder="__('enter_product_description')"
                                                                 v-model="translations[language.id].description"
                                                                 :init="getEditorConfig()"
-                                                                @input="handleDefaultLanguageInput('description', language)" />
+                                                                @input="handleDefaultLanguageInput('description', language)"
+                                                                :disabled="isSellerRole" />
                                                         </div>
                                                     </div>
 
@@ -266,7 +272,8 @@
                                                             <label>{{ __('manufacturer') }}</label>
                                                             <input type="text" class="form-control"
                                                                 :placeholder="__('enter_manufacturer')"
-                                                                v-model="translations[language.id].manufacturer">
+                                                                v-model="translations[language.id].manufacturer"
+                                                                :disabled="isSellerRole">
                                                         </div>
                                                     </div>
 
@@ -278,11 +285,11 @@
                                                                         class="text-danger">*</i></label>
                                                                 <input type="file" name="image" accept="image/*"
                                                                     ref="file_image" v-on:change="fileImage"
-                                                                    class="file-input">
+                                                                    class="file-input" :disabled="isSellerRole">
 
                                                                 <div class="file-input-div bg-gray-100"
-                                                                    @click="triggerRefClick('file_image')"
-                                                                    @drop="dropFile" @dragover="$dragoverFile"
+                                                                    @click="!isSellerRole && triggerRefClick('file_image')"
+                                                                    @drop="!isSellerRole && dropFile" @dragover="$dragoverFile"
                                                                     @dragleave="$dragleaveFile">
                                                                     <template v-if="main_image_name == ''">
                                                                         <label><i
@@ -317,11 +324,11 @@
                                                                 <input type="file" name="other_images[]"
                                                                     accept="image/*" id="other_images"
                                                                     v-on:change="otherImage" multiple=""
-                                                                    ref="file_other_images" class="file-input">
+                                                                    ref="file_other_images" class="file-input" :disabled="isSellerRole">
 
                                                                 <div class="file-input-div bg-gray-100"
-                                                                    @click="triggerRefClick('file_other_images')"
-                                                                    @drop="dropFileOtherImage" @dragover="$dragoverFile"
+                                                                    @click="!isSellerRole && triggerRefClick('file_other_images')"
+                                                                    @drop="!isSellerRole && dropFileOtherImage" @dragover="$dragoverFile"
                                                                     @dragleave="$dragleaveFile">
                                                                     <template v-if="images.length === 0">
                                                                         <label><i
@@ -358,7 +365,7 @@
                                                                             alt='Selected Other Image' />
                                                                         <button type="button"
                                                                             @click="removeOtherImage(images.indexOf(image))"
-                                                                            class="btn btn-sm btn-danger btn-remove"> <i
+                                                                            class="btn btn-sm btn-danger btn-remove" v-if="!isSellerRole"> <i
                                                                                 class="fa fa-times-circle"></i>
                                                                         </button>
                                                                     </div>
@@ -375,7 +382,7 @@
                                                                             title='Other Image' alt='Other Image' />
                                                                         <button type="button"
                                                                             @click="deleteImage(index, image.id, true)"
-                                                                            class="btn btn-sm btn-danger btn-remove"> <i
+                                                                            class="btn btn-sm btn-danger btn-remove" v-if="!isSellerRole"> <i
                                                                                 class="fa fa-times-circle"></i>
                                                                         </button>
                                                                     </div>
@@ -460,7 +467,7 @@
                                     :disabled="isLoading"> {{ __('save') }}
                                     <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
                                 </b-button>
-                                <button type="button" class="btn btn-danger" @click="clearForm">{{ __('clear')
+                                <button type="button" class="btn btn-danger" @click="clearForm" v-if="!isSellerRole">{{ __('clear')
                                     }}</button>
                             </div>
                         </div>
@@ -479,7 +486,7 @@
                                             <b-form-radio-group v-model="type" :options="[
                                                 { text: __('packet'), 'value': 'packet' },
                                                 { text: __('loose'), 'value': 'loose' },
-                                            ]" buttons button-variant="outline-primary"></b-form-radio-group>
+                                            ]" buttons button-variant="outline-primary" :disabled="isSellerRole"></b-form-radio-group>
                                         </div>
                                         <div class="form-group col-md-6">
                                             <label class="control-label">{{ __('stock_limit') }} <i
@@ -487,7 +494,7 @@
                                             <b-form-radio-group v-model="is_unlimited_stock" :options="[
                                                 { text: __('limited'), 'value': 0 },
                                                 { text: __('unlimited'), 'value': 1 },
-                                            ]" buttons button-variant="outline-primary"></b-form-radio-group>
+                                            ]" buttons button-variant="outline-primary" :disabled="isSellerRole"></b-form-radio-group>
                                         </div>
                                     </div>
                                 </div>
@@ -497,6 +504,7 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-group">
+
                                                 <label>{{ __('SKU') }}</label>
                                                 <input type="text" class="form-control"
                                                     placeholder="e.g. SUG-1KG" v-model="input.packet_sku">
@@ -506,11 +514,11 @@
                                             <div class="form-group">
                                                 <label>{{ __('measurement') }} <i class="text-danger">*</i></label>
                                                 <input type="number" step="any" min="0" class="form-control"
-                                                    placeholder="0" v-model="input.packet_measurement">
+                                                    placeholder="0" v-model="input.packet_measurement" :disabled="isSellerRole">
                                             </div>
                                         </div>
 
-                                        <div class="col-md-4">
+                                        <div class="col-md-4" v-if="isSellerRole">
                                             <div class="form-group">
                                                 <label>{{ __('price') }} ( {{ $currency }} ) <i
                                                         class="text-danger">*</i></label>
@@ -518,7 +526,7 @@
                                                     placeholder="0.00" v-model="input.packet_price" required>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-4" v-if="isSellerRole">
                                             <div class="form-group">
                                                 <label>{{ __('purchase_price') }} ( {{ $currency }} )
                                                     <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
@@ -528,7 +536,7 @@
                                                     placeholder="0.00" v-model="input.packet_purchase_price">
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-4" v-if="isSellerRole">
                                             <div class="form-group">
                                                 <label>{{ __('discounted_price') }} ( {{ $currency }} )</label>
                                                 <input type="number" min="0" step="any" class="form-control"
@@ -538,7 +546,7 @@
                                                     input.validationErrorDiscountedPrice }}</span>
                                             </div>
                                         </div>
-                                        <div class="col-md-4" v-if="is_unlimited_stock != 1">
+                                        <div class="col-md-4" v-if="isSellerRole && is_unlimited_stock != 1">
                                             <div class="form-group">
                                                 <label>{{ __('stock') }} <i class="text-danger">*</i></label>
                                                 <input type="number" step="any" min="0" class="form-control"
@@ -549,7 +557,7 @@
                                             <div class="form-group">
                                                 <label>{{ __('unit') }} <i class="text-danger">*</i></label>
                                                 <select class="form-control form-select" @change="changeUnits()"
-                                                    v-model="input.packet_stock_unit_id">
+                                                    v-model="input.packet_stock_unit_id" :disabled="isSellerRole">
                                                     <option value="">{{ __('select_unit') }}</option>
 
                                                     <option v-for="(unit, key) in units" :value="unit.id">{{
@@ -559,6 +567,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
+
                                                 <label>{{ __('Secondary Unit (Outer Case/Bag)') }}</label>
                                                 <select class="form-control form-select"
                                                     v-model="input.packet_secondary_unit_id">
@@ -570,6 +579,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
+
                                                 <label>{{ __('Secondary Unit Value (Items Per Case/Bag)') }}</label>
                                                 <input type="number" step="any" min="0" 
                                                 class="form-control"
@@ -580,7 +590,7 @@
                                             <div class="form-group">
                                                 <label>{{ __('status') }} <i class="text-danger">*</i></label>
                                                 <select class="form-control form-select" v-model="input.packet_status"
-                                                    required>
+                                                    required :disabled="isSellerRole">
                                                     <option value="">{{ __('select_status') }}</option>
                                                     <option value="1">{{ __('available') }}</option>
                                                     <option value="0">{{ __('sold_out') }}</option>
@@ -591,10 +601,10 @@
                                             <div class="form-group">
                                                 <label>{{ __('variant_images') }}</label>
                                                 <input type="file" accept="image/*" :ref="'packet_variant_images_' + k"
-                                                    multiple class="file-input" v-on:change="variantImagesChanges(k)">
+                                                    multiple class="file-input" v-on:change="variantImagesChanges(k)" :disabled="isSellerRole">
 
                                                 <div class="file-input-div bg-gray-100"
-                                                    @click="$refs['packet_variant_images_' + k][0].click()"
+                                                    @click="!isSellerRole && $refs['packet_variant_images_' + k][0].click()"
                                                     @dragover="$dragoverFile" @dragleave="$dragleaveFile">
                                                     <label><i class="fa fa-cloud-upload-alt fa-2x"></i></label>
                                                     <label>{{ __('drop_files_here_or_click_to_upload') }}</label>
@@ -620,7 +630,7 @@
                                                             alt='Variant Image' />
                                                         <button type="button"
                                                             @click="deleteImage(index, image.id, false, k)"
-                                                            class="btn btn-sm btn-danger btn-remove"> <i
+                                                            class="btn btn-sm btn-danger btn-remove" v-if="!isSellerRole"> <i
                                                                 class="fa fa-times-circle"></i>
                                                         </button>
                                                     </div>
@@ -629,13 +639,13 @@
                                             </div>
                                         </div>
 
-                                        <div class="col-md-2 offset-md-10 text-end" v-if="k === 0">
+                                        <div class="col-md-2 offset-md-10 text-end" v-if="k === 0 && !isSellerRole">
                                             <a style="cursor: pointer;" class="btn btn-primary" v-b-tooltip.hover
                                                 title="Add variant of product" @click="addRow">
                                                 <i class="fa fa-plus-square"></i> {{ __('add_variant') }}
                                             </a>
                                         </div>
-                                        <div class="col-md-2 offset-md-10 text-end" v-if="k !== 0">
+                                        <div class="col-md-2 offset-md-10 text-end" v-if="k !== 0 && !isSellerRole">
                                             <a style="cursor: pointer;" class="btn btn-danger" v-b-tooltip.hover
                                                 title="Remove variant of product" @click="remove(k)">
                                                 <i class="fa fa-times"></i> {{ __('remove_variant') }}
@@ -654,12 +664,12 @@
 
                                                     <b-input-group class="mb-2">
                                                         <input type="number" step="any" min="0" class="form-control"
-                                                            placeholder="0" v-model="input.loose_measurement">
+                                                            placeholder="0" v-model="input.loose_measurement" :disabled="isSellerRole">
                                                     </b-input-group>
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-4">
+                                            <div class="col-md-4" v-if="isSellerRole">
                                                 <div class="form-group loose_div">
                                                     <label>{{ __('price') }} ( {{ $currency }} ): <i
                                                             class="text-danger">*</i></label>
@@ -668,7 +678,7 @@
                                                 </div>
                                             </div>
                                      
-                                            <div class="col-md-4">
+                                            <div class="col-md-4" v-if="isSellerRole">
                                                 <div class="form-group loose_div">
                                                     <label for="discounted_price">{{ __('discounted_price') }} ( {{
                                                         $currency }} ):</label>
@@ -683,6 +693,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
+
                                                     <label>{{ __('SKU') }}</label>
                                                     <input type="text" class="form-control"
                                                         placeholder="e.g. SUG-1KG-L" v-model="input.loose_sku">
@@ -690,6 +701,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
+
                                                     <label>{{ __('Secondary Unit (Outer Case/Bag)') }}</label>
                                                     <select class="form-control form-select"
                                                         v-model="input.loose_secondary_unit_id">
@@ -701,6 +713,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
+
                                                     <label>{{ __('Secondary Unit Value (Items Per Case/Bag)') }}</label>
                                                     <input type="number" step="any" min="0" class="form-control"
                                                         placeholder="0" v-model="input.loose_secondary_unit_value">
@@ -713,9 +726,9 @@
                                                     <input type="file" accept="image/*"
                                                         :ref="'loose_variant_images_' + k" multiple class="file-input"
                                                         v-on:change="variantImagesChanges(k)" @dragover="$dragoverFile"
-                                                        @dragleave="$dragleaveFile">
+                                                        @dragleave="$dragleaveFile" :disabled="isSellerRole">
                                                     <div class="file-input-div bg-gray-100"
-                                                        @click="$refs['loose_variant_images_' + k][0].click()">
+                                                        @click="!isSellerRole && $refs['loose_variant_images_' + k][0].click()">
                                                         <label><i class="fa fa-cloud-upload-alt fa-2x"></i></label>
                                                         <label>{{ __('drop_files_here_or_click_to_upload') }}</label>
                                                     </div>
@@ -730,7 +743,7 @@
                                                                 alt='Variant Image' />
                                                             <button type="button"
                                                                 @click="deleteImage(index, image.id, false, k)"
-                                                                class="btn btn-sm btn-danger btn-remove"> <i
+                                                                class="btn btn-sm btn-danger btn-remove" v-if="!isSellerRole"> <i
                                                                     class="fa fa-times-circle"></i>
                                                             </button>
                                                         </div>
@@ -749,13 +762,13 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-2 offset-md-10 text-end" v-if="k === 0">
+                                            <div class="col-md-2 offset-md-10 text-end" v-if="k === 0 && !isSellerRole">
                                                 <a style="cursor: pointer;" class="btn btn-primary" v-b-tooltip.hover
                                                     title="Add variant of product" @click="addRow">
                                                     <i class="fa fa-plus-square"></i> {{ __('add_variant') }}
                                                 </a>
                                             </div>
-                                            <div class="col-md-2 offset-md-10 text-end" v-if="k !== 0">
+                                            <div class="col-md-2 offset-md-10 text-end" v-if="k !== 0 && !isSellerRole">
                                                 <a style="cursor: pointer;" class="btn btn-danger" v-b-tooltip.hover
                                                     title="Remove variant of product" @click="remove(k)">
                                                     <i class="fa fa-times"></i> {{ __('remove_variant') }}
@@ -766,18 +779,18 @@
                                 </div>
 
                                 <div class="row mt-3" id="loose_stock_div" v-if="type === 'loose'">
-                                    <div class="col-md-4">
-    <div class="form-group">
-        <label>{{ __('purchase_price') }} ( {{ $currency }} )
-            <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
-                title="This field is used to calculate in your report"></i>
-        </label>
-        <input type="number" step="any" min="0" class="form-control"
-            placeholder="0.00" v-model="loose_purchase_price">
-    </div>
-</div>
+                                    <div class="col-md-4" v-if="isSellerRole">
+                                        <div class="form-group">
+                                            <label>{{ __('purchase_price') }} ( {{ $currency }} )
+                                                <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
+                                                    title="This field is used to calculate in your report"></i>
+                                            </label>
+                                            <input type="number" step="any" min="0" class="form-control"
+                                                placeholder="0.00" v-model="loose_purchase_price">
+                                        </div>
+                                    </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-4" v-if="isSellerRole">
                                         <div class="form-group" v-if="is_unlimited_stock != 1">
                                             <label>{{ __('stock') }} <i class="text-danger">*</i></label>
                                             <input type="number" step="any" min="0" class="form-control"
@@ -788,7 +801,7 @@
                                         <div class="form-group">
                                             <label>{{ __('unit') }} <i class="text-danger">*</i></label>
                                             <select class="form-control form-select" name="loose_stock_unit_id"
-                                                v-model="loose_stock_unit_id">
+                                                v-model="loose_stock_unit_id" :disabled="isSellerRole">
                                                 <option value="">{{ __('select_unit') }}</option>
                                                 <option v-for="(unit, key) in units" :value="unit.id">{{ unit.short_code
                                                     }}</option>
@@ -798,7 +811,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{ __('status') }} <i class="text-danger">*</i></label>
-                                            <select name="status" class="form-control form-select" v-model="status">
+                                            <select name="status" class="form-control form-select" v-model="status" :disabled="isSellerRole">
                                                 <option value="">{{ __('select_status') }}</option>
                                                 <option value="1">{{ __('available') }}</option>
                                                 <option value="0">{{ __('sold_out') }}</option>
@@ -819,45 +832,52 @@
                             <div class="card-body">
                                 <div class="row">
                                     <!-- Row: Category, Product type, Product status -->
-                                    <div class="col-md-4">
+                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'">
                                         <div class="form-group mb-3">
                                             <label>{{ __('category') }} <i class="text-danger">*</i></label>
                                             <select class="form-control form-select" v-model="category_id"
-                                                :disabled="!seller_id && !isSellerRole" v-html="categoryOptionsHtml">
-                                            </select>
+                                                 :disabled="isSellerRole || !seller_id" v-html="categoryOptionsHtml">
+                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'">
                                         <div class="form-group mb-3">
                                             <label>{{ __('product_type') }} </label>
-                                            <select class="form-control form-select" v-model="product_type">
-                                                <option value="">{{ __('select_type') }}</option>
-                                                <option value="1">{{ __('veg') }}</option>
-                                                <option value="2">{{ __('non_veg') }}</option>
-                                            </select>
+                                            <select class="form-control form-select" v-model="product_type" :disabled="isSellerRole">
+                                                 <option value="">{{ __('select_type') }}</option>
+                                                 <option value="1">{{ __('veg') }}</option>
+                                                 <option value="2">{{ __('non_veg') }}</option>
+                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <template v-if="isSellerRole">
-                                            <input type="hidden" v-model="is_approved">
-                                        </template>
-                                        <template v-else>
-                                            <div class="form-group mb-3">
-                                                <label class="control-label">{{ __('product_status') }}</label><br>
-                                                <div id="status" class="btn-group">
-                                                    <label class="btn btn-primary" data-toggle-class="btn-primary"
-                                                        data-toggle-passive-class="btn-default">
-                                                        <input type="radio" v-model="is_approved" value="1"> {{
-                                                            __('approved') }}
-                                                    </label>
-                                                    <label class="btn btn-danger" data-toggle-class="btn-danger"
-                                                        data-toggle-passive-class="btn-default">
-                                                        <input type="radio" v-model="is_approved" value="0">
-                                                        {{ __('not_approved') }}
-                                                    </label>
-                                                </div>
+                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'" v-if="!isSellerRole">
+                                        <div class="form-group mb-3">
+                                            <label class="control-label">{{ __('product_status') }}</label><br>
+                                            <div id="status" class="btn-group">
+                                                <label class="btn" :class="is_approved == 1 ? 'btn-success text-white' : 'btn-outline-success'" style="font-weight: 600;">
+                                                    <input type="radio" v-model="is_approved" value="1" style="display: none;"> {{ __('approved') }}
+                                                </label>
+                                                <label class="btn" :class="is_approved == 0 ? 'btn-danger text-white' : 'btn-outline-danger'" style="font-weight: 600;">
+                                                    <input type="radio" v-model="is_approved" value="0" style="display: none;"> {{ __('not_approved') }}
+                                                </label>
                                             </div>
-                                        </template>
+                                        </div>
+                                    </div>
+                                    <template v-else>
+                                        <input type="hidden" v-model="is_approved">
+                                    </template>
+                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'">
+                                        <div class="form-group mb-3">
+                                            <label class="control-label">{{ __('status') }}</label><br>
+                                            <div id="status" class="btn-group">
+                                                <label class="btn" :class="status == 1 ? 'btn-success text-white' : 'btn-outline-success'" style="font-weight: 600;">
+                                                    <input type="radio" v-model="status" value="1" style="display: none;"> {{ __('active') }}
+                                                </label>
+                                                <label class="btn" :class="status == 0 ? 'btn-danger text-white' : 'btn-outline-danger'" style="font-weight: 600;">
+                                                    <input type="radio" v-model="status" value="0" style="display: none;"> {{ __('deactive') }}
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Row: Manufacturer, Made in -->
@@ -865,15 +885,15 @@
                                         <div class="form-group mb-3">
                                             <label>{{ __('manufacturer') }} / Parent Company</label>
                                             <input type="text" class="form-control" v-model="manufacturer"
-                                                :placeholder="__('enter_manufacturer')">
+                                                 :placeholder="__('enter_manufacturer')" :disabled="isSellerRole">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label>{{ __('made_in') }}</label>
                                             <multiselect v-model="made_in" :options="countries"
-                                                :placeholder="__('select_and_search_country_name')" label="name"
-                                                track-by="name" required>
+                                                 :placeholder="__('select_and_search_country_name')" label="name"
+                                                 track-by="name" required :disabled="isSellerRole">
                                                 <template slot="singleLabel" slot-scope="props">
                                                     <span class="option__desc">
                                                         <span class="option__title">{{ props.option.name }}</span>
@@ -897,7 +917,7 @@
                                         <div class="form-group mb-3">
                                             <label for="fssai_lic">{{ __('fssai_lic_no') }}</label>
                                             <input type="text" id="fssai_lic" class="form-control" :placeholder="__('fssai_lic_no')"
-                                                v-model="fssai_lic_no" @input="validateFSSAINumber">
+                                                v-model="fssai_lic_no" @input="validateFSSAINumber" :disabled="isSellerRole">
                                             <p style="color:red" v-if="validationMessage">{{ validationMessage
                                                 }}</p>
                                             <p style="color:green" v-else-if="isValid">FSSAI License Number is
@@ -908,7 +928,7 @@
                                         <div class="form-group mb-3">
                                             <label for="barcode">{{ __('barcode') }}</label>
                                             <input type="text" class="form-control" :placeholder="__('barcode')"
-                                                v-model="barcode" @input="validateBarcode">
+                                                v-model="barcode" @input="validateBarcode" :disabled="isSellerRole">
                                             <p style="color:red" v-if="validationBarcodeMessage">{{
                                                 validationBarcodeMessage }}</p>
                                             <p style="color:green" v-else-if="isBarcodeValid">Barcode is valid!
@@ -920,7 +940,7 @@
                                             <label>{{ __('total_allowed_quantity') }} ({{ __('keep_blank_if_no_such_limit')
                                                 }}) </label>
                                             <input type="number" min="0" class="form-control"
-                                                v-model="max_allowed_quantity">
+                                                v-model="max_allowed_quantity" :disabled="isSellerRole">
                                         </div>
                                     </div>
 
@@ -932,14 +952,14 @@
                                                 <b-form-radio-group v-model="return_status" :options="[
                                                     { text: __('no'), 'value': 0 },
                                                     { text: __('yes'), 'value': 1 },
-                                                ]" buttons button-variant="outline-primary" required></b-form-radio-group>
+                                                ]" buttons button-variant="outline-primary" required :disabled="isSellerRole"></b-form-radio-group>
                                             </div>
                                             <div v-if="return_status == 1" class="ms-2">
                                                 <label for="return_day">{{ __('max_return_days') }}</label>
                                                 <input type="number" step="any" :min="return_status == 1 ? 1 : 0"
                                                     :required="return_status == 1 ? true : undefined" id="return_day"
                                                     class="form-control" :placeholder="__('number_of_days_to_return')"
-                                                    v-model="return_days">
+                                                    v-model="return_days" :disabled="isSellerRole">
                                             </div>
                                         </div>
                                     </div>
@@ -950,14 +970,14 @@
                                                 <b-form-radio-group v-model="cancelable_status" :options="[
                                                     { text: __('no'), 'value': 0 },
                                                     { text: __('yes'), 'value': 1 },
-                                                ]" buttons button-variant="outline-primary"></b-form-radio-group>
+                                                ]" buttons button-variant="outline-primary" :disabled="isSellerRole"></b-form-radio-group>
                                             </div>
                                             <div v-if="cancelable_status === 1" class="ms-2">
                                                 <label for="till_status">{{ __('till_which_status') }} <i
                                                     class="text-danger">*</i></label>
                                                 <select id="till_status" class="form-control form-select"
                                                     v-model="till_status"
-                                                    :required="cancelable_status === 1 ? true : undefined">
+                                                    :required="cancelable_status === 1 ? true : undefined" :disabled="isSellerRole">
                                                     <option value="">{{ __('select_order_status') }}</option>
                                                     <option v-for="status in order_status" :value="status.id">{{
                                                         getStatusDisplayName(status) }}
@@ -972,7 +992,7 @@
                                             <b-form-radio-group v-model="cod_allowed_status" :options="[
                                                 { text: __('no'), 'value': 0 },
                                                 { text: __('yes'), 'value': 1 },
-                                            ]" buttons button-variant="outline-primary"></b-form-radio-group>
+                                            ]" buttons button-variant="outline-primary" :disabled="isSellerRole"></b-form-radio-group>
                                         </div>
                                     </div>
                                 </div>
@@ -984,7 +1004,7 @@
                                     :disabled="isLoading"> {{ __('save') }}
                                     <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
                                 </b-button>
-                                <button type="button" class="btn btn-danger" @click="clearForm">{{ __('clear')
+                                <button type="button" class="btn btn-danger" @click="clearForm" v-if="!isSellerRole">{{ __('clear')
                                     }}</button>
                             </div>
                         </div>
