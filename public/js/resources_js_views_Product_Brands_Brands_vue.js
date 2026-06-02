@@ -412,6 +412,18 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -422,6 +434,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     return {
       id: null,
       status: 1,
+      is_overlap_allowed: 1,
       languages: [],
       defaultLanguageId: null,
       activeTab: 0,
@@ -468,6 +481,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       this.image = "";
       this.image_url = "";
       this.status = 1;
+      this.is_overlap_allowed = 1;
       this.activeTab = 0;
 
       // re-init empty translations
@@ -547,12 +561,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           id: this.id
         }
       }).then(function (res) {
+        var _brand$is_overlap_all;
         var brand = Array.isArray(res.data.data) ? res.data.data[0] : res.data.data;
         if (!brand) {
           console.error('Brand not found');
           return;
         }
         _this4.status = brand.status;
+        _this4.is_overlap_allowed = (_brand$is_overlap_all = brand.is_overlap_allowed) !== null && _brand$is_overlap_all !== void 0 ? _brand$is_overlap_all : 1;
         _this4.image_url = brand.image_url || "";
 
         // Ensure all languages are initialized first
@@ -647,7 +663,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   _i = 0, _languagesToSave = languagesToSave;
                 case 2:
                   if (!(_i < _languagesToSave.length)) {
-                    _context.next = 18;
+                    _context.next = 19;
                     break;
                   }
                   lang = _languagesToSave[_i];
@@ -656,20 +672,21 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   fd.append('language_id', lang.id);
                   fd.append('name', _this7.form[lang.id].name);
                   fd.append('status', _this7.status);
+                  fd.append('is_overlap_allowed', _this7.is_overlap_allowed);
                   if (lang.is_default && _this7.image) fd.append('image', _this7.image);
                   url = brandId ? _this7.$apiUrl + '/products/brands/update' : _this7.$apiUrl + '/products/brands/save';
-                  _context.next = 13;
+                  _context.next = 14;
                   return axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, fd);
-                case 13:
+                case 14:
                   res = _context.sent;
                   if (!brandId && (_res$data$data = res.data.data) !== null && _res$data$data !== void 0 && _res$data$data.id) brandId = res.data.data.id;
-                case 15:
+                case 16:
                   _i++;
                   _context.next = 2;
                   break;
-                case 18:
-                  return _context.abrupt("return", brandId);
                 case 19:
+                  return _context.abrupt("return", brandId);
+                case 20:
                 case "end":
                   return _context.stop();
               }
@@ -1953,6 +1970,56 @@ var render = function () {
                                         _vm.status = $$v
                                       },
                                       expression: "status",
+                                    },
+                                  }),
+                                ],
+                                1
+                              ),
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        lang.is_default
+                          ? _c("div", { staticClass: "form-group" }, [
+                              _c("label", [
+                                _vm._v(_vm._s(_vm.__("overlap_allowed"))),
+                              ]),
+                              _vm._v(" "),
+                              _c("i", {
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.hover",
+                                    modifiers: { hover: true },
+                                  },
+                                ],
+                                staticClass: "fa fa-info-circle text-muted",
+                                attrs: {
+                                  title: _vm.__(
+                                    "if_allowed_multiple_distributors_can_sell_this_brand_in_the_same_territory"
+                                  ),
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "col-md-9 text-left mt-1" },
+                                [
+                                  _c("b-form-radio-group", {
+                                    attrs: {
+                                      options: [
+                                        { text: _vm.__("no"), value: 0 },
+                                        { text: _vm.__("yes"), value: 1 },
+                                      ],
+                                      buttons: "",
+                                      "button-variant": "outline-primary",
+                                      required: "",
+                                    },
+                                    model: {
+                                      value: _vm.is_overlap_allowed,
+                                      callback: function ($$v) {
+                                        _vm.is_overlap_allowed = $$v
+                                      },
+                                      expression: "is_overlap_allowed",
                                     },
                                   }),
                                 ],

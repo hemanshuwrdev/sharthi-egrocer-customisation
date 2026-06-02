@@ -571,7 +571,8 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>{{ __('Secondary Unit Value (Items Per Case/Bag)') }}</label>
-                                                <input type="number" step="any" min="0" class="form-control"
+                                                <input type="number" step="any" min="0" 
+                                                class="form-control"
                                                     placeholder="0" v-model="input.packet_secondary_unit_value">
                                             </div>
                                         </div>
