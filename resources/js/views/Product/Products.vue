@@ -27,11 +27,7 @@
                         <div class="card-header">
                             <h4>{{ __('products') }}</h4>
                             <span class="pull-right">
-                                <template v-if="$roleSeller == login_user.role.name">
-                                    <router-link to="/seller/manage_products/create" class="btn btn-primary"
-                                        v-b-tooltip.hover title="Add Product">{{ __('add_product') }}</router-link>
-                                </template>
-                                <template v-else>
+                                <template v-if="$roleSeller != login_user.role.name">
                                     <router-link to="/manage_products/create" class="btn btn-primary" v-b-tooltip.hover
                                         title="Add Product">{{ __('add_product') }}</router-link>
                                 </template>
@@ -39,15 +35,15 @@
                         </div>
 
                         <div class="card-body">
-                            <div class="row">
+                            <div class="row" v-if="$roleSeller != login_user.role.name">
                                 <div class="form-group col-md-3">
                                     <b-dropdown size="sm" dropright :text="__('actions')"
                                         split-variant="outline-primary" variant="primary" class="m-2"
                                         :disabled="selectedItems.length === 0">
                                         <b-dropdown-item href="javascript:void(0);" @click="multipleDelete"><span
                                                 class="text-danger" style="font-weight: bold;"><i
-                                                    class="fa fa-trash"></i> {{ __('delete_selected_products')
-                                                }}</span>
+                                                     class="fa fa-trash"></i> {{ __('delete_selected_products')
+                                                 }}</span>
                                         </b-dropdown-item>
                                     </b-dropdown>
                                 </div>
@@ -161,6 +157,13 @@
                                         <span class='badge bg-danger'
                                             v-if="row.item.is_approved == 0">{{ __('not_approved') }}</span>
                                     </template>
+                                    <template #cell(status)="row">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                :checked="row.item.status == 1"
+                                                @change="toggleStatus(row.item.id)">
+                                        </div>
+                                    </template>
                                     <template #cell(return_status)="row">
                                         <span class='badge bg-danger'
                                             v-if="row.item.return_status == 0">{{ __('not_allowed') }}</span>
@@ -192,14 +195,8 @@
                                                 <router-link
                                                     :to="{ name: 'SellerProductRatings', params: { id: row.item.id, record: row.item } }"
                                                     class="btn btn-success btn-sm" v-if="$can('product_update')"
-                                                    v-b-tooltip.hover :title="__('view')">
+                                                    v-b-tooltip.hover :title="__('view_ratings')">
                                                     <i class="fa fa-star"></i>
-                                                </router-link>
-                                                <router-link
-                                                    :to="{ name: 'SellerCloneProduct', params: { id: row.item.id, record: row.item, clone: true } }"
-                                                    class="btn btn-success btn-sm" v-if="$can('product_update')"
-                                                    v-b-tooltip.hover :title="__('clone_product')">
-                                                    <i class="fa fa-clone"></i>
                                                 </router-link>
                                             </template>
                                             <template v-else>
@@ -231,7 +228,7 @@
 
                                             <button class="btn btn-danger btn-sm"
                                                 @click="deleteRecord(row.index, row.item.product_variant_id)"
-                                                v-if="$can('product_delete')" v-b-tooltip.hover :title="__('delete')">
+                                                v-if="$can('product_delete') && $roleSeller != login_user.role.name" v-b-tooltip.hover :title="__('delete')">
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </div>
@@ -289,6 +286,7 @@ export default {
                 { key: 'price', label: __('price') + '(' + this.$currency + ')', visible: true, class: 'text-center', sortable: true },
                 { key: 'discounted_price', label: __('discounted_price') + '(' + this.$currency + ')', visible: true, class: 'text-center', sortable: true },
                 { key: 'is_approved', label: __('is_approved'), visible: true, class: 'text-center', sortable: true },
+                { key: 'status', label: __('status'), visible: true, class: 'text-center', sortable: true },
                 { key: 'return_status', label: __('return'), visible: false, class: 'text-center', sortable: true },
                 { key: 'cancelable_status', label: __('cancellation'), visible: false, class: 'text-center', sortable: true },
                 { key: 'actions', label: __('actions'), visible: true }
@@ -323,7 +321,11 @@ export default {
     },
     computed: {
         visibleFields() {
-            return this.fields.filter(field => field.visible)
+            let filteredFields = this.fields.filter(field => field.visible);
+            if (this.$roleSeller === this.login_user.role.name) {
+                filteredFields = filteredFields.filter(field => field.key !== 'select');
+            }
+            return filteredFields;
         },
         isSellerRoute() {
             // Use this.$route to access the current route
@@ -536,6 +538,23 @@ export default {
                 this.totalRows = response.data.total
 
             });
+        },
+        toggleStatus(id) {
+            this.isLoading = true;
+            axios.post(this.$apiUrl + '/products/change', { id: id })
+                .then((response) => {
+                    this.isLoading = false;
+                    if (response.data.status === 1) {
+                        this.showMessage("success", response.data.message);
+                    } else {
+                        this.showError(response.data.message);
+                    }
+                    this.getRecords();
+                })
+                .catch((error) => {
+                    this.isLoading = false;
+                    this.showError(__('something_went_wrong'));
+                });
         },
         deleteRecord(index, id) {
 

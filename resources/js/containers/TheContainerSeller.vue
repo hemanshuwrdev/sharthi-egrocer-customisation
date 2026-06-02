@@ -227,11 +227,6 @@ export default {
                     permission: 'product_list',
                     submenu: [
                         {
-                            name: __('add_product'),
-                            icon: 'grid-fill',
-                            url: '/seller/manage_products/create',
-                        },
-                        {
                             name: __('manage_products'),
                             icon: 'grid-fill',
                             url: '/seller/manage_products'
@@ -245,16 +240,6 @@ export default {
                             name: __('media'),
                             icon: 'grid-fill',
                             url: '/seller/media'
-                        },
-                        {
-                            name: __('bulk_upload'),
-                            icon: 'grid-fill',
-                            url: '/seller/bulk_upload'
-                        },
-                        {
-                            name: __('bulk_update'),
-                            icon: 'grid-fill',
-                            url: '/seller/bulk_update',
                         },
                         {
                             name: __('taxes'),
