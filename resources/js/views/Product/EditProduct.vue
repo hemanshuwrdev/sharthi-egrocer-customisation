@@ -428,21 +428,24 @@
                                                             <input type="text" class="form-control"
                                                                 v-model="translations[language.id].meta_title"
                                                                 :placeholder="__('enter_meta_title')"
-                                                                @input="handleDefaultLanguageInput('meta_title', language)">
+                                                                @input="handleDefaultLanguageInput('meta_title', language)"
+                                                                :disabled="isSellerRole">
                                                         </div>
                                                         <div class="form-group mb-3">
                                                             <label>{{ __('meta_keywords') }} </label>
                                                             <input type="text" class="form-control"
                                                                 v-model="translations[language.id].meta_keywords"
                                                                 :placeholder="__('enter_meta_keywords')"
-                                                                @input="handleDefaultLanguageInput('meta_keywords', language)">
+                                                                @input="handleDefaultLanguageInput('meta_keywords', language)"
+                                                                :disabled="isSellerRole">
                                                         </div>
                                                         <div class="form-group mb-3">
                                                             <label>{{ __('schema_markup') }} </label>
                                                             <input type="text" class="form-control"
                                                                 v-model="translations[language.id].schema_markup"
                                                                 :placeholder="__('enter_schema_markup')"
-                                                                @input="handleDefaultLanguageInput('schema_markup', language)">
+                                                                @input="handleDefaultLanguageInput('schema_markup', language)"
+                                                                :disabled="isSellerRole">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
@@ -451,7 +454,8 @@
                                                             <textarea type="text" class="form-control"
                                                                 v-model="translations[language.id].meta_description"
                                                                 :placeholder="__('enter_meta_description')" rows="4"
-                                                                @input="handleDefaultLanguageInput('meta_description', language)"></textarea>
+                                                                @input="handleDefaultLanguageInput('meta_description', language)"
+                                                                :disabled="isSellerRole"></textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -504,9 +508,10 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label>{{ __('sku') }}</label>
+
+                                                <label>{{ __('SKU') }}</label>
                                                 <input type="text" class="form-control"
-                                                    placeholder="e.g. SUG-1KG" v-model="input.packet_sku" :disabled="isSellerRole">
+                                                    placeholder="e.g. SUG-1KG" v-model="input.packet_sku">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -566,10 +571,11 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label>{{ __('secondary_unit_outer_case_bag') }}</label>
+
+                                                <label>{{ __('Secondary Unit (Outer Case/Bag)') }}</label>
                                                 <select class="form-control form-select"
-                                                    v-model="input.packet_secondary_unit_id" :disabled="isSellerRole">
-                                                    <option value="">{{ __('select_secondary_unit') }}</option>
+                                                    v-model="input.packet_secondary_unit_id">
+                                                    <option value="">{{ __('Select Secondary Unit') }}</option>
                                                     <option v-for="(unit, key) in units" :value="unit.id">{{
                                                         unit.short_code }}</option>
                                                 </select>
@@ -577,9 +583,11 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label>{{ __('secondary_unit_value_items_per_case') }}</label>
-                                                <input type="number" step="any" min="0" class="form-control"
-                                                    placeholder="0" v-model="input.packet_secondary_unit_value" :disabled="isSellerRole">
+
+                                                <label>{{ __('Secondary Unit Value (Items Per Case/Bag)') }}</label>
+                                                <input type="number" step="any" min="0" 
+                                                class="form-control"
+                                                    placeholder="0" v-model="input.packet_secondary_unit_value">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -689,17 +697,19 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('sku') }}</label>
+
+                                                    <label>{{ __('SKU') }}</label>
                                                     <input type="text" class="form-control"
-                                                        placeholder="e.g. SUG-1KG-L" v-model="input.loose_sku" :disabled="isSellerRole">
+                                                        placeholder="e.g. SUG-1KG-L" v-model="input.loose_sku">
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('secondary_unit_outer_case_bag') }}</label>
+
+                                                    <label>{{ __('Secondary Unit (Outer Case/Bag)') }}</label>
                                                     <select class="form-control form-select"
-                                                        v-model="input.loose_secondary_unit_id" :disabled="isSellerRole">
-                                                        <option value="">{{ __('select_secondary_unit') }}</option>
+                                                        v-model="input.loose_secondary_unit_id">
+                                                        <option value="">{{ __('Select Secondary Unit') }}</option>
                                                         <option v-for="(unit, key) in units" :value="unit.id">{{
                                                             unit.short_code }}</option>
                                                     </select>
@@ -707,9 +717,10 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('secondary_unit_value_items_per_case') }}</label>
+
+                                                    <label>{{ __('Secondary Unit Value (Items Per Case/Bag)') }}</label>
                                                     <input type="number" step="any" min="0" class="form-control"
-                                                        placeholder="0" v-model="input.loose_secondary_unit_value" :disabled="isSellerRole">
+                                                        placeholder="0" v-model="input.loose_secondary_unit_value">
                                                 </div>
                                             </div>
                                             <div class="col-md-12 hidden">
@@ -825,7 +836,7 @@
                             <div class="card-body">
                                 <div class="row">
                                     <!-- Row: Category, Product type, Product status -->
-                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'">
+                                    <div :class="isSellerRole ? 'col-md-6' : 'col-md-4'">
                                         <div class="form-group mb-3">
                                             <label>{{ __('category') }} <i class="text-danger">*</i></label>
                                             <select class="form-control form-select" v-model="category_id"
@@ -833,7 +844,7 @@
                                              </select>
                                         </div>
                                     </div>
-                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'">
+                                    <div :class="isSellerRole ? 'col-md-6' : 'col-md-4'">
                                         <div class="form-group mb-3">
                                             <label>{{ __('product_type') }} </label>
                                             <select class="form-control form-select" v-model="product_type" :disabled="isSellerRole">
@@ -843,7 +854,7 @@
                                              </select>
                                         </div>
                                     </div>
-                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'" v-if="!isSellerRole">
+                                    <div class="col-md-4" v-if="!isSellerRole">
                                         <div class="form-group mb-3">
                                             <label class="control-label">{{ __('product_status') }}</label><br>
                                             <div id="status" class="btn-group">
@@ -859,19 +870,6 @@
                                     <template v-else>
                                         <input type="hidden" v-model="is_approved">
                                     </template>
-                                    <div :class="isSellerRole ? 'col-md-4' : 'col-md-3'">
-                                        <div class="form-group mb-3">
-                                            <label class="control-label">{{ __('status') }}</label><br>
-                                            <div id="status" class="btn-group">
-                                                <label class="btn" :class="status == 1 ? 'btn-success text-white' : 'btn-outline-success'" style="font-weight: 600;">
-                                                    <input type="radio" v-model="status" value="1" style="display: none;"> {{ __('active') }}
-                                                </label>
-                                                <label class="btn" :class="status == 0 ? 'btn-danger text-white' : 'btn-outline-danger'" style="font-weight: 600;">
-                                                    <input type="radio" v-model="status" value="0" style="display: none;"> {{ __('deactive') }}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     <!-- Row: Manufacturer, Made in -->
                                     <div class="col-md-6">
