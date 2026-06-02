@@ -13,6 +13,7 @@ class Brand extends Model
         'name',
         'image',
         'status',
+        'is_overlap_allowed',
     ];
     protected $translatable = [
         'name',

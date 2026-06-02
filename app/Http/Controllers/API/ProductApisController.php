@@ -1318,6 +1318,8 @@ class ProductApisController extends Controller
                     $variant->purchase_price = (float) $purchasePrice;
                     
                     $variant->discounted_price = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : ($variant->discounted_price ?? 0);
+
+
                     $variant->sku = isset($request->loose_sku[$index]) ? $request->loose_sku[$index] : null;
                     $variant->secondary_unit_id = isset($request->loose_secondary_unit_id[$index]) ? $request->loose_secondary_unit_id[$index] : null;
                     $variant->secondary_unit_value = isset($request->loose_secondary_unit_value[$index]) ? $request->loose_secondary_unit_value[$index] : null;
