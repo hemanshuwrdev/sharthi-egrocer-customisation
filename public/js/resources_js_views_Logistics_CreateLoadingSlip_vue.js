@@ -202,6 +202,9 @@ __webpack_require__.r(__webpack_exports__);
       if (this.loadPercent > 100) return 'bg-danger';
       if (this.loadPercent > 85) return 'bg-warning';
       return 'bg-success';
+    },
+    urlPrefix: function urlPrefix() {
+      return this.$route.path.startsWith('/seller') ? '/seller' : '';
     }
   },
   mounted: function mounted() {
@@ -311,7 +314,7 @@ __webpack_require__.r(__webpack_exports__);
         _this7.loading = false;
         if (res.data.status === 1) {
           _this7.showSuccess('Loading Slip generated and route optimized successfully!');
-          _this7.$router.push('/loading_slips');
+          _this7.$router.push(_this7.urlPrefix + '/loading_slips');
         } else {
           _this7.showError(res.data.message);
         }
@@ -488,7 +491,7 @@ var render = function () {
             {
               staticClass:
                 "btn btn-outline-secondary btn-lg font-weight-bold rounded-pill",
-              attrs: { to: "/loading_slips" },
+              attrs: { to: _vm.urlPrefix + "/loading_slips" },
             },
             [
               _c("i", { staticClass: "fa fa-arrow-left mr-2" }),

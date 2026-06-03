@@ -9,7 +9,7 @@
                 <p class="text-muted mb-0">Detailed view of planned route sequence, loaded goods, and vehicle status.</p>
             </div>
             <div class="col-auto d-flex gap-2">
-                <router-link to="/loading_slips" class="btn btn-outline-secondary font-weight-bold rounded-pill">
+                <router-link :to="urlPrefix + '/loading_slips'" class="btn btn-outline-secondary font-weight-bold rounded-pill">
                     <i class="fa fa-arrow-left mr-2"></i>Back to Slips
                 </router-link>
                 <button @click="printSlip" class="btn btn-secondary font-weight-bold rounded-pill">
@@ -163,6 +163,9 @@ export default {
             if (this.loadRatioPercent > 99) return 'text-danger';
             if (this.loadRatioPercent > 80) return 'text-warning';
             return 'text-success';
+        },
+        urlPrefix() {
+            return this.$route.path.startsWith('/seller') ? '/seller' : '';
         }
     },
     mounted() {

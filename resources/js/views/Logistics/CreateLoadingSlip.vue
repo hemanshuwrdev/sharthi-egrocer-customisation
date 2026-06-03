@@ -9,7 +9,7 @@
                 <p class="text-muted mb-0">Select delivery zone, assign driver and vehicle, and optimize the delivery routing.</p>
             </div>
             <div class="col-auto">
-                <router-link to="/loading_slips" class="btn btn-outline-secondary btn-lg font-weight-bold rounded-pill">
+                <router-link :to="urlPrefix + '/loading_slips'" class="btn btn-outline-secondary btn-lg font-weight-bold rounded-pill">
                     <i class="fa fa-arrow-left mr-2"></i>Back to Slips
                 </router-link>
             </div>
@@ -188,6 +188,9 @@ export default {
             if (this.loadPercent > 100) return 'bg-danger';
             if (this.loadPercent > 85) return 'bg-warning';
             return 'bg-success';
+        },
+        urlPrefix() {
+            return this.$route.path.startsWith('/seller') ? '/seller' : '';
         }
     },
     mounted() {
@@ -284,7 +287,7 @@ export default {
                 this.loading = false;
                 if (res.data.status === 1) {
                     this.showSuccess('Loading Slip generated and route optimized successfully!');
-                    this.$router.push('/loading_slips');
+                    this.$router.push(this.urlPrefix + '/loading_slips');
                 } else {
                     this.showError(res.data.message);
                 }

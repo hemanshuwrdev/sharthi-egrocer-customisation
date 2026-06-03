@@ -177,6 +177,9 @@ __webpack_require__.r(__webpack_exports__);
       if (this.loadRatioPercent > 99) return 'text-danger';
       if (this.loadRatioPercent > 80) return 'text-warning';
       return 'text-success';
+    },
+    urlPrefix: function urlPrefix() {
+      return this.$route.path.startsWith('/seller') ? '/seller' : '';
     }
   },
   mounted: function mounted() {
@@ -412,7 +415,7 @@ var render = function () {
                 {
                   staticClass:
                     "btn btn-outline-secondary font-weight-bold rounded-pill",
-                  attrs: { to: "/loading_slips" },
+                  attrs: { to: _vm.urlPrefix + "/loading_slips" },
                 },
                 [
                   _c("i", { staticClass: "fa fa-arrow-left mr-2" }),

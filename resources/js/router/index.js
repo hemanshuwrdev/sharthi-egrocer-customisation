@@ -1877,7 +1877,50 @@ function configRoutes() {
                         title: 'Withdrawal Requests'
                     },
                 },
-
+                {
+                    path: "vehicles",
+                    name: "SellerManageVehicles",
+                    component: ManageVehicles,
+                    meta: {
+                        requiresAuth: true,
+                        permission: 'product_list',
+                        role: sellerRoles,
+                        title: 'Manage Vehicles'
+                    }
+                },
+                {
+                    path: "loading_slips/create",
+                    name: "SellerCreateLoadingSlip",
+                    component: CreateLoadingSlip,
+                    meta: {
+                        requiresAuth: true,
+                        permission: 'product_list',
+                        role: sellerRoles,
+                        title: 'Create Loading Slip'
+                    }
+                },
+                {
+                    path: "loading_slips",
+                    name: "SellerManageLoadingSlips",
+                    component: ManageLoadingSlips,
+                    meta: {
+                        requiresAuth: true,
+                        permission: 'product_list',
+                        role: sellerRoles,
+                        title: 'Manage Loading Slips'
+                    }
+                },
+                {
+                    path: "loading_slips/view/:id",
+                    name: "SellerViewLoadingSlip",
+                    component: ViewLoadingSlip,
+                    meta: {
+                        requiresAuth: true,
+                        permission: 'product_list',
+                        role: sellerRoles,
+                        title: 'View Loading Slip'
+                    }
+                },
             ],
         },
         {

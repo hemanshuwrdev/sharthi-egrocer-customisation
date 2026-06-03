@@ -9,7 +9,7 @@
                 <p class="text-muted mb-0">Track and dispatch warehouse loading slips, driver assignments, and optimized delivery routes.</p>
             </div>
             <div class="col-auto">
-                <router-link to="/loading_slips/create" class="btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill">
+                <router-link :to="urlPrefix + '/loading_slips/create'" class="btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill">
                     <i class="fa fa-plus-circle mr-2"></i>Plan New Slip
                 </router-link>
             </div>
@@ -47,7 +47,7 @@
                         <tbody>
                             <tr v-for="slip in slips" :key="slip.id" class="transition-all hover-bg-light">
                                 <td class="font-weight-bold text-primary py-3">
-                                    <router-link :to="'/loading_slips/view/' + slip.id">
+                                    <router-link :to="urlPrefix + '/loading_slips/view/' + slip.id">
                                         {{ slip.slip_no }}
                                     </router-link>
                                 </td>
@@ -75,7 +75,7 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <router-link :to="'/loading_slips/view/' + slip.id" class="btn btn-sm btn-soft-primary" title="View Details">
+                                        <router-link :to="urlPrefix + '/loading_slips/view/' + slip.id" class="btn btn-sm btn-soft-primary" title="View Details">
                                             <i class="fa fa-eye"></i>
                                         </router-link>
                                         
@@ -121,6 +121,11 @@ export default {
             filter: '',
             loading: false
         };
+    },
+    computed: {
+        urlPrefix() {
+            return this.$route.path.startsWith('/seller') ? '/seller' : '';
+        }
     },
     mounted() {
         this.getSlips();

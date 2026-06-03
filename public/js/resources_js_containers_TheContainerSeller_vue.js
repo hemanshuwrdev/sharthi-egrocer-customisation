@@ -326,15 +326,15 @@ __webpack_require__.r(__webpack_exports__);
         submenu: [{
           name: 'Manage Vehicles',
           icon: 'grid-fill',
-          url: '/vehicles'
+          url: '/seller/vehicles'
         }, {
           name: 'Create Loading Slip',
           icon: 'grid-fill',
-          url: '/loading_slips/create'
+          url: '/seller/loading_slips/create'
         }, {
           name: 'Manage Loading Slips',
           icon: 'grid-fill',
-          url: '/loading_slips'
+          url: '/seller/loading_slips'
         }]
       }, {
         name: __('reports'),

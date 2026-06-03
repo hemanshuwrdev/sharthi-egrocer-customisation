@@ -136,6 +136,11 @@ __webpack_require__.r(__webpack_exports__);
       loading: false
     };
   },
+  computed: {
+    urlPrefix: function urlPrefix() {
+      return this.$route.path.startsWith('/seller') ? '/seller' : '';
+    }
+  },
   mounted: function mounted() {
     this.getSlips();
   },
@@ -353,7 +358,7 @@ var render = function () {
             {
               staticClass:
                 "btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill",
-              attrs: { to: "/loading_slips/create" },
+              attrs: { to: _vm.urlPrefix + "/loading_slips/create" },
             },
             [
               _c("i", { staticClass: "fa fa-plus-circle mr-2" }),
@@ -445,7 +450,10 @@ var render = function () {
                                 "router-link",
                                 {
                                   attrs: {
-                                    to: "/loading_slips/view/" + slip.id,
+                                    to:
+                                      _vm.urlPrefix +
+                                      "/loading_slips/view/" +
+                                      slip.id,
                                   },
                                 },
                                 [
@@ -571,7 +579,10 @@ var render = function () {
                                   {
                                     staticClass: "btn btn-sm btn-soft-primary",
                                     attrs: {
-                                      to: "/loading_slips/view/" + slip.id,
+                                      to:
+                                        _vm.urlPrefix +
+                                        "/loading_slips/view/" +
+                                        slip.id,
                                       title: "View Details",
                                     },
                                   },
