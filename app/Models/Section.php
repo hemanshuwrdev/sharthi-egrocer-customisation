@@ -40,6 +40,11 @@ class Section extends Model
 
     protected $appends = ['banner_app_url', 'banner_web_url', 'translations'];
 
+    protected $casts = [
+        'product_ids' => 'array',
+        'category_ids' => 'array',
+    ];
+
     public function getBannerAppUrlAttribute()
     {
         return $this->banner_app ? asset('storage/' . $this->banner_app) : null;

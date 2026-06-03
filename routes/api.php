@@ -669,9 +669,28 @@ Route::middleware('auth:api')->group(function () {
         Route::post('manage_live_tracking', [\App\Http\Controllers\DeliveryBoyController::class, 'manageLiveTracking'])->name('delivery_boy.manage_live_tracking');
     });
 
+    Route::group(['prefix' => 'vehicles'], function () {
+        Route::get('/', [\App\Http\Controllers\API\VehiclesApiController::class, 'list']);
+        Route::post('save', [\App\Http\Controllers\API\VehiclesApiController::class, 'save'])->name('vehicles.save');
+        Route::post('update', [\App\Http\Controllers\API\VehiclesApiController::class, 'update'])->name('vehicles.update');
+        Route::post('delete', [\App\Http\Controllers\API\VehiclesApiController::class, 'delete'])->name('vehicles.delete');
+        Route::get('active', [\App\Http\Controllers\API\VehiclesApiController::class, 'getActiveVehicles']);
+    });
+
+    Route::group(['prefix' => 'loading_slips'], function () {
+        Route::get('/', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'list']);
+        Route::get('orders', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrdersForAssignment']);
+        Route::get('zones', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getZones']);
+        Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('loading_slips.save');
+        Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('loading_slips.dispatch');
+        Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
+    });
+
     Route::get('set_seller_wallet_transaction', [\App\Http\Controllers\Controller::class, 'setSellerWalletTransaction']);
     Route::get('database_backup_download', [App\Http\Controllers\DatabaseBackupController::class, 'download_db_backup'])->name('database_backup_download.download_db_backup');
 });
+
+Route::get('loading_slips/print/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'print']);
 
 Route::prefix('oauth')->group(function () {
     Route::post('token', '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken');

@@ -739,6 +739,7 @@ class BasicApiController extends Controller
 
         // Get seller IDs based on location
         $seller_ids = CommonHelper::getSellerIds($latitude, $longitude);
+        $cityIds = CommonHelper::getDeliverableCityIds($latitude, $longitude);
 
         // If no sellers found in the area, return error
         if (empty($seller_ids)) {
@@ -747,7 +748,7 @@ class BasicApiController extends Controller
 
         // Fetch brands with products sold by sellers in the area
         $brands = Brand::where('status', 1)
-            ->whereHas('products', function ($query) use ($seller_ids) {
+            ->whereHas('products', function ($query) use ($seller_ids, $cityIds) {
                 $query->whereIn('products.seller_id', $seller_ids)
                     ->where('products.status', 1)
                     ->where('products.is_approved', 1)
@@ -757,6 +758,23 @@ class BasicApiController extends Controller
                             ->whereColumn('categories.id', 'products.category_id')
                             ->where('categories.status', 1);
                     });
+                if (!empty($cityIds)) {
+                    $query->where(function ($q) use ($cityIds) {
+                        $q->whereNotExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'products.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds);
+                        })
+                        ->orWhereExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'products.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds)
+                                ->whereColumn('bdm.seller_id', 'products.seller_id');
+                        });
+                    });
+                }
             })
             ->orderBy('id', 'ASC');
 
@@ -781,6 +799,7 @@ class BasicApiController extends Controller
         $longitude = $request->get('longitude');
 
         $seller_ids = CommonHelper::getSellerIds($latitude, $longitude);
+        $cityIds = CommonHelper::getDeliverableCityIds($latitude, $longitude);
 
         // If no sellers found in the area, return error
         if (empty($seller_ids)) {
@@ -789,7 +808,7 @@ class BasicApiController extends Controller
 
         $countries = Country::orderBy('id', 'ASC')
             ->where('status', 1)
-            ->whereExists(function ($query) use ($seller_ids) {
+            ->whereExists(function ($query) use ($seller_ids, $cityIds) {
                 $query->select(DB::raw(1))
                     ->from('products')
                     ->whereColumn('products.made_in', 'countries.id')
@@ -802,6 +821,23 @@ class BasicApiController extends Controller
                             ->whereColumn('categories.id', 'products.category_id')
                             ->where('categories.status', 1);   // Category status = 1
                     });
+                if (!empty($cityIds)) {
+                    $query->where(function ($q) use ($cityIds) {
+                        $q->whereNotExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'products.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds);
+                        })
+                        ->orWhereExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'products.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds)
+                                ->whereColumn('bdm.seller_id', 'products.seller_id');
+                        });
+                    });
+                }
             });
 
         $total = $countries->count();

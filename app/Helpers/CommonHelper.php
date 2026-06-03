@@ -740,13 +740,10 @@ class CommonHelper
         return $wkt;
     }
 
-    public static function getSellerIds($latitude, $longitude)
+    public static function getDeliverableCityIds($latitude, $longitude)
     {
-
-        // Helper function to convert boundary points to polygon WKT
         $point = ['lat' => $latitude, 'lng' => $longitude];
 
-        // Retrieve cities with boundary points
         $cities = City::all();
 
         $cityIds = [];
@@ -760,10 +757,10 @@ class CommonHelper
                 }
             } elseif ($city->geolocation_type == 'circle') {
                 $boundaryPoints  = json_decode($city->boundary_points, true);
-                $radius = $city->radius; // Assuming radius is stored in meters
+                $radius = $city->radius;
 
                 if (is_array($boundaryPoints) && !empty($boundaryPoints)) {
-                    $center = $boundaryPoints[0]; // Assuming the first element is the center point
+                    $center = $boundaryPoints[0];
                     if (self::isPointInCircle($point, $center, $radius)) {
                         $cityIds[] = $city->id;
                     }
@@ -771,8 +768,13 @@ class CommonHelper
             }
         }
 
-        $sellerIds = self::getSellerIdsfromCityIds($cityIds);
-        return $sellerIds;
+        return $cityIds;
+    }
+
+    public static function getSellerIds($latitude, $longitude)
+    {
+        $cityIds = self::getDeliverableCityIds($latitude, $longitude);
+        return self::getSellerIdsfromCityIds($cityIds);
     }
     public static function isPointInPolygon($point, $polygon)
     {
@@ -1099,29 +1101,38 @@ class CommonHelper
         return $productImages;
     }
 
-    public static function getProductIdsSection($section, $user_id = null)
+    /**
+     * Convert a value (array, JSON-encoded string, CSV string, or null) to an array
+     * of unique positive integers. Handles legacy CSV rows that the model's array
+     * cast cannot decode.
+     */
+    public static function normalizeIdArray($value)
     {
-        // Normalize category_ids from section:
-        // - If stored as JSON like ["2","3"], decode to array.
-        // - If stored as CSV like "2,3", explode.
-        $rawCategoryIds = $section->category_ids;
-        if (!empty($rawCategoryIds)) {
-            if (is_string($rawCategoryIds) && $rawCategoryIds[0] === '[') {
-                $decoded = json_decode($rawCategoryIds, true);
-                $cate_ids = is_array($decoded) ? $decoded : [];
-            } else {
-                $cate_ids = explode(",", $rawCategoryIds);
-            }
-        } else {
-            $cate_ids = [];
+        if (empty($value)) {
+            return [];
         }
-        // Sanitize category IDs to unique positive integers
-        $cate_ids = array_values(array_unique(array_filter(
-            array_map('intval', $cate_ids),
+        if (is_array($value)) {
+            $items = $value;
+        } elseif (is_string($value) && isset($value[0]) && $value[0] === '[') {
+            $decoded = json_decode($value, true);
+            $items = is_array($decoded) ? $decoded : [];
+        } else {
+            $items = explode(',', (string) $value);
+        }
+        return array_values(array_unique(array_filter(
+            array_map('intval', $items),
             function ($id) {
                 return $id > 0;
             }
         )));
+    }
+
+    public static function getProductIdsSection($section, $user_id = null)
+    {
+        if (empty($section)) {
+            return "";
+        }
+        $cate_ids = self::normalizeIdArray($section->category_ids);
         $product_ids = $section->product_ids;
 
         if ($section->product_type == 'all_products') {
@@ -1191,24 +1202,7 @@ class CommonHelper
                 $product_ids = "";
             }
         } else {
-            // For custom_products (and any other direct product list), normalise product_ids:
-            // - If stored as JSON array like ["702","699"], decode and implode to CSV.
-            // - Otherwise, use the raw comma-separated string as-is.
-            if (!empty($section->product_type) && $section->product_type === 'custom_products') {
-                $raw = $section->product_ids;
-                if (is_string($raw) && strlen($raw) > 0 && $raw[0] === '[') {
-                    $decoded = json_decode($raw, true);
-                    if (is_array($decoded)) {
-                        $product_ids = implode(',', $decoded);
-                    } else {
-                        $product_ids = $raw;
-                    }
-                } else {
-                    $product_ids = $raw;
-                }
-            } else {
-                $product_ids = $section->product_ids;
-            }
+            $product_ids = implode(',', self::normalizeIdArray($section->product_ids));
         }
         if ($section->product_type != 'custom_products' && $section->product_type != 'recently_visited_products' && !empty($section->product_type) && isset($sql)) {
             $product = $sql->get();
@@ -1225,7 +1219,7 @@ class CommonHelper
         return $product_ids;
     }
 
-    public static function getSectionWithProduct($seller_ids, $user_id = 0)
+    public static function getSectionWithProduct($seller_ids, $user_id = 0, $cityIds = [])
     {
         $limit = 8;
         $offset =  0;
@@ -1249,7 +1243,7 @@ class CommonHelper
             )));
 
             if (!empty($product_ids_array)) {
-                $products = Product::select(
+                $productsQuery = Product::select(
                     'p.*',
                     'p.type as d_type',
                     's.store_name as seller_name',
@@ -1264,7 +1258,27 @@ class CommonHelper
                     ->where('c.status', 1)
                     ->where('s.status', 1)
                     ->whereIn('p.seller_id', $seller_ids)
-                    ->whereIn('p.id', $product_ids_array)
+                    ->whereIn('p.id', $product_ids_array);
+
+                if (!empty($cityIds)) {
+                    $productsQuery->where(function ($q) use ($cityIds) {
+                        $q->whereNotExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds);
+                        })
+                        ->orWhereExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds)
+                                ->whereColumn('bdm.seller_id', 'p.seller_id');
+                        });
+                    });
+                }
+
+                $products = $productsQuery
                     ->with('ratings')
                     ->groupBy('p.id')
                     ->orderByRaw("FIELD(p.id, " . implode(',', $product_ids_array) . ")")

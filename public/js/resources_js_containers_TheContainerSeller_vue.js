@@ -320,6 +320,23 @@ __webpack_require__.r(__webpack_exports__);
         url: '/seller/seller_wallet_transactions',
         permission: 'product_sales_reports'
       }, {
+        name: 'Logistics',
+        icon: 'truck',
+        permission: 'product_list',
+        submenu: [{
+          name: 'Manage Vehicles',
+          icon: 'grid-fill',
+          url: '/vehicles'
+        }, {
+          name: 'Create Loading Slip',
+          icon: 'grid-fill',
+          url: '/loading_slips/create'
+        }, {
+          name: 'Manage Loading Slips',
+          icon: 'grid-fill',
+          url: '/loading_slips'
+        }]
+      }, {
         name: __('reports'),
         icon: 'folder-open',
         permission: 'product_sales_reports',
