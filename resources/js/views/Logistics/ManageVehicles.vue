@@ -106,12 +106,7 @@
                     </template>
 
                     <template #cell(name)="row">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-circle mr-3 bg-soft-primary">
-                                <i class="fa fa-truck text-primary"></i>
-                            </div>
-                            {{ row.item.name }}
-                        </div>
+                        {{ row.item.name }}
                     </template>
 
                     <template #cell(vehicle_number)="row">

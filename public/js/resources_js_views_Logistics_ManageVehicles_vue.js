@@ -218,11 +218,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -414,7 +409,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Premium aesthetics CSS */\n.card-light-primary[data-v-6e7f3107] {\n    background-color: #f0f4ff;\n    border: 1px solid rgba(78, 115, 223, 0.15) !important;\n}\n.card-light-success[data-v-6e7f3107] {\n    background-color: #eafaf1;\n    border: 1px solid rgba(28, 200, 138, 0.15) !important;\n}\n.card-light-warning[data-v-6e7f3107] {\n    background-color: #fef9ec;\n    border: 1px solid rgba(246, 194, 62, 0.15) !important;\n}\n.bg-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n}\n.bg-soft-secondary[data-v-6e7f3107] {\n    background-color: rgba(133, 135, 150, 0.1) !important;\n}\n.bg-soft-success[data-v-6e7f3107] {\n    background-color: rgba(28, 200, 138, 0.1) !important;\n    color: #1cc88a !important;\n}\n.bg-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1) !important;\n    color: #e74a3b !important;\n}\n.btn-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1);\n    color: #4e73df;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-primary[data-v-6e7f3107]:hover {\n    background-color: #4e73df;\n    color: white;\n}\n.btn-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1);\n    color: #e74a3b;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-danger[data-v-6e7f3107]:hover {\n    background-color: #e74a3b;\n    color: white;\n}\n.avatar-circle[data-v-6e7f3107] {\n    width: 40px;\n    height: 40px;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-size: 16px;\n    font-weight: bold;\n}\n.transition-all[data-v-6e7f3107] {\n    transition: all 0.25s ease-in-out;\n}\n.hover-bg-light[data-v-6e7f3107]:hover {\n    background-color: rgba(248, 249, 250, 0.9) !important;\n    transform: translateY(-2px);\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);\n}\n.form-control-lg[data-v-6e7f3107] {\n    border-radius: 10px;\n    font-size: 0.95rem;\n}\n.rounded-pill[data-v-6e7f3107] {\n    border-radius: 50rem !important;\n}\n.gap-2[data-v-6e7f3107] {\n    gap: 0.5rem;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Premium aesthetics CSS */\n.card-light-primary[data-v-6e7f3107] {\n    background-color: #f0f4ff;\n    border: 1px solid rgba(78, 115, 223, 0.15) !important;\n}\n.card-light-success[data-v-6e7f3107] {\n    background-color: #eafaf1;\n    border: 1px solid rgba(28, 200, 138, 0.15) !important;\n}\n.card-light-warning[data-v-6e7f3107] {\n    background-color: #fef9ec;\n    border: 1px solid rgba(246, 194, 62, 0.15) !important;\n}\n.bg-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n}\n.bg-soft-secondary[data-v-6e7f3107] {\n    background-color: rgba(133, 135, 150, 0.1) !important;\n}\n.bg-soft-success[data-v-6e7f3107] {\n    background-color: rgba(28, 200, 138, 0.1) !important;\n    color: #1cc88a !important;\n}\n.bg-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1) !important;\n    color: #e74a3b !important;\n}\n.btn-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1);\n    color: #4e73df;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-primary[data-v-6e7f3107]:hover {\n    background-color: #4e73df;\n    color: white;\n}\n.btn-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1);\n    color: #e74a3b;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-danger[data-v-6e7f3107]:hover {\n    background-color: #e74a3b;\n    color: white;\n}\n.avatar-circle[data-v-6e7f3107] {\n    width: 40px;\n    height: 40px;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-size: 16px;\n    font-weight: bold;\n}\n.transition-all[data-v-6e7f3107] {\n    transition: all 0.25s ease-in-out;\n}\n.hover-bg-light[data-v-6e7f3107]:hover {\n    background-color: rgba(248, 249, 250, 0.9) !important;\n    transform: translateY(-2px);\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);\n}\n.form-control-lg[data-v-6e7f3107] {\n    border-radius: 10px;\n    font-size: 0.95rem;\n}\n.rounded-pill[data-v-6e7f3107] {\n    border-radius: 50rem !important;\n}\n.gap-2[data-v-6e7f3107] {\n    gap: 0.5rem;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -794,28 +789,10 @@ var render = function () {
                     key: "cell(name)",
                     fn: function (row) {
                       return [
-                        _c(
-                          "div",
-                          { staticClass: "d-flex align-items-center" },
-                          [
-                            _c(
-                              "div",
-                              {
-                                staticClass:
-                                  "avatar-circle mr-3 bg-soft-primary",
-                              },
-                              [
-                                _c("i", {
-                                  staticClass: "fa fa-truck text-primary",
-                                }),
-                              ]
-                            ),
-                            _vm._v(
-                              "\n                        " +
-                                _vm._s(row.item.name) +
-                                "\n                    "
-                            ),
-                          ]
+                        _vm._v(
+                          "\n                    " +
+                            _vm._s(row.item.name) +
+                            "\n                "
                         ),
                       ]
                     },
