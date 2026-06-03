@@ -69,6 +69,7 @@ Route::get('/migration', function () {
 
 //         return \Artisan::output();
 //     });
+//check 
 Route::get('/supported_language', function () {
 
     $command = 'php artisan db:seed --class=SupportedLanguageSeeder';

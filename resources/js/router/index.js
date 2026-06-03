@@ -49,6 +49,12 @@ const RegisteredSellers = () => import("../views/Seller/RegisteredSellers");
 const EditSeller = () => import("../views/Seller/EditSeller");
 const SellerWalletTransactions = () => import("../views/Seller/WalletTransactions/SellerWalletTransactions");
 
+// Logistics
+const ManageVehicles = () => import("../views/Logistics/ManageVehicles.vue");
+const CreateLoadingSlip = () => import("../views/Logistics/CreateLoadingSlip.vue");
+const ManageLoadingSlips = () => import("../views/Logistics/ManageLoadingSlips.vue");
+const ViewLoadingSlip = () => import("../views/Logistics/ViewLoadingSlip.vue");
+
 //Home Slider Images
 const HomeSliders = () => import("../views/HomeSliders/HomeSliders");
 
@@ -383,6 +389,46 @@ function configRoutes() {
             },
             children: [
                 { path: "/unauthorized", component: Unauthorized, meta: { title: 'Unauthorized' } },
+                {
+                    path: "vehicles",
+                    name: "ManageVehicles",
+                    component: ManageVehicles,
+                    meta: {
+                        requiresAuth: true,
+                        role: adminRoles,
+                        title: 'Manage Vehicles'
+                    }
+                },
+                {
+                    path: "loading_slips/create",
+                    name: "CreateLoadingSlip",
+                    component: CreateLoadingSlip,
+                    meta: {
+                        requiresAuth: true,
+                        role: adminRoles,
+                        title: 'Create Loading Slip'
+                    }
+                },
+                {
+                    path: "loading_slips",
+                    name: "ManageLoadingSlips",
+                    component: ManageLoadingSlips,
+                    meta: {
+                        requiresAuth: true,
+                        role: adminRoles,
+                        title: 'Manage Loading Slips'
+                    }
+                },
+                {
+                    path: "loading_slips/view/:id",
+                    name: "ViewLoadingSlip",
+                    component: ViewLoadingSlip,
+                    meta: {
+                        requiresAuth: true,
+                        role: adminRoles,
+                        title: 'View Loading Slip'
+                    }
+                },
                 {
                     path: "dashboard",
                     name: "Dashboard",

@@ -1025,7 +1025,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 // import InputTag from 'vue-input-tag';
@@ -6323,7 +6342,6 @@ var render = function () {
                                           { staticClass: "form-group" },
                                           [
                                             _c("label", [
-
                                               _vm._v(_vm._s(_vm.__("SKU"))),
                                             ]),
                                             _vm._v(" "),
@@ -6341,59 +6359,6 @@ var render = function () {
                                               attrs: {
                                                 type: "text",
                                                 placeholder: "e.g. SUG-1KG",
-                                              },
-                                              domProps: {
-                                                value: input.packet_sku,
-                                              },
-                                              on: {
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    input,
-                                                    "packet_sku",
-                                                    $event.target.value
-                                                  )
-                                                },
-                                              },
-                                            }),
-                                          ]
-                                        ),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-4" }, [
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(_vm.__("measurement")) +
-                                                  " "
-                                              ),
-                                              _c(
-                                                "i",
-                                                { staticClass: "text-danger" },
-                                                [_vm._v("*")]
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value: input.packet_sku,
-                                                  expression:
-                                                    "input.packet_sku",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "text",
-                                                placeholder: "e.g. SUG-1KG",
-                                                disabled: _vm.isSellerRole,
                                               },
                                               domProps: {
                                                 value: input.packet_sku,
@@ -6897,7 +6862,6 @@ var render = function () {
                                               _vm._v(
                                                 _vm._s(
                                                   _vm.__(
-
                                                     "Secondary Unit (Outer Case/Bag)"
                                                   )
                                                 )
@@ -7020,164 +6984,6 @@ var render = function () {
                                                 step: "any",
                                                 min: "0",
                                                 placeholder: "0",
-                                              },
-                                              domProps: {
-                                                value:
-                                                  input.packet_secondary_unit_value,
-                                              },
-                                              on: {
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    input,
-                                                    "packet_secondary_unit_value",
-                                                    $event.target.value
-                                                  )
-                                                },
-                                              },
-                                            }),
-                                          ]
-                                        ),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-4" }, [
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(_vm.__("status")) + " "
-                                              ),
-                                              _c(
-                                                "i",
-                                                { staticClass: "text-danger" },
-                                                [_vm._v("*")]
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c(
-                                              "select",
-                                              {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value:
-                                                      input.packet_secondary_unit_id,
-                                                    expression:
-                                                      "input.packet_secondary_unit_id",
-                                                  },
-                                                ],
-                                                staticClass:
-                                                  "form-control form-select",
-                                                attrs: {
-                                                  disabled: _vm.isSellerRole,
-                                                },
-                                                on: {
-                                                  change: function ($event) {
-                                                    var $$selectedVal =
-                                                      Array.prototype.filter
-                                                        .call(
-                                                          $event.target.options,
-                                                          function (o) {
-                                                            return o.selected
-                                                          }
-                                                        )
-                                                        .map(function (o) {
-                                                          var val =
-                                                            "_value" in o
-                                                              ? o._value
-                                                              : o.value
-                                                          return val
-                                                        })
-                                                    _vm.$set(
-                                                      input,
-                                                      "packet_secondary_unit_id",
-                                                      $event.target.multiple
-                                                        ? $$selectedVal
-                                                        : $$selectedVal[0]
-                                                    )
-                                                  },
-                                                },
-                                              },
-                                              [
-                                                _c(
-                                                  "option",
-                                                  { attrs: { value: "" } },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.__(
-                                                          "select_secondary_unit"
-                                                        )
-                                                      )
-                                                    ),
-                                                  ]
-                                                ),
-                                                _vm._v(" "),
-                                                _vm._l(
-                                                  _vm.units,
-                                                  function (unit, key) {
-                                                    return _c(
-                                                      "option",
-                                                      {
-                                                        domProps: {
-                                                          value: unit.id,
-                                                        },
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            unit.short_code
-                                                          )
-                                                        ),
-                                                      ]
-                                                    )
-                                                  }
-                                                ),
-                                              ],
-                                              2
-                                            ),
-                                          ]
-                                        ),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-4" }, [
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "secondary_unit_value_items_per_case"
-                                                  )
-                                                )
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value:
-                                                    input.packet_secondary_unit_value,
-                                                  expression:
-                                                    "input.packet_secondary_unit_value",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "number",
-                                                step: "any",
-                                                min: "0",
-                                                placeholder: "0",
-                                                disabled: _vm.isSellerRole,
                                               },
                                               domProps: {
                                                 value:
@@ -7879,222 +7685,6 @@ var render = function () {
                                               ]
                                             )
                                           : _vm._e(),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-4" }, [
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "form-group loose_div",
-                                            },
-                                            [
-                                              _c("label", [
-                                                _vm._v(_vm._s(_vm.__("sku"))),
-                                              ]),
-                                              _vm._v(" "),
-                                              _c("input", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value: input.loose_sku,
-                                                    expression:
-                                                      "input.loose_sku",
-                                                  },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  type: "text",
-                                                  placeholder: "e.g. SUG-1KG-L",
-                                                  disabled: _vm.isSellerRole,
-                                                },
-                                                domProps: {
-                                                  value: input.loose_sku,
-                                                },
-                                                on: {
-                                                  input: function ($event) {
-                                                    if (
-                                                      $event.target.composing
-                                                    ) {
-                                                      return
-                                                    }
-                                                    _vm.$set(
-                                                      input,
-                                                      "loose_sku",
-                                                      $event.target.value
-                                                    )
-                                                  },
-                                                },
-                                              }),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-4" }, [
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "form-group loose_div",
-                                            },
-                                            [
-                                              _c("label", [
-                                                _vm._v(
-                                                  _vm._s(
-                                                    _vm.__(
-                                                      "secondary_unit_outer_case_bag"
-                                                    )
-                                                  )
-                                                ),
-                                              ]),
-                                              _vm._v(" "),
-                                              _c(
-                                                "select",
-                                                {
-                                                  directives: [
-                                                    {
-                                                      name: "model",
-                                                      rawName: "v-model",
-                                                      value:
-                                                        input.loose_secondary_unit_id,
-                                                      expression:
-                                                        "input.loose_secondary_unit_id",
-                                                    },
-                                                  ],
-                                                  staticClass:
-                                                    "form-control form-select",
-                                                  attrs: {
-                                                    disabled: _vm.isSellerRole,
-                                                  },
-                                                  on: {
-                                                    change: function ($event) {
-                                                      var $$selectedVal =
-                                                        Array.prototype.filter
-                                                          .call(
-                                                            $event.target
-                                                              .options,
-                                                            function (o) {
-                                                              return o.selected
-                                                            }
-                                                          )
-                                                          .map(function (o) {
-                                                            var val =
-                                                              "_value" in o
-                                                                ? o._value
-                                                                : o.value
-                                                            return val
-                                                          })
-                                                      _vm.$set(
-                                                        input,
-                                                        "loose_secondary_unit_id",
-                                                        $event.target.multiple
-                                                          ? $$selectedVal
-                                                          : $$selectedVal[0]
-                                                      )
-                                                    },
-                                                  },
-                                                },
-                                                [
-                                                  _c(
-                                                    "option",
-                                                    { attrs: { value: "" } },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.__(
-                                                            "select_secondary_unit"
-                                                          )
-                                                        )
-                                                      ),
-                                                    ]
-                                                  ),
-                                                  _vm._v(" "),
-                                                  _vm._l(
-                                                    _vm.units,
-                                                    function (unit, key) {
-                                                      return _c(
-                                                        "option",
-                                                        {
-                                                          domProps: {
-                                                            value: unit.id,
-                                                          },
-                                                        },
-                                                        [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              unit.short_code
-                                                            )
-                                                          ),
-                                                        ]
-                                                      )
-                                                    }
-                                                  ),
-                                                ],
-                                                2
-                                              ),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-4" }, [
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "form-group loose_div",
-                                            },
-                                            [
-                                              _c("label", [
-                                                _vm._v(
-                                                  _vm._s(
-                                                    _vm.__(
-                                                      "secondary_unit_value_items_per_case"
-                                                    )
-                                                  )
-                                                ),
-                                              ]),
-                                              _vm._v(" "),
-                                              _c("input", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value:
-                                                      input.loose_secondary_unit_value,
-                                                    expression:
-                                                      "input.loose_secondary_unit_value",
-                                                  },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  type: "number",
-                                                  step: "any",
-                                                  min: "0",
-                                                  placeholder: "0",
-                                                  disabled: _vm.isSellerRole,
-                                                },
-                                                domProps: {
-                                                  value:
-                                                    input.loose_secondary_unit_value,
-                                                },
-                                                on: {
-                                                  input: function ($event) {
-                                                    if (
-                                                      $event.target.composing
-                                                    ) {
-                                                      return
-                                                    }
-                                                    _vm.$set(
-                                                      input,
-                                                      "loose_secondary_unit_value",
-                                                      $event.target.value
-                                                    )
-                                                  },
-                                                },
-                                              }),
-                                            ]
-                                          ),
-                                        ]),
                                         _vm._v(" "),
                                         _c("div", { staticClass: "col-md-4" }, [
                                           _c(
@@ -9205,29 +8795,29 @@ var render = function () {
                                         ),
                                       ]
                                     ),
-
-                                  ],
-                            ],
-                            2
-                          ),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-6" }, [
-                            _c("div", { staticClass: "form-group mb-3" }, [
-                              _c("label", [
-                                _vm._v(
-                                  _vm._s(_vm.__("manufacturer")) +
-                                    " / Parent Company"
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.manufacturer,
-                                    expression: "manufacturer",
-                                  },
+                                  ]
+                                )
+                              : [
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.is_approved,
+                                        expression: "is_approved",
+                                      },
+                                    ],
+                                    attrs: { type: "hidden" },
+                                    domProps: { value: _vm.is_approved },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.is_approved = $event.target.value
+                                      },
+                                    },
+                                  }),
                                 ],
                             _vm._v(" "),
                             _c(

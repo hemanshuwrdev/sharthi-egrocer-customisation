@@ -63,4 +63,13 @@ class Order extends Model
         return json_decode($value, true);
     }
 
+    public function loadingSlip()
+    {
+        return $this->belongsTo(LoadingSlip::class, 'loading_slip_id');
+    }
+
+    public function deliveryBoy()
+    {
+        return $this->belongsTo(DeliveryBoy::class, 'delivery_boy_id');
+    }
 }
