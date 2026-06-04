@@ -1551,5 +1551,8 @@
     "invalid_sku": "Invalid SKU. Please enter a valid SKU.",
     "Secondary Unit (Outer Case/Bag)": "Secondary Unit (Outer Case/Bag)",
     "Select Secondary Unit": "Select Secondary Unit",
-    "Secondary Unit Value (Items Per Case/Bag)": "Secondary Unit Value (Items Per Case/Bag)"
+    "Secondary Unit Value (Items Per Case/Bag)": "Secondary Unit Value (Items Per Case/Bag)",
+    "salesman": "Salesman",
+    "retailer": "Retailer",
+    "collections": "Collections"
 }

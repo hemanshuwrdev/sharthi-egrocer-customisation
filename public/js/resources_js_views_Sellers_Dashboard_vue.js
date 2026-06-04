@@ -413,6 +413,42 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1322,7 +1358,7 @@ var render = function () {
             _c("div", { staticClass: "row g-2" }, [
               _c(
                 "div",
-                { staticClass: "col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6" },
+                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
                 [
                   _c(
                     "div",
@@ -1369,7 +1405,10 @@ var render = function () {
                                 [
                                   _c(
                                     "h5",
-                                    { staticClass: "text-muted font-semibold" },
+                                    {
+                                      staticClass:
+                                        "text-muted font-semibold text-center",
+                                    },
                                     [_vm._v(_vm._s(_vm.__("orders")))]
                                   ),
                                   _vm._v(" "),
@@ -1392,7 +1431,7 @@ var render = function () {
               _vm._v(" "),
               _c(
                 "div",
-                { staticClass: "col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6" },
+                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
                 [
                   _c(
                     "div",
@@ -1428,7 +1467,10 @@ var render = function () {
                                 [
                                   _c(
                                     "h5",
-                                    { staticClass: "text-muted font-semibold" },
+                                    {
+                                      staticClass:
+                                        "text-muted font-semibold text-center",
+                                    },
                                     [_vm._v(_vm._s(_vm.__("products")))]
                                   ),
                                   _vm._v(" "),
@@ -1451,7 +1493,7 @@ var render = function () {
               _vm._v(" "),
               _c(
                 "div",
-                { staticClass: "col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6" },
+                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
                 [
                   _c(
                     "div",
@@ -1487,7 +1529,10 @@ var render = function () {
                                 [
                                   _c(
                                     "h5",
-                                    { staticClass: "text-muted font-semibold" },
+                                    {
+                                      staticClass:
+                                        "text-muted font-semibold text-center",
+                                    },
                                     [_vm._v(_vm._s(_vm.__("category")))]
                                   ),
                                   _vm._v(" "),
@@ -1510,7 +1555,7 @@ var render = function () {
               _vm._v(" "),
               _c(
                 "div",
-                { staticClass: "col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6" },
+                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
                 [
                   _c(
                     "div",
@@ -1518,7 +1563,7 @@ var render = function () {
                     [
                       _c(
                         "router-link",
-                        { attrs: { to: "/seller/dashboard" } },
+                        { attrs: { to: "/seller/cash_collection" } },
                         [
                           _c("div", { staticClass: "card-body px-3 py-4-5" }, [
                             _c("div", { staticClass: "row" }, [
@@ -1548,23 +1593,17 @@ var render = function () {
                                 [
                                   _c(
                                     "h5",
-                                    { staticClass: "text-muted font-semibold" },
-                                    [_vm._v(_vm._s(_vm.__("balance")))]
+                                    {
+                                      staticClass:
+                                        "text-muted font-semibold text-center",
+                                    },
+                                    [_vm._v(_vm._s(_vm.__("collections")))]
                                   ),
                                   _vm._v(" "),
                                   _c(
                                     "h3",
                                     { staticClass: "font-extrabold mb-0" },
-                                    [
-                                      _vm._v(
-                                        _vm._s(
-                                          _vm.$currency +
-                                            " " +
-                                            _vm.record.balance
-                                        ) +
-                                          "\n                                                "
-                                      ),
-                                    ]
+                                    [_vm._v(_vm._s(_vm.__("view")))]
                                   ),
                                 ]
                               ),
@@ -1575,6 +1614,82 @@ var render = function () {
                     ],
                     1
                   ),
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
+                [
+                  _c("div", { staticClass: "card" }, [
+                    _c("a", { attrs: { href: "#" } }, [
+                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
+                        _c("div", { staticClass: "row" }, [
+                          _vm._m(0),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            {
+                              staticClass:
+                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
+                            },
+                            [
+                              _c(
+                                "h5",
+                                {
+                                  staticClass:
+                                    "text-muted font-semibold text-center",
+                                },
+                                [_vm._v(_vm._s(_vm.__("salesman")))]
+                              ),
+                              _vm._v(" "),
+                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
+                                _vm._v(_vm._s(_vm.__("view"))),
+                              ]),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                    ]),
+                  ]),
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
+                [
+                  _c("div", { staticClass: "card" }, [
+                    _c("a", { attrs: { href: "#" } }, [
+                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
+                        _c("div", { staticClass: "row" }, [
+                          _vm._m(1),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            {
+                              staticClass:
+                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
+                            },
+                            [
+                              _c(
+                                "h5",
+                                {
+                                  staticClass:
+                                    "text-muted font-semibold text-center",
+                                },
+                                [_vm._v(_vm._s(_vm.__("retailer")))]
+                              ),
+                              _vm._v(" "),
+                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
+                                _vm._v(_vm._s(_vm.__("view"))),
+                              ]),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                    ]),
+                  ]),
                 ]
               ),
             ]),
@@ -2637,7 +2752,42 @@ var render = function () {
     ]),
   ])
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c(
+      "div",
+      {
+        staticClass:
+          "col-md-12 d-flex justify-content-center align-items-center",
+      },
+      [
+        _c("div", { staticClass: "stats-icon-big orange" }, [
+          _c("i", { staticClass: "fa fa-users" }),
+        ]),
+      ]
+    )
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c(
+      "div",
+      {
+        staticClass:
+          "col-md-12 d-flex justify-content-center align-items-center",
+      },
+      [
+        _c("div", { staticClass: "stats-icon-big sky" }, [
+          _c("i", { staticClass: "fa fa-line-chart" }),
+        ]),
+      ]
+    )
+  },
+]
 render._withStripped = true
 
 

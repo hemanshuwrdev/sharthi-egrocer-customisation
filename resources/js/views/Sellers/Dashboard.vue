@@ -9,7 +9,7 @@
                 <div class="row">
                     <div class="col-12 col-xl-6 dashboard-counter">
                         <div class="row g-2">
-                            <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
                                 <div class="card">
                                     <router-link to="/seller/orders">
                                         <div class="card-body px-3 py-4-5">
@@ -22,7 +22,7 @@
                                                 </div>
                                                 <div
                                                     class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold">{{ __('orders') }}</h5>
+                                                    <h5 class="text-muted font-semibold text-center">{{ __('orders') }}</h5>
                                                     <h3 class="font-extrabold mb-0">{{ record.order_count }}</h3>
                                                 </div>
                                             </div>
@@ -30,7 +30,7 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
                                 <div class="card">
                                     <router-link to="/seller/manage_products">
                                         <div class="card-body px-3 py-4-5">
@@ -42,7 +42,7 @@
                                                 </div>
                                                 <div
                                                     class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold">{{ __('products') }}</h5>
+                                                    <h5 class="text-muted font-semibold text-center">{{ __('products') }}</h5>
                                                     <h3 class="font-extrabold mb-0">{{ record.product_count }}</h3>
                                                 </div>
                                             </div>
@@ -50,7 +50,7 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
                                 <div class="card">
                                     <router-link to="/seller/categories">
                                         <div class="card-body px-3 py-4-5">
@@ -62,7 +62,7 @@
                                                 </div>
                                                 <div
                                                     class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold">{{ __('category') }}</h5>
+                                                    <h5 class="text-muted font-semibold text-center">{{ __('category') }}</h5>
                                                     <h3 class="font-extrabold mb-0">{{ record.category_count }}</h3>
                                                 </div>
                                             </div>
@@ -70,9 +70,10 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+
+                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
                                 <div class="card">
-                                    <router-link to="/seller/dashboard">
+                                    <router-link to="/seller/cash_collection">
                                         <div class="card-body px-3 py-4-5">
                                             <div class="row">
                                                 <div class="col-md-12 d-flex justify-content-center align-items-center">
@@ -80,16 +81,51 @@
                                                         <i class="fa fa-money"></i>
                                                     </div>
                                                 </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold">{{ __('balance') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ $currency + " " + record.balance
-                                                    }}
-                                                    </h3>
+                                                <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
+                                                    <h5 class="text-muted font-semibold text-center">{{ __('collections') }}</h5>
+                                                    <h3 class="font-extrabold mb-0">{{ __('view') }}</h3>
                                                 </div>
                                             </div>
                                         </div>
                                     </router-link>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
+                                <div class="card">
+                                    <a href="#">
+                                        <div class="card-body px-3 py-4-5">
+                                            <div class="row">
+                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
+                                                    <div class="stats-icon-big orange">
+                                                        <i class="fa fa-users"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
+                                                    <h5 class="text-muted font-semibold text-center">{{ __('salesman') }}</h5>
+                                                    <h3 class="font-extrabold mb-0">{{ __('view') }}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
+                                <div class="card">
+                                    <a href="#">
+                                        <div class="card-body px-3 py-4-5">
+                                            <div class="row">
+                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
+                                                    <div class="stats-icon-big sky">
+                                                        <i class="fa fa-line-chart"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
+                                                    <h5 class="text-muted font-semibold text-center">{{ __('retailer') }}</h5>
+                                                    <h3 class="font-extrabold mb-0">{{ __('view') }}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
                                 </div>
                             </div>
                         </div>
