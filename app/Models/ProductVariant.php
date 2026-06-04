@@ -57,6 +57,11 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class, 'product_id', 'id');
     }
 
+    public function slabPrices()
+    {
+        return $this->hasMany(ProductSlabPrice::class, 'product_variant_id', 'id')->orderBy('min_qty');
+    }
+
     public function getFinalPriceWithTaxAttribute()
     {
         $taxPercentage = $this->product->tax?->percentage ?? 0;

@@ -23,12 +23,93 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
 /* harmony import */ var _mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../mixins/TranslationHelper.js */ "./resources/js/mixins/TranslationHelper.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -1758,19 +1839,90 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           'packet_stock_unit_id': '',
           'packet_sku': '',
           'packet_secondary_unit_id': '',
-          'packet_secondary_unit_value': ''
+          'packet_secondary_unit_value': '',
+          'packet_slab_prices': []
         });
       } else {
         this.inputs.push({
           'name': '',
           'loose_sku': '',
           'loose_secondary_unit_id': '',
-          'loose_secondary_unit_value': ''
+          'loose_secondary_unit_value': '',
+          'loose_slab_prices': []
         });
       }
     },
-    remove: function remove(index) {
+    addSlabRow: function addSlabRow(input, type) {
+      var key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+      if (!input[key]) this.$set(input, key, []);
+      input[key].push({
+        min_qty: null,
+        max_qty: null,
+        price: null
+      });
+    },
+    removeSlabRow: function removeSlabRow(input, index, type) {
+      var key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+      input[key].splice(index, 1);
+    },
+    slabPreview: function slabPreview(input, type) {
       var _this17 = this;
+      var key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+      var slabs = (input[key] || []).filter(function (s) {
+        return s.min_qty && s.price !== null && s.price !== '';
+      });
+      if (!slabs.length) return '';
+      return slabs.map(function (s) {
+        return "".concat(s.min_qty, "-").concat(s.max_qty || '∞', " \u2192 ").concat(_this17.$currency).concat(s.price);
+      }).join(', ');
+    },
+    validateSlabs: function validateSlabs(input, type) {
+      var key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+      var rows = (input[key] || []).filter(function (s) {
+        return s.min_qty || s.max_qty || s.price !== null && s.price !== '';
+      });
+      if (!rows.length) {
+        this.$set(input, 'validationErrorSlab', '');
+        return true;
+      }
+      var _iterator = _createForOfIteratorHelper(rows),
+        _step;
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var r = _step.value;
+          if (!r.min_qty || r.min_qty < 1) {
+            this.$set(input, 'validationErrorSlab', 'Min Qty must be at least 1');
+            return false;
+          }
+          if (r.max_qty !== null && r.max_qty !== '' && r.max_qty < r.min_qty) {
+            this.$set(input, 'validationErrorSlab', 'Max Qty must be greater than or equal to Min Qty');
+            return false;
+          }
+          if (r.price === null || r.price === '' || r.price < 0) {
+            this.$set(input, 'validationErrorSlab', 'Price must be a non-negative number');
+            return false;
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+      var sorted = rows.slice().sort(function (a, b) {
+        return a.min_qty - b.min_qty;
+      });
+      for (var i = 1; i < sorted.length; i++) {
+        var prevMax = sorted[i - 1].max_qty;
+        if (prevMax === null || prevMax === '' || prevMax >= sorted[i].min_qty) {
+          this.$set(input, 'validationErrorSlab', 'Slab ranges overlap');
+          return false;
+        }
+      }
+      this.$set(input, 'validationErrorSlab', '');
+      return true;
+    },
+    remove: function remove(index) {
+      var _this18 = this;
       var variant_id = this.inputs[index].id ? this.inputs[index].id : "";
       if (this.id && variant_id !== "") {
         this.$swal.fire({
@@ -1787,10 +1939,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             var postData = {
               id: variant_id
             };
-            axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this17.$apiUrl + '/products/delete', postData).then(function (response) {
+            axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this18.$apiUrl + '/products/delete', postData).then(function (response) {
               var data = response.data;
-              _this17.inputs.splice(index, 1);
-              _this17.showSuccess(data.message);
+              _this18.inputs.splice(index, 1);
+              _this18.showSuccess(data.message);
             });
           }
         });
@@ -1921,7 +2073,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     getSellerCategories: function getSellerCategories() {
-      var _this18 = this;
+      var _this19 = this;
       var selectPlaceholder = '<option value="">' + __('select_category') + '</option>';
       // When no seller selected, show only placeholder and clear selection
       if (!this.seller_id || this.seller_id === 0 || this.seller_id === '') {
@@ -1935,7 +2087,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           seller_id: this.seller_id
         }
       }).then(function (response) {
-        _this18.isLoading = false;
+        _this19.isLoading = false;
         var data = response.data;
         var optionsHtml = '';
         if (typeof data === 'string') {
@@ -1943,14 +2095,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         } else if (data && typeof data.data === 'string') {
           optionsHtml = data.data;
         }
-        _this18.categoryOptions = selectPlaceholder + optionsHtml;
+        _this19.categoryOptions = selectPlaceholder + optionsHtml;
       })["catch"](function (error) {
-        _this18.isLoading = false;
-        _this18.categoryOptions = selectPlaceholder;
+        _this19.isLoading = false;
+        _this19.categoryOptions = selectPlaceholder;
       });
     },
     getSeller: function getSeller() {
-      var _this19 = this;
+      var _this20 = this;
       if (this.seller_id !== 0 && this.seller_id !== "" && !this.id) {
         this.isLoading = true;
         var param = {
@@ -1959,114 +2111,114 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/sellers/edit/' + this.seller_id, {
           params: param
         }).then(function (response) {
-          _this19.isLoading = false, _this19.require_products_approval = response.data.data.require_products_approval;
-          _this19.is_approved = _this19.require_products_approval == 0 ? 1 : 0;
+          _this20.isLoading = false, _this20.require_products_approval = response.data.data.require_products_approval;
+          _this20.is_approved = _this20.require_products_approval == 0 ? 1 : 0;
         });
       }
     },
     getCategories: function getCategories() {
-      var _this20 = this;
+      var _this21 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/categories/options').then(function (response) {
-        _this20.isLoading = false;
+        _this21.isLoading = false;
         var data = response.data;
         var placeholder = '<option value="">' + __('select_category') + '</option>';
         if (typeof data === 'string') {
-          _this20.categoryOptions = placeholder + data;
+          _this21.categoryOptions = placeholder + data;
         } else if (data.data && typeof data.data === 'string') {
-          _this20.categoryOptions = placeholder + data.data;
+          _this21.categoryOptions = placeholder + data.data;
         } else {
-          _this20.categoryOptions = placeholder;
+          _this21.categoryOptions = placeholder;
         }
       })["catch"](function (error) {
-        _this20.isLoading = false;
+        _this21.isLoading = false;
       });
     },
     getSellers: function getSellers() {
-      var _this21 = this;
+      var _this22 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/sellers').then(function (response) {
-        _this21.isLoading = false;
+        _this22.isLoading = false;
         var data = response.data;
-        _this21.sellers = data.data;
+        _this22.sellers = data.data;
       });
     },
     getTaxes: function getTaxes() {
-      var _this22 = this;
+      var _this23 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/products/taxes').then(function (response) {
-        _this22.isLoading = false;
+        _this23.isLoading = false;
         var data = response.data;
-        _this22.taxes = data.data;
+        _this23.taxes = data.data;
       });
     },
     getUnits: function getUnits() {
-      var _this23 = this;
+      var _this24 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/units/get').then(function (response) {
-        _this23.isLoading = false;
+        _this24.isLoading = false;
         var data = response.data;
-        _this23.units = data.data;
+        _this24.units = data.data;
       });
     },
     getBrands: function getBrands() {
-      var _this24 = this;
+      var _this25 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/products/brands/get').then(function (response) {
-        _this24.isLoading = false;
+        _this25.isLoading = false;
         var data = response.data;
-        _this24.brands = data.data;
-        if (_this24.cachedData && _this24.cachedData.brand) {
-          var foundBrand = _this24.brands.find(function (b) {
-            return b.id === _this24.cachedData.brand.id;
+        _this25.brands = data.data;
+        if (_this25.cachedData && _this25.cachedData.brand) {
+          var foundBrand = _this25.brands.find(function (b) {
+            return b.id === _this25.cachedData.brand.id;
           }) || null;
           // Update brand with translated name
-          _this24.$nextTick(function () {
-            if (foundBrand && _this24.translatedBrands && _this24.translatedBrands.length > 0) {
-              var translatedBrand = _this24.translatedBrands.find(function (b) {
+          _this25.$nextTick(function () {
+            if (foundBrand && _this25.translatedBrands && _this25.translatedBrands.length > 0) {
+              var translatedBrand = _this25.translatedBrands.find(function (b) {
                 return b.id === foundBrand.id;
               });
               if (translatedBrand) {
-                _this24.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
+                _this25.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
                   name: translatedBrand.name,
                   title: translatedBrand.title
                 });
               } else {
-                _this24.brand = foundBrand;
+                _this25.brand = foundBrand;
               }
             } else {
-              _this24.brand = foundBrand;
+              _this25.brand = foundBrand;
             }
           });
         }
       });
     },
     getCountries: function getCountries() {
-      var _this25 = this;
+      var _this26 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/countries/active').then(function (response) {
-        _this25.isLoading = false;
+        _this26.isLoading = false;
         var data = response.data;
-        _this25.countries = data.data;
-        if (_this25.cachedData && _this25.cachedData.made_in) {
-          _this25.made_in = _this25.countries.find(function (c) {
-            return c.id === _this25.cachedData.made_in.id;
+        _this26.countries = data.data;
+        if (_this26.cachedData && _this26.cachedData.made_in) {
+          _this26.made_in = _this26.countries.find(function (c) {
+            return c.id === _this26.cachedData.made_in.id;
           }) || null;
         }
       });
     },
     getTags: function getTags() {
-      var _this26 = this;
+      var _this27 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/products/tags').then(function (response) {
-        _this26.isLoading = false;
+        _this27.isLoading = false;
         var data = response.data;
-        _this26.tags = data.data;
+        _this27.tags = data.data;
 
         // After tags are loaded, convert tag names to IDs for Select2 (if translations are already loaded)
-        if (_this26.id && _this26.languages.length > 0) {
-          _this26.$nextTick(function () {
-            _this26.convertTagNamesToIds();
+        if (_this27.id && _this27.languages.length > 0) {
+          _this27.$nextTick(function () {
+            _this27.convertTagNamesToIds();
           });
         }
       });
@@ -2092,26 +2244,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return status.status || '';
     },
     getOrderStatus: function getOrderStatus() {
-      var _this27 = this;
+      var _this28 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
-        _this27.isLoading = false;
+        _this28.isLoading = false;
         var data = response.data;
         var statusesToRemoveIds = [6, 7, 8];
-        _this27.order_status = data.data.filter(function (status) {
+        _this28.order_status = data.data.filter(function (status) {
           return !statusesToRemoveIds.includes(status.id);
         });
       });
     },
     getTextGenKey: function getTextGenKey() {
-      var _this28 = this;
+      var _this29 = this;
       // Get the text generation API key from store settings
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/store_settings').then(function (response) {
         var data = response.data.data;
         if (data.store_settings) {
           data.store_settings.forEach(function (item) {
             if (item.variable === 'text_gen_key') {
-              _this28.textGenKey = item.value;
+              _this29.textGenKey = item.value;
             }
           });
         }
@@ -2176,105 +2328,105 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return true;
     },
     getProduct: function getProduct() {
-      var _this29 = this;
+      var _this30 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/products/edit/' + this.id).then(function (response) {
         var data = response.data;
         if (data.status === 1) {
-          var _this29$record$indica;
-          _this29.record = data.data;
-          _this29.name = _this29.record.name;
-          _this29.slug = _this29.record.slug;
-          _this29.barcode = _this29.record.barcode;
-          if (_this29.clone) {
-            _this29.name = '';
-            _this29.slug = '';
-            _this29.barcode = '';
+          var _this30$record$indica;
+          _this30.record = data.data;
+          _this30.name = _this30.record.name;
+          _this30.slug = _this30.record.slug;
+          _this30.barcode = _this30.record.barcode;
+          if (_this30.clone) {
+            _this30.name = '';
+            _this30.slug = '';
+            _this30.barcode = '';
           }
-          _this29.seller_id = _this29.record.seller_id;
-          _this29.getSellerCategories();
-          _this29.getSeller();
-          _this29.tag_ids = _this29.record.tags.map(function (item) {
+          _this30.seller_id = _this30.record.seller_id;
+          _this30.getSellerCategories();
+          _this30.getSeller();
+          _this30.tag_ids = _this30.record.tags.map(function (item) {
             return item.id;
           });
-          _this29.tax_id = _this29.record.tax_id;
-          var foundBrand = _this29.brands.find(function (item) {
-            return item.id === _this29.record.brand_id;
+          _this30.tax_id = _this30.record.tax_id;
+          var foundBrand = _this30.brands.find(function (item) {
+            return item.id === _this30.record.brand_id;
           });
           // Update brand with translated name after brands are loaded
-          _this29.$nextTick(function () {
-            if (foundBrand && _this29.translatedBrands && _this29.translatedBrands.length > 0) {
-              var translatedBrand = _this29.translatedBrands.find(function (b) {
+          _this30.$nextTick(function () {
+            if (foundBrand && _this30.translatedBrands && _this30.translatedBrands.length > 0) {
+              var translatedBrand = _this30.translatedBrands.find(function (b) {
                 return b.id === foundBrand.id;
               });
               if (translatedBrand) {
-                _this29.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
+                _this30.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
                   name: translatedBrand.name,
                   title: translatedBrand.title
                 });
               } else {
-                _this29.brand = foundBrand;
+                _this30.brand = foundBrand;
               }
             } else {
-              _this29.brand = foundBrand;
+              _this30.brand = foundBrand;
             }
           });
-          _this29.type = _this29.record.type;
-          _this29.category_id = _this29.record.category_id;
-          _this29.product_type = (_this29$record$indica = _this29.record.indicator) !== null && _this29$record$indica !== void 0 ? _this29$record$indica : "";
-          _this29.manufacturer = _this29.record.manufacturer != null && _this29.record.manufacturer !== "null" ? _this29.record.manufacturer : "";
+          _this30.type = _this30.record.type;
+          _this30.category_id = _this30.record.category_id;
+          _this30.product_type = (_this30$record$indica = _this30.record.indicator) !== null && _this30$record$indica !== void 0 ? _this30$record$indica : "";
+          _this30.manufacturer = _this30.record.manufacturer != null && _this30.record.manufacturer !== "null" ? _this30.record.manufacturer : "";
 
           // Load translations
-          _this29.loadTranslations();
-          _this29.made_in = _this29.countries.find(function (item) {
-            return item.id == _this29.record.made_in;
+          _this30.loadTranslations();
+          _this30.made_in = _this30.countries.find(function (item) {
+            return item.id == _this30.record.made_in;
           });
-          _this29.tax_included_in_price = _this29.record.tax_included_in_price;
-          _this29.return_status = _this29.record.return_status;
-          _this29.return_days = _this29.record.return_days;
-          _this29.cancelable_status = _this29.record.cancelable_status;
-          _this29.till_status = _this29.record.till_status;
-          _this29.cod_allowed_status = _this29.record.cod_allowed;
-          _this29.max_allowed_quantity = _this29.record.total_allowed_quantity;
-          _this29.description = _this29.record.description;
-          _this29.is_approved = _this29.record.is_approved;
-          _this29.status = _this29.record.status;
-          _this29.is_unlimited_stock = _this29.record.is_unlimited_stock;
-          _this29.main_image_path = _this29.$storageUrl + _this29.record.image;
-          _this29.other_images = _this29.record.images;
-          _this29.fssai_lic_no = _this29.record.fssai_lic_no;
-          _this29.image = _this29.record.image;
-          _this29.meta_title = _this29.record.meta_title;
-          _this29.meta_keywords = _this29.record.meta_keywords;
-          _this29.schema_markup = _this29.record.schema_markup;
-          _this29.meta_description = _this29.record.meta_description;
+          _this30.tax_included_in_price = _this30.record.tax_included_in_price;
+          _this30.return_status = _this30.record.return_status;
+          _this30.return_days = _this30.record.return_days;
+          _this30.cancelable_status = _this30.record.cancelable_status;
+          _this30.till_status = _this30.record.till_status;
+          _this30.cod_allowed_status = _this30.record.cod_allowed;
+          _this30.max_allowed_quantity = _this30.record.total_allowed_quantity;
+          _this30.description = _this30.record.description;
+          _this30.is_approved = _this30.record.is_approved;
+          _this30.status = _this30.record.status;
+          _this30.is_unlimited_stock = _this30.record.is_unlimited_stock;
+          _this30.main_image_path = _this30.$storageUrl + _this30.record.image;
+          _this30.other_images = _this30.record.images;
+          _this30.fssai_lic_no = _this30.record.fssai_lic_no;
+          _this30.image = _this30.record.image;
+          _this30.meta_title = _this30.record.meta_title;
+          _this30.meta_keywords = _this30.record.meta_keywords;
+          _this30.schema_markup = _this30.record.schema_markup;
+          _this30.meta_description = _this30.record.meta_description;
 
           // Set default language translation from main record
-          if (_this29.defaultLanguageId && _this29.translations[_this29.defaultLanguageId]) {
-            _this29.translations[_this29.defaultLanguageId].name = _this29.name;
+          if (_this30.defaultLanguageId && _this30.translations[_this30.defaultLanguageId]) {
+            _this30.translations[_this30.defaultLanguageId].name = _this30.name;
             // Convert tag_ids to tag names for translation
-            if (Array.isArray(_this29.tag_ids) && _this29.tag_ids.length > 0) {
-              var tagNames = _this29.tag_ids.map(function (tagId) {
-                var tag = _this29.tags.find(function (t) {
+            if (Array.isArray(_this30.tag_ids) && _this30.tag_ids.length > 0) {
+              var tagNames = _this30.tag_ids.map(function (tagId) {
+                var tag = _this30.tags.find(function (t) {
                   return t.id == tagId;
                 });
                 return tag ? tag.name : tagId;
               });
-              _this29.translations[_this29.defaultLanguageId].tags = tagNames.join(',');
+              _this30.translations[_this30.defaultLanguageId].tags = tagNames.join(',');
             } else {
-              _this29.translations[_this29.defaultLanguageId].tags = '';
+              _this30.translations[_this30.defaultLanguageId].tags = '';
             }
-            _this29.translations[_this29.defaultLanguageId].manufacturer = _this29.manufacturer;
-            _this29.translations[_this29.defaultLanguageId].description = _this29.description;
-            _this29.translations[_this29.defaultLanguageId].meta_title = _this29.meta_title;
-            _this29.translations[_this29.defaultLanguageId].meta_keywords = _this29.meta_keywords;
-            _this29.translations[_this29.defaultLanguageId].schema_markup = _this29.schema_markup;
-            _this29.translations[_this29.defaultLanguageId].meta_description = _this29.meta_description;
+            _this30.translations[_this30.defaultLanguageId].manufacturer = _this30.manufacturer;
+            _this30.translations[_this30.defaultLanguageId].description = _this30.description;
+            _this30.translations[_this30.defaultLanguageId].meta_title = _this30.meta_title;
+            _this30.translations[_this30.defaultLanguageId].meta_keywords = _this30.meta_keywords;
+            _this30.translations[_this30.defaultLanguageId].schema_markup = _this30.schema_markup;
+            _this30.translations[_this30.defaultLanguageId].meta_description = _this30.meta_description;
           }
-          var vm = _this29;
-          if (_this29.type == 'packet') {
-            _this29.inputs = [];
-            _this29.record.variants.forEach(function (item) {
+          var vm = _this30;
+          if (_this30.type == 'packet') {
+            _this30.inputs = [];
+            _this30.record.variants.forEach(function (item) {
               var variantData = {
                 'id': item.id ? item.id : "",
                 'packet_measurement': item.measurement,
@@ -2287,17 +2439,24 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                 'packet_sku': item.sku,
                 'packet_secondary_unit_id': item.secondary_unit_id,
                 'packet_secondary_unit_value': item.secondary_unit_value,
-                'images': item.images
+                'images': item.images,
+                'packet_slab_prices': Array.isArray(item.slab_prices) ? item.slab_prices.map(function (s) {
+                  return {
+                    min_qty: s.min_qty,
+                    max_qty: s.max_qty,
+                    price: s.price
+                  };
+                }) : []
               };
               vm.inputs.push(variantData);
             });
           }
-          if (_this29.type == 'loose') {
+          if (_this30.type == 'loose') {
             var loose_stock = 0;
             var loose_stock_unit_id = 0;
             var status = 0;
-            _this29.inputs = [];
-            _this29.record.variants.forEach(function (item) {
+            _this30.inputs = [];
+            _this30.record.variants.forEach(function (item) {
               var _item$custom_title;
               var variantData = {
                 'id': item.id ? item.id : "",
@@ -2310,34 +2469,41 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                 'loose_sku': item.sku,
                 'loose_secondary_unit_id': item.secondary_unit_id,
                 'loose_secondary_unit_value': item.secondary_unit_value,
-                'loose_images': item.images
+                'loose_images': item.images,
+                'loose_slab_prices': Array.isArray(item.slab_prices) ? item.slab_prices.map(function (s) {
+                  return {
+                    min_qty: s.min_qty,
+                    max_qty: s.max_qty,
+                    price: s.price
+                  };
+                }) : []
               };
               vm.inputs.push(variantData);
               loose_stock = item.stock;
               loose_stock_unit_id = item.stock_unit_id;
               status = item.status;
             });
-            _this29.loose_stock = loose_stock;
-            _this29.loose_stock_unit_id = loose_stock_unit_id;
-            _this29.status = status;
+            _this30.loose_stock = loose_stock;
+            _this30.loose_stock_unit_id = loose_stock_unit_id;
+            _this30.status = status;
           }
         } else {
-          _this29.showError(data.message);
+          _this30.showError(data.message);
           setTimeout(function () {
-            _this29.$router.back();
+            _this30.$router.back();
           }, 1000);
         }
       })["catch"](function (error) {
-        _this29.isLoading = false;
+        _this30.isLoading = false;
         if (error.message) {
-          _this29.showError(error.message);
+          _this30.showError(error.message);
         } else {
-          _this29.showError("Something went wrong!");
+          _this30.showError("Something went wrong!");
         }
       });
     },
     saveRecord: function saveRecord() {
-      var _this30 = this;
+      var _this31 = this;
       // Validate default language
       if (!this.validateDefaultLanguage()) {
         return;
@@ -2383,7 +2549,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         var tagNames = this.tag_ids.map(function (tagId) {
           // If it's a number, find the tag name from tags array
           if (typeof tagId === 'number' || typeof tagId === 'string' && !isNaN(tagId)) {
-            var tag = _this30.tags.find(function (t) {
+            var tag = _this31.tags.find(function (t) {
               return t.id == tagId;
             });
             return tag ? tag.name : tagId;
@@ -2399,7 +2565,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         });
         var _tagNames = tagIdsArray.map(function (tagId) {
           if (!isNaN(tagId)) {
-            var tag = _this30.tags.find(function (t) {
+            var tag = _this31.tags.find(function (t) {
               return t.id == tagId;
             });
             return tag ? tag.name : tagId;
@@ -2435,6 +2601,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           formData.append('packet_sku[]', this.inputs[_i].packet_sku != undefined ? this.inputs[_i].packet_sku : "");
           formData.append('packet_secondary_unit_id[]', this.inputs[_i].packet_secondary_unit_id != undefined ? this.inputs[_i].packet_secondary_unit_id : "");
           formData.append('packet_secondary_unit_value[]', this.inputs[_i].packet_secondary_unit_value != undefined ? this.inputs[_i].packet_secondary_unit_value : "");
+          formData.append('packet_slab_prices[' + _i + ']', JSON.stringify(this.inputs[_i].packet_slab_prices || []));
 
           // Safely handle packet variant images refs (can be undefined when card is hidden in non-default language tab)
           var packetRef = this.$refs['packet_variant_images_' + _i];
@@ -2461,6 +2628,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           formData.append('loose_sku[]', this.inputs[_i2].loose_sku != undefined ? this.inputs[_i2].loose_sku : "");
           formData.append('loose_secondary_unit_id[]', this.inputs[_i2].loose_secondary_unit_id != undefined ? this.inputs[_i2].loose_secondary_unit_id : "");
           formData.append('loose_secondary_unit_value[]', this.inputs[_i2].loose_secondary_unit_value != undefined ? this.inputs[_i2].loose_secondary_unit_value : "");
+          formData.append('loose_slab_prices[' + _i2 + ']', JSON.stringify(this.inputs[_i2].loose_slab_prices || []));
 
           // Safely handle loose variant images refs (can be undefined when card is hidden in non-default language tab)
           var looseRef = this.$refs['loose_variant_images_' + _i2];
@@ -2508,28 +2676,28 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       // Sync tags for all languages before saving (ensure translation.tags is up to date)
       this.languages.forEach(function (language) {
-        if (_this30.translations[language.id]) {
-          _this30.handleTagChange(language.id);
+        if (_this31.translations[language.id]) {
+          _this31.handleTagChange(language.id);
         }
       });
 
       // Prepare translations array
       var allTranslations = [];
       this.languages.forEach(function (language) {
-        var translation = _this30.translations[language.id];
+        var translation = _this31.translations[language.id];
         // Convert tag IDs to tag names for translation (for all languages)
         var tagsValue = translation.tags || '';
 
         // Get tag IDs for this language
         var tagIds = [];
         if (language.is_default) {
-          tagIds = Array.isArray(_this30.tag_ids) ? _this30.tag_ids : _this30.tag_ids ? String(_this30.tag_ids).split(',').map(function (t) {
+          tagIds = Array.isArray(_this31.tag_ids) ? _this31.tag_ids : _this31.tag_ids ? String(_this31.tag_ids).split(',').map(function (t) {
             return t.trim();
           }).filter(function (t) {
             return t;
           }) : [];
         } else {
-          var langTagIds = _this30.tagIdsByLanguage[language.id];
+          var langTagIds = _this31.tagIdsByLanguage[language.id];
           if (langTagIds) {
             tagIds = Array.isArray(langTagIds) ? langTagIds : String(langTagIds).split(',').map(function (t) {
               return t.trim();
@@ -2545,7 +2713,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           var _tagNames2 = tagIds.map(function (tagId) {
             // If it's a number, find the tag name from tags array
             if (typeof tagId === 'number' || typeof tagId === 'string' && !isNaN(tagId)) {
-              var tag = _this30.tags.find(function (t) {
+              var tag = _this31.tags.find(function (t) {
                 return t.id == tagId;
               });
               return tag ? tag.name : tagId;
@@ -2561,7 +2729,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
         // For default language, use manufacturer from main field
         if (language.is_default) {
-          translation.manufacturer = _this30.manufacturer || '';
+          translation.manufacturer = _this31.manufacturer || '';
         }
         allTranslations.push({
           language_id: language.id,
@@ -2589,9 +2757,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }).then(function (res) {
         var data = res.data;
         if (data.status === 1) {
-          _this30.skipCache = true;
+          _this31.skipCache = true;
           localStorage.removeItem('product_form_cache');
-          _this30.showMessage("success", data.message);
+          _this31.showMessage("success", data.message);
           setTimeout(function () {
             var _vm$loggedUser, _vm$loggedUser$role;
             vm.$swal.close();
@@ -2612,11 +2780,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       })["catch"](function (error) {
         vm.isLoading = false;
-        _this30.showError("Something went wrong!");
+        _this31.showError("Something went wrong!");
       });
     },
     deleteImage: function deleteImage(index, id, productImage) {
-      var _this31 = this;
+      var _this32 = this;
       var key = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : "";
       this.$swal.fire({
         title: "Are you Sure?",
@@ -2629,14 +2797,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         cancelButtonColor: '#d33'
       }).then(function (result) {
         if (result.value) {
-          _this31.deleteImageIds.push(id);
+          _this32.deleteImageIds.push(id);
           if (productImage) {
-            _this31.other_images.splice(index, 1);
+            _this32.other_images.splice(index, 1);
           } else {
-            if (_this31.type === 'packet') {
-              _this31.inputs[key].images.splice(index, 1);
+            if (_this32.type === 'packet') {
+              _this32.inputs[key].images.splice(index, 1);
             } else {
-              _this31.inputs[key].loose_images.splice(index, 1);
+              _this32.inputs[key].loose_images.splice(index, 1);
             }
           }
         }
@@ -2692,7 +2860,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       } catch (e) {}
     },
     restoreCache: function restoreCache() {
-      var _this32 = this;
+      var _this33 = this;
       try {
         var cached = localStorage.getItem('product_form_cache');
         if (!cached) return;
@@ -2704,7 +2872,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.cachedData = data;
         Object.keys(data).forEach(function (key) {
           if (key === 'timestamp' || key === 'brand' || key === 'made_in' || key === 'translations' || key === 'tagIdsByLanguage') return;
-          if (_this32.hasOwnProperty(key)) _this32[key] = data[key] !== undefined ? data[key] : _this32[key];
+          if (_this33.hasOwnProperty(key)) _this33[key] = data[key] !== undefined ? data[key] : _this33[key];
         });
 
         // Restore per-language translation data.
@@ -2714,14 +2882,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         if (data.translations && this.languages && this.languages.length > 0) {
           this.languages.forEach(function (language) {
             if (data.translations[language.id]) {
-              _this32.$set(_this32.translations, language.id, _objectSpread(_objectSpread({}, _this32.translations[language.id]), data.translations[language.id]));
+              _this33.$set(_this33.translations, language.id, _objectSpread(_objectSpread({}, _this33.translations[language.id]), data.translations[language.id]));
             }
           });
         }
         // Restore per-language tag ID selections.
         if (data.tagIdsByLanguage && this.languages && this.languages.length > 0) {
           Object.keys(data.tagIdsByLanguage).forEach(function (languageId) {
-            _this32.$set(_this32.tagIdsByLanguage, languageId, data.tagIdsByLanguage[languageId]);
+            _this33.$set(_this33.tagIdsByLanguage, languageId, data.tagIdsByLanguage[languageId]);
           });
         }
         if (data.brand && this.brands && this.brands.length) {
@@ -2730,20 +2898,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }) || null;
           // Update brand with translated name
           this.$nextTick(function () {
-            if (foundBrand && _this32.translatedBrands && _this32.translatedBrands.length > 0) {
-              var translatedBrand = _this32.translatedBrands.find(function (b) {
+            if (foundBrand && _this33.translatedBrands && _this33.translatedBrands.length > 0) {
+              var translatedBrand = _this33.translatedBrands.find(function (b) {
                 return b.id === foundBrand.id;
               });
               if (translatedBrand) {
-                _this32.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
+                _this33.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
                   name: translatedBrand.name,
                   title: translatedBrand.title
                 });
               } else {
-                _this32.brand = foundBrand;
+                _this33.brand = foundBrand;
               }
             } else {
-              _this32.brand = foundBrand;
+              _this33.brand = foundBrand;
             }
           });
         }
@@ -2754,8 +2922,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
         if (this.seller_id) {
           this.$nextTick(function () {
-            _this32.getSellerCategories();
-            _this32.getSeller();
+            _this33.getSellerCategories();
+            _this33.getSeller();
           });
         }
       } catch (e) {
@@ -2824,21 +2992,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       localStorage.removeItem('product_form_cache');
     },
     debouncedSave: function debouncedSave() {
-      var _this33 = this;
+      var _this34 = this;
       if (this.cacheTimer) clearTimeout(this.cacheTimer);
       this.cacheTimer = setTimeout(function () {
-        return _this33.saveCache();
+        return _this34.saveCache();
       }, 500);
     }
   },
   watch: {
     // Watch currentLanguageId to update selected brand name when language changes
     currentLanguageId: function currentLanguageId(newVal, oldVal) {
-      var _this34 = this;
+      var _this35 = this;
       if (newVal && this.brand && this.translatedBrands && this.translatedBrands.length > 0) {
         // Find the translated brand from translatedBrands
         var translatedBrand = this.translatedBrands.find(function (b) {
-          return b.id === _this34.brand.id;
+          return b.id === _this35.brand.id;
         });
         if (translatedBrand) {
           // Update the brand object with translated name
@@ -2852,11 +3020,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     // Watch translatedBrands to update selected brand when brands are loaded or language changes
     translatedBrands: {
       handler: function handler(newVal) {
-        var _this35 = this;
+        var _this36 = this;
         if (newVal && newVal.length > 0 && this.brand && this.brand.id) {
           // Find the translated brand from translatedBrands
           var translatedBrand = newVal.find(function (b) {
-            return b.id === _this35.brand.id;
+            return b.id === _this36.brand.id;
           });
           if (translatedBrand) {
             // Update the brand object with translated name
@@ -2871,12 +3039,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     // Watch activeLanguageTab to ensure Select2 updates when switching tabs
     activeLanguageTab: function activeLanguageTab(newTab, oldTab) {
-      var _this36 = this;
+      var _this37 = this;
       // Force Select2 to update when switching language tabs
       this.$nextTick(function () {
         // Trigger conversion again to ensure tagIdsByLanguage is set
-        if (_this36.tags && _this36.tags.length > 0 && _this36.languages.length > 0) {
-          _this36.convertTagNamesToIds();
+        if (_this37.tags && _this37.tags.length > 0 && _this37.languages.length > 0) {
+          _this37.convertTagNamesToIds();
         }
       });
     },
@@ -6676,6 +6844,476 @@ var render = function () {
                                           )
                                         : _vm._e(),
                                       _vm._v(" "),
+                                      _vm.isSellerRole
+                                        ? _c(
+                                            "div",
+                                            { staticClass: "col-md-12" },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c("label", [
+                                                    _vm._v(
+                                                      "\n                                                " +
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "Bulk Pricing (Slab)"
+                                                          )
+                                                        ) +
+                                                        "\n                                                "
+                                                    ),
+                                                    _c("i", {
+                                                      directives: [
+                                                        {
+                                                          name: "b-tooltip",
+                                                          rawName:
+                                                            "v-b-tooltip.hover",
+                                                          modifiers: {
+                                                            hover: true,
+                                                          },
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "fa fa-info-circle text-muted",
+                                                      attrs: {
+                                                        title:
+                                                          "Qty-based tier pricing. Empty Max Qty = open-ended (e.g. 50+). Slabs override discounted_price when matched.",
+                                                      },
+                                                    }),
+                                                  ]),
+                                                  _vm._v(" "),
+                                                  input.packet_slab_prices &&
+                                                  input.packet_slab_prices
+                                                    .length
+                                                    ? _c(
+                                                        "table",
+                                                        {
+                                                          staticClass:
+                                                            "table table-sm table-bordered mb-2",
+                                                        },
+                                                        [
+                                                          _c("thead", [
+                                                            _c("tr", [
+                                                              _c(
+                                                                "th",
+                                                                {
+                                                                  staticStyle: {
+                                                                    width:
+                                                                      "25%",
+                                                                  },
+                                                                },
+                                                                [
+                                                                  _vm._v(
+                                                                    _vm._s(
+                                                                      _vm.__(
+                                                                        "Min Qty"
+                                                                      )
+                                                                    )
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "th",
+                                                                {
+                                                                  staticStyle: {
+                                                                    width:
+                                                                      "30%",
+                                                                  },
+                                                                },
+                                                                [
+                                                                  _vm._v(
+                                                                    _vm._s(
+                                                                      _vm.__(
+                                                                        "Max Qty"
+                                                                      )
+                                                                    ) + " "
+                                                                  ),
+                                                                  _c(
+                                                                    "small",
+                                                                    {
+                                                                      staticClass:
+                                                                        "text-muted",
+                                                                    },
+                                                                    [
+                                                                      _vm._v(
+                                                                        "(blank = unlimited)"
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "th",
+                                                                {
+                                                                  staticStyle: {
+                                                                    width:
+                                                                      "30%",
+                                                                  },
+                                                                },
+                                                                [
+                                                                  _vm._v(
+                                                                    _vm._s(
+                                                                      _vm.__(
+                                                                        "Price"
+                                                                      )
+                                                                    ) +
+                                                                      " ( " +
+                                                                      _vm._s(
+                                                                        _vm.$currency
+                                                                      ) +
+                                                                      " )"
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c("th", {
+                                                                staticStyle: {
+                                                                  width: "15%",
+                                                                },
+                                                              }),
+                                                            ]),
+                                                          ]),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "tbody",
+                                                            _vm._l(
+                                                              input.packet_slab_prices,
+                                                              function (
+                                                                slab,
+                                                                si
+                                                              ) {
+                                                                return _c(
+                                                                  "tr",
+                                                                  { key: si },
+                                                                  [
+                                                                    _c("td", [
+                                                                      _c(
+                                                                        "input",
+                                                                        {
+                                                                          directives:
+                                                                            [
+                                                                              {
+                                                                                name: "model",
+                                                                                rawName:
+                                                                                  "v-model.number",
+                                                                                value:
+                                                                                  slab.min_qty,
+                                                                                expression:
+                                                                                  "slab.min_qty",
+                                                                                modifiers:
+                                                                                  {
+                                                                                    number: true,
+                                                                                  },
+                                                                              },
+                                                                            ],
+                                                                          staticClass:
+                                                                            "form-control form-control-sm",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "number",
+                                                                              min: "1",
+                                                                            },
+                                                                          domProps:
+                                                                            {
+                                                                              value:
+                                                                                slab.min_qty,
+                                                                            },
+                                                                          on: {
+                                                                            input:
+                                                                              function (
+                                                                                $event
+                                                                              ) {
+                                                                                if (
+                                                                                  $event
+                                                                                    .target
+                                                                                    .composing
+                                                                                ) {
+                                                                                  return
+                                                                                }
+                                                                                _vm.$set(
+                                                                                  slab,
+                                                                                  "min_qty",
+                                                                                  _vm._n(
+                                                                                    $event
+                                                                                      .target
+                                                                                      .value
+                                                                                  )
+                                                                                )
+                                                                              },
+                                                                            blur: function (
+                                                                              $event
+                                                                            ) {
+                                                                              return _vm.$forceUpdate()
+                                                                            },
+                                                                          },
+                                                                        }
+                                                                      ),
+                                                                    ]),
+                                                                    _vm._v(" "),
+                                                                    _c("td", [
+                                                                      _c(
+                                                                        "input",
+                                                                        {
+                                                                          directives:
+                                                                            [
+                                                                              {
+                                                                                name: "model",
+                                                                                rawName:
+                                                                                  "v-model.number",
+                                                                                value:
+                                                                                  slab.max_qty,
+                                                                                expression:
+                                                                                  "slab.max_qty",
+                                                                                modifiers:
+                                                                                  {
+                                                                                    number: true,
+                                                                                  },
+                                                                              },
+                                                                            ],
+                                                                          staticClass:
+                                                                            "form-control form-control-sm",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "number",
+                                                                              min: "1",
+                                                                              placeholder:
+                                                                                "∞",
+                                                                            },
+                                                                          domProps:
+                                                                            {
+                                                                              value:
+                                                                                slab.max_qty,
+                                                                            },
+                                                                          on: {
+                                                                            input:
+                                                                              function (
+                                                                                $event
+                                                                              ) {
+                                                                                if (
+                                                                                  $event
+                                                                                    .target
+                                                                                    .composing
+                                                                                ) {
+                                                                                  return
+                                                                                }
+                                                                                _vm.$set(
+                                                                                  slab,
+                                                                                  "max_qty",
+                                                                                  _vm._n(
+                                                                                    $event
+                                                                                      .target
+                                                                                      .value
+                                                                                  )
+                                                                                )
+                                                                              },
+                                                                            blur: function (
+                                                                              $event
+                                                                            ) {
+                                                                              return _vm.$forceUpdate()
+                                                                            },
+                                                                          },
+                                                                        }
+                                                                      ),
+                                                                    ]),
+                                                                    _vm._v(" "),
+                                                                    _c("td", [
+                                                                      _c(
+                                                                        "input",
+                                                                        {
+                                                                          directives:
+                                                                            [
+                                                                              {
+                                                                                name: "model",
+                                                                                rawName:
+                                                                                  "v-model.number",
+                                                                                value:
+                                                                                  slab.price,
+                                                                                expression:
+                                                                                  "slab.price",
+                                                                                modifiers:
+                                                                                  {
+                                                                                    number: true,
+                                                                                  },
+                                                                              },
+                                                                            ],
+                                                                          staticClass:
+                                                                            "form-control form-control-sm",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "number",
+                                                                              min: "0",
+                                                                              step: "any",
+                                                                            },
+                                                                          domProps:
+                                                                            {
+                                                                              value:
+                                                                                slab.price,
+                                                                            },
+                                                                          on: {
+                                                                            input:
+                                                                              function (
+                                                                                $event
+                                                                              ) {
+                                                                                if (
+                                                                                  $event
+                                                                                    .target
+                                                                                    .composing
+                                                                                ) {
+                                                                                  return
+                                                                                }
+                                                                                _vm.$set(
+                                                                                  slab,
+                                                                                  "price",
+                                                                                  _vm._n(
+                                                                                    $event
+                                                                                      .target
+                                                                                      .value
+                                                                                  )
+                                                                                )
+                                                                              },
+                                                                            blur: function (
+                                                                              $event
+                                                                            ) {
+                                                                              return _vm.$forceUpdate()
+                                                                            },
+                                                                          },
+                                                                        }
+                                                                      ),
+                                                                    ]),
+                                                                    _vm._v(" "),
+                                                                    _c(
+                                                                      "td",
+                                                                      {
+                                                                        staticClass:
+                                                                          "text-end",
+                                                                      },
+                                                                      [
+                                                                        _c(
+                                                                          "button",
+                                                                          {
+                                                                            staticClass:
+                                                                              "btn btn-sm btn-danger",
+                                                                            attrs:
+                                                                              {
+                                                                                type: "button",
+                                                                              },
+                                                                            on: {
+                                                                              click:
+                                                                                function (
+                                                                                  $event
+                                                                                ) {
+                                                                                  return _vm.removeSlabRow(
+                                                                                    input,
+                                                                                    si,
+                                                                                    "packet"
+                                                                                  )
+                                                                                },
+                                                                            },
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "i",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "fa fa-times",
+                                                                              }
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                  ]
+                                                                )
+                                                              }
+                                                            ),
+                                                            0
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "button",
+                                                    {
+                                                      staticClass:
+                                                        "btn btn-sm btn-outline-primary",
+                                                      attrs: { type: "button" },
+                                                      on: {
+                                                        click: function (
+                                                          $event
+                                                        ) {
+                                                          return _vm.addSlabRow(
+                                                            input,
+                                                            "packet"
+                                                          )
+                                                        },
+                                                      },
+                                                    },
+                                                    [
+                                                      _c("i", {
+                                                        staticClass:
+                                                          "fa fa-plus",
+                                                      }),
+                                                      _vm._v(
+                                                        " " +
+                                                          _vm._s(
+                                                            _vm.__("Add Slab")
+                                                          ) +
+                                                          "\n                                            "
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _vm.slabPreview(
+                                                    input,
+                                                    "packet"
+                                                  )
+                                                    ? _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "text-muted small mt-1",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            "\n                                                " +
+                                                              _vm._s(
+                                                                _vm.slabPreview(
+                                                                  input,
+                                                                  "packet"
+                                                                )
+                                                              ) +
+                                                              "\n                                            "
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                  _vm._v(" "),
+                                                  input.validationErrorSlab
+                                                    ? _c(
+                                                        "span",
+                                                        {
+                                                          staticClass:
+                                                            "error d-block",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              input.validationErrorSlab
+                                                            )
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                ]
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                      _vm._v(" "),
                                       _vm.isSellerRole &&
                                       _vm.is_unlimited_stock != 1
                                         ? _c(
@@ -7674,6 +8312,491 @@ var render = function () {
                                                             _vm._v(
                                                               _vm._s(
                                                                 input.validationErrorDiscountedPriceLoose
+                                                              )
+                                                            ),
+                                                          ]
+                                                        )
+                                                      : _vm._e(),
+                                                  ]
+                                                ),
+                                              ]
+                                            )
+                                          : _vm._e(),
+                                        _vm._v(" "),
+                                        _vm.isSellerRole
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "col-md-12" },
+                                              [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "form-group loose_div",
+                                                  },
+                                                  [
+                                                    _c("label", [
+                                                      _vm._v(
+                                                        "\n                                                    " +
+                                                          _vm._s(
+                                                            _vm.__(
+                                                              "Bulk Pricing (Slab)"
+                                                            )
+                                                          ) +
+                                                          "\n                                                    "
+                                                      ),
+                                                      _c("i", {
+                                                        directives: [
+                                                          {
+                                                            name: "b-tooltip",
+                                                            rawName:
+                                                              "v-b-tooltip.hover",
+                                                            modifiers: {
+                                                              hover: true,
+                                                            },
+                                                          },
+                                                        ],
+                                                        staticClass:
+                                                          "fa fa-info-circle text-muted",
+                                                        attrs: {
+                                                          title:
+                                                            "Qty-based tier pricing. Empty Max Qty = open-ended.",
+                                                        },
+                                                      }),
+                                                    ]),
+                                                    _vm._v(" "),
+                                                    input.loose_slab_prices &&
+                                                    input.loose_slab_prices
+                                                      .length
+                                                      ? _c(
+                                                          "table",
+                                                          {
+                                                            staticClass:
+                                                              "table table-sm table-bordered mb-2",
+                                                          },
+                                                          [
+                                                            _c("thead", [
+                                                              _c("tr", [
+                                                                _c(
+                                                                  "th",
+                                                                  {
+                                                                    staticStyle:
+                                                                      {
+                                                                        width:
+                                                                          "25%",
+                                                                      },
+                                                                  },
+                                                                  [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        _vm.__(
+                                                                          "Min Qty"
+                                                                        )
+                                                                      )
+                                                                    ),
+                                                                  ]
+                                                                ),
+                                                                _vm._v(" "),
+                                                                _c(
+                                                                  "th",
+                                                                  {
+                                                                    staticStyle:
+                                                                      {
+                                                                        width:
+                                                                          "30%",
+                                                                      },
+                                                                  },
+                                                                  [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        _vm.__(
+                                                                          "Max Qty"
+                                                                        )
+                                                                      ) + " "
+                                                                    ),
+                                                                    _c(
+                                                                      "small",
+                                                                      {
+                                                                        staticClass:
+                                                                          "text-muted",
+                                                                      },
+                                                                      [
+                                                                        _vm._v(
+                                                                          "(blank = unlimited)"
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                  ]
+                                                                ),
+                                                                _vm._v(" "),
+                                                                _c(
+                                                                  "th",
+                                                                  {
+                                                                    staticStyle:
+                                                                      {
+                                                                        width:
+                                                                          "30%",
+                                                                      },
+                                                                  },
+                                                                  [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        _vm.__(
+                                                                          "Price"
+                                                                        )
+                                                                      ) +
+                                                                        " ( " +
+                                                                        _vm._s(
+                                                                          _vm.$currency
+                                                                        ) +
+                                                                        " )"
+                                                                    ),
+                                                                  ]
+                                                                ),
+                                                                _vm._v(" "),
+                                                                _c("th", {
+                                                                  staticStyle: {
+                                                                    width:
+                                                                      "15%",
+                                                                  },
+                                                                }),
+                                                              ]),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c(
+                                                              "tbody",
+                                                              _vm._l(
+                                                                input.loose_slab_prices,
+                                                                function (
+                                                                  slab,
+                                                                  si
+                                                                ) {
+                                                                  return _c(
+                                                                    "tr",
+                                                                    { key: si },
+                                                                    [
+                                                                      _c("td", [
+                                                                        _c(
+                                                                          "input",
+                                                                          {
+                                                                            directives:
+                                                                              [
+                                                                                {
+                                                                                  name: "model",
+                                                                                  rawName:
+                                                                                    "v-model.number",
+                                                                                  value:
+                                                                                    slab.min_qty,
+                                                                                  expression:
+                                                                                    "slab.min_qty",
+                                                                                  modifiers:
+                                                                                    {
+                                                                                      number: true,
+                                                                                    },
+                                                                                },
+                                                                              ],
+                                                                            staticClass:
+                                                                              "form-control form-control-sm",
+                                                                            attrs:
+                                                                              {
+                                                                                type: "number",
+                                                                                min: "1",
+                                                                              },
+                                                                            domProps:
+                                                                              {
+                                                                                value:
+                                                                                  slab.min_qty,
+                                                                              },
+                                                                            on: {
+                                                                              input:
+                                                                                function (
+                                                                                  $event
+                                                                                ) {
+                                                                                  if (
+                                                                                    $event
+                                                                                      .target
+                                                                                      .composing
+                                                                                  ) {
+                                                                                    return
+                                                                                  }
+                                                                                  _vm.$set(
+                                                                                    slab,
+                                                                                    "min_qty",
+                                                                                    _vm._n(
+                                                                                      $event
+                                                                                        .target
+                                                                                        .value
+                                                                                    )
+                                                                                  )
+                                                                                },
+                                                                              blur: function (
+                                                                                $event
+                                                                              ) {
+                                                                                return _vm.$forceUpdate()
+                                                                              },
+                                                                            },
+                                                                          }
+                                                                        ),
+                                                                      ]),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c("td", [
+                                                                        _c(
+                                                                          "input",
+                                                                          {
+                                                                            directives:
+                                                                              [
+                                                                                {
+                                                                                  name: "model",
+                                                                                  rawName:
+                                                                                    "v-model.number",
+                                                                                  value:
+                                                                                    slab.max_qty,
+                                                                                  expression:
+                                                                                    "slab.max_qty",
+                                                                                  modifiers:
+                                                                                    {
+                                                                                      number: true,
+                                                                                    },
+                                                                                },
+                                                                              ],
+                                                                            staticClass:
+                                                                              "form-control form-control-sm",
+                                                                            attrs:
+                                                                              {
+                                                                                type: "number",
+                                                                                min: "1",
+                                                                                placeholder:
+                                                                                  "∞",
+                                                                              },
+                                                                            domProps:
+                                                                              {
+                                                                                value:
+                                                                                  slab.max_qty,
+                                                                              },
+                                                                            on: {
+                                                                              input:
+                                                                                function (
+                                                                                  $event
+                                                                                ) {
+                                                                                  if (
+                                                                                    $event
+                                                                                      .target
+                                                                                      .composing
+                                                                                  ) {
+                                                                                    return
+                                                                                  }
+                                                                                  _vm.$set(
+                                                                                    slab,
+                                                                                    "max_qty",
+                                                                                    _vm._n(
+                                                                                      $event
+                                                                                        .target
+                                                                                        .value
+                                                                                    )
+                                                                                  )
+                                                                                },
+                                                                              blur: function (
+                                                                                $event
+                                                                              ) {
+                                                                                return _vm.$forceUpdate()
+                                                                              },
+                                                                            },
+                                                                          }
+                                                                        ),
+                                                                      ]),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c("td", [
+                                                                        _c(
+                                                                          "input",
+                                                                          {
+                                                                            directives:
+                                                                              [
+                                                                                {
+                                                                                  name: "model",
+                                                                                  rawName:
+                                                                                    "v-model.number",
+                                                                                  value:
+                                                                                    slab.price,
+                                                                                  expression:
+                                                                                    "slab.price",
+                                                                                  modifiers:
+                                                                                    {
+                                                                                      number: true,
+                                                                                    },
+                                                                                },
+                                                                              ],
+                                                                            staticClass:
+                                                                              "form-control form-control-sm",
+                                                                            attrs:
+                                                                              {
+                                                                                type: "number",
+                                                                                min: "0",
+                                                                                step: "any",
+                                                                              },
+                                                                            domProps:
+                                                                              {
+                                                                                value:
+                                                                                  slab.price,
+                                                                              },
+                                                                            on: {
+                                                                              input:
+                                                                                function (
+                                                                                  $event
+                                                                                ) {
+                                                                                  if (
+                                                                                    $event
+                                                                                      .target
+                                                                                      .composing
+                                                                                  ) {
+                                                                                    return
+                                                                                  }
+                                                                                  _vm.$set(
+                                                                                    slab,
+                                                                                    "price",
+                                                                                    _vm._n(
+                                                                                      $event
+                                                                                        .target
+                                                                                        .value
+                                                                                    )
+                                                                                  )
+                                                                                },
+                                                                              blur: function (
+                                                                                $event
+                                                                              ) {
+                                                                                return _vm.$forceUpdate()
+                                                                              },
+                                                                            },
+                                                                          }
+                                                                        ),
+                                                                      ]),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "td",
+                                                                        {
+                                                                          staticClass:
+                                                                            "text-end",
+                                                                        },
+                                                                        [
+                                                                          _c(
+                                                                            "button",
+                                                                            {
+                                                                              staticClass:
+                                                                                "btn btn-sm btn-danger",
+                                                                              attrs:
+                                                                                {
+                                                                                  type: "button",
+                                                                                },
+                                                                              on: {
+                                                                                click:
+                                                                                  function (
+                                                                                    $event
+                                                                                  ) {
+                                                                                    return _vm.removeSlabRow(
+                                                                                      input,
+                                                                                      si,
+                                                                                      "loose"
+                                                                                    )
+                                                                                  },
+                                                                              },
+                                                                            },
+                                                                            [
+                                                                              _c(
+                                                                                "i",
+                                                                                {
+                                                                                  staticClass:
+                                                                                    "fa fa-times",
+                                                                                }
+                                                                              ),
+                                                                            ]
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                    ]
+                                                                  )
+                                                                }
+                                                              ),
+                                                              0
+                                                            ),
+                                                          ]
+                                                        )
+                                                      : _vm._e(),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "button",
+                                                      {
+                                                        staticClass:
+                                                          "btn btn-sm btn-outline-primary",
+                                                        attrs: {
+                                                          type: "button",
+                                                        },
+                                                        on: {
+                                                          click: function (
+                                                            $event
+                                                          ) {
+                                                            return _vm.addSlabRow(
+                                                              input,
+                                                              "loose"
+                                                            )
+                                                          },
+                                                        },
+                                                      },
+                                                      [
+                                                        _c("i", {
+                                                          staticClass:
+                                                            "fa fa-plus",
+                                                        }),
+                                                        _vm._v(
+                                                          " " +
+                                                            _vm._s(
+                                                              _vm.__("Add Slab")
+                                                            ) +
+                                                            "\n                                                "
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _vm.slabPreview(
+                                                      input,
+                                                      "loose"
+                                                    )
+                                                      ? _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "text-muted small mt-1",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                                                    " +
+                                                                _vm._s(
+                                                                  _vm.slabPreview(
+                                                                    input,
+                                                                    "loose"
+                                                                  )
+                                                                ) +
+                                                                "\n                                                "
+                                                            ),
+                                                          ]
+                                                        )
+                                                      : _vm._e(),
+                                                    _vm._v(" "),
+                                                    input.validationErrorSlab
+                                                      ? _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "error d-block",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                input.validationErrorSlab
                                                               )
                                                             ),
                                                           ]

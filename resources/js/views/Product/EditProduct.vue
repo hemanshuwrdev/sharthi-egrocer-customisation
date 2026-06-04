@@ -550,6 +550,45 @@
                                                     input.validationErrorDiscountedPrice }}</span>
                                             </div>
                                         </div>
+                                        <div class="col-md-12" v-if="isSellerRole">
+                                            <div class="form-group">
+                                                <label>
+                                                    {{ __('Bulk Pricing (Slab)') }}
+                                                    <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
+                                                        title="Qty-based tier pricing. Empty Max Qty = open-ended (e.g. 50+). Slabs override discounted_price when matched."></i>
+                                                </label>
+                                                <table class="table table-sm table-bordered mb-2"
+                                                    v-if="input.packet_slab_prices && input.packet_slab_prices.length">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="width:25%">{{ __('Min Qty') }}</th>
+                                                            <th style="width:30%">{{ __('Max Qty') }} <small class="text-muted">(blank = unlimited)</small></th>
+                                                            <th style="width:30%">{{ __('Price') }} ( {{ $currency }} )</th>
+                                                            <th style="width:15%"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr v-for="(slab, si) in input.packet_slab_prices" :key="si">
+                                                            <td><input type="number" min="1" class="form-control form-control-sm" v-model.number="slab.min_qty"></td>
+                                                            <td><input type="number" min="1" class="form-control form-control-sm" v-model.number="slab.max_qty" placeholder="∞"></td>
+                                                            <td><input type="number" min="0" step="any" class="form-control form-control-sm" v-model.number="slab.price"></td>
+                                                            <td class="text-end">
+                                                                <button type="button" class="btn btn-sm btn-danger"
+                                                                    @click="removeSlabRow(input, si, 'packet')"><i class="fa fa-times"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    @click="addSlabRow(input, 'packet')">
+                                                    <i class="fa fa-plus"></i> {{ __('Add Slab') }}
+                                                </button>
+                                                <div class="text-muted small mt-1" v-if="slabPreview(input, 'packet')">
+                                                    {{ slabPreview(input, 'packet') }}
+                                                </div>
+                                                <span v-if="input.validationErrorSlab" class="error d-block">{{ input.validationErrorSlab }}</span>
+                                            </div>
+                                        </div>
                                         <div class="col-md-4" v-if="isSellerRole && is_unlimited_stock != 1">
                                             <div class="form-group">
                                                 <label>{{ __('stock') }} <i class="text-danger">*</i></label>
@@ -693,6 +732,45 @@
                                                     <span v-if="input.validationErrorDiscountedPriceLoose"
                                                         class="error">{{
                                                             input.validationErrorDiscountedPriceLoose }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12" v-if="isSellerRole">
+                                                <div class="form-group loose_div">
+                                                    <label>
+                                                        {{ __('Bulk Pricing (Slab)') }}
+                                                        <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
+                                                            title="Qty-based tier pricing. Empty Max Qty = open-ended."></i>
+                                                    </label>
+                                                    <table class="table table-sm table-bordered mb-2"
+                                                        v-if="input.loose_slab_prices && input.loose_slab_prices.length">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="width:25%">{{ __('Min Qty') }}</th>
+                                                                <th style="width:30%">{{ __('Max Qty') }} <small class="text-muted">(blank = unlimited)</small></th>
+                                                                <th style="width:30%">{{ __('Price') }} ( {{ $currency }} )</th>
+                                                                <th style="width:15%"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(slab, si) in input.loose_slab_prices" :key="si">
+                                                                <td><input type="number" min="1" class="form-control form-control-sm" v-model.number="slab.min_qty"></td>
+                                                                <td><input type="number" min="1" class="form-control form-control-sm" v-model.number="slab.max_qty" placeholder="∞"></td>
+                                                                <td><input type="number" min="0" step="any" class="form-control form-control-sm" v-model.number="slab.price"></td>
+                                                                <td class="text-end">
+                                                                    <button type="button" class="btn btn-sm btn-danger"
+                                                                        @click="removeSlabRow(input, si, 'loose')"><i class="fa fa-times"></i></button>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                        @click="addSlabRow(input, 'loose')">
+                                                        <i class="fa fa-plus"></i> {{ __('Add Slab') }}
+                                                    </button>
+                                                    <div class="text-muted small mt-1" v-if="slabPreview(input, 'loose')">
+                                                        {{ slabPreview(input, 'loose') }}
+                                                    </div>
+                                                    <span v-if="input.validationErrorSlab" class="error d-block">{{ input.validationErrorSlab }}</span>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
@@ -1714,10 +1792,57 @@ export default {
         },
         addRow() {
             if (this.type === 'packet') {
-                this.inputs.push({ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '', 'packet_sku': '', 'packet_secondary_unit_id': '', 'packet_secondary_unit_value': '' })
+                this.inputs.push({ 'name': '', 'packet_status': '', 'packet_stock_unit_id': '', 'packet_sku': '', 'packet_secondary_unit_id': '', 'packet_secondary_unit_value': '', 'packet_slab_prices': [] })
             } else {
-                this.inputs.push({ 'name': '', 'loose_sku': '', 'loose_secondary_unit_id': '', 'loose_secondary_unit_value': '' })
+                this.inputs.push({ 'name': '', 'loose_sku': '', 'loose_secondary_unit_id': '', 'loose_secondary_unit_value': '', 'loose_slab_prices': [] })
             }
+        },
+        addSlabRow(input, type) {
+            const key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+            if (!input[key]) this.$set(input, key, []);
+            input[key].push({ min_qty: null, max_qty: null, price: null });
+        },
+        removeSlabRow(input, index, type) {
+            const key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+            input[key].splice(index, 1);
+        },
+        slabPreview(input, type) {
+            const key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+            const slabs = (input[key] || []).filter(s => s.min_qty && s.price !== null && s.price !== '');
+            if (!slabs.length) return '';
+            return slabs.map(s => `${s.min_qty}-${s.max_qty || '∞'} → ${this.$currency}${s.price}`).join(', ');
+        },
+        validateSlabs(input, type) {
+            const key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+            const rows = (input[key] || []).filter(s => s.min_qty || s.max_qty || (s.price !== null && s.price !== ''));
+            if (!rows.length) {
+                this.$set(input, 'validationErrorSlab', '');
+                return true;
+            }
+            for (const r of rows) {
+                if (!r.min_qty || r.min_qty < 1) {
+                    this.$set(input, 'validationErrorSlab', 'Min Qty must be at least 1');
+                    return false;
+                }
+                if (r.max_qty !== null && r.max_qty !== '' && r.max_qty < r.min_qty) {
+                    this.$set(input, 'validationErrorSlab', 'Max Qty must be greater than or equal to Min Qty');
+                    return false;
+                }
+                if (r.price === null || r.price === '' || r.price < 0) {
+                    this.$set(input, 'validationErrorSlab', 'Price must be a non-negative number');
+                    return false;
+                }
+            }
+            const sorted = rows.slice().sort((a, b) => a.min_qty - b.min_qty);
+            for (let i = 1; i < sorted.length; i++) {
+                const prevMax = sorted[i - 1].max_qty;
+                if (prevMax === null || prevMax === '' || prevMax >= sorted[i].min_qty) {
+                    this.$set(input, 'validationErrorSlab', 'Slab ranges overlap');
+                    return false;
+                }
+            }
+            this.$set(input, 'validationErrorSlab', '');
+            return true;
         },
         remove(index) {
             let variant_id = (this.inputs[index].id) ? this.inputs[index].id : "";
@@ -2257,6 +2382,11 @@ export default {
                                     'packet_secondary_unit_id': item.secondary_unit_id,
                                     'packet_secondary_unit_value': item.secondary_unit_value,
                                     'images': item.images,
+                                    'packet_slab_prices': Array.isArray(item.slab_prices) ? item.slab_prices.map(s => ({
+                                        min_qty: s.min_qty,
+                                        max_qty: s.max_qty,
+                                        price: s.price
+                                    })) : [],
                                 };
                                 vm.inputs.push(variantData);
                             });
@@ -2282,6 +2412,11 @@ export default {
                                     'loose_secondary_unit_id': item.secondary_unit_id,
                                     'loose_secondary_unit_value': item.secondary_unit_value,
                                     'loose_images': item.images,
+                                    'loose_slab_prices': Array.isArray(item.slab_prices) ? item.slab_prices.map(s => ({
+                                        min_qty: s.min_qty,
+                                        max_qty: s.max_qty,
+                                        price: s.price
+                                    })) : [],
                                 };
                                 vm.inputs.push(variantData);
                                 loose_stock = item.stock;
@@ -2403,6 +2538,7 @@ export default {
                     formData.append('packet_sku[]', (this.inputs[i].packet_sku != undefined) ? this.inputs[i].packet_sku : "");
                     formData.append('packet_secondary_unit_id[]', (this.inputs[i].packet_secondary_unit_id != undefined) ? this.inputs[i].packet_secondary_unit_id : "");
                     formData.append('packet_secondary_unit_value[]', (this.inputs[i].packet_secondary_unit_value != undefined) ? this.inputs[i].packet_secondary_unit_value : "");
+                    formData.append('packet_slab_prices[' + i + ']', JSON.stringify(this.inputs[i].packet_slab_prices || []));
 
                     // Safely handle packet variant images refs (can be undefined when card is hidden in non-default language tab)
                     const packetRef = this.$refs['packet_variant_images_' + i];
@@ -2430,6 +2566,7 @@ export default {
                     formData.append('loose_sku[]', (this.inputs[i].loose_sku != undefined) ? this.inputs[i].loose_sku : "");
                     formData.append('loose_secondary_unit_id[]', (this.inputs[i].loose_secondary_unit_id != undefined) ? this.inputs[i].loose_secondary_unit_id : "");
                     formData.append('loose_secondary_unit_value[]', (this.inputs[i].loose_secondary_unit_value != undefined) ? this.inputs[i].loose_secondary_unit_value : "");
+                    formData.append('loose_slab_prices[' + i + ']', JSON.stringify(this.inputs[i].loose_slab_prices || []));
 
                     // Safely handle loose variant images refs (can be undefined when card is hidden in non-default language tab)
                     const looseRef = this.$refs['loose_variant_images_' + i];

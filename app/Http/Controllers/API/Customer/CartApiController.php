@@ -123,6 +123,12 @@ class CartApiController extends Controller
                 $res[$key]->price = CommonHelper::doubleNumber($taxed->taxable_price ?? $item->price);
                 $res[$key]->taxable_amount = CommonHelper::doubleNumber($taxed->taxable_amount);
 
+                $cartQty = (int) ($row->qty ?? 0);
+                $taxPercentage = (float) ($item->tax_percentage ?? 0);
+                $res[$key]->slab_prices = CommonHelper::getSlabPricesForApi($item->id, $taxPercentage);
+                $slabTaxed = CommonHelper::getSlabTaxableAmount($item->id, $cartQty);
+                $res[$key]->effective_unit_price = CommonHelper::doubleNumber($slabTaxed->taxable_amount ?? $taxed->taxable_amount);
+
                 $res[$key]->stock = $item->stock;
                 $res[$key]->images = CommonHelper::getImages($row['id'], $row->product_variant_id);
                 $res[$key]->total_allowed_quantity = $item->total_allowed_quantity;
@@ -201,6 +207,8 @@ class CartApiController extends Controller
                     $result[$key]->discounted_price =  CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $item->discounted_price);
                     $result[$key]->price = CommonHelper::doubleNumber($taxed->taxable_price ?? $item->price);
                     $result[$key]->taxable_amount = CommonHelper::doubleNumber($taxed->taxable_amount);
+
+                    $result[$key]->slab_prices = CommonHelper::getSlabPricesForApi($item->id, (float) ($item->tax_percentage ?? 0));
 
                     $result[$key]->stock = $item->stock;
                     $result[$key]->images = CommonHelper::getImages($rows['id'], $rows->product_variant_id);
@@ -783,6 +791,11 @@ class CartApiController extends Controller
                             $result[$key]->price = CommonHelper::doubleNumber($taxed->taxable_price ?? $item->price);
                             $result[$key]->taxable_amount = CommonHelper::doubleNumber($taxed->taxable_amount);
 
+                            $cartQty = (int) ($rows->qty ?? 0);
+                            $result[$key]->slab_prices = CommonHelper::getSlabPricesForApi($item->id, (float) ($item->tax_percentage ?? 0));
+                            $slabTaxed = CommonHelper::getSlabTaxableAmount($item->id, $cartQty);
+                            $result[$key]->effective_unit_price = CommonHelper::doubleNumber($slabTaxed->taxable_amount ?? $taxed->taxable_amount);
+
                             $result[$key]->stock = $item->stock;
                             $result[$key]->images = CommonHelper::getImages($rows->id, $rows->product_variant_id);
                             $result[$key]->total_allowed_quantity = $item->total_allowed_quantity;
@@ -886,6 +899,10 @@ class CartApiController extends Controller
                 $variantIndex = array_search($row->id, $variant_id);
                 $row->qty = $quantity[$variantIndex] ?? 0;  // Default to 0 if quantity not found
                 $row->product_variant_id = $row->id;  // Default to 0 if quantity not found
+
+                $row->slab_prices = CommonHelper::getSlabPricesForApi($row->id, (float) ($row->tax_percentage ?? 0));
+                $slabTaxed = CommonHelper::getSlabTaxableAmount($row->id, (int) $row->qty);
+                $row->effective_unit_price = CommonHelper::doubleNumber($slabTaxed->taxable_amount ?? $taxed->taxable_amount);
 
             }
 

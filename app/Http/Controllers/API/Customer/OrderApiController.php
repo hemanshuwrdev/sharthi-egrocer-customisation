@@ -428,8 +428,17 @@ class OrderApiController extends Controller
                     $tax_title = $item->tax_title;
                     $seller_id = (!empty($item->seller_id)) ? $item->seller_id : "";
                     $tax_percentage = (empty($item->tax_percentage) || $item->tax_percentage == "") ? 0 : $item->tax_percentage;
-                    $tax_amt = $discounted_price != 0 ? (($tax_percentage / 100) * $discounted_price) : (($tax_percentage / 100) * $price);
-                    $sub_total = $discounted_price != 0 ? ($discounted_price + ($tax_percentage / 100) * $discounted_price) * $quantity : ($price + ($tax_percentage / 100) * $price) * $quantity;
+
+                    $matchedSlab = CommonHelper::getMatchingSlab($product_variant_id, $quantity);
+                    if ($matchedSlab) {
+                        $effective_unit_price = (float) $matchedSlab->price;
+                    } elseif ($discounted_price != 0) {
+                        $effective_unit_price = (float) $discounted_price;
+                    } else {
+                        $effective_unit_price = (float) $price;
+                    }
+                    $tax_amt = ($tax_percentage / 100) * $effective_unit_price;
+                    $sub_total = ($effective_unit_price + ($tax_percentage / 100) * $effective_unit_price) * $quantity;
 
                     $neworder_id = $order_id;
                     $tax_amount = $tax_amt;
@@ -449,6 +458,11 @@ class OrderApiController extends Controller
 
                     $order_item->price = $price;
                     $order_item->discounted_price = $discounted_price;
+                    if ($matchedSlab) {
+                        $order_item->slab_unit_price = $effective_unit_price;
+                        $order_item->slab_min_qty = (int) $matchedSlab->min_qty;
+                        $order_item->slab_max_qty = $matchedSlab->max_qty !== null ? (int) $matchedSlab->max_qty : null;
+                    }
 
                     $order_item->tax_amount = $tax_amount;
                     $order_item->tax_percentage = $tax_percentage;

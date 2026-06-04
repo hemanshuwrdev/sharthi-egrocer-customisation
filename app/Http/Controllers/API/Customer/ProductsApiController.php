@@ -883,6 +883,7 @@ class ProductsApiController extends Controller
                 $variants[$key]['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variants[$key]['discounted_price']);
                 $variants[$key]['price'] = CommonHelper::doubleNumber($taxed->taxable_price ?? $variants[$key]['price']);
                 $variants[$key]['taxable_amount'] = CommonHelper::doubleNumber($taxed->taxable_amount);
+                $variants[$key]['slab_prices'] = CommonHelper::getSlabPricesForApi($variants[$key]['id'], (float) ($taxed->percentage ?? 0));
                 $variants[$key]->images = CommonHelper::getImages($variants[$key]->product_id, $variants[$key]->id);
                 $variants[$key]->stock_unit_name = $variants[$key]->stock_unit_name ?? '';
 

@@ -224,8 +224,8 @@ class SellerPosController extends Controller
                 $productVariant = ProductVariant::with(['product', 'unit'])->find($item['product_variant_id']);
                 $product = Product::find($item['product_id']);
 
-                // Calculate item prices
-                $price = $productVariant->discounted_price > 0 ? $productVariant->discounted_price : $productVariant->price;
+                // Calculate item prices (slab-aware)
+                $price = CommonHelper::getSlabUnitPrice($productVariant->id, (int) $item['quantity']);
                 $subtotal = $price * $item['quantity'];
 
                 // Add order item to pos_order_items table
@@ -559,7 +559,7 @@ class SellerPosController extends Controller
                 }
 
                 $product = $productVariant->product;
-                $price = $productVariant->discounted_price > 0 ? $productVariant->discounted_price : $productVariant->price;
+                $price = CommonHelper::getSlabUnitPrice($productVariant->id, (int) $newQuantity);
                 $subtotal = $price * $newQuantity;
 
                 // Find if this item (with same product AND variant) exists in the original order

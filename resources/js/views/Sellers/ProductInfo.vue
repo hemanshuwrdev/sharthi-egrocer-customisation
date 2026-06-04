@@ -30,7 +30,7 @@
                         <h4 v-if="type === 'packet_products'" class="card-title">{{ __('packet_stock_products_list') }}</h4>
                         <h4 v-if="type === 'loose_products'" class="card-title">{{ __('loose_stock_products_list') }}</h4>
                         <span class="pull-right">
-                            <router-link to="/manage_products/create" class="btn btn-primary">{{ __('add_product') }}</router-link>
+                            <router-link to="/seller/manage_products/create" class="btn btn-primary">{{ __('add_product') }}</router-link>
                         </span>
                     </div>
                     <div class="card-body">
@@ -81,11 +81,11 @@
                                 <template #cell(actions)="row">
                                     <div style="width: 120px">
                                         <router-link
-                                            :to="{ name: 'ViewProduct',params: { id: row.item.id, record : row.item }}"
+                                            :to="{ name: 'SellerViewProduct',params: { id: row.item.id, record : row.item }}"
                                             v-b-tooltip.hover :title="__('view')" class="btn btn-primary btn-sm"><i
                                             class="fa fa-eye"></i></router-link>
                                         <router-link
-                                            :to="{ name: 'EditProduct',params: { id: row.item.id, record : row.item }}"
+                                            :to="{ name: 'SellerEditProduct',params: { id: row.item.id, record : row.item }}"
                                             v-b-tooltip.hover :title="__('edit')" class="btn btn-success btn-sm"><i
                                             class="fa fa-pencil-alt"></i></router-link>
                                         <button class="btn btn-danger btn-sm" v-b-tooltip.hover :title="__('delete')"

@@ -19,6 +19,7 @@ use App\Models\OrderStatus;
 use App\Models\OrderStatusList;
 use App\Models\Product;
 use App\Models\ProductImages;
+use App\Models\ProductSlabPrice;
 use App\Models\ProductVariant;
 use App\Models\RecentlyVisitedProduct;
 use App\Models\PromoCode;
@@ -1629,14 +1630,155 @@ class CommonHelper
         return intval(round(microtime(true) * rand(1000, 9999)));
     }
 
+    /**
+     * Resolve the matching slab row for a given variant + qty.
+     * Returns null when no slab is defined or qty falls outside all tiers.
+     */
+    public static function getMatchingSlab($variant_id, $qty)
+    {
+        $qty = (int) $qty;
+        if ($qty < 1) {
+            return null;
+        }
+        return ProductSlabPrice::where('product_variant_id', $variant_id)
+            ->where('min_qty', '<=', $qty)
+            ->where(function ($q) use ($qty) {
+                $q->whereNull('max_qty')->orWhere('max_qty', '>=', $qty);
+            })
+            ->orderBy('min_qty', 'desc')
+            ->first();
+    }
+
+    /**
+     * Pre-tax unit price for a variant at a given qty.
+     * Falls back to discounted_price (if > 0) then price when no slab matches.
+     */
+    public static function getSlabUnitPrice($variant_id, $qty)
+    {
+        $slab = self::getMatchingSlab($variant_id, $qty);
+        if ($slab) {
+            return (float) $slab->price;
+        }
+        $variant = ProductVariant::select('price', 'discounted_price')->find($variant_id);
+        if (!$variant) {
+            return 0.0;
+        }
+        return ($variant->discounted_price != 0 && $variant->discounted_price !== null)
+            ? (float) $variant->discounted_price
+            : (float) $variant->price;
+    }
+
+    /**
+     * Slab-aware version of ProductHelper::getTaxableAmount.
+     * Returns an object with the same shape (taxable_amount, taxable_price,
+     * taxable_discounted_price, percentage, price, discounted_price) so it
+     * can be a drop-in replacement at call sites.
+     */
+    public static function getSlabTaxableAmount($variant_id, $qty)
+    {
+        $base = ProductHelper::getTaxableAmount($variant_id);
+        if (empty($base)) {
+            return $base;
+        }
+        $slab = self::getMatchingSlab($variant_id, $qty);
+        if (!$slab) {
+            return $base;
+        }
+        $slabPrice = (float) $slab->price;
+        $percentage = (float) ($base->percentage ?? 0);
+        $base->discounted_price = $slabPrice;
+        $base->taxable_discounted_price = $slabPrice + ($slabPrice * $percentage / 100);
+        $base->taxable_amount = $base->taxable_discounted_price;
+        return $base;
+    }
+
+    /**
+     * Persist slab pricing rows for a variant. Accepts a JSON-encoded string
+     * or an array of {min_qty, max_qty, price} objects. Empty input deletes
+     * existing slabs. Returns null on success, error message string otherwise.
+     */
+    public static function saveSlabPricesForVariant($variant_id, $slabs)
+    {
+        if (is_string($slabs)) {
+            $decoded = json_decode($slabs, true);
+            $slabs = is_array($decoded) ? $decoded : [];
+        } elseif (!is_array($slabs)) {
+            $slabs = [];
+        }
+
+        $clean = [];
+        foreach ($slabs as $row) {
+            $minQty = isset($row['min_qty']) ? (int) $row['min_qty'] : 0;
+            $maxRaw = $row['max_qty'] ?? null;
+            $maxQty = ($maxRaw === null || $maxRaw === '' || $maxRaw === 'null') ? null : (int) $maxRaw;
+            $price = isset($row['price']) ? (float) $row['price'] : -1;
+            if ($minQty < 1) {
+                return 'Slab min_qty must be at least 1';
+            }
+            if ($maxQty !== null && $maxQty < $minQty) {
+                return 'Slab max_qty must be greater than or equal to min_qty';
+            }
+            if ($price < 0) {
+                return 'Slab price cannot be negative';
+            }
+            $clean[] = ['min_qty' => $minQty, 'max_qty' => $maxQty, 'price' => $price];
+        }
+
+        usort($clean, function ($a, $b) {
+            return $a['min_qty'] <=> $b['min_qty'];
+        });
+        for ($i = 1; $i < count($clean); $i++) {
+            $prevMax = $clean[$i - 1]['max_qty'];
+            if ($prevMax === null || $prevMax >= $clean[$i]['min_qty']) {
+                return 'Slab ranges overlap';
+            }
+        }
+
+        ProductSlabPrice::where('product_variant_id', $variant_id)->delete();
+        if (!empty($clean)) {
+            $now = now();
+            $rows = array_map(function ($r) use ($variant_id, $now) {
+                return $r + [
+                    'product_variant_id' => $variant_id,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }, $clean);
+            ProductSlabPrice::insert($rows);
+        }
+        return null;
+    }
+
+    /**
+     * Return the slab table for a variant decorated with tax-inclusive prices.
+     * Used in API responses so retailer app can render bulk-pricing UI.
+     */
+    public static function getSlabPricesForApi($variant_id, $tax_percentage = 0)
+    {
+        $tax = (float) $tax_percentage;
+        return ProductSlabPrice::where('product_variant_id', $variant_id)
+            ->orderBy('min_qty')
+            ->get()
+            ->map(function ($slab) use ($tax) {
+                $price = (float) $slab->price;
+                return [
+                    'min_qty' => (int) $slab->min_qty,
+                    'max_qty' => $slab->max_qty !== null ? (int) $slab->max_qty : null,
+                    'price' => self::doubleNumber($price),
+                    'price_with_tax' => self::doubleNumber($price + ($price * $tax / 100)),
+                ];
+            })->toArray();
+    }
+
     public static function calculateTotalAmount($variant_ids, $quantityArray)
     {
         $save_price = 0;
         $total_amount = 0;
         if (count($variant_ids) === count($quantityArray)) {
             foreach ($variant_ids as $key => $variant_id) {
+                $qty = intval($quantityArray[$key]);
 
-                $taxed_amount = ProductHelper::getTaxableAmount($variant_id);
+                $taxed_amount = self::getSlabTaxableAmount($variant_id, $qty);
 
                 $variant = ProductVariant::select('price', 'discounted_price')->where('id', $variant_id)->first();
 
@@ -1646,11 +1788,11 @@ class CommonHelper
                     $mainPrice = $variant->price;
                 }
 
-                $price = floatval($taxed_amount->taxable_amount ?? $mainPrice) * intval($quantityArray[$key]);
+                $price = floatval($taxed_amount->taxable_amount ?? $mainPrice) * $qty;
 
                 $total_amount += floatval($price);
 
-                $save_price += floatval($taxed_amount->price) * intval($quantityArray[$key]);
+                $save_price += floatval($taxed_amount->price) * $qty;
             }
         }
         return array('save_price' => $save_price, 'total_amount' => $total_amount);
@@ -1663,9 +1805,17 @@ class CommonHelper
         foreach ($item_details as $key => $item) {
             $price = $item->price;
             $discounted_price = (empty($item->discounted_price) || $item->discounted_price == "") ? 0 : $item->discounted_price;
-            $quantity = $quantityArray[$key];
+            $quantity = (int) $quantityArray[$key];
             $tax_percentage = (empty($item->tax_percentage) || ($item->tax_percentage == "")) ? 0 : $item->tax_percentage;
-            $final_price = ($discounted_price != 0) ? ($discounted_price * $quantity) : ($price * $quantity);
+
+            $variant_id = $item->id ?? $item->product_variant_id ?? null;
+            $slabUnit = $variant_id ? self::getSlabUnitPrice($variant_id, $quantity) : null;
+            if ($slabUnit !== null && $slabUnit > 0 && self::getMatchingSlab($variant_id, $quantity)) {
+                $final_price = $slabUnit * $quantity;
+            } else {
+                $final_price = ($discounted_price != 0) ? ($discounted_price * $quantity) : ($price * $quantity);
+            }
+
             $tax_count = ($tax_percentage / 100) * $final_price;
             $order_total_tax_amt += $tax_count;
             $order_total_tax_per += $tax_percentage;

@@ -868,6 +868,13 @@ class ProductApisController extends Controller
                     if ($request->hasFile('packet_variant_images_' . $index)) {
                         CommonHelper::uploadProductImages($request->file('packet_variant_images_' . $index), $product->id, $variant_id);
                     }
+                    if (isset($request->packet_slab_prices[$index])) {
+                        $slabErr = CommonHelper::saveSlabPricesForVariant($variant_id, $request->packet_slab_prices[$index]);
+                        if ($slabErr) {
+                            DB::rollBack();
+                            return CommonHelper::responseError($slabErr);
+                        }
+                    }
                 }
             }
 
@@ -901,6 +908,13 @@ class ProductApisController extends Controller
                     $variant_id = DB::getPdo()->lastInsertId();
                     if ($request->hasFile('loose_variant_images_' . $index)) {
                         CommonHelper::uploadProductImages($request->file('loose_variant_images_' . $index), $product->id, $variant_id);
+                    }
+                    if (isset($request->loose_slab_prices[$index])) {
+                        $slabErr = CommonHelper::saveSlabPricesForVariant($variant_id, $request->loose_slab_prices[$index]);
+                        if ($slabErr) {
+                            DB::rollBack();
+                            return CommonHelper::responseError($slabErr);
+                        }
                     }
                 }
             }
@@ -1294,6 +1308,13 @@ class ProductApisController extends Controller
                     if ($request->hasFile('packet_variant_images_' . $index)) {
                         CommonHelper::uploadProductImages($request->file('packet_variant_images_' . $index), $product->id, $variant->id);
                     }
+                    if (isset($request->packet_slab_prices[$index])) {
+                        $slabErr = CommonHelper::saveSlabPricesForVariant($variant->id, $request->packet_slab_prices[$index]);
+                        if ($slabErr) {
+                            DB::rollBack();
+                            return CommonHelper::responseError($slabErr);
+                        }
+                    }
                 }
             }
 
@@ -1326,6 +1347,13 @@ class ProductApisController extends Controller
                     $variant->save();
                     if ($request->hasFile('loose_variant_images_' . $index)) {
                         CommonHelper::uploadProductImages($request->file('loose_variant_images_' . $index), $product->id, $variant->id);
+                    }
+                    if (isset($request->loose_slab_prices[$index])) {
+                        $slabErr = CommonHelper::saveSlabPricesForVariant($variant->id, $request->loose_slab_prices[$index]);
+                        if ($slabErr) {
+                            DB::rollBack();
+                            return CommonHelper::responseError($slabErr);
+                        }
                     }
                 }
             }

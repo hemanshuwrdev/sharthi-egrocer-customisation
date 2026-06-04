@@ -469,7 +469,7 @@ var render = function () {
                   "router-link",
                   {
                     staticClass: "btn btn-primary",
-                    attrs: { to: "/manage_products/create" },
+                    attrs: { to: "/seller/manage_products/create" },
                   },
                   [_vm._v(_vm._s(_vm.__("add_product")))]
                 ),
@@ -653,7 +653,7 @@ var render = function () {
                                     staticClass: "btn btn-primary btn-sm",
                                     attrs: {
                                       to: {
-                                        name: "ViewProduct",
+                                        name: "SellerViewProduct",
                                         params: {
                                           id: row.item.id,
                                           record: row.item,
@@ -678,7 +678,7 @@ var render = function () {
                                     staticClass: "btn btn-success btn-sm",
                                     attrs: {
                                       to: {
-                                        name: "EditProduct",
+                                        name: "SellerEditProduct",
                                         params: {
                                           id: row.item.id,
                                           record: row.item,
