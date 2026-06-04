@@ -2253,7 +2253,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         toggle: 'app_mode_seller'
       }, {
         key: 'app_mode_delivery_boy_remark',
-        label: 'Delivery Boy Remark',
+        label: 'Driver Remark',
         toggle: 'app_mode_delivery_boy'
       }];
       for (var _i = 0, _conditionalRequiredF = conditionalRequiredFields; _i < _conditionalRequiredF.length; _i++) {
@@ -6504,7 +6504,7 @@ var render = function () {
                                               step: "0.1",
                                               name: "delivery_boy_bonus_percentage",
                                               id: "delivery_boy_bonus_percentage",
-                                              placeholder: "Delivery Boy Bonus",
+                                              placeholder: "Driver Bonus",
                                             },
                                             domProps: {
                                               value:

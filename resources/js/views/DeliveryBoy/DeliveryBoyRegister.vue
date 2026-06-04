@@ -12,11 +12,11 @@
                         <h2 style="margin: 10px;">{{ $appName }}</h2>
                     </a>
                 </div>
-                <h4>Delivery Boy Complete Profile</h4>
+                <h4>Driver Complete Profile</h4>
                 <p class="auth-subtitle text-primary">Please Complete the form to complete your registration</p>
                 <form ref="my-form" @submit.prevent="saveRecord" novalidate> 
                     <div class="content">
-                        <h6>Delivery Boy Information</h6>
+                        <h6>Driver Information</h6>
                         <div class="row">
                              <div class="col-md-4">
                     <div class="form-group">

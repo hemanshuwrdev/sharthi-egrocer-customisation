@@ -596,7 +596,7 @@
                                                                 name="delivery_boy_bonus_percentage"
                                                                 id="delivery_boy_bonus_percentage"
                                                                 v-model="store_settings.delivery_boy_bonus_percentage"
-                                                                placeholder='Delivery Boy Bonus' />
+                                                                placeholder='Driver Bonus' />
                                                         </div>
 
                                                         <div v-if="store_settings.delivery_boy_bonus_settings == 1 && store_settings.delivery_boy_bonus_type == 1"
@@ -2248,7 +2248,7 @@ export default {
             const conditionalRequiredFields = [
                 { key: 'app_mode_customer_remark', label: 'Customer Remark', toggle: 'app_mode_customer' },
                 { key: 'app_mode_seller_remark', label: 'Seller Remark', toggle: 'app_mode_seller' },
-                { key: 'app_mode_delivery_boy_remark', label: 'Delivery Boy Remark', toggle: 'app_mode_delivery_boy' },
+                { key: 'app_mode_delivery_boy_remark', label: 'Driver Remark', toggle: 'app_mode_delivery_boy' },
             ];
 
             for (let field of conditionalRequiredFields) {

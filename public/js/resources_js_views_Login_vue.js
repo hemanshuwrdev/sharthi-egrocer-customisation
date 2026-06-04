@@ -529,7 +529,7 @@ var render = function () {
                       "btn btn-primary btn-block btn-lg shadow-lg mt-2",
                     attrs: { to: "/delivery_boy/login" },
                   },
-                  [_vm._v("\n                        Delivery Boy Panel")]
+                  [_vm._v("\n                        Driver Panel")]
                 ),
               ],
               1

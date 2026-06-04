@@ -11,7 +11,7 @@
                         </a>
                     </div>
                     <h4>Welcome Back!</h4>
-                    <p class="auth-subtitle text-primary">Please login to your Delivery Boy Account</p>
+                    <p class="auth-subtitle text-primary">Please login to your Driver Account</p>
                     <form @submit.prevent="loginCheck()">
                         <div class="form-group position-relative has-icon-left mb-4">
                             <input type="email" class="form-control form-control-xl" placeholder="Email Address" required

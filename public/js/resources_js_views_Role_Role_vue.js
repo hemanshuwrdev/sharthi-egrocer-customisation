@@ -185,6 +185,11 @@ __webpack_require__.r(__webpack_exports__);
       newName = newName.toLowerCase().replace(/(?<= )[^\s]|^./g, function (a) {
         return a.toUpperCase();
       });
+      newName = newName.replace(/Delivery Boy/g, 'Driver');
+      newName = newName.replace(/Delivery boy/g, 'Driver');
+      newName = newName.replace(/delivery boy/g, 'driver');
+      newName = newName.replace(/Delivery Boys/g, 'Drivers');
+      newName = newName.replace(/delivery boys/g, 'drivers');
       return newName;
     }
   },

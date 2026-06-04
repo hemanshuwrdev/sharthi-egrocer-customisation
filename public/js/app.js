@@ -3364,6 +3364,11 @@ vue__WEBPACK_IMPORTED_MODULE_17__["default"].prototype.formattedName = function 
   newName = newName.toLowerCase().replace(/(?<= )[^\s]|^./g, function (a) {
     return a.toUpperCase();
   });
+  newName = newName.replace(/Delivery Boy/g, 'Driver');
+  newName = newName.replace(/Delivery boy/g, 'Driver');
+  newName = newName.replace(/delivery boy/g, 'driver');
+  newName = newName.replace(/Delivery Boys/g, 'Drivers');
+  newName = newName.replace(/delivery boys/g, 'drivers');
   return newName;
 };
 vue__WEBPACK_IMPORTED_MODULE_17__["default"].prototype.showMessage = function (variant, message) {
@@ -4542,12 +4547,12 @@ function configRoutes() {
       }
     }, {
       path: "privacy_policy_delivery_boy",
-      name: "Privacy Policy Delivery Boy",
+      name: "Privacy Policy Driver",
       component: PrivacyPolicyDeliveryBoy,
       meta: {
         permission: 'order_list',
         role: adminRoles,
-        title: 'Privacy Policy Delivery Boy'
+        title: 'Privacy Policy Driver'
       }
     }, {
       path: "privacy_policy_seller",
@@ -4722,7 +4727,7 @@ function configRoutes() {
       meta: {
         permission: 'order_list',
         role: adminRoles,
-        title: 'Create Delivery Boy'
+        title: 'Create Driver'
       }
     }, {
       path: "delivery_boys/edit/:id",
@@ -4732,7 +4737,7 @@ function configRoutes() {
       meta: {
         permission: 'order_list',
         role: adminRoles,
-        title: 'Edit Delivery Boy'
+        title: 'Edit Driver'
       }
     }, {
       path: "registered_delivery_boys",
@@ -4741,7 +4746,7 @@ function configRoutes() {
       meta: {
         permission: 'order_list',
         role: adminRoles,
-        title: 'Delivery Boys'
+        title: 'Drivers'
       }
     }, {
       path: "delivery_boys",
@@ -4750,7 +4755,7 @@ function configRoutes() {
       meta: {
         permission: 'order_list',
         role: adminRoles,
-        title: 'Delivery Boys'
+        title: 'Drivers'
       }
     }, {
       path: "fund_transfers",
@@ -4763,21 +4768,21 @@ function configRoutes() {
       }
     }, {
       path: "Salary",
-      name: "Delivery Boy Salary",
+      name: "Driver Salary",
       component: DeliveryBoySalary,
       meta: {
         permission: 'order_list',
         role: adminRoles,
-        title: 'Delivery Boy Salary'
+        title: 'Driver Salary'
       }
     }, {
       path: "cash_collection",
-      name: "Delivery boy cash",
+      name: "Driver Cash",
       component: CashCollection,
       meta: {
         permission: 'order_list',
         role: adminRoles,
-        title: 'Delivery boy cash'
+        title: 'Driver Cash'
       }
     }, {
       path: "general_settings",
@@ -5459,14 +5464,14 @@ function configRoutes() {
     name: "delivery_boy_login",
     component: DeliveryBoyLogin,
     meta: {
-      title: 'Delivery Boy Login'
+      title: 'Driver Login'
     }
   }, {
     path: "/delivery_boy/register",
     name: "delivery_boy_register",
     component: DeliveryBoyRegister,
     meta: {
-      title: 'Delivery Boy Register'
+      title: 'Driver Register'
     }
   }, {
     path: "/delivery_boy/details",
@@ -5474,7 +5479,7 @@ function configRoutes() {
     component: DeliveryBoyDetails,
     meta: {
       role: deliveryBoyRoles,
-      title: 'Delivery Boy Details'
+      title: 'Driver Details'
     }
   }, {
     /* Here the name of the route is not usable. if you enable the name of this route then display the warning in the console.
@@ -5546,7 +5551,7 @@ function configRoutes() {
       meta: {
         permission: 'order_list',
         role: deliveryBoyRoles,
-        title: 'Delivery Boy Invoice Order'
+        title: 'Driver Invoice Order'
       }
     }, {
       path: "fund_transfers",
@@ -5564,7 +5569,7 @@ function configRoutes() {
       meta: {
         permission: 'order_list',
         role: deliveryBoyRoles,
-        title: 'Delivery boy cash'
+        title: 'Driver Cash'
       }
     }, {
       path: "Salary",
@@ -5573,7 +5578,7 @@ function configRoutes() {
       meta: {
         permission: 'salary_list',
         role: deliveryBoyRoles,
-        title: 'Delivery Boy Salary'
+        title: 'Driver Salary'
       }
     }, {
       path: "product_sales_reports",

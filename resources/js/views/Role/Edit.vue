@@ -176,7 +176,12 @@ export default {
 
         formattedName: function (name) {
             var newName = name.replace(/_/g, ' ');
-            newName = newName.toLowerCase().replace(/(?<= )[^\s]|^./g, a => a.toUpperCase())
+            newName = newName.toLowerCase().replace(/(?<= )[^\s]|^./g, a => a.toUpperCase());
+            newName = newName.replace(/Delivery Boy/g, 'Driver');
+            newName = newName.replace(/Delivery boy/g, 'Driver');
+            newName = newName.replace(/delivery boy/g, 'driver');
+            newName = newName.replace(/Delivery Boys/g, 'Drivers');
+            newName = newName.replace(/delivery boys/g, 'drivers');
             return newName;
         }
     },

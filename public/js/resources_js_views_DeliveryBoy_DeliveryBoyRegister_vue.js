@@ -614,7 +614,7 @@ var render = function () {
             ),
           ]),
           _vm._v(" "),
-          _c("h4", [_vm._v("Delivery Boy Complete Profile")]),
+          _c("h4", [_vm._v("Driver Complete Profile")]),
           _vm._v(" "),
           _c("p", { staticClass: "auth-subtitle text-primary" }, [
             _vm._v("Please Complete the form to complete your registration"),
@@ -634,7 +634,7 @@ var render = function () {
             },
             [
               _c("div", { staticClass: "content" }, [
-                _c("h6", [_vm._v("Delivery Boy Information")]),
+                _c("h6", [_vm._v("Driver Information")]),
                 _vm._v(" "),
                 _c("div", { staticClass: "row" }, [
                   _c("div", { staticClass: "col-md-4" }, [

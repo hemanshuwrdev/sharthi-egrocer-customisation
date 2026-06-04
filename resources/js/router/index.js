@@ -857,12 +857,12 @@ function configRoutes() {
                 },
                 {
                     path: "privacy_policy_delivery_boy",
-                    name: "Privacy Policy Delivery Boy",
+                    name: "Privacy Policy Driver",
                     component: PrivacyPolicyDeliveryBoy,
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title: 'Privacy Policy Delivery Boy'
+                        title: 'Privacy Policy Driver'
 
                     },
                 },
@@ -1064,7 +1064,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title: 'Create Delivery Boy'
+                        title: 'Create Driver'
 
                     },
                 },
@@ -1076,7 +1076,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title: 'Edit Delivery Boy'
+                        title: 'Edit Driver'
 
                     },
                 },
@@ -1087,7 +1087,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title: 'Delivery Boys'
+                        title: 'Drivers'
 
                     },
                 },
@@ -1098,7 +1098,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title: 'Delivery Boys'
+                        title: 'Drivers'
 
                     },
                 },
@@ -1115,22 +1115,22 @@ function configRoutes() {
                 },
                 {
                     path: "Salary",
-                    name: "Delivery Boy Salary",
+                    name: "Driver Salary",
                     component: DeliveryBoySalary,
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title: 'Delivery Boy Salary'
+                        title: 'Driver Salary'
                     },
                 },
                 {
                     path: "cash_collection",
-                    name: "Delivery boy cash",
+                    name: "Driver Cash",
                     component: CashCollection,
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title: 'Delivery boy cash'
+                        title: 'Driver Cash'
 
                     },
                 },
@@ -1928,7 +1928,7 @@ function configRoutes() {
             name: "delivery_boy_login",
             component: DeliveryBoyLogin,
             meta: {
-                title: 'Delivery Boy Login'
+                title: 'Driver Login'
             },
         },
         {
@@ -1936,7 +1936,7 @@ function configRoutes() {
             name: "delivery_boy_register",
             component: DeliveryBoyRegister,
             meta: {
-                title: 'Delivery Boy Register'
+                title: 'Driver Register'
             }
         },
         {
@@ -1945,7 +1945,7 @@ function configRoutes() {
             component: DeliveryBoyDetails,
             meta: {
                 role: deliveryBoyRoles,
-                title: 'Delivery Boy Details'
+                title: 'Driver Details'
             }
         },
 
@@ -2028,7 +2028,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title: 'Delivery Boy Invoice Order'
+                        title: 'Driver Invoice Order'
                     },
                 },
                 {
@@ -2048,7 +2048,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title: 'Delivery boy cash'
+                        title: 'Driver Cash'
                     },
                 },
                 {
@@ -2058,7 +2058,7 @@ function configRoutes() {
                     meta: {
                         permission: 'salary_list',
                         role: deliveryBoyRoles,
-                        title: 'Delivery Boy Salary'
+                        title: 'Driver Salary'
                     },
                 },
 
