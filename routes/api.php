@@ -565,6 +565,8 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/seller/reports/thermal-print', [App\Http\Controllers\SellerController::class, 'thermalPrint']);
             Route::post('/seller/thermal-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveThermalSettings']);
             Route::get('/seller/thermal-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getThermalSettings']);
+            Route::get('/seller/order-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getOrderSettings']);
+            Route::post('/seller/order-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveOrderSettings']);
         });
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
         Route::get('settings', [\App\Http\Controllers\SellerController::class, 'getSettings']);

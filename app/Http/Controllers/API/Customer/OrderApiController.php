@@ -393,6 +393,8 @@ class OrderApiController extends Controller
                 $order->latitude = $latitude;
                 $order->longitude = $longitude;
                 $order->delivery_time = $delivery_time;
+                $orderSellerId = !empty($seller_ids) ? $seller_ids[0] : (array_values(array_unique(array_column($item_details->toArray(), 'seller_id')))[0] ?? null);
+                $order->delivery_date = CommonHelper::computeDeliveryDate(null, $orderSellerId);
                 $order->status = $order_status;
                 $order->active_status = $active_status;
                 $order->order_from = $order_from;

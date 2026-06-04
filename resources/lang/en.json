@@ -1562,6 +1562,16 @@
     "edit_salesman": "Edit Salesman",
     "salesman_saved_successfully": "Salesman Saved Successfully!",
     "salesman_updated_successfully": "Salesman Updated Successfully!",
-    "salesman_deleted_successfully": "Salesman Deleted Successfully!"
+    "salesman_deleted_successfully": "Salesman Deleted Successfully!",
+    "order_settings": "Order Settings",
+    "order_settings_saved_successfully": "Order settings saved successfully",
+    "order_settings_updated_successfully": "Order settings updated successfully",
+    "order_settings_deleted_successfully": "Order settings deleted successfully",
+    "order_setting_status_updated_successfully": "Order setting status updated successfully",
+    "order_setting_not_found": "Order setting not found",
+    "order_setting_already_active": "Order setting already active",
+    "order_setting_already_inactive": "Order setting already inactive",
+    "orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after": "Orders at or before this time get next day delivery, after get day after",
+    "order_cutoff_time": "Order Cutoff Time"
 
 }

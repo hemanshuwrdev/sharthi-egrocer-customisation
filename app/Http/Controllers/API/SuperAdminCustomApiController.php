@@ -79,7 +79,7 @@ class SuperAdminCustomApiController extends Controller
         }
 
         $seller = Seller::find($request->seller_id);
-        $seller->managed_territories = implode(',', $request->city_ids);
+        $seller->city_id = implode(',', $request->city_ids);
         $seller->save();
 
         return CommonHelper::responseSuccess('Geo-fences updated successfully for distributor.');

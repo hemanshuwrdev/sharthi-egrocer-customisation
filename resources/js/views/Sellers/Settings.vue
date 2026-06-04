@@ -62,6 +62,34 @@
                 </div>
 
             </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>{{ __('order_settings') }}</h4>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label for="order_cutoff_time">{{ __('order_cutoff_time') }}</label>
+                            <input type="time" class="form-control"
+                                id="order_cutoff_time"
+                                v-model="order_cutoff_time"
+                                placeholder="15:00" />
+                            <span class="text text-primary font-size-13">({{
+                                __('orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after')
+                                }})</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <b-button variant="primary" :disabled="isOrderLoading" @click="saveOrderSettings">
+                        {{ __('save') }}
+                        <b-spinner small v-if="isOrderLoading"></b-spinner>
+                    </b-button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -83,12 +111,15 @@ export default {
                 { text: ' 80 mm', value: 80 },
                 { text: ' 112 mm', value: 112 },
                 { text: ' 152 mm', value: 152 }
-            ]
+            ],
+            isOrderLoading: false,
+            order_cutoff_time: ""
         }
     },
 
     created() {
         this.getSettings();
+        this.getOrderSettings();
     },
 
     methods: {
@@ -153,6 +184,40 @@ export default {
                 .catch(() => {
                     this.showError('Failed to save settings');
                     this.isLoading = false;
+                });
+        },
+
+        // ================= ORDER SETTINGS =================
+        getOrderSettings() {
+            axios.get(this.$sellerApiUrl + '/seller/order-settings')
+                .then(res => {
+                    if (res.data.status && res.data.data) {
+                        this.order_cutoff_time = res.data.data.order_cutoff_time || "";
+                    }
+                })
+                .catch(() => {
+                    this.showError('Failed to load order settings');
+                });
+        },
+
+        saveOrderSettings() {
+            this.isOrderLoading = true;
+
+            let formData = new FormData();
+            formData.append('order_cutoff_time', this.order_cutoff_time || '');
+
+            axios.post(this.$sellerApiUrl + '/seller/order-settings/save', formData)
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                    } else {
+                        this.showError(res.data.message || 'Failed to save');
+                    }
+                    this.isOrderLoading = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to save order settings');
+                    this.isOrderLoading = false;
                 });
         }
     }

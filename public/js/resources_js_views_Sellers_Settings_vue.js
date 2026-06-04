@@ -82,6 +82,34 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -105,11 +133,14 @@ __webpack_require__.r(__webpack_exports__);
       }, {
         text: ' 152 mm',
         value: 152
-      }]
+      }],
+      isOrderLoading: false,
+      order_cutoff_time: ""
     };
   },
   created: function created() {
     this.getSettings();
+    this.getOrderSettings();
   },
   methods: {
     // ================= LOAD SETTINGS =================
@@ -162,6 +193,34 @@ __webpack_require__.r(__webpack_exports__);
       })["catch"](function () {
         _this2.showError('Failed to save settings');
         _this2.isLoading = false;
+      });
+    },
+    // ================= ORDER SETTINGS =================
+    getOrderSettings: function getOrderSettings() {
+      var _this3 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/seller/order-settings').then(function (res) {
+        if (res.data.status && res.data.data) {
+          _this3.order_cutoff_time = res.data.data.order_cutoff_time || "";
+        }
+      })["catch"](function () {
+        _this3.showError('Failed to load order settings');
+      });
+    },
+    saveOrderSettings: function saveOrderSettings() {
+      var _this4 = this;
+      this.isOrderLoading = true;
+      var formData = new FormData();
+      formData.append('order_cutoff_time', this.order_cutoff_time || '');
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/seller/order-settings/save', formData).then(function (res) {
+        if (res.data.status) {
+          _this4.showMessage('success', __(res.data.message));
+        } else {
+          _this4.showError(res.data.message || 'Failed to save');
+        }
+        _this4.isOrderLoading = false;
+      })["catch"](function () {
+        _this4.showError('Failed to save order settings');
+        _this4.isOrderLoading = false;
       });
     }
   }
@@ -436,6 +495,86 @@ var render = function () {
                     "\n                    "
                 ),
                 _vm.isLoading
+                  ? _c("b-spinner", { attrs: { small: "" } })
+                  : _vm._e(),
+              ],
+              1
+            ),
+          ],
+          1
+        ),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "card mt-4" }, [
+        _c("div", { staticClass: "card-header" }, [
+          _c("h4", [_vm._v(_vm._s(_vm.__("order_settings")))]),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "card-body" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "form-group col-md-6" }, [
+              _c("label", { attrs: { for: "order_cutoff_time" } }, [
+                _vm._v(_vm._s(_vm.__("order_cutoff_time"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.order_cutoff_time,
+                    expression: "order_cutoff_time",
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "time",
+                  id: "order_cutoff_time",
+                  placeholder: "15:00",
+                },
+                domProps: { value: _vm.order_cutoff_time },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.order_cutoff_time = $event.target.value
+                  },
+                },
+              }),
+              _vm._v(" "),
+              _c("span", { staticClass: "text text-primary font-size-13" }, [
+                _vm._v(
+                  "(" +
+                    _vm._s(
+                      _vm.__(
+                        "orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after"
+                      )
+                    ) +
+                    ")"
+                ),
+              ]),
+            ]),
+          ]),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "card-footer" },
+          [
+            _c(
+              "b-button",
+              {
+                attrs: { variant: "primary", disabled: _vm.isOrderLoading },
+                on: { click: _vm.saveOrderSettings },
+              },
+              [
+                _vm._v(
+                  "\n                    " +
+                    _vm._s(_vm.__("save")) +
+                    "\n                    "
+                ),
+                _vm.isOrderLoading
                   ? _c("b-spinner", { attrs: { small: "" } })
                   : _vm._e(),
               ],

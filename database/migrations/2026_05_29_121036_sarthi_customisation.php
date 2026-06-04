@@ -72,55 +72,59 @@ class SarthiCustomisation extends Migration
         });      
 
         // 2. Slab (Bulk) Pricing per variant
-        Schema::create('product_slab_prices', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('product_variant_id');
-            $table->unsignedInteger('min_qty');
-            $table->unsignedInteger('max_qty')->nullable()->comment('NULL = open-ended (e.g. "50+")');
-            $table->decimal('price', 15, 4);
-            $table->timestamps();
+        // Schema::create('product_slab_prices', function (Blueprint $table) {
+        //     $table->bigIncrements('id');
+        //     $table->unsignedBigInteger('product_variant_id');
+        //     $table->unsignedInteger('min_qty');
+        //     $table->unsignedInteger('max_qty')->nullable()->comment('NULL = open-ended (e.g. "50+")');
+        //     $table->decimal('price', 15, 4);
+        //     $table->timestamps();
 
-            $table->foreign('product_variant_id')
-                ->references('id')->on('product_variants')
-                ->onDelete('cascade');
+        //     $table->foreign('product_variant_id')
+        //         ->references('id')->on('product_variants')
+        //         ->onDelete('cascade');
 
-            $table->index(['product_variant_id', 'min_qty'], 'idx_psp_variant_minqty');
-        });
+        //     $table->index(['product_variant_id', 'min_qty'], 'idx_psp_variant_minqty');
+        // });
 
         // 3. Slab snapshot on order_items (frozen at order time)
-        Schema::table('order_items', function (Blueprint $table) {
-            $table->decimal('slab_unit_price', 15, 4)->nullable()->after('discounted_price');
-            $table->unsignedInteger('slab_min_qty')->nullable()->after('slab_unit_price');
-            $table->unsignedInteger('slab_max_qty')->nullable()->after('slab_min_qty');
-        });
+        // Schema::table('order_items', function (Blueprint $table) {
+        //     $table->decimal('slab_unit_price', 15, 4)->nullable()->after('discounted_price');
+        //     $table->unsignedInteger('slab_min_qty')->nullable()->after('slab_unit_price');
+        //     $table->unsignedInteger('slab_max_qty')->nullable()->after('slab_min_qty');
+        // });
 
         // 4. Brand overlap flag (multiple distributors for same brand)
-        Schema::table('brands', function (Blueprint $table) {
-            $table->tinyInteger('is_overlap_allowed')->default(0)->after('status')
-                ->comment('1 = multiple distributors can deliver this brand in same area');
-        });
+        // Schema::table('brands', function (Blueprint $table) {
+        //     $table->tinyInteger('is_overlap_allowed')->default(0)->after('status')
+        //         ->comment('1 = multiple distributors can deliver this brand in same area');
+        // });
 
-        // 5. Distributor multi-territory assignment (CSV of city IDs)
+        // 5. Per-distributor order cutoff time
+        // NOTE: managed_territories was dropped — sellers.city_id is already a CSV of city IDs.
         Schema::table('sellers', function (Blueprint $table) {
-            $table->text('managed_territories')->nullable()->after('city_id')
-                ->comment('CSV of city IDs this distributor serves');
+            if (!Schema::hasColumn('sellers', 'order_cutoff_time')) {
+                $table->string('order_cutoff_time', 5)->nullable()->after('city_id')
+                    ->comment('HH:MM 24h. Per-distributor order cutoff. At/before this time -> next-day delivery; after -> day-after.');
+            }
         });
 
         // 6. Brand → Distributor → City mapping (territory control)
-        Schema::create('brand_distributor_mappings', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('brand_id');
-            $table->unsignedBigInteger('seller_id');
-            $table->unsignedBigInteger('city_id');
-            $table->timestamps();
+        // Schema::create('brand_distributor_mappings', function (Blueprint $table) {
+        //     $table->bigIncrements('id');
+        //     $table->unsignedBigInteger('brand_id');
+        //     $table->unsignedBigInteger('seller_id');
+        //     $table->unsignedBigInteger('city_id');
+        //     $table->timestamps();
 
-            $table->unique(['brand_id', 'seller_id', 'city_id'], 'uniq_bdm_brand_seller_city');
-            $table->index('brand_id', 'idx_bdm_brand');
-            $table->index('seller_id', 'idx_bdm_seller');
-            $table->index('city_id', 'idx_bdm_city');
-        });
+        //     $table->unique(['brand_id', 'seller_id', 'city_id'], 'uniq_bdm_brand_seller_city');
+        //     $table->index('brand_id', 'idx_bdm_brand');
+        //     $table->index('seller_id', 'idx_bdm_seller');
+        //     $table->index('city_id', 'idx_bdm_city');
+        // });
 
         // 7. Order cutoff / delivery date (3 PM rule)
+
         Schema::table('orders', function (Blueprint $table) {
             $table->date('delivery_date')->nullable()->after('delivery_time')
                 ->comment('Auto-tagged delivery date per cutoff rule');
@@ -157,11 +161,11 @@ class SarthiCustomisation extends Migration
 
         Schema::dropIfExists('brand_distributor_mappings');
 
-        if (Schema::hasColumn('sellers', 'managed_territories')) {
-            Schema::table('sellers', function (Blueprint $table) {
-                $table->dropColumn('managed_territories');
-            });
-        }
+        Schema::table('sellers', function (Blueprint $table) {
+            if (Schema::hasColumn('sellers', 'order_cutoff_time')) {
+                $table->dropColumn('order_cutoff_time');
+            }
+        });
 
         if (Schema::hasColumn('brands', 'is_overlap_allowed')) {
             Schema::table('brands', function (Blueprint $table) {

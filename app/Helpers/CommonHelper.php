@@ -849,12 +849,9 @@ class CommonHelper
 
         $query->where(function ($q) use ($cityIds) {
             foreach ($cityIds as $cityId) {
-                // Check if city_id is a comma-separated string (e.g., '1,2')
+                // city_id stored as CSV of city IDs (Sarthi: distributor serves multiple cities)
                 $q->orWhereRaw('FIND_IN_SET(?, city_id)', [$cityId])
-                    // Check if city_id is an individual integer or an array
-                    ->orWhereIn('city_id', $cityIds)
-                    // Check managed_territories (Sarthi DDOS Customization)
-                    ->orWhereRaw('FIND_IN_SET(?, managed_territories)', [$cityId]);
+                    ->orWhereIn('city_id', $cityIds);
             }
         });
 
@@ -1576,10 +1573,14 @@ class CommonHelper
             if (!empty($taxed->taxable_price) && $taxed->taxable_price > 0) {
                 $discount = ($taxed->taxable_price - $taxed->taxable_discounted_price);
                 $variant['calc_discount_percentage'] = round(($discount / $taxed->taxable_price) * 100, 2);
-            } else {
-                $discount = ($variant['price'] -  $variant['discounted_price']);
+            } elseif (!empty($variant['price']) && $variant['price'] > 0) {
+                $discount = ($variant['price'] - $variant['discounted_price']);
                 $variant['calc_discount_percentage'] = round(($discount / $variant['price']) * 100, 2);
+            } else {
+                $variant['calc_discount_percentage'] = 0;
             }
+
+            $variant['slab_prices'] = self::getSlabPricesForApi($variant['id'], (float) ($taxed->percentage ?? 0));
 
             return $variant;
         }
@@ -1768,6 +1769,32 @@ class CommonHelper
                     'price_with_tax' => self::doubleNumber($price + ($price * $tax / 100)),
                 ];
             })->toArray();
+    }
+
+    /**
+     * Compute delivery_date for an order based on a PER-DISTRIBUTOR cutoff time.
+     * Rule: order created at-or-before cutoff -> delivery = next day.
+     *       order created after cutoff -> delivery = day after next.
+     * Cutoff is read from sellers.order_cutoff_time (HH:MM, 24h).
+     * Default 15:00 (3 PM) per Sarthi spec when seller has no cutoff set.
+     */
+    public static function computeDeliveryDate($createdAt = null, $sellerId = null)
+    {
+        $createdAt = $createdAt ? \Carbon\Carbon::parse($createdAt) : \Carbon\Carbon::now();
+
+        $cutoffString = null;
+        if ($sellerId) {
+            $cutoffString = Seller::where('id', $sellerId)->value('order_cutoff_time');
+        }
+        if (empty($cutoffString) || !preg_match('/^\d{1,2}:\d{2}$/', trim($cutoffString))) {
+            $cutoffString = '15:00';
+        }
+
+        $cutoffForDay = \Carbon\Carbon::parse($createdAt->toDateString() . ' ' . $cutoffString);
+
+        return $createdAt->lessThanOrEqualTo($cutoffForDay)
+            ? $createdAt->copy()->addDay()->toDateString()
+            : $createdAt->copy()->addDays(2)->toDateString();
     }
 
     public static function calculateTotalAmount($variant_ids, $quantityArray)
