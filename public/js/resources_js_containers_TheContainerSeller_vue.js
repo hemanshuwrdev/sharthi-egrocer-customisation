@@ -353,6 +353,11 @@ __webpack_require__.r(__webpack_exports__);
           url: '/seller/salary'
         }]
       }, {
+        name: __('salesman'),
+        icon: 'users',
+        url: '/seller/salesman',
+        permission: 'order_list'
+      }, {
         name: 'Logistics',
         icon: 'truck',
         permission: 'product_list',

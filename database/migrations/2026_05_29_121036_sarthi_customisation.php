@@ -125,6 +125,20 @@ class SarthiCustomisation extends Migration
             $table->date('delivery_date')->nullable()->after('delivery_time')
                 ->comment('Auto-tagged delivery date per cutoff rule');
         });
+        
+        // 8. Salesmen Table (onboarded by distributor)
+        if (!Schema::hasTable('salesmen')) {
+            Schema::create('salesmen', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('mobile')->unique();
+                $table->foreignId('seller_id')->constrained('sellers')->onDelete('cascade')->comment('Distributor who onboarded the salesman');
+                $table->text('brands')->comment('JSON array or CSV of assigned brand IDs');
+                $table->boolean('allow_payment_collection')->default(false);
+                $table->tinyInteger('status')->default(1);
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -185,6 +199,7 @@ class SarthiCustomisation extends Migration
         Schema::dropIfExists('loading_slips');
         Schema::dropIfExists('vehicles');
         Schema::dropIfExists('vehicles_and_dispatches_tables');
+        Schema::dropIfExists('salesmen');
 
     }
 }

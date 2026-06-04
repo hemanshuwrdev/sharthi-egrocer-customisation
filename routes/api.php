@@ -336,6 +336,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('salary/delete', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'deleteSalary']);
     });
 
+    Route::group(['prefix' => 'salesman'], function () {
+        Route::get('/', [\App\Http\Controllers\API\SalesmanApiController::class, 'getSalesmen']);
+        Route::post('save', [\App\Http\Controllers\API\SalesmanApiController::class, 'save'])->name('salesman.save');
+        Route::get('edit/{id}', [\App\Http\Controllers\API\SalesmanApiController::class, 'edit']);
+        Route::post('update', [\App\Http\Controllers\API\SalesmanApiController::class, 'update'])->name('salesman.update');
+        Route::post('delete', [\App\Http\Controllers\API\SalesmanApiController::class, 'delete'])->name('salesman.delete');
+    });
+
     Route::group(['prefix' => 'fund_transfers'], function () {
         Route::get('/', [\App\Http\Controllers\API\FundTransfersApiController::class, 'index']);
         Route::post('save', [\App\Http\Controllers\API\FundTransfersApiController::class, 'save'])->name('fund_transfers.save');
@@ -615,6 +623,15 @@ Route::middleware('auth:api')->group(function () {
             Route::get('get_product_variants', [\App\Http\Controllers\API\ProductApisController::class, 'getProductVariants']);
             Route::post('update_variant_stock', [\App\Http\Controllers\API\ProductApisController::class, 'updateVariantStock']);
         });
+
+        Route::group(['prefix' => 'salesman'], function () {
+            Route::get('/', [\App\Http\Controllers\API\SalesmanApiController::class, 'getSalesmen']);
+            Route::post('save', [\App\Http\Controllers\API\SalesmanApiController::class, 'save'])->name('seller.salesman.save');
+            Route::get('edit/{id}', [\App\Http\Controllers\API\SalesmanApiController::class, 'edit']);
+            Route::post('update', [\App\Http\Controllers\API\SalesmanApiController::class, 'update'])->name('seller.salesman.update');
+            Route::post('delete', [\App\Http\Controllers\API\SalesmanApiController::class, 'delete'])->name('seller.salesman.delete');
+        });
+
         Route::get('/seller_wallet_transactions', [\App\Http\Controllers\API\SellerWalletTransactionsApiController::class, 'getSellerWalletTransactions']);
         Route::get('/delete_seller_account', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'deleteSellerAccount'])->name('seller.delete_seller_account');
         Route::group(['prefix' => 'withdrawal_requests'], function () {

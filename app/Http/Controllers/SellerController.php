@@ -57,6 +57,21 @@ class SellerController extends BaseController
 
         $data['product_count'] = Product::where('seller_id', $seller_id)->get()->count() ?? 0;
 
+        $data['salesman_count'] = \App\Models\Salesman::where('seller_id', $seller_id)->count() ?? 0;
+
+        // Retailer count is unique users ordering from this seller
+        $data['retailer_count'] = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $seller_id)
+            ->distinct('orders.user_id')
+            ->count('orders.user_id') ?? 0;
+
+        // Collections: Total cash received by delivery boys of this seller + salesmen maybe?
+        // Or simply sum of delivered orders. Let's use delivered orders sub_total as total collections.
+        $data['collections'] = OrderItem::where('seller_id', $seller_id)
+            ->where('active_status', OrderStatusList::$delivered)
+            ->sum('sub_total') ?? 0;
+
         $categoryIds = Seller::select('categories')->where('id', $seller_id)->value('categories') ?? "";
         $categoryIdsArray = explode(',', $categoryIds);
 

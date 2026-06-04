@@ -83,7 +83,7 @@
                                                 </div>
                                                 <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
                                                     <h5 class="text-muted font-semibold text-center">{{ __('collections') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ __('view') }}</h3>
+                                                    <h3 class="font-extrabold mb-0">{{ $currency }} {{ record.collections || 0 }}</h3>
                                                 </div>
                                             </div>
                                         </div>
@@ -102,7 +102,7 @@
                                                 </div>
                                                 <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
                                                     <h5 class="text-muted font-semibold text-center">{{ __('salesman') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ __('view') }}</h3>
+                                                    <h3 class="font-extrabold mb-0">{{ record.salesman_count || 0 }}</h3>
                                                 </div>
                                             </div>
                                         </div>
@@ -121,7 +121,7 @@
                                                 </div>
                                                 <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
                                                     <h5 class="text-muted font-semibold text-center">{{ __('retailer') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ __('view') }}</h3>
+                                                    <h3 class="font-extrabold mb-0">{{ record.retailer_count || 0 }}</h3>
                                                 </div>
                                             </div>
                                         </div>

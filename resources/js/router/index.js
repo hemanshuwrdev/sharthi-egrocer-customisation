@@ -208,6 +208,9 @@ const SellerUnits = () => import("../views/Sellers/Units");
 
 const SellerProducts = () => import("../views/Product/Products");
 const SellerEditProduct = () => import("../views/Product/EditProduct");
+
+const SellerSalesman = () => import("../views/Seller/Salesman/Salesman");
+const SellerEditSalesman = () => import("../views/Seller/Salesman/EditSalesman");
 const SellerViewProduct = () => import("../views/Product/ViewProduct");
 const SellerProductRatings = () => import("../views/Product/ProductRatings");
 const SellerCloneProduct = () => import("../views/Product/EditProduct");
@@ -1134,7 +1137,7 @@ function configRoutes() {
 
                     },
                 },
-                
+
                 {
                     path: "general_settings",
                     name: "GeneralWebSettings",
@@ -1642,6 +1645,37 @@ function configRoutes() {
                     },
                 },
                 {
+                    path: "salesman/create",
+                    name: "SellerCreateSalesman",
+                    component: SellerEditSalesman,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Create Salesman'
+                    },
+                },
+                {
+                    path: "salesman/edit/:id",
+                    name: "SellerEditSalesman",
+                    component: SellerEditSalesman,
+                    props: true,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Edit Salesman'
+                    },
+                },
+                {
+                    path: "salesman",
+                    name: "SellerSalesman",
+                    component: SellerSalesman,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Salesman'
+                    },
+                },
+                {
                     path: "orders",
                     name: "SellerOrders",
                     component: SellerOrders,
@@ -1886,7 +1920,7 @@ function configRoutes() {
                     },
                 },
 
-             {
+                {
                     path: "/seller/setting",
                     name: "Setting",
                     component: SellerPrintSettings,

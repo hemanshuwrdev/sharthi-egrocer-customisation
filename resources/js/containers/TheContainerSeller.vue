@@ -327,6 +327,12 @@ export default {
                     ]
                 },
                 {
+                    name: __('salesman'),
+                    icon: 'users',
+                    url: '/seller/salesman',
+                    permission: 'order_list',
+                },
+                {
                     name: 'Logistics',
                     icon: 'truck',
                     permission: 'product_list',

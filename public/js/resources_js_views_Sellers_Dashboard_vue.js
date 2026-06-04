@@ -1603,7 +1603,13 @@ var render = function () {
                                   _c(
                                     "h3",
                                     { staticClass: "font-extrabold mb-0" },
-                                    [_vm._v(_vm._s(_vm.__("view")))]
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.record.collections || 0)
+                                      ),
+                                    ]
                                   ),
                                 ]
                               ),
@@ -1644,7 +1650,7 @@ var render = function () {
                               ),
                               _vm._v(" "),
                               _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.__("view"))),
+                                _vm._v(_vm._s(_vm.record.salesman_count || 0)),
                               ]),
                             ]
                           ),
@@ -1682,7 +1688,7 @@ var render = function () {
                               ),
                               _vm._v(" "),
                               _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.__("view"))),
+                                _vm._v(_vm._s(_vm.record.retailer_count || 0)),
                               ]),
                             ]
                           ),
