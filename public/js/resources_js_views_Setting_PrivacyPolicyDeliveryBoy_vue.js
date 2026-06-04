@@ -119,6 +119,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
 
 
 
@@ -893,7 +895,9 @@ var render = function () {
                               },
                               [
                                 _vm._v(" "),
-                                language.is_default && _vm.languages.length > 1
+                                _vm.$route.path.includes("/seller") &&
+                                language.is_default &&
+                                _vm.languages.length > 1
                                   ? _c(
                                       "div",
                                       { staticClass: "mb-3" },
@@ -1050,6 +1054,8 @@ var render = function () {
                                       attrs: {
                                         placeholder: _vm.__("privacy_policy"),
                                         init: _vm.getEditorConfig(),
+                                        disabled:
+                                          !_vm.$route.path.includes("/seller"),
                                       },
                                       model: {
                                         value:
@@ -1135,6 +1141,8 @@ var render = function () {
                                       attrs: {
                                         placeholder: _vm.__("terms_conditions"),
                                         init: _vm.getEditorConfig(),
+                                        disabled:
+                                          !_vm.$route.path.includes("/seller"),
                                       },
                                       model: {
                                         value:
@@ -1176,36 +1184,38 @@ var render = function () {
                   : _vm._e(),
               ]),
               _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "card-footer" },
-                [
-                  _c(
-                    "b-button",
-                    {
-                      attrs: {
-                        type: "submit",
-                        variant: "primary",
-                        disabled: _vm.isLoading,
-                      },
-                    },
+              _vm.$route.path.includes("/seller")
+                ? _c(
+                    "div",
+                    { staticClass: "card-footer" },
                     [
-                      _vm._v(
-                        " " +
-                          _vm._s(_vm.__("update")) +
-                          "\n                            "
+                      _c(
+                        "b-button",
+                        {
+                          attrs: {
+                            type: "submit",
+                            variant: "primary",
+                            disabled: _vm.isLoading,
+                          },
+                        },
+                        [
+                          _vm._v(
+                            " " +
+                              _vm._s(_vm.__("update")) +
+                              "\n                            "
+                          ),
+                          _vm.isLoading
+                            ? _c("b-spinner", {
+                                attrs: { small: "", label: "Spinning" },
+                              })
+                            : _vm._e(),
+                        ],
+                        1
                       ),
-                      _vm.isLoading
-                        ? _c("b-spinner", {
-                            attrs: { small: "", label: "Spinning" },
-                          })
-                        : _vm._e(),
                     ],
                     1
-                  ),
-                ],
-                1
-              ),
+                  )
+                : _vm._e(),
             ]),
           ]
         ),

@@ -870,7 +870,7 @@ var render = function () {
               ]),
               _vm._v(" "),
               _c("span", { staticClass: "pull-right" }, [
-                _vm.$can("salary_create")
+                _vm.$route.path.includes("/seller")
                   ? _c(
                       "button",
                       {
@@ -1088,7 +1088,7 @@ var render = function () {
                           key: "cell(actions)",
                           fn: function (row) {
                             return [
-                              _vm.$can("salary_update")
+                              _vm.$route.path.includes("/seller")
                                 ? _c(
                                     "b-button",
                                     {
@@ -1108,7 +1108,7 @@ var render = function () {
                                   )
                                 : _vm._e(),
                               _vm._v(" "),
-                              _vm.$can("salary_delete")
+                              _vm.$route.path.includes("/seller")
                                 ? _c(
                                     "b-button",
                                     {

@@ -29,7 +29,7 @@
                             <template v-else>
 
                                 <li class="breadcrumb-item" aria-current="page">
-                                    <router-link to="/delivery_boys">{{ __('manage_delivery_boy') }}</router-link>
+                                    <router-link :to="$route.path.includes('/seller') ? '/seller/delivery_boys' : '/delivery_boys'">{{ __('manage_delivery_boy') }}</router-link>
                                 </li>
 
                                 <li class="breadcrumb-item active" aria-current="page">
@@ -49,7 +49,7 @@
                         <div class="card-header" v-if="this.$roleDeliveryBoy !== this.login_user.role.name">
                             <h4>{{ __('delivery_boy') }}</h4>
                             <span class="pull-right">
-                                <router-link to="/delivery_boys" class="btn btn-primary" v-b-tooltip.hover
+                                <router-link :to="$route.path.includes('/seller') ? '/seller/delivery_boys' : '/delivery_boys'" class="btn btn-primary" v-b-tooltip.hover
                                     title="View Delivery boys">{{ __('view_delivery_boys') }}</router-link>
                             </span>
                         </div>
@@ -1162,7 +1162,11 @@ export default {
                 );
                 
                 if (!this.login_user || this.login_user.role_id !== 4) {
-                    this.$router.push({ path: '/delivery_boys' });
+                    if (this.$route.path.includes('/seller')) {
+                        this.$router.push({ path: '/seller/delivery_boys' });
+                    } else {
+                        this.$router.push({ path: '/delivery_boys' });
+                    }
                 }
 
             } catch (error) {

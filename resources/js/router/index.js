@@ -1561,6 +1561,87 @@ function configRoutes() {
                     },
                 },
                 {
+                    path: "delivery_boys/create",
+                    name: "SellerCreateDeliveryBoy",
+                    component: EditDeliveryBoy,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Create Driver'
+                    },
+                },
+                {
+                    path: "delivery_boys/edit/:id",
+                    name: "SellerEditDeliveryBoy",
+                    component: EditDeliveryBoy,
+                    props: true,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Edit Driver'
+                    },
+                },
+                {
+                    path: "registered_delivery_boys",
+                    name: "SellerRegisteredDeliveryBoys",
+                    component: RegisteredDeliveryBoys,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Drivers'
+                    },
+                },
+                {
+                    path: "delivery_boys",
+                    name: "SellerDeliveryBoys",
+                    component: DeliveryBoys,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Drivers'
+                    },
+                },
+                {
+                    path: "fund_transfers",
+                    name: "SellerFundTransfers",
+                    component: FundTransfers,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Fund Transfers'
+                    },
+                },
+                {
+                    path: "Salary",
+                    name: "SellerDriverSalary",
+                    component: DeliveryBoySalary,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Driver Salary'
+                    },
+                },
+                {
+                    path: "cash_collection",
+                    name: "SellerDriverCash",
+                    component: CashCollection,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Driver Cash'
+                    },
+                },
+                {
+                    path: "privacy_policy_delivery_boy",
+                    name: "SellerPrivacyPolicyDriver",
+                    component: PrivacyPolicyDeliveryBoy,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Privacy Policy Driver'
+                    },
+                },
+                {
                     path: "orders",
                     name: "SellerOrders",
                     component: SellerOrders,

@@ -1113,7 +1113,7 @@ var render = function () {
               ]),
               _vm._v(" "),
               _c("span", { staticClass: "pull-right" }, [
-                _vm.$can("fund_transfers_create")
+                _vm.$route.path.includes("/seller")
                   ? _c(
                       "button",
                       {

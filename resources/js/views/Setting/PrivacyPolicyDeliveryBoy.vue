@@ -34,7 +34,7 @@
                                         </template>
 
                                         <!-- Translate buttons -->
-                                        <div class="mb-3" v-if="language.is_default && languages.length > 1">
+                                        <div class="mb-3" v-if="$route.path.includes('/seller') && language.is_default && languages.length > 1">
                                             <b-button size="sm" variant="outline-primary" class="mr-2" @click="translateEmpty(language)"
                                                 v-b-tooltip.hover
                                                 :title="__('only_empty_fields_will_be_translated_existing_content_will_not_be_changed')"
@@ -63,6 +63,7 @@
                                     :placeholder="__('privacy_policy')"
                                                 v-model="translations[language.id].privacy_policy_delivery_boy"
                                                 :init="getEditorConfig()"
+                                                :disabled="!$route.path.includes('/seller')"
                                 />
                             </div>
 
@@ -76,6 +77,7 @@
                                     :placeholder="__('terms_conditions')"
                                                 v-model="translations[language.id].terms_conditions_delivery_boy"
                                                 :init="getEditorConfig()"
+                                                :disabled="!$route.path.includes('/seller')"
                                             />
                                         </div>
                                     </b-tab>
@@ -87,7 +89,7 @@
                                 <b-spinner :label="__('loading')"></b-spinner>
                             </div>
                         </div>
-                        <div class="card-footer">
+                        <div class="card-footer" v-if="$route.path.includes('/seller')">
                             <b-button type="submit" variant="primary" :disabled="isLoading"> {{ __('update') }}
                                 <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
                             </b-button>

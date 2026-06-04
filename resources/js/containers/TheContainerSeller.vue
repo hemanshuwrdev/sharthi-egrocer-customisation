@@ -285,6 +285,48 @@ export default {
                     permission: 'product_sales_reports',
                 },
                 {
+                    name: __('delivery_boys'),
+                    icon: 'male',
+                    permission: 'order_list',
+                    submenu: [
+                        {
+                            name: __('add_delivery_boy'),
+                            icon: 'grid-fill',
+                            url: '/seller/delivery_boys/create'
+                        },
+                        {
+                            name: __('dlivery_boy_requests'),
+                            icon: 'grid-fill',
+                            url: '/seller/registered_delivery_boys'
+                        },
+                        {
+                            name: __('manage_delivery_boys'),
+                            icon: 'grid-fill',
+                            url: '/seller/delivery_boys'
+                        },
+                        {
+                            name: __('fund_transfers'),
+                            icon: 'grid-fill',
+                            url: '/seller/fund_transfers'
+                        },
+                        {
+                            name: __('delivery_boy_cash'),
+                            icon: 'grid-fill',
+                            url: '/seller/cash_collection'
+                        },
+                        {
+                            name: __('delivery_boy_policies'),
+                            icon: 'grid-fill',
+                            url: '/seller/privacy_policy_delivery_boy'
+                        },
+                        {
+                            name: __('Salary'),
+                            icon: 'grid-fill',
+                            url: '/seller/salary'
+                        }
+                    ]
+                },
+                {
                     name: 'Logistics',
                     icon: 'truck',
                     permission: 'product_list',

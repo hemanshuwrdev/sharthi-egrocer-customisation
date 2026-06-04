@@ -22,8 +22,8 @@
                     <div class="card-header">
                         <h4 class="card-title"> {{ __('delivery_boys') }}</h4>
                         <span class="pull-right">
-                            <router-link to="/delivery_boys/create" class="btn btn-primary" v-b-tooltip.hover
-                                :title="__('add_delivery_boy')" v-if="$can('delivery_boy_create')">{{
+                            <router-link to="/seller/delivery_boys/create" class="btn btn-primary" v-b-tooltip.hover
+                                :title="__('add_delivery_boy')" v-if="$route.path.includes('/seller')">{{
                                     __('add_delivery_boy') }}</router-link>
 
                         </span>
@@ -132,15 +132,15 @@
 
                                 <template #cell(actions)="row">
                                     <router-link
-                                        :to="{ name: 'EditDeliveryBoy', params: { id: row.item.id, record: row.item } }"
+                                        :to="{ name: 'SellerEditDeliveryBoy', params: { id: row.item.id, record: row.item } }"
                                         v-b-tooltip.hover title="Edit" class="btn btn-primary btn-sm"
-                                        v-if="$can('seller_update')" v-b-tooltip.hover :title="__('edit')">
+                                        v-if="$route.path.includes('/seller')" v-b-tooltip.hover :title="__('edit')">
                                         <i class="fa fa-pencil-alt"></i>
                                     </router-link>
 
                                     <button class="btn btn-sm btn-danger"
                                         @click="deleteDeliveryBoys(row.index, row.item.id)"
-                                        v-if="$can('delivery_boy_delete')" v-b-tooltip.hover :title="__('delete')"><i
+                                        v-if="$route.path.includes('/seller')" v-b-tooltip.hover :title="__('delete')"><i
                                             class="fa fa-trash"></i></button>
                                 </template>
 

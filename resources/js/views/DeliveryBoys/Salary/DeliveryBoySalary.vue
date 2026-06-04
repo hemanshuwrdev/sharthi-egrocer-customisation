@@ -24,7 +24,7 @@
                     <div class="card-header">
                         <h4 class="card-title">{{ __('delivery_boy_salary') }}</h4>
                         <span class="pull-right">
-                            <button class="btn btn-primary" v-if="$can('salary_create')" @click="create_new = true">{{
+                            <button class="btn btn-primary" v-if="$route.path.includes('/seller')" @click="create_new = true">{{
                                 __('add_salary') }}</button>
                         </span>
                     </div>
@@ -81,11 +81,11 @@
                                     {{ formatDate(row.item.paid_on) }}
                                 </template>
                                 <template #cell(actions)="row">
-                                    <b-button v-if="$can('salary_update')" size="sm" variant="primary"
+                                    <b-button v-if="$route.path.includes('/seller')" size="sm" variant="primary"
                                         @click="editRecord(row.item)" class="mr-1">
                                         <i class="fa fa-pencil-alt"></i>
                                     </b-button>
-                                    <b-button v-if="$can('salary_delete')" size="sm" variant="danger"
+                                    <b-button v-if="$route.path.includes('/seller')" size="sm" variant="danger"
                                         @click="deleteRecord(row.item.id)">
                                         <i class="fa fa-trash"></i>
                                     </b-button>

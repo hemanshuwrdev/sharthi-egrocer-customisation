@@ -475,18 +475,6 @@ export default {
                     permission: null,
                     submenu: [
                         {
-                            name: __('add_delivery_boy'),
-                            icon: 'grid-fill',
-                            url: '/delivery_boys/create',
-                            permission: 'delivery_boy_create',
-                        },
-                        {
-                            name: __('dlivery_boy_requests'),
-                            icon: 'grid-fill',
-                            url: '/registered_delivery_boys',
-                            permission: 'delivery_boy_list',
-                        },
-                        {
                             name: __('manage_delivery_boys'),
                             icon: 'grid-fill',
                             url: '/delivery_boys',
@@ -515,7 +503,7 @@ export default {
                             icon: 'grid-fill',
                             url: '/salary',
                             permission: 'salary_list',
-                        },
+                        }
                     ]
                 },
                 {

@@ -24,7 +24,7 @@
                         <h4 class="card-title">{{ __('fund_transfers') }}</h4>
                         <span class="pull-right">
                             <button class="btn btn-primary" @click="create_new=true"
-                                    v-if="$can('fund_transfers_create')">{{ __('add_fund_transfers') }}</button>
+                                    v-if="$route.path.includes('/seller')">{{ __('add_fund_transfers') }}</button>
                         </span>
                     </div>
                     <div class="card-body">

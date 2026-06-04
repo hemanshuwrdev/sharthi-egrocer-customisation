@@ -1220,9 +1220,15 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
               case 119:
                 _this6.showMessage('success', _isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
                 if (!_this6.login_user || _this6.login_user.role_id !== 4) {
-                  _this6.$router.push({
-                    path: '/delivery_boys'
-                  });
+                  if (_this6.$route.path.includes('/seller')) {
+                    _this6.$router.push({
+                      path: '/seller/delivery_boys'
+                    });
+                  } else {
+                    _this6.$router.push({
+                      path: '/delivery_boys'
+                    });
+                  }
                 }
                 _context.next = 126;
                 break;
@@ -1812,7 +1818,13 @@ var render = function () {
                           [
                             _c(
                               "router-link",
-                              { attrs: { to: "/delivery_boys" } },
+                              {
+                                attrs: {
+                                  to: _vm.$route.path.includes("/seller")
+                                    ? "/seller/delivery_boys"
+                                    : "/delivery_boys",
+                                },
+                              },
                               [_vm._v(_vm._s(_vm.__("manage_delivery_boy")))]
                             ),
                           ],
@@ -1869,7 +1881,9 @@ var render = function () {
                           ],
                           staticClass: "btn btn-primary",
                           attrs: {
-                            to: "/delivery_boys",
+                            to: _vm.$route.path.includes("/seller")
+                              ? "/seller/delivery_boys"
+                              : "/delivery_boys",
                             title: "View Delivery boys",
                           },
                         },

@@ -24,7 +24,7 @@
                         <h4 class="card-title">{{ __('cash_collection_list') }}</h4>
                         <span class="pull-right">
                             <button class="btn btn-primary" @click="create_new = true"
-                                v-if="$can('cash_collection_create')">{{ __('add_cash_collection') }}</button>
+                                v-if="$route.path.includes('/seller')">{{ __('add_cash_collection') }}</button>
                         </span>
                     </div>
                     <div class="card-body">

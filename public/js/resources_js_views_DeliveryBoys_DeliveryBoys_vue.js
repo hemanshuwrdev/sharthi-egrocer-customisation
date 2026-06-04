@@ -1146,7 +1146,7 @@ var render = function () {
                 "span",
                 { staticClass: "pull-right" },
                 [
-                  _vm.$can("delivery_boy_create")
+                  _vm.$route.path.includes("/seller")
                     ? _c(
                         "router-link",
                         {
@@ -1159,7 +1159,7 @@ var render = function () {
                           ],
                           staticClass: "btn btn-primary",
                           attrs: {
-                            to: "/delivery_boys/create",
+                            to: "/seller/delivery_boys/create",
                             title: _vm.__("add_delivery_boy"),
                           },
                         },
@@ -1609,7 +1609,7 @@ var render = function () {
                           key: "cell(actions)",
                           fn: function (row) {
                             return [
-                              _vm.$can("seller_update")
+                              _vm.$route.path.includes("/seller")
                                 ? _c(
                                     "router-link",
                                     {
@@ -1628,7 +1628,7 @@ var render = function () {
                                       staticClass: "btn btn-primary btn-sm",
                                       attrs: {
                                         to: {
-                                          name: "EditDeliveryBoy",
+                                          name: "SellerEditDeliveryBoy",
                                           params: {
                                             id: row.item.id,
                                             record: row.item,
@@ -1646,7 +1646,7 @@ var render = function () {
                                   )
                                 : _vm._e(),
                               _vm._v(" "),
-                              _vm.$can("delivery_boy_delete")
+                              _vm.$route.path.includes("/seller")
                                 ? _c(
                                     "button",
                                     {
