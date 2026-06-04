@@ -1554,5 +1554,14 @@
     "Secondary Unit Value (Items Per Case/Bag)": "Secondary Unit Value (Items Per Case/Bag)",
     "salesman": "Salesman",
     "retailer": "Retailer",
-    "collections": "Collections"
+    "collections": "Collections",
+    "add_salesman": "Add Salesman",
+    "assigned_brands": "Assigned Brands",
+    "allow_payment_collection": "Allow Payment Collection",
+    "salesman_details": "Salesman Details",
+    "edit_salesman": "Edit Salesman",
+    "salesman_saved_successfully": "Salesman Saved Successfully!",
+    "salesman_updated_successfully": "Salesman Updated Successfully!",
+    "salesman_deleted_successfully": "Salesman Deleted Successfully!"
+
 }
