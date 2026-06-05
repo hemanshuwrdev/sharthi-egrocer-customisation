@@ -646,6 +646,23 @@ Route::middleware('auth:api')->group(function () {
             Route::get('get_balance', [\App\Http\Controllers\API\WithdrawalRequestsApiController::class, 'getBalance']);
         });
         Route::post('/google_gemini', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'googleGeminiAI'])->name('seller.google_gemini');
+
+        Route::group(['prefix' => 'vehicles'], function () {
+            Route::get('/', [\App\Http\Controllers\API\VehiclesApiController::class, 'list']);
+            Route::post('save', [\App\Http\Controllers\API\VehiclesApiController::class, 'save'])->name('seller.vehicles.save');
+            Route::post('update', [\App\Http\Controllers\API\VehiclesApiController::class, 'update'])->name('seller.vehicles.update');
+            Route::post('delete', [\App\Http\Controllers\API\VehiclesApiController::class, 'delete'])->name('seller.vehicles.delete');
+            Route::get('active', [\App\Http\Controllers\API\VehiclesApiController::class, 'getActiveVehicles']);
+        });
+
+        Route::group(['prefix' => 'loading_slips'], function () {
+            Route::get('/', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'list']);
+            Route::get('orders', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrdersForAssignment']);
+            Route::get('zones', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getZones']);
+            Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('seller.loading_slips.save');
+            Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('seller.loading_slips.dispatch');
+            Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
+        });
     });
 
     /*delivery_boy*/
@@ -687,6 +704,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('return_request_status_update', [\App\Http\Controllers\API\ReturnRequestsApiController::class, 'deliveryBoyUpdate'])->name('delivery_boy.return_requests.update');
         Route::post('manage_live_tracking', [\App\Http\Controllers\DeliveryBoyController::class, 'manageLiveTracking'])->name('delivery_boy.manage_live_tracking');
     });
+
 
     Route::group(['prefix' => 'vehicles'], function () {
         Route::get('/', [\App\Http\Controllers\API\VehiclesApiController::class, 'list']);
