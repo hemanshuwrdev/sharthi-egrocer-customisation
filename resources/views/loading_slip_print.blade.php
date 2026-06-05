@@ -155,7 +155,11 @@
 
     <div class="header">
         <div class="logo-title">
-            <h1>{{ $app_name }}</h1>
+            @if($logo)
+                <img src="{{ asset('storage/'.$logo) }}" alt="{{ $app_name }}" style="max-height: 50px; margin-bottom: 5px;">
+            @else
+                <h1>{{ $app_name }}</h1>
+            @endif
             <p>Warehouse Operations & Logistics Control</p>
         </div>
         <div class="slip-meta">

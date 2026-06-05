@@ -317,7 +317,7 @@ class LoadingSlipsApiController extends Controller
             ->get();
 
         $app_name = \App\Models\Setting::get_value('app_name') ?: 'Sarthi Wholesale';
-        $logo = \App\Models\Setting::get_value('web_settings_logo') ?: '';
+        $logo = \App\Models\Setting::get_value('logo') ?: \App\Models\Setting::get_value('web_settings_logo');
 
         // Build printable loading slip invoice template
         $html = view('loading_slip_print', [
