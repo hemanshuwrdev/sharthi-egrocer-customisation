@@ -662,6 +662,7 @@ Route::middleware('auth:api')->group(function () {
             Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('seller.loading_slips.save');
             Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('seller.loading_slips.dispatch');
             Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
+            Route::get('print/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'print']);
         });
     });
 
