@@ -62,6 +62,9 @@ Route::middleware('auth:api')->group(function () {
     // Sarthi DDOS Super Admin Customizations
     Route::group(['prefix' => 'admin'], function () {
         Route::post('brand-mappings', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'saveBrandMappings']);
+        Route::get('brand-mappings', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'listBrandMappings']);
+        Route::get('brand-mappings/get', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'getBrandSellerMapping']);
+        Route::post('brand-mappings/delete', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'deleteBrandMapping']);
         Route::post('geo-fences', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'saveGeoFences']);
     });
 
@@ -163,6 +166,28 @@ Route::middleware('auth:api')->group(function () {
         });
         Route::get('get_product_variants', [\App\Http\Controllers\API\ProductApisController::class, 'getProductVariants']);
         Route::post('update_variant_stock', [\App\Http\Controllers\API\ProductApisController::class, 'updateVariantStock']);
+    });
+
+    // Sarthi Master Catalog (super admin owned)
+    Route::group(['prefix' => 'master_catalog'], function () {
+        Route::group(['prefix' => 'parent_companies'], function () {
+            Route::get('/', [\App\Http\Controllers\API\ParentCompanyApiController::class, 'list']);
+            Route::get('search', [\App\Http\Controllers\API\ParentCompanyApiController::class, 'search']);
+            Route::post('save', [\App\Http\Controllers\API\ParentCompanyApiController::class, 'save'])->name('parent_companies.save');
+            Route::post('find_or_create', [\App\Http\Controllers\API\ParentCompanyApiController::class, 'findOrCreate'])->name('parent_companies.find_or_create');
+            Route::post('update', [\App\Http\Controllers\API\ParentCompanyApiController::class, 'update'])->name('parent_companies.update');
+            Route::post('delete', [\App\Http\Controllers\API\ParentCompanyApiController::class, 'delete'])->name('parent_companies.delete');
+        });
+
+        Route::group(['prefix' => 'products'], function () {
+            Route::get('/', [\App\Http\Controllers\API\MasterProductApiController::class, 'list']);
+            Route::get('edit/{id}', [\App\Http\Controllers\API\MasterProductApiController::class, 'edit']);
+            Route::post('save', [\App\Http\Controllers\API\MasterProductApiController::class, 'save'])->name('master_products.save');
+            Route::post('update', [\App\Http\Controllers\API\MasterProductApiController::class, 'update'])->name('master_products.update');
+            Route::post('delete', [\App\Http\Controllers\API\MasterProductApiController::class, 'delete'])->name('master_products.delete');
+            Route::post('change_status', [\App\Http\Controllers\API\MasterProductApiController::class, 'changeStatus'])->name('master_products.change_status');
+            Route::get('search', [\App\Http\Controllers\API\MasterProductApiController::class, 'catalogSearch']);
+        });
     });
 
     Route::group(['prefix' => 'sellers'], function () {
@@ -521,7 +546,8 @@ Route::middleware('auth:api')->group(function () {
     Route::group(['prefix' => 'seller'], function () {
         /*Dashboard*/
         Route::get('dashboard', [\App\Http\Controllers\SellerController::class, 'index']);
-        Route::get('get_products', [\App\Http\Controllers\API\ProductApisController::class, 'getProducts_sellerapp']);
+        // Sarthi: master-catalog-aware list (replaces legacy seller-owned product list)
+        Route::get('get_products', [\App\Http\Controllers\API\SellerProductApiController::class, 'getMyProducts']);
         Route::post('update_seller_status', [\App\Http\Controllers\API\SellerApiController::class, 'updateStatus'])->name('sellers.update_seller_status');
         Route::post('get_seller_status', [\App\Http\Controllers\API\SellerApiController::class, 'getStatus'])->name('sellers.get_seller_status');
         Route::post('details', [\App\Http\Controllers\API\AdminAuthController::class, 'saveSellerDetails'])->name('sellers.details');
@@ -606,12 +632,20 @@ Route::middleware('auth:api')->group(function () {
         });
 
         Route::group(['prefix' => 'products'], function () {
-            Route::get('/', [\App\Http\Controllers\API\ProductApisController::class, 'getProducts']);
+            // Sarthi: list and write endpoints now run off the master catalog (seller_products overrides).
+            // Distributor no longer owns products — they get auto-populated from assigned brands.
+            Route::get('/', [\App\Http\Controllers\API\SellerProductApiController::class, 'getMyProducts']);
+            Route::post('save', [\App\Http\Controllers\API\SellerProductApiController::class, 'save'])->name('products.save');
+            Route::post('update', [\App\Http\Controllers\API\SellerProductApiController::class, 'save'])->name('products.update');
+            Route::post('update_variant_stock', [\App\Http\Controllers\API\SellerProductApiController::class, 'save'])->name('products.update_variant_stock');
+            Route::post('toggle_status', [\App\Http\Controllers\API\SellerProductApiController::class, 'toggleStatus'])->name('products.toggle_status');
+            Route::post('save_slabs', [\App\Http\Controllers\API\SellerProductApiController::class, 'saveSlabs'])->name('products.save_slabs');
+
+            // Legacy seller-owned product endpoints — kept until Phase 7 cleanup.
+            // App should NOT call these in the master catalog flow.
             Route::get('active', [\App\Http\Controllers\API\ProductApisController::class, 'getActiveProducts']);
             Route::get('/product_by_id', [\App\Http\Controllers\API\ProductApisController::class, 'getProduct']);
-            Route::post('save', [\App\Http\Controllers\API\ProductApisController::class, 'save'])->name('products.save');
             Route::get('edit/{id}', [\App\Http\Controllers\API\ProductApisController::class, 'edit']);
-            Route::post('update', [\App\Http\Controllers\API\ProductApisController::class, 'update'])->name('products.update');
             Route::post('delete', [\App\Http\Controllers\API\ProductApisController::class, 'delete'])->name('products.delete');
             Route::post('multiple_delete', [\App\Http\Controllers\API\ProductApisController::class, 'multipleDelete'])->name('products.multiple_delete');
             Route::get('/brands', [\App\Http\Controllers\API\BrandsApiController::class, 'index']);
@@ -623,7 +657,6 @@ Route::middleware('auth:api')->group(function () {
             Route::get('download_product_data_excel', [\App\Http\Controllers\API\ProductApisController::class, 'downloadProductDataExcel']);
             Route::post('bulk_update', [\App\Http\Controllers\API\ProductApisController::class, 'bulkUpdate'])->name('products.bulk_update');
             Route::get('get_product_variants', [\App\Http\Controllers\API\ProductApisController::class, 'getProductVariants']);
-            Route::post('update_variant_stock', [\App\Http\Controllers\API\ProductApisController::class, 'updateVariantStock']);
         });
 
         Route::group(['prefix' => 'salesman'], function () {

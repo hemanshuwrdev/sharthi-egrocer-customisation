@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\API;
 
 use App\Helpers\CommonHelper;
+use App\Helpers\MasterCatalogOrderHelper;
 use App\Http\Controllers\Controller;
+use App\Models\BrandDistributorMapping;
+use App\Models\Category;
+use App\Models\MasterProduct;
+use App\Models\MasterProductVariant;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SellerProduct;
+use App\Models\SellerProductSlabPrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use App\Models\Category;
+use Illuminate\Support\Facades\Validator;
 
 class SellerPosController extends Controller
 {
@@ -122,12 +128,12 @@ class SellerPosController extends Controller
 
     public function placeOrder(Request $request)
     {
+        // Sarthi: POS items.*.product_variant_id now references master_product_variants.id.
         $validator = Validator::make($request->all(), [
             'user_id' => 'nullable',
             'user_type' => 'nullable|in:pos,user',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.product_variant_id' => 'required|exists:product_variants,id',
+            'items.*.product_variant_id' => 'required|exists:master_product_variants,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'payment_method' => 'required|in:cash,card,upi',
             'total' => 'required|numeric',
@@ -147,54 +153,39 @@ class SellerPosController extends Controller
             ], 422);
         }
 
+        $sellerId = auth()->user()->seller->id;
+
         DB::beginTransaction();
         try {
             // Get user info if provided
-            $user = null;
             if ($request->user_id && $request->user_type) {
                 if ($request->user_type === 'pos') {
-                    $user = DB::table('pos_users')->find($request->user_id);
+                    DB::table('pos_users')->find($request->user_id);
                 } else {
-                    $user = DB::table('users')->find($request->user_id);
+                    DB::table('users')->find($request->user_id);
                 }
             }
 
-            $updatedVariants = [];
-            // Check if all products are available and have enough stock
-            foreach ($request->items as $item) {
-                $productVariant = ProductVariant::find($item['product_variant_id']);
-                if (!$productVariant) {
+            // Pre-validate every line. resolveLine enforces (assigned, activated, in-stock).
+            // product_variant_id refers to master_product_variants.id in the master catalog flow.
+            $resolved = [];
+            foreach ($request->items as $idx => $item) {
+                $r = MasterCatalogOrderHelper::resolveLine($sellerId, (int) $item['product_variant_id'], (float) $item['quantity']);
+                if (!$r['ok']) {
+                    DB::rollBack();
                     return response()->json([
                         'status' => false,
-                        'message' => 'Product variant not found'
-                    ], 404);
-                }
-
-                $product = Product::find($item['product_id']);
-                if (!$product || $product->status != 1) {
-                    return response()->json([
-                        'status' => false,
-                        'message' => "Product '{$product->name}' is not available"
+                        'message' => __($r['error']) ?: $r['error'],
                     ], 422);
                 }
-
-                // Skip stock validation for unlimited stock products
-                if (!$product->is_unlimited_stock && $productVariant->stock < $item['quantity']) {
-                    return response()->json([
-                        'status' => false,
-                        'message' => "Not enough stock for '{$product->name}'"
-                    ], 422);
-                }
+                $resolved[$idx] = $r;
             }
-
-            // Generate unique order ID
-            $orders_id = 'POS' . date('YmdHis') . rand(10, 99);
 
             // Create order data array
             $orderData = [
                 'pos_user_id' => ($request->user_type === 'pos') ? $request->user_id : null,
                 'user_id' => ($request->user_type === 'user') ? $request->user_id : null,
-                'store_id' => auth()->user()->seller->id,
+                'store_id' => $sellerId,
                 'total_amount' => $request->final_total,
                 'discount_amount' => $request->discount_amount ?? 0,
                 'discount_percentage' => $request->discount_percentage ?? 0,
@@ -203,10 +194,9 @@ class SellerPosController extends Controller
                 'updated_at' => now()
             ];
 
-            // Create order in pos_orders table
+            $orders_id = 'POS' . date('YmdHis') . rand(10, 99);
             $posOrderId = DB::table('pos_orders')->insertGetId($orderData);
 
-            // Add additional charges if provided
             if (!empty($request->additional_charges)) {
                 foreach ($request->additional_charges as $charge) {
                     DB::table('pos_additional_charges')->insert([
@@ -219,69 +209,31 @@ class SellerPosController extends Controller
                 }
             }
 
-            // Add order items and update stock
-            foreach ($request->items as $item) {
-                $productVariant = ProductVariant::with(['product', 'unit'])->find($item['product_variant_id']);
-                $product = Product::find($item['product_id']);
+            foreach ($request->items as $idx => $item) {
+                $r = $resolved[$idx];
+                $sp = $r['seller_product'];
+                $mv = $r['master_variant'];
+                $qty = (float) $item['quantity'];
+                $price = $r['unit_price'];
+                $subtotal = $price * $qty;
 
-                // Calculate item prices (slab-aware)
-                $price = CommonHelper::getSlabUnitPrice($productVariant->id, (int) $item['quantity']);
-                $subtotal = $price * $item['quantity'];
-
-                // Add order item to pos_order_items table
                 DB::table('pos_order_items')->insert([
                     'pos_order_id' => $posOrderId,
-                    'product_id' => $item['product_id'],
-                    'product_variant_id' => $item['product_variant_id'],
-                    'quantity' => $item['quantity'],
+                    'product_id' => $mv->master_product_id,
+                    'product_variant_id' => $mv->id,
+                    'master_product_variant_id' => $mv->id,
+                    'seller_product_id' => $sp->id,
+                    'quantity' => $qty,
                     'unit_price' => $price,
                     'total_price' => $subtotal,
+                    'slab_unit_price' => $r['slab'] ? $r['slab']['price'] : null,
+                    'slab_min_qty' => $r['slab']['min_qty'] ?? null,
+                    'slab_max_qty' => $r['slab']['max_qty'] ?? null,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
 
-                // Update product stock - using the logic from OrderApiController
-                if (!$product->is_unlimited_stock) {
-                    if ($product->type == 'packet') {
-                        // For packet products, decrease stock by quantity
-                        $stock = $productVariant->stock - $item['quantity'];
-                        $productVariant->stock = $stock;
-                        $productVariant->save();
-                        $updatedVariants[] = $productVariant;
-
-
-                        if ($productVariant->stock <= 0) {
-                            $productVariant->status = 0; // 0 = Sold Out
-                            $productVariant->save();
-                        }
-                    } else if ($product->type == 'loose') {
-                        // For loose products, decrease stock by weight
-                        $stock = max(0, $productVariant->stock - ($productVariant->measurement * $item['quantity']));
-
-                        // Update main product variant stock
-                        $productVariant->stock = $stock;
-                        if ($stock <= 0) {
-                            $productVariant->status = 0; // 0 = Sold Out
-                        }
-                        $productVariant->save();
-                        $updatedVariants[] = $productVariant;
-
-                        // Update other variants with same product and stock unit
-                        ProductVariant::where("product_id", $product->id)
-                            ->where("stock_unit_id", $productVariant->stock_unit_id) // Only same unit type
-                            ->where("id", '!=', $productVariant->id) // Exclude current variant
-                            ->update([
-                                'stock' => $stock,
-                                'status' => $stock <= 0 ? 0 : 1 // 0 = Sold Out, 1 = Available
-                            ]);
-                    }
-                }
-            }
-
-            try {
-                CommonHelper::sendLowStockNotification($updatedVariants);
-            } catch (\Exception $e) {
-                Log::channel('low_stock_mail')->info("Low stock notification error: " . $e->getMessage());
+                MasterCatalogOrderHelper::decrementStock($sp->id, $qty);
             }
 
             DB::commit();
@@ -310,79 +262,99 @@ class SellerPosController extends Controller
     {
         try {
             $sellerId = auth()->user()->seller->id;
-            $perPage = $request->per_page ?? 9;
-            $page = $request->page ?? 1;
+            $perPage = (int) ($request->per_page ?? 9);
+            $page = max((int) ($request->page ?? 1), 1);
 
-            $productQuery = Product::select('products.*')
-                ->where('products.seller_id', $sellerId)
-                ->where('products.status', 1)
-                ->with(['variants' => function ($query) {
-                    $query->with('unit'); // Remove status filter to show all variants including sold out ones
-                }]);
+            // Sarthi: POS reads from master catalog filtered by this seller's activated overrides.
+            // Group by master_product so the POS card still shows one product with N variants beneath.
+            $masterIdsQuery = MasterProduct::query()
+                ->select('master_products.id')
+                ->join('master_product_variants', 'master_product_variants.master_product_id', '=', 'master_products.id')
+                ->join('seller_products', function ($j) use ($sellerId) {
+                    $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
+                        ->where('seller_products.seller_id', $sellerId)
+                        ->where('seller_products.status', 1);
+                })
+                ->where('master_products.status', 1)
+                ->where('master_product_variants.status', 1);
 
-            // Apply category filter if provided
             if ($request->category_id) {
-                $productQuery->where('category_id', $request->category_id);
+                $masterIdsQuery->where('master_products.category_id', $request->category_id);
             }
 
-            // Apply search filter if provided
             if ($request->search) {
                 $search = $request->search;
-                $productQuery->where(function ($query) use ($search) {
-                    $query->where('products.name', 'like', '%' . $search . '%')
-                        ->orWhere('products.slug', 'like', '%' . $search . '%')
-                        ->orWhere('products.tags', 'like', '%' . $search . '%');
+                $masterIdsQuery->where(function ($q) use ($search) {
+                    $q->where('master_products.name', 'like', "%{$search}%")
+                        ->orWhere('master_products.slug', 'like', "%{$search}%")
+                        ->orWhere('master_product_variants.sku', 'like', "%{$search}%");
                 });
             }
 
-            $totalProducts = $productQuery->count();
-            $products = $productQuery->orderBy('id', 'DESC')
-                ->paginate($perPage, ['*'], 'page', $page);
+            $masterIds = $masterIdsQuery->distinct()->pluck('master_products.id');
+            $totalProducts = $masterIds->count();
+            $pagedIds = $masterIds->slice(($page - 1) * $perPage, $perPage)->values();
 
-            // Transform products for POS display
-            $transformedProducts = $products->map(function ($product) {
-                $variant = $product->variants->isNotEmpty() ? $product->variants[0] : null;
+            $products = MasterProduct::with(['variants' => function ($q) use ($sellerId) {
+                $q->where('master_product_variants.status', 1)
+                    ->whereHas('sellerProducts', function ($q2) use ($sellerId) {
+                        $q2->where('seller_id', $sellerId)->where('status', 1);
+                    })
+                    ->with(['unit']);
+            }])
+                ->whereIn('id', $pagedIds)
+                ->orderBy('name')
+                ->get();
 
+            $variantIds = $products->flatMap(fn($p) => $p->variants->pluck('id'))->unique();
+            $overrides = SellerProduct::where('seller_id', $sellerId)
+                ->whereIn('master_product_variant_id', $variantIds)
+                ->get()
+                ->keyBy('master_product_variant_id');
+
+            $transformedProducts = $products->map(function ($product) use ($overrides) {
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
                     'description' => $product->description,
                     'image_url' => CommonHelper::getImage($product->image),
-                    'is_unlimited_stock' => (bool)$product->is_unlimited_stock,
-                    'variants' => $product->variants->map(function ($variant) use ($product) {
+                    'is_unlimited_stock' => false,
+                    'variants' => $product->variants->map(function ($variant) use ($overrides) {
+                        $sp = $overrides[$variant->id] ?? null;
                         return [
                             'id' => $variant->id,
-                            'measurement' => $variant->measurement,
+                            'seller_product_id' => $sp ? $sp->id : null,
+                            'measurement' => $variant->secondary_unit_value ?: $variant->weight,
                             'measurement_unit_name' => $variant->unit ? $variant->unit->short_code : '',
-                            'price' => $variant->price,
-                            'discounted_price' => $variant->discounted_price,
-                            'stock' => $variant->stock,
-                            'status' => $variant->status
+                            'sku' => $variant->sku,
+                            'price' => $sp ? (float) $sp->selling_price : 0,
+                            'mrp' => $sp ? (float) $sp->mrp : 0,
+                            'discounted_price' => $sp && $sp->discounted_price !== null ? (float) $sp->discounted_price : 0,
+                            'stock' => $sp ? (float) $sp->stock : 0,
+                            'status' => $sp ? (int) $sp->status : 0,
                         ];
-                    })
+                    })->values(),
                 ];
             });
 
-            $response = [
+            return response()->json([
                 'status' => true,
                 'data' => $transformedProducts,
                 'meta' => [
                     'total' => $totalProducts,
-                    'current_page' => $products->currentPage(),
-                    'last_page' => $products->lastPage(),
-                    'per_page' => $products->perPage(),
-                    'from' => $products->firstItem() ?? 0,
-                    'to' => $products->lastItem() ?? 0
-                ]
-            ];
-
-            return response()->json($response);
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($totalProducts / max($perPage, 1)),
+                    'per_page' => $perPage,
+                    'from' => $totalProducts === 0 ? 0 : (($page - 1) * $perPage) + 1,
+                    'to' => min($page * $perPage, $totalProducts),
+                ],
+            ]);
         } catch (\Exception $e) {
             Log::error("Error fetching products: " . $e->getMessage());
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong while fetching products.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -399,7 +371,20 @@ class SellerPosController extends Controller
                 ], 404);
             }
 
-            $categories = Category::whereIn('id', explode(",", $seller->categories))
+            // Sarthi: categories derived from this seller's activated master catalog rows.
+            $categoryIds = MasterProduct::query()
+                ->join('master_product_variants', 'master_product_variants.master_product_id', '=', 'master_products.id')
+                ->join('seller_products', function ($j) use ($seller) {
+                    $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
+                        ->where('seller_products.seller_id', $seller->id)
+                        ->where('seller_products.status', 1);
+                })
+                ->where('master_products.status', 1)
+                ->whereNotNull('master_products.category_id')
+                ->distinct()
+                ->pluck('master_products.category_id');
+
+            $categories = Category::whereIn('id', $categoryIds)
                 ->where('status', 1)
                 ->orderBy('name', 'ASC')
                 ->get()

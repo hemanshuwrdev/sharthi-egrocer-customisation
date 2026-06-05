@@ -87,18 +87,72 @@ class SarthiCustomisation extends Migration
         //     $table->index(['product_variant_id', 'min_qty'], 'idx_psp_variant_minqty');
         // });
 
-        // 3. Slab snapshot on order_items (frozen at order time)
-        // Schema::table('order_items', function (Blueprint $table) {
-        //     $table->decimal('slab_unit_price', 15, 4)->nullable()->after('discounted_price');
-        //     $table->unsignedInteger('slab_min_qty')->nullable()->after('slab_unit_price');
-        //     $table->unsignedInteger('slab_max_qty')->nullable()->after('slab_min_qty');
-        // });
+        // 3. Slab snapshot + master catalog references on order_items (frozen at order time)
+        Schema::table('order_items', function (Blueprint $table) {
+            if (!Schema::hasColumn('order_items', 'slab_unit_price')) {
+                $table->decimal('slab_unit_price', 15, 4)->nullable()->after('discounted_price');
+            }
+            if (!Schema::hasColumn('order_items', 'slab_min_qty')) {
+                $table->unsignedInteger('slab_min_qty')->nullable()->after('slab_unit_price');
+            }
+            if (!Schema::hasColumn('order_items', 'slab_max_qty')) {
+                $table->unsignedInteger('slab_max_qty')->nullable()->after('slab_min_qty');
+            }
+            if (!Schema::hasColumn('order_items', 'master_product_variant_id')) {
+                $table->unsignedBigInteger('master_product_variant_id')->nullable()->after('product_variant_id');
+                $table->index('master_product_variant_id', 'idx_oi_master_variant');
+            }
+            if (!Schema::hasColumn('order_items', 'seller_product_id')) {
+                $table->unsignedBigInteger('seller_product_id')->nullable()->after('master_product_variant_id');
+                $table->index('seller_product_id', 'idx_oi_seller_product');
+            }
+        });
+
+        // 3c. Master catalog references on carts (retailer can have master + legacy items)
+        if (Schema::hasTable('carts')) {
+            Schema::table('carts', function (Blueprint $table) {
+                if (!Schema::hasColumn('carts', 'master_product_variant_id')) {
+                    $table->unsignedBigInteger('master_product_variant_id')->nullable()->after('product_variant_id');
+                    $table->index('master_product_variant_id', 'idx_carts_master_variant');
+                }
+                if (!Schema::hasColumn('carts', 'seller_id')) {
+                    $table->unsignedBigInteger('seller_id')->nullable()->after('master_product_variant_id');
+                    $table->index('seller_id', 'idx_carts_seller');
+                }
+                if (!Schema::hasColumn('carts', 'seller_product_id')) {
+                    $table->unsignedBigInteger('seller_product_id')->nullable()->after('seller_id');
+                }
+            });
+        }
+
+        // 3b. Same snapshot fields on pos_order_items so POS sales can reference master catalog too.
+        Schema::table('pos_order_items', function (Blueprint $table) {
+            if (!Schema::hasColumn('pos_order_items', 'master_product_variant_id')) {
+                $table->unsignedBigInteger('master_product_variant_id')->nullable()->after('product_variant_id');
+                $table->index('master_product_variant_id', 'idx_poi_master_variant');
+            }
+            if (!Schema::hasColumn('pos_order_items', 'seller_product_id')) {
+                $table->unsignedBigInteger('seller_product_id')->nullable()->after('master_product_variant_id');
+                $table->index('seller_product_id', 'idx_poi_seller_product');
+            }
+            if (!Schema::hasColumn('pos_order_items', 'slab_unit_price')) {
+                $table->decimal('slab_unit_price', 15, 4)->nullable()->after('total_price');
+            }
+            if (!Schema::hasColumn('pos_order_items', 'slab_min_qty')) {
+                $table->unsignedInteger('slab_min_qty')->nullable()->after('slab_unit_price');
+            }
+            if (!Schema::hasColumn('pos_order_items', 'slab_max_qty')) {
+                $table->unsignedInteger('slab_max_qty')->nullable()->after('slab_min_qty');
+            }
+        });
 
         // 4. Brand overlap flag (multiple distributors for same brand)
-        // Schema::table('brands', function (Blueprint $table) {
-        //     $table->tinyInteger('is_overlap_allowed')->default(0)->after('status')
-        //         ->comment('1 = multiple distributors can deliver this brand in same area');
-        // });
+        Schema::table('brands', function (Blueprint $table) {
+            if (!Schema::hasColumn('brands', 'is_overlap_allowed')) {
+                $table->tinyInteger('is_overlap_allowed')->default(0)->after('status')
+                    ->comment('1 = multiple distributors can deliver this brand in same area');
+            }
+        });
 
         // 5. Per-distributor order cutoff time
         // NOTE: managed_territories was dropped — sellers.city_id is already a CSV of city IDs.
@@ -110,18 +164,20 @@ class SarthiCustomisation extends Migration
         });
 
         // 6. Brand → Distributor → City mapping (territory control)
-        // Schema::create('brand_distributor_mappings', function (Blueprint $table) {
-        //     $table->bigIncrements('id');
-        //     $table->unsignedBigInteger('brand_id');
-        //     $table->unsignedBigInteger('seller_id');
-        //     $table->unsignedBigInteger('city_id');
-        //     $table->timestamps();
+        if (!Schema::hasTable('brand_distributor_mappings')) {
+            Schema::create('brand_distributor_mappings', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->unsignedBigInteger('brand_id');
+                $table->unsignedBigInteger('seller_id');
+                $table->unsignedBigInteger('city_id');
+                $table->timestamps();
 
-        //     $table->unique(['brand_id', 'seller_id', 'city_id'], 'uniq_bdm_brand_seller_city');
-        //     $table->index('brand_id', 'idx_bdm_brand');
-        //     $table->index('seller_id', 'idx_bdm_seller');
-        //     $table->index('city_id', 'idx_bdm_city');
-        // });
+                $table->unique(['brand_id', 'seller_id', 'city_id'], 'uniq_bdm_brand_seller_city');
+                $table->index('brand_id', 'idx_bdm_brand');
+                $table->index('seller_id', 'idx_bdm_seller');
+                $table->index('city_id', 'idx_bdm_city');
+            });
+        }
 
         // 7. Order cutoff / delivery date (3 PM rule)
 
@@ -140,6 +196,94 @@ class SarthiCustomisation extends Migration
             ->comment('Auto-tagged delivery date per cutoff rule');
     }
 });
+
+        // 9. Master Catalog: Parent Companies (e.g., Nestlé, ITC, HUL)
+        if (!Schema::hasTable('parent_companies')) {
+            Schema::create('parent_companies', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->tinyInteger('status')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // 10. Master Catalog: Products (super admin owned catalog)
+        if (!Schema::hasTable('master_products')) {
+            Schema::create('master_products', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->nullable();
+                $table->unsignedBigInteger('parent_company_id')->nullable();
+                $table->unsignedBigInteger('brand_id')->nullable();
+                $table->unsignedBigInteger('category_id')->nullable();
+                $table->unsignedBigInteger('tax_id')->nullable();
+                $table->string('hsn')->nullable();
+                $table->string('image')->nullable();
+                $table->text('other_images')->nullable()->comment('JSON array of additional image paths');
+                $table->text('short_description')->nullable();
+                $table->longText('description')->nullable();
+                $table->string('type')->default('single')->comment('single | variable');
+                $table->tinyInteger('status')->default(1);
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->timestamps();
+
+                $table->index('parent_company_id', 'idx_mp_parent');
+                $table->index('brand_id', 'idx_mp_brand');
+                $table->index('category_id', 'idx_mp_category');
+            });
+        }
+
+        // 11. Master Catalog: Variants (SKU + unit + secondary unit + weight)
+        if (!Schema::hasTable('master_product_variants')) {
+            Schema::create('master_product_variants', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('master_product_id')->constrained('master_products')->onDelete('cascade');
+                $table->string('sku')->nullable();
+                $table->unsignedBigInteger('unit_id')->nullable();
+                $table->unsignedBigInteger('secondary_unit_id')->nullable()->comment('e.g., Box, Case, Bag');
+                $table->float('secondary_unit_value', 8, 2)->nullable()->comment('How many primary units in secondary unit');
+                $table->double('weight', 10, 3)->nullable();
+                $table->string('image')->nullable();
+                $table->tinyInteger('status')->default(1);
+                $table->timestamps();
+
+                $table->index('master_product_id', 'idx_mpv_product');
+                $table->index('sku', 'idx_mpv_sku');
+            });
+        }
+
+        // 12. Seller (Distributor) Product Control: per-seller activation, mrp, selling price, stock
+        if (!Schema::hasTable('seller_products')) {
+            Schema::create('seller_products', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('seller_id')->constrained('sellers')->onDelete('cascade');
+                $table->foreignId('master_product_variant_id')->constrained('master_product_variants')->onDelete('cascade');
+                $table->decimal('mrp', 15, 4)->default(0);
+                $table->decimal('selling_price', 15, 4)->default(0);
+                $table->decimal('discounted_price', 15, 4)->nullable();
+                $table->double('stock', 12, 3)->default(0);
+                $table->tinyInteger('status')->default(1)->comment('1 = activated by distributor');
+                $table->timestamps();
+
+                $table->unique(['seller_id', 'master_product_variant_id'], 'uniq_sp_seller_variant');
+                $table->index('seller_id', 'idx_sp_seller');
+                $table->index('master_product_variant_id', 'idx_sp_variant');
+            });
+        }
+
+        // 13. Seller Slab (Bulk) Pricing per seller_product
+        if (!Schema::hasTable('seller_product_slab_prices')) {
+            Schema::create('seller_product_slab_prices', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('seller_product_id')->constrained('seller_products')->onDelete('cascade');
+                $table->unsignedInteger('min_qty');
+                $table->unsignedInteger('max_qty')->nullable()->comment('NULL = open-ended (e.g. "50+")');
+                $table->decimal('price', 15, 4);
+                $table->timestamps();
+
+                $table->index(['seller_product_id', 'min_qty'], 'idx_spsp_sp_minqty');
+            });
+        }
 
         // 8. Salesmen Table (onboarded by distributor)
         if (!Schema::hasTable('salesmen')) {
@@ -163,13 +307,19 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        // Master catalog (reverse FK order)
+        Schema::dropIfExists('seller_product_slab_prices');
+        Schema::dropIfExists('seller_products');
+        Schema::dropIfExists('master_product_variants');
+        Schema::dropIfExists('master_products');
+        Schema::dropIfExists('parent_companies');
 
         if (Schema::hasColumn('orders', 'delivery_date')) {
             Schema::table('orders', function (Blueprint $table) {
                 $table->dropColumn('delivery_date');
             });
         }
- 
+
 
         Schema::dropIfExists('brand_distributor_mappings');
 
@@ -186,8 +336,32 @@ class SarthiCustomisation extends Migration
         }
 
         Schema::table('order_items', function (Blueprint $table) {
-            $table->dropColumn(['slab_unit_price', 'slab_min_qty', 'slab_max_qty']);
+            foreach (['slab_unit_price', 'slab_min_qty', 'slab_max_qty', 'master_product_variant_id', 'seller_product_id'] as $col) {
+                if (Schema::hasColumn('order_items', $col)) {
+                    $table->dropColumn($col);
+                }
+            }
         });
+
+        if (Schema::hasTable('pos_order_items')) {
+            Schema::table('pos_order_items', function (Blueprint $table) {
+                foreach (['slab_unit_price', 'slab_min_qty', 'slab_max_qty', 'master_product_variant_id', 'seller_product_id'] as $col) {
+                    if (Schema::hasColumn('pos_order_items', $col)) {
+                        $table->dropColumn($col);
+                    }
+                }
+            });
+        }
+
+        if (Schema::hasTable('carts')) {
+            Schema::table('carts', function (Blueprint $table) {
+                foreach (['master_product_variant_id', 'seller_id', 'seller_product_id'] as $col) {
+                    if (Schema::hasColumn('carts', $col)) {
+                        $table->dropColumn($col);
+                    }
+                }
+            });
+        }
 
         Schema::dropIfExists('product_slab_prices');
 

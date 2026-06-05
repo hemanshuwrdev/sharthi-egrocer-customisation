@@ -44,6 +44,11 @@ const BulkUpdate = () => import("../views/Product/BulkUpdate");
 const Brands = () => import("../views/Product/Brands/Brands");
 const ManageStock = () => import("../views/Product/ManageStock");
 
+// Master Catalog (Sarthi)
+const MasterProducts = () => import("../views/MasterCatalog/MasterProducts");
+const MasterProductForm = () => import("../views/MasterCatalog/MasterProductForm");
+const BrandMappings = () => import("../views/MasterCatalog/BrandMappings");
+
 const Sellers = () => import("../views/Seller/Sellers");
 const RegisteredSellers = () => import("../views/Seller/RegisteredSellers");
 const EditSeller = () => import("../views/Seller/EditSeller");
@@ -207,6 +212,7 @@ const SellerBrands = () => import("../views/Sellers/Brands");
 const SellerUnits = () => import("../views/Sellers/Units");
 
 const SellerProducts = () => import("../views/Product/Products");
+const SellerMyProducts = () => import("../views/Sellers/MyProducts/MyProducts");
 const SellerEditProduct = () => import("../views/Product/EditProduct");
 
 const SellerSalesman = () => import("../views/Seller/Salesman/Salesman");
@@ -660,6 +666,47 @@ function configRoutes() {
                         role: adminRoles,
                         title: 'Brands'
 
+                    },
+                },
+                {
+                    path: "master_catalog/products",
+                    name: "MasterProducts",
+                    component: MasterProducts,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Master Catalog'
+                    },
+                },
+                {
+                    path: "master_catalog/products/create",
+                    name: "CreateMasterProduct",
+                    component: MasterProductForm,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Add Master Product'
+                    },
+                },
+                {
+                    path: "master_catalog/products/edit/:id",
+                    name: "EditMasterProduct",
+                    component: MasterProductForm,
+                    props: true,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Edit Master Product'
+                    },
+                },
+                {
+                    path: "master_catalog/brand_mappings",
+                    name: "BrandDistributorMappings",
+                    component: BrandMappings,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Brand Distributor Mappings'
                     },
                 },
                 {
@@ -1740,11 +1787,21 @@ function configRoutes() {
                 {
                     path: "manage_products",
                     name: "SellerManageProducts",
-                    component: SellerProducts,
+                    component: SellerMyProducts,
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title: 'Products'
+                        title: 'My Products'
+                    },
+                },
+                {
+                    path: "my_products",
+                    name: "SellerMyProducts",
+                    component: SellerMyProducts,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'My Products'
                     },
                 },
 

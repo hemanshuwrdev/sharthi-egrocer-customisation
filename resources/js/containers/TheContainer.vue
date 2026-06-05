@@ -328,6 +328,31 @@ export default {
                     ]
                 },
                 {
+                    name: __('master_catalog'),
+                    icon: 'layers',
+                    permission: null,
+                    submenu: [
+                        {
+                            name: __('add_master_product'),
+                            icon: 'grid-fill',
+                            url: '/master_catalog/products/create',
+                            permission: 'product_create',
+                        },
+                        {
+                            name: __('master_products'),
+                            icon: 'grid-fill',
+                            url: '/master_catalog/products',
+                            permission: 'product_list',
+                        },
+                        {
+                            name: __('brand_distributor_mappings'),
+                            icon: 'grid-fill',
+                            url: '/master_catalog/brand_mappings',
+                            permission: 'product_list',
+                        },
+                    ]
+                },
+                {
                     name: __('stock_management'),
                     icon: 'cubes',
                     url: '/manage_stock',

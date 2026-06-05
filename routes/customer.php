@@ -34,13 +34,14 @@ Route::group(['middleware' => ['auth.customer']], function () {
     Route::get('sellers', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getSellers']);
     
     Route::group(['prefix' => 'products'], function () {
-        Route::post('/', [\App\Http\Controllers\API\Customer\ProductsApiController::class, 'getProducts']);
+        // Sarthi: retailer feed driven by master catalog + brand_distributor_mappings (city based).
+        Route::post('/', [\App\Http\Controllers\API\Customer\RetailerCatalogApiController::class, 'listProducts']);
         Route::post('similar', [\App\Http\Controllers\API\Customer\ProductsApiController::class, 'getSimilarProducts']);
         Route::get('ratings_list', [\App\Http\Controllers\API\Customer\ProductsApiController::class, 'productRatingsList']);
         Route::post('rating/image_list', [\App\Http\Controllers\API\Customer\ProductsApiController::class, 'productRatingImageList']);
         Route::get('get_seo_things', [\App\Http\Controllers\API\Customer\ProductsApiController::class, 'getSeoThings']);
     });
-    Route::post('product_by_id', [\App\Http\Controllers\API\Customer\ProductsApiController::class, 'getProduct']);
+    Route::post('product_by_id', [\App\Http\Controllers\API\Customer\RetailerCatalogApiController::class, 'productDetail']);
     Route::get('faqs', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getFaqs']);
     Route::get('social_media', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getSocialMedia']);
 
@@ -110,11 +111,11 @@ Route::group(['middleware' => ['auth.customer']], function () {
             Route::post('/remove', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'removeFromFavorite']);
         });
 
-        // Carts
+        // Carts — Sarthi master catalog (save_for_later/bulk_add still on legacy controller)
         Route::group(['prefix' => 'cart'], function () {
-            Route::get('/', [\App\Http\Controllers\API\Customer\CartApiController::class, 'getUserCart']);
-            Route::post('/add', [\App\Http\Controllers\API\Customer\CartApiController::class, 'addToCart']);
-            Route::post('/remove', [\App\Http\Controllers\API\Customer\CartApiController::class, 'removeFromCart']);
+            Route::get('/', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'getCart']);
+            Route::post('/add', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'addToCart']);
+            Route::post('/remove', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'removeFromCart']);
             Route::post('/save_for_later', [\App\Http\Controllers\API\Customer\CartApiController::class, 'addToSaveForLater']);
             Route::post('/bulk_add_to_cart_items', [\App\Http\Controllers\API\Customer\CartApiController::class, 'BulkAddToCartItems']);
             Route::get('/get_cart_count', [\App\Http\Controllers\API\Customer\CartApiController::class, 'getCartCount']);
@@ -167,7 +168,8 @@ Route::group(['middleware' => ['auth.customer']], function () {
         Route::get('order_status_lists', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getOrderStatusLists']);
 
         //Checkout
-        Route::post('place_order', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'placeOrder']);
+        // Sarthi: place_order operates on master_cart, splits per distributor, freezes slab
+        Route::post('place_order', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'placeOrder']);
         Route::post('initiate_transaction', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'initiateTransaction']);
         Route::post('add_transaction', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'addTransaction']);
         Route::post('update_order_status', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'updateOrderStatus']);
