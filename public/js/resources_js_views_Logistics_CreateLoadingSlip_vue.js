@@ -313,14 +313,14 @@ __webpack_require__.r(__webpack_exports__);
       }).then(function (res) {
         _this7.loading = false;
         if (res.data.status === 1) {
-          _this7.showSuccess('Loading Slip generated and route optimized successfully!');
+          _this7.showSuccess(__('loading_slip_generated_and_route_optimized_successfully'));
           _this7.$router.push(_this7.urlPrefix + '/loading_slips');
         } else {
           _this7.showError(res.data.message);
         }
       })["catch"](function (err) {
         _this7.loading = false;
-        _this7.showError('An error occurred during slip creation.');
+        _this7.showError(__('an_error_occurred_during_slip_creation'));
       });
     }
   }
@@ -344,7 +344,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.bg-soft-primary[data-v-54652c95] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n    color: #4e73df !important;\n}\n.max-w-200[data-v-54652c95] {\n    max-width: 200px;\n}\n.max-w-250[data-v-54652c95] {\n    max-width: 250px;\n}\n.transition-all[data-v-54652c95] {\n    transition: all 0.25s ease-in-out;\n}\n.hover-bg-light[data-v-54652c95]:hover {\n    background-color: rgba(248, 249, 250, 0.9) !important;\n}\n.cursor-pointer[data-v-54652c95] {\n    cursor: pointer;\n}\n.gap-2[data-v-54652c95] {\n    gap: 0.5rem;\n}\n.text-xs[data-v-54652c95] {\n    font-size: 0.75rem;\n}\n.position-sticky[data-v-54652c95] {\n    position: sticky;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.bg-soft-primary[data-v-54652c95] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n    color: #4e73df !important;\n}\n.max-w-200[data-v-54652c95] {\n    max-width: 200px;\n}\n.max-w-250[data-v-54652c95] {\n    max-width: 250px;\n}\n.transition-all[data-v-54652c95] {\n    transition: all 0.25s ease-in-out;\n}\n.cursor-pointer[data-v-54652c95] {\n    cursor: pointer;\n}\n.gap-2[data-v-54652c95] {\n    gap: 0.5rem;\n}\n.text-xs[data-v-54652c95] {\n    font-size: 0.75rem;\n}\n.position-sticky[data-v-54652c95] {\n    position: sticky;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -480,7 +480,22 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "container-fluid py-4" }, [
     _c("div", { staticClass: "row align-items-center mb-4" }, [
-      _vm._m(0),
+      _c("div", { staticClass: "col" }, [
+        _c("h1", { staticClass: "h3 font-weight-bold mb-1" }, [
+          _c("i", { staticClass: "fa fa-clipboard text-primary mr-2" }),
+          _vm._v(_vm._s(_vm.__("create_loading_slip")) + "\n            "),
+        ]),
+        _vm._v(" "),
+        _c("p", { staticClass: "text-muted mb-0" }, [
+          _vm._v(
+            _vm._s(
+              _vm.__(
+                "select_delivery_zone_assign_driver_and_vehicle_and_optimize_the_delivery_routing"
+              )
+            )
+          ),
+        ]),
+      ]),
       _vm._v(" "),
       _c(
         "div",
@@ -495,7 +510,7 @@ var render = function () {
             },
             [
               _c("i", { staticClass: "fa fa-arrow-left mr-2" }),
-              _vm._v("Back to Slips\n            "),
+              _vm._v(_vm._s(_vm.__("back_to_slips")) + "\n            "),
             ]
           ),
         ],
@@ -506,9 +521,13 @@ var render = function () {
     _c("div", { staticClass: "row" }, [
       _c("div", { staticClass: "col-lg-8 mb-4" }, [
         _c("div", { staticClass: "card border-0 shadow-sm rounded-lg h-100" }, [
-          _c("div", { staticClass: "card-header bg-white border-0 py-3" }, [
+          _c("div", { staticClass: "card-header border-0 py-3" }, [
             _c("div", { staticClass: "row align-items-center" }, [
-              _vm._m(1),
+              _c("div", { staticClass: "col-md-6" }, [
+                _c("h6", { staticClass: "m-0 font-weight-bold" }, [
+                  _vm._v(_vm._s(_vm.__("unassigned_doorstep_orders"))),
+                ]),
+              ]),
               _vm._v(" "),
               _c("div", { staticClass: "col-md-6" }, [
                 _c(
@@ -524,7 +543,7 @@ var render = function () {
                         staticClass:
                           "mb-0 text-muted font-weight-bold mr-2 text-nowrap",
                       },
-                      [_vm._v("Filter by Zone:")]
+                      [_vm._v(_vm._s(_vm.__("filter_by_zone")) + ":")]
                     ),
                     _vm._v(" "),
                     _c(
@@ -539,7 +558,7 @@ var render = function () {
                           },
                         ],
                         staticClass:
-                          "form-control form-select bg-light border-0 max-w-200",
+                          "form-control form-select border-0 max-w-200",
                         on: {
                           change: [
                             function ($event) {
@@ -561,7 +580,7 @@ var render = function () {
                       },
                       [
                         _c("option", { attrs: { value: "" } }, [
-                          _vm._v("All Zones"),
+                          _vm._v(_vm._s(_vm.__("all_zones"))),
                         ]),
                         _vm._v(" "),
                         _vm._l(_vm.zones, function (zone) {
@@ -654,13 +673,13 @@ var render = function () {
                         _c(
                           "th",
                           { staticClass: "py-3 font-weight-bold text-muted" },
-                          [_vm._v("Order ID")]
+                          [_vm._v(_vm._s(_vm.__("order_id")))]
                         ),
                         _vm._v(" "),
                         _c(
                           "th",
                           { staticClass: "py-3 font-weight-bold text-muted" },
-                          [_vm._v("Customer Name")]
+                          [_vm._v(_vm._s(_vm.__("customer_name")))]
                         ),
                         _vm._v(" "),
                         _c(
@@ -669,7 +688,7 @@ var render = function () {
                             staticClass:
                               "py-3 font-weight-bold text-muted text-center",
                           },
-                          [_vm._v("Zone")]
+                          [_vm._v(_vm._s(_vm.__("zone")))]
                         ),
                         _vm._v(" "),
                         _c(
@@ -678,7 +697,7 @@ var render = function () {
                             staticClass:
                               "py-3 font-weight-bold text-muted text-right",
                           },
-                          [_vm._v("Value")]
+                          [_vm._v(_vm._s(_vm.__("value")))]
                         ),
                         _vm._v(" "),
                         _c(
@@ -687,7 +706,7 @@ var render = function () {
                             staticClass:
                               "py-3 font-weight-bold text-muted text-right",
                           },
-                          [_vm._v("Weight (kg)")]
+                          [_vm._v(_vm._s(_vm.__("weight_kg")))]
                         ),
                       ]),
                     ]),
@@ -700,8 +719,7 @@ var render = function () {
                             "tr",
                             {
                               key: order.id,
-                              staticClass:
-                                "transition-all hover-bg-light cursor-pointer",
+                              staticClass: "transition-all cursor-pointer",
                               on: {
                                 click: function ($event) {
                                   return _vm.toggleOrderSelection(order)
@@ -774,19 +792,14 @@ var render = function () {
                                 ]
                               ),
                               _vm._v(" "),
-                              _c(
-                                "td",
-                                { staticClass: "font-weight-bold text-dark" },
-                                [_vm._v("#" + _vm._s(order.id))]
-                              ),
+                              _c("td", { staticClass: "font-weight-bold" }, [
+                                _vm._v("#" + _vm._s(order.id)),
+                              ]),
                               _vm._v(" "),
                               _c("td", [
                                 _c(
                                   "div",
-                                  {
-                                    staticClass:
-                                      "font-weight-bold text-dark mb-0",
-                                  },
+                                  { staticClass: "font-weight-bold mb-0" },
                                   [_vm._v(_vm._s(order.user_name))]
                                 ),
                                 _vm._v(" "),
@@ -821,19 +834,13 @@ var render = function () {
                               _vm._v(" "),
                               _c(
                                 "td",
-                                {
-                                  staticClass:
-                                    "text-right font-weight-bold text-dark",
-                                },
+                                { staticClass: "text-right font-weight-bold" },
                                 [_vm._v("₹" + _vm._s(order.final_total))]
                               ),
                               _vm._v(" "),
                               _c(
                                 "td",
-                                {
-                                  staticClass:
-                                    "text-right font-weight-bold text-dark",
-                                },
+                                { staticClass: "text-right font-weight-bold" },
                                 [
                                   _vm._v(
                                     "\n                                        " +
@@ -847,7 +854,35 @@ var render = function () {
                         }),
                         _vm._v(" "),
                         _vm.orders.length === 0
-                          ? _c("tr", [_vm._m(2)])
+                          ? _c("tr", [
+                              _c(
+                                "td",
+                                {
+                                  staticClass: "text-center py-5 text-muted",
+                                  attrs: { colspan: "6" },
+                                },
+                                [
+                                  _c("i", {
+                                    staticClass:
+                                      "fa fa-check-circle fa-2x mb-3 text-success",
+                                  }),
+                                  _vm._v(" "),
+                                  _c(
+                                    "p",
+                                    { staticClass: "mb-0 font-weight-bold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          _vm.__(
+                                            "hurray_all_doorstep_orders_are_already_assigned_to_slips"
+                                          )
+                                        )
+                                      ),
+                                    ]
+                                  ),
+                                ]
+                              ),
+                            ])
                           : _vm._e(),
                       ],
                       2
@@ -868,7 +903,11 @@ var render = function () {
             staticStyle: { top: "24px" },
           },
           [
-            _vm._m(3),
+            _c("div", { staticClass: "card-header border-0 py-3" }, [
+              _c("h6", { staticClass: "m-0 font-weight-bold" }, [
+                _vm._v(_vm._s(_vm.__("logistics_planner"))),
+              ]),
+            ]),
             _vm._v(" "),
             _c("div", { staticClass: "card-body" }, [
               _c(
@@ -883,7 +922,19 @@ var render = function () {
                 },
                 [
                   _c("div", { staticClass: "form-group mb-3" }, [
-                    _vm._m(4),
+                    _c(
+                      "label",
+                      {
+                        staticClass:
+                          "form-control-label text-muted font-weight-bold mb-1",
+                      },
+                      [
+                        _vm._v(_vm._s(_vm.__("select_delivery_vehicle")) + " "),
+                        _c("span", { staticClass: "text-danger" }, [
+                          _vm._v("*"),
+                        ]),
+                      ]
+                    ),
                     _vm._v(" "),
                     _c(
                       "select",
@@ -920,7 +971,9 @@ var render = function () {
                       },
                       [
                         _c("option", { attrs: { value: "" } }, [
-                          _vm._v("-- Choose Vehicle --"),
+                          _vm._v(
+                            "-- " + _vm._s(_vm.__("choose_vehicle")) + " --"
+                          ),
                         ]),
                         _vm._v(" "),
                         _vm._l(_vm.vehicles, function (v) {
@@ -933,9 +986,13 @@ var render = function () {
                                   _vm._s(v.name) +
                                   " [" +
                                   _vm._s(v.vehicle_number) +
-                                  "] - Cap: " +
+                                  "] - " +
+                                  _vm._s(_vm.__("cap")) +
+                                  ": " +
                                   _vm._s(v.capacity) +
-                                  " kg\n                                "
+                                  " " +
+                                  _vm._s(_vm.__("kg")) +
+                                  "\n                                "
                               ),
                             ]
                           )
@@ -946,7 +1003,21 @@ var render = function () {
                   ]),
                   _vm._v(" "),
                   _c("div", { staticClass: "form-group mb-4" }, [
-                    _vm._m(5),
+                    _c(
+                      "label",
+                      {
+                        staticClass:
+                          "form-control-label text-muted font-weight-bold mb-1",
+                      },
+                      [
+                        _vm._v(
+                          _vm._s(_vm.__("select_active_driver_rider")) + " "
+                        ),
+                        _c("span", { staticClass: "text-danger" }, [
+                          _vm._v("*"),
+                        ]),
+                      ]
+                    ),
                     _vm._v(" "),
                     _c(
                       "select",
@@ -980,7 +1051,9 @@ var render = function () {
                       },
                       [
                         _c("option", { attrs: { value: "" } }, [
-                          _vm._v("-- Choose Driver --"),
+                          _vm._v(
+                            "-- " + _vm._s(_vm.__("choose_driver")) + " --"
+                          ),
                         ]),
                         _vm._v(" "),
                         _vm._l(_vm.drivers, function (d) {
@@ -1005,15 +1078,11 @@ var render = function () {
                   _vm._v(" "),
                   _c(
                     "div",
-                    {
-                      staticClass: "card bg-light border-0 p-3 mb-4 rounded-lg",
-                    },
+                    { staticClass: "card border-0 p-3 mb-4 rounded-lg" },
                     [
-                      _c(
-                        "h6",
-                        { staticClass: "font-weight-bold text-dark mb-2" },
-                        [_vm._v("Live Weight Load Bar")]
-                      ),
+                      _c("h6", { staticClass: "font-weight-bold mb-2" }, [
+                        _vm._v(_vm._s(_vm.__("live_weight_load_bar"))),
+                      ]),
                       _vm._v(" "),
                       !_vm.selectedVehicle
                         ? _c(
@@ -1024,7 +1093,13 @@ var render = function () {
                             [
                               _c("i", { staticClass: "fa fa-truck mr-1" }),
                               _vm._v(
-                                " Choose a vehicle to visualize weight limits\n                            "
+                                " " +
+                                  _vm._s(
+                                    _vm.__(
+                                      "choose_a_vehicle_to_visualize_weight_limits"
+                                    )
+                                  ) +
+                                  "\n                            "
                               ),
                             ]
                           )
@@ -1033,17 +1108,20 @@ var render = function () {
                               "div",
                               {
                                 staticClass:
-                                  "d-flex justify-content-between font-weight-bold mb-1 small text-dark",
+                                  "d-flex justify-content-between font-weight-bold mb-1 small",
                               },
                               [
-                                _c("span", [_vm._v("Current Load Weight")]),
+                                _c("span", [
+                                  _vm._v(_vm._s(_vm.__("current_load_weight"))),
+                                ]),
                                 _vm._v(" "),
                                 _c("span", [
                                   _vm._v(
                                     _vm._s(_vm.totalSelectedWeight) +
                                       " / " +
                                       _vm._s(_vm.selectedVehicle.capacity) +
-                                      " kg"
+                                      " " +
+                                      _vm._s(_vm.__("kg"))
                                   ),
                                 ]),
                               ]
@@ -1085,7 +1163,9 @@ var render = function () {
                                     _vm._v(
                                       "\n                                        " +
                                         _vm._s(_vm.loadPercent.toFixed(1)) +
-                                        "% Capacity Loaded\n                                    "
+                                        "% " +
+                                        _vm._s(_vm.__("capacity_loaded")) +
+                                        "\n                                    "
                                     ),
                                   ]
                                 ),
@@ -1097,13 +1177,15 @@ var render = function () {
                                     class:
                                       _vm.loadPercent > 100
                                         ? "bg-danger text-white"
-                                        : "bg-secondary text-dark",
+                                        : "bg-secondary",
                                   },
                                   [
                                     _vm._v(
                                       "\n                                        " +
                                         _vm._s(_vm.selectedOrderIds.length) +
-                                        " Orders Selected\n                                    "
+                                        " " +
+                                        _vm._s(_vm.__("orders_selected")) +
+                                        "\n                                    "
                                     ),
                                   ]
                                 ),
@@ -1124,9 +1206,17 @@ var render = function () {
                           _c("i", {
                             staticClass: "fa fa-exclamation-triangle mr-2",
                           }),
-                          _c("strong", [_vm._v("Vehicle Overloaded!")]),
+                          _c("strong", [
+                            _vm._v(_vm._s(_vm.__("vehicle_overloaded")) + "!"),
+                          ]),
                           _vm._v(
-                            " Selected load exceeds the vehicle's maximum capability. Please remove some orders before scheduling.\n                        "
+                            " " +
+                              _vm._s(
+                                _vm.__(
+                                  "selected_load_exceeds_the_vehicle_maximum_capability"
+                                )
+                              ) +
+                              "\n                        "
                           ),
                         ]
                       )
@@ -1153,7 +1243,8 @@ var render = function () {
                           })
                         : _c("i", { staticClass: "fa fa-magic mr-2" }),
                       _vm._v(
-                        "Generate Slip & Sequence Route\n                        "
+                        _vm._s(_vm.__("generate_slip_and_sequence_route")) +
+                          "\n                        "
                       ),
                     ],
                     1
@@ -1167,87 +1258,7 @@ var render = function () {
     ]),
   ])
 }
-var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col" }, [
-      _c("h1", { staticClass: "h3 text-dark font-weight-bold mb-1" }, [
-        _c("i", { staticClass: "fa fa-clipboard text-primary mr-2" }),
-        _vm._v("Create Loading Slip\n            "),
-      ]),
-      _vm._v(" "),
-      _c("p", { staticClass: "text-muted mb-0" }, [
-        _vm._v(
-          "Select delivery zone, assign driver and vehicle, and optimize the delivery routing."
-        ),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col-md-6" }, [
-      _c("h6", { staticClass: "m-0 font-weight-bold text-dark" }, [
-        _vm._v("Unassigned Doorstep Orders"),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c(
-      "td",
-      { staticClass: "text-center py-5 text-muted", attrs: { colspan: "6" } },
-      [
-        _c("i", { staticClass: "fa fa-check-circle fa-2x mb-3 text-success" }),
-        _vm._v(" "),
-        _c("p", { staticClass: "mb-0 font-weight-bold" }, [
-          _vm._v("Hurray! All doorstep orders are already assigned to slips."),
-        ]),
-      ]
-    )
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "card-header bg-white border-0 py-3" }, [
-      _c("h6", { staticClass: "m-0 font-weight-bold text-dark" }, [
-        _vm._v("Logistics Planner"),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c(
-      "label",
-      { staticClass: "form-control-label text-muted font-weight-bold mb-1" },
-      [
-        _vm._v("Select Delivery Vehicle "),
-        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
-      ]
-    )
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c(
-      "label",
-      { staticClass: "form-control-label text-muted font-weight-bold mb-1" },
-      [
-        _vm._v("Select Active Driver / Rider "),
-        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
-      ]
-    )
-  },
-]
+var staticRenderFns = []
 render._withStripped = true
 
 

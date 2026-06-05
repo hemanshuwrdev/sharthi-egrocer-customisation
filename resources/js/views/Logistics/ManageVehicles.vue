@@ -3,14 +3,14 @@
         <!-- Header Section -->
         <div class="row align-items-center mb-4">
             <div class="col">
-                <h1 class="h3 text-dark font-weight-bold mb-1">
-                    <i class="fa fa-truck text-primary mr-2"></i>Manage Vehicles
+                <h1 class="h3 font-weight-bold mb-1">
+                    <i class="fa fa-truck text-primary mr-2"></i>{{ __('manage_vehicles') }}
                 </h1>
-                <p class="text-muted mb-0">Add, edit, and manage your distribution fleet and load capacities.</p>
+                <p class="text-muted mb-0">{{ __('add_edit_and_manage_your_distribution_fleet_and_load_capacities') }}</p>
             </div>
             <div class="col-auto">
                 <button @click="openCreateModal" class="btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill">
-                    <i class="fa fa-plus mr-2"></i>Add New Vehicle
+                    <i class="fa fa-plus mr-2"></i>{{ __('add_new_vehicle') }}
                 </button>
             </div>
         </div>
@@ -22,8 +22,8 @@
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-uppercase mb-1 text-primary">Total Vehicles</div>
-                                <div class="h5 mb-0 font-weight-bold text-dark">{{ total }}</div>
+                                <div class="text-xs font-weight-bold text-uppercase mb-1 text-primary">{{ __('total_vehicles') }}</div>
+                                <div class="h5 mb-0 font-weight-bold">{{ total }}</div>
                             </div>
                             <div class="col-auto">
                                 <i class="fa fa-truck fa-2x text-primary opacity-75"></i>
@@ -37,8 +37,8 @@
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-uppercase mb-1 text-success">Active Fleet</div>
-                                <div class="h5 mb-0 font-weight-bold text-dark">{{ activeCount }}</div>
+                                <div class="text-xs font-weight-bold text-uppercase mb-1 text-success">{{ __('active_fleet') }}</div>
+                                <div class="h5 mb-0 font-weight-bold">{{ activeCount }}</div>
                             </div>
                             <div class="col-auto">
                                 <i class="fa fa-check-circle fa-2x text-success opacity-75"></i>
@@ -52,8 +52,8 @@
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-uppercase mb-1 text-warning">Total Capacity</div>
-                                <div class="h5 mb-0 font-weight-bold text-dark">{{ totalCapacity }} kg</div>
+                                <div class="text-xs font-weight-bold text-uppercase mb-1 text-warning">{{ __('total_capacity') }}</div>
+                                <div class="h5 mb-0 font-weight-bold">{{ totalCapacity }} {{ __('kg') }}</div>
                             </div>
                             <div class="col-auto">
                                 <i class="fa fa-balance-scale fa-2x text-warning opacity-75"></i>
@@ -66,22 +66,22 @@
 
         <!-- Main Content Table Card -->
         <div class="card border-0 shadow-sm rounded-lg overflow-hidden">
-            <div class="card-header bg-white border-0 py-3">
-                <h4 class="m-0 font-weight-bold text-dark">Vehicles</h4>
+            <div class="card-header border-0 py-3">
+                <h4 class="m-0 font-weight-bold">{{ __('vehicles') }}</h4>
             </div>
             <div class="card-body">
                 <b-row class="mb-2">
                     <b-col md="3" offset-md="8">
-                        <h6 class="box-title">Search</h6>
+                        <h6 class="box-title">{{ __('search') }}</h6>
                         <b-form-input
                             id="filter-input"
                             v-model="filter"
                             type="search"
-                            placeholder="Search"
+                            :placeholder="__('search')"
                         ></b-form-input>
                     </b-col>
                     <b-col md="1" class="text-center">
-                        <button class="btn btn-primary btn_refresh" v-b-tooltip.hover title="Refresh" @click="getVehicles()">
+                        <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getVehicles()">
                             <i class="fa fa-refresh" aria-hidden="true"></i>
                         </button>
                     </b-col>
@@ -95,13 +95,13 @@
                     stacked="md"
                     show-empty
                     small
-                    empty-text="No records to show"
-                    empty-filtered-text="No records to show">
+                    :empty-text="__('no_records_to_show')"
+                    :empty-filtered-text="__('no_records_to_show')">
 
                     <template #table-busy>
                         <div class="text-center text-black my-2">
                             <b-spinner class="align-middle"></b-spinner>
-                            <strong>Loading...</strong>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
                     </template>
 
@@ -110,21 +110,21 @@
                     </template>
 
                     <template #cell(vehicle_number)="row">
-                        <span class="badge bg-soft-secondary font-weight-bold text-dark border">{{ row.item.vehicle_number }}</span>
+                        <span class="badge bg-soft-secondary font-weight-bold border">{{ row.item.vehicle_number }}</span>
                     </template>
 
                     <template #cell(capacity)="row">
-                        {{ row.item.capacity }} kg
+                        {{ row.item.capacity }} {{ __('kg') }}
                     </template>
 
                     <template #cell(status)="row">
-                        <span class="badge bg-success" v-if="row.item.status == 1">Active</span>
-                        <span class="badge bg-danger" v-if="row.item.status == 0">Inactive</span>
+                        <span class="badge bg-success" v-if="row.item.status == 1">{{ __('active') }}</span>
+                        <span class="badge bg-danger" v-if="row.item.status == 0">{{ __('inactive') }}</span>
                     </template>
 
                     <template #cell(actions)="row">
-                        <button class="btn btn-sm btn-primary mr-2" @click="openEditModal(row.item)" v-b-tooltip.hover title="Edit"><i class="fa fa-pencil-alt"></i></button>
-                        <button class="btn btn-sm btn-danger" @click="deleteVehicle(row.item.id)" v-b-tooltip.hover title="Delete"><i class="fa fa-trash"></i></button>
+                        <button class="btn btn-sm btn-primary mr-2" @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')"><i class="fa fa-pencil-alt"></i></button>
+                        <button class="btn btn-sm btn-danger" @click="deleteVehicle(row.item.id)" v-b-tooltip.hover :title="__('delete')"><i class="fa fa-trash"></i></button>
                     </template>
 
                 </b-table>
@@ -133,7 +133,7 @@
                     <b-col md="2" class="my-1">
                         <label>
                             <b-form-group
-                                label="Per page"
+                                :label="__('per_page')"
                                 label-for="per-page-select"
                                 label-align-sm="right"
                                 label-size="sm"
@@ -149,7 +149,7 @@
                         </label>
                     </b-col>
                     <b-col md="4" class="my-1" offset-md="6">
-                        <label>Total Records :- {{ total }} </label>
+                        <label>{{ __('total_records') }} :- {{ total }} </label>
                         <b-pagination
                             v-model="page"
                             :total-rows="total"
@@ -164,38 +164,38 @@
         </div>
 
         <!-- Add/Edit Vehicle Modal -->
-        <b-modal id="vehicle-modal" v-model="modalShow" :title="isEdit ? 'Edit Vehicle Details' : 'Register New Vehicle'" hide-footer centered body-class="p-4" header-class="border-0 pb-0" title-class="font-weight-bold text-dark h4">
+        <b-modal id="vehicle-modal" v-model="modalShow" :title="isEdit ? __('edit_vehicle_details') : __('register_new_vehicle')" hide-footer centered body-class="p-4" header-class="border-0 pb-0" title-class="font-weight-bold h4">
             <form @submit.prevent="saveVehicle">
                 <div class="form-group mb-3">
-                    <label class="form-control-label text-muted font-weight-bold">Vehicle Model / Name <span class="text-danger">*</span></label>
+                    <label class="form-control-label text-muted font-weight-bold">{{ __('vehicle_model_name') }} <span class="text-danger">*</span></label>
                     <input v-model="form.name" type="text" class="form-control form-control-lg border shadow-none" placeholder="e.g. Tata Ace, Mahindra Bolero" required>
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-control-label text-muted font-weight-bold">Vehicle Registration Number <span class="text-danger">*</span></label>
+                    <label class="form-control-label text-muted font-weight-bold">{{ __('vehicle_registration_number') }} <span class="text-danger">*</span></label>
                     <input v-model="form.vehicle_number" type="text" class="form-control form-control-lg border shadow-none" placeholder="e.g. MH-12-AB-1234" required>
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-control-label text-muted font-weight-bold">Load Weight Capacity (in Kilograms) <span class="text-danger">*</span></label>
+                    <label class="form-control-label text-muted font-weight-bold">{{ __('load_weight_capacity_in_kilograms') }} <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input v-model.number="form.capacity" type="number" step="0.01" class="form-control form-control-lg border shadow-none" placeholder="e.g. 500" required>
-                        <span class="input-group-text bg-light border font-weight-bold text-muted">kg</span>
+                        <span class="input-group-text bg-light border font-weight-bold text-muted">{{ __('kg') }}</span>
                     </div>
                 </div>
                 <div class="form-group mb-4" v-if="isEdit">
-                    <label class="form-control-label text-muted font-weight-bold d-block">Vehicle Fleet Status</label>
+                    <label class="form-control-label text-muted font-weight-bold d-block">{{ __('vehicle_fleet_status') }}</label>
                     <div class="form-check form-switch fs-5 pl-0">
                         <input class="form-check-input ms-0" type="checkbox" id="vehicle-status" v-model="form.status" :true-value="1" :false-value="0">
-                        <label class="form-check-label ml-2 font-weight-bold text-dark" for="vehicle-status">
-                            {{ form.status == 1 ? 'Active & Ready for Dispatch' : 'Inactive / Maintenance' }}
+                        <label class="form-check-label ml-2 font-weight-bold" for="vehicle-status">
+                            {{ form.status == 1 ? __('active_ready_for_dispatch') : __('inactive_maintenance') }}
                         </label>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                    <b-button @click="modalShow = false" variant="light" class="btn-lg px-4 font-weight-bold rounded-pill">Cancel</b-button>
+                    <b-button @click="modalShow = false" variant="light" class="btn-lg px-4 font-weight-bold rounded-pill">{{ __('cancel') }}</b-button>
                     <b-button type="submit" variant="primary" class="btn-lg px-4 font-weight-bold rounded-pill" :disabled="loading">
                         <b-spinner v-if="loading" small class="mr-2"></b-spinner>
-                        {{ isEdit ? 'Save Changes' : 'Register Vehicle' }}
+                        {{ isEdit ? __('save_changes') : __('register_vehicle') }}
                     </b-button>
                 </div>
             </form>
@@ -221,12 +221,12 @@ export default {
             loading: false,
             isLoading: false,
             fields: [
-                { key: 'id', label: 'ID', class: 'text-center', sortable: true },
-                { key: 'name', label: 'Vehicle Name', class: 'text-center', sortable: true },
-                { key: 'vehicle_number', label: 'Vehicle Number', class: 'text-center', sortable: true },
-                { key: 'capacity', label: 'Capacity (kg)', class: 'text-center', sortable: true },
-                { key: 'status', label: 'Status', class: 'text-center', sortable: true },
-                { key: 'actions', label: 'Actions', class: 'text-center' }
+                { key: 'id', label: __('id'), class: 'text-center', sortable: true },
+                { key: 'name', label: __('vehicle_name'), class: 'text-center', sortable: true },
+                { key: 'vehicle_number', label: __('vehicle_number'), class: 'text-center', sortable: true },
+                { key: 'capacity', label: __('capacity_kg'), class: 'text-center', sortable: true },
+                { key: 'status', label: __('status'), class: 'text-center', sortable: true },
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             form: {
                 id: null,
@@ -277,7 +277,7 @@ export default {
                 }
             }).catch(err => {
                 this.isLoading = false;
-                this.showError('Could not load vehicles data.');
+                this.showError(__('could_not_load_vehicles_data'));
             });
         },
         openCreateModal() {
@@ -317,16 +317,17 @@ export default {
                     }
                 }).catch(err => {
                     this.loading = false;
-                    this.showError('An error occurred while saving the vehicle.');
+                    this.showError(__('an_error_occurred_while_saving_the_vehicle'));
                 });
         },
         deleteVehicle(id) {
             this.$swal.fire({
-                title: 'Are you sure?',
-                text: 'You want to delete this vehicle? This action is irreversible!',
+                title: __('are_you_sure'),
+                text: __('you_want_to_delete_this_vehicle_this_action_is_irreversible'),
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, Delete',
+                confirmButtonText: __('yes_delete'),
+                cancelButtonText: __('cancel'),
                 confirmButtonColor: '#e74a3b',
                 cancelButtonColor: '#858796',
             }).then(result => {
@@ -340,7 +341,7 @@ export default {
                                 this.showError(res.data.message);
                             }
                         }).catch(err => {
-                            this.showError('An error occurred while deleting the vehicle.');
+                            this.showError(__('an_error_occurred_while_deleting_the_vehicle'));
                         });
                 }
             });
@@ -365,9 +366,11 @@ export default {
 }
 .bg-soft-primary {
     background-color: rgba(78, 115, 223, 0.1) !important;
+    color: #4e73df !important;
 }
 .bg-soft-secondary {
     background-color: rgba(133, 135, 150, 0.1) !important;
+    color: #858796 !important;
 }
 .bg-soft-success {
     background-color: rgba(28, 200, 138, 0.1) !important;

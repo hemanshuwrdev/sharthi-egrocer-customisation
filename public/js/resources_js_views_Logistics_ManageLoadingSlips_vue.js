@@ -122,6 +122,12 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -163,11 +169,12 @@ __webpack_require__.r(__webpack_exports__);
     dispatchSlip: function dispatchSlip(id) {
       var _this2 = this;
       this.$swal.fire({
-        title: 'Are you sure?',
-        text: 'This will change loading slip status to Dispatched and update all assigned orders to "Out for Delivery"!',
+        title: __('are_you_sure'),
+        text: __('this_will_change_loading_slip_status_to_dispatched_and_update_all_assigned_orders_to_out_for_delivery'),
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Yes, Dispatch Now',
+        confirmButtonText: __('yes_dispatch_now'),
+        cancelButtonText: __('cancel'),
         confirmButtonColor: '#1cc88a',
         cancelButtonColor: '#858796'
       }).then(function (result) {
@@ -182,7 +189,7 @@ __webpack_require__.r(__webpack_exports__);
               _this2.showError(res.data.message);
             }
           })["catch"](function (err) {
-            _this2.showError('An error occurred during dispatch.');
+            _this2.showError(__('an_error_occurred_during_dispatch'));
           });
         }
       });
@@ -347,7 +354,18 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "container-fluid py-4" }, [
     _c("div", { staticClass: "row align-items-center mb-4" }, [
-      _vm._m(0),
+      _c("div", { staticClass: "col" }, [
+        _c("h1", { staticClass: "h3 font-weight-bold mb-1" }, [
+          _c("i", { staticClass: "fa fa-file-text text-primary mr-2" }),
+          _vm._v(
+            _vm._s(_vm.__("loading_slips_and_dispatches")) + "\n            "
+          ),
+        ]),
+        _vm._v(" "),
+        _c("p", { staticClass: "text-muted mb-0" }, [
+          _vm._v(_vm._s(_vm.__("track_and_dispatch_warehouse_loading_slips"))),
+        ]),
+      ]),
       _vm._v(" "),
       _c(
         "div",
@@ -362,7 +380,7 @@ var render = function () {
             },
             [
               _c("i", { staticClass: "fa fa-plus-circle mr-2" }),
-              _vm._v("Plan New Slip\n            "),
+              _vm._v(_vm._s(_vm.__("plan_new_slip")) + "\n            "),
             ]
           ),
         ],
@@ -374,51 +392,97 @@ var render = function () {
       "div",
       { staticClass: "card border-0 shadow-sm rounded-lg overflow-hidden" },
       [
-        _c("div", { staticClass: "card-header bg-white border-0 py-3" }, [
-          _c("div", { staticClass: "row align-items-center" }, [
-            _vm._m(1),
-            _vm._v(" "),
-            _c("div", { staticClass: "col-md-4" }, [
-              _c(
-                "div",
-                { staticClass: "input-group input-group-alternative" },
-                [
-                  _vm._m(2),
-                  _vm._v(" "),
-                  _c("input", {
-                    directives: [
-                      {
-                        name: "model",
-                        rawName: "v-model",
-                        value: _vm.filter,
-                        expression: "filter",
-                      },
-                    ],
-                    staticClass: "form-control bg-light border-0",
-                    attrs: {
-                      type: "text",
-                      placeholder: "Search by slip no, vehicle, driver...",
-                    },
-                    domProps: { value: _vm.filter },
-                    on: {
-                      input: [
-                        function ($event) {
-                          if ($event.target.composing) {
-                            return
-                          }
-                          _vm.filter = $event.target.value
-                        },
-                        _vm.getSlips,
-                      ],
-                    },
-                  }),
-                ]
-              ),
-            ]),
+        _c("div", { staticClass: "card-header border-0 py-3" }, [
+          _c("h6", { staticClass: "m-0 font-weight-bold" }, [
+            _vm._v(_vm._s(_vm.__("distribution_runs"))),
           ]),
         ]),
         _vm._v(" "),
         _c("div", { staticClass: "card-body p-0" }, [
+          _c(
+            "div",
+            { staticClass: "p-3 border-bottom" },
+            [
+              _c(
+                "b-row",
+                { staticClass: "mb-2" },
+                [
+                  _c(
+                    "b-col",
+                    { attrs: { md: "4", "offset-md": "7" } },
+                    [
+                      _c("h6", { staticClass: "box-title" }, [
+                        _vm._v(_vm._s(_vm.__("search"))),
+                      ]),
+                      _vm._v(" "),
+                      _c("b-form-input", {
+                        attrs: {
+                          id: "filter-input",
+                          type: "search",
+                          placeholder: _vm.__(
+                            "search_by_slip_no_vehicle_driver"
+                          ),
+                        },
+                        on: { input: _vm.getSlips },
+                        model: {
+                          value: _vm.filter,
+                          callback: function ($$v) {
+                            _vm.filter = $$v
+                          },
+                          expression: "filter",
+                        },
+                      }),
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-col",
+                    { staticClass: "text-center", attrs: { md: "1" } },
+                    [
+                      _c(
+                        "h6",
+                        {
+                          staticClass: "box-title",
+                          staticStyle: { visibility: "hidden" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("refresh")))]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          directives: [
+                            {
+                              name: "b-tooltip",
+                              rawName: "v-b-tooltip.hover",
+                              modifiers: { hover: true },
+                            },
+                          ],
+                          staticClass: "btn btn-primary btn_refresh",
+                          attrs: { title: _vm.__("refresh") },
+                          on: {
+                            click: function ($event) {
+                              return _vm.getSlips()
+                            },
+                          },
+                        },
+                        [
+                          _c("i", {
+                            staticClass: "fa fa-refresh",
+                            attrs: { "aria-hidden": "true" },
+                          }),
+                        ]
+                      ),
+                    ]
+                  ),
+                ],
+                1
+              ),
+            ],
+            1
+          ),
+          _vm._v(" "),
           _c("div", { staticClass: "table-responsive" }, [
             _c(
               "table",
@@ -427,7 +491,63 @@ var render = function () {
                   "table align-items-center table-flush table-hover mb-0",
               },
               [
-                _vm._m(3),
+                _c("thead", { staticClass: "thead-light" }, [
+                  _c("tr", [
+                    _c(
+                      "th",
+                      { staticClass: "py-3 font-weight-bold text-muted" },
+                      [_vm._v(_vm._s(_vm.__("slip_no")))]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "th",
+                      { staticClass: "py-3 font-weight-bold text-muted" },
+                      [_vm._v(_vm._s(_vm.__("vehicle_details")))]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "th",
+                      { staticClass: "py-3 font-weight-bold text-muted" },
+                      [_vm._v(_vm._s(_vm.__("driver_rider")))]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "th",
+                      {
+                        staticClass:
+                          "py-3 font-weight-bold text-muted text-center",
+                      },
+                      [_vm._v(_vm._s(_vm.__("orders")))]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "th",
+                      {
+                        staticClass:
+                          "py-3 font-weight-bold text-muted text-right",
+                      },
+                      [_vm._v(_vm._s(_vm.__("total_weight")))]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "th",
+                      {
+                        staticClass:
+                          "py-3 font-weight-bold text-muted text-center",
+                      },
+                      [_vm._v(_vm._s(_vm.__("status")))]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "th",
+                      {
+                        staticClass:
+                          "py-3 font-weight-bold text-muted text-center",
+                      },
+                      [_vm._v(_vm._s(_vm.__("actions")))]
+                    ),
+                  ]),
+                ]),
                 _vm._v(" "),
                 _c(
                   "tbody",
@@ -435,10 +555,7 @@ var render = function () {
                     _vm._l(_vm.slips, function (slip) {
                       return _c(
                         "tr",
-                        {
-                          key: slip.id,
-                          staticClass: "transition-all hover-bg-light",
-                        },
+                        { key: slip.id, staticClass: "transition-all" },
                         [
                           _c(
                             "td",
@@ -470,11 +587,9 @@ var render = function () {
                           _vm._v(" "),
                           _c("td", [
                             slip.vehicle
-                              ? _c(
-                                  "div",
-                                  { staticClass: "font-weight-bold text-dark" },
-                                  [_vm._v(_vm._s(slip.vehicle.name))]
-                                )
+                              ? _c("div", { staticClass: "font-weight-bold" }, [
+                                  _vm._v(_vm._s(slip.vehicle.name)),
+                                ])
                               : _vm._e(),
                             _vm._v(" "),
                             slip.vehicle
@@ -486,11 +601,9 @@ var render = function () {
                           _vm._v(" "),
                           _c("td", [
                             slip.driver
-                              ? _c(
-                                  "div",
-                                  { staticClass: "font-weight-bold text-dark" },
-                                  [_vm._v(_vm._s(slip.driver.name))]
-                                )
+                              ? _c("div", { staticClass: "font-weight-bold" }, [
+                                  _vm._v(_vm._s(slip.driver.name)),
+                                ])
                               : _vm._e(),
                             _vm._v(" "),
                             slip.driver
@@ -502,30 +615,32 @@ var render = function () {
                           _vm._v(" "),
                           _c(
                             "td",
-                            {
-                              staticClass:
-                                "text-center font-weight-bold text-dark",
-                            },
+                            { staticClass: "text-center font-weight-bold" },
                             [
                               _c(
                                 "span",
                                 { staticClass: "badge bg-soft-info text-info" },
-                                [_vm._v(_vm._s(slip.total_orders) + " orders")]
+                                [
+                                  _vm._v(
+                                    _vm._s(slip.total_orders) +
+                                      " " +
+                                      _vm._s(_vm.__("orders"))
+                                  ),
+                                ]
                               ),
                             ]
                           ),
                           _vm._v(" "),
                           _c(
                             "td",
-                            {
-                              staticClass:
-                                "text-right font-weight-bold text-dark",
-                            },
+                            { staticClass: "text-right font-weight-bold" },
                             [
                               _vm._v(
                                 "\n                                " +
                                   _vm._s(slip.total_weight) +
-                                  " kg\n                            "
+                                  " " +
+                                  _vm._s(_vm.__("kg")) +
+                                  "\n                            "
                               ),
                             ]
                           ),
@@ -544,7 +659,9 @@ var render = function () {
                                         "fa fa-clock-o mr-1 text-warning",
                                     }),
                                     _vm._v(
-                                      " Planned\n                                "
+                                      " " +
+                                        _vm._s(_vm.__("planned")) +
+                                        "\n                                "
                                     ),
                                   ]
                                 )
@@ -560,7 +677,9 @@ var render = function () {
                                         "fa fa-truck mr-1 text-success",
                                     }),
                                     _vm._v(
-                                      " Dispatched\n                                "
+                                      " " +
+                                        _vm._s(_vm.__("dispatched")) +
+                                        "\n                                "
                                     ),
                                   ]
                                 ),
@@ -583,7 +702,7 @@ var render = function () {
                                         _vm.urlPrefix +
                                         "/loading_slips/view/" +
                                         slip.id,
-                                      title: "View Details",
+                                      title: _vm.__("view_details"),
                                     },
                                   },
                                   [_c("i", { staticClass: "fa fa-eye" })]
@@ -596,7 +715,9 @@ var render = function () {
                                         staticClass:
                                           "btn btn-sm btn-soft-success",
                                         attrs: {
-                                          title: "Dispatch Out-For-Delivery",
+                                          title: _vm.__(
+                                            "dispatch_out_for_delivery"
+                                          ),
                                         },
                                         on: {
                                           click: function ($event) {
@@ -607,7 +728,9 @@ var render = function () {
                                       [
                                         _c("i", { staticClass: "fa fa-send" }),
                                         _vm._v(
-                                          " Dispatch\n                                    "
+                                          " " +
+                                            _vm._s(_vm.__("dispatch")) +
+                                            "\n                                    "
                                         ),
                                       ]
                                     )
@@ -618,7 +741,9 @@ var render = function () {
                                   {
                                     staticClass:
                                       "btn btn-sm btn-soft-secondary",
-                                    attrs: { title: "Print Loading Slip" },
+                                    attrs: {
+                                      title: _vm.__("print_loading_slip"),
+                                    },
                                     on: {
                                       click: function ($event) {
                                         return _vm.printSlip(slip.id)
@@ -628,7 +753,9 @@ var render = function () {
                                   [
                                     _c("i", { staticClass: "fa fa-print" }),
                                     _vm._v(
-                                      " Print\n                                    "
+                                      " " +
+                                        _vm._s(_vm.__("print")) +
+                                        "\n                                    "
                                     ),
                                   ]
                                 ),
@@ -640,7 +767,29 @@ var render = function () {
                       )
                     }),
                     _vm._v(" "),
-                    _vm.slips.length === 0 ? _c("tr", [_vm._m(4)]) : _vm._e(),
+                    _vm.slips.length === 0
+                      ? _c("tr", [
+                          _c(
+                            "td",
+                            {
+                              staticClass: "text-center py-5 text-muted",
+                              attrs: { colspan: "7" },
+                            },
+                            [
+                              _c("i", {
+                                staticClass:
+                                  "fa fa-folder-open fa-2x mb-3 text-light",
+                              }),
+                              _vm._v(" "),
+                              _c("p", { staticClass: "mb-0" }, [
+                                _vm._v(
+                                  _vm._s(_vm.__("no_distribution_slips_found"))
+                                ),
+                              ]),
+                            ]
+                          ),
+                        ])
+                      : _vm._e(),
                   ],
                   2
                 ),
@@ -652,7 +801,7 @@ var render = function () {
         _vm.total > _vm.per_page
           ? _c(
               "div",
-              { staticClass: "card-footer bg-white border-0 py-3" },
+              { staticClass: "card-footer border-0 py-3" },
               [
                 _c("b-pagination", {
                   staticClass: "mb-0",
@@ -678,105 +827,7 @@ var render = function () {
     ),
   ])
 }
-var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col" }, [
-      _c("h1", { staticClass: "h3 text-dark font-weight-bold mb-1" }, [
-        _c("i", { staticClass: "fa fa-file-text text-primary mr-2" }),
-        _vm._v("Loading Slips & Dispatches\n            "),
-      ]),
-      _vm._v(" "),
-      _c("p", { staticClass: "text-muted mb-0" }, [
-        _vm._v(
-          "Track and dispatch warehouse loading slips, driver assignments, and optimized delivery routes."
-        ),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col" }, [
-      _c("h6", { staticClass: "m-0 font-weight-bold text-dark" }, [
-        _vm._v("Distribution Runs"),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("span", { staticClass: "input-group-text bg-light border-0" }, [
-      _c("i", { staticClass: "fa fa-search text-muted" }),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("thead", { staticClass: "thead-light" }, [
-      _c("tr", [
-        _c("th", { staticClass: "py-3 font-weight-bold text-muted" }, [
-          _vm._v("Slip No"),
-        ]),
-        _vm._v(" "),
-        _c("th", { staticClass: "py-3 font-weight-bold text-muted" }, [
-          _vm._v("Vehicle Details"),
-        ]),
-        _vm._v(" "),
-        _c("th", { staticClass: "py-3 font-weight-bold text-muted" }, [
-          _vm._v("Driver / Rider"),
-        ]),
-        _vm._v(" "),
-        _c(
-          "th",
-          { staticClass: "py-3 font-weight-bold text-muted text-center" },
-          [_vm._v("Orders")]
-        ),
-        _vm._v(" "),
-        _c(
-          "th",
-          { staticClass: "py-3 font-weight-bold text-muted text-right" },
-          [_vm._v("Total Weight")]
-        ),
-        _vm._v(" "),
-        _c(
-          "th",
-          { staticClass: "py-3 font-weight-bold text-muted text-center" },
-          [_vm._v("Status")]
-        ),
-        _vm._v(" "),
-        _c(
-          "th",
-          { staticClass: "py-3 font-weight-bold text-muted text-center" },
-          [_vm._v("Actions")]
-        ),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c(
-      "td",
-      { staticClass: "text-center py-5 text-muted", attrs: { colspan: "7" } },
-      [
-        _c("i", { staticClass: "fa fa-folder-open fa-2x mb-3 text-light" }),
-        _vm._v(" "),
-        _c("p", { staticClass: "mb-0" }, [
-          _vm._v(
-            "No distribution slips found. Let's create your first distribution run!"
-          ),
-        ]),
-      ]
-    )
-  },
-]
+var staticRenderFns = []
 render._withStripped = true
 
 

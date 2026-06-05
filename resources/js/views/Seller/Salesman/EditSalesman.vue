@@ -100,15 +100,15 @@ export default {
             isLoading: false,
         }
     },
-    created: function () {
-        this.getBrands();
+    created: async function () {
+        await this.getBrands();
         if (this.id) {
             this.getRecord();
         }
     },
     methods: {
         getBrands() {
-            axios.get(this.$sellerApiUrl + '/brands')
+            return axios.get(this.$sellerApiUrl + '/brands')
                 .then(response => {
                     let data = response.data;
                     if (data.status === 1) {
@@ -127,6 +127,13 @@ export default {
                     if (data.status === 1) {
                         this.record = data.data;
                         this.record.allow_payment_collection = data.data.allow_payment_collection == 1 ? true : false;
+                        if (this.record.brands) {
+                            let parsedBrands = typeof this.record.brands === 'string' ? JSON.parse(this.record.brands) : this.record.brands;
+                            let brandIds = parsedBrands.map(b => b.toString());
+                            this.record.brands = this.availableBrands.filter(b => brandIds.includes(b.id.toString()));
+                        } else {
+                            this.record.brands = [];
+                        }
                     }
                 }).catch(error => {
                     this.isLoading = false;

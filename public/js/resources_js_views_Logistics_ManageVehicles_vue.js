@@ -236,32 +236,32 @@ __webpack_require__.r(__webpack_exports__);
       isLoading: false,
       fields: [{
         key: 'id',
-        label: 'ID',
+        label: __('id'),
         "class": 'text-center',
         sortable: true
       }, {
         key: 'name',
-        label: 'Vehicle Name',
+        label: __('vehicle_name'),
         "class": 'text-center',
         sortable: true
       }, {
         key: 'vehicle_number',
-        label: 'Vehicle Number',
+        label: __('vehicle_number'),
         "class": 'text-center',
         sortable: true
       }, {
         key: 'capacity',
-        label: 'Capacity (kg)',
+        label: __('capacity_kg'),
         "class": 'text-center',
         sortable: true
       }, {
         key: 'status',
-        label: 'Status',
+        label: __('status'),
         "class": 'text-center',
         sortable: true
       }, {
         key: 'actions',
-        label: 'Actions',
+        label: __('actions'),
         "class": 'text-center'
       }],
       form: {
@@ -318,7 +318,7 @@ __webpack_require__.r(__webpack_exports__);
         }
       })["catch"](function (err) {
         _this.isLoading = false;
-        _this.showError('Could not load vehicles data.');
+        _this.showError(__('could_not_load_vehicles_data'));
       });
     },
     openCreateModal: function openCreateModal() {
@@ -358,17 +358,18 @@ __webpack_require__.r(__webpack_exports__);
         }
       })["catch"](function (err) {
         _this2.loading = false;
-        _this2.showError('An error occurred while saving the vehicle.');
+        _this2.showError(__('an_error_occurred_while_saving_the_vehicle'));
       });
     },
     deleteVehicle: function deleteVehicle(id) {
       var _this3 = this;
       this.$swal.fire({
-        title: 'Are you sure?',
-        text: 'You want to delete this vehicle? This action is irreversible!',
+        title: __('are_you_sure'),
+        text: __('you_want_to_delete_this_vehicle_this_action_is_irreversible'),
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Yes, Delete',
+        confirmButtonText: __('yes_delete'),
+        cancelButtonText: __('cancel'),
         confirmButtonColor: '#e74a3b',
         cancelButtonColor: '#858796'
       }).then(function (result) {
@@ -383,7 +384,7 @@ __webpack_require__.r(__webpack_exports__);
               _this3.showError(res.data.message);
             }
           })["catch"](function (err) {
-            _this3.showError('An error occurred while deleting the vehicle.');
+            _this3.showError(__('an_error_occurred_while_deleting_the_vehicle'));
           });
         }
       });
@@ -409,7 +410,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Premium aesthetics CSS */\n.card-light-primary[data-v-6e7f3107] {\n    background-color: #f0f4ff;\n    border: 1px solid rgba(78, 115, 223, 0.15) !important;\n}\n.card-light-success[data-v-6e7f3107] {\n    background-color: #eafaf1;\n    border: 1px solid rgba(28, 200, 138, 0.15) !important;\n}\n.card-light-warning[data-v-6e7f3107] {\n    background-color: #fef9ec;\n    border: 1px solid rgba(246, 194, 62, 0.15) !important;\n}\n.bg-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n}\n.bg-soft-secondary[data-v-6e7f3107] {\n    background-color: rgba(133, 135, 150, 0.1) !important;\n}\n.bg-soft-success[data-v-6e7f3107] {\n    background-color: rgba(28, 200, 138, 0.1) !important;\n    color: #1cc88a !important;\n}\n.bg-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1) !important;\n    color: #e74a3b !important;\n}\n.btn-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1);\n    color: #4e73df;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-primary[data-v-6e7f3107]:hover {\n    background-color: #4e73df;\n    color: white;\n}\n.btn-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1);\n    color: #e74a3b;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-danger[data-v-6e7f3107]:hover {\n    background-color: #e74a3b;\n    color: white;\n}\n.avatar-circle[data-v-6e7f3107] {\n    width: 40px;\n    height: 40px;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-size: 16px;\n    font-weight: bold;\n}\n.transition-all[data-v-6e7f3107] {\n    transition: all 0.25s ease-in-out;\n}\n.hover-bg-light[data-v-6e7f3107]:hover {\n    background-color: rgba(248, 249, 250, 0.9) !important;\n    transform: translateY(-2px);\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);\n}\n.form-control-lg[data-v-6e7f3107] {\n    border-radius: 10px;\n    font-size: 0.95rem;\n}\n.rounded-pill[data-v-6e7f3107] {\n    border-radius: 50rem !important;\n}\n.gap-2[data-v-6e7f3107] {\n    gap: 0.5rem;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Premium aesthetics CSS */\n.card-light-primary[data-v-6e7f3107] {\n    background-color: #f0f4ff;\n    border: 1px solid rgba(78, 115, 223, 0.15) !important;\n}\n.card-light-success[data-v-6e7f3107] {\n    background-color: #eafaf1;\n    border: 1px solid rgba(28, 200, 138, 0.15) !important;\n}\n.card-light-warning[data-v-6e7f3107] {\n    background-color: #fef9ec;\n    border: 1px solid rgba(246, 194, 62, 0.15) !important;\n}\n.bg-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n    color: #4e73df !important;\n}\n.bg-soft-secondary[data-v-6e7f3107] {\n    background-color: rgba(133, 135, 150, 0.1) !important;\n    color: #858796 !important;\n}\n.bg-soft-success[data-v-6e7f3107] {\n    background-color: rgba(28, 200, 138, 0.1) !important;\n    color: #1cc88a !important;\n}\n.bg-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1) !important;\n    color: #e74a3b !important;\n}\n.btn-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1);\n    color: #4e73df;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-primary[data-v-6e7f3107]:hover {\n    background-color: #4e73df;\n    color: white;\n}\n.btn-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1);\n    color: #e74a3b;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-danger[data-v-6e7f3107]:hover {\n    background-color: #e74a3b;\n    color: white;\n}\n.avatar-circle[data-v-6e7f3107] {\n    width: 40px;\n    height: 40px;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-size: 16px;\n    font-weight: bold;\n}\n.transition-all[data-v-6e7f3107] {\n    transition: all 0.25s ease-in-out;\n}\n.hover-bg-light[data-v-6e7f3107]:hover {\n    background-color: rgba(248, 249, 250, 0.9) !important;\n    transform: translateY(-2px);\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);\n}\n.form-control-lg[data-v-6e7f3107] {\n    border-radius: 10px;\n    font-size: 0.95rem;\n}\n.rounded-pill[data-v-6e7f3107] {\n    border-radius: 50rem !important;\n}\n.gap-2[data-v-6e7f3107] {\n    gap: 0.5rem;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -548,7 +549,22 @@ var render = function () {
     { staticClass: "container-fluid py-4" },
     [
       _c("div", { staticClass: "row align-items-center mb-4" }, [
-        _vm._m(0),
+        _c("div", { staticClass: "col" }, [
+          _c("h1", { staticClass: "h3 font-weight-bold mb-1" }, [
+            _c("i", { staticClass: "fa fa-truck text-primary mr-2" }),
+            _vm._v(_vm._s(_vm.__("manage_vehicles")) + "\n            "),
+          ]),
+          _vm._v(" "),
+          _c("p", { staticClass: "text-muted mb-0" }, [
+            _vm._v(
+              _vm._s(
+                _vm.__(
+                  "add_edit_and_manage_your_distribution_fleet_and_load_capacities"
+                )
+              )
+            ),
+          ]),
+        ]),
         _vm._v(" "),
         _c("div", { staticClass: "col-auto" }, [
           _c(
@@ -560,7 +576,7 @@ var render = function () {
             },
             [
               _c("i", { staticClass: "fa fa-plus mr-2" }),
-              _vm._v("Add New Vehicle\n            "),
+              _vm._v(_vm._s(_vm.__("add_new_vehicle")) + "\n            "),
             ]
           ),
         ]),
@@ -586,17 +602,15 @@ var render = function () {
                           staticClass:
                             "text-xs font-weight-bold text-uppercase mb-1 text-primary",
                         },
-                        [_vm._v("Total Vehicles")]
+                        [_vm._v(_vm._s(_vm.__("total_vehicles")))]
                       ),
                       _vm._v(" "),
-                      _c(
-                        "div",
-                        { staticClass: "h5 mb-0 font-weight-bold text-dark" },
-                        [_vm._v(_vm._s(_vm.total))]
-                      ),
+                      _c("div", { staticClass: "h5 mb-0 font-weight-bold" }, [
+                        _vm._v(_vm._s(_vm.total)),
+                      ]),
                     ]),
                     _vm._v(" "),
-                    _vm._m(1),
+                    _vm._m(0),
                   ]
                 ),
               ]),
@@ -623,17 +637,15 @@ var render = function () {
                           staticClass:
                             "text-xs font-weight-bold text-uppercase mb-1 text-success",
                         },
-                        [_vm._v("Active Fleet")]
+                        [_vm._v(_vm._s(_vm.__("active_fleet")))]
                       ),
                       _vm._v(" "),
-                      _c(
-                        "div",
-                        { staticClass: "h5 mb-0 font-weight-bold text-dark" },
-                        [_vm._v(_vm._s(_vm.activeCount))]
-                      ),
+                      _c("div", { staticClass: "h5 mb-0 font-weight-bold" }, [
+                        _vm._v(_vm._s(_vm.activeCount)),
+                      ]),
                     ]),
                     _vm._v(" "),
-                    _vm._m(2),
+                    _vm._m(1),
                   ]
                 ),
               ]),
@@ -660,17 +672,17 @@ var render = function () {
                           staticClass:
                             "text-xs font-weight-bold text-uppercase mb-1 text-warning",
                         },
-                        [_vm._v("Total Capacity")]
+                        [_vm._v(_vm._s(_vm.__("total_capacity")))]
                       ),
                       _vm._v(" "),
-                      _c(
-                        "div",
-                        { staticClass: "h5 mb-0 font-weight-bold text-dark" },
-                        [_vm._v(_vm._s(_vm.totalCapacity) + " kg")]
-                      ),
+                      _c("div", { staticClass: "h5 mb-0 font-weight-bold" }, [
+                        _vm._v(
+                          _vm._s(_vm.totalCapacity) + " " + _vm._s(_vm.__("kg"))
+                        ),
+                      ]),
                     ]),
                     _vm._v(" "),
-                    _vm._m(3),
+                    _vm._m(2),
                   ]
                 ),
               ]),
@@ -683,7 +695,11 @@ var render = function () {
         "div",
         { staticClass: "card border-0 shadow-sm rounded-lg overflow-hidden" },
         [
-          _vm._m(4),
+          _c("div", { staticClass: "card-header border-0 py-3" }, [
+            _c("h4", { staticClass: "m-0 font-weight-bold" }, [
+              _vm._v(_vm._s(_vm.__("vehicles"))),
+            ]),
+          ]),
           _vm._v(" "),
           _c(
             "div",
@@ -698,14 +714,14 @@ var render = function () {
                     { attrs: { md: "3", "offset-md": "8" } },
                     [
                       _c("h6", { staticClass: "box-title" }, [
-                        _vm._v("Search"),
+                        _vm._v(_vm._s(_vm.__("search"))),
                       ]),
                       _vm._v(" "),
                       _c("b-form-input", {
                         attrs: {
                           id: "filter-input",
                           type: "search",
-                          placeholder: "Search",
+                          placeholder: _vm.__("search"),
                         },
                         model: {
                           value: _vm.filter,
@@ -734,7 +750,7 @@ var render = function () {
                             },
                           ],
                           staticClass: "btn btn-primary btn_refresh",
-                          attrs: { title: "Refresh" },
+                          attrs: { title: _vm.__("refresh") },
                           on: {
                             click: function ($event) {
                               return _vm.getVehicles()
@@ -763,8 +779,8 @@ var render = function () {
                   stacked: "md",
                   "show-empty": "",
                   small: "",
-                  "empty-text": "No records to show",
-                  "empty-filtered-text": "No records to show",
+                  "empty-text": _vm.__("no_records_to_show"),
+                  "empty-filtered-text": _vm.__("no_records_to_show"),
                 },
                 scopedSlots: _vm._u([
                   {
@@ -777,7 +793,9 @@ var render = function () {
                           [
                             _c("b-spinner", { staticClass: "align-middle" }),
                             _vm._v(" "),
-                            _c("strong", [_vm._v("Loading...")]),
+                            _c("strong", [
+                              _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                            ]),
                           ],
                           1
                         ),
@@ -805,7 +823,7 @@ var render = function () {
                           "span",
                           {
                             staticClass:
-                              "badge bg-soft-secondary font-weight-bold text-dark border",
+                              "badge bg-soft-secondary font-weight-bold border",
                           },
                           [_vm._v(_vm._s(row.item.vehicle_number))]
                         ),
@@ -819,7 +837,9 @@ var render = function () {
                         _vm._v(
                           "\n                    " +
                             _vm._s(row.item.capacity) +
-                            " kg\n                "
+                            " " +
+                            _vm._s(_vm.__("kg")) +
+                            "\n                "
                         ),
                       ]
                     },
@@ -830,13 +850,13 @@ var render = function () {
                       return [
                         row.item.status == 1
                           ? _c("span", { staticClass: "badge bg-success" }, [
-                              _vm._v("Active"),
+                              _vm._v(_vm._s(_vm.__("active"))),
                             ])
                           : _vm._e(),
                         _vm._v(" "),
                         row.item.status == 0
                           ? _c("span", { staticClass: "badge bg-danger" }, [
-                              _vm._v("Inactive"),
+                              _vm._v(_vm._s(_vm.__("inactive"))),
                             ])
                           : _vm._e(),
                       ]
@@ -857,7 +877,7 @@ var render = function () {
                               },
                             ],
                             staticClass: "btn btn-sm btn-primary mr-2",
-                            attrs: { title: "Edit" },
+                            attrs: { title: _vm.__("edit") },
                             on: {
                               click: function ($event) {
                                 return _vm.openEditModal(row.item)
@@ -878,7 +898,7 @@ var render = function () {
                               },
                             ],
                             staticClass: "btn btn-sm btn-danger",
-                            attrs: { title: "Delete" },
+                            attrs: { title: _vm.__("delete") },
                             on: {
                               click: function ($event) {
                                 return _vm.deleteVehicle(row.item.id)
@@ -905,7 +925,7 @@ var render = function () {
                           {
                             staticClass: "mb-0",
                             attrs: {
-                              label: "Per page",
+                              label: _vm.__("per_page"),
                               "label-for": "per-page-select",
                               "label-align-sm": "right",
                               "label-size": "sm",
@@ -943,7 +963,12 @@ var render = function () {
                     },
                     [
                       _c("label", [
-                        _vm._v("Total Records :- " + _vm._s(_vm.total) + " "),
+                        _vm._v(
+                          _vm._s(_vm.__("total_records")) +
+                            " :- " +
+                            _vm._s(_vm.total) +
+                            " "
+                        ),
                       ]),
                       _vm._v(" "),
                       _c("b-pagination", {
@@ -979,12 +1004,14 @@ var render = function () {
         {
           attrs: {
             id: "vehicle-modal",
-            title: _vm.isEdit ? "Edit Vehicle Details" : "Register New Vehicle",
+            title: _vm.isEdit
+              ? _vm.__("edit_vehicle_details")
+              : _vm.__("register_new_vehicle"),
             "hide-footer": "",
             centered: "",
             "body-class": "p-4",
             "header-class": "border-0 pb-0",
-            "title-class": "font-weight-bold text-dark h4",
+            "title-class": "font-weight-bold h4",
           },
           model: {
             value: _vm.modalShow,
@@ -1014,7 +1041,7 @@ var render = function () {
                       "form-control-label text-muted font-weight-bold",
                   },
                   [
-                    _vm._v("Vehicle Model / Name "),
+                    _vm._v(_vm._s(_vm.__("vehicle_model_name")) + " "),
                     _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
                   ]
                 ),
@@ -1055,7 +1082,7 @@ var render = function () {
                       "form-control-label text-muted font-weight-bold",
                   },
                   [
-                    _vm._v("Vehicle Registration Number "),
+                    _vm._v(_vm._s(_vm.__("vehicle_registration_number")) + " "),
                     _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
                   ]
                 ),
@@ -1096,7 +1123,9 @@ var render = function () {
                       "form-control-label text-muted font-weight-bold",
                   },
                   [
-                    _vm._v("Load Weight Capacity (in Kilograms) "),
+                    _vm._v(
+                      _vm._s(_vm.__("load_weight_capacity_in_kilograms")) + " "
+                    ),
                     _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
                   ]
                 ),
@@ -1144,7 +1173,7 @@ var render = function () {
                       staticClass:
                         "input-group-text bg-light border font-weight-bold text-muted",
                     },
-                    [_vm._v("kg")]
+                    [_vm._v(_vm._s(_vm.__("kg")))]
                   ),
                 ]),
               ]),
@@ -1157,7 +1186,7 @@ var render = function () {
                         staticClass:
                           "form-control-label text-muted font-weight-bold d-block",
                       },
-                      [_vm._v("Vehicle Fleet Status")]
+                      [_vm._v(_vm._s(_vm.__("vehicle_fleet_status")))]
                     ),
                     _vm._v(" "),
                     _c(
@@ -1221,7 +1250,7 @@ var render = function () {
                           "label",
                           {
                             staticClass:
-                              "form-check-label ml-2 font-weight-bold text-dark",
+                              "form-check-label ml-2 font-weight-bold",
                             attrs: { for: "vehicle-status" },
                           },
                           [
@@ -1229,8 +1258,8 @@ var render = function () {
                               "\n                        " +
                                 _vm._s(
                                   _vm.form.status == 1
-                                    ? "Active & Ready for Dispatch"
-                                    : "Inactive / Maintenance"
+                                    ? _vm.__("active_ready_for_dispatch")
+                                    : _vm.__("inactive_maintenance")
                                 ) +
                                 "\n                    "
                             ),
@@ -1259,7 +1288,7 @@ var render = function () {
                         },
                       },
                     },
-                    [_vm._v("Cancel")]
+                    [_vm._v(_vm._s(_vm.__("cancel")))]
                   ),
                   _vm._v(" "),
                   _c(
@@ -1282,7 +1311,9 @@ var render = function () {
                       _vm._v(
                         "\n                    " +
                           _vm._s(
-                            _vm.isEdit ? "Save Changes" : "Register Vehicle"
+                            _vm.isEdit
+                              ? _vm.__("save_changes")
+                              : _vm.__("register_vehicle")
                           ) +
                           "\n                "
                       ),
@@ -1301,23 +1332,6 @@ var render = function () {
   )
 }
 var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col" }, [
-      _c("h1", { staticClass: "h3 text-dark font-weight-bold mb-1" }, [
-        _c("i", { staticClass: "fa fa-truck text-primary mr-2" }),
-        _vm._v("Manage Vehicles\n            "),
-      ]),
-      _vm._v(" "),
-      _c("p", { staticClass: "text-muted mb-0" }, [
-        _vm._v(
-          "Add, edit, and manage your distribution fleet and load capacities."
-        ),
-      ]),
-    ])
-  },
   function () {
     var _vm = this
     var _h = _vm.$createElement
@@ -1344,16 +1358,6 @@ var staticRenderFns = [
       _c("i", {
         staticClass: "fa fa-balance-scale fa-2x text-warning opacity-75",
       }),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "card-header bg-white border-0 py-3" }, [
-      _c("h4", { staticClass: "m-0 font-weight-bold text-dark" }, [
-        _vm._v("Vehicles"),
-      ]),
     ])
   },
 ]

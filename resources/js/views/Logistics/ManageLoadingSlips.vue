@@ -3,88 +3,94 @@
         <!-- Header Section -->
         <div class="row align-items-center mb-4">
             <div class="col">
-                <h1 class="h3 text-dark font-weight-bold mb-1">
-                    <i class="fa fa-file-text text-primary mr-2"></i>Loading Slips & Dispatches
+                <h1 class="h3 font-weight-bold mb-1">
+                    <i class="fa fa-file-text text-primary mr-2"></i>{{ __('loading_slips_and_dispatches') }}
                 </h1>
-                <p class="text-muted mb-0">Track and dispatch warehouse loading slips, driver assignments, and optimized delivery routes.</p>
+                <p class="text-muted mb-0">{{ __('track_and_dispatch_warehouse_loading_slips') }}</p>
             </div>
             <div class="col-auto">
                 <router-link :to="urlPrefix + '/loading_slips/create'" class="btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill">
-                    <i class="fa fa-plus-circle mr-2"></i>Plan New Slip
+                    <i class="fa fa-plus-circle mr-2"></i>{{ __('plan_new_slip') }}
                 </router-link>
             </div>
         </div>
 
         <!-- Listing Card -->
         <div class="card border-0 shadow-sm rounded-lg overflow-hidden">
-            <div class="card-header bg-white border-0 py-3">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h6 class="m-0 font-weight-bold text-dark">Distribution Runs</h6>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="input-group input-group-alternative">
-                            <span class="input-group-text bg-light border-0"><i class="fa fa-search text-muted"></i></span>
-                            <input v-model="filter" @input="getSlips" type="text" class="form-control bg-light border-0" placeholder="Search by slip no, vehicle, driver...">
-                        </div>
-                    </div>
-                </div>
+            <div class="card-header border-0 py-3">
+                <h6 class="m-0 font-weight-bold">{{ __('distribution_runs') }}</h6>
             </div>
             <div class="card-body p-0">
+                <div class="p-3 border-bottom">
+                    <b-row class="mb-2">
+                        <b-col md="4" offset-md="7">
+                            <h6 class="box-title">{{ __('search') }}</h6>
+                            <b-form-input id="filter-input" v-model="filter" @input="getSlips" type="search"
+                                :placeholder="__('search_by_slip_no_vehicle_driver')"></b-form-input>
+                        </b-col>
+                        <b-col md="1" class="text-center">
+                            <h6 class="box-title" style="visibility: hidden;">{{ __('refresh') }}</h6>
+                            <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
+                                @click="getSlips()">
+                                <i class="fa fa-refresh" aria-hidden="true"></i>
+                            </button>
+                        </b-col>
+                    </b-row>
+                </div>
                 <div class="table-responsive">
                     <table class="table align-items-center table-flush table-hover mb-0">
                         <thead class="thead-light">
                             <tr>
-                                <th class="py-3 font-weight-bold text-muted">Slip No</th>
-                                <th class="py-3 font-weight-bold text-muted">Vehicle Details</th>
-                                <th class="py-3 font-weight-bold text-muted">Driver / Rider</th>
-                                <th class="py-3 font-weight-bold text-muted text-center">Orders</th>
-                                <th class="py-3 font-weight-bold text-muted text-right">Total Weight</th>
-                                <th class="py-3 font-weight-bold text-muted text-center">Status</th>
-                                <th class="py-3 font-weight-bold text-muted text-center">Actions</th>
+                                <th class="py-3 font-weight-bold text-muted">{{ __('slip_no') }}</th>
+                                <th class="py-3 font-weight-bold text-muted">{{ __('vehicle_details') }}</th>
+                                <th class="py-3 font-weight-bold text-muted">{{ __('driver_rider') }}</th>
+                                <th class="py-3 font-weight-bold text-muted text-center">{{ __('orders') }}</th>
+                                <th class="py-3 font-weight-bold text-muted text-right">{{ __('total_weight') }}</th>
+                                <th class="py-3 font-weight-bold text-muted text-center">{{ __('status') }}</th>
+                                <th class="py-3 font-weight-bold text-muted text-center">{{ __('actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="slip in slips" :key="slip.id" class="transition-all hover-bg-light">
+                            <tr v-for="slip in slips" :key="slip.id" class="transition-all">
                                 <td class="font-weight-bold text-primary py-3">
                                     <router-link :to="urlPrefix + '/loading_slips/view/' + slip.id">
                                         {{ slip.slip_no }}
                                     </router-link>
                                 </td>
                                 <td>
-                                    <div class="font-weight-bold text-dark" v-if="slip.vehicle">{{ slip.vehicle.name }}</div>
+                                    <div class="font-weight-bold" v-if="slip.vehicle">{{ slip.vehicle.name }}</div>
                                     <small class="text-muted" v-if="slip.vehicle">{{ slip.vehicle.vehicle_number }}</small>
                                 </td>
                                 <td>
-                                    <div class="font-weight-bold text-dark" v-if="slip.driver">{{ slip.driver.name }}</div>
+                                    <div class="font-weight-bold" v-if="slip.driver">{{ slip.driver.name }}</div>
                                     <small class="text-muted" v-if="slip.driver">{{ slip.driver.mobile }}</small>
                                 </td>
-                                <td class="text-center font-weight-bold text-dark">
-                                    <span class="badge bg-soft-info text-info">{{ slip.total_orders }} orders</span>
+                                <td class="text-center font-weight-bold">
+                                    <span class="badge bg-soft-info text-info">{{ slip.total_orders }} {{ __('orders') }}</span>
                                 </td>
-                                <td class="text-right font-weight-bold text-dark">
-                                    {{ slip.total_weight }} kg
+                                <td class="text-right font-weight-bold">
+                                    {{ slip.total_weight }} {{ __('kg') }}
                                 </td>
                                 <td class="text-center">
                                     <span v-if="slip.status == 0" class="badge bg-soft-warning font-weight-bold">
-                                        <i class="fa fa-clock-o mr-1 text-warning"></i> Planned
+                                        <i class="fa fa-clock-o mr-1 text-warning"></i> {{ __('planned') }}
                                     </span>
                                     <span v-else class="badge bg-soft-success font-weight-bold">
-                                        <i class="fa fa-truck mr-1 text-success"></i> Dispatched
+                                        <i class="fa fa-truck mr-1 text-success"></i> {{ __('dispatched') }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <router-link :to="urlPrefix + '/loading_slips/view/' + slip.id" class="btn btn-sm btn-soft-primary" title="View Details">
+                                        <router-link :to="urlPrefix + '/loading_slips/view/' + slip.id" class="btn btn-sm btn-soft-primary" :title="__('view_details')">
                                             <i class="fa fa-eye"></i>
                                         </router-link>
                                         
-                                        <button v-if="slip.status == 0" @click="dispatchSlip(slip.id)" class="btn btn-sm btn-soft-success" title="Dispatch Out-For-Delivery">
-                                            <i class="fa fa-send"></i> Dispatch
+                                        <button v-if="slip.status == 0" @click="dispatchSlip(slip.id)" class="btn btn-sm btn-soft-success" :title="__('dispatch_out_for_delivery')">
+                                            <i class="fa fa-send"></i> {{ __('dispatch') }}
                                         </button>
 
-                                        <button @click="printSlip(slip.id)" class="btn btn-sm btn-soft-secondary" title="Print Loading Slip">
-                                            <i class="fa fa-print"></i> Print
+                                        <button @click="printSlip(slip.id)" class="btn btn-sm btn-soft-secondary" :title="__('print_loading_slip')">
+                                            <i class="fa fa-print"></i> {{ __('print') }}
                                         </button>
                                     </div>
                                 </td>
@@ -92,7 +98,7 @@
                             <tr v-if="slips.length === 0">
                                 <td colspan="7" class="text-center py-5 text-muted">
                                     <i class="fa fa-folder-open fa-2x mb-3 text-light"></i>
-                                    <p class="mb-0">No distribution slips found. Let's create your first distribution run!</p>
+                                    <p class="mb-0">{{ __('no_distribution_slips_found') }}</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -100,7 +106,7 @@
                 </div>
             </div>
             <!-- Pagination -->
-            <div class="card-footer bg-white border-0 py-3" v-if="total > per_page">
+            <div class="card-footer border-0 py-3" v-if="total > per_page">
                 <b-pagination v-model="page" :total-rows="total" :per-page="per_page" align="right" class="mb-0" @input="getSlips"></b-pagination>
             </div>
         </div>
@@ -147,11 +153,12 @@ export default {
         },
         dispatchSlip(id) {
             this.$swal.fire({
-                title: 'Are you sure?',
-                text: 'This will change loading slip status to Dispatched and update all assigned orders to "Out for Delivery"!',
+                title: __('are_you_sure'),
+                text: __('this_will_change_loading_slip_status_to_dispatched_and_update_all_assigned_orders_to_out_for_delivery'),
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, Dispatch Now',
+                confirmButtonText: __('yes_dispatch_now'),
+                cancelButtonText: __('cancel'),
                 confirmButtonColor: '#1cc88a',
                 cancelButtonColor: '#858796',
             }).then(result => {
@@ -165,7 +172,7 @@ export default {
                                 this.showError(res.data.message);
                             }
                         }).catch(err => {
-                            this.showError('An error occurred during dispatch.');
+                            this.showError(__('an_error_occurred_during_dispatch'));
                         });
                 }
             });

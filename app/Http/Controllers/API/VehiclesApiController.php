@@ -63,7 +63,7 @@ class VehiclesApiController extends Controller
 
         return CommonHelper::responseWithData([
             'id' => $vehicle->id,
-            'message' => 'Vehicle saved successfully',
+            'message' => __('Vehicle saved successfully'),
         ]);
     }
 
@@ -89,7 +89,7 @@ class VehiclesApiController extends Controller
             'status' => $request->status,
         ]);
 
-        return CommonHelper::responseSuccess('Vehicle updated successfully');
+        return CommonHelper::responseSuccess(__('Vehicle updated successfully'));
     }
 
     public function delete(Request $request)
@@ -106,12 +106,12 @@ class VehiclesApiController extends Controller
 
         // Check if vehicle has any loading slips
         if ($vehicle->loadingSlips()->count() > 0) {
-            return CommonHelper::responseError('Cannot delete vehicle assigned to loading slips');
+            return CommonHelper::responseError(__('Cannot delete vehicle assigned to loading slips'));
         }
 
         $vehicle->delete();
 
-        return CommonHelper::responseSuccess('Vehicle deleted successfully');
+        return CommonHelper::responseSuccess(__('Vehicle deleted successfully'));
     }
 
     public function getActiveVehicles()

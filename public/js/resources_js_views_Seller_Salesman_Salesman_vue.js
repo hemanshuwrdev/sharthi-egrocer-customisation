@@ -110,34 +110,34 @@ __webpack_require__.r(__webpack_exports__);
     return {
       fields: [{
         key: 'id',
-        label: 'ID',
+        label: __('id'),
         sortable: true,
         sortDirection: 'desc'
       }, {
         key: 'name',
-        label: 'Name',
+        label: __('name'),
         sortable: true,
         "class": 'text-center'
       }, {
         key: 'mobile',
-        label: 'Mobile',
+        label: __('mobile'),
         sortable: true,
         "class": 'text-center'
       }, {
         key: 'brands',
-        label: 'Assigned Brands',
+        label: __('assigned_brands'),
         "class": 'text-center'
       }, {
         key: 'allow_payment_collection',
-        label: 'Payment Collection',
+        label: __('payment_collection'),
         "class": 'text-center'
       }, {
         key: 'status',
-        label: 'Status',
+        label: __('status'),
         "class": 'text-center'
       }, {
         key: 'actions',
-        label: 'Actions',
+        label: __('actions'),
         "class": 'text-center'
       }],
       totalRows: 1,
@@ -206,13 +206,14 @@ __webpack_require__.r(__webpack_exports__);
     deleteSalesman: function deleteSalesman(index, id) {
       var _this3 = this;
       this.$swal.fire({
-        title: "Are you Sure?",
-        text: "You want to delete this Salesman",
+        title: __('are_you_sure'),
+        text: __('you_want_to_delete_this_salesman'),
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!"
+        confirmButtonText: __('yes_delete_it'),
+        cancelButtonText: __('cancel')
       }).then(function (result) {
         if (result.value) {
           _this3.isLoading = true;

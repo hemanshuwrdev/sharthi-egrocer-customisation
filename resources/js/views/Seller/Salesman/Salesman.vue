@@ -95,13 +95,13 @@ export default {
     data: function () {
         return {
             fields: [
-                { key: 'id', label: 'ID', sortable: true, sortDirection: 'desc' },
-                { key: 'name', label: 'Name', sortable: true, class: 'text-center' },
-                { key: 'mobile', label: 'Mobile', sortable: true, class: 'text-center' },
-                { key: 'brands', label: 'Assigned Brands', class: 'text-center' },
-                { key: 'allow_payment_collection', label: 'Payment Collection', class: 'text-center' },
-                { key: 'status', label: 'Status', class: 'text-center' },
-                { key: 'actions', label: 'Actions', class: 'text-center' }
+                { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
+                { key: 'name', label: __('name'), sortable: true, class: 'text-center' },
+                { key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center' },
+                { key: 'brands', label: __('assigned_brands'), class: 'text-center' },
+                { key: 'allow_payment_collection', label: __('payment_collection'), class: 'text-center' },
+                { key: 'status', label: __('status'), class: 'text-center' },
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,
@@ -161,13 +161,14 @@ export default {
         },
         deleteSalesman(index, id) {
             this.$swal.fire({
-                title: "Are you Sure?",
-                text: "You want to delete this Salesman",
+                title: __('are_you_sure'),
+                text: __('you_want_to_delete_this_salesman'),
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                confirmButtonText: "Yes, delete it!"
+                confirmButtonText: __('yes_delete_it'),
+                cancelButtonText: __('cancel')
             }).then((result) => {
                 if (result.value) {
                     this.isLoading = true;

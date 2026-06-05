@@ -11,10 +11,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue-multiselect */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.js");
-/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue-multiselect */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.js");
+/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_2__);
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 //
 //
 //
@@ -102,7 +107,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
-    Multiselect: (vue_multiselect__WEBPACK_IMPORTED_MODULE_1___default())
+    Multiselect: (vue_multiselect__WEBPACK_IMPORTED_MODULE_2___default())
   },
   data: function data() {
     return {
@@ -118,16 +123,34 @@ __webpack_require__.r(__webpack_exports__);
       isLoading: false
     };
   },
-  created: function created() {
-    this.getBrands();
-    if (this.id) {
-      this.getRecord();
+  created: function () {
+    var _created = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+      return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return this.getBrands();
+            case 2:
+              if (this.id) {
+                this.getRecord();
+              }
+            case 3:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+    function created() {
+      return _created.apply(this, arguments);
     }
-  },
+    return created;
+  }(),
   methods: {
     getBrands: function getBrands() {
       var _this = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/brands').then(function (response) {
+      return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$sellerApiUrl + '/brands').then(function (response) {
         var data = response.data;
         if (data.status === 1) {
           _this.availableBrands = data.data;
@@ -139,12 +162,23 @@ __webpack_require__.r(__webpack_exports__);
     getRecord: function getRecord() {
       var _this2 = this;
       this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/salesman/edit/' + this.id).then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$sellerApiUrl + '/salesman/edit/' + this.id).then(function (response) {
         _this2.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
           _this2.record = data.data;
           _this2.record.allow_payment_collection = data.data.allow_payment_collection == 1 ? true : false;
+          if (_this2.record.brands) {
+            var parsedBrands = typeof _this2.record.brands === 'string' ? JSON.parse(_this2.record.brands) : _this2.record.brands;
+            var brandIds = parsedBrands.map(function (b) {
+              return b.toString();
+            });
+            _this2.record.brands = _this2.availableBrands.filter(function (b) {
+              return brandIds.includes(b.id.toString());
+            });
+          } else {
+            _this2.record.brands = [];
+          }
         }
       })["catch"](function (error) {
         _this2.isLoading = false;
@@ -171,7 +205,7 @@ __webpack_require__.r(__webpack_exports__);
       });
       formData.append('allow_payment_collection', this.record.allow_payment_collection ? 1 : 0);
       formData.append('status', this.record.status);
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post(url, formData).then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (response) {
         var data = response.data;
         if (data.status === 1) {
           _this3.showMessage("success", data.message);
