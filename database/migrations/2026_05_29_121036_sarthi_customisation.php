@@ -125,11 +125,22 @@ class SarthiCustomisation extends Migration
 
         // 7. Order cutoff / delivery date (3 PM rule)
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->date('delivery_date')->nullable()->after('delivery_time')
-                ->comment('Auto-tagged delivery date per cutoff rule');
-        });
+        // Schema::table('orders', function (Blueprint $table) {
+        //     $table->date('delivery_date')->nullable()->after('delivery_time')
+        //         ->comment('Auto-tagged delivery date per cutoff rule');
+        // });
         
+        
+        
+        Schema::table('orders', function (Blueprint $table) {
+    if (!Schema::hasColumn('orders', 'delivery_date')) {
+        $table->date('delivery_date')
+            ->nullable()
+            ->after('delivery_time')
+            ->comment('Auto-tagged delivery date per cutoff rule');
+    }
+});
+
         // 8. Salesmen Table (onboarded by distributor)
         if (!Schema::hasTable('salesmen')) {
             Schema::create('salesmen', function (Blueprint $table) {
@@ -158,6 +169,7 @@ class SarthiCustomisation extends Migration
                 $table->dropColumn('delivery_date');
             });
         }
+ 
 
         Schema::dropIfExists('brand_distributor_mappings');
 
