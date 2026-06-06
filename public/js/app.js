@@ -3156,7 +3156,8 @@ vue__WEBPACK_IMPORTED_MODULE_17__["default"].use(vue2_google_maps__WEBPACK_IMPOR
   load: {
     key: window.GoogleMapApiKey || window.MapApiKey || decryptedMapKey || decryptedKey,
     // Use unencrypted map API key first, then fallback to place API key
-    libraries: 'places,drawing'
+    libraries: 'places,drawing',
+    v: '3.64'
   }
 });
 vue__WEBPACK_IMPORTED_MODULE_17__["default"].prototype.$googleMapsKey = window.GoogleMapApiKey || window.MapApiKey || decryptedMapKey || decryptedKey;
