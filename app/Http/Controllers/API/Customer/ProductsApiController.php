@@ -7,12 +7,17 @@ use App\Helpers\ProductHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Repository\CategoryRepository;
 use App\Http\Repository\ProductRepository;
+use App\Models\BrandDistributorMapping;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Favorite;
+use App\Models\MasterProduct;
+use App\Models\MasterProductVariant;
 use App\Models\Product;
 use App\Models\ProductImages;
 use App\Models\ProductVariant;
+use App\Models\SellerProduct;
+use App\Models\SellerProductSlabPrice;
 use App\Models\Section;
 use App\Models\Seller;
 use App\Models\Setting;
@@ -973,127 +978,115 @@ class ProductsApiController extends Controller
     }
 
 
+    /**
+     * Sarthi: similar-products carousel for a master product. Returns up to `limit`
+     * other master products in the same category, optionally scoped to the
+     * retailer's delivery area (lat/long) — each card carries the cheapest
+     * available seller_product offer per variant.
+     */
     public function getSimilarProducts(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'product_id' => 'required',
-            'category_id' => 'required',
+            'product_id' => 'required|integer',
+            'category_id' => 'required|integer',
         ]);
-
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : '';
+        $limit = (int) $request->get('limit', 6);
 
-
-        $product_id = $request['product_id'];
-        $category_id = $request['category_id'];
-
-        $limit = $request->get('limit', 6);
-        $offset = 0;
-        $order = "RAND()";
-        $where = '';
-
-        $sql = "SELECT count(p.id) as total FROM `products` p JOIN `sellers`s ON s.id=p.seller_id where p.id != $product_id AND p.category_id = $category_id AND p.is_approved = 1 AND p.status = 1 and s.status = 1  $where ORDER BY $order LIMIT $offset,$limit";
-        $total = DB::select(DB::raw($sql));
-        if (count($total) > 0) {
-            $total = $total[0]->total;
-        } else {
-            $total = 0;
+        // Optional area scope
+        $sellerIds = collect();
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+            if (!empty($cityIds)) {
+                $sellerIds = BrandDistributorMapping::whereIn('city_id', $cityIds)
+                    ->pluck('seller_id')
+                    ->unique();
+            }
         }
 
-        $rows = array();
+        $masterIdsQuery = MasterProduct::where('category_id', $request->category_id)
+            ->where('id', '!=', $request->product_id)
+            ->where('status', 1);
 
-        $sql = "SELECT p.*,s.name as seller_name,s.status as seller_status,(SELECT MIN(pv.price) FROM product_variants pv WHERE pv.product_id=p.id) as price FROM products p  JOIN sellers s on s.id=p.seller_id where p.id != $product_id and p.status=1  and p.is_approved = 1 and  s.status = 1 and category_id = $category_id $where ORDER BY $order LIMIT $offset,$limit";
-        $res = DB::select(DB::raw($sql));
-        $res = json_decode(json_encode($res), true);
+        if ($sellerIds->isNotEmpty()) {
+            $masterIdsQuery->whereIn('id', function ($sub) use ($sellerIds) {
+                $sub->select('mpv.master_product_id')
+                    ->from('master_product_variants as mpv')
+                    ->join('seller_products as sp', 'sp.master_product_variant_id', '=', 'mpv.id')
+                    ->whereIn('sp.seller_id', $sellerIds)
+                    ->where('sp.status', 1)
+                    ->where('sp.selling_price', '>', 0);
+            });
+        }
 
-        if (!empty($res)) {
-            foreach ($res as $row) {
-                $tempRow['id'] = $row['id'];
-                $tempRow['seller_id'] = $row['seller_id'];
-                $tempRow['seller_name'] = $row['seller_name'];
-                $tempRow['tax_id'] = $row['tax_id'];
-                $tempRow['row_order'] = $row['row_order'];
-                $tempRow['name'] = $row['name'];
-                $tempRow['slug'] = $row['slug'];
-                $tempRow['category_id'] = $row['category_id'];
-
-                $tempRow['indicator'] = $row['indicator'];
-                $tempRow['manufacturer'] = $row['manufacturer'];
-                $tempRow['made_in'] = $row['made_in'];
-                $tempRow['return_status'] = $row['return_status'];
-                $tempRow['cancelable_status'] = $row['cancelable_status'];
-                $tempRow['till_status'] = $row['till_status'];
-                $tempRow['seller_status'] = $row['seller_status'];
-                $tempRow['date_added'] = CommonHelper::formatDateTime($row['created_at']);
-                $tempRow['price'] = $row['price'];
-                $tempRow['type'] = $row['type'];
-                $tempRow['pincodes'] = $row['pincodes'];
-                $tempRow['is_approved'] = $row['is_approved'];
-                $tempRow['return_days'] = $row['return_days'];
-                $tempRow['image'] = (!empty($row['image'])) ? asset('storage/' . $row['image']) : '';
-
-                $otherImages = ProductImages::where('product_id', $row['id'])->where('product_variant_id', 0)->get();
-                if (!empty($otherImages)) {
-                    for ($j = 0; $j < count($otherImages); $j++) {
-                        $tempRow['other_images'][$j] = asset('storage/' . $otherImages[$j]['image']);
-                    }
-                } else {
-                    $tempRow['other_images'] = array();
-                }
-
-                if ($row['tax_id'] == 0) {
-                    $tempRow['tax_title'] = "";
-                    $tempRow['tax_percentage'] = "0";
-                } else {
-
-                    $tax1 = Tax::find($row['tax_id']);
-                    $tempRow['tax_title'] = $tax1['title'];
-                    $tempRow['tax_percentage'] = $tax1['percentage'];
-                }
-
-                if ($user_id) {
-                    $fav = Favorite::where('product_id', $row['id'])->where('user_id', $user_id)->first();
-                    $row['is_favorite'] = !is_null($fav) ? true : false;
-                } else {
-                    $row['is_favorite'] = false;
-                }
-
-                $tempRow['description'] = $row['description'];
-                $tempRow['status'] = $row['status'];
-
-                $sql1 = "SELECT *,(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as measurement_unit_name,(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as stock_unit_name FROM product_variants pv WHERE pv.product_id=" . $row['id'] . " ORDER BY pv.status ASC";
-                $variants = DB::select(DB::raw($sql1));
-                $variants = json_decode(json_encode($variants), true);
-                if (empty($variants)) {
-                    continue;
-                }
-                for ($k = 0; $k < count($variants); $k++) {
-                    $variantImages = ProductImages::where('product_id', $row['id'])->where('product_variant_id', $variants[$k]['id'])->get();
-                    $variants[$k]['images'] = (empty($variantImages)) ? array() : $variantImages;
-                    for ($j = 0; $j < count($variantImages); $j++) {
-                        $variants[$k]['images'][$j] = !empty($variantImages[$j]['image']) ? asset('storage/' . $variantImages[$j]['image']) : "";
-                    }
-
-                    $cart = Cart::where('product_variant_id', $variants[$k]['id'])->where('user_id', $user_id)->first();
-                    if ($cart) {
-                        $variants[$k]['cart_count'] = $cart['qty'];
-                    } else {
-                        $variants[$k]['cart_count'] = "0";
-                    }
-                }
-                $tempRow['variants'] = $variants;
-                $rows[] = $tempRow;
-            }
-
-            $response['total'] = $total;
-            $response['data'] = $rows;
-            return CommonHelper::responseWithData($response);
-        } else {
+        $masterIds = $masterIdsQuery->inRandomOrder()->limit($limit)->pluck('id');
+        $total = $masterIds->count();
+        if ($total === 0) {
             return CommonHelper::responseError(__('data_not_found'));
         }
+
+        $products = MasterProduct::with(['brand', 'parentCompany', 'category'])
+            ->whereIn('id', $masterIds)
+            ->get()
+            ->keyBy('id');
+
+        $variants = MasterProductVariant::with('unit', 'secondaryUnit')
+            ->whereIn('master_product_id', $masterIds)
+            ->where('status', 1)
+            ->get()
+            ->groupBy('master_product_id');
+
+        $variantIds = $variants->flatten()->pluck('id')->all();
+        $offersQuery = SellerProduct::whereIn('master_product_variant_id', $variantIds)
+            ->where('status', 1)
+            ->where('selling_price', '>', 0);
+        if ($sellerIds->isNotEmpty()) {
+            $offersQuery->whereIn('seller_id', $sellerIds);
+        }
+        $bestOffer = $offersQuery->get()
+            ->groupBy('master_product_variant_id')
+            ->map(fn($g) => $g->sortBy('selling_price')->first());
+
+        $rows = collect($masterIds)
+            ->map(function ($mid) use ($products, $variants, $bestOffer) {
+                $p = $products->get($mid);
+                if (!$p) return null;
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'slug' => $p->slug,
+                    'image' => $p->image ? asset('storage/' . $p->image) : '',
+                    'brand' => $p->brand ? $p->brand->name : null,
+                    'brand_id' => $p->brand_id,
+                    'category' => $p->category ? $p->category->name : null,
+                    'category_id' => $p->category_id,
+                    'type' => $p->type,
+                    'variants' => ($variants->get($mid) ?? collect())->map(function ($v) use ($bestOffer) {
+                        $sp = $bestOffer->get($v->id);
+                        return [
+                            'product_variant_id' => $v->id,
+                            'product_id' => $v->master_product_id,
+                            'sku' => $v->sku,
+                            'unit' => $v->unit ? $v->unit->name : null,
+                            'measurement_unit_name' => $v->unit ? $v->unit->short_code : null,
+                            'weight' => $v->weight,
+                            'mrp' => $sp ? (float) $sp->mrp : 0,
+                            'selling_price' => $sp ? (float) $sp->selling_price : 0,
+                            'discounted_price' => $sp && $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                            'stock' => $sp ? (float) $sp->stock : 0,
+                            'seller_id' => $sp ? $sp->seller_id : null,
+                            'seller_product_id' => $sp ? $sp->id : null,
+                        ];
+                    })->values(),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return CommonHelper::responseWithData(['total' => $total, 'data' => $rows]);
     }
 
     public function getSearchProducts(Request $request)
@@ -1222,11 +1215,15 @@ class ProductsApiController extends Controller
     public function productRatingSave(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            // 'user_id' => 'required',
+            // Sarthi: product_id now refers to master_products.id
             'rate' => 'required',
-            'product_id' => ['required', Rule::unique('product_ratings')->where(function ($query) use ($request) {
-                return $query->where('user_id', auth()->user()->id);
-            })],
+            'product_id' => [
+                'required',
+                'exists:master_products,id',
+                Rule::unique('product_ratings')->where(function ($query) use ($request) {
+                    return $query->where('user_id', auth()->user()->id);
+                }),
+            ],
             'image.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
@@ -1362,27 +1359,35 @@ class ProductsApiController extends Controller
 
     public function getSeoThings(Request $request)
     {
+        // Sarthi: SEO lookup now driven by master_products (super-admin owned catalog).
         $slug = $request->input('slug');
 
-        $product = Product::withTranslation()
-            ->select('id', 'meta_title', 'meta_keywords', 'meta_description', 'schema_markup', 'image')
+        $product = MasterProduct::select('id', 'meta_title', 'meta_keywords', 'meta_description', 'schema_markup', 'image')
             ->where('slug', $slug)
             ->first();
 
         if (!$product) {
             return CommonHelper::responseError("Product not available");
         }
-        $seoThings = [];
-        $seoThings['meta_title'] = $product->meta_title;
-        $seoThings['meta_keywords'] = $product->meta_keywords;
-        $seoThings['meta_description'] = $product->meta_description;
-        $seoThings['schema_markup'] = $product->schema_markup;
-        $seoThings['og_image'] = $product->image_url;
-        $seoThings['favicon'] = Setting::get_value('favicon') ? asset('storage/' . Setting::get_value('favicon')) : '';
 
-        return CommonHelper::responseWithData($seoThings);
+        return CommonHelper::responseWithData([
+            'meta_title' => $product->meta_title,
+            'meta_keywords' => $product->meta_keywords,
+            'meta_description' => $product->meta_description,
+            'schema_markup' => $product->schema_markup,
+            'og_image' => $product->image ? asset('storage/' . $product->image) : '',
+            'favicon' => Setting::get_value('favicon') ? asset('storage/' . Setting::get_value('favicon')) : '',
+        ]);
     }
 
+    /**
+     * Sarthi: returns the user's recently-visited master products, optionally
+     * scoped to their delivery area (lat/long) so each card reflects the cheapest
+     * available offer where the user can buy. Without lat/long it returns master
+     * metadata only (no pricing).
+     *
+     * `recently_visited_products.product_id` is now `master_products.id`.
+     */
     public function getRecentlyVisitedProducts(Request $request)
     {
         $user = $request->user('api-customers');
@@ -1390,191 +1395,101 @@ class ProductsApiController extends Controller
             return CommonHelper::responseError('User authentication required.');
         }
 
-        $user_id = $user->id;
-        $exclude_product_id = $request->get('product_id');
+        $excludeId = $request->get('product_id');
 
         try {
-            // Get recently visited product IDs for this user, ordered by most recent
-            $recentlyVisitedQuery = RecentlyVisitedProduct::where('user_id', $user_id)
+            $query = RecentlyVisitedProduct::where('user_id', $user->id)
                 ->orderBy('visited_at', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->limit(10);
-
-            if (!empty($exclude_product_id)) {
-                $recentlyVisitedQuery->where('product_id', '!=', $exclude_product_id);
+            if (!empty($excludeId)) {
+                $query->where('product_id', '!=', $excludeId);
             }
-
-            $recentlyVisited = $recentlyVisitedQuery->pluck('product_id')->toArray();
-
-            if (empty($recentlyVisited)) {
+            $masterIds = $query->pluck('product_id')->toArray();
+            if (empty($masterIds)) {
                 return CommonHelper::responseWithData([], 0);
             }
 
-            $products = Product::select(
-                'p.*',
-                'p.type as d_type',
-                's.store_name as seller_name',
-                's.slug as seller_slug',
-                's.status as seller_status',
-                'pv.price',
-                'pv.discounted_price',
-                DB::raw("if(pv.discounted_price > 0, ceil(((pv.price - pv.discounted_price)/pv.price)*100), 0)  as cal_discount_percentage"),
-                DB::raw("ceil((pv.price - pv.discounted_price)) as cal_discount"),
-                DB::raw('count(*) as order_counter'),
-                'co.name as country_made_in',
-                'tx.percentage as tax_percentage',
-                DB::raw("GROUP_CONCAT(t.name) as tag_names")
-            )
-                ->from('products as p')
-                ->leftJoin("countries as co", "p.made_in", "=", "co.id")
-                ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
-                ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
-                ->Join("product_variants as pv", "pv.product_id", "=", "p.id")
-                ->leftJoin('product_tag as pt', 'p.id', '=', 'pt.product_id')
-                ->leftJoin('tags as t', 'pt.tag_id', '=', 't.id')
-                ->leftJoin('taxes as tx', 'p.tax_id', '=', 'tx.id')
-                ->where('p.is_approved', 1)
-                ->where('p.status', 1)
-                ->where('c.status', 1)
-                ->where('s.status', 1)
-                ->whereIn('p.id', $recentlyVisited)
-                ->with('ratings')
-                ->selectRaw(
-                    '
-        MIN(IF(pv.discounted_price > 0, pv.discounted_price, pv.price)) as min_price,
-        MAX(IF(pv.discounted_price > 0, pv.discounted_price, pv.price)) as max_price'
-                )
-                ->groupBy('p.id')
-                ->orderByRaw("FIELD(p.id, " . implode(',', $recentlyVisited) . ")")
-                ->get();
+            $products = MasterProduct::with(['brand', 'parentCompany', 'category'])
+                ->whereIn('id', $masterIds)
+                ->where('status', 1)
+                ->get()
+                ->keyBy('id');
 
-            $total = Product::whereIn('p.id', $recentlyVisited)
-                ->where('p.is_approved', 1)
-                ->where('p.status', 1)
-                ->from('products as p')
-                ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
-                ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
-                ->where('c.status', 1)
-                ->where('s.status', 1)
-                ->count();
-
-            $products = $products->makeHidden([
-                'row_order',
-                'return_status',
-                'cancelable_status',
-                'till_status',
-                'description',
-                'status',
-                'is_approved',
-                'return_days',
-                'pincodes',
-                'cod_allowed',
-                'pickup_location',
-                'tags',
-                'd_type',
-                'seller_name',
-                'seller_slug',
-                'seller_status',
-                'created_at',
-                'updated_at',
-                'deleted_at',
-                'image',
-                'other_images'
-            ]);
-
-            $productRatingSetting = (int) (Setting::get_value('product_rating') ?? 0);
-            $isProductRatingEnabled = $productRatingSetting === 1;
-            $fewQuantityAlertThreshold = (int) (Setting::get_value('few_quantity_left_alert') ?? 0);
-
-            $i = 0;
-            foreach ($products as $row) {
-                $variants = ProductVariant::with(['product.tax', 'unit', 'images'])
-                    ->where('product_id', $row['id'])
-                    ->get();
-
-                if ($request->sort == 'low') {
-                    $variants = $variants->sortBy('final_price_with_tax')->values();
-                } elseif ($request->sort == 'high') {
-                    $variants = $variants->sortByDesc('final_price_with_tax')->values();
-                } elseif ($request->sort == 'discount') {
-                    $variants = $variants->sortByDesc(function ($variant) {
-                        if ($variant->discounted_price > 0 && $variant->price > 0) {
-                            return ceil((($variant->price - $variant->discounted_price) / $variant->price) * 100);
-                        }
-                        return 0;
-                    })->values();
+            // Resolve allowed seller_ids for the user's area (if lat/long sent).
+            $sellerIds = collect();
+            if ($request->filled('latitude') && $request->filled('longitude')) {
+                $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+                if (!empty($cityIds)) {
+                    $sellerIds = BrandDistributorMapping::whereIn('city_id', $cityIds)
+                        ->pluck('seller_id')
+                        ->unique();
                 }
-
-                $variants = $variants->makeHidden(['product_id', 'status', 'measurement_unit_id', 'stock_unit_id', 'deleted_at']);
-                if (empty($variants)) {
-                    continue;
-                }
-
-                CommonHelper::getProductDetails($row['id'], $user_id, false);
-                $variantArray = array();
-                $productType = strtolower((string) ($row->type ?? ''));
-                $isPacketType = $productType === 'packet';
-                $productUnlimitedStock = (int) ($row->is_unlimited_stock ?? 0);
-                $isFewQuantityLeft = false;
-                $variantFewQuantityMap = [];
-                $row->product_rating = $isProductRatingEnabled;
-
-                if ($fewQuantityAlertThreshold > 0) {
-                    foreach ($variants as $variant) {
-                        $variantId = $variant->id ?? null;
-                        $variantStock = (int) ($variant->stock ?? 0);
-                        $variantUnlimitedStock = $isPacketType
-                            ? (int) ($variant->is_unlimited_stock ?? 0)
-                            : $productUnlimitedStock;
-
-                        $variantHasFewQuantity = false;
-                        if ($variantUnlimitedStock === 0 && $variantStock > 0 && $variantStock <= $fewQuantityAlertThreshold) {
-                            $variantHasFewQuantity = true;
-                            if (!$isPacketType) {
-                                $isFewQuantityLeft = true;
-                            }
-                        }
-
-                        if ($variantId !== null) {
-                            $variantFewQuantityMap[$variantId] = $variantHasFewQuantity;
-                        }
-                    }
-
-                    if ($isPacketType && in_array(true, $variantFewQuantityMap, true)) {
-                        $isFewQuantityLeft = true;
-                    }
-                }
-
-                for ($k = 0; $k < count($variants); $k++) {
-                    $currentVariantId = $variants[$k]->id ?? null;
-                    $currentVariantFewQuantity = $currentVariantId !== null
-                        ? ($variantFewQuantityMap[$currentVariantId] ?? false)
-                        : false;
-
-                    $variantData = CommonHelper::getProductVariant($variants[$k]['id'], $user_id);
-
-                    if ($variantData) {
-                        $variantDataArray = is_object($variantData) ? $variantData->toArray() : (array) $variantData;
-                        $variantDataArray['few_quantity_left'] = $isPacketType ? $currentVariantFewQuantity : $isFewQuantityLeft;
-                        $loadedUnit = $variants[$k]->relationLoaded('unit') ? $variants[$k]->unit : null;
-                        $variantDataArray['unit'] = $loadedUnit ? $loadedUnit->toArray() : null;
-                        $variantData = is_object($variantData) ? (object) $variantDataArray : $variantDataArray;
-                    }
-                    array_push($variantArray, $variantData);
-                }
-                $products[$i]['variants'] = $variantArray;
-
-                $row->rating_count = CommonHelper::productAverageRating($row['id'])['rating_count'];
-                $row->average_rating = CommonHelper::productAverageRating($row['id'])['average_rating'];
-
-                $i++;
             }
 
-            if (!empty($products)) {
-                return CommonHelper::responseWithData($products, $total);
-            } else {
-                return CommonHelper::responseError("No products found");
+            $variants = MasterProductVariant::with('unit', 'secondaryUnit')
+                ->whereIn('master_product_id', $masterIds)
+                ->where('status', 1)
+                ->get()
+                ->groupBy('master_product_id');
+
+            $variantIds = $variants->flatten()->pluck('id')->all();
+            $offersQuery = SellerProduct::whereIn('master_product_variant_id', $variantIds)
+                ->where('status', 1)
+                ->where('selling_price', '>', 0);
+            if ($sellerIds->isNotEmpty()) {
+                $offersQuery->whereIn('seller_id', $sellerIds);
             }
+            $bestOffer = $offersQuery->get()
+                ->groupBy('master_product_variant_id')
+                ->map(fn($g) => $g->sortBy('selling_price')->first());
+
+            $isRatingEnabled = (int) (Setting::get_value('product_rating') ?? 0) === 1;
+
+            $result = collect($masterIds)
+                ->map(function ($mid) use ($products, $variants, $bestOffer, $isRatingEnabled) {
+                    $p = $products->get($mid);
+                    if (!$p) return null;
+
+                    $rating = CommonHelper::productAverageRating($p->id);
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'slug' => $p->slug,
+                        'image' => $p->image,
+                        'brand' => $p->brand ? $p->brand->name : null,
+                        'brand_id' => $p->brand_id,
+                        'category' => $p->category ? $p->category->name : null,
+                        'category_id' => $p->category_id,
+                        'type' => $p->type,
+                        'product_rating' => $isRatingEnabled,
+                        'rating_count' => $rating['rating_count'],
+                        'average_rating' => $rating['average_rating'],
+                        'variants' => ($variants->get($mid) ?? collect())->map(function ($v) use ($bestOffer) {
+                            $sp = $bestOffer->get($v->id);
+                            return [
+                                'product_variant_id' => $v->id,
+                                'product_id' => $v->master_product_id,
+                                'sku' => $v->sku,
+                                'unit' => $v->unit ? $v->unit->name : null,
+                                'secondary_unit' => $v->secondaryUnit ? $v->secondaryUnit->name : null,
+                                'secondary_unit_value' => $v->secondary_unit_value,
+                                'weight' => $v->weight,
+                                'image' => $v->image,
+                                'mrp' => $sp ? (float) $sp->mrp : 0,
+                                'selling_price' => $sp ? (float) $sp->selling_price : 0,
+                                'discounted_price' => $sp && $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                                'stock' => $sp ? (float) $sp->stock : 0,
+                                'seller_id' => $sp ? $sp->seller_id : null,
+                                'seller_product_id' => $sp ? $sp->id : null,
+                            ];
+                        })->values(),
+                    ];
+                })
+                ->filter()
+                ->values();
+
+            return CommonHelper::responseWithData($result, $result->count());
         } catch (\Exception $e) {
             Log::info("Recently Visited Products Error : " . $e->getMessage());
             return CommonHelper::responseError("Something Went Wrong!");

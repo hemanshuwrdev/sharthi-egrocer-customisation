@@ -252,6 +252,44 @@ class SarthiCustomisation extends Migration
             });
         }
 
+        // 11a. Master Catalog: SEO columns on master_products (default-language fallback)
+        Schema::table('master_products', function (Blueprint $table) {
+            if (!Schema::hasColumn('master_products', 'meta_title')) {
+                $table->string('meta_title')->nullable()->after('description');
+            }
+            if (!Schema::hasColumn('master_products', 'meta_keywords')) {
+                $table->text('meta_keywords')->nullable()->after('meta_title');
+            }
+            if (!Schema::hasColumn('master_products', 'meta_description')) {
+                $table->text('meta_description')->nullable()->after('meta_keywords');
+            }
+            if (!Schema::hasColumn('master_products', 'schema_markup')) {
+                $table->text('schema_markup')->nullable()->after('meta_description');
+            }
+        });
+
+        // 11b. Master Catalog: Translations (per-language name / description / SEO fields)
+        if (!Schema::hasTable('master_product_translations')) {
+            Schema::create('master_product_translations', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('master_product_id');
+                $table->unsignedBigInteger('language_id');
+                $table->string('name')->nullable();
+                $table->longText('description')->nullable();
+                $table->string('meta_title')->nullable();
+                $table->text('meta_keywords')->nullable();
+                $table->text('schema_markup')->nullable();
+                $table->text('meta_description')->nullable();
+                $table->timestamps();
+
+                $table->unique(['master_product_id', 'language_id'], 'uniq_mpt_product_language');
+                $table->foreign('master_product_id', 'fk_mpt_product')
+                    ->references('id')->on('master_products')->onDelete('cascade');
+                $table->foreign('language_id', 'fk_mpt_language')
+                    ->references('id')->on('languages')->onDelete('cascade');
+            });
+        }
+
         // 12. Seller (Distributor) Product Control: per-seller activation, mrp, selling price, stock
         if (!Schema::hasTable('seller_products')) {
             Schema::create('seller_products', function (Blueprint $table) {
@@ -310,6 +348,7 @@ class SarthiCustomisation extends Migration
         // Master catalog (reverse FK order)
         Schema::dropIfExists('seller_product_slab_prices');
         Schema::dropIfExists('seller_products');
+        Schema::dropIfExists('master_product_translations');
         Schema::dropIfExists('master_product_variants');
         Schema::dropIfExists('master_products');
         Schema::dropIfExists('parent_companies');

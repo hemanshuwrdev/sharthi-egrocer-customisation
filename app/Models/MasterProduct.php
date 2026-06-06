@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MasterProduct extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTranslations;
 
     protected $table = 'master_products';
 
@@ -23,6 +24,10 @@ class MasterProduct extends Model
         'other_images',
         'short_description',
         'description',
+        'meta_title',
+        'meta_keywords',
+        'meta_description',
+        'schema_markup',
         'type',
         'status',
         'created_by',
@@ -31,6 +36,18 @@ class MasterProduct extends Model
     protected $casts = [
         'other_images' => 'array',
     ];
+
+    protected $translatable = [
+        'name',
+        'description',
+        'meta_title',
+        'meta_keywords',
+        'schema_markup',
+        'meta_description',
+    ];
+
+    protected $translationModel = 'MasterProductTranslation';
+    protected $translationForeignKey = 'master_product_id';
 
     public function parentCompany()
     {

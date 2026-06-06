@@ -116,9 +116,9 @@ Route::group(['middleware' => ['auth.customer']], function () {
             Route::get('/', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'getCart']);
             Route::post('/add', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'addToCart']);
             Route::post('/remove', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'removeFromCart']);
-            Route::post('/save_for_later', [\App\Http\Controllers\API\Customer\CartApiController::class, 'addToSaveForLater']);
-            Route::post('/bulk_add_to_cart_items', [\App\Http\Controllers\API\Customer\CartApiController::class, 'BulkAddToCartItems']);
-            Route::get('/get_cart_count', [\App\Http\Controllers\API\Customer\CartApiController::class, 'getCartCount']);
+            Route::post('/save_for_later', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'saveForLater']);
+            Route::post('/bulk_add_to_cart_items', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'bulkAddToCart']);
+            Route::get('/get_cart_count', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'getCartCount']);
         });
 
         // Offers

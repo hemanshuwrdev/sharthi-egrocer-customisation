@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Language;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
 use Illuminate\Http\Request;
@@ -54,8 +55,14 @@ class MasterProductApiController extends Controller
 
     public function edit($id)
     {
-        $product = MasterProduct::with(['parentCompany', 'brand', 'category', 'variants.unit', 'variants.secondaryUnit'])
-            ->find($id);
+        $product = MasterProduct::with([
+            'parentCompany',
+            'brand',
+            'category',
+            'variants.unit',
+            'variants.secondaryUnit',
+            'translations',
+        ])->find($id);
         if (!$product) {
             return CommonHelper::responseError('master_product_not_found');
         }
@@ -69,7 +76,6 @@ class MasterProductApiController extends Controller
     public function save(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
             'brand_id' => 'nullable|exists:brands,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -87,18 +93,29 @@ class MasterProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $nameError = $this->ensureDefaultLanguageName($request);
+        if ($nameError) {
+            return CommonHelper::responseError($nameError);
+        }
+
         try {
             $productId = DB::transaction(function () use ($request) {
+                $translations = $this->decodeTranslations($request);
+                $defaults = $this->extractDefaultsFromTranslations($request, $translations);
+
                 $product = new MasterProduct();
-                $product->name = $request->name;
-                $product->slug = Str::slug($request->name) . '-' . substr(uniqid(), -5);
+                $product->name = $defaults['name'];
+                $product->slug = Str::slug($defaults['name']) . '-' . substr(uniqid(), -5);
                 $product->parent_company_id = $request->parent_company_id;
                 $product->brand_id = $request->brand_id;
                 $product->category_id = $request->category_id;
                 $product->tax_id = $request->tax_id;
                 $product->hsn = $request->hsn;
-                $product->short_description = $request->short_description;
-                $product->description = $request->description;
+                $product->description = $defaults['description'];
+                $product->meta_title = $defaults['meta_title'];
+                $product->meta_keywords = $defaults['meta_keywords'];
+                $product->meta_description = $defaults['meta_description'];
+                $product->schema_markup = $defaults['schema_markup'];
                 $product->type = $request->type ?: 'single';
                 $product->status = $request->has('status') ? $request->status : 1;
                 $product->created_by = auth()->id();
@@ -115,6 +132,12 @@ class MasterProductApiController extends Controller
                 }
 
                 $product->save();
+
+                foreach ($translations as $t) {
+                    if (!empty($t['language_id'])) {
+                        $product->saveTranslation((int) $t['language_id'], $t);
+                    }
+                }
 
                 foreach ((array) $request->input('variants', []) as $idx => $v) {
                     $variant = new MasterProductVariant();
@@ -152,7 +175,6 @@ class MasterProductApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:master_products,id',
-            'name' => 'required|string|max:255',
             'brand_id' => 'nullable|exists:brands,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -170,17 +192,28 @@ class MasterProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $nameError = $this->ensureDefaultLanguageName($request);
+        if ($nameError) {
+            return CommonHelper::responseError($nameError);
+        }
+
         try {
             DB::transaction(function () use ($request) {
                 $product = MasterProduct::find($request->id);
-                $product->name = $request->name;
+                $translations = $this->decodeTranslations($request);
+                $defaults = $this->extractDefaultsFromTranslations($request, $translations);
+
+                $product->name = $defaults['name'];
                 $product->parent_company_id = $request->parent_company_id;
                 $product->brand_id = $request->brand_id;
                 $product->category_id = $request->category_id;
                 $product->tax_id = $request->tax_id;
                 $product->hsn = $request->hsn;
-                $product->short_description = $request->short_description;
-                $product->description = $request->description;
+                $product->description = $defaults['description'];
+                $product->meta_title = $defaults['meta_title'];
+                $product->meta_keywords = $defaults['meta_keywords'];
+                $product->meta_description = $defaults['meta_description'];
+                $product->schema_markup = $defaults['schema_markup'];
                 if ($request->filled('type')) {
                     $product->type = $request->type;
                 }
@@ -194,15 +227,32 @@ class MasterProductApiController extends Controller
                     }
                     $product->image = $this->storeImage($request->file('image'), 'master_products');
                 }
-                if ($request->hasFile('other_images')) {
-                    $paths = $product->other_images ?: [];
-                    foreach ((array) $request->file('other_images') as $file) {
-                        $paths[] = $this->storeImage($file, 'master_products');
+
+                $existingOther = $product->other_images ?: [];
+
+                // Remove explicit images (paths sent via delete_other_images[])
+                $deletePaths = array_filter((array) $request->input('delete_other_images', []));
+                if (!empty($deletePaths)) {
+                    foreach ($deletePaths as $path) {
+                        Storage::disk('public')->delete($path);
                     }
-                    $product->other_images = $paths;
+                    $existingOther = array_values(array_diff($existingOther, $deletePaths));
                 }
 
+                if ($request->hasFile('other_images')) {
+                    foreach ((array) $request->file('other_images') as $file) {
+                        $existingOther[] = $this->storeImage($file, 'master_products');
+                    }
+                }
+                $product->other_images = $existingOther;
+
                 $product->save();
+
+                foreach ($translations as $t) {
+                    if (!empty($t['language_id'])) {
+                        $product->saveTranslation((int) $t['language_id'], $t);
+                    }
+                }
 
                 foreach ((array) $request->input('variants', []) as $idx => $v) {
                     $isDelete = !empty($v['_delete']);
@@ -336,5 +386,80 @@ class MasterProductApiController extends Controller
     {
         $fileName = time() . '_' . rand(1111, 99999) . '.' . $file->getClientOriginalExtension();
         return Storage::disk('public')->putFileAs($folder, $file, $fileName);
+    }
+
+    /**
+     * Master product names live inside translations[] now, not at the top level.
+     * Require a non-empty name in the default language; falls back to top-level
+     * `name` for backward-compatible callers.
+     */
+    private function ensureDefaultLanguageName(Request $request): ?string
+    {
+        $translations = $this->decodeTranslations($request);
+        $defaults = $this->extractDefaultsFromTranslations($request, $translations);
+        $name = trim((string) ($defaults['name'] ?? ''));
+        return $name === '' ? __('please_fill_product_name_in_default_language') : null;
+    }
+
+    /**
+     * Accepts translations as either a JSON-encoded string or an array of
+     * { language_id, name, description, meta_*, schema_markup } objects.
+     * Matches the legacy /products/save shape used by ProductApisController.
+     */
+    private function decodeTranslations(Request $request): array
+    {
+        $raw = $request->input('translations', []);
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : [];
+        }
+        return is_array($raw) ? $raw : [];
+    }
+
+    /**
+     * The base table (master_products) mirrors the default-language values
+     * so callers without a language context still see something sensible.
+     * Falls back to top-level request fields when no default-lang translation
+     * is sent (e.g. single-language installs).
+     */
+    private function extractDefaultsFromTranslations(Request $request, array $translations): array
+    {
+        // Match the front-end's /active_languages filter so both ends resolve the
+        // same "default language" id, otherwise the lookup picks a stale row.
+        $defaultLang = Language::where('is_default', 1)
+            ->where('status', 1)
+            ->where('system_type', 4)
+            ->first();
+        $defaultLangId = $defaultLang ? (int) $defaultLang->id : null;
+
+        $defaultTr = null;
+        if ($defaultLangId) {
+            foreach ($translations as $t) {
+                if (isset($t['language_id']) && (int) $t['language_id'] === $defaultLangId) {
+                    $defaultTr = $t;
+                    break;
+                }
+            }
+        }
+
+        // Fallback: pick the first translation that has any non-empty field
+        // (covers misconfigured is_default rows + users typing in a non-default tab).
+        if (!$defaultTr) {
+            foreach ($translations as $t) {
+                if (!empty(trim((string) ($t['name'] ?? '')))) {
+                    $defaultTr = $t;
+                    break;
+                }
+            }
+        }
+
+        return [
+            'name' => $defaultTr['name'] ?? $request->input('name'),
+            'description' => $defaultTr['description'] ?? $request->input('description'),
+            'meta_title' => $defaultTr['meta_title'] ?? $request->input('meta_title'),
+            'meta_keywords' => $defaultTr['meta_keywords'] ?? $request->input('meta_keywords'),
+            'schema_markup' => $defaultTr['schema_markup'] ?? $request->input('schema_markup'),
+            'meta_description' => $defaultTr['meta_description'] ?? $request->input('meta_description'),
+        ];
     }
 }

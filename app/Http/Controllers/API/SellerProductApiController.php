@@ -102,7 +102,7 @@ class SellerProductApiController extends Controller
             $mp = $v->masterProduct;
             return [
                 'product_variant_id' => $v->id,
-                'master_product_id' => $v->master_product_id,
+                'product_id' => $v->master_product_id,
                 'master_product_name' => $mp ? $mp->name : null,
                 'parent_company' => $mp && $mp->parentCompany ? $mp->parentCompany->name : null,
                 'brand' => $mp && $mp->brand ? $mp->brand->name : null,

@@ -143,7 +143,7 @@ class RetailerCatalogApiController extends Controller
 
             return [
                 'product_variant_id' => $first->id,
-                'master_product_id' => $first->master_product_id,
+                'product_id' => $first->master_product_id,
                 'master_product_name' => $mp ? $mp->name : null,
                 'brand' => $mp && $mp->brand ? $mp->brand->name : null,
                 'brand_id' => $mp ? $mp->brand_id : null,
@@ -236,7 +236,7 @@ class RetailerCatalogApiController extends Controller
 
         return CommonHelper::responseWithData([
             'product_variant_id' => $variant->id,
-            'master_product_id' => $variant->master_product_id,
+            'product_id' => $variant->master_product_id,
             'master_product_name' => $variant->masterProduct->name,
             'brand' => $brand ? $brand->name : null,
             'brand_id' => $brandId,

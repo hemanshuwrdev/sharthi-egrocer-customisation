@@ -146,7 +146,7 @@ class RetailerCartOrderApiController extends Controller
             $groups[$row->seller_id]['items'][] = [
                 'cart_id' => $row->id,
                 'product_variant_id' => $variant->id,
-                'master_product_id' => $variant->master_product_id,
+                'product_id' => $variant->master_product_id,
                 'name' => $variant->masterProduct->name ?? '',
                 'brand' => $variant->masterProduct->brand->name ?? null,
                 'sku' => $variant->sku,
@@ -225,6 +225,135 @@ class RetailerCartOrderApiController extends Controller
         return $deleted
             ? CommonHelper::responseSuccess('item_removed_from_cart')
             : CommonHelper::responseError('item_not_found');
+    }
+
+    /**
+     * Count of master-catalog cart rows for the logged-in user (excluding save-for-later).
+     */
+    public function getCartCount(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return CommonHelper::responseError('user_not_found');
+        }
+
+        $count = Cart::where('user_id', $user->id)
+            ->whereNotNull('master_product_variant_id')
+            ->where('save_for_later', 0)
+            ->count();
+
+        return CommonHelper::responseWithData(['cart_count' => $count]);
+    }
+
+    /**
+     * Move a cart row in/out of save-for-later. Body: cart_id, save_for_later (0|1).
+     */
+    public function saveForLater(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'cart_id' => 'required|exists:carts,id',
+            'save_for_later' => 'required|in:0,1',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $user = auth()->user();
+        $cart = Cart::where('id', $request->cart_id)
+            ->where('user_id', $user->id)
+            ->first();
+        if (!$cart) {
+            return CommonHelper::responseError('item_not_found');
+        }
+
+        $cart->save_for_later = (int) $request->save_for_later;
+        $cart->save();
+
+        return CommonHelper::responseSuccess('cart_updated_successfully');
+    }
+
+    /**
+     * Bulk add master variants to the cart. Body:
+     *   items[].product_variant_id, items[].qty
+     *   + latitude+longitude (retailer) OR seller_id (salesman)
+     *
+     * Returns per-item ok/error so partial failures are visible to the client.
+     */
+    public function bulkAddToCart(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'items' => 'required|array|min:1',
+            'items.*.product_variant_id' => 'required|integer|exists:master_product_variants,id',
+            'items.*.qty' => 'required|numeric|min:1',
+            'latitude' => 'nullable',
+            'longitude' => 'nullable',
+            'seller_id' => 'nullable|exists:sellers,id',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+        if ((!$request->latitude || !$request->longitude) && !$request->seller_id) {
+            return CommonHelper::responseError('latitude_longitude_or_seller_id_required');
+        }
+
+        $user = auth()->user();
+        $explicitSellerId = (int) $request->seller_id ?: null;
+        $cityIds = !$explicitSellerId
+            ? CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude)
+            : [];
+
+        $results = [];
+        foreach ($request->items as $idx => $item) {
+            $variantId = (int) $item['product_variant_id'];
+            $qty = (float) $item['qty'];
+
+            $sellerId = $explicitSellerId;
+            if (!$sellerId) {
+                if (empty($cityIds)) {
+                    $results[] = ['index' => $idx, 'ok' => false, 'error' => 'product_not_available_in_your_area'];
+                    continue;
+                }
+                $resolved = $this->resolveSellerForCityIds($variantId, $cityIds);
+                if (!$resolved['ok']) {
+                    $results[] = ['index' => $idx, 'ok' => false, 'error' => $resolved['error']];
+                    continue;
+                }
+                $sellerId = $resolved['seller_id'];
+            }
+
+            $line = MasterCatalogOrderHelper::resolveLine($sellerId, $variantId, $qty);
+            if (!$line['ok']) {
+                $results[] = ['index' => $idx, 'ok' => false, 'error' => $line['error']];
+                continue;
+            }
+
+            $cart = Cart::where('user_id', $user->id)
+                ->where('master_product_variant_id', $variantId)
+                ->where('seller_id', $sellerId)
+                ->first();
+            if (!$cart) {
+                $cart = new Cart();
+                $cart->user_id = $user->id;
+                $cart->product_id = $line['master_variant']->master_product_id;
+                $cart->product_variant_id = 0;
+                $cart->master_product_variant_id = $variantId;
+                $cart->seller_id = $sellerId;
+                $cart->save_for_later = 0;
+            }
+            $cart->seller_product_id = $line['seller_product']->id;
+            $cart->qty = $qty;
+            $cart->save();
+
+            $results[] = [
+                'index' => $idx,
+                'ok' => true,
+                'cart_id' => $cart->id,
+                'seller_id' => $sellerId,
+                'unit_price' => $line['unit_price'],
+            ];
+        }
+
+        return CommonHelper::responseWithData($results);
     }
 
     /**

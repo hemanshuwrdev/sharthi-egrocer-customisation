@@ -410,13 +410,17 @@ class SellerPosController extends Controller
         }
     }
 
+    /**
+     * Sarthi: edit an existing POS order on the master catalog.
+     * items[].product_variant_id refers to master_product_variants.id (same as placeOrder).
+     * Stock deltas are applied on seller_products via MasterCatalogOrderHelper.
+     */
     public function updateOrder(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|exists:pos_orders,id',
             'items' => 'required|array',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.product_variant_id' => 'required|exists:product_variants,id',
+            'items.*.product_variant_id' => 'required|exists:master_product_variants,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'payment_method' => 'required|in:cash,card,upi',
             'discount_amount' => 'nullable|numeric',
@@ -436,223 +440,101 @@ class SellerPosController extends Controller
             ], 422);
         }
 
+        $sellerId = auth()->user()->seller->id;
+
         DB::beginTransaction();
         try {
-            // Get the existing order
             $order = DB::table('pos_orders')->where('id', $request->order_id)->first();
-
             if (!$order) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Order not found'
-                ], 404);
+                return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+            }
+            if ($order->store_id != $sellerId) {
+                return response()->json(['status' => false, 'message' => 'Unauthorized access to this order'], 403);
             }
 
-            // Verify seller owns the order
-            if ($order->store_id != auth()->user()->seller->id) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unauthorized access to this order'
-                ], 403);
+            // Pre-resolve every new line so we fail before we touch anything.
+            $resolved = [];
+            foreach ($request->items as $idx => $item) {
+                $r = MasterCatalogOrderHelper::resolveLine(
+                    $sellerId,
+                    (int) $item['product_variant_id'],
+                    (float) $item['quantity']
+                );
+                if (!$r['ok']) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status' => false,
+                        'message' => __($r['error']) ?: $r['error'],
+                    ], 422);
+                }
+                $resolved[$idx] = $r;
             }
 
-            // Get existing order items
+            // Snapshot existing items keyed by master_product_variant_id so we can diff.
             $existingItems = DB::table('pos_order_items')
                 ->where('pos_order_id', $request->order_id)
                 ->get();
 
-            // Create composite keys for existing and new items (product_id + variant_id)
-            $existingItemsMap = [];
-            foreach ($existingItems as $item) {
-                $key = $item->product_id . '_' . $item->product_variant_id;
-                $existingItemsMap[$key] = $item;
+            $existingByVariant = [];
+            foreach ($existingItems as $row) {
+                $key = $row->master_product_variant_id ?: $row->product_variant_id;
+                $existingByVariant[$key] = $row;
             }
 
-            // Create a map of new items
-            $newItemsMap = [];
-            foreach ($request->items as $item) {
-                $key = $item['product_id'] . '_' . $item['product_variant_id'];
-                $newItemsMap[$key] = $item;
-            }
+            $incomingVariantIds = collect($request->items)
+                ->pluck('product_variant_id')
+                ->map(fn($v) => (int) $v)
+                ->all();
 
-            // Find keys to remove (in existing but not in new)
-            $keysToRemove = array_diff(array_keys($existingItemsMap), array_keys($newItemsMap));
-
-            // Step 1: Handle removed items - restore stock and delete from database
-            foreach ($keysToRemove as $key) {
-                $removedItem = $existingItemsMap[$key];
-
-                // Restore stock if variant exists
-                if ($removedItem->product_variant_id) {
-                    $productVariant = ProductVariant::with('product')->find($removedItem->product_variant_id);
-
-                    if ($productVariant && $productVariant->is_unlimited_stock != 1) {
-                        $product = $productVariant->product;
-
-                        if ($product) {
-                            // Restore stock based on product type
-                            if ($product->type == 'packet') {
-                                $newStock = $productVariant->stock + $removedItem->quantity;
-                                $productVariant->stock = $newStock;
-
-                                if ($productVariant->status == 0 && $newStock > 0) {
-                                    $productVariant->status = 1; // Set back to available
-                                }
-
-                                $productVariant->save();
-                            } else if ($product->type == 'loose') {
-                                $weightToRestore = $productVariant->measurement * $removedItem->quantity;
-                                $newStock = $productVariant->stock + $weightToRestore;
-
-                                $productVariant->stock = $newStock;
-
-                                if ($productVariant->status == 0 && $newStock > 0) {
-                                    $productVariant->status = 1; // Set back to available
-                                }
-
-                                $productVariant->save();
-
-                                // Update other variants with same stock unit
-                                ProductVariant::where("product_id", $product->id)
-                                    ->where("stock_unit_id", $productVariant->stock_unit_id)
-                                    ->where("id", '!=', $productVariant->id)
-                                    ->update([
-                                        'stock' => $newStock,
-                                        'status' => $newStock <= 0 ? 0 : 1
-                                    ]);
-                            }
-                        }
-                    }
-                }
-
-                // Delete the item from the order
-                $deleted = DB::table('pos_order_items')
-                    ->where('id', $removedItem->id)
-                    ->delete();
-            }
-
-            // Step 2: Process remaining items (update existing or add new)
-            foreach ($request->items as $item) {
-                $productId = $item['product_id'];
-                $productVariantId = $item['product_variant_id'];
-                $newQuantity = $item['quantity'];
-                $compositeKey = $productId . '_' . $productVariantId;
-
-                $productVariant = ProductVariant::with(['product'])->find($productVariantId);
-                if (!$productVariant || !$productVariant->product) {
+            // Step 1: remove dropped lines and restore stock to seller_products.
+            foreach ($existingByVariant as $variantKey => $existing) {
+                if (in_array((int) $variantKey, $incomingVariantIds, true)) {
                     continue;
                 }
+                if ($existing->seller_product_id) {
+                    MasterCatalogOrderHelper::decrementStock(
+                        $existing->seller_product_id,
+                        -1 * (float) $existing->quantity
+                    );
+                }
+                DB::table('pos_order_items')->where('id', $existing->id)->delete();
+            }
 
-                $product = $productVariant->product;
-                $price = CommonHelper::getSlabUnitPrice($productVariant->id, (int) $newQuantity);
-                $subtotal = $price * $newQuantity;
+            // Step 2: upsert remaining lines and adjust stock by delta.
+            foreach ($request->items as $idx => $item) {
+                $r = $resolved[$idx];
+                $sp = $r['seller_product'];
+                $mv = $r['master_variant'];
+                $qty = (float) $item['quantity'];
+                $price = $r['unit_price'];
+                $subtotal = $price * $qty;
+                $existing = $existingByVariant[$mv->id] ?? null;
 
-                // Find if this item (with same product AND variant) exists in the original order
-                $existingItem = isset($existingItemsMap[$compositeKey]) ? $existingItemsMap[$compositeKey] : null;
+                $payload = [
+                    'product_id' => $mv->master_product_id,
+                    'product_variant_id' => $mv->id,
+                    'master_product_variant_id' => $mv->id,
+                    'seller_product_id' => $sp->id,
+                    'quantity' => $qty,
+                    'unit_price' => $price,
+                    'total_price' => $subtotal,
+                    'slab_unit_price' => $r['slab'] ? $r['slab']['price'] : null,
+                    'slab_min_qty' => $r['slab']['min_qty'] ?? null,
+                    'slab_max_qty' => $r['slab']['max_qty'] ?? null,
+                    'updated_at' => now(),
+                ];
 
-                if ($existingItem) {
-                    // Item exists, update it and adjust stock
-                    $oldQuantity = $existingItem->quantity;
-                    $quantityDiff = $oldQuantity - $newQuantity; // positive means stock to add back
-
-                    // Update the item in database
-                    DB::table('pos_order_items')
-                        ->where('id', $existingItem->id)
-                        ->update([
-                            'product_variant_id' => $productVariantId,
-                            'quantity' => $newQuantity,
-                            'unit_price' => $price,
-                            'total_price' => $subtotal,
-                            'updated_at' => now()
-                        ]);
-
-                    // Adjust stock if quantity changed and not unlimited
-                    if ($quantityDiff != 0 && $productVariant->is_unlimited_stock != 1) {
-                        if ($product->type == 'packet') {
-                            // Add stock back or remove more stock
-                            $newStock = $productVariant->stock + $quantityDiff;
-                            $productVariant->stock = max(0, $newStock);
-
-                            // Update status based on stock
-                            if ($newStock <= 0) {
-                                $productVariant->status = 0; // Sold out
-                            } else if ($productVariant->status == 0 && $newStock > 0) {
-                                $productVariant->status = 1; // Available
-                            }
-
-                            $productVariant->save();
-                        } else if ($product->type == 'loose') {
-                            // For loose products, adjust by weight
-                            $weightAdjustment = $productVariant->measurement * $quantityDiff;
-                            $newStock = $productVariant->stock + $weightAdjustment;
-                            $productVariant->stock = max(0, $newStock);
-
-                            // Update status based on stock
-                            if ($newStock <= 0) {
-                                $productVariant->status = 0; // Sold out
-                            } else if ($productVariant->status == 0 && $newStock > 0) {
-                                $productVariant->status = 1; // Available
-                            }
-
-                            $productVariant->save();
-
-                            // Update other variants with same stock unit
-                            ProductVariant::where("product_id", $product->id)
-                                ->where("stock_unit_id", $productVariant->stock_unit_id)
-                                ->where("id", '!=', $productVariant->id)
-                                ->update([
-                                    'stock' => max(0, $newStock),
-                                    'status' => $newStock <= 0 ? 0 : 1
-                                ]);
-                        }
+                if ($existing) {
+                    $delta = $qty - (float) $existing->quantity;
+                    if ($delta != 0) {
+                        MasterCatalogOrderHelper::decrementStock($sp->id, $delta);
                     }
+                    DB::table('pos_order_items')->where('id', $existing->id)->update($payload);
                 } else {
-                    // Add new item to order
-                    DB::table('pos_order_items')->insert([
-                        'pos_order_id' => $request->order_id,
-                        'product_id' => $productId,
-                        'product_variant_id' => $productVariantId,
-                        'quantity' => $newQuantity,
-                        'unit_price' => $price,
-                        'total_price' => $subtotal,
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
-
-                    // Reduce stock for new item (if not unlimited)
-                    if ($productVariant->is_unlimited_stock != 1) {
-                        if ($product->type == 'packet') {
-                            // For packet products, decrease stock by quantity
-                            $newStock = max(0, $productVariant->stock - $newQuantity);
-                            $productVariant->stock = $newStock;
-
-                            if ($newStock <= 0) {
-                                $productVariant->status = 0; // Sold out
-                            }
-
-                            $productVariant->save();
-                        } else if ($product->type == 'loose') {
-                            // For loose products, decrease stock by weight
-                            $weightToReduce = $productVariant->measurement * $newQuantity;
-                            $newStock = max(0, $productVariant->stock - $weightToReduce);
-
-                            $productVariant->stock = $newStock;
-                            if ($newStock <= 0) {
-                                $productVariant->status = 0; // Sold out
-                            }
-
-                            $productVariant->save();
-
-                            // Update other variants with same stock unit
-                            ProductVariant::where("product_id", $product->id)
-                                ->where("stock_unit_id", $productVariant->stock_unit_id)
-                                ->where("id", '!=', $productVariant->id)
-                                ->update([
-                                    'stock' => $newStock,
-                                    'status' => $newStock <= 0 ? 0 : 1
-                                ]);
-                        }
-                    }
+                    $payload['pos_order_id'] = $request->order_id;
+                    $payload['created_at'] = now();
+                    DB::table('pos_order_items')->insert($payload);
+                    MasterCatalogOrderHelper::decrementStock($sp->id, $qty);
                 }
             }
 

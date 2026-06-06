@@ -4083,19 +4083,18 @@ class CommonHelper
 
     public static function productAverageRating($product_id)
     {
-        $product_ratings = Product::with('ratings')->find($product_id);
+        // Sarthi: product_id now refers to master_products.id; count straight off product_ratings
+        // without joining Product so it works regardless of catalog backing table.
+        $ratings = ProductRating::where('product_id', $product_id)->get(['rate']);
+        $total = $ratings->count();
 
-        // Calculate the average rating
-        $averageRating = (isset($product_ratings) && $product_ratings->ratings->count() > 0) ? $product_ratings->ratings->avg('rate') : 0;
-
-        // Count the number of ratings
-        $data['rating_count'] = isset($product_ratings) ? $product_ratings->ratings->count() : 0;
-        $data['average_rating'] = $averageRating;
-        $data['one_star_rating'] = ProductRating::where('product_id', $product_id)->where('rate', 1)->count() ?? 0;
-        $data['two_star_rating'] = ProductRating::where('product_id', $product_id)->where('rate', 2)->count() ?? 0;
-        $data['three_star_rating'] = ProductRating::where('product_id', $product_id)->where('rate', 3)->count() ?? 0;
-        $data['four_star_rating'] = ProductRating::where('product_id', $product_id)->where('rate', 4)->count() ?? 0;
-        $data['five_star_rating'] = ProductRating::where('product_id', $product_id)->where('rate', 5)->count() ?? 0;
+        $data = [];
+        $data['rating_count'] = $total;
+        $data['average_rating'] = $total ? (float) $ratings->avg('rate') : 0;
+        for ($i = 1; $i <= 5; $i++) {
+            $data[['', 'one', 'two', 'three', 'four', 'five'][$i] . '_star_rating']
+                = $ratings->where('rate', $i)->count();
+        }
         return $data;
     }
 

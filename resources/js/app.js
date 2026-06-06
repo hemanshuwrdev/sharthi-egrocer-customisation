@@ -61,6 +61,7 @@ Vue.use(VueGoogleMaps, {
         key: window.GoogleMapApiKey || window.MapApiKey || decryptedMapKey || decryptedKey, // Use unencrypted map API key first, then fallback to place API key
         libraries: 'places,drawing',
         v: '3.64',
+
     },
 })
 
