@@ -8,7 +8,7 @@
                 </h1>
                 <p class="text-muted mb-0">{{ __('track_and_dispatch_warehouse_loading_slips') }}</p>
             </div>
-            <div class="col-auto">
+            <div class="col-auto" v-if="isSeller">
                 <router-link :to="urlPrefix + '/loading_slips/create'" class="btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill">
                     <i class="fa fa-plus-circle mr-2"></i>{{ __('plan_new_slip') }}
                 </router-link>
@@ -85,7 +85,7 @@
                                             <i class="fa fa-eye"></i>
                                         </router-link>
                                         
-                                        <button v-if="slip.status == 0" @click="dispatchSlip(slip.id)" class="btn btn-sm btn-soft-success" :title="__('dispatch_out_for_delivery')">
+                                        <button v-if="slip.status == 0 && isSeller" @click="dispatchSlip(slip.id)" class="btn btn-sm btn-soft-success" :title="__('dispatch_out_for_delivery')">
                                             <i class="fa fa-send"></i> {{ __('dispatch') }}
                                         </button>
 

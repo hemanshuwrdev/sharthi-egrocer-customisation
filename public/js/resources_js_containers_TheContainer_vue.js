@@ -548,6 +548,27 @@ __webpack_require__.r(__webpack_exports__);
       //         }
       //     ]
       // },
+
+      // {
+      //     name: 'Logistics',
+      //     icon: 'truck',
+      //     permission: null,
+      //     submenu: [
+      //         {
+      //             name: 'Manage Vehicles',
+      //             icon: 'grid-fill',
+      //             url: '/vehicles',
+      //             permission: 'delivery_boy_list',
+      //         },
+      //         {
+      //             name: 'Manage Loading Slips',
+      //             icon: 'grid-fill',
+      //             url: '/loading_slips',
+      //             permission: 'delivery_boy_list',
+      //         }
+      //     ]
+      // },
+
       {
         name: __('notifications'),
         icon: 'share-square',

@@ -104,6 +104,10 @@ class LoadingSlipsApiController extends Controller
 
     public function save(Request $request)
     {
+        if (!auth()->user() || !auth()->user()->seller) {
+            return \App\Helpers\CommonHelper::responseError('Only distributors (sellers) can create a loading slip.');
+        }
+
         $validator = Validator::make($request->all(), [
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:delivery_boys,id',
@@ -268,6 +272,10 @@ class LoadingSlipsApiController extends Controller
 
     public function dispatch(Request $request)
     {
+        if (!auth()->user() || !auth()->user()->seller) {
+            return \App\Helpers\CommonHelper::responseError('Only distributors (sellers) can dispatch a loading slip.');
+        }
+
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:loading_slips,id',
         ]);

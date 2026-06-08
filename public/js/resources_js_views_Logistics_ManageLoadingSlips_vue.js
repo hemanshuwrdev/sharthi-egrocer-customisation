@@ -373,25 +373,27 @@ var render = function () {
         ]),
       ]),
       _vm._v(" "),
-      _c(
-        "div",
-        { staticClass: "col-auto" },
-        [
-          _c(
-            "router-link",
-            {
-              staticClass:
-                "btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill",
-              attrs: { to: _vm.urlPrefix + "/loading_slips/create" },
-            },
+      _vm.isSeller
+        ? _c(
+            "div",
+            { staticClass: "col-auto" },
             [
-              _c("i", { staticClass: "fa fa-plus-circle mr-2" }),
-              _vm._v(_vm._s(_vm.__("plan_new_slip")) + "\n            "),
-            ]
-          ),
-        ],
-        1
-      ),
+              _c(
+                "router-link",
+                {
+                  staticClass:
+                    "btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill",
+                  attrs: { to: _vm.urlPrefix + "/loading_slips/create" },
+                },
+                [
+                  _c("i", { staticClass: "fa fa-plus-circle mr-2" }),
+                  _vm._v(_vm._s(_vm.__("plan_new_slip")) + "\n            "),
+                ]
+              ),
+            ],
+            1
+          )
+        : _vm._e(),
     ]),
     _vm._v(" "),
     _c(
@@ -714,7 +716,7 @@ var render = function () {
                                   [_c("i", { staticClass: "fa fa-eye" })]
                                 ),
                                 _vm._v(" "),
-                                slip.status == 0
+                                slip.status == 0 && _vm.isSeller
                                   ? _c(
                                       "button",
                                       {

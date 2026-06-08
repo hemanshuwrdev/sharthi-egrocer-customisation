@@ -450,7 +450,7 @@ var render = function () {
                 ]
               ),
               _vm._v(" "),
-              _vm.slip.status == 0
+              _vm.isSeller && _vm.slip.status == 0
                 ? _c(
                     "button",
                     {

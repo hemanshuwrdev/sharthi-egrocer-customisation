@@ -15,7 +15,7 @@
                 <button @click="printSlip" class="btn btn-secondary font-weight-bold rounded-pill">
                     <i class="fa fa-print mr-2"></i>{{ __('print_slip') }}
                 </button>
-                <button v-if="slip.status == 0" @click="dispatchSlip" class="btn btn-success font-weight-bold rounded-pill">
+                <button v-if="isSeller && slip.status == 0" @click="dispatchSlip" class="btn btn-success font-weight-bold rounded-pill">
                     <i class="fa fa-send mr-2"></i>{{ __('dispatch_run') }}
                 </button>
             </div>
