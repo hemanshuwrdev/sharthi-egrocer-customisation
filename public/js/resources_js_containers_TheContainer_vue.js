@@ -521,6 +521,26 @@ __webpack_require__.r(__webpack_exports__);
           permission: 'salary_list'
         }]
       },
+      // {
+      //     name: 'Logistics',
+      //     icon: 'truck',
+      //     permission: null,
+      //     submenu: [
+      //         {
+      //             name: 'Manage Vehicles',
+      //             icon: 'grid-fill',
+      //             url: '/vehicles',
+      //             permission: 'delivery_boy_list',
+      //         },
+      //         {
+      //             name: 'Manage Loading Slips',
+      //             icon: 'grid-fill',
+      //             url: '/loading_slips',
+      //             permission: 'delivery_boy_list',
+      //         }
+      //     ]
+      // },
+
       // Hidden from super admin sidebar — Vehicles + Loading Slips live under the
       // distributor panel; super admin should not access them. Uncomment to restore.
       // {

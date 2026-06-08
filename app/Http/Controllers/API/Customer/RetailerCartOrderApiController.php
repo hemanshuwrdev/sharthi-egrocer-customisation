@@ -442,8 +442,13 @@ class RetailerCartOrderApiController extends Controller
                         'delivery_time' => $request->delivery_time ?? '',
                         'delivery_date' => $deliveryDate,
 
+
                         'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
                         'active_status' => (string) \App\Models\OrderStatusList::$received,
+
+                        // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
+                        // 'active_status' => OrderStatusList::$received,
+
 
                         // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
                         // 'active_status' => OrderStatusList::$received,
@@ -479,8 +484,10 @@ class RetailerCartOrderApiController extends Controller
                             'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
                             'active_status' => (string) \App\Models\OrderStatusList::$received,
 
+
                             // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
                             // 'active_status' => OrderStatusList::$received,
+
 
                             'seller_id' => $sellerId,
                             'slab_unit_price' => $r['slab'] ? $r['slab']['price'] : null,
