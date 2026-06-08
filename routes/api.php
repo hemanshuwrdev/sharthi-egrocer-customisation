@@ -477,6 +477,8 @@ Route::middleware('auth:api')->group(function () {
 
         Route::post('/update_items_status', [\App\Http\Controllers\API\OrdersApiController::class, 'updateItemsStatus'])->name('orders.update_items_status');
         Route::post('/cancel_order_item', [\App\Http\Controllers\API\OrdersApiController::class, 'cancelOrderItem'])->name('orders.cancel_order_item');
+        // Sarthi: super-admin edits a retailer's placed order (qty / price per line) + notifies retailer
+        Route::post('/update_items', [\App\Http\Controllers\API\OrdersApiController::class, 'updateOrderItems'])->name('orders.update_items');
     });
 
     Route::group(['prefix' => 'role'], function () {
@@ -576,6 +578,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('cancel_order_item', [\App\Http\Controllers\API\OrdersApiController::class, 'cancelOrderItem'])->name('orders.cancel_order_item');
         Route::post('update_status', [\App\Http\Controllers\API\OrdersApiController::class, 'updateStatus'])->name('seller.update_status');
         Route::post('assign_delivery_boy', [\App\Http\Controllers\API\OrdersApiController::class, 'assignDeliveryBoy'])->name('seller.assign_delivery_boy');
+        // Sarthi: distributor edits qty/price of a retailer-placed order, notifies retailer
+        Route::post('orders/update_items', [\App\Http\Controllers\API\OrdersApiController::class, 'updateOrderItems'])->name('seller.orders.update_items');
 
         Route::get('order_statuses', [\App\Http\Controllers\SellerController::class, 'getOrderStatus']);
         Route::get('self_pickup_order_statuses', [\App\Http\Controllers\API\OrderStatusApiController::class, 'getSelfPickupOrderStatus']);

@@ -19,6 +19,75 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_3__);
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -444,7 +513,13 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       itemCurrentPage: 1,
       itemPerPage: this.$perPage,
       itemPageOptions: this.$pageOptions,
-      search: ""
+      search: "",
+      // Sarthi: distributor edits qty on a received order from the list page
+      editOrderModalShow: false,
+      editingOrderId: null,
+      editingItems: [],
+      editingOrderItemsLoading: false,
+      isSavingEdit: false
     };
   },
   computed: {
@@ -458,6 +533,14 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           value: f.key
         };
       });
+    },
+    editingItemsTotal: function editingItemsTotal() {
+      var t = this.editingItems.reduce(function (sum, r) {
+        var q = parseFloat(r.quantity) || 0;
+        var p = parseFloat(r.price) || 0;
+        return sum + q * p;
+      }, 0);
+      return t.toFixed(2);
     }
   },
   mounted: function mounted() {
@@ -485,6 +568,117 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     }
   },
   methods: {
+    // Sarthi: distributor edits qty on a `received` order (active_status == 2) from the list
+    canEditOrder: function canEditOrder(orderRow) {
+      if (!orderRow || orderRow.active_status == null) return false;
+      return parseInt(orderRow.active_status) === 2;
+    },
+    editingRowSubtotal: function editingRowSubtotal(row) {
+      var q = parseFloat(row.quantity) || 0;
+      var p = parseFloat(row.price) || 0;
+      return (q * p).toFixed(2);
+    },
+    openEditOrderItems: function openEditOrderItems(orderRow) {
+      var _this = this;
+      this.editingOrderId = orderRow.id;
+      this.editingItems = [];
+      this.editOrderModalShow = true;
+
+      // If items aren't loaded yet (row not expanded), fetch them
+      var seed = function seed(items) {
+        _this.editingItems = items.filter(function (i) {
+          return parseInt(i.active_status) !== 7 && parseInt(i.active_status) !== 8;
+        }).map(function (i) {
+          return {
+            order_item_id: i.id,
+            product_name: i.product_name,
+            variant_name: i.variant_name,
+            price: parseFloat(i.price) || 0,
+            original_quantity: parseFloat(i.quantity) || 0,
+            quantity: parseFloat(i.quantity) || 0
+          };
+        });
+      };
+      if (orderRow.order_items && orderRow.order_items.length > 0) {
+        seed(orderRow.order_items);
+        return;
+      }
+      this.editingOrderItemsLoading = true;
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/orders/view/' + orderRow.id).then(function (response) {
+        _this.editingOrderItemsLoading = false;
+        var data = response.data;
+        if (data.status === 1) {
+          seed(data.data.order_items || []);
+        } else {
+          _this.showError(data.message);
+          _this.editOrderModalShow = false;
+        }
+      })["catch"](function () {
+        _this.editingOrderItemsLoading = false;
+        _this.showError('Failed to load order items');
+        _this.editOrderModalShow = false;
+      });
+    },
+    onEditOrderModalHide: function onEditOrderModalHide() {
+      this.editingItems = [];
+      this.editingOrderId = null;
+    },
+    saveEditedOrderItems: function saveEditedOrderItems() {
+      var _this2 = this;
+      var changed = this.editingItems.filter(function (r) {
+        return parseFloat(r.quantity) !== r.original_quantity;
+      }).map(function (r) {
+        return {
+          order_item_id: r.order_item_id,
+          quantity: parseFloat(r.quantity)
+          // price intentionally omitted — distributor can't change price
+        };
+      });
+      if (changed.length === 0) {
+        this.showWarning(this.__('no_changes_to_save'));
+        return;
+      }
+      var _iterator = _createForOfIteratorHelper(changed),
+        _step;
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var r = _step.value;
+          if (isNaN(r.quantity) || r.quantity < 0) {
+            this.showError(this.__('invalid_qty'));
+            return;
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+      this.isSavingEdit = true;
+      var postData = {
+        order_id: this.editingOrderId,
+        items: changed
+      };
+      axios__WEBPACK_IMPORTED_MODULE_3___default().post(this.$apiUrl + '/orders/update_items', postData).then(function (response) {
+        _this2.isSavingEdit = false;
+        var data = response.data;
+        if (data.status === 1) {
+          _this2.editOrderModalShow = false;
+          _this2.editingItems = [];
+          _this2.editingOrderId = null;
+          _this2.showMessage('success', data.message);
+          _this2.getOrders();
+        } else {
+          _this2.showError(data.message);
+        }
+      })["catch"](function (error) {
+        _this2.isSavingEdit = false;
+        if (error.response && error.response.data && error.response.data.message) {
+          _this2.showError(error.response.data.message);
+        } else {
+          _this2.showError('Something went wrong!');
+        }
+      });
+    },
     /**
      * Status name for dropdown. API returns status_name as object by lang code { en: "...", hi: "..." }.
      * Picks current app locale; fallback to status.status.
@@ -555,19 +749,19 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       return key ? this.__(key) : String(val);
     },
     getOrderStatus: function getOrderStatus() {
-      var _this = this;
+      var _this3 = this;
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
-        _this.isLoading = false;
-        _this.statuses = response.data.data;
+        _this3.isLoading = false;
+        _this3.statuses = response.data.data;
       })["catch"](function (error) {
         vm.isLoading = false;
         if (error.request.statusText) {
-          _this.showError(error.request.statusText);
+          _this3.showError(error.request.statusText);
         } else if (error.message) {
-          _this.showError(error.message);
+          _this3.showError(error.message);
         } else {
-          _this.showError("Something went wrong!");
+          _this3.showError("Something went wrong!");
         }
       });
     },
@@ -623,7 +817,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       this.getOrders();
     },
     getOrders: function getOrders() {
-      var _this2 = this;
+      var _this4 = this;
       this.isLoading = true;
       var offset = (this.currentPage - 1) * this.perPage;
       var item_offset = (this.itemCurrentPage - 1) * this.itemPerPage;
@@ -642,45 +836,45 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$sellerApiUrl + '/orders', {
         params: param
       }).then(function (response) {
-        _this2.isLoading = false;
-        _this2.orders = response.data.data.orders;
-        _this2.totalOrderRows = response.data.total;
-        _this2.total_amount = _this2.orders.map(function (item) {
+        _this4.isLoading = false;
+        _this4.orders = response.data.data.orders;
+        _this4.totalOrderRows = response.data.total;
+        _this4.total_amount = _this4.orders.map(function (item) {
           return parseFloat(item.total) || 0;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this2.delivery_charge = _this2.orders.map(function (item) {
+        _this4.delivery_charge = _this4.orders.map(function (item) {
           return parseFloat(item.delivery_charge) || 0;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this2.remaining_final = _this2.orders.map(function (item) {
+        _this4.remaining_final = _this4.orders.map(function (item) {
           return parseFloat(item.remaining_final) || 0;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this2.order_items = response.data.data.order_items;
-        _this2.totalOrderItemRows = response.data.data.total_order_item;
-        _this2.order_items_total_sum = _this2.order_items.map(function (item) {
+        _this4.order_items = response.data.data.order_items;
+        _this4.totalOrderItemRows = response.data.data.total_order_item;
+        _this4.order_items_total_sum = _this4.order_items.map(function (item) {
           return item.total;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this2.orders.forEach(function (order) {
-          _this2.$set(order, 'order_items', []);
-          _this2.$set(order, 'itemsLoading', false);
+        _this4.orders.forEach(function (order) {
+          _this4.$set(order, 'order_items', []);
+          _this4.$set(order, 'itemsLoading', false);
         });
       });
     },
     toggleOrder: function toggleOrder(row) {
-      var _this3 = this;
+      var _this5 = this;
       if (row.detailsShowing) {
         row.toggleDetails();
       } else {
         this.orders.forEach(function (o) {
           if (o.id !== row.item.id) {
-            _this3.$set(o, '_showDetails', false);
+            _this5.$set(o, '_showDetails', false);
           }
         });
         if (row.item.order_items.length === 0) {
@@ -694,7 +888,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             row.item.itemsLoading = false;
           })["catch"](function (error) {
             row.item.itemsLoading = false;
-            _this3.showError(error.message || "Failed to fetch order items");
+            _this5.showError(error.message || "Failed to fetch order items");
           });
         }
         row.toggleDetails();
@@ -969,1175 +1163,1524 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "page-title" }, [
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-            _c("h3", [_vm._v(_vm._s(_vm.__("order_list")))]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
+    _c(
+      "div",
+      { staticClass: "page-heading" },
+      [
+        _c("div", { staticClass: "page-title" }, [
+          _c("div", { staticClass: "row" }, [
             _c(
-              "nav",
-              {
-                staticClass: "breadcrumb-header float-start float-lg-end",
-                attrs: { "aria-label": "breadcrumb" },
-              },
+              "div",
+              { staticClass: "col-12 col-md-6 order-md-1 order-last" },
+              [_c("h3", [_vm._v(_vm._s(_vm.__("order_list")))])]
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "col-12 col-md-6 order-md-2 order-first" },
               [
-                _c("ol", { staticClass: "breadcrumb" }, [
-                  _c(
-                    "li",
-                    { staticClass: "breadcrumb-item" },
-                    [
+                _c(
+                  "nav",
+                  {
+                    staticClass: "breadcrumb-header float-start float-lg-end",
+                    attrs: { "aria-label": "breadcrumb" },
+                  },
+                  [
+                    _c("ol", { staticClass: "breadcrumb" }, [
                       _c(
-                        "router-link",
-                        { attrs: { to: "/seller/dashboard" } },
-                        [_vm._v(_vm._s(_vm.__("dashboard")))]
+                        "li",
+                        { staticClass: "breadcrumb-item" },
+                        [
+                          _c(
+                            "router-link",
+                            { attrs: { to: "/seller/dashboard" } },
+                            [_vm._v(_vm._s(_vm.__("dashboard")))]
+                          ),
+                        ],
+                        1
                       ),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "li",
-                    {
-                      staticClass: "breadcrumb-item active",
-                      attrs: { "aria-current": "page" },
-                    },
-                    [_vm._v(_vm._s(_vm.__("order_list")))]
-                  ),
-                ]),
+                      _vm._v(" "),
+                      _c(
+                        "li",
+                        {
+                          staticClass: "breadcrumb-item active",
+                          attrs: { "aria-current": "page" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("order_list")))]
+                      ),
+                    ]),
+                  ]
+                ),
               ]
             ),
           ]),
         ]),
-      ]),
-      _vm._v(" "),
-      _c("section", { staticClass: "section" }, [
-        _c("div", { staticClass: "card" }, [
-          _c("div", { staticClass: "card-header" }, [
-            _c("h4", { staticClass: "card-title" }, [
-              _vm._v(_vm._s(_vm.__("latest_orders"))),
+        _vm._v(" "),
+        _c("section", { staticClass: "section" }, [
+          _c("div", { staticClass: "card" }, [
+            _c("div", { staticClass: "card-header" }, [
+              _c("h4", { staticClass: "card-title" }, [
+                _vm._v(_vm._s(_vm.__("latest_orders"))),
+              ]),
             ]),
-          ]),
-          _vm._v(" "),
-          _c(
-            "div",
-            { staticClass: "card-body" },
-            [
-              _c(
-                "div",
-                { staticClass: "row ps-3 mb-2" },
-                [
-                  _c("b-col", { attrs: { md: "3" } }, [
-                    _c("h6", { staticClass: "box-title" }, [
-                      _vm._v(_vm._s(_vm.__("from_and_to_date"))),
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass:
-                          "d-flex justify-content-center align-items-center",
-                      },
-                      [
-                        _c("date-range-picker", {
-                          attrs: {
-                            autoApply: false,
-                            showDropdowns: true,
-                            maxDate: _vm.maxDate,
-                            "locale-data": _vm.dateRangePickerLocale,
-                            ranges: _vm.dateRangePickerRanges,
-                            "append-to-body": true,
-                            opens: "right",
-                          },
-                          on: { update: _vm.handleFilterChange },
-                          model: {
-                            value: _vm.dateRange,
-                            callback: function ($$v) {
-                              _vm.dateRange = $$v
-                            },
-                            expression: "dateRange",
-                          },
-                        }),
-                        _vm._v(" "),
-                        _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-sm btn-danger ml-1",
-                            on: {
-                              click: function ($event) {
-                                return _vm.clearDate()
-                              },
-                            },
-                          },
-                          [
-                            _vm._v(
-                              "\n                                    " +
-                                _vm._s(_vm.__("clear")) +
-                                "\n                                "
-                            ),
-                          ]
-                        ),
-                      ],
-                      1
-                    ),
-                  ]),
-                  _vm._v(" "),
-                  _c("b-col", { attrs: { md: "2" } }, [
-                    _c(
-                      "h6",
-                      { staticClass: "box-title", attrs: { for: "status" } },
-                      [_vm._v(_vm._s(_vm.__("status")))]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "select",
-                      {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.status,
-                            expression: "status",
-                          },
-                        ],
-                        staticClass: "form-control form-select",
-                        attrs: { id: "status", name: "status" },
-                        on: {
-                          change: [
-                            function ($event) {
-                              var $$selectedVal = Array.prototype.filter
-                                .call($event.target.options, function (o) {
-                                  return o.selected
-                                })
-                                .map(function (o) {
-                                  var val = "_value" in o ? o._value : o.value
-                                  return val
-                                })
-                              _vm.status = $event.target.multiple
-                                ? $$selectedVal
-                                : $$selectedVal[0]
-                            },
-                            function ($event) {
-                              return _vm.handleFilterChange()
-                            },
-                          ],
-                        },
-                      },
-                      [
-                        _c("option", { attrs: { value: "" } }, [
-                          _vm._v(_vm._s(_vm.__("all_orders"))),
-                        ]),
-                        _vm._v(" "),
-                        _vm._l(_vm.statuses, function (status) {
-                          return _c(
-                            "option",
-                            { key: status.id, domProps: { value: status.id } },
-                            [_vm._v(_vm._s(_vm.getStatusDisplayName(status)))]
-                          )
-                        }),
-                      ],
-                      2
-                    ),
-                  ]),
-                  _vm._v(" "),
-                  _c("b-col", { attrs: { md: "3" } }, [
-                    _c("h6", { staticClass: "box-title" }, [
-                      _vm._v(_vm._s(_vm.__("from_and_to_delivery_date"))),
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass:
-                          "d-flex justify-content-center align-items-center",
-                      },
-                      [
-                        _c("date-range-picker", {
-                          attrs: {
-                            autoApply: false,
-                            showDropdowns: true,
-                            maxDate: _vm.maxDate,
-                            ranges: _vm.customRanges,
-                            "append-to-body": true,
-                            opens: "left",
-                          },
-                          on: { update: _vm.handleFilterChange },
-                          model: {
-                            value: _vm.deliveryDateRange,
-                            callback: function ($$v) {
-                              _vm.deliveryDateRange = $$v
-                            },
-                            expression: "deliveryDateRange",
-                          },
-                        }),
-                        _vm._v(" "),
-                        _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-sm btn-danger ml-1",
-                            on: {
-                              click: function ($event) {
-                                return _vm.clearDeliveryDate()
-                              },
-                            },
-                          },
-                          [
-                            _vm._v(
-                              "\n                                    " +
-                                _vm._s(_vm.__("clear")) +
-                                "\n                                "
-                            ),
-                          ]
-                        ),
-                      ],
-                      1
-                    ),
-                  ]),
-                  _vm._v(" "),
-                  _c(
-                    "b-col",
-                    { attrs: { md: "2" } },
-                    [
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "card-body" },
+              [
+                _c(
+                  "div",
+                  { staticClass: "row ps-3 mb-2" },
+                  [
+                    _c("b-col", { attrs: { md: "3" } }, [
                       _c("h6", { staticClass: "box-title" }, [
-                        _vm._v(_vm._s(_vm.__("search"))),
+                        _vm._v(_vm._s(_vm.__("from_and_to_date"))),
                       ]),
                       _vm._v(" "),
-                      _c("b-form-input", {
-                        attrs: {
-                          id: "filter-input",
-                          type: "search",
-                          placeholder: _vm.__("search"),
-                        },
-                        on: {
-                          input: function ($event) {
-                            return _vm.handleFilterChange()
-                          },
-                        },
-                        model: {
-                          value: _vm.search,
-                          callback: function ($$v) {
-                            _vm.search = $$v
-                          },
-                          expression: "search",
-                        },
-                      }),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-col",
-                    { staticClass: "text-center", attrs: { md: "1" } },
-                    [
                       _c(
-                        "button",
+                        "div",
+                        {
+                          staticClass:
+                            "d-flex justify-content-center align-items-center",
+                        },
+                        [
+                          _c("date-range-picker", {
+                            attrs: {
+                              autoApply: false,
+                              showDropdowns: true,
+                              maxDate: _vm.maxDate,
+                              "locale-data": _vm.dateRangePickerLocale,
+                              ranges: _vm.dateRangePickerRanges,
+                              "append-to-body": true,
+                              opens: "right",
+                            },
+                            on: { update: _vm.handleFilterChange },
+                            model: {
+                              value: _vm.dateRange,
+                              callback: function ($$v) {
+                                _vm.dateRange = $$v
+                              },
+                              expression: "dateRange",
+                            },
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-sm btn-danger ml-1",
+                              on: {
+                                click: function ($event) {
+                                  return _vm.clearDate()
+                                },
+                              },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(_vm.__("clear")) +
+                                  "\n                                "
+                              ),
+                            ]
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("b-col", { attrs: { md: "2" } }, [
+                      _c(
+                        "h6",
+                        { staticClass: "box-title", attrs: { for: "status" } },
+                        [_vm._v(_vm._s(_vm.__("status")))]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "select",
                         {
                           directives: [
                             {
-                              name: "b-tooltip",
-                              rawName: "v-b-tooltip.hover",
-                              modifiers: { hover: true },
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.status,
+                              expression: "status",
                             },
                           ],
-                          staticClass: "btn btn-primary btn_refresh",
-                          attrs: { title: _vm.__("refresh") },
+                          staticClass: "form-control form-select",
+                          attrs: { id: "status", name: "status" },
                           on: {
-                            click: function ($event) {
-                              return _vm.getOrders()
-                            },
+                            change: [
+                              function ($event) {
+                                var $$selectedVal = Array.prototype.filter
+                                  .call($event.target.options, function (o) {
+                                    return o.selected
+                                  })
+                                  .map(function (o) {
+                                    var val = "_value" in o ? o._value : o.value
+                                    return val
+                                  })
+                                _vm.status = $event.target.multiple
+                                  ? $$selectedVal
+                                  : $$selectedVal[0]
+                              },
+                              function ($event) {
+                                return _vm.handleFilterChange()
+                              },
+                            ],
                           },
                         },
                         [
-                          _c("i", {
-                            staticClass: "fa fa-refresh",
-                            attrs: { "aria-hidden": "true" },
-                          }),
-                        ]
-                      ),
-                    ]
-                  ),
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "b-tabs",
-                {
-                  attrs: {
-                    pills: "",
-                    "active-nav-item-class": "font-weight-bold text-uppercase",
-                  },
-                },
-                [
-                  _c(
-                    "b-tab",
-                    {
-                      attrs: { title: _vm.__("orders"), active: "" },
-                      on: { click: _vm.getOrders },
-                    },
-                    [
-                      _c(
-                        "div",
-                        { staticClass: "table-responsive mt-3" },
-                        [
-                          _c("b-table", {
-                            attrs: {
-                              items: _vm.orders,
-                              fields: _vm.orderFields,
-                              filter: _vm.filter,
-                              "filter-included-fields": _vm.filterOn,
-                              "sort-by": _vm.sortBy,
-                              "sort-desc": _vm.sortDesc,
-                              "sort-direction": _vm.sortDirection,
-                              bordered: true,
-                              busy: _vm.isLoading,
-                              stacked: "md",
-                              "show-empty": "",
-                              small: "",
-                              "show-details": "",
-                            },
-                            on: {
-                              "update:sortBy": function ($event) {
-                                _vm.sortBy = $event
-                              },
-                              "update:sort-by": function ($event) {
-                                _vm.sortBy = $event
-                              },
-                              "update:sortDesc": function ($event) {
-                                _vm.sortDesc = $event
-                              },
-                              "update:sort-desc": function ($event) {
-                                _vm.sortDesc = $event
-                              },
-                            },
-                            scopedSlots: _vm._u([
+                          _c("option", { attrs: { value: "" } }, [
+                            _vm._v(_vm._s(_vm.__("all_orders"))),
+                          ]),
+                          _vm._v(" "),
+                          _vm._l(_vm.statuses, function (status) {
+                            return _c(
+                              "option",
                               {
-                                key: "table-busy",
-                                fn: function () {
-                                  return [
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "text-center text-black my-2",
-                                      },
-                                      [
-                                        _c("b-spinner", {
-                                          staticClass: "align-middle",
-                                        }),
-                                        _vm._v(" "),
-                                        _c("strong", [
-                                          _vm._v(
-                                            _vm._s(_vm.__("loading")) + "..."
-                                          ),
-                                        ]),
-                                      ],
-                                      1
-                                    ),
-                                  ]
-                                },
-                                proxy: true,
+                                key: status.id,
+                                domProps: { value: status.id },
                               },
-                              {
-                                key: "cell(id)",
-                                fn: function (row) {
-                                  return [
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "d-flex align-items-center",
-                                      },
-                                      [
-                                        _c("i", {
-                                          class: row.detailsShowing
-                                            ? "fa fa-chevron-down"
-                                            : "fa fa-chevron-right",
-                                          staticStyle: {
-                                            cursor: "pointer",
-                                            "margin-right": "10px",
-                                          },
-                                          on: {
-                                            click: function ($event) {
-                                              return _vm.toggleOrder(row)
-                                            },
-                                          },
-                                        }),
-                                        _vm._v(
-                                          "\n                                            " +
-                                            _vm._s(row.item.id) +
-                                            "\n                                        "
-                                        ),
-                                      ]
-                                    ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "cell(mobile)",
-                                fn: function (row) {
-                                  return [
-                                    _vm._v(
-                                      "\n                                        " +
-                                        _vm._s(
-                                          _vm._f("mobileMask")(row.item.mobile)
-                                        ) +
-                                        "\n                                    "
-                                    ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "cell(active_status)",
-                                fn: function (row) {
-                                  return [
-                                    _c(
-                                      "span",
-                                      {
-                                        staticClass: "badge",
-                                        class: _vm.getStatusBadgeClass(
-                                          row.item.active_status
-                                        ),
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                            " +
-                                            _vm._s(
-                                              _vm.getStatusLabelById(
-                                                row.item.active_status
-                                              )
-                                            ) +
-                                            "\n                                        "
-                                        ),
-                                      ]
-                                    ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "cell(actions)",
-                                fn: function (row) {
-                                  return [
-                                    _c(
-                                      "router-link",
-                                      {
-                                        directives: [
-                                          {
-                                            name: "b-tooltip",
-                                            rawName: "v-b-tooltip.hover",
-                                            modifiers: { hover: true },
-                                          },
-                                        ],
-                                        staticClass: "btn btn-primary btn-sm",
-                                        attrs: {
-                                          to: {
-                                            name: "SellerViewOrder",
-                                            params: {
-                                              id: row.item.id,
-                                              record: row.item,
-                                            },
-                                          },
-                                          title: _vm.__("view"),
-                                        },
-                                      },
-                                      [_c("i", { staticClass: "fa fa-eye" })]
-                                    ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "row-details",
-                                fn: function (row) {
-                                  return [
-                                    _c("b-card", [
-                                      row.item.itemsLoading
-                                        ? _c(
-                                            "div",
-                                            { staticClass: "text-center" },
-                                            [
-                                              _c("b-spinner", {
-                                                attrs: { label: "Spinning" },
-                                              }),
-                                            ],
-                                            1
-                                          )
-                                        : _c("div", [
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass: "table-responsive",
-                                              },
-                                              [
-                                                _c(
-                                                  "table",
-                                                  {
-                                                    staticClass:
-                                                      "table table-bordered table-sm",
-                                                  },
-                                                  [
-                                                    _c("thead", [
-                                                      _c("tr", [
-                                                        _c("th", [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              _vm.__("product")
-                                                            )
-                                                          ),
-                                                        ]),
-                                                        _vm._v(" "),
-                                                        _c("th", [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              _vm.__("image")
-                                                            )
-                                                          ),
-                                                        ]),
-                                                        _vm._v(" "),
-                                                        _c("th", [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              _vm.__("variant")
-                                                            )
-                                                          ),
-                                                        ]),
-                                                        _vm._v(" "),
-                                                        _c("th", [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              _vm.__("qty")
-                                                            )
-                                                          ),
-                                                        ]),
-                                                        _vm._v(" "),
-                                                        _c("th", [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              _vm.__("subtotal")
-                                                            )
-                                                          ),
-                                                        ]),
-                                                        _vm._v(" "),
-                                                        _c("th", [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              _vm.__("status")
-                                                            )
-                                                          ),
-                                                        ]),
-                                                      ]),
-                                                    ]),
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "tbody",
-                                                      [
-                                                        _vm._l(
-                                                          row.item.order_items,
-                                                          function (item) {
-                                                            return _c(
-                                                              "tr",
-                                                              { key: item.id },
-                                                              [
-                                                                _c("td", [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      item.product_name
-                                                                    )
-                                                                  ),
-                                                                ]),
-                                                                _vm._v(" "),
-                                                                _c("td", [
-                                                                  _c("img", {
-                                                                    attrs: {
-                                                                      src: item.image,
-                                                                      alt: "Image",
-                                                                      height:
-                                                                        "50",
-                                                                    },
-                                                                  }),
-                                                                ]),
-                                                                _vm._v(" "),
-                                                                _c("td", [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      item.variant_name
-                                                                    )
-                                                                  ),
-                                                                ]),
-                                                                _vm._v(" "),
-                                                                _c("td", [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      item.quantity
-                                                                    )
-                                                                  ),
-                                                                ]),
-                                                                _vm._v(" "),
-                                                                _c("td", [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      _vm.$currency
-                                                                    ) +
-                                                                      " " +
-                                                                      _vm._s(
-                                                                        item.sub_total
-                                                                      )
-                                                                  ),
-                                                                ]),
-                                                                _vm._v(" "),
-                                                                _c("td", [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      item.status_name
-                                                                    )
-                                                                  ),
-                                                                ]),
-                                                              ]
-                                                            )
-                                                          }
-                                                        ),
-                                                        _vm._v(" "),
-                                                        !row.item.order_items ||
-                                                        row.item.order_items
-                                                          .length === 0
-                                                          ? _c("tr", [
-                                                              _c(
-                                                                "td",
-                                                                {
-                                                                  staticClass:
-                                                                    "text-center",
-                                                                  attrs: {
-                                                                    colspan:
-                                                                      "6",
-                                                                  },
-                                                                },
-                                                                [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      _vm.__(
-                                                                        "no_products_found"
-                                                                      )
-                                                                    )
-                                                                  ),
-                                                                ]
-                                                              ),
-                                                            ])
-                                                          : _vm._e(),
-                                                      ],
-                                                      2
-                                                    ),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                          ]),
-                                    ]),
-                                  ]
-                                },
-                              },
-                            ]),
+                              [_vm._v(_vm._s(_vm.getStatusDisplayName(status)))]
+                            )
                           }),
                         ],
-                        1
+                        2
                       ),
-                      _vm._v(" "),
-                      _c("b-row", [
-                        _c("div", { staticClass: "col-md-4 text-success h6" }, [
-                          _vm._v(
-                            _vm._s(_vm.__("total_amount")) +
-                              " :- " +
-                              _vm._s(_vm.$currency) +
-                              " " +
-                              _vm._s(_vm.total_amount)
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "col-md-4 text-success h6" }, [
-                          _vm._v(
-                            _vm._s(_vm.__("total_dchrg")) +
-                              " :- " +
-                              _vm._s(_vm.$currency) +
-                              " " +
-                              _vm._s(_vm.delivery_charge)
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "col-md-4 text-success h6" }, [
-                          _vm._v(
-                            _vm._s(_vm.__("total_final_amount")) +
-                              " :- " +
-                              _vm._s(_vm.$currency) +
-                              " " +
-                              _vm._s(_vm.remaining_final)
-                          ),
-                        ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("b-col", { attrs: { md: "3" } }, [
+                      _c("h6", { staticClass: "box-title" }, [
+                        _vm._v(_vm._s(_vm.__("from_and_to_delivery_date"))),
                       ]),
                       _vm._v(" "),
                       _c(
-                        "b-row",
+                        "div",
+                        {
+                          staticClass:
+                            "d-flex justify-content-center align-items-center",
+                        },
                         [
+                          _c("date-range-picker", {
+                            attrs: {
+                              autoApply: false,
+                              showDropdowns: true,
+                              maxDate: _vm.maxDate,
+                              ranges: _vm.customRanges,
+                              "append-to-body": true,
+                              opens: "left",
+                            },
+                            on: { update: _vm.handleFilterChange },
+                            model: {
+                              value: _vm.deliveryDateRange,
+                              callback: function ($$v) {
+                                _vm.deliveryDateRange = $$v
+                              },
+                              expression: "deliveryDateRange",
+                            },
+                          }),
+                          _vm._v(" "),
                           _c(
-                            "b-col",
-                            { staticClass: "my-1", attrs: { md: "2" } },
+                            "button",
+                            {
+                              staticClass: "btn btn-sm btn-danger ml-1",
+                              on: {
+                                click: function ($event) {
+                                  return _vm.clearDeliveryDate()
+                                },
+                              },
+                            },
                             [
-                              _c(
-                                "b-form-group",
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(_vm.__("clear")) +
+                                  "\n                                "
+                              ),
+                            ]
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "b-col",
+                      { attrs: { md: "2" } },
+                      [
+                        _c("h6", { staticClass: "box-title" }, [
+                          _vm._v(_vm._s(_vm.__("search"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("b-form-input", {
+                          attrs: {
+                            id: "filter-input",
+                            type: "search",
+                            placeholder: _vm.__("search"),
+                          },
+                          on: {
+                            input: function ($event) {
+                              return _vm.handleFilterChange()
+                            },
+                          },
+                          model: {
+                            value: _vm.search,
+                            callback: function ($$v) {
+                              _vm.search = $$v
+                            },
+                            expression: "search",
+                          },
+                        }),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "b-col",
+                      { staticClass: "text-center", attrs: { md: "1" } },
+                      [
+                        _c(
+                          "button",
+                          {
+                            directives: [
+                              {
+                                name: "b-tooltip",
+                                rawName: "v-b-tooltip.hover",
+                                modifiers: { hover: true },
+                              },
+                            ],
+                            staticClass: "btn btn-primary btn_refresh",
+                            attrs: { title: _vm.__("refresh") },
+                            on: {
+                              click: function ($event) {
+                                return _vm.getOrders()
+                              },
+                            },
+                          },
+                          [
+                            _c("i", {
+                              staticClass: "fa fa-refresh",
+                              attrs: { "aria-hidden": "true" },
+                            }),
+                          ]
+                        ),
+                      ]
+                    ),
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _c(
+                  "b-tabs",
+                  {
+                    attrs: {
+                      pills: "",
+                      "active-nav-item-class":
+                        "font-weight-bold text-uppercase",
+                    },
+                  },
+                  [
+                    _c(
+                      "b-tab",
+                      {
+                        attrs: { title: _vm.__("orders"), active: "" },
+                        on: { click: _vm.getOrders },
+                      },
+                      [
+                        _c(
+                          "div",
+                          { staticClass: "table-responsive mt-3" },
+                          [
+                            _c("b-table", {
+                              attrs: {
+                                items: _vm.orders,
+                                fields: _vm.orderFields,
+                                filter: _vm.filter,
+                                "filter-included-fields": _vm.filterOn,
+                                "sort-by": _vm.sortBy,
+                                "sort-desc": _vm.sortDesc,
+                                "sort-direction": _vm.sortDirection,
+                                bordered: true,
+                                busy: _vm.isLoading,
+                                stacked: "md",
+                                "show-empty": "",
+                                small: "",
+                                "show-details": "",
+                              },
+                              on: {
+                                "update:sortBy": function ($event) {
+                                  _vm.sortBy = $event
+                                },
+                                "update:sort-by": function ($event) {
+                                  _vm.sortBy = $event
+                                },
+                                "update:sortDesc": function ($event) {
+                                  _vm.sortDesc = $event
+                                },
+                                "update:sort-desc": function ($event) {
+                                  _vm.sortDesc = $event
+                                },
+                              },
+                              scopedSlots: _vm._u([
                                 {
-                                  staticClass: "mb-0",
-                                  attrs: {
-                                    label: _vm.__("per_page"),
-                                    "label-for": "per-page-select",
-                                    "label-align-sm": "right",
-                                    "label-size": "sm",
+                                  key: "table-busy",
+                                  fn: function () {
+                                    return [
+                                      _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "text-center text-black my-2",
+                                        },
+                                        [
+                                          _c("b-spinner", {
+                                            staticClass: "align-middle",
+                                          }),
+                                          _vm._v(" "),
+                                          _c("strong", [
+                                            _vm._v(
+                                              _vm._s(_vm.__("loading")) + "..."
+                                            ),
+                                          ]),
+                                        ],
+                                        1
+                                      ),
+                                    ]
+                                  },
+                                  proxy: true,
+                                },
+                                {
+                                  key: "cell(id)",
+                                  fn: function (row) {
+                                    return [
+                                      _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "d-flex align-items-center",
+                                        },
+                                        [
+                                          _c("i", {
+                                            class: row.detailsShowing
+                                              ? "fa fa-chevron-down"
+                                              : "fa fa-chevron-right",
+                                            staticStyle: {
+                                              cursor: "pointer",
+                                              "margin-right": "10px",
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.toggleOrder(row)
+                                              },
+                                            },
+                                          }),
+                                          _vm._v(
+                                            "\n                                            " +
+                                              _vm._s(row.item.id) +
+                                              "\n                                        "
+                                          ),
+                                        ]
+                                      ),
+                                    ]
                                   },
                                 },
-                                [
-                                  _c("b-form-select", {
-                                    staticClass: "form-control form-select",
-                                    attrs: {
-                                      id: "per-page-select",
-                                      options: _vm.pageOptions,
-                                      size: "sm",
-                                    },
-                                    model: {
-                                      value: _vm.perPage,
-                                      callback: function ($$v) {
-                                        _vm.perPage = $$v
-                                      },
-                                      expression: "perPage",
-                                    },
-                                  }),
-                                ],
-                                1
+                                {
+                                  key: "cell(mobile)",
+                                  fn: function (row) {
+                                    return [
+                                      _vm._v(
+                                        "\n                                        " +
+                                          _vm._s(
+                                            _vm._f("mobileMask")(
+                                              row.item.mobile
+                                            )
+                                          ) +
+                                          "\n                                    "
+                                      ),
+                                    ]
+                                  },
+                                },
+                                {
+                                  key: "cell(active_status)",
+                                  fn: function (row) {
+                                    return [
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass: "badge",
+                                          class: _vm.getStatusBadgeClass(
+                                            row.item.active_status
+                                          ),
+                                        },
+                                        [
+                                          _vm._v(
+                                            "\n                                            " +
+                                              _vm._s(
+                                                _vm.getStatusLabelById(
+                                                  row.item.active_status
+                                                )
+                                              ) +
+                                              "\n                                        "
+                                          ),
+                                        ]
+                                      ),
+                                    ]
+                                  },
+                                },
+                                {
+                                  key: "cell(actions)",
+                                  fn: function (row) {
+                                    return [
+                                      _c(
+                                        "router-link",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "b-tooltip",
+                                              rawName: "v-b-tooltip.hover",
+                                              modifiers: { hover: true },
+                                            },
+                                          ],
+                                          staticClass: "btn btn-primary btn-sm",
+                                          attrs: {
+                                            to: {
+                                              name: "SellerViewOrder",
+                                              params: {
+                                                id: row.item.id,
+                                                record: row.item,
+                                              },
+                                            },
+                                            title: _vm.__("view"),
+                                          },
+                                        },
+                                        [_c("i", { staticClass: "fa fa-eye" })]
+                                      ),
+                                      _vm._v(" "),
+                                      _vm.canEditOrder(row.item)
+                                        ? _c(
+                                            "b-button",
+                                            {
+                                              directives: [
+                                                {
+                                                  name: "b-tooltip",
+                                                  rawName: "v-b-tooltip.hover",
+                                                  modifiers: { hover: true },
+                                                },
+                                              ],
+                                              staticClass: "ms-1",
+                                              attrs: {
+                                                title: _vm.__("edit_quantity"),
+                                                variant: "warning",
+                                                size: "sm",
+                                              },
+                                              on: {
+                                                click: function ($event) {
+                                                  return _vm.openEditOrderItems(
+                                                    row.item
+                                                  )
+                                                },
+                                              },
+                                            },
+                                            [
+                                              _c("i", {
+                                                staticClass: "fa fa-pencil-alt",
+                                              }),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                    ]
+                                  },
+                                },
+                                {
+                                  key: "row-details",
+                                  fn: function (row) {
+                                    return [
+                                      _c("b-card", [
+                                        row.item.itemsLoading
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "text-center" },
+                                              [
+                                                _c("b-spinner", {
+                                                  attrs: { label: "Spinning" },
+                                                }),
+                                              ],
+                                              1
+                                            )
+                                          : _c("div", [
+                                              _c(
+                                                "div",
+                                                {
+                                                  staticClass:
+                                                    "table-responsive",
+                                                },
+                                                [
+                                                  _c(
+                                                    "table",
+                                                    {
+                                                      staticClass:
+                                                        "table table-bordered table-sm",
+                                                    },
+                                                    [
+                                                      _c("thead", [
+                                                        _c("tr", [
+                                                          _c("th", [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "product"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]),
+                                                          _vm._v(" "),
+                                                          _c("th", [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__("image")
+                                                              )
+                                                            ),
+                                                          ]),
+                                                          _vm._v(" "),
+                                                          _c("th", [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "variant"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]),
+                                                          _vm._v(" "),
+                                                          _c("th", [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__("qty")
+                                                              )
+                                                            ),
+                                                          ]),
+                                                          _vm._v(" "),
+                                                          _c("th", [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "subtotal"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]),
+                                                          _vm._v(" "),
+                                                          _c("th", [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__("status")
+                                                              )
+                                                            ),
+                                                          ]),
+                                                        ]),
+                                                      ]),
+                                                      _vm._v(" "),
+                                                      _c(
+                                                        "tbody",
+                                                        [
+                                                          _vm._l(
+                                                            row.item
+                                                              .order_items,
+                                                            function (item) {
+                                                              return _c(
+                                                                "tr",
+                                                                {
+                                                                  key: item.id,
+                                                                },
+                                                                [
+                                                                  _c("td", [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        item.product_name
+                                                                      )
+                                                                    ),
+                                                                  ]),
+                                                                  _vm._v(" "),
+                                                                  _c("td", [
+                                                                    _c("img", {
+                                                                      attrs: {
+                                                                        src: item.image,
+                                                                        alt: "Image",
+                                                                        height:
+                                                                          "50",
+                                                                      },
+                                                                    }),
+                                                                  ]),
+                                                                  _vm._v(" "),
+                                                                  _c("td", [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        item.variant_name
+                                                                      )
+                                                                    ),
+                                                                  ]),
+                                                                  _vm._v(" "),
+                                                                  _c("td", [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        item.quantity
+                                                                      )
+                                                                    ),
+                                                                  ]),
+                                                                  _vm._v(" "),
+                                                                  _c("td", [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        _vm.$currency
+                                                                      ) +
+                                                                        " " +
+                                                                        _vm._s(
+                                                                          item.sub_total
+                                                                        )
+                                                                    ),
+                                                                  ]),
+                                                                  _vm._v(" "),
+                                                                  _c("td", [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        item.status_name
+                                                                      )
+                                                                    ),
+                                                                  ]),
+                                                                ]
+                                                              )
+                                                            }
+                                                          ),
+                                                          _vm._v(" "),
+                                                          !row.item
+                                                            .order_items ||
+                                                          row.item.order_items
+                                                            .length === 0
+                                                            ? _c("tr", [
+                                                                _c(
+                                                                  "td",
+                                                                  {
+                                                                    staticClass:
+                                                                      "text-center",
+                                                                    attrs: {
+                                                                      colspan:
+                                                                        "6",
+                                                                    },
+                                                                  },
+                                                                  [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        _vm.__(
+                                                                          "no_products_found"
+                                                                        )
+                                                                      )
+                                                                    ),
+                                                                  ]
+                                                                ),
+                                                              ])
+                                                            : _vm._e(),
+                                                        ],
+                                                        2
+                                                      ),
+                                                    ]
+                                                  ),
+                                                ]
+                                              ),
+                                            ]),
+                                      ]),
+                                    ]
+                                  },
+                                },
+                              ]),
+                            }),
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c("b-row", [
+                          _c(
+                            "div",
+                            { staticClass: "col-md-4 text-success h6" },
+                            [
+                              _vm._v(
+                                _vm._s(_vm.__("total_amount")) +
+                                  " :- " +
+                                  _vm._s(_vm.$currency) +
+                                  " " +
+                                  _vm._s(_vm.total_amount)
                               ),
-                            ],
-                            1
+                            ]
                           ),
                           _vm._v(" "),
                           _c(
-                            "b-col",
-                            {
-                              staticClass: "my-1",
-                              attrs: { md: "4", "offset-md": "6" },
-                            },
+                            "div",
+                            { staticClass: "col-md-4 text-success h6" },
                             [
-                              _c("b-pagination", {
-                                staticClass: "my-0",
-                                attrs: {
-                                  "total-rows": _vm.totalOrderRows,
-                                  "per-page": _vm.perPage,
-                                  align: "fill",
-                                  size: "sm",
-                                },
-                                model: {
-                                  value: _vm.currentPage,
-                                  callback: function ($$v) {
-                                    _vm.currentPage = $$v
-                                  },
-                                  expression: "currentPage",
-                                },
-                              }),
-                            ],
-                            1
+                              _vm._v(
+                                _vm._s(_vm.__("total_dchrg")) +
+                                  " :- " +
+                                  _vm._s(_vm.$currency) +
+                                  " " +
+                                  _vm._s(_vm.delivery_charge)
+                              ),
+                            ]
                           ),
-                        ],
-                        1
-                      ),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-tab",
-                    {
-                      attrs: { title: _vm.__("order_items") },
-                      on: { click: _vm.getOrders },
-                    },
-                    [
-                      _c(
-                        "div",
-                        { staticClass: "table-responsive mt-3" },
-                        [
-                          _c("b-table", {
-                            attrs: {
-                              items: _vm.order_items,
-                              fields: _vm.orderItemFields,
-                              filter: _vm.filter,
-                              "filter-included-fields": _vm.filterOn,
-                              "sort-by": _vm.sortBy,
-                              "sort-desc": _vm.sortDesc,
-                              "sort-direction": _vm.sortDirection,
-                              bordered: true,
-                              busy: _vm.isLoading,
-                              stacked: "md",
-                              "show-empty": "",
-                              small: "",
-                            },
-                            on: {
-                              "update:sortBy": function ($event) {
-                                _vm.sortBy = $event
-                              },
-                              "update:sort-by": function ($event) {
-                                _vm.sortBy = $event
-                              },
-                              "update:sortDesc": function ($event) {
-                                _vm.sortDesc = $event
-                              },
-                              "update:sort-desc": function ($event) {
-                                _vm.sortDesc = $event
-                              },
-                            },
-                            scopedSlots: _vm._u([
-                              {
-                                key: "table-busy",
-                                fn: function () {
-                                  return [
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "text-center text-black my-2",
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-4 text-success h6" },
+                            [
+                              _vm._v(
+                                _vm._s(_vm.__("total_final_amount")) +
+                                  " :- " +
+                                  _vm._s(_vm.$currency) +
+                                  " " +
+                                  _vm._s(_vm.remaining_final)
+                              ),
+                            ]
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "b-row",
+                          [
+                            _c(
+                              "b-col",
+                              { staticClass: "my-1", attrs: { md: "2" } },
+                              [
+                                _c(
+                                  "b-form-group",
+                                  {
+                                    staticClass: "mb-0",
+                                    attrs: {
+                                      label: _vm.__("per_page"),
+                                      "label-for": "per-page-select",
+                                      "label-align-sm": "right",
+                                      "label-size": "sm",
+                                    },
+                                  },
+                                  [
+                                    _c("b-form-select", {
+                                      staticClass: "form-control form-select",
+                                      attrs: {
+                                        id: "per-page-select",
+                                        options: _vm.pageOptions,
+                                        size: "sm",
                                       },
-                                      [
-                                        _c("b-spinner", {
-                                          staticClass: "align-middle",
-                                        }),
-                                        _vm._v(" "),
-                                        _c("strong", [
-                                          _vm._v(
-                                            _vm._s(_vm.__("loading")) + "..."
-                                          ),
-                                        ]),
-                                      ],
-                                      1
-                                    ),
-                                  ]
-                                },
-                                proxy: true,
-                              },
-                              {
-                                key: "cell(mobile)",
-                                fn: function (row) {
-                                  return [
-                                    _vm._v(
-                                      "\n                                        " +
-                                        _vm._s(
-                                          _vm._f("mobileMask")(row.item.mobile)
-                                        ) +
-                                        "\n                                    "
-                                    ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "head(tax)",
-                                fn: function (row) {
-                                  return [
-                                    _vm._v(
-                                      "\n                                        " +
-                                        _vm._s(
-                                          "Tax (" + _vm.$currency + ") (%)"
-                                        ) +
-                                        "\n                                    "
-                                    ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "cell(is_credited)",
-                                fn: function (row) {
-                                  return [
-                                    row.item.is_credited
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-success" },
-                                          [_vm._v(_vm._s(_vm.__("credited")))]
-                                        )
-                                      : _c(
-                                          "span",
-                                          { staticClass: "badge bg-danger" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(_vm.__("not_credited"))
-                                            ),
-                                          ]
-                                        ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "cell(active_status)",
-                                fn: function (row) {
-                                  return [
-                                    row.item.active_status == _vm.$received ||
-                                    row.item.active_status == 2
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-primary" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        )
-                                      : row.item.active_status ==
-                                          _vm.$pending ||
-                                        row.item.active_status == 1
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-secondary" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        )
-                                      : row.item.active_status ==
-                                          _vm.$processed ||
-                                        row.item.active_status == 3
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-info" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        )
-                                      : row.item.active_status ==
-                                          _vm.$shipped ||
-                                        row.item.active_status == 4
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-warning" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        )
-                                      : row.item.active_status ==
-                                          _vm.$outForDelivery ||
-                                        row.item.active_status == 5
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-warning" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        )
-                                      : row.item.active_status ==
-                                          _vm.$delivered ||
-                                        row.item.active_status == 6
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-success" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        )
-                                      : row.item.active_status ==
-                                          _vm.$returned ||
-                                        row.item.active_status ==
-                                          _vm.$cancelled ||
-                                        row.item.active_status == 7 ||
-                                        row.item.active_status == 8
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-danger" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        )
-                                      : _c(
-                                          "span",
-                                          { staticClass: "badge bg-secondary" },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.getStatusLabelById(
-                                                  row.item.active_status
-                                                ) || _vm.__("not_found")
-                                              )
-                                            ),
-                                          ]
-                                        ),
-                                  ]
-                                },
-                              },
-                              {
-                                key: "cell(actions)",
-                                fn: function (row) {
-                                  return [
-                                    _c(
-                                      "router-link",
-                                      {
-                                        directives: [
-                                          {
-                                            name: "b-tooltip",
-                                            rawName: "v-b-tooltip.hover",
-                                            modifiers: { hover: true },
-                                          },
-                                        ],
-                                        staticClass: "btn btn-primary btn-sm",
-                                        attrs: {
-                                          to: {
-                                            name: "SellerViewOrder",
-                                            params: {
-                                              id: row.item.order_id,
-                                              record: row.item,
-                                            },
-                                          },
-                                          title: _vm.__("view"),
+                                      model: {
+                                        value: _vm.perPage,
+                                        callback: function ($$v) {
+                                          _vm.perPage = $$v
                                         },
+                                        expression: "perPage",
                                       },
-                                      [_c("i", { staticClass: "fa fa-eye" })]
-                                    ),
-                                  ]
-                                },
+                                    }),
+                                  ],
+                                  1
+                                ),
+                              ],
+                              1
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "b-col",
+                              {
+                                staticClass: "my-1",
+                                attrs: { md: "4", "offset-md": "6" },
                               },
-                            ]),
-                          }),
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c("b-row", [
+                              [
+                                _c("b-pagination", {
+                                  staticClass: "my-0",
+                                  attrs: {
+                                    "total-rows": _vm.totalOrderRows,
+                                    "per-page": _vm.perPage,
+                                    align: "fill",
+                                    size: "sm",
+                                  },
+                                  model: {
+                                    value: _vm.currentPage,
+                                    callback: function ($$v) {
+                                      _vm.currentPage = $$v
+                                    },
+                                    expression: "currentPage",
+                                  },
+                                }),
+                              ],
+                              1
+                            ),
+                          ],
+                          1
+                        ),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "b-tab",
+                      {
+                        attrs: { title: _vm.__("order_items") },
+                        on: { click: _vm.getOrders },
+                      },
+                      [
                         _c(
                           "div",
+                          { staticClass: "table-responsive mt-3" },
+                          [
+                            _c("b-table", {
+                              attrs: {
+                                items: _vm.order_items,
+                                fields: _vm.orderItemFields,
+                                filter: _vm.filter,
+                                "filter-included-fields": _vm.filterOn,
+                                "sort-by": _vm.sortBy,
+                                "sort-desc": _vm.sortDesc,
+                                "sort-direction": _vm.sortDirection,
+                                bordered: true,
+                                busy: _vm.isLoading,
+                                stacked: "md",
+                                "show-empty": "",
+                                small: "",
+                              },
+                              on: {
+                                "update:sortBy": function ($event) {
+                                  _vm.sortBy = $event
+                                },
+                                "update:sort-by": function ($event) {
+                                  _vm.sortBy = $event
+                                },
+                                "update:sortDesc": function ($event) {
+                                  _vm.sortDesc = $event
+                                },
+                                "update:sort-desc": function ($event) {
+                                  _vm.sortDesc = $event
+                                },
+                              },
+                              scopedSlots: _vm._u([
+                                {
+                                  key: "table-busy",
+                                  fn: function () {
+                                    return [
+                                      _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "text-center text-black my-2",
+                                        },
+                                        [
+                                          _c("b-spinner", {
+                                            staticClass: "align-middle",
+                                          }),
+                                          _vm._v(" "),
+                                          _c("strong", [
+                                            _vm._v(
+                                              _vm._s(_vm.__("loading")) + "..."
+                                            ),
+                                          ]),
+                                        ],
+                                        1
+                                      ),
+                                    ]
+                                  },
+                                  proxy: true,
+                                },
+                                {
+                                  key: "cell(mobile)",
+                                  fn: function (row) {
+                                    return [
+                                      _vm._v(
+                                        "\n                                        " +
+                                          _vm._s(
+                                            _vm._f("mobileMask")(
+                                              row.item.mobile
+                                            )
+                                          ) +
+                                          "\n                                    "
+                                      ),
+                                    ]
+                                  },
+                                },
+                                {
+                                  key: "head(tax)",
+                                  fn: function (row) {
+                                    return [
+                                      _vm._v(
+                                        "\n                                        " +
+                                          _vm._s(
+                                            "Tax (" + _vm.$currency + ") (%)"
+                                          ) +
+                                          "\n                                    "
+                                      ),
+                                    ]
+                                  },
+                                },
+                                {
+                                  key: "cell(is_credited)",
+                                  fn: function (row) {
+                                    return [
+                                      row.item.is_credited
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge bg-success" },
+                                            [_vm._v(_vm._s(_vm.__("credited")))]
+                                          )
+                                        : _c(
+                                            "span",
+                                            { staticClass: "badge bg-danger" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(_vm.__("not_credited"))
+                                              ),
+                                            ]
+                                          ),
+                                    ]
+                                  },
+                                },
+                                {
+                                  key: "cell(active_status)",
+                                  fn: function (row) {
+                                    return [
+                                      row.item.active_status == _vm.$received ||
+                                      row.item.active_status == 2
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge bg-primary" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          )
+                                        : row.item.active_status ==
+                                            _vm.$pending ||
+                                          row.item.active_status == 1
+                                        ? _c(
+                                            "span",
+                                            {
+                                              staticClass: "badge bg-secondary",
+                                            },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          )
+                                        : row.item.active_status ==
+                                            _vm.$processed ||
+                                          row.item.active_status == 3
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge bg-info" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          )
+                                        : row.item.active_status ==
+                                            _vm.$shipped ||
+                                          row.item.active_status == 4
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge bg-warning" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          )
+                                        : row.item.active_status ==
+                                            _vm.$outForDelivery ||
+                                          row.item.active_status == 5
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge bg-warning" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          )
+                                        : row.item.active_status ==
+                                            _vm.$delivered ||
+                                          row.item.active_status == 6
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge bg-success" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          )
+                                        : row.item.active_status ==
+                                            _vm.$returned ||
+                                          row.item.active_status ==
+                                            _vm.$cancelled ||
+                                          row.item.active_status == 7 ||
+                                          row.item.active_status == 8
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge bg-danger" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          )
+                                        : _c(
+                                            "span",
+                                            {
+                                              staticClass: "badge bg-secondary",
+                                            },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.getStatusLabelById(
+                                                    row.item.active_status
+                                                  ) || _vm.__("not_found")
+                                                )
+                                              ),
+                                            ]
+                                          ),
+                                    ]
+                                  },
+                                },
+                                {
+                                  key: "cell(actions)",
+                                  fn: function (row) {
+                                    return [
+                                      _c(
+                                        "router-link",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "b-tooltip",
+                                              rawName: "v-b-tooltip.hover",
+                                              modifiers: { hover: true },
+                                            },
+                                          ],
+                                          staticClass: "btn btn-primary btn-sm",
+                                          attrs: {
+                                            to: {
+                                              name: "SellerViewOrder",
+                                              params: {
+                                                id: row.item.order_id,
+                                                record: row.item,
+                                              },
+                                            },
+                                            title: _vm.__("view"),
+                                          },
+                                        },
+                                        [_c("i", { staticClass: "fa fa-eye" })]
+                                      ),
+                                    ]
+                                  },
+                                },
+                              ]),
+                            }),
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c("b-row", [
+                          _c(
+                            "div",
+                            {
+                              staticClass:
+                                "col-md-12 text-success text-center h6",
+                            },
+                            [
+                              _vm._v(
+                                _vm._s(_vm.__("total")) +
+                                  " :- " +
+                                  _vm._s(_vm.$currency) +
+                                  " " +
+                                  _vm._s(_vm.order_items_total_sum)
+                              ),
+                            ]
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "b-row",
+                          [
+                            _c(
+                              "b-col",
+                              { staticClass: "my-1", attrs: { md: "2" } },
+                              [
+                                _c(
+                                  "b-form-group",
+                                  {
+                                    staticClass: "mb-0",
+                                    attrs: {
+                                      label: _vm.__("per_page"),
+                                      "label-for": "per-page-select",
+                                      "label-align-sm": "right",
+                                      "label-size": "sm",
+                                    },
+                                  },
+                                  [
+                                    _c("b-form-select", {
+                                      staticClass: "form-control form-select",
+                                      attrs: {
+                                        id: "per-page-select",
+                                        options: _vm.pageOptions,
+                                        size: "sm",
+                                      },
+                                      model: {
+                                        value: _vm.itemPerPage,
+                                        callback: function ($$v) {
+                                          _vm.itemPerPage = $$v
+                                        },
+                                        expression: "itemPerPage",
+                                      },
+                                    }),
+                                  ],
+                                  1
+                                ),
+                              ],
+                              1
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "b-col",
+                              {
+                                staticClass: "my-1",
+                                attrs: { md: "4", "offset-md": "6" },
+                              },
+                              [
+                                _c("b-pagination", {
+                                  staticClass: "my-0",
+                                  attrs: {
+                                    "total-rows": _vm.totalOrderItemRows,
+                                    "per-page": _vm.itemPerPage,
+                                    align: "fill",
+                                    size: "sm",
+                                  },
+                                  model: {
+                                    value: _vm.itemCurrentPage,
+                                    callback: function ($$v) {
+                                      _vm.itemCurrentPage = $$v
+                                    },
+                                    expression: "itemCurrentPage",
+                                  },
+                                }),
+                              ],
+                              1
+                            ),
+                          ],
+                          1
+                        ),
+                      ],
+                      1
+                    ),
+                  ],
+                  1
+                ),
+              ],
+              1
+            ),
+          ]),
+        ]),
+        _vm._v(" "),
+        _c(
+          "b-modal",
+          {
+            attrs: {
+              title: _vm.__("edit_quantity"),
+              size: "lg",
+              "hide-footer": true,
+            },
+            on: { hide: _vm.onEditOrderModalHide },
+            model: {
+              value: _vm.editOrderModalShow,
+              callback: function ($$v) {
+                _vm.editOrderModalShow = $$v
+              },
+              expression: "editOrderModalShow",
+            },
+          },
+          [
+            _c("b-container", { attrs: { fluid: "" } }, [
+              _c("p", { staticClass: "text-muted small" }, [
+                _vm._v(
+                  "\n                    " +
+                    _vm._s(_vm.__("only_received_orders_can_be_edited")) +
+                    "\n                "
+                ),
+              ]),
+              _vm._v(" "),
+              _vm.editingOrderItemsLoading
+                ? _c(
+                    "div",
+                    { staticClass: "text-center py-3" },
+                    [_c("b-spinner")],
+                    1
+                  )
+                : _c("div", [
+                    _c("div", { staticClass: "table-responsive" }, [
+                      _c(
+                        "table",
+                        { staticClass: "table table-bordered align-middle" },
+                        [
+                          _c("thead", { staticClass: "table-light" }, [
+                            _c("tr", [
+                              _c("th", [_vm._v(_vm._s(_vm.__("product")))]),
+                              _vm._v(" "),
+                              _c(
+                                "th",
+                                {
+                                  staticClass: "text-center",
+                                  staticStyle: { width: "130px" },
+                                },
+                                [_vm._v(_vm._s(_vm.__("quantity")))]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "th",
+                                {
+                                  staticClass: "text-end",
+                                  staticStyle: { width: "130px" },
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.__("price")) +
+                                      " (" +
+                                      _vm._s(_vm.$currency) +
+                                      ")"
+                                  ),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "th",
+                                {
+                                  staticClass: "text-end",
+                                  staticStyle: { width: "140px" },
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.__("subtotal")) +
+                                      " (" +
+                                      _vm._s(_vm.$currency) +
+                                      ")"
+                                  ),
+                                ]
+                              ),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "tbody",
+                            [
+                              _vm._l(_vm.editingItems, function (row) {
+                                return _c("tr", { key: row.order_item_id }, [
+                                  _c("td", [
+                                    _c("div", [
+                                      _vm._v(_vm._s(row.product_name)),
+                                    ]),
+                                    _vm._v(" "),
+                                    row.variant_name
+                                      ? _c(
+                                          "small",
+                                          { staticClass: "text-muted" },
+                                          [
+                                            _vm._v(
+                                              "(" +
+                                                _vm._s(row.variant_name) +
+                                                ")"
+                                            ),
+                                          ]
+                                        )
+                                      : _vm._e(),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model.number",
+                                          value: row.quantity,
+                                          expression: "row.quantity",
+                                          modifiers: { number: true },
+                                        },
+                                      ],
+                                      staticClass: "form-control text-center",
+                                      attrs: {
+                                        type: "number",
+                                        min: "0",
+                                        step: "1",
+                                      },
+                                      domProps: { value: row.quantity },
+                                      on: {
+                                        input: function ($event) {
+                                          if ($event.target.composing) {
+                                            return
+                                          }
+                                          _vm.$set(
+                                            row,
+                                            "quantity",
+                                            _vm._n($event.target.value)
+                                          )
+                                        },
+                                        blur: function ($event) {
+                                          return _vm.$forceUpdate()
+                                        },
+                                      },
+                                    }),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(_vm._s(row.price)),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(_vm._s(_vm.editingRowSubtotal(row))),
+                                  ]),
+                                ])
+                              }),
+                              _vm._v(" "),
+                              _vm.editingItems.length === 0
+                                ? _c("tr", [
+                                    _c(
+                                      "td",
+                                      {
+                                        staticClass: "text-center text-muted",
+                                        attrs: { colspan: "4" },
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                        " +
+                                            _vm._s(_vm.__("no_items")) +
+                                            "\n                                    "
+                                        ),
+                                      ]
+                                    ),
+                                  ])
+                                : _vm._e(),
+                            ],
+                            2
+                          ),
+                          _vm._v(" "),
+                          _vm.editingItems.length > 0
+                            ? _c("tfoot", [
+                                _c("tr", [
+                                  _c(
+                                    "th",
+                                    {
+                                      staticClass: "text-end",
+                                      attrs: { colspan: "3" },
+                                    },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.__("new_total")) +
+                                          " (" +
+                                          _vm._s(_vm.$currency) +
+                                          ")"
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("th", { staticClass: "text-end" }, [
+                                    _vm._v(_vm._s(_vm.editingItemsTotal)),
+                                  ]),
+                                ]),
+                              ])
+                            : _vm._e(),
+                        ]
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      { staticClass: "d-flex justify-content-end gap-2 mt-3" },
+                      [
+                        _c(
+                          "b-button",
                           {
-                            staticClass:
-                              "col-md-12 text-success text-center h6",
+                            attrs: {
+                              variant: "secondary",
+                              disabled: _vm.isSavingEdit,
+                            },
+                            on: {
+                              click: function ($event) {
+                                _vm.editOrderModalShow = false
+                              },
+                            },
                           },
                           [
                             _vm._v(
-                              _vm._s(_vm.__("total")) +
-                                " :- " +
-                                _vm._s(_vm.$currency) +
-                                " " +
-                                _vm._s(_vm.order_items_total_sum)
+                              "\n                            " +
+                                _vm._s(_vm.__("cancel")) +
+                                "\n                        "
                             ),
                           ]
                         ),
-                      ]),
-                      _vm._v(" "),
-                      _c(
-                        "b-row",
-                        [
-                          _c(
-                            "b-col",
-                            { staticClass: "my-1", attrs: { md: "2" } },
-                            [
-                              _c(
-                                "b-form-group",
-                                {
-                                  staticClass: "mb-0",
-                                  attrs: {
-                                    label: _vm.__("per_page"),
-                                    "label-for": "per-page-select",
-                                    "label-align-sm": "right",
-                                    "label-size": "sm",
-                                  },
-                                },
-                                [
-                                  _c("b-form-select", {
-                                    staticClass: "form-control form-select",
-                                    attrs: {
-                                      id: "per-page-select",
-                                      options: _vm.pageOptions,
-                                      size: "sm",
-                                    },
-                                    model: {
-                                      value: _vm.itemPerPage,
-                                      callback: function ($$v) {
-                                        _vm.itemPerPage = $$v
-                                      },
-                                      expression: "itemPerPage",
-                                    },
-                                  }),
-                                ],
-                                1
-                              ),
-                            ],
-                            1
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-col",
-                            {
-                              staticClass: "my-1",
-                              attrs: { md: "4", "offset-md": "6" },
+                        _vm._v(" "),
+                        _c(
+                          "b-button",
+                          {
+                            attrs: {
+                              variant: "primary",
+                              disabled:
+                                _vm.isSavingEdit ||
+                                _vm.editingItems.length === 0,
                             },
-                            [
-                              _c("b-pagination", {
-                                staticClass: "my-0",
-                                attrs: {
-                                  "total-rows": _vm.totalOrderItemRows,
-                                  "per-page": _vm.itemPerPage,
-                                  align: "fill",
-                                  size: "sm",
-                                },
-                                model: {
-                                  value: _vm.itemCurrentPage,
-                                  callback: function ($$v) {
-                                    _vm.itemCurrentPage = $$v
-                                  },
-                                  expression: "itemCurrentPage",
-                                },
-                              }),
-                            ],
-                            1
-                          ),
-                        ],
-                        1
-                      ),
-                    ],
-                    1
-                  ),
-                ],
-                1
-              ),
-            ],
-            1
-          ),
-        ]),
-      ]),
-    ]),
+                            on: { click: _vm.saveEditedOrderItems },
+                          },
+                          [
+                            _vm.isSavingEdit
+                              ? _c("span", [
+                                  _c("i", {
+                                    staticClass: "fa fa-spinner fa-spin",
+                                  }),
+                                ])
+                              : _vm._e(),
+                            _vm._v(
+                              "\n                            " +
+                                _vm._s(_vm.__("save_changes")) +
+                                "\n                        "
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]),
+            ]),
+          ],
+          1
+        ),
+      ],
+      1
+    ),
   ])
 }
 var staticRenderFns = []

@@ -3085,7 +3085,9 @@ var render = function () {
                                               [
                                                 _c("label", [
                                                   _vm._v(
-                                                    _vm._s(_vm.__("name")) + " "
+                                                    _vm._s(
+                                                      _vm.__("seller_name")
+                                                    ) + " "
                                                   ),
                                                   language.is_default
                                                     ? _c(
@@ -3120,7 +3122,9 @@ var render = function () {
                                                         ? true
                                                         : undefined,
                                                     placeholder:
-                                                      _vm.__("enter_name"),
+                                                      _vm.__(
+                                                        "enter_seller_name"
+                                                      ),
                                                   },
                                                   domProps: {
                                                     value:

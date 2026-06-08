@@ -109,6 +109,20 @@ class NotificationTemplatesSeeder extends Seeder
                 'message'     => 'We regret to inform you that your product request has been rejected.',
                 'placeholders' => json_encode([]),
             ],
+            // --- Sarthi: retailer places new order → notify distributor (RetailerCartOrderApiController::placeOrder) ---
+            [
+                'type'        => 'retailer_new_order_seller',
+                'title'       => 'New order #{{order_id}} from {{retailer_name}}',
+                'message'     => '{{retailer_name}} placed a new order totalling {{currency}}{{final_total}}. Tap to view and process.',
+                'placeholders' => json_encode(['order_id', 'retailer_name', 'currency', 'final_total']),
+            ],
+            // --- Sarthi: distributor edited the order → notify retailer (OrdersApiController::updateOrderItems) ---
+            [
+                'type'        => 'order_edited_customer',
+                'title'       => 'Your order #{{order_id}} has been updated by the distributor',
+                'message'     => '{{change_summary}} New total: {{currency}}{{new_total}}. Tap to view the updated order.',
+                'placeholders' => json_encode(['order_id', 'app_name', 'currency', 'new_total', 'change_summary']),
+            ],
             // --- Cart reminder (CommonHelper::SendCartNotification) ---
             [
                 'type'        => 'cart_reminder_first',

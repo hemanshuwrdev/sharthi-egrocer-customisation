@@ -350,6 +350,7 @@
                     </div>
                 </b-container>
             </b-modal>
+
         </div>
     </div>
 </template>
@@ -806,7 +807,8 @@ export default {
                     }
                 }
             });
-        }
+        },
+
     }
 };
 </script>

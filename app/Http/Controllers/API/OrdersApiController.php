@@ -18,6 +18,7 @@ use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\UserToken;
 use App\Models\DeliveryBoyTransaction;
 use App\Models\ProductVariant;
 use App\Models\PromoCode;
@@ -1177,5 +1178,195 @@ class OrdersApiController extends Controller
             ];
         }
         return $result;
+    }
+
+    /**
+     * Sarthi: distributor edits a retailer's placed order (qty / unit price per line).
+     * Allowed only while the order is still `received` (not yet processed/shipped/delivered/cancelled).
+     * Recomputes the order's total / final_total, writes an `edited` audit row to order_status,
+     * and pushes `order_edited_customer` to the retailer with a human-readable change summary.
+     *
+     * Body:
+     *   order_id : int
+     *   items[]  : [{ order_item_id: int, quantity: number, price: number (optional) }, ...]
+     */
+    public function updateOrderItems(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id'              => 'required|integer|exists:orders,id',
+            'items'                 => 'required|array|min:1',
+            'items.*.order_item_id' => 'required|integer|exists:order_items,id',
+            'items.*.quantity'      => 'required|numeric|min:0',
+            'items.*.price'         => 'nullable|numeric|min:0',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $order = Order::find($request->order_id);
+        if (!$order) {
+            return CommonHelper::responseError('order_not_found');
+        }
+        if ((int) $order->active_status !== OrderStatusList::$received) {
+            return CommonHelper::responseError('order_can_only_be_edited_while_received');
+        }
+
+        $authUser = auth()->user();
+        $isSuperAdmin = $authUser && (int) $authUser->role_id === Role::$roleSuperAdmin;
+        $sellerScopeId = null;
+        if (!$isSuperAdmin) {
+            $seller = Seller::where('admin_id', $authUser->id)->first();
+            if (!$seller) {
+                return CommonHelper::responseError('unauthorized');
+            }
+            $sellerScopeId = (int) $seller->id;
+        }
+
+        // Pre-load every order_item referenced, scope-check, build a change list
+        $orderItems = OrderItem::whereIn('id', array_column($request->items, 'order_item_id'))
+            ->where('order_id', $order->id)
+            ->get()
+            ->keyBy('id');
+
+        $changes = [];
+        foreach ($request->items as $payload) {
+            $oi = $orderItems[$payload['order_item_id']] ?? null;
+            if (!$oi) {
+                return CommonHelper::responseError('order_item_not_found');
+            }
+            if (!$isSuperAdmin && (int) $oi->seller_id !== $sellerScopeId) {
+                return CommonHelper::responseError('order_item_not_for_this_distributor');
+            }
+            $oldQty = (float) $oi->quantity;
+            $oldPrice = (float) $oi->price;
+            $newQty = (float) $payload['quantity'];
+            $newPrice = \array_key_exists('price', $payload) && $payload['price'] !== null && $payload['price'] !== ''
+                ? (float) $payload['price']
+                : $oldPrice;
+            if ($newQty == $oldQty && $newPrice == $oldPrice) {
+                continue;
+            }
+            $changes[] = [
+                'order_item'   => $oi,
+                'old_qty'      => $oldQty,
+                'new_qty'      => $newQty,
+                'old_price'    => $oldPrice,
+                'new_price'    => $newPrice,
+            ];
+        }
+
+        if (empty($changes)) {
+            return CommonHelper::responseError('no_changes_provided');
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($changes as $c) {
+                $oi = $c['order_item'];
+                $oi->quantity = $c['new_qty'];
+                $oi->price = $c['new_price'];
+                $oi->sub_total = round($c['new_qty'] * $c['new_price'], 2);
+                $oi->updated_at = now();
+                $oi->save();
+            }
+
+            // Recompute order's total from order_items (sum of sub_totals of non-cancelled lines)
+            $newTotal = (float) OrderItem::where('order_id', $order->id)
+                ->where('active_status', '!=', OrderStatusList::$cancelled)
+                ->sum('sub_total');
+
+            // final_total = items_total + delivery_charge + tax_amount - discount - promo_discount - wallet_balance
+            $newFinal = round(
+                $newTotal
+                + (float) $order->delivery_charge
+                + (float) $order->tax_amount
+                - (float) $order->discount
+                - (float) $order->promo_discount
+                - (float) $order->wallet_balance,
+                2
+            );
+
+            $order->total = round($newTotal, 2);
+            $order->final_total = $newFinal;
+            $order->updated_at = now();
+            $order->save();
+
+            // Audit row so the timeline shows the edit
+            CommonHelper::setOrderStatus([
+                'order_id'   => $order->id,
+                'status'     => 'edited',
+                'created_by' => $authUser->id,
+                'user_type'  => OrderStatus::$userTypeAdmin,
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('[updateOrderItems] failed for order ' . $order->id . ': ' . $e->getMessage());
+            return CommonHelper::responseError($e->getMessage());
+        }
+
+        // Build a short, readable change summary for the retailer push
+        $summaryParts = [];
+        foreach ($changes as $c) {
+            $name = trim((string) ($c['order_item']->product_name ?? '')) !== ''
+                ? $c['order_item']->product_name
+                : ('Item #' . $c['order_item']->id);
+            $bits = [];
+            if ($c['old_qty'] != $c['new_qty']) {
+                $bits[] = 'qty ' . self::trimZero($c['old_qty']) . '→' . self::trimZero($c['new_qty']);
+            }
+            if ($c['old_price'] != $c['new_price']) {
+                $bits[] = 'price ' . self::trimZero($c['old_price']) . '→' . self::trimZero($c['new_price']);
+            }
+            $summaryParts[] = $name . ': ' . implode(', ', $bits);
+        }
+        $changeSummary = implode(' | ', $summaryParts);
+        if (mb_strlen($changeSummary) > 220) {
+            $changeSummary = mb_substr($changeSummary, 0, 217) . '...';
+        }
+
+        // Push to retailer (best-effort; never fail the edit if FCM is down)
+        try {
+            $tokens = UserToken::where('user_id', $order->user_id)
+                ->where('type', 'customer')
+                ->get();
+            if ($tokens->isNotEmpty()) {
+                CommonHelper::sendNotificationByTemplate(
+                    $tokens,
+                    'order_edited_customer',
+                    [
+                        'order_id'       => $order->id,
+                        'app_name'       => Setting::get_value('app_name') ?? '',
+                        'currency'       => Setting::get_value('currency') ?? '$',
+                        'new_total'      => number_format((float) $order->final_total, 2, '.', ''),
+                        'change_summary' => $changeSummary,
+                    ],
+                    '',
+                    0,
+                    '',
+                    null,
+                    null,
+                    'order',
+                    $order->id
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::error('[updateOrderItems] retailer push failed for order ' . $order->id . ': ' . $e->getMessage());
+        }
+
+        return CommonHelper::responseWithData([
+            'order_id'       => $order->id,
+            'total'          => $order->total,
+            'final_total'    => $order->final_total,
+            'change_summary' => $changeSummary,
+            'message'        => 'Order updated and customer notified.',
+        ]);
+    }
+
+    private static function trimZero($n): string
+    {
+        $f = (float) $n;
+        return rtrim(rtrim(number_format($f, 2, '.', ''), '0'), '.');
     }
 }

@@ -5,13 +5,17 @@ namespace App\Http\Controllers\API\Customer;
 use App\Helpers\CommonHelper;
 use App\Helpers\MasterCatalogOrderHelper;
 use App\Http\Controllers\Controller;
+use App\Models\AdminToken;
 use App\Models\BrandDistributorMapping;
 use App\Models\Cart;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
+use App\Models\Seller;
 use App\Models\SellerProduct;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -437,7 +441,7 @@ class RetailerCartOrderApiController extends Controller
                         'delivery_time' => $request->delivery_time ?? '',
                         'delivery_date' => $deliveryDate,
                         'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
-                        'active_status' => 'received',
+                        'active_status' => (string) \App\Models\OrderStatusList::$received,
                         'address_id' => $request->address_id ?? 0,
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -467,7 +471,7 @@ class RetailerCartOrderApiController extends Controller
                             'discount' => 0,
                             'sub_total' => $subTotal,
                             'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
-                            'active_status' => 'received',
+                            'active_status' => (string) \App\Models\OrderStatusList::$received,
                             'seller_id' => $sellerId,
                             'slab_unit_price' => $r['slab'] ? $r['slab']['price'] : null,
                             'slab_min_qty' => $r['slab']['min_qty'] ?? null,
@@ -492,6 +496,47 @@ class RetailerCartOrderApiController extends Controller
             });
         } catch (\Throwable $e) {
             return CommonHelper::responseError($e->getMessage());
+        }
+
+        // Sarthi: notify each distributor that a new retailer order has landed.
+        // Failure to push must never fail the placeOrder call — wrap each send.
+        $currency = Setting::get_value('currency') ?? '$';
+        $retailerName = trim((string) ($user->name ?? '')) !== '' ? $user->name : (string) ($user->mobile ?? '');
+        foreach ($createdOrders as $row) {
+            try {
+                $seller = Seller::select('sellers.admin_id')
+                    ->where('sellers.id', $row['seller_id'])
+                    ->first();
+                if (!$seller) {
+                    continue;
+                }
+                $tokens = AdminToken::where('user_id', $seller->admin_id)
+                    ->where('type', 'Seller')
+                    ->get();
+                if ($tokens->isEmpty()) {
+                    continue;
+                }
+                $placeholders = [
+                    'order_id'      => $row['order_id'],
+                    'retailer_name' => $retailerName,
+                    'currency'      => $currency,
+                    'final_total'   => $row['final_total'],
+                ];
+                CommonHelper::sendNotificationByTemplate(
+                    $tokens,
+                    'retailer_new_order_seller',
+                    $placeholders,
+                    'new_order',
+                    0,
+                    '',
+                    null,
+                    null,
+                    'order',
+                    $row['order_id']
+                );
+            } catch (\Throwable $e) {
+                Log::error('[placeOrder] distributor push failed for order ' . $row['order_id'] . ': ' . $e->getMessage());
+            }
         }
 
         return CommonHelper::responseWithData([

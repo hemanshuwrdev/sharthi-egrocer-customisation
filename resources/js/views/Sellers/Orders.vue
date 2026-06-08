@@ -109,6 +109,11 @@
                                                 :to="{ name: 'SellerViewOrder', params: { id: row.item.id, record: row.item } }"
                                                 v-b-tooltip.hover :title="__('view')" class="btn btn-primary btn-sm"><i
                                                     class="fa fa-eye"></i></router-link>
+                                            <b-button v-if="canEditOrder(row.item)" v-b-tooltip.hover
+                                                :title="__('edit_quantity')" variant="warning" size="sm"
+                                                class="ms-1" @click="openEditOrderItems(row.item)">
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </b-button>
                                         </template>
 
                                         <template #row-details="row">
@@ -264,6 +269,67 @@
                     </div>
                 </div>
             </section>
+
+            <b-modal v-model="editOrderModalShow" :title="__('edit_quantity')" size="lg" :hide-footer="true"
+                @hide="onEditOrderModalHide">
+                <b-container fluid>
+                    <p class="text-muted small">
+                        {{ __('only_received_orders_can_be_edited') }}
+                    </p>
+                    <div v-if="editingOrderItemsLoading" class="text-center py-3">
+                        <b-spinner></b-spinner>
+                    </div>
+                    <div v-else>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{{ __('product') }}</th>
+                                        <th class="text-center" style="width: 130px;">{{ __('quantity') }}</th>
+                                        <th class="text-end" style="width: 130px;">{{ __('price') }} ({{ $currency }})</th>
+                                        <th class="text-end" style="width: 140px;">{{ __('subtotal') }} ({{ $currency }})</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="row in editingItems" :key="row.order_item_id">
+                                        <td>
+                                            <div>{{ row.product_name }}</div>
+                                            <small class="text-muted" v-if="row.variant_name">({{ row.variant_name }})</small>
+                                        </td>
+                                        <td>
+                                            <input type="number" min="0" step="1" class="form-control text-center"
+                                                v-model.number="row.quantity">
+                                        </td>
+                                        <td class="text-end">{{ row.price }}</td>
+                                        <td class="text-end">{{ editingRowSubtotal(row) }}</td>
+                                    </tr>
+                                    <tr v-if="editingItems.length === 0">
+                                        <td colspan="4" class="text-center text-muted">
+                                            {{ __('no_items') }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot v-if="editingItems.length > 0">
+                                    <tr>
+                                        <th colspan="3" class="text-end">{{ __('new_total') }} ({{ $currency }})</th>
+                                        <th class="text-end">{{ editingItemsTotal }}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <b-button variant="secondary" @click="editOrderModalShow = false" :disabled="isSavingEdit">
+                                {{ __('cancel') }}
+                            </b-button>
+                            <b-button variant="primary" @click="saveEditedOrderItems"
+                                :disabled="isSavingEdit || editingItems.length === 0">
+                                <span v-if="isSavingEdit"><i class="fa fa-spinner fa-spin"></i></span>
+                                {{ __('save_changes') }}
+                            </b-button>
+                        </div>
+                    </div>
+                </b-container>
+            </b-modal>
         </div>
     </div>
 </template>
@@ -339,6 +405,12 @@ export default {
             itemPageOptions: this.$pageOptions,
             search: "",
 
+            // Sarthi: distributor edits qty on a received order from the list page
+            editOrderModalShow: false,
+            editingOrderId: null,
+            editingItems: [],
+            editingOrderItemsLoading: false,
+            isSavingEdit: false,
         }
     },
     computed: {
@@ -349,7 +421,15 @@ export default {
                 .map(f => {
                     return { text: f.label, value: f.key }
                 })
-        }
+        },
+        editingItemsTotal() {
+            const t = this.editingItems.reduce((sum, r) => {
+                const q = parseFloat(r.quantity) || 0;
+                const p = parseFloat(r.price) || 0;
+                return sum + q * p;
+            }, 0);
+            return t.toFixed(2);
+        },
     },
     mounted() {
         // Set the initial number of items
@@ -376,6 +456,108 @@ export default {
         }
     },
     methods: {
+        // Sarthi: distributor edits qty on a `received` order (active_status == 2) from the list
+        canEditOrder(orderRow) {
+            if (!orderRow || orderRow.active_status == null) return false;
+            return parseInt(orderRow.active_status) === 2;
+        },
+        editingRowSubtotal(row) {
+            const q = parseFloat(row.quantity) || 0;
+            const p = parseFloat(row.price) || 0;
+            return (q * p).toFixed(2);
+        },
+        openEditOrderItems(orderRow) {
+            this.editingOrderId = orderRow.id;
+            this.editingItems = [];
+            this.editOrderModalShow = true;
+
+            // If items aren't loaded yet (row not expanded), fetch them
+            const seed = (items) => {
+                this.editingItems = items
+                    .filter(i => parseInt(i.active_status) !== 7 && parseInt(i.active_status) !== 8)
+                    .map(i => ({
+                        order_item_id: i.id,
+                        product_name: i.product_name,
+                        variant_name: i.variant_name,
+                        price: parseFloat(i.price) || 0,
+                        original_quantity: parseFloat(i.quantity) || 0,
+                        quantity: parseFloat(i.quantity) || 0,
+                    }));
+            };
+
+            if (orderRow.order_items && orderRow.order_items.length > 0) {
+                seed(orderRow.order_items);
+                return;
+            }
+
+            this.editingOrderItemsLoading = true;
+            axios.get(this.$apiUrl + '/orders/view/' + orderRow.id)
+                .then((response) => {
+                    this.editingOrderItemsLoading = false;
+                    const data = response.data;
+                    if (data.status === 1) {
+                        seed(data.data.order_items || []);
+                    } else {
+                        this.showError(data.message);
+                        this.editOrderModalShow = false;
+                    }
+                })
+                .catch(() => {
+                    this.editingOrderItemsLoading = false;
+                    this.showError('Failed to load order items');
+                    this.editOrderModalShow = false;
+                });
+        },
+        onEditOrderModalHide() {
+            this.editingItems = [];
+            this.editingOrderId = null;
+        },
+        saveEditedOrderItems() {
+            const changed = this.editingItems
+                .filter(r => parseFloat(r.quantity) !== r.original_quantity)
+                .map(r => ({
+                    order_item_id: r.order_item_id,
+                    quantity: parseFloat(r.quantity),
+                    // price intentionally omitted — distributor can't change price
+                }));
+
+            if (changed.length === 0) {
+                this.showWarning(this.__('no_changes_to_save'));
+                return;
+            }
+            for (const r of changed) {
+                if (isNaN(r.quantity) || r.quantity < 0) {
+                    this.showError(this.__('invalid_qty'));
+                    return;
+                }
+            }
+
+            this.isSavingEdit = true;
+            const postData = { order_id: this.editingOrderId, items: changed };
+            axios.post(this.$apiUrl + '/orders/update_items', postData)
+                .then((response) => {
+                    this.isSavingEdit = false;
+                    const data = response.data;
+                    if (data.status === 1) {
+                        this.editOrderModalShow = false;
+                        this.editingItems = [];
+                        this.editingOrderId = null;
+                        this.showMessage('success', data.message);
+                        this.getOrders();
+                    } else {
+                        this.showError(data.message);
+                    }
+                })
+                .catch(error => {
+                    this.isSavingEdit = false;
+                    if (error.response && error.response.data && error.response.data.message) {
+                        this.showError(error.response.data.message);
+                    } else {
+                        this.showError('Something went wrong!');
+                    }
+                });
+        },
+
         /**
          * Status name for dropdown. API returns status_name as object by lang code { en: "...", hi: "..." }.
          * Picks current app locale; fallback to status.status.

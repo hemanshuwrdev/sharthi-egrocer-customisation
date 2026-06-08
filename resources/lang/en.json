@@ -1,4 +1,11 @@
 {
+    "edit_quantity": "Edit Quantity",
+    "new_total": "New Total",
+    "no_items": "No items found.",
+    "only_received_orders_can_be_edited": "Only orders in the 'Received' state can be edited. Adjust quantity and Save to notify the retailer.",
+    "no_changes_to_save": "No changes to save.",
+    "invalid_qty": "Quantity must be a non-negative number.",
+    "enter_seller_name": "Enter distributor name",
     "files_selected": "files selected",
     "selected_other_images": "Selected other images",
     "uploaded_other_images": "Uploaded other images",

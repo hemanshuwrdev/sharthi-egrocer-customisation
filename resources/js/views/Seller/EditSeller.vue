@@ -92,12 +92,12 @@
                                             <div class="row">
                                                 <div class="form-group col-md-4">
                                                     <div class="form-group">
-                                                        <label>{{ __('name') }} <i class="text-danger"
+                                                        <label>{{ __('seller_name') }} <i class="text-danger"
                                                                 v-if="language.is_default">*</i></label>
                                                         <input type="text" class="form-control"
                                                             :required="language.is_default ? true : undefined"
                                                             v-model="translations[language.id].name"
-                                                            :placeholder="__('enter_name')" @focus="onInputFocus"
+                                                            :placeholder="__('enter_seller_name')" @focus="onInputFocus"
                                                             @blur="onInputBlur">
                                                     </div>
                                                 </div>

@@ -362,7 +362,7 @@ __webpack_require__.r(__webpack_exports__);
         }]
       }, {
         name: __('master_catalog'),
-        icon: 'layers',
+        icon: 'cubes',
         permission: null,
         submenu: [{
           name: __('add_master_product'),
@@ -520,27 +520,35 @@ __webpack_require__.r(__webpack_exports__);
           url: '/salary',
           permission: 'salary_list'
         }]
-      }, {
-        name: 'Logistics',
-        icon: 'truck',
-        permission: null,
-        submenu: [{
-          name: 'Manage Vehicles',
-          icon: 'grid-fill',
-          url: '/vehicles',
-          permission: 'delivery_boy_list'
-        }, {
-          name: 'Create Loading Slip',
-          icon: 'grid-fill',
-          url: '/loading_slips/create',
-          permission: 'delivery_boy_list'
-        }, {
-          name: 'Manage Loading Slips',
-          icon: 'grid-fill',
-          url: '/loading_slips',
-          permission: 'delivery_boy_list'
-        }]
-      }, {
+      },
+      // Hidden from super admin sidebar — Vehicles + Loading Slips live under the
+      // distributor panel; super admin should not access them. Uncomment to restore.
+      // {
+      //     name: 'Logistics',
+      //     icon: 'truck',
+      //     permission: null,
+      //     submenu: [
+      //         {
+      //             name: 'Manage Vehicles',
+      //             icon: 'grid-fill',
+      //             url: '/vehicles',
+      //             permission: 'delivery_boy_list',
+      //         },
+      //         {
+      //             name: 'Create Loading Slip',
+      //             icon: 'grid-fill',
+      //             url: '/loading_slips/create',
+      //             permission: 'delivery_boy_list',
+      //         },
+      //         {
+      //             name: 'Manage Loading Slips',
+      //             icon: 'grid-fill',
+      //             url: '/loading_slips',
+      //             permission: 'delivery_boy_list',
+      //         }
+      //     ]
+      // },
+      {
         name: __('notifications'),
         icon: 'share-square',
         url: '/notifications',
