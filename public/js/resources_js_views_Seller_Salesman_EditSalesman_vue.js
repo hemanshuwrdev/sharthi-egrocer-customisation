@@ -102,6 +102,12 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 
 
@@ -117,6 +123,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         mobile: '',
         brands: [],
         allow_payment_collection: false,
+        discount: null,
         status: 1
       },
       availableBrands: [],
@@ -204,6 +211,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         formData.append('brands[' + index + ']', brand.id || brand);
       });
       formData.append('allow_payment_collection', this.record.allow_payment_collection ? 1 : 0);
+      if (this.record.discount !== null && this.record.discount !== '') {
+        formData.append('discount', this.record.discount);
+      }
       formData.append('status', this.record.status);
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (response) {
         var data = response.data;
@@ -472,7 +482,7 @@ var render = function () {
                   _c("div", { staticClass: "col-md-6" }, [
                     _c("div", { staticClass: "form-group" }, [
                       _c("label", { attrs: { for: "name" } }, [
-                        _vm._v(_vm._s(_vm.__("name"))),
+                        _vm._v(_vm._s(_vm.__("salesman_name"))),
                       ]),
                       _vm._v(" "),
                       _c("input", {
@@ -488,7 +498,7 @@ var render = function () {
                         attrs: {
                           type: "text",
                           id: "name",
-                          placeholder: _vm.__("enter_name"),
+                          placeholder: _vm.__("enter_salesman_name"),
                           required: "",
                         },
                         domProps: { value: _vm.record.name },
@@ -648,6 +658,45 @@ var render = function () {
                         },
                         [_vm._v(_vm._s(_vm.__("yes")))]
                       ),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-md-6" }, [
+                    _c("div", { staticClass: "form-group" }, [
+                      _c("label", { attrs: { for: "discount" } }, [
+                        _vm._v(_vm._s(_vm.__("discount")) + " (%)"),
+                      ]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.record.discount,
+                            expression: "record.discount",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "number",
+                          step: "0.01",
+                          id: "discount",
+                          placeholder: _vm.__("enter_discount"),
+                        },
+                        domProps: { value: _vm.record.discount },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(
+                              _vm.record,
+                              "discount",
+                              $event.target.value
+                            )
+                          },
+                        },
+                      }),
                     ]),
                   ]),
                   _vm._v(" "),

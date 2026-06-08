@@ -332,8 +332,15 @@ class SarthiCustomisation extends Migration
                 $table->foreignId('seller_id')->constrained('sellers')->onDelete('cascade')->comment('Distributor who onboarded the salesman');
                 $table->text('brands')->comment('JSON array or CSV of assigned brand IDs');
                 $table->boolean('allow_payment_collection')->default(false);
+                $table->decimal('discount', 8, 2)->nullable()->comment('Discount percentage or amount');
                 $table->tinyInteger('status')->default(1);
                 $table->timestamps();
+            });
+        } else {
+            Schema::table('salesmen', function (Blueprint $table) {
+                if (!Schema::hasColumn('salesmen', 'discount')) {
+                    $table->decimal('discount', 8, 2)->nullable()->after('allow_payment_collection')->comment('Discount percentage or amount');
+                }
             });
         }
     }

@@ -1747,5 +1747,8 @@
     "brand_not_assigned_to_you": "This brand is not assigned to your distributor account.",
     "seller_product_not_found": "Distributor product entry not found",
     "product_not_available_in_your_area": "This product is not available in your area",
-    "city_required": "city_id is required"
+    "city_required": "city_id is required",
+    "enter_discount": "Enter discount",
+    "salesman_name": "Salesman Name",
+    "enter_salesman_name": "Enter salesman name"
 }

@@ -57,6 +57,7 @@ class SalesmanApiController extends Controller
         $salesman->seller_id = $seller_id;
         $salesman->brands = json_encode($request->brands);
         $salesman->allow_payment_collection = $request->allow_payment_collection ? 1 : 0;
+        $salesman->discount = $request->discount;
         $salesman->status = $request->status ?? 1;
         $salesman->save();
 
@@ -120,6 +121,7 @@ class SalesmanApiController extends Controller
         $salesman->mobile = $request->mobile;
         $salesman->brands = json_encode($request->brands);
         $salesman->allow_payment_collection = $request->allow_payment_collection ? 1 : 0;
+        $salesman->discount = $request->discount;
         $salesman->status = $request->status ?? 1;
         $salesman->save();
 

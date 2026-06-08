@@ -27,8 +27,8 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="name">{{ __('name') }}</label>
-                                        <input type="text" v-model="record.name" class="form-control" id="name" :placeholder="__('enter_name')" required>
+                                        <label for="name">{{ __('salesman_name') }}</label>
+                                        <input type="text" v-model="record.name" class="form-control" id="name" :placeholder="__('enter_salesman_name')" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -59,6 +59,12 @@
                                         <label for="allow_payment_collection">{{ __('allow_payment_collection') }}</label><br>
                                         <input type="checkbox" v-model="record.allow_payment_collection" id="allow_payment_collection" class="form-check-input mt-2">
                                         <label for="allow_payment_collection" class="form-check-label mt-2 ml-2">{{ __('yes') }}</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="discount">{{ __('discount') }} (%)</label>
+                                        <input type="number" step="0.01" v-model="record.discount" class="form-control" id="discount" :placeholder="__('enter_discount')">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -94,6 +100,7 @@ export default {
                 mobile: '',
                 brands: [],
                 allow_payment_collection: false,
+                discount: null,
                 status: 1
             },
             availableBrands: [],
@@ -158,6 +165,9 @@ export default {
                 formData.append('brands[' + index + ']', brand.id || brand);
             });
             formData.append('allow_payment_collection', this.record.allow_payment_collection ? 1 : 0);
+            if (this.record.discount !== null && this.record.discount !== '') {
+                formData.append('discount', this.record.discount);
+            }
             formData.append('status', this.record.status);
 
             axios.post(url, formData)
