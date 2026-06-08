@@ -699,7 +699,6 @@ Route::middleware('auth:api')->group(function () {
             Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('seller.loading_slips.save');
             Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('seller.loading_slips.dispatch');
             Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
-            Route::get('print/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'print']);
         });
     });
 
@@ -746,9 +745,6 @@ Route::middleware('auth:api')->group(function () {
 
     Route::group(['prefix' => 'vehicles'], function () {
         Route::get('/', [\App\Http\Controllers\API\VehiclesApiController::class, 'list']);
-        Route::post('save', [\App\Http\Controllers\API\VehiclesApiController::class, 'save'])->name('vehicles.save');
-        Route::post('update', [\App\Http\Controllers\API\VehiclesApiController::class, 'update'])->name('vehicles.update');
-        Route::post('delete', [\App\Http\Controllers\API\VehiclesApiController::class, 'delete'])->name('vehicles.delete');
         Route::get('active', [\App\Http\Controllers\API\VehiclesApiController::class, 'getActiveVehicles']);
     });
 
@@ -766,6 +762,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 Route::get('loading_slips/print/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'print']);
+Route::get('seller/loading_slips/print/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'print']);
 
 Route::prefix('oauth')->group(function () {
     Route::post('token', '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken');

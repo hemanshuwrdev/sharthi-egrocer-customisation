@@ -145,6 +145,12 @@ __webpack_require__.r(__webpack_exports__);
   computed: {
     urlPrefix: function urlPrefix() {
       return this.$route.path.startsWith('/seller') ? '/seller' : '';
+    },
+    isSeller: function isSeller() {
+      return this.$route.path.startsWith('/seller');
+    },
+    apiBase: function apiBase() {
+      return this.isSeller ? this.$sellerApiUrl : this.$apiUrl;
     }
   },
   mounted: function mounted() {
@@ -153,7 +159,7 @@ __webpack_require__.r(__webpack_exports__);
   methods: {
     getSlips: function getSlips() {
       var _this = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/loading_slips', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips', {
         params: {
           page: this.page,
           per_page: this.per_page,
@@ -179,7 +185,7 @@ __webpack_require__.r(__webpack_exports__);
         cancelButtonColor: '#858796'
       }).then(function (result) {
         if (result.isConfirmed) {
-          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this2.$apiUrl + '/loading_slips/dispatch', {
+          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this2.apiBase + '/loading_slips/dispatch', {
             id: id
           }).then(function (res) {
             if (res.data.status === 1) {
@@ -195,7 +201,7 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     printSlip: function printSlip(id) {
-      window.open(this.$baseUrl + '/api/loading_slips/print/' + id, '_blank');
+      window.open(this.apiBase + '/loading_slips/print/' + id, '_blank');
     }
   }
 });

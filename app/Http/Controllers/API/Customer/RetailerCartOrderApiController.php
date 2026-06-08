@@ -13,6 +13,7 @@ use App\Models\MasterProductVariant;
 use App\Models\Seller;
 use App\Models\SellerProduct;
 use App\Models\Setting;
+use App\Models\OrderStatusList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -440,8 +441,13 @@ class RetailerCartOrderApiController extends Controller
                         'longitude' => $request->longitude,
                         'delivery_time' => $request->delivery_time ?? '',
                         'delivery_date' => $deliveryDate,
+
                         'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
                         'active_status' => (string) \App\Models\OrderStatusList::$received,
+
+                        // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
+                        // 'active_status' => OrderStatusList::$received,
+
                         'address_id' => $request->address_id ?? 0,
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -472,6 +478,10 @@ class RetailerCartOrderApiController extends Controller
                             'sub_total' => $subTotal,
                             'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
                             'active_status' => (string) \App\Models\OrderStatusList::$received,
+
+                            // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
+                            // 'active_status' => OrderStatusList::$received,
+
                             'seller_id' => $sellerId,
                             'slab_unit_price' => $r['slab'] ? $r['slab']['price'] : null,
                             'slab_min_qty' => $r['slab']['min_qty'] ?? null,

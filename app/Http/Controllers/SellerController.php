@@ -1226,7 +1226,7 @@ class SellerController extends BaseController
             }
         }
 
-        $deliveryBoys = DeliveryBoy::select('id', 'name', 'address', 'other_payment_information')
+        $deliveryBoys = DeliveryBoy::select('id', 'name', 'address', 'other_payment_information', 'mobile')
             ->where('city_id', $city_id)
             ->where('status', 1);
 

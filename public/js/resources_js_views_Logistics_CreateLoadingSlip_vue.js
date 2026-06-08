@@ -205,6 +205,12 @@ __webpack_require__.r(__webpack_exports__);
     },
     urlPrefix: function urlPrefix() {
       return this.$route.path.startsWith('/seller') ? '/seller' : '';
+    },
+    isSeller: function isSeller() {
+      return this.$route.path.startsWith('/seller');
+    },
+    apiBase: function apiBase() {
+      return this.isSeller ? this.$sellerApiUrl : this.$apiUrl;
     }
   },
   mounted: function mounted() {
@@ -216,7 +222,7 @@ __webpack_require__.r(__webpack_exports__);
   methods: {
     getZones: function getZones() {
       var _this = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/loading_slips/zones').then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/zones').then(function (res) {
         if (res.data.status === 1) {
           _this.zones = res.data.data;
         }
@@ -224,7 +230,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     getVehicles: function getVehicles() {
       var _this2 = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/vehicles/active').then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/vehicles/active').then(function (res) {
         if (res.data.status === 1) {
           _this2.vehicles = res.data.data;
         }
@@ -233,7 +239,7 @@ __webpack_require__.r(__webpack_exports__);
     getDrivers: function getDrivers() {
       var _this3 = this;
       // Eager load delivery boys that are active
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/delivery_boys', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/delivery_boys', {
         params: {
           status: 1
         }
@@ -245,7 +251,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     getOrders: function getOrders() {
       var _this4 = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/loading_slips/orders', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/orders', {
         params: {
           zone: this.selectedZone
         }
@@ -306,7 +312,7 @@ __webpack_require__.r(__webpack_exports__);
     createLoadingSlip: function createLoadingSlip() {
       var _this7 = this;
       this.loading = true;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/loading_slips/save', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.apiBase + '/loading_slips/save', {
         vehicle_id: this.selectedVehicleId,
         driver_id: this.selectedDriverId,
         order_ids: this.selectedOrderIds

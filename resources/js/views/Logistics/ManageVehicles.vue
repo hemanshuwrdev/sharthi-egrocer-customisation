@@ -8,7 +8,7 @@
                 </h1>
                 <p class="text-muted mb-0">{{ __('add_edit_and_manage_your_distribution_fleet_and_load_capacities') }}</p>
             </div>
-            <div class="col-auto">
+            <div class="col-auto" v-if="isSeller">
                 <button @click="openCreateModal" class="btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill">
                     <i class="fa fa-plus mr-2"></i>{{ __('add_new_vehicle') }}
                 </button>
@@ -220,14 +220,6 @@ export default {
             isEdit: false,
             loading: false,
             isLoading: false,
-            fields: [
-                { key: 'id', label: __('id'), class: 'text-center', sortable: true },
-                { key: 'name', label: __('vehicle_name'), class: 'text-center', sortable: true },
-                { key: 'vehicle_number', label: __('vehicle_number'), class: 'text-center', sortable: true },
-                { key: 'capacity', label: __('capacity_kg'), class: 'text-center', sortable: true },
-                { key: 'status', label: __('status'), class: 'text-center', sortable: true },
-                { key: 'actions', label: __('actions'), class: 'text-center' }
-            ],
             form: {
                 id: null,
                 name: '',
@@ -238,6 +230,25 @@ export default {
         };
     },
     computed: {
+        isSeller() {
+            return this.$route.path.startsWith('/seller');
+        },
+        apiPath() {
+            return this.isSeller ? '/seller/vehicles' : '/vehicles';
+        },
+        fields() {
+            const baseFields = [
+                { key: 'id', label: __('id'), class: 'text-center', sortable: true },
+                { key: 'name', label: __('vehicle_name'), class: 'text-center', sortable: true },
+                { key: 'vehicle_number', label: __('vehicle_number'), class: 'text-center', sortable: true },
+                { key: 'capacity', label: __('capacity_kg'), class: 'text-center', sortable: true },
+                { key: 'status', label: __('status'), class: 'text-center', sortable: true }
+            ];
+            if (this.isSeller) {
+                baseFields.push({ key: 'actions', label: __('actions'), class: 'text-center' });
+            }
+            return baseFields;
+        },
         activeCount() {
             return this.vehicles.filter(v => v.status == 1).length;
         },
@@ -263,7 +274,7 @@ export default {
     methods: {
         getVehicles() {
             this.isLoading = true;
-            axios.get(this.$apiUrl + '/vehicles', {
+            axios.get(this.$apiUrl + this.apiPath, {
                 params: {
                     page: this.page,
                     per_page: this.perPage,
@@ -304,7 +315,7 @@ export default {
         },
         saveVehicle() {
             this.loading = true;
-            const endpoint = this.isEdit ? '/vehicles/update' : '/vehicles/save';
+            const endpoint = this.apiPath + (this.isEdit ? '/update' : '/save');
             axios.post(this.$apiUrl + endpoint, this.form)
                 .then(res => {
                     this.loading = false;
@@ -332,7 +343,7 @@ export default {
                 cancelButtonColor: '#858796',
             }).then(result => {
                 if (result.isConfirmed) {
-                    axios.post(this.$apiUrl + '/vehicles/delete', { id: id })
+                    axios.post(this.$apiUrl + this.apiPath + '/delete', { id: id })
                         .then(res => {
                             if (res.data.status === 1) {
                                 this.showMessage('success', res.data.message);

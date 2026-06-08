@@ -191,6 +191,12 @@ export default {
         },
         urlPrefix() {
             return this.$route.path.startsWith('/seller') ? '/seller' : '';
+        },
+        isSeller() {
+            return this.$route.path.startsWith('/seller');
+        },
+        apiBase() {
+            return this.isSeller ? this.$sellerApiUrl : this.$apiUrl;
         }
     },
     mounted() {
@@ -201,7 +207,7 @@ export default {
     },
     methods: {
         getZones() {
-            axios.get(this.$apiUrl + '/loading_slips/zones')
+            axios.get(this.apiBase + '/loading_slips/zones')
                 .then(res => {
                     if (res.data.status === 1) {
                         this.zones = res.data.data;
@@ -209,7 +215,7 @@ export default {
                 });
         },
         getVehicles() {
-            axios.get(this.$apiUrl + '/vehicles/active')
+            axios.get(this.apiBase + '/vehicles/active')
                 .then(res => {
                     if (res.data.status === 1) {
                         this.vehicles = res.data.data;
@@ -218,7 +224,7 @@ export default {
         },
         getDrivers() {
             // Eager load delivery boys that are active
-            axios.get(this.$apiUrl + '/delivery_boys', { params: { status: 1 } })
+            axios.get(this.apiBase + '/delivery_boys', { params: { status: 1 } })
                 .then(res => {
                     if (res.data.status === 1) {
                         this.drivers = res.data.data.data || res.data.data;
@@ -226,7 +232,7 @@ export default {
                 });
         },
         getOrders() {
-            axios.get(this.$apiUrl + '/loading_slips/orders', {
+            axios.get(this.apiBase + '/loading_slips/orders', {
                 params: { zone: this.selectedZone }
             }).then(res => {
                 if (res.data.status === 1) {
@@ -279,7 +285,7 @@ export default {
         },
         createLoadingSlip() {
             this.loading = true;
-            axios.post(this.$apiUrl + '/loading_slips/save', {
+            axios.post(this.apiBase + '/loading_slips/save', {
                 vehicle_id: this.selectedVehicleId,
                 driver_id: this.selectedDriverId,
                 order_ids: this.selectedOrderIds

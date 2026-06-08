@@ -29,6 +29,10 @@ class LoadingSlipsApiController extends Controller
 
         $query = LoadingSlip::with(['vehicle', 'driver'])->orderBy('id', 'DESC');
 
+        if (auth()->user() && auth()->user()->seller) {
+            $query->where('created_by', auth()->user()->id);
+        }
+
         if ($filter) {
             $query->where(function ($q) use ($filter) {
                 $q->where('slip_no', 'like', "%{$filter}%")
@@ -63,6 +67,16 @@ class LoadingSlipsApiController extends Controller
                 OrderStatusList::$processed,
                 OrderStatusList::$shipped
             ]);
+
+        if (auth()->user() && auth()->user()->seller) {
+            $sellerId = auth()->user()->seller->id;
+            $query->whereExists(function ($q) use ($sellerId) {
+                $q->select(DB::raw(1))
+                  ->from('order_items')
+                  ->whereColumn('order_items.order_id', 'orders.id')
+                  ->where('order_items.seller_id', $sellerId);
+            });
+        }
 
         if ($zone) {
             $query->where('cities.zone', $zone);
@@ -113,6 +127,19 @@ class LoadingSlipsApiController extends Controller
         }
 
         $orders = Order::whereIn('id', $request->order_ids)->get();
+
+        if (auth()->user() && auth()->user()->seller) {
+            $sellerId = auth()->user()->seller->id;
+            foreach ($orders as $order) {
+                $hasSellerItem = DB::table('order_items')
+                    ->where('order_id', $order->id)
+                    ->where('seller_id', $sellerId)
+                    ->exists();
+                if (!$hasSellerItem) {
+                    return CommonHelper::responseError("Order #{$order->id} does not belong to your store.");
+                }
+            }
+        }
 
         $totalWeight = 0;
         $totalItems = 0;
@@ -216,6 +243,9 @@ class LoadingSlipsApiController extends Controller
         $slip = LoadingSlip::with(['vehicle', 'driver'])->find($id);
         if (!$slip) {
             return CommonHelper::responseError('Loading slip not found.');
+        }
+        if (auth()->user() && auth()->user()->seller && $slip->created_by != auth()->user()->id) {
+            return CommonHelper::responseError('Access denied to this loading slip.');
         }
 
         // Fetch associated orders in sequential route order if sequenced, or order id asc

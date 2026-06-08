@@ -131,6 +131,12 @@ export default {
     computed: {
         urlPrefix() {
             return this.$route.path.startsWith('/seller') ? '/seller' : '';
+        },
+        isSeller() {
+            return this.$route.path.startsWith('/seller');
+        },
+        apiBase() {
+            return this.isSeller ? this.$sellerApiUrl : this.$apiUrl;
         }
     },
     mounted() {
@@ -138,7 +144,7 @@ export default {
     },
     methods: {
         getSlips() {
-            axios.get(this.$apiUrl + '/loading_slips', {
+            axios.get(this.apiBase + '/loading_slips', {
                 params: {
                     page: this.page,
                     per_page: this.per_page,
@@ -163,7 +169,7 @@ export default {
                 cancelButtonColor: '#858796',
             }).then(result => {
                 if (result.isConfirmed) {
-                    axios.post(this.$apiUrl + '/loading_slips/dispatch', { id: id })
+                    axios.post(this.apiBase + '/loading_slips/dispatch', { id: id })
                         .then(res => {
                             if (res.data.status === 1) {
                                 this.showMessage('success', res.data.message);
@@ -178,7 +184,7 @@ export default {
             });
         },
         printSlip(id) {
-            window.open(this.$baseUrl + '/api/loading_slips/print/' + id, '_blank');
+            window.open(this.apiBase + '/loading_slips/print/' + id, '_blank');
         }
     }
 };

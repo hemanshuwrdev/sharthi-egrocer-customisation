@@ -166,6 +166,12 @@ export default {
         },
         urlPrefix() {
             return this.$route.path.startsWith('/seller') ? '/seller' : '';
+        },
+        isSeller() {
+            return this.$route.path.startsWith('/seller');
+        },
+        apiBase() {
+            return this.isSeller ? this.$sellerApiUrl : this.$apiUrl;
         }
     },
     mounted() {
@@ -174,7 +180,7 @@ export default {
     methods: {
         getSlipDetails() {
             const id = this.$route.params.id;
-            axios.get(this.$apiUrl + '/loading_slips/view/' + id)
+            axios.get(this.apiBase + '/loading_slips/view/' + id)
                 .then(res => {
                     if (res.data.status === 1) {
                         this.slip = res.data.data.slip;
@@ -198,7 +204,7 @@ export default {
                 cancelButtonColor: '#858796',
             }).then(result => {
                 if (result.isConfirmed) {
-                    axios.post(this.$apiUrl + '/loading_slips/dispatch', { id: this.slip.id })
+                    axios.post(this.apiBase + '/loading_slips/dispatch', { id: this.slip.id })
                         .then(res => {
                             if (res.data.status === 1) {
                                 this.showMessage('success', res.data.message);
@@ -213,7 +219,7 @@ export default {
             });
         },
         printSlip() {
-            window.open(this.$baseUrl + '/api' + this.urlPrefix + '/loading_slips/print/' + this.slip.id, '_blank');
+            window.open(this.apiBase + '/loading_slips/print/' + this.slip.id, '_blank');
         },
         formatDate(dateStr) {
             return moment(dateStr).format('DD-MM-YYYY hh:mm A');

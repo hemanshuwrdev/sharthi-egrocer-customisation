@@ -234,7 +234,24 @@ __webpack_require__.r(__webpack_exports__);
       isEdit: false,
       loading: false,
       isLoading: false,
-      fields: [{
+      form: {
+        id: null,
+        name: '',
+        vehicle_number: '',
+        capacity: '',
+        status: 1
+      }
+    };
+  },
+  computed: {
+    isSeller: function isSeller() {
+      return this.$route.path.startsWith('/seller');
+    },
+    apiPath: function apiPath() {
+      return this.isSeller ? '/seller/vehicles' : '/vehicles';
+    },
+    fields: function fields() {
+      var baseFields = [{
         key: 'id',
         label: __('id'),
         "class": 'text-center',
@@ -259,21 +276,16 @@ __webpack_require__.r(__webpack_exports__);
         label: __('status'),
         "class": 'text-center',
         sortable: true
-      }, {
-        key: 'actions',
-        label: __('actions'),
-        "class": 'text-center'
-      }],
-      form: {
-        id: null,
-        name: '',
-        vehicle_number: '',
-        capacity: '',
-        status: 1
+      }];
+      if (this.isSeller) {
+        baseFields.push({
+          key: 'actions',
+          label: __('actions'),
+          "class": 'text-center'
+        });
       }
-    };
-  },
-  computed: {
+      return baseFields;
+    },
     activeCount: function activeCount() {
       return this.vehicles.filter(function (v) {
         return v.status == 1;
@@ -304,7 +316,7 @@ __webpack_require__.r(__webpack_exports__);
     getVehicles: function getVehicles() {
       var _this = this;
       this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/vehicles', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + this.apiPath, {
         params: {
           page: this.page,
           per_page: this.perPage,
@@ -346,7 +358,7 @@ __webpack_require__.r(__webpack_exports__);
     saveVehicle: function saveVehicle() {
       var _this2 = this;
       this.loading = true;
-      var endpoint = this.isEdit ? '/vehicles/update' : '/vehicles/save';
+      var endpoint = this.apiPath + (this.isEdit ? '/update' : '/save');
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + endpoint, this.form).then(function (res) {
         _this2.loading = false;
         if (res.data.status === 1) {
@@ -374,7 +386,7 @@ __webpack_require__.r(__webpack_exports__);
         cancelButtonColor: '#858796'
       }).then(function (result) {
         if (result.isConfirmed) {
-          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this3.$apiUrl + '/vehicles/delete', {
+          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this3.$apiUrl + _this3.apiPath + '/delete', {
             id: id
           }).then(function (res) {
             if (res.data.status === 1) {
@@ -410,7 +422,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Premium aesthetics CSS */\n.card-light-primary[data-v-6e7f3107] {\n    background-color: #f0f4ff;\n    border: 1px solid rgba(78, 115, 223, 0.15) !important;\n}\n.card-light-success[data-v-6e7f3107] {\n    background-color: #eafaf1;\n    border: 1px solid rgba(28, 200, 138, 0.15) !important;\n}\n.card-light-warning[data-v-6e7f3107] {\n    background-color: #fef9ec;\n    border: 1px solid rgba(246, 194, 62, 0.15) !important;\n}\n.bg-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n    color: #4e73df !important;\n}\n.bg-soft-secondary[data-v-6e7f3107] {\n    background-color: rgba(133, 135, 150, 0.1) !important;\n    color: #858796 !important;\n}\n.bg-soft-success[data-v-6e7f3107] {\n    background-color: rgba(28, 200, 138, 0.1) !important;\n    color: #1cc88a !important;\n}\n.bg-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1) !important;\n    color: #e74a3b !important;\n}\n.btn-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1);\n    color: #4e73df;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-primary[data-v-6e7f3107]:hover {\n    background-color: #4e73df;\n    color: white;\n}\n.btn-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1);\n    color: #e74a3b;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-danger[data-v-6e7f3107]:hover {\n    background-color: #e74a3b;\n    color: white;\n}\n.avatar-circle[data-v-6e7f3107] {\n    width: 40px;\n    height: 40px;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-size: 16px;\n    font-weight: bold;\n}\n.transition-all[data-v-6e7f3107] {\n    transition: all 0.25s ease-in-out;\n}\n.hover-bg-light[data-v-6e7f3107]:hover {\n    background-color: rgba(248, 249, 250, 0.9) !important;\n    transform: translateY(-2px);\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);\n}\n.form-control-lg[data-v-6e7f3107] {\n    border-radius: 10px;\n    font-size: 0.95rem;\n}\n.rounded-pill[data-v-6e7f3107] {\n    border-radius: 50rem !important;\n}\n.gap-2[data-v-6e7f3107] {\n    gap: 0.5rem;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Premium aesthetics CSS */\n.card-light-primary[data-v-6e7f3107] {\n    background-color: #f0f4ff;\n    border: 1px solid rgba(78, 115, 223, 0.15) !important;\n}\n.card-light-success[data-v-6e7f3107] {\n    background-color: #eafaf1;\n    border: 1px solid rgba(28, 200, 138, 0.15) !important;\n}\n.card-light-warning[data-v-6e7f3107] {\n    background-color: #fef9ec;\n    border: 1px solid rgba(246, 194, 62, 0.15) !important;\n}\n.bg-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n    color: #4e73df !important;\n}\n.bg-soft-secondary[data-v-6e7f3107] {\n    background-color: rgba(133, 135, 150, 0.1) !important;\n    color: #858796 !important;\n}\n.bg-soft-success[data-v-6e7f3107] {\n    background-color: rgba(28, 200, 138, 0.1) !important;\n    color: #1cc88a !important;\n}\n.bg-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1) !important;\n    color: #e74a3b !important;\n}\n.btn-soft-primary[data-v-6e7f3107] {\n    background-color: rgba(78, 115, 223, 0.1);\n    color: #4e73df;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-primary[data-v-6e7f3107]:hover {\n    background-color: #4e73df;\n    color: white;\n}\n.btn-soft-danger[data-v-6e7f3107] {\n    background-color: rgba(231, 74, 59, 0.1);\n    color: #e74a3b;\n    border: none;\n    transition: all 0.2s;\n}\n.btn-soft-danger[data-v-6e7f3107]:hover {\n    background-color: #e74a3b;\n    color: white;\n}\n.avatar-circle[data-v-6e7f3107] {\n    width: 40px;\n    height: 40px;\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-size: 16px;\n    font-weight: bold;\n}\n.transition-all[data-v-6e7f3107] {\n    transition: all 0.25s ease-in-out;\n}\n.hover-bg-light[data-v-6e7f3107]:hover {\n    background-color: rgba(248, 249, 250, 0.9) !important;\n    transform: translateY(-2px);\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);\n}\n.form-control-lg[data-v-6e7f3107] {\n    border-radius: 10px;\n    font-size: 0.95rem;\n}\n.rounded-pill[data-v-6e7f3107] {\n    border-radius: 50rem !important;\n}\n.gap-2[data-v-6e7f3107] {\n    gap: 0.5rem;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -566,20 +578,22 @@ var render = function () {
           ]),
         ]),
         _vm._v(" "),
-        _c("div", { staticClass: "col-auto" }, [
-          _c(
-            "button",
-            {
-              staticClass:
-                "btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill",
-              on: { click: _vm.openCreateModal },
-            },
-            [
-              _c("i", { staticClass: "fa fa-plus mr-2" }),
-              _vm._v(_vm._s(_vm.__("add_new_vehicle")) + "\n            "),
-            ]
-          ),
-        ]),
+        _vm.isSeller
+          ? _c("div", { staticClass: "col-auto" }, [
+              _c(
+                "button",
+                {
+                  staticClass:
+                    "btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill",
+                  on: { click: _vm.openCreateModal },
+                },
+                [
+                  _c("i", { staticClass: "fa fa-plus mr-2" }),
+                  _vm._v(_vm._s(_vm.__("add_new_vehicle")) + "\n            "),
+                ]
+              ),
+            ])
+          : _vm._e(),
       ]),
       _vm._v(" "),
       _c("div", { staticClass: "row mb-4" }, [

@@ -43,6 +43,10 @@ class VehiclesApiController extends Controller
 
     public function save(Request $request)
     {
+        if (auth()->user()->role_id !== \App\Models\Role::$roleSeller) {
+            return CommonHelper::responseError(__('Unauthorized. Only distributors can manage vehicles.'));
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'vehicle_number' => 'required|string|max:255|unique:vehicles,vehicle_number',
@@ -69,6 +73,10 @@ class VehiclesApiController extends Controller
 
     public function update(Request $request)
     {
+        if (auth()->user()->role_id !== \App\Models\Role::$roleSeller) {
+            return CommonHelper::responseError(__('Unauthorized. Only distributors can manage vehicles.'));
+        }
+
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:vehicles,id',
             'name' => 'required|string|max:255',
@@ -94,6 +102,10 @@ class VehiclesApiController extends Controller
 
     public function delete(Request $request)
     {
+        if (auth()->user()->role_id !== \App\Models\Role::$roleSeller) {
+            return CommonHelper::responseError(__('Unauthorized. Only distributors can manage vehicles.'));
+        }
+
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:vehicles,id',
         ]);
