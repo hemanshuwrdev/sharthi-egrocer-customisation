@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Models\City;
 use App\Models\DeliveryBoy;
 use App\Models\Role;
+use App\Models\Salesman;
 use App\Models\Seller;
 use App\Models\AdminToken;
 use Carbon\Carbon;
@@ -42,6 +43,11 @@ class AdminAuthController extends Controller
         } elseif ($request->type == 4) {
             $user = Admin::with('deliveryBoy')->where('email', request()->email)->first();
             if (!$user || !$user->deliveryBoy) {
+                return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+            }
+        } elseif ($request->type == 5) {
+            $user = Admin::with('salesman')->where('email', request()->email)->first();
+            if (!$user || !$user->salesman) {
                 return CommonHelper::responseError('user_is_not_register_with_this_email_address');
             }
         } else {
@@ -87,6 +93,11 @@ class AdminAuthController extends Controller
             return CommonHelper::responseError('your_account_is_blocked_please_contact_to_administrator_for_activate');
         }
 
+        // Salesman status gate
+        if ($user->role_id == Role::$roleSalesman && isset($user->salesman) && $user->salesman->status == Salesman::$statusBlocked) {
+            return CommonHelper::responseError('your_account_is_blocked_please_contact_to_administrator_for_activate');
+        }
+
         Auth::login($user, false);
 
         if (isset($request->fcm_token) && !empty($request->fcm_token)) {
@@ -97,6 +108,8 @@ class AdminAuthController extends Controller
                 $type = Role::$roleNameSeller;
             } elseif ($user->role_id == Role::$roleDeliveryBoy) {
                 $type = Role::$roleNameDeliveryBoy;
+            } elseif ($user->role_id == Role::$roleSalesman) {
+                $type = Role::$roleNameSalesman;
             } elseif ($user->role_id == Role::$roleAdmin) {
                 $type = Role::$roleNameAdmin;
             } elseif ($user->role_id == Role::$roleSuperAdmin) {
@@ -122,6 +135,11 @@ class AdminAuthController extends Controller
             $key = isset($userArray['delivery_boy']) ? 'delivery_boy' : 'deliveryBoy';
             if (!empty($userArray[$key])) {
                 $userArray[$key]['name'] = $user->deliveryBoy->getAttributeValue('name') ?? '';
+            }
+        }
+        if ($user->salesman) {
+            if (!empty($userArray['salesman'])) {
+                $userArray['salesman']['name'] = $user->salesman->getAttributeValue('name') ?? '';
             }
         }
         $res = ['user' => $userArray, 'access_token' => $accessToken];

@@ -39,6 +39,18 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
+                                        <label for="email">{{ __('email') }}</label>
+                                        <input type="email" v-model="record.email" class="form-control" id="email" :placeholder="__('enter_email')" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="password">{{ __('password') }} <span v-if="id" class="text-muted small">({{ __('leave_blank_to_keep_unchanged') }})</span></label>
+                                        <input type="password" v-model="record.password" class="form-control" id="password" :placeholder="__('enter_password')" :required="!id" autocomplete="new-password">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                         <label for="brands">{{ __('assigned_brands') }}</label>
                                         <multiselect
                                             v-model="record.brands"
@@ -98,6 +110,8 @@ export default {
             record: {
                 name: '',
                 mobile: '',
+                email: '',
+                password: '',
                 brands: [],
                 allow_payment_collection: false,
                 discount: null,
@@ -133,6 +147,7 @@ export default {
                     let data = response.data;
                     if (data.status === 1) {
                         this.record = data.data;
+                        this.record.password = '';
                         this.record.allow_payment_collection = data.data.allow_payment_collection == 1 ? true : false;
                         if (this.record.brands) {
                             let parsedBrands = typeof this.record.brands === 'string' ? JSON.parse(this.record.brands) : this.record.brands;
@@ -160,6 +175,10 @@ export default {
             }
             formData.append('name', this.record.name);
             formData.append('mobile', this.record.mobile);
+            formData.append('email', this.record.email);
+            if (this.record.password) {
+                formData.append('password', this.record.password);
+            }
             this.record.brands.forEach((brand, index) => {
                 // If brand is an object from Multiselect, just pass its ID.
                 formData.append('brands[' + index + ']', brand.id || brand);

@@ -56,7 +56,7 @@
                                 </template>
 
                                 <template #cell(brands)="row">
-                                    <span v-if="row.item.brands && JSON.parse(row.item.brands)" class="badge bg-secondary me-1" v-for="brand in JSON.parse(row.item.brands)" :key="brand">
+                                    <span class="badge bg-secondary me-1" v-for="brand in parseBrands(row.item.brands)" :key="brand">
                                         {{ getBrandName(brand) }}
                                     </span>
                                 </template>
@@ -97,6 +97,7 @@ export default {
             fields: [
                 { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
                 { key: 'name', label: __('name'), sortable: true, class: 'text-center' },
+                { key: 'email', label: __('email'), sortable: true, class: 'text-center' },
                 { key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center' },
                 { key: 'brands', label: __('assigned_brands'), class: 'text-center' },
                 { key: 'allow_payment_collection', label: __('payment_collection'), class: 'text-center' },
@@ -143,6 +144,11 @@ export default {
         getBrandName(id) {
             let brand = this.availableBrands.find(b => b.id == id);
             return brand ? brand.name : id;
+        },
+        parseBrands(value) {
+            if (!value) return [];
+            if (Array.isArray(value)) return value;
+            try { return JSON.parse(value) || []; } catch (e) { return []; }
         },
         getSalesmen() {
             this.isLoading = true;

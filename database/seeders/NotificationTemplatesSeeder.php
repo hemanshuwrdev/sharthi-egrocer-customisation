@@ -123,6 +123,27 @@ class NotificationTemplatesSeeder extends Seeder
                 'message'     => '{{change_summary}} New total: {{currency}}{{new_total}}. Tap to view the updated order.',
                 'placeholders' => json_encode(['order_id', 'app_name', 'currency', 'new_total', 'change_summary']),
             ],
+            // --- Sarthi: new retailer registered → fan-out push to all salesmen of mapped distributors ---
+            [
+                'type'        => 'new_retailer_pending',
+                'title'       => 'New retailer pending verification: {{shop_name}}',
+                'message'     => '{{shop_name}} ({{retailer_name}}) signed up in {{city_name}}. Visit and verify to claim them.',
+                'placeholders' => json_encode(['shop_name', 'retailer_name', 'city_name', 'retailer_id']),
+            ],
+            // --- Sarthi: salesman verified retailer → activation push to retailer ---
+            [
+                'type'        => 'retailer_verified_customer',
+                'title'       => 'Your shop is verified — start ordering!',
+                'message'     => 'Hi {{shop_name}}, {{salesman_name}} has verified your shop. Your account is now active. Start placing orders.',
+                'placeholders' => json_encode(['shop_name', 'salesman_name']),
+            ],
+            // --- Sarthi: salesman placed assisted order on retailer's behalf ---
+            [
+                'type'        => 'salesman_placed_order_customer',
+                'title'       => 'Order #{{order_id}} placed by your salesman',
+                'message'     => '{{salesman_name}} placed an order for you totalling {{currency}}{{final_total}}. Tap to view.',
+                'placeholders' => json_encode(['order_id', 'salesman_name', 'currency', 'final_total']),
+            ],
             // --- Cart reminder (CommonHelper::SendCartNotification) ---
             [
                 'type'        => 'cart_reminder_first',

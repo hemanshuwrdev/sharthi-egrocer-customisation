@@ -16,6 +16,7 @@ Route::group(['middleware' => ['auth.customer']], function () {
     Route::post('send_sms',[\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
     Route::post('verify_user',[\App\Http\Controllers\API\Customer\SmsApiController::class, 'verifyContact']);
     Route::post('register', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'register']);
+    Route::post('register_retailer', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'registerRetailer']);
     Route::post('verify_email',[\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'verifyEmail']);
     Route::post('verify_user_exist',[\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'verifyUserExist']);
     Route::post('login', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'login']);

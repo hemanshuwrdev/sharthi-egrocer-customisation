@@ -76,7 +76,9 @@ class RetailerCartOrderApiController extends Controller
             return CommonHelper::responseError($line['error']);
         }
 
+        // Retailer's own cart only — never collide with a salesman's draft on this retailer.
         $cart = Cart::where('user_id', $user->id)
+            ->whereNull('placed_by_salesman_id')
             ->where('master_product_variant_id', $variantId)
             ->where('seller_id', $sellerId)
             ->first();
@@ -112,6 +114,7 @@ class RetailerCartOrderApiController extends Controller
         $user = auth()->user();
 
         $items = Cart::where('user_id', $user->id)
+            ->whereNull('placed_by_salesman_id')
             ->whereNotNull('master_product_variant_id')
             ->where('save_for_later', 0)
             ->get();
@@ -225,6 +228,7 @@ class RetailerCartOrderApiController extends Controller
         $user = auth()->user();
         $deleted = Cart::where('id', $request->cart_id)
             ->where('user_id', $user->id)
+            ->whereNull('placed_by_salesman_id')
             ->delete();
 
         return $deleted
@@ -243,6 +247,7 @@ class RetailerCartOrderApiController extends Controller
         }
 
         $count = Cart::where('user_id', $user->id)
+            ->whereNull('placed_by_salesman_id')
             ->whereNotNull('master_product_variant_id')
             ->where('save_for_later', 0)
             ->count();
@@ -266,6 +271,7 @@ class RetailerCartOrderApiController extends Controller
         $user = auth()->user();
         $cart = Cart::where('id', $request->cart_id)
             ->where('user_id', $user->id)
+            ->whereNull('placed_by_salesman_id')
             ->first();
         if (!$cart) {
             return CommonHelper::responseError('item_not_found');
@@ -333,6 +339,7 @@ class RetailerCartOrderApiController extends Controller
             }
 
             $cart = Cart::where('user_id', $user->id)
+                ->whereNull('placed_by_salesman_id')
                 ->where('master_product_variant_id', $variantId)
                 ->where('seller_id', $sellerId)
                 ->first();
@@ -386,7 +393,14 @@ class RetailerCartOrderApiController extends Controller
 
         $user = auth()->user();
 
+        // Sarthi verification gate: only retailers in approved/active state can place orders.
+        // Pending + salesman_verified can browse but not order (per spec Status System rules).
+        if (!in_array($user->verification_status, ['approved', 'active'], true)) {
+            return CommonHelper::responseError('retailer_pending_verification');
+        }
+
         $items = Cart::where('user_id', $user->id)
+            ->whereNull('placed_by_salesman_id')
             ->whereNotNull('master_product_variant_id')
             ->where('save_for_later', 0)
             ->get();

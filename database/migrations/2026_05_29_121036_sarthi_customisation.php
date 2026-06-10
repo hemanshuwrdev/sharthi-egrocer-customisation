@@ -344,12 +344,90 @@ class SarthiCustomisation extends Migration
             });
         }
 
+
         // Delivery Boys Table Additions
         Schema::table('delivery_boys', function (Blueprint $table) {
             if (!Schema::hasColumn('delivery_boys', 'license_no')) {
                 $table->string('license_no')->nullable()->after('mobile');
             }
         });
+
+        // 8.b Salesman login wiring: link to admins (email/password) for app/panel login (mirrors seller/delivery_boy)
+        Schema::table('salesmen', function (Blueprint $table) {
+            if (!Schema::hasColumn('salesmen', 'admin_id')) {
+                $table->unsignedBigInteger('admin_id')->nullable()->after('id')->comment('FK to admins.id for login credentials');
+            }
+            if (!Schema::hasColumn('salesmen', 'email')) {
+                $table->string('email')->nullable()->after('mobile');
+            }
+        });
+
+        // 9. Retailer verification (Sarthi onboarding flow): hot-path columns on users + profile/audit table
+        //    Status flow per spec: pending -> salesman_verified -> approved -> active
+        //    Fan-out + first-claim model: salesman_id is set atomically at verify time.
+        Schema::table('users', function (Blueprint $table) {
+            if (!Schema::hasColumn('users', 'verification_status')) {
+                $table->enum('verification_status', ['pending', 'salesman_verified', 'approved', 'active'])
+                      ->nullable()
+                      ->after('status')
+                      ->comment('Retailer onboarding lifecycle; NULL for non-retailer users');
+            }
+            if (!Schema::hasColumn('users', 'salesman_id')) {
+                $table->unsignedBigInteger('salesman_id')->nullable()->after('verification_status')
+                      ->comment('Owning salesman; set atomically on first verification claim');
+                $table->index('salesman_id', 'idx_users_salesman');
+            }
+        });
+
+        // 9.b Salesman assisted-order attribution.
+        //     - carts.placed_by_salesman_id separates salesman drafts from retailer's own cart
+        //     - orders.placed_by_salesman_id is the audit of who actually placed it
+        //     - orders.salesman_discount records the absolute amount applied via salesman's discount cap
+        Schema::table('carts', function (Blueprint $table) {
+            if (!Schema::hasColumn('carts', 'placed_by_salesman_id')) {
+                $table->unsignedBigInteger('placed_by_salesman_id')->nullable()->after('user_id')
+                      ->comment('Salesman drafting this cart row on behalf of the retailer; NULL = retailer added themselves');
+                $table->index(['user_id', 'placed_by_salesman_id'], 'idx_carts_user_salesman');
+            }
+        });
+        Schema::table('orders', function (Blueprint $table) {
+            if (!Schema::hasColumn('orders', 'placed_by_salesman_id')) {
+                $table->unsignedBigInteger('placed_by_salesman_id')->nullable()->after('user_id')
+                      ->comment('Set when a salesman placed the order on retailer behalf; NULL for direct retailer orders');
+                $table->index('placed_by_salesman_id', 'idx_orders_salesman');
+            }
+            if (!Schema::hasColumn('orders', 'salesman_discount')) {
+                $table->decimal('salesman_discount', 10, 2)->nullable()->after('discount')
+                      ->comment('Absolute discount amount applied via salesman discount cap');
+            }
+        });
+
+        if (!Schema::hasTable('retailer_profiles')) {
+            Schema::create('retailer_profiles', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id')->unique()->comment('FK to users.id (retailer)');
+                // Registration profile (set at signup)
+                $table->string('shop_name')->nullable()->comment('Display name of the shop');
+                $table->string('party_name')->nullable()->comment('Billing name for Tally sync');
+                $table->string('gst_no')->nullable();
+                $table->text('address')->nullable()->comment('Shop address captured at signup');
+                $table->unsignedBigInteger('city_id')->nullable()->comment('Drives distributor fan-out');
+                $table->decimal('gps_lat', 10, 7)->nullable()->comment('Captured at signup');
+                $table->decimal('gps_lng', 10, 7)->nullable();
+                // Verification audit (set when a salesman verifies in person)
+                $table->decimal('verified_lat', 10, 7)->nullable()->comment('Storefront GPS captured by salesman');
+                $table->decimal('verified_lng', 10, 7)->nullable();
+                $table->string('storefront_photo')->nullable();
+                $table->text('verification_notes')->nullable();
+                $table->timestamp('verified_at')->nullable();
+                $table->unsignedBigInteger('verified_by_salesman_id')->nullable();
+                $table->timestamps();
+
+                $table->index('city_id', 'idx_rp_city');
+                $table->index('verified_by_salesman_id', 'idx_rp_verified_by');
+            });
+        }
+
     }
 
     /**
@@ -359,6 +437,35 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        // Salesman assisted-order attribution
+        Schema::table('orders', function (Blueprint $table) {
+            if (Schema::hasColumn('orders', 'salesman_discount')) {
+                $table->dropColumn('salesman_discount');
+            }
+            if (Schema::hasColumn('orders', 'placed_by_salesman_id')) {
+                $table->dropIndex('idx_orders_salesman');
+                $table->dropColumn('placed_by_salesman_id');
+            }
+        });
+        Schema::table('carts', function (Blueprint $table) {
+            if (Schema::hasColumn('carts', 'placed_by_salesman_id')) {
+                $table->dropIndex('idx_carts_user_salesman');
+                $table->dropColumn('placed_by_salesman_id');
+            }
+        });
+
+        // Retailer verification
+        Schema::dropIfExists('retailer_profiles');
+        Schema::table('users', function (Blueprint $table) {
+            if (Schema::hasColumn('users', 'salesman_id')) {
+                $table->dropIndex('idx_users_salesman');
+                $table->dropColumn('salesman_id');
+            }
+            if (Schema::hasColumn('users', 'verification_status')) {
+                $table->dropColumn('verification_status');
+            }
+        });
+
         // Master catalog (reverse FK order)
         Schema::dropIfExists('seller_product_slab_prices');
         Schema::dropIfExists('seller_products');

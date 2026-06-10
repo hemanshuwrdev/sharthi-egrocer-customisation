@@ -12,7 +12,7 @@ class Admin extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable,HasRoles;
 
-    protected $appends = ['allPermissions','seller_status','delivery_boy_status'];
+    protected $appends = ['allPermissions','seller_status','delivery_boy_status','salesman_status'];
     protected $hidden = ['password'];
 
     protected $fillable = ['username','email','password','role_id','created_by'];
@@ -61,6 +61,19 @@ class Admin extends Authenticatable
         $status = 0;
         if($this->deliveryBoy){
             $status = $this->deliveryBoy->status;
+        }
+        return $status;
+    }
+
+    public function salesman(){
+        return $this->belongsTo(Salesman::class,'id','admin_id');
+    }
+
+    public function getSalesmanStatusAttribute()
+    {
+        $status = 0;
+        if($this->salesman){
+            $status = $this->salesman->status;
         }
         return $status;
     }

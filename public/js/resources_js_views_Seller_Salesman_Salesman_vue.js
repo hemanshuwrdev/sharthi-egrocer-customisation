@@ -119,6 +119,11 @@ __webpack_require__.r(__webpack_exports__);
         sortable: true,
         "class": 'text-center'
       }, {
+        key: 'email',
+        label: __('email'),
+        sortable: true,
+        "class": 'text-center'
+      }, {
         key: 'mobile',
         label: __('mobile'),
         sortable: true,
@@ -187,6 +192,15 @@ __webpack_require__.r(__webpack_exports__);
         return b.id == id;
       });
       return brand ? brand.name : id;
+    },
+    parseBrands: function parseBrands(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
+      try {
+        return JSON.parse(value) || [];
+      } catch (e) {
+        return [];
+      }
     },
     getSalesmen: function getSalesmen() {
       var _this2 = this;
@@ -567,25 +581,22 @@ var render = function () {
                         key: "cell(brands)",
                         fn: function (row) {
                           return _vm._l(
-                            JSON.parse(row.item.brands),
+                            _vm.parseBrands(row.item.brands),
                             function (brand) {
-                              return row.item.brands &&
-                                JSON.parse(row.item.brands)
-                                ? _c(
-                                    "span",
-                                    {
-                                      key: brand,
-                                      staticClass: "badge bg-secondary me-1",
-                                    },
-                                    [
-                                      _vm._v(
-                                        "\n                                    " +
-                                          _vm._s(_vm.getBrandName(brand)) +
-                                          "\n                                "
-                                      ),
-                                    ]
-                                  )
-                                : _vm._e()
+                              return _c(
+                                "span",
+                                {
+                                  key: brand,
+                                  staticClass: "badge bg-secondary me-1",
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                    " +
+                                      _vm._s(_vm.getBrandName(brand)) +
+                                      "\n                                "
+                                  ),
+                                ]
+                              )
                             }
                           )
                         },

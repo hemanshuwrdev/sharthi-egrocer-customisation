@@ -4,8 +4,13 @@ namespace App\Http\Controllers\API\Customer;
 
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
+use App\Models\AdminToken;
+use App\Models\BrandDistributorMapping;
 use App\Models\Cart;
+use App\Models\City;
 use App\Models\MailSetting;
+use App\Models\RetailerProfile;
+use App\Models\Salesman;
 use App\Models\Setting;
 use App\Models\UserToken;
 use App\Models\SubscriptionPlan;
@@ -446,6 +451,169 @@ class CustomerAuthController extends Controller
         } catch (\Exception $e) {
             Log::error('Register : ' . $e->getMessage());
             return CommonHelper::responseError($e->getMessage());
+        }
+    }
+
+    /**
+     * Sarthi: B2B retailer registration.
+     *  - Creates User with verification_status='pending'
+     *  - Creates RetailerProfile with shop/billing/address/GPS
+     *  - Fans out 'new_retailer_pending' push to ALL salesmen of every distributor
+     *    that maps to the retailer's city via brand_distributor_mappings
+     *  - First salesman to verify claims the retailer (atomic, separate endpoint)
+     *
+     * Body (required): name, country_code, mobile, shop_name, party_name, city_id, address
+     * Body (optional): gst_no, gps_lat, gps_lng, fcm_token, platform, language_id
+     */
+    public function registerRetailer(Request $request)
+    {
+        $registerCountryCode = $this->normalizeCountryCode($request->input('country_code'));
+
+        $validator = Validator::make($request->all(), [
+            'name'         => 'required|string|max:120',
+            'country_code' => 'required|string',
+            'mobile'       => [
+                'required', 'numeric',
+                Rule::unique('users', 'mobile')
+                    ->where(fn($q) => $q->where('country_code', $registerCountryCode))
+                    ->whereNull('deleted_at'),
+            ],
+            'shop_name'    => 'required|string|max:160',
+            'party_name'   => 'required|string|max:160',
+            'city_id'      => 'required|integer|exists:cities,id',
+            'address'      => 'required|string|min:5',
+            'gst_no'       => 'nullable|string|max:32',
+            'gps_lat'      => 'nullable|numeric|between:-90,90',
+            'gps_lng'      => 'nullable|numeric|between:-180,180',
+        ], [
+            'mobile.unique' => 'mobile_number_already_taken',
+        ]);
+
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        DB::beginTransaction();
+        try {
+            $user = new User();
+            $user->name = $request->get('name');
+            $user->mobile = $request->get('mobile');
+            $user->country_code = $registerCountryCode;
+            $user->type = 'phone';
+            $user->status = User::$active;
+            $user->verification_status = 'pending';
+            $user->referral_code = strtoupper(substr(sha1(microtime()), 0, 6));
+            $user->is_verified = 1; // OTP verified prior to this call
+            $user->save();
+
+            CommonHelper::setDefaultMailSetting($user->id, 0);
+
+            $profile = new RetailerProfile();
+            $profile->user_id    = $user->id;
+            $profile->shop_name  = $request->shop_name;
+            $profile->party_name = $request->party_name;
+            $profile->gst_no     = $request->gst_no;
+            $profile->city_id    = $request->city_id;
+            $profile->address    = $request->address;
+            $profile->gps_lat    = $request->gps_lat;
+            $profile->gps_lng    = $request->gps_lng;
+            $profile->save();
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('registerRetailer create failed: ' . $e->getMessage());
+            return CommonHelper::responseError('something_went_wrong');
+        }
+
+        // Auth + token
+        Auth::login($user);
+        $accessToken = $user->createToken('authToken')->accessToken;
+
+        if ($request->has('fcm_token') && filled($request->fcm_token)) {
+            $language_id = $request->input('language_id') ?: CommonHelper::getDefaultLanguageId();
+            UserToken::updateOrCreate(
+                ['fcm_token' => $request->fcm_token],
+                [
+                    'user_id'     => $user->id,
+                    'platform'    => $request->platform ?? 'android',
+                    'type'        => 'customer',
+                    'language_id' => $language_id,
+                ]
+            );
+        }
+
+        // Fire-and-forget fan-out: any failure must NEVER break the registration.
+        try {
+            $this->fanOutNewRetailerToSalesmen($user, $profile);
+        } catch (\Throwable $e) {
+            Log::error('registerRetailer fan-out failed: ' . $e->getMessage());
+        }
+
+        return CommonHelper::responseWithData([
+            'user'            => $user->load('retailerProfile'),
+            'access_token'    => $accessToken,
+            'message'         => __('registration_pending_verification'),
+        ]);
+    }
+
+    /**
+     * Sarthi: push 'new_retailer_pending' to every salesman of every distributor
+     * that ships to the retailer's city. No-op if no distributors map to that city.
+     */
+    private function fanOutNewRetailerToSalesmen(User $retailer, RetailerProfile $profile): void
+    {
+        if (!$profile->city_id) {
+            return;
+        }
+
+        $distributorIds = BrandDistributorMapping::where('city_id', $profile->city_id)
+            ->pluck('seller_id')->unique()->values();
+
+        if ($distributorIds->isEmpty()) {
+            return;
+        }
+
+        $salesmen = Salesman::whereIn('seller_id', $distributorIds)
+            ->where('status', Salesman::$statusActive)
+            ->whereNotNull('admin_id')
+            ->get(['id', 'admin_id', 'name']);
+
+        if ($salesmen->isEmpty()) {
+            return;
+        }
+
+        $cityName = City::where('id', $profile->city_id)->value('name') ?? '';
+        $placeholders = [
+            'shop_name'     => $profile->shop_name ?? '',
+            'retailer_name' => $retailer->name ?? '',
+            'city_name'     => $cityName,
+            'retailer_id'   => $retailer->id,
+        ];
+
+        foreach ($salesmen as $sm) {
+            try {
+                $tokens = AdminToken::where('user_id', $sm->admin_id)
+                    ->where('type', 'Salesman')
+                    ->get();
+                if ($tokens->isEmpty()) {
+                    continue;
+                }
+                CommonHelper::sendNotificationByTemplate(
+                    $tokens,
+                    'new_retailer_pending',
+                    $placeholders,
+                    'new_retailer',
+                    0,
+                    '',
+                    null,
+                    null,
+                    'retailer',
+                    $retailer->id
+                );
+            } catch (\Throwable $e) {
+                Log::error('[registerRetailer] salesman push failed for salesman_id=' . $sm->id . ': ' . $e->getMessage());
+            }
         }
     }
 

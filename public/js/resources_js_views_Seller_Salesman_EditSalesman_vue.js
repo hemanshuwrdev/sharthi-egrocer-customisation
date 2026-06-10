@@ -108,6 +108,18 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -121,6 +133,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       record: {
         name: '',
         mobile: '',
+        email: '',
+        password: '',
         brands: [],
         allow_payment_collection: false,
         discount: null,
@@ -174,6 +188,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         var data = response.data;
         if (data.status === 1) {
           _this2.record = data.data;
+          _this2.record.password = '';
           _this2.record.allow_payment_collection = data.data.allow_payment_collection == 1 ? true : false;
           if (_this2.record.brands) {
             var parsedBrands = typeof _this2.record.brands === 'string' ? JSON.parse(_this2.record.brands) : _this2.record.brands;
@@ -206,6 +221,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       }
       formData.append('name', this.record.name);
       formData.append('mobile', this.record.mobile);
+      formData.append('email', this.record.email);
+      if (this.record.password) {
+        formData.append('password', this.record.password);
+      }
       this.record.brands.forEach(function (brand, index) {
         // If brand is an object from Multiselect, just pass its ID.
         formData.append('brands[' + index + ']', brand.id || brand);
@@ -543,6 +562,92 @@ var render = function () {
                               return
                             }
                             _vm.$set(_vm.record, "mobile", $event.target.value)
+                          },
+                        },
+                      }),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-md-6" }, [
+                    _c("div", { staticClass: "form-group" }, [
+                      _c("label", { attrs: { for: "email" } }, [
+                        _vm._v(_vm._s(_vm.__("email"))),
+                      ]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.record.email,
+                            expression: "record.email",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "email",
+                          id: "email",
+                          placeholder: _vm.__("enter_email"),
+                          required: "",
+                        },
+                        domProps: { value: _vm.record.email },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(_vm.record, "email", $event.target.value)
+                          },
+                        },
+                      }),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-md-6" }, [
+                    _c("div", { staticClass: "form-group" }, [
+                      _c("label", { attrs: { for: "password" } }, [
+                        _vm._v(_vm._s(_vm.__("password")) + " "),
+                        _vm.id
+                          ? _c("span", { staticClass: "text-muted small" }, [
+                              _vm._v(
+                                "(" +
+                                  _vm._s(
+                                    _vm.__("leave_blank_to_keep_unchanged")
+                                  ) +
+                                  ")"
+                              ),
+                            ])
+                          : _vm._e(),
+                      ]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.record.password,
+                            expression: "record.password",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "password",
+                          id: "password",
+                          placeholder: _vm.__("enter_password"),
+                          required: !_vm.id,
+                          autocomplete: "new-password",
+                        },
+                        domProps: { value: _vm.record.password },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(
+                              _vm.record,
+                              "password",
+                              $event.target.value
+                            )
                           },
                         },
                       }),

@@ -38,4 +38,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(\App\Models\Language::class, 'language_id');
     }
+
+    public function retailerProfile()
+    {
+        return $this->hasOne(RetailerProfile::class, 'user_id', 'id');
+    }
+
+    public function salesman()
+    {
+        return $this->belongsTo(Salesman::class, 'salesman_id', 'id');
+    }
 }

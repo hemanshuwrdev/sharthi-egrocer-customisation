@@ -742,6 +742,32 @@ Route::middleware('auth:api')->group(function () {
         Route::post('manage_live_tracking', [\App\Http\Controllers\DeliveryBoyController::class, 'manageLiveTracking'])->name('delivery_boy.manage_live_tracking');
     });
 
+    /*salesman app (login session)*/
+    /***********************************************************************************************/
+
+    Route::group(['prefix' => 'salesman'], function () {
+        Route::post('add_fcm_token', [\App\Http\Controllers\API\AdminAuthController::class, 'addFcmToken'])->name('salesman.add_fcm_token');
+        Route::post('update_fcm_token', [\App\Http\Controllers\API\AdminAuthController::class, 'updateFcmToken'])->name('salesman.update_fcm_token');
+        Route::post('logout', [\App\Http\Controllers\API\AdminAuthController::class, 'logout'])->name('salesman.logout');
+
+        // Sarthi: retailer verification (fan-out + first-claim)
+        Route::group(['prefix' => 'retailers'], function () {
+            Route::get('pending', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'pendingRetailers'])->name('salesman.retailers.pending');
+            Route::post('verify', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'verifyRetailer'])->name('salesman.retailers.verify');
+            Route::get('my-retailers', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'myRetailers'])->name('salesman.retailers.my');
+            Route::post('scan', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'scanRetailer'])->name('salesman.retailers.scan');
+            Route::get('{id}', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'retailerDetail'])->name('salesman.retailers.detail');
+        });
+
+        // Sarthi: salesman assisted order — cart + place
+        Route::group(['prefix' => 'cart'], function () {
+            Route::post('add', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'addCartItem'])->name('salesman.cart.add');
+            Route::get('list', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'getCartItems'])->name('salesman.cart.list');
+            Route::post('remove', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'removeCartItem'])->name('salesman.cart.remove');
+        });
+        Route::post('orders/place', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'placeOrder'])->name('salesman.orders.place');
+    });
+
 
     Route::group(['prefix' => 'vehicles'], function () {
         Route::get('/', [\App\Http\Controllers\API\VehiclesApiController::class, 'list']);
