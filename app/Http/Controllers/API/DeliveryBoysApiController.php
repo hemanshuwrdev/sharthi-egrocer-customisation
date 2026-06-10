@@ -98,19 +98,18 @@ class DeliveryBoysApiController extends Controller
 
         if ($request->language_id == $defaultLanguage->id) {
             $rules = array_merge($rules, [
-                'dob' => 'required',
                 'mobile' => 'required',
+                'license_no' => 'required',
                 'email' => 'email|required|unique:admins,email',
-                'password' => 'required',
-                'confirm_password' => 'required|same:password',
-                'ifsc_code' => 'required',
-                'bank_name' => 'required',
-                'bank_account_number' => 'required',
-                'account_name' => 'required',
+                 'password' => 'nullable',
+                'ifsc_code' => 'nullable',
+                'bank_name' => 'nullable',
+                'bank_account_number' => 'nullable',
+                'account_name' => 'nullable',
                 'city_id' => 'required',
-                'driving_license' => 'required|file',
-                'national_identity_card' => 'required|file',
-                'bonus_percentage' => $request->bonus_type == 1 ? 'required|numeric|min:0.1' : 'nullable'
+                'driving_license' => 'nullable|file',
+                'national_identity_card' => 'nullable|file',
+                'bonus_percentage' => 'nullable|numeric'
             ]);
         }
 
@@ -129,7 +128,7 @@ class DeliveryBoysApiController extends Controller
             $admin = Admin::create([
                 'username' => $request->name,
                 'email'    => $request->email,
-                'password' => bcrypt($request->password),
+                'password' => bcrypt($request->password ?? $request->mobile),
                 'role_id'  => Role::$roleDeliveryBoy,
                 'created_by' => 0,
             ]);
@@ -141,6 +140,7 @@ class DeliveryBoysApiController extends Controller
                 'address'  => $request->address,
                 'other_payment_information' => $request->other_payment_information,
                 'mobile'   => $request->mobile,
+                'license_no' => $request->license_no,
                 'dob'      => $request->dob,
                 'city_id'  => $request->city_id,
                 'bonus_type' => $request->bonus_type ?? 0,
@@ -238,6 +238,7 @@ class DeliveryBoysApiController extends Controller
             $deliveryBoy->address = $request->address;
             $deliveryBoy->other_payment_information = $request->other_payment_information ?? '';
             $deliveryBoy->mobile = $request->mobile ?? $deliveryBoy->mobile;
+            $deliveryBoy->license_no = $request->license_no ?? $deliveryBoy->license_no;
             $deliveryBoy->dob    = $request->dob ?? $deliveryBoy->dob;
             $deliveryBoy->city_id = $request->city_id ?? $deliveryBoy->city_id;
             $deliveryBoy->status = $request->status ?? $deliveryBoy->status;

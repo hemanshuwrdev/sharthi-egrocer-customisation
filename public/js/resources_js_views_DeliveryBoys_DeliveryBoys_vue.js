@@ -639,6 +639,22 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -663,11 +679,13 @@ __webpack_require__.r(__webpack_exports__);
         admin_id: this.record ? this.record.admin_id : "",
         name: this.record ? this.record.name : "",
         mobile: this.record ? this.record.mobile : "",
+        license_no: this.record ? this.record.license_no : "",
         email: this.record ? this.record.admin.email : "",
         password: "",
         confirm_password: "",
         dob: this.record ? this.record.dob : "",
-        bonus: this.record ? this.record.bonus : "",
+        bonus_type: this.record ? this.record.bonus_type : 0,
+        bonus_percentage: this.record ? this.record.bonus_percentage : "",
         driving_license: "",
         driving_license_url: this.record ? this.$storageUrl + this.record.driving_license : "",
         national_identity_card: "",
@@ -782,15 +800,16 @@ __webpack_require__.r(__webpack_exports__);
         return;
       }
       var formData = new FormData();
-      for (var key in this.deliveryBoys) {
-        formData.append(key, this.deliveryBoys[key]);
-      }
       var vm = this;
       this.isLoading = true;
-      var formObject = this.deliveryBoys;
-      // let formData = new FormData();
-      for (var _key in formObject) {
-        formData.append(_key, formObject[_key]);
+      for (var key in this.deliveryBoys) {
+        if (key === 'driving_license' || key === 'national_identity_card') {
+          if (this.deliveryBoys[key] && this.deliveryBoys[key] !== "") {
+            formData.append(key, this.deliveryBoys[key]);
+          }
+        } else if (this.deliveryBoys[key] !== null) {
+          formData.append(key, this.deliveryBoys[key]);
+        }
       }
       var url = this.$apiUrl + '/delivery_boys/save';
       if (this.deliveryBoys.id) {
@@ -1987,6 +2006,45 @@ var render = function () {
             _vm._v(" "),
             _c("div", { staticClass: "col-md-6" }, [
               _c("div", { staticClass: "form-group" }, [
+                _c("label", { attrs: { for: "license_no" } }, [
+                  _vm._v(_vm._s(_vm.__("license_no"))),
+                ]),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.deliveryBoys.license_no,
+                      expression: "deliveryBoys.license_no",
+                    },
+                  ],
+                  staticClass: "form-control",
+                  attrs: {
+                    type: "text",
+                    name: "license_no",
+                    id: "license_no",
+                    placeholder: "Enter license no.",
+                  },
+                  domProps: { value: _vm.deliveryBoys.license_no },
+                  on: {
+                    input: function ($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(
+                        _vm.deliveryBoys,
+                        "license_no",
+                        $event.target.value
+                      )
+                    },
+                  },
+                }),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "col-md-6" }, [
+              _c("div", { staticClass: "form-group" }, [
                 _c("label", { attrs: { for: "email" } }, [
                   _vm._v(_vm._s(_vm.__("email"))),
                 ]),
@@ -2297,8 +2355,60 @@ var render = function () {
             _vm._v(" "),
             _c("div", { staticClass: "col-md-6" }, [
               _c("div", { staticClass: "form-group" }, [
-                _c("label", { attrs: { for: "bonus" } }, [
-                  _vm._v(_vm._s(_vm.__("bonus")) + " (%)"),
+                _c("label", { attrs: { for: "bonus_type" } }, [
+                  _vm._v(_vm._s(_vm.__("bonus_type"))),
+                ]),
+                _vm._v(" "),
+                _c(
+                  "select",
+                  {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.deliveryBoys.bonus_type,
+                        expression: "deliveryBoys.bonus_type",
+                      },
+                    ],
+                    staticClass: "form-control",
+                    attrs: { name: "bonus_type", id: "bonus_type" },
+                    on: {
+                      change: function ($event) {
+                        var $$selectedVal = Array.prototype.filter
+                          .call($event.target.options, function (o) {
+                            return o.selected
+                          })
+                          .map(function (o) {
+                            var val = "_value" in o ? o._value : o.value
+                            return val
+                          })
+                        _vm.$set(
+                          _vm.deliveryBoys,
+                          "bonus_type",
+                          $event.target.multiple
+                            ? $$selectedVal
+                            : $$selectedVal[0]
+                        )
+                      },
+                    },
+                  },
+                  [
+                    _c("option", { attrs: { value: "0" } }, [
+                      _vm._v("Fixed Amount / Commission"),
+                    ]),
+                    _vm._v(" "),
+                    _c("option", { attrs: { value: "1" } }, [
+                      _vm._v("Percentage"),
+                    ]),
+                  ]
+                ),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "col-md-6" }, [
+              _c("div", { staticClass: "form-group" }, [
+                _c("label", { attrs: { for: "bonus_percentage" } }, [
+                  _vm._v(_vm._s(_vm.__("bonus"))),
                 ]),
                 _vm._v(" "),
                 _c("input", {
@@ -2306,24 +2416,28 @@ var render = function () {
                     {
                       name: "model",
                       rawName: "v-model",
-                      value: _vm.deliveryBoys.bonus,
-                      expression: "deliveryBoys.bonus",
+                      value: _vm.deliveryBoys.bonus_percentage,
+                      expression: "deliveryBoys.bonus_percentage",
                     },
                   ],
                   staticClass: "form-control",
                   attrs: {
                     type: "number",
-                    name: "bonus",
-                    id: "bonus",
-                    placeholder: "Enter Bonus (%)",
+                    name: "bonus_percentage",
+                    id: "bonus_percentage",
+                    placeholder: "Enter Bonus Amount or Percentage",
                   },
-                  domProps: { value: _vm.deliveryBoys.bonus },
+                  domProps: { value: _vm.deliveryBoys.bonus_percentage },
                   on: {
                     input: function ($event) {
                       if ($event.target.composing) {
                         return
                       }
-                      _vm.$set(_vm.deliveryBoys, "bonus", $event.target.value)
+                      _vm.$set(
+                        _vm.deliveryBoys,
+                        "bonus_percentage",
+                        $event.target.value
+                      )
                     },
                   },
                 }),

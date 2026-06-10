@@ -1750,5 +1750,7 @@
     "city_required": "city_id is required",
     "enter_discount": "Enter discount",
     "salesman_name": "Salesman Name",
-    "enter_salesman_name": "Enter salesman name"
+    "enter_salesman_name": "Enter salesman name",
+    "license_no": "License No",
+    "please_upload_driving_license_image": "Please upload driving license image"
 }

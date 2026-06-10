@@ -343,6 +343,13 @@ class SarthiCustomisation extends Migration
                 }
             });
         }
+
+        // Delivery Boys Table Additions
+        Schema::table('delivery_boys', function (Blueprint $table) {
+            if (!Schema::hasColumn('delivery_boys', 'license_no')) {
+                $table->string('license_no')->nullable()->after('mobile');
+            }
+        });
     }
 
     /**
@@ -437,5 +444,10 @@ class SarthiCustomisation extends Migration
         Schema::dropIfExists('vehicles_and_dispatches_tables');
         Schema::dropIfExists('salesmen');
 
+        Schema::table('delivery_boys', function (Blueprint $table) {
+            if (Schema::hasColumn('delivery_boys', 'license_no')) {
+                $table->dropColumn('license_no');
+            }
+        });
     }
 }

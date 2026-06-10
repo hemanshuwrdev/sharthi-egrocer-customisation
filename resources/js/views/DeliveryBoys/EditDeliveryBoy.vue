@@ -161,8 +161,7 @@
                                         <!-- Date Of Birth -->
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="dob">{{ __('date_of_birth') }} <span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="dob">{{ __('date_of_birth') }}</label>
                                                 <input type="date" name="dob" id="dob" v-model="deliveryBoys.dob"
                                                     class="form-control" :placeholder="__('date_of_birth')"
                                                     @input="validateDateOfBirth">
@@ -181,6 +180,17 @@
                                                     :placeholder="__('mobile_no')" @input="validateMobileNumber">
                                                 <span v-if="mobilevalidationError" class="error">{{
                                                     mobilevalidationError }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- License No -->
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="license_no">{{ __('license_no') }}<span
+                                                        class="text-danger text-xs">*</span></label>
+                                                <input type="text" name="license_no" id="license_no"
+                                                    v-model="deliveryBoys.license_no" class="form-control"
+                                                    :placeholder="__('license_no')">
                                             </div>
                                         </div>
 
@@ -244,10 +254,10 @@
                                         <!-- Bank's IFSC Code -->
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="ifsc_code">{{ __('bank_ifsc_code') }}<span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="ifsc_code">{{ __('bank_ifsc_code') }}
+                                                       </label>
                                                 <input type="text" name="ifsc_code" id="ifsc_code"
-                                                    v-model="deliveryBoys.ifsc_code" required
+                                                    v-model="deliveryBoys.ifsc_code"
                                                     :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
                                                     class="form-control" :placeholder="__('bank_ifsc_code')">
                                             </div>
@@ -256,10 +266,10 @@
                                         <!-- Bank Name -->
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="bank_name">{{ __('bank_name') }}<span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="bank_name">{{ __('bank_name') }}
+                                                </label>
                                                 <input type="text" name="bank_name" id="bank_name"
-                                                    v-model="deliveryBoys.bank_name" required
+                                                    v-model="deliveryBoys.bank_name" 
                                                     :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
                                                     class="form-control" :placeholder="__('bank_name')">
                                             </div>
@@ -268,10 +278,10 @@
                                         <!-- Account Number -->
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="account_number">{{ __('account_number') }}<span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="account_number">{{ __('account_number') }}
+                                                    </label>
                                                 <input type="number" name="account_number" id="account_number"
-                                                    v-model="deliveryBoys.bank_account_number" required
+                                                    v-model="deliveryBoys.bank_account_number" 
                                                     :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
                                                     class="form-control" :placeholder="__('account_number')"
                                                     @input="validateAccountNumber">
@@ -283,10 +293,10 @@
                                         <!-- Bank Account Name -->
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="account_name">{{ __('bank_account_name') }}<span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="account_name">{{ __('bank_account_name') }}
+                                                       </label>
                                                 <input type="text" name="account_name" id="account_name"
-                                                    v-model="deliveryBoys.account_name" required
+                                                    v-model="deliveryBoys.account_name"
                                                     :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
                                                     class="form-control" :placeholder="__('bank_account_name')">
                                             </div>
@@ -347,8 +357,8 @@
                                         <!-- Driving License -->
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="driving_license">{{ __('driving_licence') }}<span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="driving_license">{{ __('driving_licence') }}
+                                                       </label>
                                                 <input type="file" class="file-input"
                                                     accept="image/*,application/pdf,.doc,.docx" name="driving_license"
                                                     id="driving_license"
@@ -392,7 +402,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="national_identity_card">{{ __('national_identity_card')
-                                                    }}<span class="text-danger text-xs">*</span></label>
+                                                    }}</label>
                                                 <input type="file" accept="image/*,application/pdf,.doc,.docx"
                                                     name="national_identity_card" id="national_identity_card"
                                                     v-if="this.$roleDeliveryBoy !== this.login_user.role.name"
@@ -452,8 +462,8 @@
                                         <div class="row mt-2">
                                             <div class="col-md-3">
                                                 <div class="form-group">
-                                                    <label for="bonus_type">{{ __('bonus_type') }}<span
-                                                            class="text-danger text-xs">*</span></label>
+                                                    <label for="bonus_type">{{ __('bonus_type') }}
+                                                           </label>
                                                     <select name="bonus_type" id="bonus_type" @change="changeBonusType"
                                                         v-model="deliveryBoys.bonus_type"
                                                         :disabled="this.$roleDeliveryBoy === this.login_user.role.name"
@@ -466,8 +476,7 @@
                                             </div>
                                             <div v-if="deliveryBoys.bonus_type == 1" class="col-md-3">
                                                 <div class="form-group">
-                                                    <label for="bonus_percentage">{{ __('bonus_percentage') }}<span
-                                                            class="text-danger text-xs">*</span></label>
+                                                    <label for="bonus_percentage">{{ __('bonus_percentage') }}</label>
                                                     <input type="number" min="0.1" max="100" step="0.1"
                                                         name="bonus_percentage" id="bonus_percentage"
                                                         v-model="deliveryBoys.bonus_percentage" class="form-control"
@@ -612,6 +621,7 @@ export default {
                 name: "",
                 dob: "",
                 mobile: "",
+                license_no: "",
                 email: "",
                 password: "",
                 confirm_password: "",
@@ -933,6 +943,7 @@ export default {
                         this.deliveryBoys.name = emptyIfNull(this.record?.name);
                         this.deliveryBoys.dob = emptyIfNull(this.record?.dob);
                         this.deliveryBoys.mobile = emptyIfNull(this.record?.mobile);
+                        this.deliveryBoys.license_no = emptyIfNull(this.record?.license_no);
                         this.deliveryBoys.email = (this.record?.admin) ? (this.record.admin.email || '') : '';
                         this.deliveryBoys.password = "";
                         this.deliveryBoys.confirm_password = "";
@@ -1000,8 +1011,8 @@ export default {
                 switchToDefault();
                 return;
             }
-            if (!this.deliveryBoys.dob) {
-                this.showError(__('please_fill_date_of_birth') || 'Please fill the date of birth.');
+            if (!this.deliveryBoys.license_no) {
+                this.showError(__('please_fill_license_no') || 'Please fill the license number.');
                 switchToDefault();
                 return;
             }
@@ -1021,38 +1032,17 @@ export default {
                 return;
             }
 
-            const isEdit = !!this.deliveryBoys.id;
-            if (!isEdit && !this.deliveryBoys.driving_license) {
-                this.showError(__('please_upload_driving_license') || 'Please upload driving license.');
-                switchToDefault();
-                return;
-            }
-            if (!isEdit && !this.deliveryBoys.national_identity_card) {
-                this.showError(__('please_upload_national_identity_card') || 'Please upload national identity card.');
-                switchToDefault();
-                return;
-            }
+            // Driving license and national identity card are optional
 
-            // Password validation: on create required; on edit if filled then confirm must match
-            if (!isEdit) {
-                if (!this.deliveryBoys.password) {
-                    this.showError(__('please_fill_password'));
-                    switchToDefault();
-                    return;
-                }
-                if (this.deliveryBoys.password !== this.deliveryBoys.confirm_password) {
-                    this.showError(__('password_and_confirm_password_must_match'));
-                    switchToDefault();
-                    return;
-                }
-            } else if (this.deliveryBoys.password) {
+            // Password validation: optional, but if filled, confirm must match
+            if (this.deliveryBoys.password) {
                 if (!this.deliveryBoys.confirm_password) {
-                    this.showError(__('please_fill_confirm_password'));
+                    this.showError(__('please_fill_confirm_password') || 'Please fill the confirm password.');
                     switchToDefault();
                     return;
                 }
                 if (this.deliveryBoys.password !== this.deliveryBoys.confirm_password) {
-                    this.showError(__('password_and_confirm_password_must_match'));
+                    this.showError(__('password_and_confirm_password_must_match') || 'Password and confirm password must match.');
                     switchToDefault();
                     return;
                 }
@@ -1079,8 +1069,9 @@ export default {
                 );
 
                 // main fields
-                fd.append('dob', this.deliveryBoys.dob);
+                fd.append('dob', this.deliveryBoys.dob ?? '');
                 fd.append('mobile', this.deliveryBoys.mobile);
+                fd.append('license_no', this.deliveryBoys.license_no);
                 fd.append('email', this.deliveryBoys.email);
                 fd.append('ifsc_code', this.deliveryBoys.ifsc_code);
                 fd.append('bank_name', this.deliveryBoys.bank_name);

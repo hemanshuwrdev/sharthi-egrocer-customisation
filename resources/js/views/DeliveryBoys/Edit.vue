@@ -35,6 +35,14 @@
 
                 <div class="col-md-6">
                     <div class="form-group">
+                        <label for="license_no">{{ __('license_no') }}</label>
+                        <input type="text" name="license_no" id="license_no" v-model="deliveryBoys.license_no"
+                            class="form-control" placeholder="Enter license no.">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
                         <label for="email">{{ __('email') }}</label>
                         <input type="text" name="email" id="email" v-model="deliveryBoys.email" class="form-control"
                             placeholder="Enter email id.">
@@ -56,7 +64,6 @@
                             placeholder="Enter agin password.">
                     </div>
                 </div>
-
 
                 <div class="col-md-6">
                     <div class="form-group">
@@ -123,9 +130,18 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="bonus">{{ __('bonus') }} (%)</label>
-                        <input type="number" name="bonus" id="bonus" v-model="deliveryBoys.bonus" class="form-control"
-                            placeholder="Enter Bonus (%)">
+                        <label for="bonus_type">{{ __('bonus_type') }}</label>
+                        <select name="bonus_type" id="bonus_type" v-model="deliveryBoys.bonus_type" class="form-control">
+                            <option value="0">Fixed Amount / Commission</option>
+                            <option value="1">Percentage</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="bonus_percentage">{{ __('bonus') }}</label>
+                        <input type="number" name="bonus_percentage" id="bonus_percentage" v-model="deliveryBoys.bonus_percentage" class="form-control"
+                            placeholder="Enter Bonus Amount or Percentage">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -247,11 +263,13 @@ export default {
                 admin_id: this.record ? this.record.admin_id : "",
                 name: this.record ? this.record.name : "",
                 mobile: this.record ? this.record.mobile : "",
+                license_no: this.record ? this.record.license_no : "",
                 email: this.record ? this.record.admin.email : "",
                 password: "",
-                confirm_password: "",
+                confirm_password: "",             
                 dob: this.record ? this.record.dob : "",
-                bonus: this.record ? this.record.bonus : "",
+                bonus_type: this.record ? this.record.bonus_type : 0,
+                bonus_percentage: this.record ? this.record.bonus_percentage : "",
 
                 driving_license: "",
                 driving_license_url: this.record ? this.$storageUrl + this.record.driving_license : "",
@@ -369,17 +387,18 @@ export default {
                 return
             }
 
-            let formData = new FormData()
-
-            for (let key in this.deliveryBoys) {
-                formData.append(key, this.deliveryBoys[key])
-            }
+            let formData = new FormData();
             let vm = this;
             this.isLoading = true;
-            let formObject = this.deliveryBoys;
-            // let formData = new FormData();
-            for (let key in formObject) {
-                formData.append(key, formObject[key]);
+            
+            for (let key in this.deliveryBoys) {
+                if (key === 'driving_license' || key === 'national_identity_card') {
+                    if (this.deliveryBoys[key] && this.deliveryBoys[key] !== "") {
+                        formData.append(key, this.deliveryBoys[key]);
+                    }
+                } else if (this.deliveryBoys[key] !== null) {
+                    formData.append(key, this.deliveryBoys[key]);
+                }
             }
             let url = this.$apiUrl + '/delivery_boys/save';
             if (this.deliveryBoys.id) {

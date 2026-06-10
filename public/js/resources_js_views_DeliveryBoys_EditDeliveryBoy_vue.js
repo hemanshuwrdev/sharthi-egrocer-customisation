@@ -604,6 +604,15 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -642,6 +651,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         name: "",
         dob: "",
         mobile: "",
+        license_no: "",
         email: "",
         password: "",
         confirm_password: "",
@@ -902,7 +912,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         _this5.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
-          var _this5$record, _this5$record2, _this5$record3, _this5$record4, _this5$record5, _this5$record6, _this5$record7, _this5$record8, _this5$record9, _this5$record10, _this5$record11, _this5$record12;
+          var _this5$record, _this5$record2, _this5$record3, _this5$record4, _this5$record5, _this5$record6, _this5$record7, _this5$record8, _this5$record9, _this5$record10, _this5$record11, _this5$record12, _this5$record13;
           _this5.record = data.data;
           _this5.translations = {};
           if (!_this5.languages.length) return;
@@ -936,22 +946,23 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           _this5.deliveryBoys.name = emptyIfNull((_this5$record2 = _this5.record) === null || _this5$record2 === void 0 ? void 0 : _this5$record2.name);
           _this5.deliveryBoys.dob = emptyIfNull((_this5$record3 = _this5.record) === null || _this5$record3 === void 0 ? void 0 : _this5$record3.dob);
           _this5.deliveryBoys.mobile = emptyIfNull((_this5$record4 = _this5.record) === null || _this5$record4 === void 0 ? void 0 : _this5$record4.mobile);
-          _this5.deliveryBoys.email = (_this5$record5 = _this5.record) !== null && _this5$record5 !== void 0 && _this5$record5.admin ? _this5.record.admin.email || '' : '';
+          _this5.deliveryBoys.license_no = emptyIfNull((_this5$record5 = _this5.record) === null || _this5$record5 === void 0 ? void 0 : _this5$record5.license_no);
+          _this5.deliveryBoys.email = (_this5$record6 = _this5.record) !== null && _this5$record6 !== void 0 && _this5$record6.admin ? _this5.record.admin.email || '' : '';
           _this5.deliveryBoys.password = "";
           _this5.deliveryBoys.confirm_password = "";
-          _this5.deliveryBoys.ifsc_code = emptyIfNull((_this5$record6 = _this5.record) === null || _this5$record6 === void 0 ? void 0 : _this5$record6.ifsc_code);
-          _this5.deliveryBoys.bank_name = emptyIfNull((_this5$record7 = _this5.record) === null || _this5$record7 === void 0 ? void 0 : _this5$record7.bank_name);
-          _this5.deliveryBoys.bank_account_number = emptyIfNull((_this5$record8 = _this5.record) === null || _this5$record8 === void 0 ? void 0 : _this5$record8.bank_account_number);
-          _this5.deliveryBoys.account_name = emptyIfNull((_this5$record9 = _this5.record) === null || _this5$record9 === void 0 ? void 0 : _this5$record9.account_name);
+          _this5.deliveryBoys.ifsc_code = emptyIfNull((_this5$record7 = _this5.record) === null || _this5$record7 === void 0 ? void 0 : _this5$record7.ifsc_code);
+          _this5.deliveryBoys.bank_name = emptyIfNull((_this5$record8 = _this5.record) === null || _this5$record8 === void 0 ? void 0 : _this5$record8.bank_name);
+          _this5.deliveryBoys.bank_account_number = emptyIfNull((_this5$record9 = _this5.record) === null || _this5$record9 === void 0 ? void 0 : _this5$record9.bank_account_number);
+          _this5.deliveryBoys.account_name = emptyIfNull((_this5$record10 = _this5.record) === null || _this5$record10 === void 0 ? void 0 : _this5$record10.account_name);
           if (Array.isArray(_this5.cities)) {
             var matched = _this5.cities.find(function (item) {
               return item.id === _this5.record.city_id;
             });
             _this5.city = matched || null;
           }
-          _this5.deliveryBoys.city_id = emptyIfNull((_this5$record10 = _this5.record) === null || _this5$record10 === void 0 ? void 0 : _this5$record10.city_id);
-          _this5.deliveryBoys.address = emptyIfNull((_this5$record11 = _this5.record) === null || _this5$record11 === void 0 ? void 0 : _this5$record11.address);
-          _this5.deliveryBoys.other_payment_information = emptyIfNull((_this5$record12 = _this5.record) === null || _this5$record12 === void 0 ? void 0 : _this5$record12.other_payment_information);
+          _this5.deliveryBoys.city_id = emptyIfNull((_this5$record11 = _this5.record) === null || _this5$record11 === void 0 ? void 0 : _this5$record11.city_id);
+          _this5.deliveryBoys.address = emptyIfNull((_this5$record12 = _this5.record) === null || _this5$record12 === void 0 ? void 0 : _this5$record12.address);
+          _this5.deliveryBoys.other_payment_information = emptyIfNull((_this5$record13 = _this5.record) === null || _this5$record13 === void 0 ? void 0 : _this5$record13.other_payment_information);
           _this5.deliveryBoys.driving_license = "";
           _this5.deliveryBoys.driving_license_url = _this5.record ? _this5.$storageUrl + _this5.record.driving_license : "";
           _this5.deliveryBoys.national_identity_card = "";
@@ -984,7 +995,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var _this6 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
         var _defaultTrans$name;
-        var defaultLang, defaultTrans, switchToDefault, isEdit, _defaultTrans$address, _defaultTrans$other_p, _this6$deliveryBoys$r, _this6$deliveryBoys$b, _this6$deliveryBoys$b2, _this6$deliveryBoys$b3, _isEdit, fd, _this6$deliveryBoys$p, _this6$deliveryBoys$c, _this6$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response, _error$response$data;
+        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this6$deliveryBoys$d, _this6$deliveryBoys$r, _this6$deliveryBoys$b, _this6$deliveryBoys$b2, _this6$deliveryBoys$b3, isEdit, fd, _this6$deliveryBoys$p, _this6$deliveryBoys$c, _this6$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response, _error$response$data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -1011,11 +1022,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 switchToDefault();
                 return _context.abrupt("return");
               case 10:
-                if (_this6.deliveryBoys.dob) {
+                if (_this6.deliveryBoys.license_no) {
                   _context.next = 14;
                   break;
                 }
-                _this6.showError(__('please_fill_date_of_birth') || 'Please fill the date of birth.');
+                _this6.showError(__('please_fill_license_no') || 'Please fill the license number.');
                 switchToDefault();
                 return _context.abrupt("return");
               case 14:
@@ -1043,72 +1054,32 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 switchToDefault();
                 return _context.abrupt("return");
               case 26:
-                isEdit = !!_this6.deliveryBoys.id;
-                if (!(!isEdit && !_this6.deliveryBoys.driving_license)) {
-                  _context.next = 31;
-                  break;
-                }
-                _this6.showError(__('please_upload_driving_license') || 'Please upload driving license.');
-                switchToDefault();
-                return _context.abrupt("return");
-              case 31:
-                if (!(!isEdit && !_this6.deliveryBoys.national_identity_card)) {
+                if (!_this6.deliveryBoys.password) {
                   _context.next = 35;
                   break;
                 }
-                _this6.showError(__('please_upload_national_identity_card') || 'Please upload national identity card.');
+                if (_this6.deliveryBoys.confirm_password) {
+                  _context.next = 31;
+                  break;
+                }
+                _this6.showError(__('please_fill_confirm_password') || 'Please fill the confirm password.');
+                switchToDefault();
+                return _context.abrupt("return");
+              case 31:
+                if (!(_this6.deliveryBoys.password !== _this6.deliveryBoys.confirm_password)) {
+                  _context.next = 35;
+                  break;
+                }
+                _this6.showError(__('password_and_confirm_password_must_match') || 'Password and confirm password must match.');
                 switchToDefault();
                 return _context.abrupt("return");
               case 35:
-                if (isEdit) {
-                  _context.next = 46;
-                  break;
-                }
-                if (_this6.deliveryBoys.password) {
-                  _context.next = 40;
-                  break;
-                }
-                _this6.showError(__('please_fill_password'));
-                switchToDefault();
-                return _context.abrupt("return");
-              case 40:
-                if (!(_this6.deliveryBoys.password !== _this6.deliveryBoys.confirm_password)) {
-                  _context.next = 44;
-                  break;
-                }
-                _this6.showError(__('password_and_confirm_password_must_match'));
-                switchToDefault();
-                return _context.abrupt("return");
-              case 44:
-                _context.next = 55;
-                break;
-              case 46:
-                if (!_this6.deliveryBoys.password) {
-                  _context.next = 55;
-                  break;
-                }
-                if (_this6.deliveryBoys.confirm_password) {
-                  _context.next = 51;
-                  break;
-                }
-                _this6.showError(__('please_fill_confirm_password'));
-                switchToDefault();
-                return _context.abrupt("return");
-              case 51:
-                if (!(_this6.deliveryBoys.password !== _this6.deliveryBoys.confirm_password)) {
-                  _context.next = 55;
-                  break;
-                }
-                _this6.showError(__('password_and_confirm_password_must_match'));
-                switchToDefault();
-                return _context.abrupt("return");
-              case 55:
                 // All client-side checks passed — start loading
                 _this6.isLoading = true;
-                _context.prev = 56;
-                _isEdit = !!_this6.deliveryBoys.id;
+                _context.prev = 36;
+                isEdit = !!_this6.deliveryBoys.id;
                 fd = new FormData();
-                if (_isEdit) {
+                if (isEdit) {
                   fd.append('id', _this6.deliveryBoys.id);
                 }
 
@@ -1119,8 +1090,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 fd.append('other_payment_information', (_defaultTrans$other_p = defaultTrans.other_payment_information) !== null && _defaultTrans$other_p !== void 0 ? _defaultTrans$other_p : '');
 
                 // main fields
-                fd.append('dob', _this6.deliveryBoys.dob);
+                fd.append('dob', (_this6$deliveryBoys$d = _this6.deliveryBoys.dob) !== null && _this6$deliveryBoys$d !== void 0 ? _this6$deliveryBoys$d : '');
                 fd.append('mobile', _this6.deliveryBoys.mobile);
+                fd.append('license_no', _this6.deliveryBoys.license_no);
                 fd.append('email', _this6.deliveryBoys.email);
                 fd.append('ifsc_code', _this6.deliveryBoys.ifsc_code);
                 fd.append('bank_name', _this6.deliveryBoys.bank_name);
@@ -1135,7 +1107,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 fd.append('bonus_max_amount', (_this6$deliveryBoys$b3 = _this6.deliveryBoys.bonus_max_amount) !== null && _this6$deliveryBoys$b3 !== void 0 ? _this6$deliveryBoys$b3 : 0);
 
                 // password: required on CREATE; on EDIT send only when filled
-                if (!_isEdit) {
+                if (!isEdit) {
                   fd.append('password', (_this6$deliveryBoys$p = _this6.deliveryBoys.password) !== null && _this6$deliveryBoys$p !== void 0 ? _this6$deliveryBoys$p : '');
                   fd.append('confirm_password', (_this6$deliveryBoys$c = _this6.deliveryBoys.confirm_password) !== null && _this6$deliveryBoys$c !== void 0 ? _this6$deliveryBoys$c : '');
                 } else if (_this6.deliveryBoys.password) {
@@ -1150,75 +1122,75 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 if (_this6.deliveryBoys.national_identity_card instanceof File) {
                   fd.append('national_identity_card', _this6.deliveryBoys.national_identity_card);
                 }
-                url = _isEdit ? _this6.$apiUrl + '/delivery_boys/update' : _this6.$apiUrl + '/delivery_boys/save';
-                _context.next = 84;
+                url = isEdit ? _this6.$apiUrl + '/delivery_boys/update' : _this6.$apiUrl + '/delivery_boys/save';
+                _context.next = 65;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, fd);
-              case 84:
+              case 65:
                 response = _context.sent;
                 if (!(!response.data || response.data.status !== 1)) {
-                  _context.next = 87;
+                  _context.next = 68;
                   break;
                 }
                 throw new Error(((_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || __('something_went_wrong'));
-              case 87:
-                if (!_isEdit) {
+              case 68:
+                if (!isEdit) {
                   _this6.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 }
 
                 // Save non-default language translations
                 _iterator = _createForOfIteratorHelper(_this6.languages);
-                _context.prev = 89;
+                _context.prev = 70;
                 _iterator.s();
-              case 91:
+              case 72:
                 if ((_step = _iterator.n()).done) {
-                  _context.next = 111;
+                  _context.next = 92;
                   break;
                 }
                 lang = _step.value;
                 if (!lang.is_default) {
-                  _context.next = 95;
+                  _context.next = 76;
                   break;
                 }
-                return _context.abrupt("continue", 109);
-              case 95:
+                return _context.abrupt("continue", 90);
+              case 76:
                 t = _this6.translations[lang.id];
                 if (!(!t || !t.name && !t.address && !t.other_payment_information)) {
-                  _context.next = 98;
+                  _context.next = 79;
                   break;
                 }
-                return _context.abrupt("continue", 109);
-              case 98:
+                return _context.abrupt("continue", 90);
+              case 79:
                 tfd = new FormData();
                 tfd.append('id', _this6.deliveryBoys.id);
                 tfd.append('language_id', lang.id);
                 tfd.append('name', (_t$name = t.name) !== null && _t$name !== void 0 ? _t$name : '');
                 tfd.append('address', (_t$address = t.address) !== null && _t$address !== void 0 ? _t$address : '');
                 tfd.append('other_payment_information', (_t$other_payment_info = t.other_payment_information) !== null && _t$other_payment_info !== void 0 ? _t$other_payment_info : '');
-                _context.next = 106;
+                _context.next = 87;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this6.$apiUrl + '/delivery_boys/update', tfd);
-              case 106:
+              case 87:
                 tRes = _context.sent;
                 if (!(!tRes.data || tRes.data.status !== 1)) {
-                  _context.next = 109;
+                  _context.next = 90;
                   break;
                 }
                 throw new Error(((_tRes$data = tRes.data) === null || _tRes$data === void 0 ? void 0 : _tRes$data.message) || __('something_went_wrong'));
-              case 109:
-                _context.next = 91;
+              case 90:
+                _context.next = 72;
                 break;
-              case 111:
-                _context.next = 116;
+              case 92:
+                _context.next = 97;
                 break;
-              case 113:
-                _context.prev = 113;
-                _context.t0 = _context["catch"](89);
+              case 94:
+                _context.prev = 94;
+                _context.t0 = _context["catch"](70);
                 _iterator.e(_context.t0);
-              case 116:
-                _context.prev = 116;
+              case 97:
+                _context.prev = 97;
                 _iterator.f();
-                return _context.finish(116);
-              case 119:
-                _this6.showMessage('success', _isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
+                return _context.finish(97);
+              case 100:
+                _this6.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
                 if (!_this6.login_user || _this6.login_user.role_id !== 4) {
                   if (_this6.$route.path.includes('/seller')) {
                     _this6.$router.push({
@@ -1230,22 +1202,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                     });
                   }
                 }
-                _context.next = 126;
+                _context.next = 107;
                 break;
-              case 123:
-                _context.prev = 123;
-                _context.t1 = _context["catch"](56);
+              case 104:
+                _context.prev = 104;
+                _context.t1 = _context["catch"](36);
                 _this6.showError(_context.t1.message || (_context.t1 === null || _context.t1 === void 0 ? void 0 : (_error$response = _context.t1.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong') || 'Something went wrong.');
-              case 126:
-                _context.prev = 126;
+              case 107:
+                _context.prev = 107;
                 _this6.isLoading = false;
-                return _context.finish(126);
-              case 129:
+                return _context.finish(107);
+              case 110:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[56, 123, 126, 129], [89, 113, 116, 119]]);
+        }, _callee, null, [[36, 104, 107, 110], [70, 94, 97, 100]]);
       }))();
     }
   }
@@ -2396,12 +2368,7 @@ var render = function () {
                             _c("div", { staticClass: "col-md-4" }, [
                               _c("div", { staticClass: "form-group" }, [
                                 _c("label", { attrs: { for: "dob" } }, [
-                                  _vm._v(_vm._s(_vm.__("date_of_birth")) + " "),
-                                  _c(
-                                    "span",
-                                    { staticClass: "text-danger text-xs" },
-                                    [_vm._v("*")]
-                                  ),
+                                  _vm._v(_vm._s(_vm.__("date_of_birth"))),
                                 ]),
                                 _vm._v(" "),
                                 _c("input", {
@@ -2496,6 +2463,52 @@ var render = function () {
                                       _vm._v(_vm._s(_vm.mobilevalidationError)),
                                     ])
                                   : _vm._e(),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c("div", { staticClass: "form-group" }, [
+                                _c("label", { attrs: { for: "license_no" } }, [
+                                  _vm._v(_vm._s(_vm.__("license_no"))),
+                                  _c(
+                                    "span",
+                                    { staticClass: "text-danger text-xs" },
+                                    [_vm._v("*")]
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.deliveryBoys.license_no,
+                                      expression: "deliveryBoys.license_no",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "text",
+                                    name: "license_no",
+                                    id: "license_no",
+                                    placeholder: _vm.__("license_no"),
+                                  },
+                                  domProps: {
+                                    value: _vm.deliveryBoys.license_no,
+                                  },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.deliveryBoys,
+                                        "license_no",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
                               ]),
                             ]),
                             _vm._v(" "),
@@ -2966,11 +2979,9 @@ var render = function () {
                             _c("div", { staticClass: "col-md-4" }, [
                               _c("div", { staticClass: "form-group" }, [
                                 _c("label", { attrs: { for: "ifsc_code" } }, [
-                                  _vm._v(_vm._s(_vm.__("bank_ifsc_code"))),
-                                  _c(
-                                    "span",
-                                    { staticClass: "text-danger text-xs" },
-                                    [_vm._v("*")]
+                                  _vm._v(
+                                    _vm._s(_vm.__("bank_ifsc_code")) +
+                                      "\n                                                   "
                                   ),
                                 ]),
                                 _vm._v(" "),
@@ -2988,7 +2999,6 @@ var render = function () {
                                     type: "text",
                                     name: "ifsc_code",
                                     id: "ifsc_code",
-                                    required: "",
                                     readonly:
                                       this.$roleDeliveryBoy ===
                                       this.login_user.role.name,
@@ -3016,11 +3026,9 @@ var render = function () {
                             _c("div", { staticClass: "col-md-4" }, [
                               _c("div", { staticClass: "form-group" }, [
                                 _c("label", { attrs: { for: "bank_name" } }, [
-                                  _vm._v(_vm._s(_vm.__("bank_name"))),
-                                  _c(
-                                    "span",
-                                    { staticClass: "text-danger text-xs" },
-                                    [_vm._v("*")]
+                                  _vm._v(
+                                    _vm._s(_vm.__("bank_name")) +
+                                      "\n                                            "
                                   ),
                                 ]),
                                 _vm._v(" "),
@@ -3038,7 +3046,6 @@ var render = function () {
                                     type: "text",
                                     name: "bank_name",
                                     id: "bank_name",
-                                    required: "",
                                     readonly:
                                       this.$roleDeliveryBoy ===
                                       this.login_user.role.name,
@@ -3069,11 +3076,9 @@ var render = function () {
                                   "label",
                                   { attrs: { for: "account_number" } },
                                   [
-                                    _vm._v(_vm._s(_vm.__("account_number"))),
-                                    _c(
-                                      "span",
-                                      { staticClass: "text-danger text-xs" },
-                                      [_vm._v("*")]
+                                    _vm._v(
+                                      _vm._s(_vm.__("account_number")) +
+                                        "\n                                                "
                                     ),
                                   ]
                                 ),
@@ -3094,7 +3099,6 @@ var render = function () {
                                     type: "number",
                                     name: "account_number",
                                     id: "account_number",
-                                    required: "",
                                     readonly:
                                       this.$roleDeliveryBoy ===
                                       this.login_user.role.name,
@@ -3138,11 +3142,9 @@ var render = function () {
                                   "label",
                                   { attrs: { for: "account_name" } },
                                   [
-                                    _vm._v(_vm._s(_vm.__("bank_account_name"))),
-                                    _c(
-                                      "span",
-                                      { staticClass: "text-danger text-xs" },
-                                      [_vm._v("*")]
+                                    _vm._v(
+                                      _vm._s(_vm.__("bank_account_name")) +
+                                        "\n                                                   "
                                     ),
                                   ]
                                 ),
@@ -3161,7 +3163,6 @@ var render = function () {
                                     type: "text",
                                     name: "account_name",
                                     id: "account_name",
-                                    required: "",
                                     readonly:
                                       this.$roleDeliveryBoy ===
                                       this.login_user.role.name,
@@ -3416,11 +3417,9 @@ var render = function () {
                                   "label",
                                   { attrs: { for: "driving_license" } },
                                   [
-                                    _vm._v(_vm._s(_vm.__("driving_licence"))),
-                                    _c(
-                                      "span",
-                                      { staticClass: "text-danger text-xs" },
-                                      [_vm._v("*")]
+                                    _vm._v(
+                                      _vm._s(_vm.__("driving_licence")) +
+                                        "\n                                                   "
                                     ),
                                   ]
                                 ),
@@ -3568,11 +3567,6 @@ var render = function () {
                                   [
                                     _vm._v(
                                       _vm._s(_vm.__("national_identity_card"))
-                                    ),
-                                    _c(
-                                      "span",
-                                      { staticClass: "text-danger text-xs" },
-                                      [_vm._v("*")]
                                     ),
                                   ]
                                 ),
@@ -3797,11 +3791,9 @@ var render = function () {
                                     "label",
                                     { attrs: { for: "bonus_type" } },
                                     [
-                                      _vm._v(_vm._s(_vm.__("bonus_type"))),
-                                      _c(
-                                        "span",
-                                        { staticClass: "text-danger text-xs" },
-                                        [_vm._v("*")]
+                                      _vm._v(
+                                        _vm._s(_vm.__("bonus_type")) +
+                                          "\n                                                       "
                                       ),
                                     ]
                                   ),
@@ -3883,14 +3875,6 @@ var render = function () {
                                         [
                                           _vm._v(
                                             _vm._s(_vm.__("bonus_percentage"))
-                                          ),
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass:
-                                                "text-danger text-xs",
-                                            },
-                                            [_vm._v("*")]
                                           ),
                                         ]
                                       ),
