@@ -352,6 +352,7 @@ class SarthiCustomisation extends Migration
             }
         });
 
+
         // 8.b Salesman login wiring: link to admins (email/password) for app/panel login (mirrors seller/delivery_boy)
         Schema::table('salesmen', function (Blueprint $table) {
             if (!Schema::hasColumn('salesmen', 'admin_id')) {
@@ -428,6 +429,32 @@ class SarthiCustomisation extends Migration
             });
         }
 
+        // Order Execution per Stop: Cash, UPI, photo and reason
+        Schema::table('orders', function (Blueprint $table) {
+            if (!Schema::hasColumn('orders', 'cash_received')) {
+                $table->decimal('cash_received', 15, 2)->nullable()->after('final_total');
+            }
+            if (!Schema::hasColumn('orders', 'upi_received')) {
+                $table->decimal('upi_received', 15, 2)->nullable()->after('cash_received');
+            }
+            if (!Schema::hasColumn('orders', 'upi_photo')) {
+                $table->string('upi_photo')->nullable()->after('upi_received');
+            }
+            if (!Schema::hasColumn('orders', 'delivery_reason')) {
+                $table->string('delivery_reason')->nullable()->after('upi_photo');
+            }
+        });
+
+        // Item level delivery tracking
+        Schema::table('order_items', function (Blueprint $table) {
+            if (!Schema::hasColumn('order_items', 'delivered_quantity')) {
+                $table->integer('delivered_quantity')->nullable()->after('quantity');
+            }
+            if (!Schema::hasColumn('order_items', 'damage_photo')) {
+                $table->string('damage_photo')->nullable()->after('delivered_quantity');
+            }
+        });
+
     }
 
     /**
@@ -496,7 +523,7 @@ class SarthiCustomisation extends Migration
         }
 
         Schema::table('order_items', function (Blueprint $table) {
-            foreach (['slab_unit_price', 'slab_min_qty', 'slab_max_qty', 'master_product_variant_id', 'seller_product_id'] as $col) {
+            foreach (['slab_unit_price', 'slab_min_qty', 'slab_max_qty', 'master_product_variant_id', 'seller_product_id', 'delivered_quantity', 'damage_photo'] as $col) {
                 if (Schema::hasColumn('order_items', $col)) {
                     $table->dropColumn($col);
                 }
@@ -543,6 +570,11 @@ class SarthiCustomisation extends Migration
             }
             if (Schema::hasColumn('orders', 'loading_slip_id')) {
                 $table->dropColumn('loading_slip_id');
+            }
+            foreach (['cash_received', 'upi_received', 'upi_photo', 'delivery_reason'] as $col) {
+                if (Schema::hasColumn('orders', $col)) {
+                    $table->dropColumn($col);
+                }
             }
         });
 
