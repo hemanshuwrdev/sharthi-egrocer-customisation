@@ -429,6 +429,7 @@ class SarthiCustomisation extends Migration
             });
         }
 
+
         // Order Execution per Stop: Cash, UPI, photo and reason
         Schema::table('orders', function (Blueprint $table) {
             if (!Schema::hasColumn('orders', 'cash_received')) {
@@ -452,6 +453,72 @@ class SarthiCustomisation extends Migration
             }
             if (!Schema::hasColumn('order_items', 'damage_photo')) {
                 $table->string('damage_photo')->nullable()->after('delivered_quantity');
+
+        // 10. Scheme Engine: distributor-owned offers (Buy X Get Y + group slab discount, auto-apply best)
+        if (!Schema::hasTable('schemes')) {
+            Schema::create('schemes', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('seller_id')->constrained('sellers')->onDelete('cascade')->comment('Distributor who owns the scheme');
+                $table->string('name');
+                $table->enum('type', ['buy_x_get_y', 'group_discount']);
+                // buy_x_get_y fields (NULL for group_discount)
+                $table->unsignedBigInteger('buy_seller_product_id')->nullable();
+                $table->unsignedInteger('buy_qty')->nullable();
+                $table->unsignedBigInteger('free_seller_product_id')->nullable();
+                $table->unsignedInteger('free_qty')->nullable();
+                $table->date('start_date');
+                $table->date('end_date');
+                $table->tinyInteger('status')->default(1);
+                $table->timestamps();
+
+                $table->index(['seller_id', 'status', 'start_date', 'end_date'], 'idx_schemes_active');
+            });
+        }
+
+        // 10.b Group-discount basket definition
+        if (!Schema::hasTable('scheme_products')) {
+            Schema::create('scheme_products', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('scheme_id')->constrained('schemes')->onDelete('cascade');
+                $table->foreignId('seller_product_id')->constrained('seller_products')->onDelete('cascade');
+                $table->timestamps();
+
+                $table->unique(['scheme_id', 'seller_product_id'], 'uniq_schemeprod');
+            });
+        }
+
+        // 10.c Group-discount value slabs (combined basket value -> discount)
+        if (!Schema::hasTable('scheme_slabs')) {
+            Schema::create('scheme_slabs', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('scheme_id')->constrained('schemes')->onDelete('cascade');
+                $table->decimal('min_value', 15, 4)->comment('Combined group basket value to trigger this slab');
+                $table->enum('discount_type', ['percentage', 'flat']);
+                $table->decimal('discount_value', 15, 4);
+                $table->timestamps();
+
+                $table->index(['scheme_id', 'min_value'], 'idx_schemeslabs_minval');
+            });
+        }
+
+        // 10.d Scheme snapshot on orders (kept even if scheme is later deleted/edited)
+        Schema::table('orders', function (Blueprint $table) {
+            if (!Schema::hasColumn('orders', 'scheme_id')) {
+                $table->unsignedBigInteger('scheme_id')->nullable()->after('promo_discount')
+                      ->comment('Best scheme auto-applied at place-order time');
+            }
+            if (!Schema::hasColumn('orders', 'scheme_discount')) {
+                $table->decimal('scheme_discount', 15, 4)->default(0)->after('scheme_id')
+                      ->comment('Absolute amount deducted by group_discount scheme');
+            }
+        });
+        Schema::table('order_items', function (Blueprint $table) {
+            if (!Schema::hasColumn('order_items', 'scheme_id')) {
+                $table->unsignedBigInteger('scheme_id')->nullable()->after('slab_max_qty');
+            }
+            if (!Schema::hasColumn('order_items', 'is_free_item')) {
+                $table->tinyInteger('is_free_item')->default(0)->after('scheme_id')
+                      ->comment('1 = free line added by buy_x_get_y scheme (price 0, deducts stock)');
             }
         });
 
@@ -464,6 +531,25 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        // Scheme engine (reverse FK order)
+        Schema::dropIfExists('scheme_slabs');
+        Schema::dropIfExists('scheme_products');
+        Schema::dropIfExists('schemes');
+        Schema::table('orders', function (Blueprint $table) {
+            foreach (['scheme_id', 'scheme_discount'] as $col) {
+                if (Schema::hasColumn('orders', $col)) {
+                    $table->dropColumn($col);
+                }
+            }
+        });
+        Schema::table('order_items', function (Blueprint $table) {
+            foreach (['scheme_id', 'is_free_item'] as $col) {
+                if (Schema::hasColumn('order_items', $col)) {
+                    $table->dropColumn($col);
+                }
+            }
+        });
+
         // Salesman assisted-order attribution
         Schema::table('orders', function (Blueprint $table) {
             if (Schema::hasColumn('orders', 'salesman_discount')) {

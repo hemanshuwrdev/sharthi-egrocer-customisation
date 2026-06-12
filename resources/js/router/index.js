@@ -217,6 +217,8 @@ const SellerEditProduct = () => import("../views/Product/EditProduct");
 
 const SellerSalesman = () => import("../views/Seller/Salesman/Salesman");
 const SellerEditSalesman = () => import("../views/Seller/Salesman/EditSalesman");
+const SellerSchemes = () => import("../views/Seller/Schemes/Schemes");
+const SellerEditScheme = () => import("../views/Seller/Schemes/EditScheme");
 const SellerViewProduct = () => import("../views/Product/ViewProduct");
 const SellerProductRatings = () => import("../views/Product/ProductRatings");
 const SellerCloneProduct = () => import("../views/Product/EditProduct");
@@ -1720,6 +1722,37 @@ function configRoutes() {
                         permission: 'order_list',
                         role: sellerRoles,
                         title: 'Salesman'
+                    },
+                },
+                {
+                    path: "schemes/create",
+                    name: "SellerCreateScheme",
+                    component: SellerEditScheme,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Create Scheme'
+                    },
+                },
+                {
+                    path: "schemes/edit/:id",
+                    name: "SellerEditScheme",
+                    component: SellerEditScheme,
+                    props: true,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Edit Scheme'
+                    },
+                },
+                {
+                    path: "schemes",
+                    name: "SellerSchemes",
+                    component: SellerSchemes,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Schemes'
                     },
                 },
                 {

@@ -213,6 +213,14 @@
                                             <th class="th-width">{{ __('promo_code') }}</th>
                                             <td>{{ order.promo_code }}</td>
                                         </tr>
+                                        <tr v-if="order.scheme_id">
+                                            <th class="th-width">{{ __('scheme') }}</th>
+                                            <td><span class="badge bg-info">{{ order.scheme_name || ('#' + order.scheme_id) }}</span></td>
+                                        </tr>
+                                        <tr v-if="order.scheme_discount > 0">
+                                            <th class="th-width">{{ __('scheme_discount') }} ({{ $currency }})</th>
+                                            <td>{{ order.scheme_discount }}</td>
+                                        </tr>
                                         <tr>
                                             <th class="th-width">{{ __('delivery_charge') }} ({{ $currency }})</th>
                                             <td>{{ order.delivery_charge }}</td>
@@ -244,6 +252,10 @@
                     <div class="row">
                         <div class="col-md-4" v-for="item in order_items" :key="item.id">
                             <div class="card position-relative">
+                                <div v-if="item.is_free_item == 1"
+                                    class="badge bg-success position-absolute" style="top: 10px; left: 10px;">
+                                    {{ __('free') }}
+                                </div>
                                 <div v-if="item.active_status == 7 || item.active_status == 8"
                                     class="badge bg-danger position-absolute" style="top: 10px; right: 10px;">
                                     {{ getDisplayName(item.status_name_translation) || item.status_name }}

@@ -14,6 +14,7 @@ use App\Models\Seller;
 use App\Models\SellerProduct;
 use App\Models\Setting;
 use App\Models\OrderStatusList;
+use App\Services\SchemeEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -167,10 +168,25 @@ class RetailerCartOrderApiController extends Controller
                 'sub_total' => $subtotal,
             ];
             $groups[$row->seller_id]['sub_total'] = ($groups[$row->seller_id]['sub_total'] ?? 0) + $subtotal;
+            $groups[$row->seller_id]['scheme_lines'][] = [
+                'seller_product_id' => $line['seller_product']->id,
+                'qty' => (float) $row->qty,
+                'line_total' => $subtotal,
+            ];
         }
 
+        // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
+        foreach ($groups as $sellerId => &$group) {
+            $scheme = SchemeEngine::evaluate((int) $sellerId, $group['scheme_lines'] ?? []);
+            unset($group['scheme_lines']);
+            $group['applied_scheme'] = $scheme;
+            $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
+            $group['final_total'] = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
+        }
+        unset($group);
+
         $groupsOut = collect($groups)->values();
-        $grand = $groupsOut->sum('sub_total');
+        $grand = $groupsOut->sum('final_total');
 
         return CommonHelper::responseWithData([
             'groups' => $groupsOut,
@@ -426,10 +442,21 @@ class RetailerCartOrderApiController extends Controller
             DB::transaction(function () use ($items, $resolved, $bySeller, $request, $user, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerTotal = 0;
+                    $schemeLines = [];
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];
-                        $sellerTotal += $r['unit_price'] * (float) $row->qty;
+                        $lineTotal = $r['unit_price'] * (float) $row->qty;
+                        $sellerTotal += $lineTotal;
+                        $schemeLines[] = [
+                            'seller_product_id' => $r['seller_product']->id,
+                            'qty' => (float) $row->qty,
+                            'line_total' => $lineTotal,
+                        ];
                     }
+
+                    // Auto-apply the best scheme — always re-evaluated here, never trusted from the app.
+                    $scheme = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
+                    $schemeDiscount = $scheme['scheme_discount'] ?? 0;
 
                     $ordersId = 'OD' . date('YmdHis') . rand(10, 99);
                     $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
@@ -448,7 +475,9 @@ class RetailerCartOrderApiController extends Controller
                         'wallet_balance' => 0,
                         'discount' => 0,
                         'promo_discount' => 0,
-                        'final_total' => $sellerTotal,
+                        'scheme_id' => $scheme['scheme_id'] ?? null,
+                        'scheme_discount' => $schemeDiscount,
+                        'final_total' => $sellerTotal - $schemeDiscount,
                         'payment_method' => $request->payment_method,
                         'address' => $request->address,
                         'latitude' => $request->latitude,
@@ -458,7 +487,7 @@ class RetailerCartOrderApiController extends Controller
 
 
                         'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
-                        'active_status' => (string) \App\Models\OrderStatusList::$received,
+                        'active_status' => (string) OrderStatusList::$received,
 
                         // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
                         // 'active_status' => OrderStatusList::$received,
@@ -496,7 +525,7 @@ class RetailerCartOrderApiController extends Controller
                             'discount' => 0,
                             'sub_total' => $subTotal,
                             'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
-                            'active_status' => (string) \App\Models\OrderStatusList::$received,
+                            'active_status' => (string) OrderStatusList::$received,
 
 
                             // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
@@ -514,11 +543,48 @@ class RetailerCartOrderApiController extends Controller
                         MasterCatalogOrderHelper::decrementStock($sp->id, (float) $row->qty);
                     }
 
+                    // BXGY free lines: real order_items at price 0 so they flow through delivery + stock.
+                    foreach (($scheme['free_items'] ?? []) as $free) {
+                        DB::table('order_items')->insert([
+                            'user_id' => $user->id,
+                            'order_id' => $orderId,
+                            'orders_id' => $ordersId,
+                            'product_name' => $free['product_name'],
+                            'variant_name' => $free['variant_name'],
+                            'product_variant_id' => 0,
+                            'master_product_variant_id' => $free['master_product_variant_id'],
+                            'seller_product_id' => $free['seller_product_id'],
+                            'quantity' => $free['qty'],
+                            'price' => 0,
+                            'discounted_price' => 0,
+                            'tax_amount' => 0,
+                            'tax_percentage' => 0,
+                            'discount' => 0,
+                            'sub_total' => 0,
+                            'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
+                            'active_status' => (string) \App\Models\OrderStatusList::$received,
+                            'seller_id' => $sellerId,
+                            'scheme_id' => $scheme['scheme_id'],
+                            'is_free_item' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        MasterCatalogOrderHelper::decrementStock((int) $free['seller_product_id'], (float) $free['qty']);
+                    }
+
                     $createdOrders[] = [
                         'order_id' => $orderId,
                         'orders_id' => $ordersId,
                         'seller_id' => (int) $sellerId,
-                        'final_total' => $sellerTotal,
+                        'final_total' => $sellerTotal - $schemeDiscount,
+                        'scheme' => $scheme ? [
+                            'scheme_id' => $scheme['scheme_id'],
+                            'name' => $scheme['name'],
+                            'type' => $scheme['type'],
+                            'scheme_discount' => $schemeDiscount,
+                            'free_items' => $scheme['free_items'],
+                        ] : null,
                         'delivery_date' => $deliveryDate,
                     ];
                 }

@@ -26,6 +26,7 @@ use App\Models\User;
 use App\Models\OrderStatusList;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CustomerAuthController extends Controller
 {
@@ -554,6 +555,47 @@ class CustomerAuthController extends Controller
             'user'            => $user->load('retailerProfile'),
             'access_token'    => $accessToken,
             'message'         => __('registration_pending_verification'),
+        ]);
+    }
+
+    /**
+     * Sarthi: GET /api/customer/get_retailer_qr
+     * Backend-generated QR for the logged-in retailer. Available only after salesman
+     * verification (status approved/active) — per spec "retailer QR after approval".
+     * QR encodes the plain user_id, which is what POST /api/salesman/retailers/scan resolves.
+     * Image is generated once and cached on the public disk; pass regenerate=1 to force rebuild.
+     */
+    public function getRetailerQr(Request $request)
+    {
+        $user = Auth::user();
+        $profile = $user->retailerProfile;
+        if (!$profile) {
+            return CommonHelper::responseError('retailer_not_found');
+        }
+        if (!in_array($user->verification_status, ['approved', 'active'], true)) {
+            return CommonHelper::responseError('retailer_pending_verification');
+        }
+
+        $path = 'retailer_qr/' . $user->id . '.svg';
+        try {
+            if ($request->boolean('regenerate') || !Storage::disk('public')->exists($path)) {
+                $svg = QrCode::format('svg')
+                    ->size(400)
+                    ->margin(1)
+                    ->errorCorrection('M')
+                    ->generate((string) $user->id);
+                Storage::disk('public')->put($path, $svg);
+            }
+        } catch (\Throwable $e) {
+            Log::error('getRetailerQr generate failed for user_id=' . $user->id . ': ' . $e->getMessage());
+            return CommonHelper::responseError('something_went_wrong');
+        }
+
+        return CommonHelper::responseWithData([
+            'qr_code'      => (string) $user->id,
+            'qr_image_url' => Storage::disk('public')->url($path),
+            'shop_name'    => $profile->shop_name,
+            'party_name'   => $profile->party_name,
         ]);
     }
 

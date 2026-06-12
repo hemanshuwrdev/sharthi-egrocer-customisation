@@ -17,6 +17,7 @@ use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserToken;
+use App\Services\SchemeEngine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -502,12 +503,27 @@ class SalesmanAppApiController extends Controller
                 'sub_total' => $subtotal,
             ];
             $groups[$row->seller_id]['sub_total'] = ($groups[$row->seller_id]['sub_total'] ?? 0) + $subtotal;
+            $groups[$row->seller_id]['scheme_lines'][] = [
+                'seller_product_id' => $line['seller_product']->id,
+                'qty' => (float) $row->qty,
+                'line_total' => $subtotal,
+            ];
         }
+
+        // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
+        foreach ($groups as $sellerId => &$group) {
+            $scheme = SchemeEngine::evaluate((int) $sellerId, $group['scheme_lines'] ?? []);
+            unset($group['scheme_lines']);
+            $group['applied_scheme'] = $scheme;
+            $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
+            $group['final_total'] = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
+        }
+        unset($group);
 
         $groupsOut = collect($groups)->values();
         return CommonHelper::responseWithData([
             'groups'      => $groupsOut,
-            'grand_total' => $groupsOut->sum('sub_total'),
+            'grand_total' => $groupsOut->sum('final_total'),
         ]);
     }
 
@@ -623,13 +639,24 @@ class SalesmanAppApiController extends Controller
             DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $lat, $lng, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerSubtotal = 0;
+                    $schemeLines = [];
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];
-                        $sellerSubtotal += $r['unit_price'] * (float) $row->qty;
+                        $lineTotal = $r['unit_price'] * (float) $row->qty;
+                        $sellerSubtotal += $lineTotal;
+                        $schemeLines[] = [
+                            'seller_product_id' => $r['seller_product']->id,
+                            'qty' => (float) $row->qty,
+                            'line_total' => $lineTotal,
+                        ];
                     }
 
-                    $salesmanDiscountAmount = round($sellerSubtotal * ($discountPc / 100), 2);
-                    $finalTotal = max(0, $sellerSubtotal - $salesmanDiscountAmount);
+                    // Auto-apply best scheme first, then the salesman discount on the scheme-reduced amount.
+                    $scheme = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
+                    $schemeDiscount = $scheme['scheme_discount'] ?? 0;
+
+                    $salesmanDiscountAmount = round(($sellerSubtotal - $schemeDiscount) * ($discountPc / 100), 2);
+                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount);
 
                     $ordersId = 'OD' . date('YmdHis') . rand(10, 99);
                     $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
@@ -650,6 +677,8 @@ class SalesmanAppApiController extends Controller
                         'discount'                => $salesmanDiscountAmount,
                         'salesman_discount'       => $salesmanDiscountAmount,
                         'promo_discount'          => 0,
+                        'scheme_id'               => $scheme['scheme_id'] ?? null,
+                        'scheme_discount'         => $schemeDiscount,
                         'final_total'             => $finalTotal,
                         'payment_method'          => $request->payment_method,
                         'address'                 => $address,
@@ -700,12 +729,49 @@ class SalesmanAppApiController extends Controller
                         MasterCatalogOrderHelper::decrementStock($sp->id, (float) $row->qty);
                     }
 
+                    // BXGY free lines: real order_items at price 0 so they flow through delivery + stock.
+                    foreach (($scheme['free_items'] ?? []) as $free) {
+                        DB::table('order_items')->insert([
+                            'user_id'                   => $retailer->id,
+                            'order_id'                  => $orderId,
+                            'orders_id'                 => $ordersId,
+                            'product_name'              => $free['product_name'],
+                            'variant_name'              => $free['variant_name'],
+                            'product_variant_id'        => 0,
+                            'master_product_variant_id' => $free['master_product_variant_id'],
+                            'seller_product_id'         => $free['seller_product_id'],
+                            'quantity'                  => $free['qty'],
+                            'price'                     => 0,
+                            'discounted_price'          => 0,
+                            'tax_amount'                => 0,
+                            'tax_percentage'            => 0,
+                            'discount'                  => 0,
+                            'sub_total'                 => 0,
+                            'status'                    => json_encode([['received', date('Y-m-d H:i:s')]]),
+                            'active_status'             => (string) OrderStatusList::$received,
+                            'seller_id'                 => $sellerId,
+                            'scheme_id'                 => $scheme['scheme_id'],
+                            'is_free_item'              => 1,
+                            'created_at'                => now(),
+                            'updated_at'                => now(),
+                        ]);
+
+                        MasterCatalogOrderHelper::decrementStock((int) $free['seller_product_id'], (float) $free['qty']);
+                    }
+
                     $createdOrders[] = [
                         'order_id'    => $orderId,
                         'orders_id'   => $ordersId,
                         'seller_id'   => (int) $sellerId,
                         'final_total' => $finalTotal,
                         'salesman_discount' => $salesmanDiscountAmount,
+                        'scheme' => $scheme ? [
+                            'scheme_id' => $scheme['scheme_id'],
+                            'name' => $scheme['name'],
+                            'type' => $scheme['type'],
+                            'scheme_discount' => $schemeDiscount,
+                            'free_items' => $scheme['free_items'],
+                        ] : null,
                         'delivery_date' => $deliveryDate,
                     ];
                 }

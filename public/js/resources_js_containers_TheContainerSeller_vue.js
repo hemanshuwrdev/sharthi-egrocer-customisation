@@ -358,6 +358,11 @@ __webpack_require__.r(__webpack_exports__);
         url: '/seller/salesman',
         permission: 'order_list'
       }, {
+        name: __('schemes'),
+        icon: 'gift',
+        url: '/seller/schemes',
+        permission: 'order_list'
+      }, {
         name: 'Logistics',
         icon: 'truck',
         permission: 'product_list',

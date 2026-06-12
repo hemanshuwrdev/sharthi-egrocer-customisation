@@ -86,6 +86,8 @@ Route::group(['middleware' => ['auth.customer']], function () {
         Route::post('upload_profile', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'uploadProfile']);
         Route::post('update_fcm_token', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'updateFcmToken']);
         Route::get('user_details', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'getLoginUserDetails']);
+        // Sarthi: retailer's own QR (available after salesman verification)
+        Route::get('get_retailer_qr', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'getRetailerQr']);
 
         // Transactions
         Route::get('get_user_transactions', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getUserTransactions']);

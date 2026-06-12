@@ -24,6 +24,7 @@
         "psr/http-message": "^1.0",
         "rap2hpoutre/laravel-log-viewer": "^2.2",
         "razorpay/razorpay": "2.*",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^3.0",
         "spatie/laravel-translatable": "^5.2",
         "stripe/stripe-php": "^10.0",

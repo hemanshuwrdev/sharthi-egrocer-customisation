@@ -671,6 +671,16 @@ Route::middleware('auth:api')->group(function () {
             Route::post('delete', [\App\Http\Controllers\API\SalesmanApiController::class, 'delete'])->name('seller.salesman.delete');
         });
 
+        // Sarthi: scheme engine (Buy X Get Y + group slab discount), distributor-owned
+        Route::group(['prefix' => 'schemes'], function () {
+            Route::get('/', [\App\Http\Controllers\API\SchemesApiController::class, 'getSchemes']);
+            Route::get('products', [\App\Http\Controllers\API\SchemesApiController::class, 'getSellerProducts']);
+            Route::get('edit/{id}', [\App\Http\Controllers\API\SchemesApiController::class, 'edit']);
+            Route::post('save', [\App\Http\Controllers\API\SchemesApiController::class, 'save'])->name('seller.schemes.save');
+            Route::post('update', [\App\Http\Controllers\API\SchemesApiController::class, 'update'])->name('seller.schemes.update');
+            Route::post('delete', [\App\Http\Controllers\API\SchemesApiController::class, 'delete'])->name('seller.schemes.delete');
+        });
+
         Route::get('/seller_wallet_transactions', [\App\Http\Controllers\API\SellerWalletTransactionsApiController::class, 'getSellerWalletTransactions']);
         Route::get('/delete_seller_account', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'deleteSellerAccount'])->name('seller.delete_seller_account');
         Route::group(['prefix' => 'withdrawal_requests'], function () {

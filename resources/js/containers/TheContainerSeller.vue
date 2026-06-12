@@ -333,6 +333,12 @@ export default {
                     permission: 'order_list',
                 },
                 {
+                    name: __('schemes'),
+                    icon: 'gift',
+                    url: '/seller/schemes',
+                    permission: 'order_list',
+                },
+                {
                     name: 'Logistics',
                     icon: 'truck',
                     permission: 'product_list',

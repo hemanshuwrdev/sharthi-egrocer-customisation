@@ -2417,7 +2417,8 @@ class CommonHelper
             'delivery_boys.name as delivery_boy_name',
             'order_items.id as order_item_id',
             'os.id as active_status',
-            'os.status as status_name'
+            'os.status as status_name',
+            'schemes.name as scheme_name'
         )
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
@@ -2428,6 +2429,7 @@ class CommonHelper
             ->leftJoin('delivery_boys', 'orders.delivery_boy_id', '=', 'delivery_boys.id')
             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
             ->leftJoin('order_status_lists as os', 'orders.active_status', '=', 'os.id')
+            ->leftJoin('schemes', 'orders.scheme_id', '=', 'schemes.id')
             ->where('orders.id', $order_id)
             ->groupBy('orders.id')
             ->first();

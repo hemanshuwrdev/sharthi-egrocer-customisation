@@ -378,6 +378,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1751,6 +1763,42 @@ var render = function () {
                             _c("td", [_vm._v(_vm._s(_vm.order.promo_code))]),
                           ]),
                           _vm._v(" "),
+                          _vm.order.scheme_id
+                            ? _c("tr", [
+                                _c("th", { staticClass: "th-width" }, [
+                                  _vm._v(_vm._s(_vm.__("scheme"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _c("span", { staticClass: "badge bg-info" }, [
+                                    _vm._v(
+                                      _vm._s(
+                                        _vm.order.scheme_name ||
+                                          "#" + _vm.order.scheme_id
+                                      )
+                                    ),
+                                  ]),
+                                ]),
+                              ])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          _vm.order.scheme_discount > 0
+                            ? _c("tr", [
+                                _c("th", { staticClass: "th-width" }, [
+                                  _vm._v(
+                                    _vm._s(_vm.__("scheme_discount")) +
+                                      " (" +
+                                      _vm._s(_vm.$currency) +
+                                      ")"
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(_vm._s(_vm.order.scheme_discount)),
+                                ]),
+                              ])
+                            : _vm._e(),
+                          _vm._v(" "),
                           _c("tr", [
                             _c("th", { staticClass: "th-width" }, [
                               _vm._v(
@@ -1842,6 +1890,24 @@ var render = function () {
                       { key: item.id, staticClass: "col-md-4" },
                       [
                         _c("div", { staticClass: "card position-relative" }, [
+                          item.is_free_item == 1
+                            ? _c(
+                                "div",
+                                {
+                                  staticClass:
+                                    "badge bg-success position-absolute",
+                                  staticStyle: { top: "10px", left: "10px" },
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                " +
+                                      _vm._s(_vm.__("free")) +
+                                      "\n                            "
+                                  ),
+                                ]
+                              )
+                            : _vm._e(),
+                          _vm._v(" "),
                           item.active_status == 7 || item.active_status == 8
                             ? _c(
                                 "div",
