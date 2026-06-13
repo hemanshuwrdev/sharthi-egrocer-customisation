@@ -24,11 +24,34 @@ use Illuminate\Support\Facades\Validator;
 
 class DeliveryBoyController extends BaseController
 {
-    public function index(){
+    public function index(Request $request){
         $delivery_boy_id = auth()->user()->deliveryBoy->id;
         $data = array();
+
+        $query = Order::where('delivery_boy_id', $delivery_boy_id)
+            ->where('active_status', OrderStatusList::$outForDelivery);
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+            $query->whereBetween('delivery_time', [$startDate, $endDate])
+                  ->orWhereBetween('created_at', [$startDate, $endDate]); // Adjust depending on when 'start trip' is defined
+        } else if ($request->filled('start_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->start_date)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // Calculate trip metrics
+        $data['total_stops'] = (clone $query)->count();
+        $data['expected_cash_collection'] = (clone $query)
+            ->where('payment_method', 'COD')
+            ->sum('final_total');
+
+        // Legacy metrics
         $data['order_count'] = Order::where('delivery_boy_id',$delivery_boy_id)->count();
         $data['balance'] = number_format(auth()->user()->deliveryBoy->balance, 2);
+        
         return CommonHelper::responseWithData($data);
     }
     public function doLanguageChange(Request $request)
