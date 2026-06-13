@@ -395,9 +395,10 @@ class RetailerCartOrderApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'mobile' => 'required',
-            'address' => 'required',
-            'latitude' => 'required',
-            'longitude' => 'required',
+            'order_type' => 'nullable|in:doorstep,selfpickup',
+            'address' => 'required_unless:order_type,selfpickup',
+            'latitude' => 'required_unless:order_type,selfpickup',
+            'longitude' => 'required_unless:order_type,selfpickup',
             'payment_method' => 'required',
             'delivery_time' => 'nullable|string',
             'address_id' => 'nullable|integer',
@@ -496,6 +497,7 @@ class RetailerCartOrderApiController extends Controller
                         // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
                         // 'active_status' => OrderStatusList::$received,
 
+                        'order_type' => $request->order_type ?? 'doorstep',
                         'address_id' => $request->address_id ?? 0,
                         'created_at' => now(),
                         'updated_at' => now(),

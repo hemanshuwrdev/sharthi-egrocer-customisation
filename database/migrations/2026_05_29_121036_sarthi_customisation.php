@@ -453,6 +453,8 @@ class SarthiCustomisation extends Migration
             }
             if (!Schema::hasColumn('order_items', 'damage_photo')) {
                 $table->string('damage_photo')->nullable()->after('delivered_quantity');
+            }
+        });
 
         // 10. Scheme Engine: distributor-owned offers (Buy X Get Y + group slab discount, auto-apply best)
         if (!Schema::hasTable('schemes')) {

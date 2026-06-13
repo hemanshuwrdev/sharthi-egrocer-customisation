@@ -769,6 +769,9 @@ Route::middleware('auth:api')->group(function () {
             Route::get('{id}', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'retailerDetail'])->name('salesman.retailers.detail');
         });
 
+        // Sarthi: salesman product catalog (distributor's own stock)
+        Route::get('products', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'listProducts'])->name('salesman.products.list');
+
         // Sarthi: salesman assisted order — cart + place
         Route::group(['prefix' => 'cart'], function () {
             Route::post('add', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'addCartItem'])->name('salesman.cart.add');

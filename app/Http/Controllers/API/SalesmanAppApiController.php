@@ -10,6 +10,7 @@ use App\Models\BrandDistributorMapping;
 use App\Models\Cart;
 use App\Models\MasterProductVariant;
 use App\Models\Order;
+use App\Models\SellerProductSlabPrice;
 use App\Models\OrderStatusList;
 use App\Models\RetailerProfile;
 use App\Models\Salesman;
@@ -367,6 +368,119 @@ class SalesmanAppApiController extends Controller
         if ((int) $retailer->salesman_id !== (int) $salesman->id) return null;
         if ($retailer->verification_status !== 'active') return null;
         return $retailer;
+    }
+
+    /**
+     * GET /api/salesman/products
+     * Query: filter, brand_id, category_id, parent_company_id, page, per_page
+     *
+     * Returns the logged-in salesman's distributor catalog so he can pick
+     * variants to add to a retailer's cart.  seller_id is resolved from the
+     * salesman's own record — no need for lat/lng.
+     */
+    public function listProducts(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $sellerId = (int) $salesman->seller_id;
+        $limit    = (int) $request->input('per_page', 25);
+        $page     = max((int) $request->input('page', 1), 1);
+        $offset   = ($page - 1) * $limit;
+        $filter   = trim((string) $request->input('filter', ''));
+
+        $query = MasterProductVariant::query()
+            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit'])
+            ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->join('seller_products', function ($j) use ($sellerId) {
+                $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
+                  ->where('seller_products.seller_id', '=', $sellerId);
+            })
+            ->where('master_products.status', 1)
+            ->where('master_product_variants.status', 1)
+            ->where('seller_products.status', 1)
+            ->where('seller_products.selling_price', '>', 0)
+            ->select(
+                'master_product_variants.*',
+                'seller_products.id as sp_id',
+                'seller_products.mrp as sp_mrp',
+                'seller_products.selling_price as sp_selling_price',
+                'seller_products.discounted_price as sp_discounted_price',
+                'seller_products.stock as sp_stock'
+            );
+
+        if ($filter !== '') {
+            $query->where(function ($w) use ($filter) {
+                $w->where('master_products.name', 'like', "%{$filter}%")
+                  ->orWhere('master_product_variants.sku', 'like', "%{$filter}%")
+                  ->orWhere('master_products.hsn', 'like', "%{$filter}%");
+            });
+        }
+        if ($request->filled('brand_id')) {
+            $query->where('master_products.brand_id', (int) $request->brand_id);
+        }
+        if ($request->filled('category_id')) {
+            $query->where('master_products.category_id', (int) $request->category_id);
+        }
+        if ($request->filled('parent_company_id')) {
+            $query->where('master_products.parent_company_id', (int) $request->parent_company_id);
+        }
+
+        $rows = $query->orderBy('master_products.name')
+            ->orderBy('master_product_variants.id')
+            ->get();
+
+        $slabsBySp = SellerProductSlabPrice::whereIn('seller_product_id', $rows->pluck('sp_id')->unique())
+            ->orderBy('min_qty')
+            ->get()
+            ->groupBy('seller_product_id');
+
+        $items = $rows->map(function ($r) use ($sellerId, $slabsBySp) {
+            $mp = $r->masterProduct;
+            $slabs = isset($slabsBySp[$r->sp_id])
+                ? $slabsBySp[$r->sp_id]->map(fn($s) => [
+                    'id'      => $s->id,
+                    'min_qty' => $s->min_qty,
+                    'max_qty' => $s->max_qty,
+                    'price'   => (float) $s->price,
+                ])->values()
+                : [];
+
+            $offer = [
+                'seller_id'         => $sellerId,
+                'seller_product_id' => $r->sp_id,
+                'mrp'               => (float) $r->sp_mrp,
+                'selling_price'     => (float) $r->sp_selling_price,
+                'discounted_price'  => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
+                'stock'             => (float) $r->sp_stock,
+                'slab_prices'       => $slabs,
+            ];
+
+            return [
+                'product_variant_id'   => $r->id,
+                'product_id'           => $r->master_product_id,
+                'master_product_name'  => $mp ? $mp->name : null,
+                'brand'                => $mp && $mp->brand ? $mp->brand->name : null,
+                'brand_id'             => $mp ? $mp->brand_id : null,
+                'parent_company'       => $mp && $mp->parentCompany ? $mp->parentCompany->name : null,
+                'category'             => $mp && $mp->category ? $mp->category->name : null,
+                'category_id'          => $mp ? $mp->category_id : null,
+                'sku'                  => $r->sku,
+                'unit'                 => $r->unit ? $r->unit->name : null,
+                'secondary_unit'       => $r->secondaryUnit ? $r->secondaryUnit->name : null,
+                'secondary_unit_value' => $r->secondary_unit_value,
+                'weight'               => $r->weight,
+                'image'                => $r->image ?: ($mp ? $mp->image : null),
+                'offer'                => $offer,
+            ];
+        })->values();
+
+        $total = $items->count();
+        $paged = $items->slice($offset, $limit)->values();
+
+        return CommonHelper::responseWithData($paged, $total);
     }
 
     /**

@@ -1868,58 +1868,31 @@ class ProductApisController extends Controller
 
     public function updateVariantStock(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required|integer|exists:product_variants,id',
-            'stock' => 'required|integer|min:0|max:100000',
-        ], [
-            'id.required' => 'The product variant ID is required.',
-            'id.integer' => 'The product variant ID must be a valid integer.',
-            'id.exists' => 'The selected product variant does not exist.',
+        $user = auth()->user();
+        if (!$user || !$user->seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
 
-            'stock.required' => 'The stock quantity must be a valid integer.',
-            'stock.integer' => 'The stock quantity must be a valid integer.',
-            'stock.min' => 'The stock quantity cannot be less than 0.'
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:master_product_variants,id',
+            'stock' => 'required|integer|min:0|max:100000',
         ]);
 
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $variant = ProductVariant::findOrFail($request->id);
-        if ($variant->type == 'packet') {
+        $sellerProduct = SellerProduct::where('seller_id', $user->seller->id)
+            ->where('master_product_variant_id', $request->id)
+            ->first();
 
-            $variant->stock = $request->stock;
-            $variant->save();
-
-            if ($variant->stock <= 0) {
-                $variant->status = 0; // here status 0 => "Sold Out" & 1 => "Available"
-                $variant->save();
-            } else {
-                $variant->status = 1; // here status 0 => "Sold Out" & 1 => "Available"
-                $variant->save();
-            }
-        } else if ($variant->type == 'loose') {
-            // Update stock value
-            $product_id = $variant->product_id;
-            $product = Product::find($product_id); // Use find() for a single record
-
-            // Check if product is found
-            if ($product) {
-                // Update product status based on request stock
-                $product->status = $request->stock <= 0 ? 0 : 1; // 0 => "Sold Out", 1 => "Available"
-                $product->save(); // Save the product status
-
-                // Fetch all loose variants for the product
-                $loose_variants = ProductVariant::where('product_id', $product_id)->get();
-
-                foreach ($loose_variants as $loose_variant) {
-                    // Update stock for each loose variant
-                    $loose_variant->stock = $request->stock;
-                    $loose_variant->status = $request->stock <= 0 ? 0 : 1; // Set status based on stock
-                    $loose_variant->save(); // Save each loose variant
-                }
-            }
+        if (!$sellerProduct) {
+            return CommonHelper::responseError('product_not_owned_by_seller');
         }
+
+        $sellerProduct->stock = $request->stock;
+        $sellerProduct->status = $request->stock > 0 ? 1 : 0;
+        $sellerProduct->save();
 
         return CommonHelper::responseSuccess('stock_updated_successfully');
     }
