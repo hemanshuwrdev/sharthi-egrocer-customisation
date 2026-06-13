@@ -600,7 +600,14 @@ Route::middleware('auth:api')->group(function () {
         });
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
         Route::get('settings', [\App\Http\Controllers\SellerController::class, 'getSettings']);
-        Route::get('delivery_boys', [\App\Http\Controllers\SellerController::class, 'getDeliveryBoys']);
+        Route::group(['prefix' => 'delivery_boys'], function () {
+            Route::get('/', [\App\Http\Controllers\SellerController::class, 'getDeliveryBoys']);
+            Route::get('bonus_settings', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'getDeliveryBoyBonusSettings'])->name('seller.delivery_boys.bonus_settings');
+            Route::get('edit/{id}', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'edit'])->name('seller.delivery_boys.edit');
+            Route::post('save', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'save'])->name('seller.delivery_boys.save');
+            Route::post('update', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'update'])->name('seller.delivery_boys.update');
+            Route::post('delete', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'delete'])->name('seller.delivery_boys.delete');
+        });
 
         Route::get('main_categories', [\App\Http\Controllers\SellerController::class, 'getMainCategories']);
         Route::get('seller_categories', [\App\Http\Controllers\API\CategoryApiController::class, 'getSellerCategories']);

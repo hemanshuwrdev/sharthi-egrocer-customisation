@@ -89,6 +89,25 @@ class CustomerAuthController extends Controller
                 return CommonHelper::responseError('user_not_exist');
             }
 
+            if ($request->phone_auth_type == 'phone_auth_otp') {
+                if (!$request->has('otp') || empty($request->otp)) {
+                    return CommonHelper::responseError('OTP is required.');
+                }
+
+                $fullPhone = $loginCountryCode . $request->id;
+                $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
+                    ->orWhere('phone', $request->id)
+                    ->latest('created_at')
+                    ->first();
+
+                if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
+                    return CommonHelper::responseError('OTP is invalid or has expired.');
+                }
+
+                $otpRecord->status = 'verified';
+                $otpRecord->save();
+            }
+
             if ($request->phone_auth_type == 'phone_auth_password') {
                 if (empty($user->password)) {
                     return CommonHelper::responseError('user_exist_password_blank');
