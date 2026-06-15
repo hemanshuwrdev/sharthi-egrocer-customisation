@@ -26,40 +26,88 @@ class AdminAuthController extends Controller
     public function login(Request $request)
     {
         $requestData = $request->all();
-        $validator = Validator::make($requestData, [
-            'email' => 'email|required',
-            'password' => 'required'
-        ]);
+        if ($request->phone_auth_type == 'phone_auth_otp') {
+            $validator = Validator::make($requestData, [
+                'mobile' => 'required_without_all:phone,id',
+                'otp' => 'required'
+            ]);
+        } else {
+            $validator = Validator::make($requestData, [
+                'email' => 'email|required',
+                'password' => 'required'
+            ]);
+        }
 
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
-        if ($request->type == 3) {
-            $user = Admin::with('seller')->where('email', request()->email)->first();
 
-            if (!$user || !$user->seller) {
-                return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+        if ($request->phone_auth_type == 'phone_auth_otp') {
+            $mobile = $request->mobile ?? $request->phone ?? $request->id;
+            $countryCode = $request->country_code ?? '';
+            $fullPhone = $countryCode . $mobile;
+
+            $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
+                ->orWhere('phone', $mobile)
+                ->latest('created_at')
+                ->first();
+
+            if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
+                return CommonHelper::responseError('OTP is invalid or has expired.');
             }
-        } elseif ($request->type == 4) {
-            $user = Admin::with('deliveryBoy')->where('email', request()->email)->first();
-            if (!$user || !$user->deliveryBoy) {
-                return CommonHelper::responseError('user_is_not_register_with_this_email_address');
-            }
-        } elseif ($request->type == 5) {
-            $user = Admin::with('salesman')->where('email', request()->email)->first();
-            if (!$user || !$user->salesman) {
-                return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+
+            $otpRecord->status = 'verified';
+            $otpRecord->save();
+
+            if ($request->type == 4) {
+                $deliveryBoy = DeliveryBoy::where('mobile', $mobile)->first();
+                if (!$deliveryBoy) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+                $user = Admin::with('deliveryBoy')->where('id', $deliveryBoy->admin_id)->first();
+                if (!$user) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+            } elseif ($request->type == 3) {
+                $seller = \App\Models\Seller::where('mobile', $mobile)->first();
+                if (!$seller) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+                $user = Admin::with('seller')->where('id', $seller->admin_id)->first();
+                if (!$user) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+            } else {
+                return CommonHelper::responseError('OTP login is only supported for delivery boys and sellers.');
             }
         } else {
-            $user = Admin::where('email', request()->email)->first();
-           
-            if (!$user) {
-                return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+            if ($request->type == 3) {
+                $user = Admin::with('seller')->where('email', request()->email)->first();
+    
+                if (!$user || !$user->seller) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+                }
+            } elseif ($request->type == 4) {
+                $user = Admin::with('deliveryBoy')->where('email', request()->email)->first();
+                if (!$user || !$user->deliveryBoy) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+                }
+            } elseif ($request->type == 5) {
+                $user = Admin::with('salesman')->where('email', request()->email)->first();
+                if (!$user || !$user->salesman) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+                }
+            } else {
+                $user = Admin::where('email', request()->email)->first();
+               
+                if (!$user) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_email_address');
+                }
             }
-        }
-
-        if (!Hash::check(request()->password, $user->password)) {
-            return CommonHelper::responseError('email_password_is_wrong');
+    
+            if (!Hash::check(request()->password, $user->password)) {
+                return CommonHelper::responseError('email_password_is_wrong');
+            }
         }
 
         $otherRoleIds = array(Role::$roleSeller, Role::$roleDeliveryBoy);

@@ -54,6 +54,7 @@ class TwilioHelper
             ]);
             return true;
         } catch (Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Twilio Error: " . $e->getMessage());
             return false;
         }
     }
