@@ -626,11 +626,14 @@ class SalesmanAppApiController extends Controller
 
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
         foreach ($groups as $sellerId => &$group) {
-            $scheme = SchemeEngine::evaluate((int) $sellerId, $group['scheme_lines'] ?? []);
+            $schemeLines = $group['scheme_lines'] ?? [];
+            $scheme  = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
+            $nearest = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $scheme['scheme_id'] ?? null);
             unset($group['scheme_lines']);
-            $group['applied_scheme'] = $scheme;
+            $group['applied_scheme']  = $scheme;
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
-            $group['final_total'] = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
+            $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
+            $group['nearest_scheme']  = $nearest;
         }
         unset($group);
 
