@@ -77,8 +77,17 @@ class AdminAuthController extends Controller
                 if (!$user) {
                     return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
                 }
+            } elseif ($request->type == 5) {
+                $salesman = Salesman::where('mobile', $mobile)->first();
+                if (!$salesman) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+                $user = Admin::with('salesman')->where('id', $salesman->admin_id)->first();
+                if (!$user) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
             } else {
-                return CommonHelper::responseError('OTP login is only supported for delivery boys and sellers.');
+                return CommonHelper::responseError('OTP login is only supported for delivery boys, sellers, and salesmen.');
             }
         } else {
             if ($request->type == 3) {
@@ -275,6 +284,7 @@ class AdminAuthController extends Controller
             'name' => 'required',
             'email' => 'email|required|unique:admins',
             'mobile' => 'required',
+            'otp' => 'required',
             'password' => 'min:6|required_with:confirm_password|same:confirm_password',
             'categories_ids' => 'required',
             'store_name' => 'required',
@@ -291,6 +301,22 @@ class AdminAuthController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
+
+        $mobile = $request->mobile;
+        $countryCode = $request->country_code ?? '';
+        $fullPhone = $countryCode . $mobile;
+
+        $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
+            ->orWhere('phone', $mobile)
+            ->latest('created_at')
+            ->first();
+
+        if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
+            return CommonHelper::responseError('OTP is invalid or has expired.');
+        }
+
+        $otpRecord->status = 'verified';
+        $otpRecord->save();
 
         DB::beginTransaction();
         try {

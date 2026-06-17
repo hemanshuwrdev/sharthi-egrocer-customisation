@@ -176,6 +176,21 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -198,6 +213,21 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   computed: {
+    totalFilteredWeight: function totalFilteredWeight() {
+      var sum = this.orders.reduce(function (acc, order) {
+        return acc + parseFloat(order.weight || 0);
+      }, 0);
+      return sum.toFixed(2);
+    },
+    totalFilteredValue: function totalFilteredValue() {
+      var sum = this.orders.reduce(function (acc, order) {
+        return acc + parseFloat(order.final_total || 0);
+      }, 0);
+      return sum.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    },
     barClass: function barClass() {
       if (this.loadPercent > 100) return 'bg-danger';
       if (this.loadPercent > 85) return 'bg-warning';
@@ -605,299 +635,357 @@ var render = function () {
             ]),
           ]),
           _vm._v(" "),
-          _c(
-            "div",
-            {
-              staticClass: "card-body p-0 overflow-auto",
-              staticStyle: { "max-height": "600px" },
-            },
-            [
-              _c("div", { staticClass: "table-responsive" }, [
-                _c(
-                  "table",
-                  {
-                    staticClass:
-                      "table align-items-center table-flush table-hover mb-0",
-                  },
-                  [
-                    _c("thead", { staticClass: "thead-light" }, [
-                      _c("tr", [
-                        _c(
-                          "th",
-                          {
-                            staticClass: "text-center py-3",
-                            staticStyle: { width: "40px" },
-                          },
-                          [
-                            _c("div", { staticClass: "form-check" }, [
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.selectAll,
-                                    expression: "selectAll",
-                                  },
-                                ],
-                                staticClass: "form-check-input",
-                                attrs: { type: "checkbox" },
-                                domProps: {
-                                  checked: Array.isArray(_vm.selectAll)
-                                    ? _vm._i(_vm.selectAll, null) > -1
-                                    : _vm.selectAll,
-                                },
-                                on: {
-                                  change: [
-                                    function ($event) {
-                                      var $$a = _vm.selectAll,
-                                        $$el = $event.target,
-                                        $$c = $$el.checked ? true : false
-                                      if (Array.isArray($$a)) {
-                                        var $$v = null,
-                                          $$i = _vm._i($$a, $$v)
-                                        if ($$el.checked) {
-                                          $$i < 0 &&
-                                            (_vm.selectAll = $$a.concat([$$v]))
-                                        } else {
-                                          $$i > -1 &&
-                                            (_vm.selectAll = $$a
-                                              .slice(0, $$i)
-                                              .concat($$a.slice($$i + 1)))
-                                        }
-                                      } else {
-                                        _vm.selectAll = $$c
-                                      }
-                                    },
-                                    _vm.toggleSelectAll,
-                                  ],
-                                },
-                              }),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "th",
-                          { staticClass: "py-3 font-weight-bold text-muted" },
-                          [_vm._v(_vm._s(_vm.__("order_id")))]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "th",
-                          { staticClass: "py-3 font-weight-bold text-muted" },
-                          [_vm._v(_vm._s(_vm.__("customer_name")))]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "th",
-                          {
-                            staticClass:
-                              "py-3 font-weight-bold text-muted text-center",
-                          },
-                          [_vm._v(_vm._s(_vm.__("zone")))]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "th",
-                          {
-                            staticClass:
-                              "py-3 font-weight-bold text-muted text-right",
-                          },
-                          [_vm._v(_vm._s(_vm.__("value")))]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "th",
-                          {
-                            staticClass:
-                              "py-3 font-weight-bold text-muted text-right",
-                          },
-                          [_vm._v(_vm._s(_vm.__("weight_kg")))]
-                        ),
-                      ]),
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "tbody",
-                      [
-                        _vm._l(_vm.orders, function (order) {
-                          return _c(
-                            "tr",
+          _c("div", { staticClass: "card-body p-0" }, [
+            _c(
+              "div",
+              {
+                staticClass: "overflow-auto",
+                staticStyle: { "max-height": "520px" },
+              },
+              [
+                _c("div", { staticClass: "table-responsive" }, [
+                  _c(
+                    "table",
+                    {
+                      staticClass:
+                        "table align-items-center table-flush table-hover mb-0",
+                    },
+                    [
+                      _c("thead", { staticClass: "thead-light" }, [
+                        _c("tr", [
+                          _c(
+                            "th",
                             {
-                              key: order.id,
-                              staticClass: "transition-all cursor-pointer",
-                              on: {
-                                click: function ($event) {
-                                  return _vm.toggleOrderSelection(order)
-                                },
-                              },
+                              staticClass: "py-3 pl-4",
+                              staticStyle: { width: "50px" },
                             },
                             [
-                              _c(
-                                "td",
-                                {
-                                  staticClass: "text-center py-3",
-                                  on: {
-                                    click: function ($event) {
-                                      $event.stopPropagation()
+                              _c("div", { staticClass: "form-check mb-0" }, [
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.selectAll,
+                                      expression: "selectAll",
                                     },
+                                  ],
+                                  staticClass: "form-check-input",
+                                  attrs: { type: "checkbox" },
+                                  domProps: {
+                                    checked: Array.isArray(_vm.selectAll)
+                                      ? _vm._i(_vm.selectAll, null) > -1
+                                      : _vm.selectAll,
+                                  },
+                                  on: {
+                                    change: [
+                                      function ($event) {
+                                        var $$a = _vm.selectAll,
+                                          $$el = $event.target,
+                                          $$c = $$el.checked ? true : false
+                                        if (Array.isArray($$a)) {
+                                          var $$v = null,
+                                            $$i = _vm._i($$a, $$v)
+                                          if ($$el.checked) {
+                                            $$i < 0 &&
+                                              (_vm.selectAll = $$a.concat([
+                                                $$v,
+                                              ]))
+                                          } else {
+                                            $$i > -1 &&
+                                              (_vm.selectAll = $$a
+                                                .slice(0, $$i)
+                                                .concat($$a.slice($$i + 1)))
+                                          }
+                                        } else {
+                                          _vm.selectAll = $$c
+                                        }
+                                      },
+                                      _vm.toggleSelectAll,
+                                    ],
+                                  },
+                                }),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "th",
+                            { staticClass: "py-3 font-weight-bold text-muted" },
+                            [_vm._v(_vm._s(_vm.__("order_id")))]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "th",
+                            { staticClass: "py-3 font-weight-bold text-muted" },
+                            [_vm._v(_vm._s(_vm.__("customer_name")))]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "th",
+                            {
+                              staticClass:
+                                "py-3 font-weight-bold text-muted text-center",
+                            },
+                            [_vm._v(_vm._s(_vm.__("zone")))]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "th",
+                            {
+                              staticClass:
+                                "py-3 font-weight-bold text-muted text-right",
+                            },
+                            [_vm._v(_vm._s(_vm.__("value")))]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "th",
+                            {
+                              staticClass:
+                                "py-3 font-weight-bold text-muted text-right",
+                            },
+                            [_vm._v(_vm._s(_vm.__("weight_kg")))]
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "tbody",
+                        [
+                          _vm._l(_vm.orders, function (order) {
+                            return _c(
+                              "tr",
+                              {
+                                key: order.id,
+                                staticClass: "transition-all cursor-pointer",
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.toggleOrderSelection(order)
                                   },
                                 },
-                                [
-                                  _c("div", { staticClass: "form-check" }, [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.selectedOrderIds,
-                                          expression: "selectedOrderIds",
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "checkbox" },
-                                      domProps: {
-                                        value: order.id,
-                                        checked: Array.isArray(
-                                          _vm.selectedOrderIds
-                                        )
-                                          ? _vm._i(
-                                              _vm.selectedOrderIds,
-                                              order.id
-                                            ) > -1
-                                          : _vm.selectedOrderIds,
-                                      },
-                                      on: {
-                                        change: [
-                                          function ($event) {
-                                            var $$a = _vm.selectedOrderIds,
-                                              $$el = $event.target,
-                                              $$c = $$el.checked ? true : false
-                                            if (Array.isArray($$a)) {
-                                              var $$v = order.id,
-                                                $$i = _vm._i($$a, $$v)
-                                              if ($$el.checked) {
-                                                $$i < 0 &&
-                                                  (_vm.selectedOrderIds =
-                                                    $$a.concat([$$v]))
-                                              } else {
-                                                $$i > -1 &&
-                                                  (_vm.selectedOrderIds = $$a
-                                                    .slice(0, $$i)
-                                                    .concat($$a.slice($$i + 1)))
-                                              }
-                                            } else {
-                                              _vm.selectedOrderIds = $$c
-                                            }
-                                          },
-                                          _vm.calculateWeightSum,
-                                        ],
-                                      },
-                                    }),
-                                  ]),
-                                ]
-                              ),
-                              _vm._v(" "),
-                              _c("td", { staticClass: "font-weight-bold" }, [
-                                _vm._v("#" + _vm._s(order.id)),
-                              ]),
-                              _vm._v(" "),
-                              _c("td", [
+                              },
+                              [
                                 _c(
-                                  "div",
-                                  { staticClass: "font-weight-bold mb-0" },
-                                  [_vm._v(_vm._s(order.user_name))]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "small",
+                                  "td",
                                   {
-                                    staticClass:
-                                      "text-muted text-truncate d-inline-block max-w-250",
-                                  },
-                                  [_vm._v(_vm._s(order.address))]
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("td", { staticClass: "text-center" }, [
-                                _c(
-                                  "span",
-                                  {
-                                    staticClass:
-                                      "badge bg-soft-primary font-weight-bold",
+                                    staticClass: "py-3 pl-4",
+                                    on: {
+                                      click: function ($event) {
+                                        $event.stopPropagation()
+                                      },
+                                    },
                                   },
                                   [
-                                    _vm._v(
-                                      _vm._s(
-                                        _vm.formatZone(
-                                          order.city_zone || "Default"
-                                        )
-                                      )
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-check mb-0" },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.selectedOrderIds,
+                                              expression: "selectedOrderIds",
+                                            },
+                                          ],
+                                          staticClass: "form-check-input",
+                                          attrs: { type: "checkbox" },
+                                          domProps: {
+                                            value: order.id,
+                                            checked: Array.isArray(
+                                              _vm.selectedOrderIds
+                                            )
+                                              ? _vm._i(
+                                                  _vm.selectedOrderIds,
+                                                  order.id
+                                                ) > -1
+                                              : _vm.selectedOrderIds,
+                                          },
+                                          on: {
+                                            change: [
+                                              function ($event) {
+                                                var $$a = _vm.selectedOrderIds,
+                                                  $$el = $event.target,
+                                                  $$c = $$el.checked
+                                                    ? true
+                                                    : false
+                                                if (Array.isArray($$a)) {
+                                                  var $$v = order.id,
+                                                    $$i = _vm._i($$a, $$v)
+                                                  if ($$el.checked) {
+                                                    $$i < 0 &&
+                                                      (_vm.selectedOrderIds =
+                                                        $$a.concat([$$v]))
+                                                  } else {
+                                                    $$i > -1 &&
+                                                      (_vm.selectedOrderIds =
+                                                        $$a
+                                                          .slice(0, $$i)
+                                                          .concat(
+                                                            $$a.slice($$i + 1)
+                                                          ))
+                                                  }
+                                                } else {
+                                                  _vm.selectedOrderIds = $$c
+                                                }
+                                              },
+                                              _vm.calculateWeightSum,
+                                            ],
+                                          },
+                                        }),
+                                      ]
                                     ),
                                   ]
                                 ),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "td",
-                                { staticClass: "text-right font-weight-bold" },
-                                [_vm._v("₹" + _vm._s(order.final_total))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "td",
-                                { staticClass: "text-right font-weight-bold" },
-                                [
-                                  _vm._v(
-                                    "\n                                        " +
-                                      _vm._s(order.weight || 0) +
-                                      " kg\n                                    "
+                                _vm._v(" "),
+                                _c("td", { staticClass: "font-weight-bold" }, [
+                                  _vm._v("#" + _vm._s(order.id)),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _c(
+                                    "div",
+                                    { staticClass: "font-weight-bold mb-0" },
+                                    [_vm._v(_vm._s(order.user_name))]
                                   ),
-                                ]
-                              ),
-                            ]
-                          )
-                        }),
-                        _vm._v(" "),
-                        _vm.orders.length === 0
-                          ? _c("tr", [
-                              _c(
-                                "td",
-                                {
-                                  staticClass: "text-center py-5 text-muted",
-                                  attrs: { colspan: "6" },
-                                },
-                                [
-                                  _c("i", {
-                                    staticClass:
-                                      "fa fa-check-circle fa-2x mb-3 text-success",
-                                  }),
                                   _vm._v(" "),
                                   _c(
-                                    "p",
-                                    { staticClass: "mb-0 font-weight-bold" },
+                                    "small",
+                                    {
+                                      staticClass:
+                                        "text-muted text-truncate d-inline-block max-w-250",
+                                    },
+                                    [_vm._v(_vm._s(order.address))]
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", { staticClass: "text-center" }, [
+                                  _c(
+                                    "span",
+                                    {
+                                      staticClass:
+                                        "badge bg-soft-primary font-weight-bold",
+                                    },
                                     [
                                       _vm._v(
                                         _vm._s(
-                                          _vm.__(
-                                            "hurray_all_doorstep_orders_are_already_assigned_to_slips"
+                                          _vm.formatZone(
+                                            order.city_zone || "Default"
                                           )
                                         )
                                       ),
                                     ]
                                   ),
-                                ]
-                              ),
-                            ])
-                          : _vm._e(),
-                      ],
-                      2
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "td",
+                                  {
+                                    staticClass: "text-right font-weight-bold",
+                                  },
+                                  [_vm._v("₹" + _vm._s(order.final_total))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "td",
+                                  {
+                                    staticClass: "text-right font-weight-bold",
+                                  },
+                                  [
+                                    _vm._v(
+                                      "\n                                        " +
+                                        _vm._s(order.weight || 0) +
+                                        " kg\n                                    "
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            )
+                          }),
+                          _vm._v(" "),
+                          _vm.orders.length === 0
+                            ? _c("tr", [
+                                _c(
+                                  "td",
+                                  {
+                                    staticClass: "text-center py-5 text-muted",
+                                    attrs: { colspan: "6" },
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass:
+                                        "fa fa-check-circle fa-2x mb-3 text-success",
+                                    }),
+                                    _vm._v(" "),
+                                    _c(
+                                      "p",
+                                      { staticClass: "mb-0 font-weight-bold" },
+                                      [
+                                        _vm._v(
+                                          _vm._s(
+                                            _vm.__(
+                                              "hurray_all_doorstep_orders_are_already_assigned_to_slips"
+                                            )
+                                          )
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ])
+                            : _vm._e(),
+                        ],
+                        2
+                      ),
+                    ]
+                  ),
+                ]),
+              ]
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              {
+                staticClass:
+                  "px-4 py-3 bg-white border-top d-flex justify-content-between font-weight-bold text-success",
+              },
+              [
+                _c("div", [
+                  _c("span", [
+                    _vm._v(
+                      _vm._s(_vm.__("total_weight")) +
+                        " :- " +
+                        _vm._s(_vm.totalFilteredWeight) +
+                        " " +
+                        _vm._s(_vm.__("kg"))
                     ),
-                  ]
-                ),
-              ]),
-            ]
-          ),
+                  ]),
+                ]),
+                _vm._v(" "),
+                _c("div", [
+                  _c("span", [
+                    _vm._v(
+                      _vm._s(_vm.__("orders")) +
+                        " :- " +
+                        _vm._s(_vm.orders.length)
+                    ),
+                  ]),
+                ]),
+                _vm._v(" "),
+                _c("div", [
+                  _c("span", [
+                    _vm._v(
+                      _vm._s(_vm.__("total_value")) +
+                        " :- ₹" +
+                        _vm._s(_vm.totalFilteredValue)
+                    ),
+                  ]),
+                ]),
+              ]
+            ),
+          ]),
         ]),
       ]),
       _vm._v(" "),

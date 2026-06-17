@@ -489,6 +489,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/cancel_order_item', [\App\Http\Controllers\API\OrdersApiController::class, 'cancelOrderItem'])->name('orders.cancel_order_item');
         // Sarthi: super-admin edits a retailer's placed order (qty / price per line) + notifies retailer
         Route::post('/update_items', [\App\Http\Controllers\API\OrdersApiController::class, 'updateOrderItems'])->name('orders.update_items');
+        Route::put('{id}/reschedule', [\App\Http\Controllers\API\OrdersApiController::class, 'rescheduleOrder']);
     });
 
     Route::group(['prefix' => 'role'], function () {

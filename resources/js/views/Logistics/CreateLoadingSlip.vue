@@ -36,13 +36,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-body p-0 overflow-auto" style="max-height: 600px;">
-                        <div class="table-responsive">
+                    <div class="card-body p-0">
+                        <div class="overflow-auto" style="max-height: 520px;">
+                            <div class="table-responsive">
                             <table class="table align-items-center table-flush table-hover mb-0">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th style="width: 40px;" class="text-center py-3">
-                                            <div class="form-check">
+                                        <th style="width: 50px;" class="py-3 pl-4">
+                                            <div class="form-check mb-0">
                                                 <input @change="toggleSelectAll" v-model="selectAll" class="form-check-input" type="checkbox">
                                             </div>
                                         </th>
@@ -55,8 +56,8 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="order in orders" :key="order.id" class="transition-all cursor-pointer" @click="toggleOrderSelection(order)">
-                                        <td class="text-center py-3" @click.stop>
-                                            <div class="form-check">
+                                        <td class="py-3 pl-4" @click.stop>
+                                            <div class="form-check mb-0">
                                                 <input v-model="selectedOrderIds" :value="order.id" class="form-check-input" type="checkbox" @change="calculateWeightSum">
                                             </div>
                                         </td>
@@ -81,6 +82,20 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        </div>
+
+                        <!-- Footer Summary -->
+                        <div class="px-4 py-3 bg-white border-top d-flex justify-content-between font-weight-bold text-success">
+                            <div>
+                                <span>{{ __('total_weight') }} :- {{ totalFilteredWeight }} {{ __('kg') }}</span>
+                            </div>
+                            <div>
+                                <span>{{ __('orders') }} :- {{ orders.length }}</span>
+                            </div>
+                            <div>
+                                <span>{{ __('total_value') }} :- ₹{{ totalFilteredValue }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -184,6 +199,14 @@ export default {
         };
     },
     computed: {
+        totalFilteredWeight() {
+            let sum = this.orders.reduce((acc, order) => acc + parseFloat(order.weight || 0), 0);
+            return sum.toFixed(2);
+        },
+        totalFilteredValue() {
+            let sum = this.orders.reduce((acc, order) => acc + parseFloat(order.final_total || 0), 0);
+            return sum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
         barClass() {
             if (this.loadPercent > 100) return 'bg-danger';
             if (this.loadPercent > 85) return 'bg-warning';

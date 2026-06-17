@@ -1369,4 +1369,82 @@ class OrdersApiController extends Controller
         $f = (float) $n;
         return rtrim(rtrim(number_format($f, 2, '.', ''), '0'), '.');
     }
+
+    public function rescheduleOrder(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'delivery_date'   => 'required|date|date_format:Y-m-d|after_or_equal:today',
+            'delivery_reason' => 'nullable|string|max:255',
+            'delivery_time'   => 'nullable|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $order = Order::find($id);
+        if (empty($order)) {
+            return CommonHelper::responseError("Order Not found!");
+        }
+
+        if (in_array($order->active_status, [
+            OrderStatusList::$delivered,
+            OrderStatusList::$cancelled,
+            OrderStatusList::$returned,
+            OrderStatusList::$selfPickupPicked
+        ])) {
+            return CommonHelper::responseError("Cannot reschedule an order that is already delivered, cancelled, or returned.");
+        }
+
+        // Authorize user based on role
+        $authUser = auth()->user();
+        if ($authUser->role_id == Role::$roleSeller) {
+            $seller = $authUser->seller;
+            if (!$seller) {
+                return CommonHelper::responseError("Unauthorized");
+            }
+            $hasItem = OrderItem::where('order_id', $order->id)
+                ->where('seller_id', $seller->id)
+                ->exists();
+            if (!$hasItem) {
+                return CommonHelper::responseError("Unauthorized: You do not own this order.");
+            }
+        } elseif ($authUser->role_id == Role::$roleDeliveryBoy) {
+            $deliveryBoy = $authUser->deliveryBoy;
+            if (!$deliveryBoy || $order->delivery_boy_id != $deliveryBoy->id) {
+                return CommonHelper::responseError("Unauthorized: Order not assigned to you.");
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $order->delivery_date = $request->delivery_date;
+            if ($request->has('delivery_reason')) {
+                $order->delivery_reason = $request->delivery_reason;
+            }
+            if ($request->has('delivery_time')) {
+                $order->delivery_time = $request->delivery_time;
+            }
+            $order->save();
+
+            // Log status history (using current active status, but recording a history entry)
+            $orderStatus = [
+                'order_id'      => $order->id,
+                'order_item_id' => 0,
+                'status'        => $order->active_status,
+                'created_by'    => $authUser->id,
+                'user_type'     => OrderStatus::$userTypeAdmin,
+                'created_at'    => now()
+            ];
+            OrderStatus::create($orderStatus);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Reschedule order error: " . $e->getMessage());
+            return CommonHelper::responseError("Something went wrong while rescheduling the order.");
+        }
+
+        return CommonHelper::responseSuccess(__('order_rescheduled_successfully'));
+    }
 }
