@@ -1641,6 +1641,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -2372,6 +2391,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           formData.append(field, _this7.store_settings[field]);
         }
       });
+
+      // Save payment method toggles separately via dedicated endpoint
+      var pmData = new FormData();
+      ['cash', 'upi', 'cheque', 'signature'].forEach(function (m) {
+        var _this7$store_settings;
+        pmData.append(m, (_this7$store_settings = _this7.store_settings['payment_method_' + m]) !== null && _this7$store_settings !== void 0 ? _this7$store_settings : 0);
+      });
+      axios__WEBPACK_IMPORTED_MODULE_1___default().post(this.$apiUrl + '/store_settings/payment_methods/save', pmData);
       var url = this.$apiUrl + '/store_settings/save_delivery_boy_setting';
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
@@ -6806,6 +6833,175 @@ var render = function () {
                                     ]
                                   ),
                                 ]),
+                                _vm._v(" "),
+                                _c("hr"),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "row" },
+                                  [
+                                    _c("div", { staticClass: "col-12 mb-2" }, [
+                                      _c("h6", [
+                                        _vm._v(
+                                          _vm._s(
+                                            _vm.__("Payment Collection Methods")
+                                          )
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c(
+                                        "small",
+                                        { staticClass: "text-muted" },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.__(
+                                                "Distributors can only enable methods you turn on here"
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _vm._l(
+                                      ["cash", "upi", "cheque", "signature"],
+                                      function (method) {
+                                        return _c(
+                                          "div",
+                                          {
+                                            key: method,
+                                            staticClass: "form-group col-md-3",
+                                          },
+                                          [
+                                            _c(
+                                              "label",
+                                              {
+                                                attrs: { for: "pm_" + method },
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.__(
+                                                      method
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                        method.slice(1)
+                                                    )
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                            _c("br"),
+                                            _vm._v(" "),
+                                            _c(
+                                              "div",
+                                              {
+                                                staticClass:
+                                                  "form-check form-switch",
+                                              },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        _vm.store_settings[
+                                                          "payment_method_" +
+                                                            method
+                                                        ],
+                                                      expression:
+                                                        "store_settings['payment_method_'+method]",
+                                                    },
+                                                  ],
+                                                  staticClass:
+                                                    "form-check-input",
+                                                  attrs: {
+                                                    type: "checkbox",
+                                                    "true-value": "1",
+                                                    "false-value": "0",
+                                                    id: "pm_" + method,
+                                                  },
+                                                  domProps: {
+                                                    checked: Array.isArray(
+                                                      _vm.store_settings[
+                                                        "payment_method_" +
+                                                          method
+                                                      ]
+                                                    )
+                                                      ? _vm._i(
+                                                          _vm.store_settings[
+                                                            "payment_method_" +
+                                                              method
+                                                          ],
+                                                          null
+                                                        ) > -1
+                                                      : _vm._q(
+                                                          _vm.store_settings[
+                                                            "payment_method_" +
+                                                              method
+                                                          ],
+                                                          "1"
+                                                        ),
+                                                  },
+                                                  on: {
+                                                    change: function ($event) {
+                                                      var $$a =
+                                                          _vm.store_settings[
+                                                            "payment_method_" +
+                                                              method
+                                                          ],
+                                                        $$el = $event.target,
+                                                        $$c = $$el.checked
+                                                          ? "1"
+                                                          : "0"
+                                                      if (Array.isArray($$a)) {
+                                                        var $$v = null,
+                                                          $$i = _vm._i($$a, $$v)
+                                                        if ($$el.checked) {
+                                                          $$i < 0 &&
+                                                            _vm.$set(
+                                                              _vm.store_settings,
+                                                              "payment_method_" +
+                                                                method,
+                                                              $$a.concat([$$v])
+                                                            )
+                                                        } else {
+                                                          $$i > -1 &&
+                                                            _vm.$set(
+                                                              _vm.store_settings,
+                                                              "payment_method_" +
+                                                                method,
+                                                              $$a
+                                                                .slice(0, $$i)
+                                                                .concat(
+                                                                  $$a.slice(
+                                                                    $$i + 1
+                                                                  )
+                                                                )
+                                                            )
+                                                        }
+                                                      } else {
+                                                        _vm.$set(
+                                                          _vm.store_settings,
+                                                          "payment_method_" +
+                                                            method,
+                                                          $$c
+                                                        )
+                                                      }
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ]
+                                        )
+                                      }
+                                    ),
+                                  ],
+                                  2
+                                ),
                                 _vm._v(" "),
                                 _c("div", { staticClass: "row" }, [
                                   _c(

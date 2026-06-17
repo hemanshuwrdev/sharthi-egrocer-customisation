@@ -350,6 +350,77 @@ class SalesmanAppApiController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/salesman/retailers/overview
+     *
+     * Returns two flat lists for the distributor's territory:
+     *   verified — retailers THIS salesman owns (salesman_id = me)
+     *   pending  — unclaimed retailers in the distributor's cities (salesman_id IS NULL, status = pending)
+     *
+     * Optional query param: search (name / shop_name / mobile substring)
+     */
+    public function retailersOverview(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $cityIds = $this->territoryCityIds((int) $salesman->seller_id);
+        if (empty($cityIds)) {
+            return CommonHelper::responseWithData(['verified' => [], 'pending' => []]);
+        }
+
+        $search = trim((string) $request->input('search', ''));
+
+        $query = User::query()
+            ->select(
+                'users.id as user_id',
+                'users.name',
+                'users.mobile',
+                'users.country_code',
+                'users.verification_status',
+                'users.status',
+                'users.created_at as registered_at',
+                'retailer_profiles.shop_name',
+                'retailer_profiles.party_name',
+                'retailer_profiles.address',
+                'retailer_profiles.gst_no',
+                'retailer_profiles.city_id',
+                'retailer_profiles.gps_lat',
+                'retailer_profiles.gps_lng',
+                'retailer_profiles.verified_at',
+                'cities.name as city_name',
+                'cities.zone as zone'
+            )
+            ->join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
+            ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
+            ->whereIn('retailer_profiles.city_id', $cityIds)
+            ->where(function ($q) use ($salesman) {
+                // my verified retailers OR unclaimed pending retailers in territory
+                $q->where('users.salesman_id', $salesman->id)
+                  ->orWhere(function ($sub) {
+                      $sub->whereNull('users.salesman_id')
+                          ->where('users.verification_status', 'pending');
+                  });
+            });
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', "%{$search}%")
+                  ->orWhere('retailer_profiles.shop_name', 'like', "%{$search}%")
+                  ->orWhere('users.mobile', 'like', "%{$search}%");
+            });
+        }
+
+        $rows = $query->orderByDesc('users.id')->get();
+
+        return CommonHelper::responseWithData([
+            'total' => $rows->count(),
+            'data'  => $rows,
+        ]);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     //  Phase C — Salesman assisted-order endpoints (cart + place)
     //  Strict ownership: salesman can only operate on retailers where users.salesman_id = me.

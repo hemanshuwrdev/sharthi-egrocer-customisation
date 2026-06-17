@@ -18,6 +18,7 @@ class DeliveryBoy extends Model
         'address',
         'other_payment_information',
         'admin_id',
+        'seller_id',
         'dob',
         'mobile',
         'email',

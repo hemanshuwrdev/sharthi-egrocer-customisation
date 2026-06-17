@@ -63,6 +63,36 @@
 
             </div>
 
+            <!-- Sarthi: Payment Collection Methods -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>{{ __('Payment Collection Methods') }}</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted font-size-13">{{ __('Toggle the methods your drivers can use to collect payment. Methods disabled by admin cannot be enabled.') }}</p>
+                    <div class="row">
+                        <div class="form-group col-md-3" v-for="method in paymentMethods" :key="method.method">
+                            <label>{{ __(method.method.charAt(0).toUpperCase() + method.method.slice(1)) }}</label><br>
+                            <div class="form-check form-switch">
+                                <input type="checkbox" true-value="1" false-value="0"
+                                    class="form-check-input"
+                                    v-model="method.is_enabled"
+                                    :disabled="!method.is_editable"
+                                    :title="!method.is_editable ? __('Disabled by admin') : ''"
+                                >
+                            </div>
+                            <small v-if="!method.is_editable" class="text-danger">{{ __('Disabled by admin') }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <b-button variant="primary" :disabled="isPaymentLoading" @click="savePaymentMethods">
+                        {{ __('save') }}
+                        <b-spinner small v-if="isPaymentLoading"></b-spinner>
+                    </b-button>
+                </div>
+            </div>
+
             <div class="card mt-4">
                 <div class="card-header">
                     <h4>{{ __('order_settings') }}</h4>
@@ -113,13 +143,16 @@ export default {
                 { text: ' 152 mm', value: 152 }
             ],
             isOrderLoading: false,
-            order_cutoff_time: ""
+            order_cutoff_time: "",
+            isPaymentLoading: false,
+            paymentMethods: []
         }
     },
 
     created() {
         this.getSettings();
         this.getOrderSettings();
+        this.getPaymentMethods();
     },
 
     methods: {
@@ -197,6 +230,41 @@ export default {
                 })
                 .catch(() => {
                     this.showError('Failed to load order settings');
+                });
+        },
+
+        // ================= PAYMENT METHODS =================
+        getPaymentMethods() {
+            axios.get(this.$sellerApiUrl + '/payment_methods')
+                .then(res => {
+                    if (res.data.status && res.data.data) {
+                        this.paymentMethods = res.data.data.methods.map(m => ({
+                            ...m,
+                            is_enabled: m.is_enabled ? 1 : 0
+                        }));
+                    }
+                })
+                .catch(() => {});
+        },
+
+        savePaymentMethods() {
+            this.isPaymentLoading = true;
+            let formData = new FormData();
+            this.paymentMethods.forEach(m => {
+                formData.append(m.method, m.is_editable ? m.is_enabled : 0);
+            });
+            axios.post(this.$sellerApiUrl + '/payment_methods/save', formData)
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                    } else {
+                        this.showError(res.data.message || 'Failed to save');
+                    }
+                    this.isPaymentLoading = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to save');
+                    this.isPaymentLoading = false;
                 });
         },
 

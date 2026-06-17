@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class SarthiCustomisation extends Migration
@@ -524,6 +525,82 @@ class SarthiCustomisation extends Migration
             }
         });
 
+        // ── 11. Payment Collection & Settlement ────────────────────────────────
+
+        // 11.a Admin-level payment method toggles — 4 rows in the existing settings table
+        $methods = ['cash', 'upi', 'cheque', 'signature'];
+        foreach ($methods as $method) {
+            $key = 'payment_method_' . $method;
+            if (!DB::table('settings')->where('variable', $key)->exists()) {
+                DB::table('settings')->insert(['variable' => $key, 'value' => '1']);
+            }
+        }
+
+        // 11.b Distributor-level toggles — 4 tinyint columns on sellers
+        Schema::table('sellers', function (Blueprint $table) {
+            if (!Schema::hasColumn('sellers', 'payment_method_cash')) {
+                $table->tinyInteger('payment_method_cash')->default(1)->after('change_order_status_delivered');
+            }
+            if (!Schema::hasColumn('sellers', 'payment_method_upi')) {
+                $table->tinyInteger('payment_method_upi')->default(1)->after('payment_method_cash');
+            }
+            if (!Schema::hasColumn('sellers', 'payment_method_cheque')) {
+                $table->tinyInteger('payment_method_cheque')->default(1)->after('payment_method_upi');
+            }
+            if (!Schema::hasColumn('sellers', 'payment_method_signature')) {
+                $table->tinyInteger('payment_method_signature')->default(1)->after('payment_method_cheque');
+            }
+        });
+
+        // 11.c Link delivery_boy to distributor (seller) so we can resolve their payment settings
+        Schema::table('delivery_boys', function (Blueprint $table) {
+            if (!Schema::hasColumn('delivery_boys', 'seller_id')) {
+                $table->unsignedBigInteger('seller_id')->nullable()->after('admin_id')
+                      ->comment('Distributor this driver belongs to');
+                $table->index('seller_id', 'idx_db_seller');
+            }
+        });
+
+        // 11.d Driver payment collection records (one row per collection event per order)
+        if (!Schema::hasTable('order_payments')) {
+            Schema::create('order_payments', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+                $table->foreignId('delivery_boy_id')->constrained('delivery_boys')->onDelete('cascade');
+                $table->enum('method', ['cash', 'upi', 'cheque', 'signature']);
+                $table->decimal('amount', 15, 2)->nullable()->comment('Required for cash/upi; null for cheque/signature');
+                $table->string('proof_photo')->nullable()->comment('Required for upi/cheque/signature');
+                $table->enum('status', ['pending', 'verified'])->default('pending');
+                $table->unsignedBigInteger('verified_by')->nullable()->comment('admins.id of distributor who verified');
+                $table->timestamp('verified_at')->nullable();
+                $table->timestamps();
+
+                $table->index(['order_id'], 'idx_op_order');
+                $table->index(['delivery_boy_id', 'status'], 'idx_op_driver_status');
+            });
+        }
+
+        // 11.e Driver EOD settlement summary (one row per driver per day)
+        if (!Schema::hasTable('driver_settlements')) {
+            Schema::create('driver_settlements', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('delivery_boy_id')->constrained('delivery_boys')->onDelete('cascade');
+                $table->unsignedBigInteger('seller_id');
+                $table->date('settlement_date');
+                $table->integer('total_orders')->default(0);
+                $table->decimal('total_cash', 15, 2)->default(0);
+                $table->decimal('total_upi', 15, 2)->default(0);
+                $table->decimal('total_cheque', 15, 2)->default(0);
+                $table->decimal('total_signature', 15, 2)->default(0);
+                $table->enum('status', ['open', 'locked'])->default('open');
+                $table->timestamp('locked_at')->nullable();
+                $table->timestamps();
+
+                $table->unique(['delivery_boy_id', 'settlement_date'], 'uniq_ds_driver_date');
+                $table->index('seller_id', 'idx_ds_seller');
+            });
+        }
+
     }
 
     /**
@@ -533,6 +610,26 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        // Settlement (reverse)
+        Schema::dropIfExists('driver_settlements');
+        Schema::dropIfExists('order_payments');
+        Schema::table('delivery_boys', function (Blueprint $table) {
+            if (Schema::hasColumn('delivery_boys', 'seller_id')) {
+                $table->dropIndex('idx_db_seller');
+                $table->dropColumn('seller_id');
+            }
+        });
+        Schema::table('sellers', function (Blueprint $table) {
+            foreach (['payment_method_cash', 'payment_method_upi', 'payment_method_cheque', 'payment_method_signature'] as $col) {
+                if (Schema::hasColumn('sellers', $col)) {
+                    $table->dropColumn($col);
+                }
+            }
+        });
+        DB::table('settings')->whereIn('variable', [
+            'payment_method_cash', 'payment_method_upi', 'payment_method_cheque', 'payment_method_signature',
+        ])->delete();
+
         // Scheme engine (reverse FK order)
         Schema::dropIfExists('scheme_slabs');
         Schema::dropIfExists('scheme_products');

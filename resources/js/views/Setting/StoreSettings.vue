@@ -643,6 +643,25 @@
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    <!-- Sarthi: Payment Collection Methods -->
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="col-12 mb-2">
+                                                            <h6>{{ __('Payment Collection Methods') }}</h6>
+                                                            <small class="text-muted">{{ __('Distributors can only enable methods you turn on here') }}</small>
+                                                        </div>
+                                                        <div class="form-group col-md-3" v-for="method in ['cash','upi','cheque','signature']" :key="method">
+                                                            <label :for="'pm_'+method">{{ __(method.charAt(0).toUpperCase()+method.slice(1)) }}</label><br>
+                                                            <div class="form-check form-switch">
+                                                                <input type="checkbox" true-value="1" false-value="0"
+                                                                    class="form-check-input"
+                                                                    :id="'pm_'+method"
+                                                                    v-model="store_settings['payment_method_'+method]">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                     <div class="row">
                                                         <div class="form-group col-md-6">
                                                             <b-button type="submit" variant="primary"
@@ -2388,6 +2407,13 @@ export default {
                     formData.append(field, this.store_settings[field]);
                 }
             });
+
+            // Save payment method toggles separately via dedicated endpoint
+            const pmData = new FormData();
+            ['cash', 'upi', 'cheque', 'signature'].forEach(m => {
+                pmData.append(m, this.store_settings['payment_method_' + m] ?? 0);
+            });
+            axios.post(this.$apiUrl + '/store_settings/payment_methods/save', pmData);
 
             let url = this.$apiUrl + '/store_settings/save_delivery_boy_setting';
             let vm = this;

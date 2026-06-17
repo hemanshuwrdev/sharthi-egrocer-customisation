@@ -253,6 +253,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('save_address_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_address_setting'])->name('store_settings.save_address_setting');
         Route::post('save_other_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_other_setting'])->name('store_settings.save_other_setting');
         Route::post('save_delivery_boy_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_delivery_boy_setting'])->name('store_settings.save_delivery_boy_setting');
+        // Sarthi: admin-level payment collection method toggles
+        Route::get('payment_methods',      [\App\Http\Controllers\API\SettlementController::class, 'adminGetPaymentMethods'])->name('store_settings.payment_methods.get');
+        Route::post('payment_methods/save',[\App\Http\Controllers\API\SettlementController::class, 'adminSavePaymentMethods'])->name('store_settings.payment_methods.save');
         Route::post('save_app_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_app_setting'])->name('store_settings.save_app_setting');
         Route::post('save_frontend_home_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_frontend_home_setting'])->name('store_settings.save_frontend_home_setting');
         Route::post('save_smtp_mail_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_smtp_mail_setting'])->name('store_settings.save_smtp_mail_setting');
@@ -609,6 +612,13 @@ Route::middleware('auth:api')->group(function () {
             Route::post('delete', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'delete'])->name('seller.delivery_boys.delete');
         });
 
+        // Sarthi: distributor payment method settings + payment verification + settlements
+        Route::get('payment_methods',       [\App\Http\Controllers\API\SettlementController::class, 'sellerGetPaymentMethods'])->name('seller.payment_methods.get');
+        Route::post('payment_methods/save', [\App\Http\Controllers\API\SettlementController::class, 'sellerSavePaymentMethods'])->name('seller.payment_methods.save');
+        Route::get('payments/pending',      [\App\Http\Controllers\API\SettlementController::class, 'sellerPendingPayments'])->name('seller.payments.pending');
+        Route::post('payments/verify',      [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifyPayment'])->name('seller.payments.verify');
+        Route::get('settlements',           [\App\Http\Controllers\API\SettlementController::class, 'sellerSettlements'])->name('seller.settlements');
+
         Route::get('main_categories', [\App\Http\Controllers\SellerController::class, 'getMainCategories']);
         Route::get('seller_categories', [\App\Http\Controllers\API\CategoryApiController::class, 'getSellerCategories']);
 
@@ -757,6 +767,12 @@ Route::middleware('auth:api')->group(function () {
         Route::get('return_request_by_id', [\App\Http\Controllers\API\ReturnRequestsApiController::class, 'returnRequestById']);
         Route::post('return_request_status_update', [\App\Http\Controllers\API\ReturnRequestsApiController::class, 'deliveryBoyUpdate'])->name('delivery_boy.return_requests.update');
         Route::post('manage_live_tracking', [\App\Http\Controllers\DeliveryBoyController::class, 'manageLiveTracking'])->name('delivery_boy.manage_live_tracking');
+
+        // Sarthi: payment collection + EOD settlement
+        Route::get('payment_methods',         [\App\Http\Controllers\API\SettlementController::class, 'driverPaymentMethods'])->name('delivery_boy.payment_methods');
+        Route::post('collect_payment',        [\App\Http\Controllers\API\SettlementController::class, 'collectPayment'])->name('delivery_boy.collect_payment');
+        Route::get('settlement/today',        [\App\Http\Controllers\API\SettlementController::class, 'todaySummary'])->name('delivery_boy.settlement.today');
+        Route::post('settlement/lock_eod',    [\App\Http\Controllers\API\SettlementController::class, 'lockEod'])->name('delivery_boy.settlement.lock_eod');
     });
 
     /*salesman app (login session)*/
@@ -769,11 +785,13 @@ Route::middleware('auth:api')->group(function () {
 
         // Sarthi: retailer verification (fan-out + first-claim)
         Route::group(['prefix' => 'retailers'], function () {
-            Route::get('pending', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'pendingRetailers'])->name('salesman.retailers.pending');
-            Route::post('verify', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'verifyRetailer'])->name('salesman.retailers.verify');
-            Route::get('my-retailers', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'myRetailers'])->name('salesman.retailers.my');
-            Route::post('scan', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'scanRetailer'])->name('salesman.retailers.scan');
-            Route::get('{id}', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'retailerDetail'])->name('salesman.retailers.detail');
+            Route::get('pending',       [\App\Http\Controllers\API\SalesmanAppApiController::class, 'pendingRetailers'])->name('salesman.retailers.pending');
+            Route::post('verify',       [\App\Http\Controllers\API\SalesmanAppApiController::class, 'verifyRetailer'])->name('salesman.retailers.verify');
+            Route::get('my-retailers',  [\App\Http\Controllers\API\SalesmanAppApiController::class, 'myRetailers'])->name('salesman.retailers.my');
+            Route::post('scan',         [\App\Http\Controllers\API\SalesmanAppApiController::class, 'scanRetailer'])->name('salesman.retailers.scan');
+            // Sarthi: combined verified+pending flat list (literal route must precede wildcard)
+            Route::get('overview', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'retailersOverview'])->name('salesman.retailers.overview');
+            Route::get('{id}',          [\App\Http\Controllers\API\SalesmanAppApiController::class, 'retailerDetail'])->name('salesman.retailers.detail');
         });
 
         // Sarthi: salesman product catalog (distributor's own stock)

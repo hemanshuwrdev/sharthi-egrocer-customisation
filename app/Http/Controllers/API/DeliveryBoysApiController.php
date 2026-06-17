@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\DeliveryBoy;
 use App\Models\Role;
+use App\Models\Seller;
 use App\Services\LanguageService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -133,16 +134,20 @@ class DeliveryBoysApiController extends Controller
                 'created_by' => 0,
             ]);
 
+            // Auto-detect seller context: if logged-in admin is a seller, stamp seller_id.
+            $sellerForDriver = Seller::where('admin_id', auth()->id())->value('id');
+
             /** DeliveryBoy main table */
             $deliveryBoy = DeliveryBoy::create([
-                'admin_id' => $admin->id,
-                'name'     => $request->name,
-                'address'  => $request->address,
+                'admin_id'  => $admin->id,
+                'seller_id' => $sellerForDriver,
+                'name'      => $request->name,
+                'address'   => $request->address,
                 'other_payment_information' => $request->other_payment_information,
-                'mobile'   => $request->mobile,
+                'mobile'    => $request->mobile,
                 'license_no' => $request->license_no,
-                'dob'      => $request->dob,
-                'city_id'  => $request->city_id,
+                'dob'       => $request->dob,
+                'city_id'   => $request->city_id,
                 'bonus_type' => $request->bonus_type ?? 0,
                 'bonus_percentage' => $request->bonus_percentage ?? 0,
                 'bonus_min_amount' => $request->bonus_min_amount ?? 0,
@@ -151,7 +156,7 @@ class DeliveryBoysApiController extends Controller
                 'bank_name' => $request->bank_name,
                 'bank_account_number' => $request->bank_account_number,
                 'account_name' => $request->account_name,
-                'status'   => DeliveryBoy::$statusActive,
+                'status'    => DeliveryBoy::$statusActive,
             ]);
 
 

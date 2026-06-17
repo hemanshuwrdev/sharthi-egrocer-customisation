@@ -14,6 +14,39 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -135,12 +168,15 @@ __webpack_require__.r(__webpack_exports__);
         value: 152
       }],
       isOrderLoading: false,
-      order_cutoff_time: ""
+      order_cutoff_time: "",
+      isPaymentLoading: false,
+      paymentMethods: []
     };
   },
   created: function created() {
     this.getSettings();
     this.getOrderSettings();
+    this.getPaymentMethods();
   },
   methods: {
     // ================= LOAD SETTINGS =================
@@ -206,21 +242,53 @@ __webpack_require__.r(__webpack_exports__);
         _this3.showError('Failed to load order settings');
       });
     },
-    saveOrderSettings: function saveOrderSettings() {
+    // ================= PAYMENT METHODS =================
+    getPaymentMethods: function getPaymentMethods() {
       var _this4 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/payment_methods').then(function (res) {
+        if (res.data.status && res.data.data) {
+          _this4.paymentMethods = res.data.data.methods.map(function (m) {
+            return _objectSpread(_objectSpread({}, m), {}, {
+              is_enabled: m.is_enabled ? 1 : 0
+            });
+          });
+        }
+      })["catch"](function () {});
+    },
+    savePaymentMethods: function savePaymentMethods() {
+      var _this5 = this;
+      this.isPaymentLoading = true;
+      var formData = new FormData();
+      this.paymentMethods.forEach(function (m) {
+        formData.append(m.method, m.is_editable ? m.is_enabled : 0);
+      });
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/payment_methods/save', formData).then(function (res) {
+        if (res.data.status) {
+          _this5.showMessage('success', __(res.data.message));
+        } else {
+          _this5.showError(res.data.message || 'Failed to save');
+        }
+        _this5.isPaymentLoading = false;
+      })["catch"](function () {
+        _this5.showError('Failed to save');
+        _this5.isPaymentLoading = false;
+      });
+    },
+    saveOrderSettings: function saveOrderSettings() {
+      var _this6 = this;
       this.isOrderLoading = true;
       var formData = new FormData();
       formData.append('order_cutoff_time', this.order_cutoff_time || '');
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/seller/order-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this4.showMessage('success', __(res.data.message));
+          _this6.showMessage('success', __(res.data.message));
         } else {
-          _this4.showError(res.data.message || 'Failed to save');
+          _this6.showError(res.data.message || 'Failed to save');
         }
-        _this4.isOrderLoading = false;
+        _this6.isOrderLoading = false;
       })["catch"](function () {
-        _this4.showError('Failed to save order settings');
-        _this4.isOrderLoading = false;
+        _this6.showError('Failed to save order settings');
+        _this6.isOrderLoading = false;
       });
     }
   }
@@ -495,6 +563,137 @@ var render = function () {
                     "\n                    "
                 ),
                 _vm.isLoading
+                  ? _c("b-spinner", { attrs: { small: "" } })
+                  : _vm._e(),
+              ],
+              1
+            ),
+          ],
+          1
+        ),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "card mt-4" }, [
+        _c("div", { staticClass: "card-header" }, [
+          _c("h4", [_vm._v(_vm._s(_vm.__("Payment Collection Methods")))]),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "card-body" }, [
+          _c("p", { staticClass: "text-muted font-size-13" }, [
+            _vm._v(
+              _vm._s(
+                _vm.__(
+                  "Toggle the methods your drivers can use to collect payment. Methods disabled by admin cannot be enabled."
+                )
+              )
+            ),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "row" },
+            _vm._l(_vm.paymentMethods, function (method) {
+              return _c(
+                "div",
+                { key: method.method, staticClass: "form-group col-md-3" },
+                [
+                  _c("label", [
+                    _vm._v(
+                      _vm._s(
+                        _vm.__(
+                          method.method.charAt(0).toUpperCase() +
+                            method.method.slice(1)
+                        )
+                      )
+                    ),
+                  ]),
+                  _c("br"),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "form-check form-switch" }, [
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: method.is_enabled,
+                          expression: "method.is_enabled",
+                        },
+                      ],
+                      staticClass: "form-check-input",
+                      attrs: {
+                        type: "checkbox",
+                        "true-value": "1",
+                        "false-value": "0",
+                        disabled: !method.is_editable,
+                        title: !method.is_editable
+                          ? _vm.__("Disabled by admin")
+                          : "",
+                      },
+                      domProps: {
+                        checked: Array.isArray(method.is_enabled)
+                          ? _vm._i(method.is_enabled, null) > -1
+                          : _vm._q(method.is_enabled, "1"),
+                      },
+                      on: {
+                        change: function ($event) {
+                          var $$a = method.is_enabled,
+                            $$el = $event.target,
+                            $$c = $$el.checked ? "1" : "0"
+                          if (Array.isArray($$a)) {
+                            var $$v = null,
+                              $$i = _vm._i($$a, $$v)
+                            if ($$el.checked) {
+                              $$i < 0 &&
+                                _vm.$set(
+                                  method,
+                                  "is_enabled",
+                                  $$a.concat([$$v])
+                                )
+                            } else {
+                              $$i > -1 &&
+                                _vm.$set(
+                                  method,
+                                  "is_enabled",
+                                  $$a.slice(0, $$i).concat($$a.slice($$i + 1))
+                                )
+                            }
+                          } else {
+                            _vm.$set(method, "is_enabled", $$c)
+                          }
+                        },
+                      },
+                    }),
+                  ]),
+                  _vm._v(" "),
+                  !method.is_editable
+                    ? _c("small", { staticClass: "text-danger" }, [
+                        _vm._v(_vm._s(_vm.__("Disabled by admin"))),
+                      ])
+                    : _vm._e(),
+                ]
+              )
+            }),
+            0
+          ),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "card-footer" },
+          [
+            _c(
+              "b-button",
+              {
+                attrs: { variant: "primary", disabled: _vm.isPaymentLoading },
+                on: { click: _vm.savePaymentMethods },
+              },
+              [
+                _vm._v(
+                  "\n                    " +
+                    _vm._s(_vm.__("save")) +
+                    "\n                    "
+                ),
+                _vm.isPaymentLoading
                   ? _c("b-spinner", { attrs: { small: "" } })
                   : _vm._e(),
               ],

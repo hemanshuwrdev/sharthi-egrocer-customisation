@@ -170,6 +170,13 @@ Route::group(['middleware' => ['auth.customer']], function () {
 
         Route::get('order_status_lists', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getOrderStatusLists']);
 
+        // Sarthi: Retailer POS — fast direct order (no cart), same orders table + scheme engine
+        Route::group(['prefix' => 'pos'], function () {
+            Route::get('products',     [\App\Http\Controllers\API\Customer\RetailerPosController::class, 'getProducts'])->name('retailer.pos.products');
+            Route::post('place_order', [\App\Http\Controllers\API\Customer\RetailerPosController::class, 'placeOrder'])->name('retailer.pos.place_order');
+            Route::get('invoice/{id}', [\App\Http\Controllers\API\Customer\RetailerPosController::class, 'getInvoice'])->name('retailer.pos.invoice');
+        });
+
         //Checkout
         // Sarthi: place_order operates on master_cart, splits per distributor, freezes slab
         Route::post('place_order', [\App\Http\Controllers\API\Customer\RetailerCartOrderApiController::class, 'placeOrder']);
