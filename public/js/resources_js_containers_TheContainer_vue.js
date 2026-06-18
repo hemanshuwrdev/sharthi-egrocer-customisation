@@ -835,6 +835,11 @@ __webpack_require__.r(__webpack_exports__);
           icon: 'grid-fill',
           url: '/commission_reports',
           permission: 'commission_reports'
+        }, {
+          name: __('commission_billing'),
+          icon: 'credit-card',
+          url: '/commission_billing',
+          permission: 'commission_reports'
         }]
       }, {
         name: __('system_users'),

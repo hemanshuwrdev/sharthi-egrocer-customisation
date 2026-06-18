@@ -919,7 +919,7 @@ class CustomerAuthController extends Controller
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : '';
         $total = Cart::select(DB::raw('COUNT(carts.id) AS total'))->Join('products', 'carts.product_id', '=', 'products.id')->where('carts.save_for_later', '=', 0)->where('user_id', '=', $user_id)->first();
         $total = $total->makeHidden(['image_url']);
-        $user = User::select('id', 'name', 'email', 'country_code', 'mobile', 'profile', 'balance', 'referral_code', 'status')->where('id', $user_id)->first();
+        $user = User::with('retailerProfile')->select('id', 'name', 'email', 'country_code', 'mobile', 'profile', 'balance', 'referral_code', 'status', 'verification_status', 'salesman_id')->where('id', $user_id)->first();
         if (!empty($user)) {
             // Check if there are any active subscription plans
             $activePlansCount = SubscriptionPlan::where('status', 1)->count();

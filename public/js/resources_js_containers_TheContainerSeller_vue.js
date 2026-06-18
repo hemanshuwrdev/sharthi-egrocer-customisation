@@ -398,6 +398,11 @@ __webpack_require__.r(__webpack_exports__);
           icon: 'grid-fill',
           url: '/seller/pos_reports',
           permission: 'product_sales_reports'
+        }, {
+          name: __('billing_overview'),
+          icon: 'credit-card',
+          url: '/seller/commission_billing',
+          permission: 'order_list'
         }]
       }, {
         name: __('settings'),

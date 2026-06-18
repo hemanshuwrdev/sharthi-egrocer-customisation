@@ -392,7 +392,8 @@ class RetailerCartOrderApiController extends Controller
      * Splits per distributor → one Order per seller. Each order_items row gets
      * a frozen slab snapshot. seller_products.stock is decremented atomically.
      *
-     * Required: address, payment_method, mobile, latitude, longitude
+     * Required: address, mobile, latitude, longitude
+     * payment_method is optional — defaults to COD; actual collection handled by driver.
      */
     public function placeOrder(Request $request)
     {
@@ -402,7 +403,7 @@ class RetailerCartOrderApiController extends Controller
             'address' => 'required_unless:order_type,selfpickup',
             'latitude' => 'required_unless:order_type,selfpickup',
             'longitude' => 'required_unless:order_type,selfpickup',
-            'payment_method' => 'required',
+            'payment_method' => 'nullable|string',
             'delivery_time' => 'nullable|string',
             'address_id' => 'nullable|integer',
             'order_note' => 'nullable|string',
@@ -482,7 +483,7 @@ class RetailerCartOrderApiController extends Controller
                         'scheme_id' => $scheme['scheme_id'] ?? null,
                         'scheme_discount' => $schemeDiscount,
                         'final_total' => $sellerTotal - $schemeDiscount,
-                        'payment_method' => $request->payment_method,
+                        'payment_method' => $request->payment_method ?? 'COD',
                         'address' => $request->address,
                         'latitude' => $request->latitude,
                         'longitude' => $request->longitude,

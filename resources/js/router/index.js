@@ -160,6 +160,7 @@ const ProductSalesReports = () => import("../views/Reports/ProductSalesReports")
 
 // Commission Reports
 const CommissionReports = () => import("../views/Reports/CommissionReports");
+const CommissionBilling = () => import("../views/Reports/CommissionBilling");
 
 // System Users
 const SystemUsers = () => import("../views/SystemUsers/SystemUsers");
@@ -207,6 +208,7 @@ const SellerReturnRequests = () => import("../views/ReturnRequests/ReturnRequest
 const SellerWithdrawalRequests = () => import("../views/Sellers/WithdrawalRequests/WithdrawalRequests");
 const SellerProductSalesReports = () => import("../views/Sellers/ProductSalesReports");
 const SellerSalesReports = () => import("../views/Sellers/SalesReports");
+const SellerCommissionBilling = () => import("../views/Sellers/CommissionBilling");
 const SellerTaxes = () => import("../views/Sellers/Taxes");
 const SellerBrands = () => import("../views/Sellers/Brands");
 const SellerUnits = () => import("../views/Sellers/Units");
@@ -1359,6 +1361,16 @@ function configRoutes() {
                     },
                 },
                 {
+                    path: "commission_billing",
+                    name: "CommissionBilling",
+                    component: CommissionBilling,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Commission Billing'
+                    },
+                },
+                {
                     path: "pos_reports",
                     name: "POS Reports",
                     component: PosReports,
@@ -1986,6 +1998,16 @@ function configRoutes() {
                         permission: 'order_list',
                         role: sellerRoles,
                         title: 'Sales Reports'
+                    }
+                },
+                {
+                    path: "commission_billing",
+                    name: "SellerCommissionBilling",
+                    component: SellerCommissionBilling,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Billing Overview'
                     }
                 },
                 {

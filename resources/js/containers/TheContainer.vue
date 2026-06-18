@@ -917,6 +917,12 @@ export default {
                             icon: 'grid-fill',
                             url: '/commission_reports',
                             permission: 'commission_reports',
+                        },
+                        {
+                            name: __('commission_billing'),
+                            icon: 'credit-card',
+                            url: '/commission_billing',
+                            permission: 'commission_reports',
                         }
                     ]
                 },

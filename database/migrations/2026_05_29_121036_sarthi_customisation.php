@@ -568,7 +568,7 @@ class SarthiCustomisation extends Migration
                 $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
                 $table->foreignId('delivery_boy_id')->constrained('delivery_boys')->onDelete('cascade');
                 $table->enum('method', ['cash', 'upi', 'cheque', 'signature']);
-                $table->decimal('amount', 15, 2)->nullable()->comment('Required for cash/upi; null for cheque/signature');
+                $table->decimal('amount', 15, 2)->nullable()->comment('Amount collected; required for all methods');
                 $table->string('proof_photo')->nullable()->comment('Required for upi/cheque/signature');
                 $table->enum('status', ['pending', 'verified'])->default('pending');
                 $table->unsignedBigInteger('verified_by')->nullable()->comment('admins.id of distributor who verified');

@@ -267,10 +267,10 @@ class SettlementController extends Controller
         $enabled = array_values($this->sellerEnabledMethods($seller));
 
         $meta = [
-            'cash'      => ['requires_amount' => true,  'requires_photo' => false, 'photo_label' => null],
-            'upi'       => ['requires_amount' => true,  'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
-            'cheque'    => ['requires_amount' => false, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
-            'signature' => ['requires_amount' => false, 'requires_photo' => true,  'photo_label' => 'Customer signature'],
+            'cash'      => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null],
+            'upi'       => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
+            'cheque'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
+            'signature' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Customer signature'],
         ];
 
         $data = array_map(fn ($m) => array_merge(['method' => $m], $meta[$m]), $enabled);
@@ -308,9 +308,9 @@ class SettlementController extends Controller
             return CommonHelper::responseError('payment_method_not_allowed');
         }
 
-        // Method-specific field validation
+        // Method-specific field validation — all methods require amount
         $method = $request->method;
-        if (in_array($method, ['cash', 'upi'], true) && !$request->filled('amount')) {
+        if (!$request->filled('amount')) {
             return CommonHelper::responseError('amount_required_for_' . $method);
         }
         if (in_array($method, ['upi', 'cheque', 'signature'], true) && !$request->hasFile('proof_photo') && !$request->filled('proof_photo')) {
@@ -325,9 +325,9 @@ class SettlementController extends Controller
             return CommonHelper::responseError('order_not_assigned_to_you');
         }
 
-        // Prevent duplicate collection for same order
-        if (OrderPayment::where('order_id', $order->id)->exists()) {
-            return CommonHelper::responseError('payment_already_collected_for_this_order');
+        // Prevent same method being submitted twice for the same order (split cash+UPI is allowed)
+        if (OrderPayment::where('order_id', $order->id)->where('method', $method)->exists()) {
+            return CommonHelper::responseError('payment_method_already_collected_for_this_order');
         }
 
         // Handle proof photo upload
@@ -345,7 +345,7 @@ class SettlementController extends Controller
                 'order_id'        => $order->id,
                 'delivery_boy_id' => $driver->id,
                 'method'          => $method,
-                'amount'          => in_array($method, ['cash', 'upi'], true) ? (float) $request->amount : null,
+                'amount'          => (float) $request->amount,
                 'proof_photo'     => $proofPath,
                 'status'          => 'pending',
             ]);
@@ -385,8 +385,8 @@ class SettlementController extends Controller
             'total_orders'    => $payments->count(),
             'total_cash'      => round($payments->where('method', 'cash')->sum('amount'), 2),
             'total_upi'       => round($payments->where('method', 'upi')->sum('amount'), 2),
-            'total_cheque'    => $payments->where('method', 'cheque')->count(),
-            'total_signature' => $payments->where('method', 'signature')->count(),
+            'total_cheque'    => round($payments->where('method', 'cheque')->sum('amount'), 2),
+            'total_signature' => round($payments->where('method', 'signature')->sum('amount'), 2),
             'pending_count'   => $pendingCount,
             'can_lock_eod'    => $canLockEod,
             'eod_lock_reason' => $canLockEod ? null : ($payments->isEmpty() ? 'no_collections_today' : 'distributor_verification_pending'),
@@ -447,8 +447,8 @@ class SettlementController extends Controller
                 'total_orders'    => $payments->count(),
                 'total_cash'      => round($payments->where('method', 'cash')->sum('amount'), 2),
                 'total_upi'       => round($payments->where('method', 'upi')->sum('amount'), 2),
-                'total_cheque'    => $payments->where('method', 'cheque')->count(),
-                'total_signature' => $payments->where('method', 'signature')->count(),
+                'total_cheque'    => round($payments->where('method', 'cheque')->sum('amount'), 2),
+                'total_signature' => round($payments->where('method', 'signature')->sum('amount'), 2),
                 'status'          => 'locked',
                 'locked_at'       => Carbon::now(),
             ]

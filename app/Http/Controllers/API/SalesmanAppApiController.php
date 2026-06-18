@@ -746,7 +746,7 @@ class SalesmanAppApiController extends Controller
 
     /**
      * POST /api/salesman/orders/place
-     * Body: retailer_id, payment_method, mobile?, address?, latitude?, longitude?, address_id?,
+     * Body: retailer_id, mobile?, address?, latitude?, longitude?, address_id?,
      *       delivery_time?, order_note?, discount_percent? (0..salesmen.discount cap)
      *
      * Mirrors RetailerCartOrderApiController::placeOrder but:
@@ -764,7 +764,7 @@ class SalesmanAppApiController extends Controller
 
         $validator = Validator::make($request->all(), [
             'retailer_id'      => 'required|integer|exists:users,id',
-            'payment_method'   => 'required|string',
+            'payment_method'   => 'nullable|string',
             'discount_percent' => 'nullable|numeric|min:0|max:100',
             'mobile'           => 'nullable|string',
             'address'          => 'nullable|string',
@@ -868,7 +868,7 @@ class SalesmanAppApiController extends Controller
                         'scheme_id'               => $scheme['scheme_id'] ?? null,
                         'scheme_discount'         => $schemeDiscount,
                         'final_total'             => $finalTotal,
-                        'payment_method'          => $request->payment_method,
+                        'payment_method'          => $request->payment_method ?? 'COD',
                         'address'                 => $address,
                         'latitude'                => $lat,
                         'longitude'               => $lng,

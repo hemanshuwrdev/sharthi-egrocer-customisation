@@ -457,6 +457,13 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [\App\Http\Controllers\API\CommissionReportsApiController::class, 'getCommissionReport']);
     });
 
+    // Sarthi: commission billing — GMV + commission summary for admin
+    Route::group(['prefix' => 'commissions'], function () {
+        Route::get('summary',              [\App\Http\Controllers\API\CommissionBillingController::class, 'adminSummary'])->name('admin.commissions.summary');
+        Route::get('/',                    [\App\Http\Controllers\API\CommissionBillingController::class, 'adminTransactions'])->name('admin.commissions.transactions');
+        Route::get('distributor/{seller_id}', [\App\Http\Controllers\API\CommissionBillingController::class, 'adminDistributorDetail'])->name('admin.commissions.distributor');
+    });
+
     Route::group(['prefix' => 'order_statuses'], function () {
         Route::get('/', [\App\Http\Controllers\API\OrderStatusApiController::class, 'getOrderStatus']);
         Route::get('/self_pickup', [\App\Http\Controllers\API\OrderStatusApiController::class, 'getSelfPickupOrderStatus']);
@@ -618,6 +625,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('payments/pending',      [\App\Http\Controllers\API\SettlementController::class, 'sellerPendingPayments'])->name('seller.payments.pending');
         Route::post('payments/verify',      [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifyPayment'])->name('seller.payments.verify');
         Route::get('settlements',           [\App\Http\Controllers\API\SettlementController::class, 'sellerSettlements'])->name('seller.settlements');
+
+        // Sarthi: distributor billing overview (GMV + commission)
+        Route::get('billing', [\App\Http\Controllers\API\CommissionBillingController::class, 'sellerBilling'])->name('seller.billing');
 
         Route::get('main_categories', [\App\Http\Controllers\SellerController::class, 'getMainCategories']);
         Route::get('seller_categories', [\App\Http\Controllers\API\CategoryApiController::class, 'getSellerCategories']);
