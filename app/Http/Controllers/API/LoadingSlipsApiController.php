@@ -340,19 +340,87 @@ class LoadingSlipsApiController extends Controller
             return response()->json(['error' => 'Loading slip not found.'], 404);
         }
 
-        $orders = Order::select('orders.*', 'users.name as user_name', 'user_addresses.address as customer_address', 'cities.zone as city_zone')
+        $orders = Order::select(
+                'orders.*',
+                'users.name as user_name',
+                'user_addresses.address as customer_address',
+                'cities.zone as city_zone',
+                'rp.party_name',
+                'rp.shop_name',
+                'rp.gst_no as customer_gst',
+                DB::raw('COALESCE(rp.party_name, rp.shop_name, users.name) as customer_name'),
+                'orders.mobile as customer_mobile'
+            )
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
             ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
+            ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
             ->where('orders.loading_slip_id', $id)
             ->get();
 
-        // Get aggregate items and quantities loaded
+        // Load seller details
+        $sellerId = null;
+        if (auth()->user() && auth()->user()->seller) {
+            $sellerId = auth()->user()->seller->id;
+        } else if ($orders->count() > 0) {
+            $firstOrder = $orders->first();
+            $firstItem = DB::table('order_items')->where('order_id', $firstOrder->id)->first();
+            if ($firstItem) {
+                $sellerId = $firstItem->seller_id;
+            }
+        }
+
+        $seller = null;
+        if ($sellerId) {
+            $seller = DB::table('sellers')
+                ->select('sellers.*', 'cities.name as city_name')
+                ->leftJoin('cities', 'sellers.city_id', '=', 'cities.id')
+                ->where('sellers.id', $sellerId)
+                ->first();
+        }
+
+        // Get aggregate items and quantities loaded with packaging details
         $itemSummary = DB::table('order_items')
-            ->select('product_name', 'variant_name', DB::raw('SUM(quantity) as qty'))
-            ->whereIn('order_id', $orders->pluck('id'))
-            ->groupBy('product_variant_id', 'product_name', 'variant_name')
+            ->select(
+                'order_items.product_name',
+                'order_items.variant_name',
+                DB::raw('SUM(order_items.quantity) as qty'),
+                'pv.secondary_unit_value',
+                'u2.short_code as secondary_unit_name',
+                'pv.measurement as primary_measurement',
+                'u1.short_code as primary_unit_name'
+            )
+            ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
+            ->leftJoin('units as u1', 'pv.stock_unit_id', '=', 'u1.id')
+            ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
+            ->whereIn('order_items.order_id', $orders->pluck('id'))
+            ->groupBy(
+                'order_items.product_variant_id',
+                'order_items.product_name',
+                'order_items.variant_name',
+                'pv.secondary_unit_value',
+                'u2.short_code',
+                'pv.measurement',
+                'u1.short_code'
+            )
             ->get();
+
+        // Load items for each individual order for party name wise bills
+        foreach ($orders as $order) {
+            $order->items = DB::table('order_items')
+                ->select(
+                    'order_items.*',
+                    'pv.secondary_unit_value',
+                    'u2.short_code as secondary_unit_name',
+                    'pv.measurement as primary_measurement',
+                    'u1.short_code as primary_unit_name'
+                )
+                ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
+                ->leftJoin('units as u1', 'pv.stock_unit_id', '=', 'u1.id')
+                ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
+                ->where('order_items.order_id', $order->id)
+                ->get();
+        }
 
         $app_name = \App\Models\Setting::get_value('app_name') ?: 'Sarthi Wholesale';
         $logo = \App\Models\Setting::get_value('logo') ?: \App\Models\Setting::get_value('web_settings_logo');
@@ -364,6 +432,7 @@ class LoadingSlipsApiController extends Controller
             'itemSummary' => $itemSummary,
             'app_name' => $app_name,
             'logo' => $logo,
+            'seller' => $seller,
         ])->render();
 
         return response($html)->header('Content-Type', 'text/html');

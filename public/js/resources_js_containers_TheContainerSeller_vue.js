@@ -2939,7 +2939,15 @@ var render = function () {
                           _c(
                             "p",
                             { staticClass: "mb-0 text-sm text-gray-600" },
-                            [_vm._v(_vm._s(_vm.role))]
+                            [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.role === "Seller"
+                                    ? _vm.__("seller")
+                                    : _vm.role
+                                )
+                              ),
+                            ]
                           ),
                         ]),
                         _vm._v(" "),
