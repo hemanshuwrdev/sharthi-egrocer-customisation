@@ -87,7 +87,7 @@ class LoadingSlipsApiController extends Controller
         // Calculate and save order weight dynamically if not saved already
         foreach ($orders as $order) {
             $computedWeight = self::calculateOrderWeight($order->id);
-            if ($order->weight != $computedWeight) {
+            if ($order->weight === null || (float)$order->weight !== (float)$computedWeight) {
                 $order->weight = $computedWeight;
                 $order->save();
             }
@@ -485,28 +485,41 @@ class LoadingSlipsApiController extends Controller
         $totalWeight = 0;
 
         foreach ($items as $item) {
-            $variant = ProductVariant::find($item->product_variant_id);
-            if ($variant) {
-                $measurement = (float)$variant->measurement;
-                $qty = (int)$item->quantity;
-                $unit = Unit::find($variant->stock_unit_id);
+            $weightInKg = 0;
 
-                $weightInKg = 0;
-                if ($unit) {
-                    $code = strtolower(trim($unit->short_code));
-                    if (in_array($code, ['kg', 'kilogram', 'kilograms', 'l', 'ltr', 'litre', 'litres'])) {
-                        $weightInKg = $measurement;
-                    } elseif (in_array($code, ['g', 'gm', 'gram', 'grams', 'ml', 'milliliter', 'milliliters'])) {
-                        $weightInKg = $measurement / 1000;
-                    } else {
-                        // For pieces/packets treat as 0.1 kg standard
-                        $weightInKg = 0.1;
-                    }
+            if ($item->master_product_variant_id) {
+                // Master catalog system
+                $variant = \App\Models\MasterProductVariant::find($item->master_product_variant_id);
+                if ($variant) {
+                    $weightInKg = (float)($variant->weight ?? 0.1);
                 } else {
                     $weightInKg = 0.1;
                 }
-                $totalWeight += ($weightInKg * $qty);
+            } else {
+                // Legacy system
+                $variant = ProductVariant::find($item->product_variant_id);
+                if ($variant) {
+                    $measurement = (float)$variant->measurement;
+                    $unit = Unit::find($variant->stock_unit_id);
+
+                    if ($unit) {
+                        $code = strtolower(trim($unit->short_code));
+                        if (in_array($code, ['kg', 'kilogram', 'kilograms', 'l', 'ltr', 'litre', 'litres'])) {
+                            $weightInKg = $measurement;
+                        } elseif (in_array($code, ['g', 'gm', 'gram', 'grams', 'ml', 'milliliter', 'milliliters'])) {
+                            $weightInKg = $measurement / 1000;
+                        } else {
+                            // For pieces/packets treat as 0.1 kg standard
+                            $weightInKg = 0.1;
+                        }
+                    } else {
+                        $weightInKg = 0.1;
+                    }
+                }
             }
+
+            $qty = (int)$item->quantity;
+            $totalWeight += ($weightInKg * $qty);
         }
 
         return round($totalWeight, 2);

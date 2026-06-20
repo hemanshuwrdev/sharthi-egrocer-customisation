@@ -1214,6 +1214,7 @@ class SellerController extends BaseController
         $limit = ($request->limit) ?? 10;
         $offset = ($request->offset) ?? 0;
 
+        $seller_id = auth()->user()->seller->id;
         $city_id = auth()->user()->seller->city_id;
 
         if ($request->order_id) {
@@ -1226,14 +1227,46 @@ class SellerController extends BaseController
             }
         }
 
-        $deliveryBoys = DeliveryBoy::select('id', 'name', 'address', 'other_payment_information', 'mobile')
-            ->where('city_id', $city_id)
-            ->where('status', 1);
+        // Split city_id into array of IDs if it contains commas
+        $cityIds = array_filter(array_map('trim', explode(',', $city_id)));
+
+        // Retrieve delivery boys scoped to the seller's cities, and owned by this seller or system-wide (NULL/0)
+        $deliveryBoys = DeliveryBoy::with(['admin', 'translations'])
+            ->whereIn('city_id', $cityIds)
+            ->where(function ($query) use ($seller_id) {
+                $query->where('seller_id', $seller_id)
+                      ->orWhereNull('seller_id')
+                      ->orWhere('seller_id', 0);
+            });
+
+        // Filter by status if specified in the request
+        if ($request->has('filterStatus') && $request->input('filterStatus') !== '') {
+            $deliveryBoys->where('status', $request->filterStatus);
+        } elseif ($request->has('status') && $request->input('status') !== '') {
+            $deliveryBoys->where('status', $request->status);
+        } elseif (!$request->has('filterStatus') && !$request->has('status')) {
+            // Default to active delivery boys if status is not requested at all
+            $deliveryBoys->where('status', 1);
+        }
+
+        // Filter by search term if provided
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $deliveryBoys->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('mobile', 'like', "%{$search}%");
+            });
+        }
 
         $totalDeliveryBoys = clone $deliveryBoys;
         $totalDeliveryBoys = $totalDeliveryBoys->count();
 
         $deliveryBoys = $deliveryBoys->orderBy('id', 'DESC')->skip($offset)->take($limit)->get();
+
+        foreach ($deliveryBoys as $db) {
+            $db->email = $db->admin ? $db->admin->email : '';
+        }
+
         return CommonHelper::responseWithData($deliveryBoys, $totalDeliveryBoys);
     }
 
