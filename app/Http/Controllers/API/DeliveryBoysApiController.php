@@ -41,6 +41,8 @@ class DeliveryBoysApiController extends Controller
 
         if ($request->filled('filterStatus')) {
             $query->where('status', $request->filterStatus);
+        } elseif ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         if ($request->filled('city_id')) {
@@ -271,6 +273,14 @@ class DeliveryBoysApiController extends Controller
             if ($request->hasFile('national_identity_card')) {
                 $deliveryBoy->national_identity_card =
                     Storage::disk('public')->putFile('delivery_boy/national_identity_card', $request->file('national_identity_card'));
+            }
+
+            // Stamp seller_id if updating by a seller and it's not already set
+            if (!$deliveryBoy->seller_id) {
+                $sellerForDriver = Seller::where('admin_id', auth()->id())->value('id');
+                if ($sellerForDriver) {
+                    $deliveryBoy->seller_id = $sellerForDriver;
+                }
             }
 
             $deliveryBoy->save();

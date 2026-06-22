@@ -1147,8 +1147,26 @@ class OrdersApiController extends Controller
 
         $query = DeliveryBoy::where('status', 1);
         if ($cityId !== null) {
-            $query->where('city_id', $cityId);
+            $query->where(function ($q) use ($cityId) {
+                $q->where('city_id', $cityId)
+                  ->orWhereNull('city_id')
+                  ->orWhere('city_id', 0);
+            });
         }
+
+        // Apply seller-specific scoping if authenticated as a seller
+        $authUser = auth()->user();
+        if ($authUser && (int)$authUser->role_id === \App\Models\Role::$roleSeller) {
+            $seller = $authUser->seller;
+            if ($seller) {
+                $query->where(function ($q) use ($seller) {
+                    $q->where('seller_id', $seller->id)
+                      ->orWhereNull('seller_id')
+                      ->orWhere('seller_id', 0);
+                });
+            }
+        }
+
         $deliveryBoys = $query->with('translations')->orderBy('id', 'DESC')->get();
 
         $result = [];

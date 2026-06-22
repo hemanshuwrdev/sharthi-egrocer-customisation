@@ -1230,9 +1230,13 @@ class SellerController extends BaseController
         // Split city_id into array of IDs if it contains commas
         $cityIds = array_filter(array_map('trim', explode(',', $city_id)));
 
-        // Retrieve delivery boys scoped to the seller's cities, and owned by this seller or system-wide (NULL/0)
+        // Retrieve delivery boys scoped to the seller's cities (or global cities NULL/0), and owned by this seller or system-wide (NULL/0)
         $deliveryBoys = DeliveryBoy::with(['admin', 'translations'])
-            ->whereIn('city_id', $cityIds)
+            ->where(function ($query) use ($cityIds) {
+                $query->whereIn('city_id', $cityIds)
+                      ->orWhereNull('city_id')
+                      ->orWhere('city_id', 0);
+            })
             ->where(function ($query) use ($seller_id) {
                 $query->where('seller_id', $seller_id)
                       ->orWhereNull('seller_id')
