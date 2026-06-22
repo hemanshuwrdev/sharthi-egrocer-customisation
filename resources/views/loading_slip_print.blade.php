@@ -204,8 +204,12 @@
         }
 
         @media print {
+            @page {
+                size: auto;
+                margin: 0mm;
+            }
             body {
-                padding: 0;
+                padding: 15mm;
                 font-size: 12px;
             }
 
@@ -537,12 +541,20 @@
                 <!-- Header -->
                 <div class="udaan-header">
                     <div class="udaan-logo-container">
-                        <div class="udaan-logo-circle">S</div>
+                        @php
+                            $logo_url = '';
+                            if (isset($logo) && $logo !== '') {
+                                $logo_url = url('/') . '/storage/' . $logo;
+                            } else {
+                                $logo_url = asset('images/favicon.png');
+                            }
+                        @endphp
+                        <img src="{{ $logo_url }}" height="38" style="max-height: 38px; width: auto;" alt="Logo">
                         <div>
                             <span class="udaan-logo-text">{{ $app_name }}</span>
                             <div
                                 style="font-size: 8px; color: #666; font-weight: bold; margin-top: -3px; letter-spacing: 0.5px;">
-                                B2B WHOLESALE DISTRIBUTOR</div>
+                              </div>
                         </div>
                     </div>
 
@@ -561,7 +573,7 @@
                         <span class="udaan-meta-val">{{ $slip->slip_no }}</span>
 
                         <span class="udaan-meta-label">Page No:</span>
-                        <span class="udaan-meta-val">1 / 1</span>
+                        <span class="udaan-meta-val">{{ $orderIndex + 1 }} / {{ count($orders) }}</span>
                     </div>
                 </div>
 
@@ -759,27 +771,14 @@
                 <!-- Advertisement Banner -->
                 <div class="udaan-ad-banner">
                     <div class="ad-text">
-                        <h3>ANNABHUMI</h3>
+                        <h3>{{ strtoupper($app_name) }}</h3>
                         <p>Everyday Essentials, Excellent Quality, at Right Price - ORDER NOW</p>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <svg width="30" height="30" viewBox="0 0 29 29" fill="black">
-                            <path
-                                d="M0 0h9v9H0zm1 1v7h7V1zm18 18h9v9h-9zm1 1v7h7V19zM0 19h9v9H0zm1 1v7h7V20zM19 0h9v9h-9zm1 1v7h7V1zm-8 11h5v5h-5z" />
-                            <path
-                                d="M3 3h3v3H3zm19 0h3v3h-3zM3 22h3v3H3zm9-9h2v2h-2zm4 4h2v2h-2zm-4 4h2v2h-2zm8-4h2v2h-2zm0-4h2v2h-2zm-4-4h2v2h-2z" />
-                        </svg>
-                        <span style="font-size: 8px; font-weight: bold; color: #df2029;">Scan Me</span>
                     </div>
                 </div>
 
                 <!-- Footer Declarations -->
                 <div class="udaan-footer-rules">
                     <div style="max-width: 70%;">
-                        <p style="margin: 0 0 3px 0;"><strong>Terms of trade credit provided by
-                                {{ $seller->name ?? $app_name }}:</strong></p>
-                        <p style="margin: 0 0 3px 0;">Bill amount to be paid in full. Payments by cash, UPI, or Bank
-                            Transfer.</p>
                         <p style="margin: 0;"><strong>DECLARATION:</strong> We declare that this invoice shows the
                             actual price of the goods described and that all particulars are true and correct. This is a
                             computer generated invoice.</p>
@@ -788,7 +787,7 @@
                         style="text-align: right; min-width: 150px; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;">
                         <div
                             style="font-family: 'Courier New', Courier, monospace; font-size: 11px; margin-bottom: 2px; color: #555; font-style: italic; font-weight: bold;">
-                            Ajay Shah</div>
+                            {{ $seller->name }}</div>
                         <div
                             style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 3px; font-weight: bold; font-size: 8px;">
                             Authorised Signatory</div>

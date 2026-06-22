@@ -61,7 +61,7 @@ class OrdersApiController extends Controller
             $sellerNameSubquery
         )
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
-             ->where('orders.order_type', 'doorstep');
+            ->where('orders.order_type', 'doorstep');
 
         // Only parse dates when actually provided
         if (isset($request->startDate) && $request->startDate != "" && isset($request->endDate) && $request->endDate != "") {
@@ -1147,26 +1147,8 @@ class OrdersApiController extends Controller
 
         $query = DeliveryBoy::where('status', 1);
         if ($cityId !== null) {
-            $query->where(function ($q) use ($cityId) {
-                $q->where('city_id', $cityId)
-                  ->orWhereNull('city_id')
-                  ->orWhere('city_id', 0);
-            });
+            $query->where('city_id', $cityId);
         }
-
-        // Apply seller-specific scoping if authenticated as a seller
-        $authUser = auth()->user();
-        if ($authUser && (int)$authUser->role_id === \App\Models\Role::$roleSeller) {
-            $seller = $authUser->seller;
-            if ($seller) {
-                $query->where(function ($q) use ($seller) {
-                    $q->where('seller_id', $seller->id)
-                      ->orWhereNull('seller_id')
-                      ->orWhere('seller_id', 0);
-                });
-            }
-        }
-
         $deliveryBoys = $query->with('translations')->orderBy('id', 'DESC')->get();
 
         $result = [];
@@ -1296,11 +1278,11 @@ class OrdersApiController extends Controller
             // final_total = items_total + delivery_charge + tax_amount - discount - promo_discount - wallet_balance
             $newFinal = round(
                 $newTotal
-                + (float) $order->delivery_charge
-                + (float) $order->tax_amount
-                - (float) $order->discount
-                - (float) $order->promo_discount
-                - (float) $order->wallet_balance,
+                    + (float) $order->delivery_charge
+                    + (float) $order->tax_amount
+                    - (float) $order->discount
+                    - (float) $order->promo_discount
+                    - (float) $order->wallet_balance,
                 2
             );
 
