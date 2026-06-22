@@ -727,7 +727,7 @@ class CustomerAuthController extends Controller
         $profileCountryCode = $this->normalizeCountryCode($request->input('country_code', $user->country_code));
         $validator = Validator::make($request->all(), [
             'name'   => 'required',
-            'email'  => 'required|unique:users,email,' . $user->id . ',id,deleted_at,NULL',
+            'email'  => 'nullable|email|unique:users,email,' . $user->id . ',id,deleted_at,NULL',
             'country_code' => 'required_with:mobile|nullable|string',
             'mobile' => [
                 'nullable',
@@ -752,7 +752,9 @@ class CustomerAuthController extends Controller
         }
         
         $user->name = $request->name;
-        $user->email = $request->email;
+        if ($request->filled('email')) {
+            $user->email = $request->email;
+        }
 
         if (isset($request->mobile) && $user->type != 'phone') {
             $user->mobile = $request->mobile;

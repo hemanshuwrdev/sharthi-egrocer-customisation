@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryBoy;
 use App\Models\DriverSettlement;
+use App\Models\LoadingSlip;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Seller;
@@ -240,6 +241,29 @@ class SettlementController extends Controller
         $payment->verified_at = Carbon::now();
         $payment->save();
 
+        // Auto-reconcile: if trip has zero cash expected after this verification, mark full_match
+        $order = Order::find($payment->order_id);
+        if ($order && $order->loading_slip_id) {
+            $slip = LoadingSlip::find($order->loading_slip_id);
+            if ($slip && $slip->reconciliation_status !== 'full_match') {
+                $orderIds        = Order::where('loading_slip_id', $slip->id)->pluck('id');
+                $totalExpected   = round(Order::whereIn('id', $orderIds)->sum('final_total'), 2);
+                $digitalVerified = round(
+                    OrderPayment::whereIn('order_id', $orderIds)
+                        ->whereIn('method', ['upi', 'cheque', 'signature'])
+                        ->where('status', 'verified')
+                        ->sum('amount'),
+                    2
+                );
+                $cashExpected = round($totalExpected - $digitalVerified, 2);
+                if ($cashExpected <= 0) {
+                    $slip->cash_received         = 0;
+                    $slip->reconciliation_status = 'full_match';
+                    $slip->save();
+                }
+            }
+        }
+
         return CommonHelper::responseSuccess('payment_verified');
     }
 
@@ -464,6 +488,188 @@ class SettlementController extends Controller
     // ──────────────────────────────────────────────────────────────────────────
     //  Distributor reconciliation
     // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * GET /seller/trips
+     * All loading slips for this distributor with reconciliation status.
+     */
+    public function sellerTripsList(Request $request)
+    {
+        $query = LoadingSlip::with(['driver:id,name,mobile', 'vehicle:id,vehicle_number,name'])
+            ->where('created_by', auth()->id())
+            ->orderByDesc('id');
+
+        if ($request->filled('filter')) {
+            $filter = $request->input('filter');
+            $query->where(function ($q) use ($filter) {
+                $q->where('slip_no', 'like', "%{$filter}%")
+                  ->orWhereHas('driver', fn($d) => $d->where('name', 'like', "%{$filter}%"));
+            });
+        }
+
+        $total = $query->count();
+        $slips = $query->skip(($request->input('page', 1) - 1) * 10)->take(10)->get();
+
+        return CommonHelper::responseWithData($slips, $total);
+    }
+
+    /**
+     * GET /seller/trips/{id}
+     * id = loading_slip_id
+     * Returns slip info + all orders + per-order payment status + totals.
+     */
+    public function sellerTripDetail(int $id)
+    {
+        $slip = LoadingSlip::with(['driver:id,name,mobile', 'vehicle:id,vehicle_number,name'])
+            ->where(function ($q) {
+                if (auth()->user() && auth()->user()->seller) {
+                    $q->where('created_by', auth()->id());
+                }
+            })
+            ->find($id);
+
+        if (!$slip) return CommonHelper::responseError('trip_not_found');
+
+        // All orders in this slip with retailer info
+        $orders = Order::with('user:id,name,mobile')
+            ->where('loading_slip_id', $id)
+            ->get();
+
+        $orderIds = $orders->pluck('id');
+
+        // All payments for these orders
+        $payments = $orderIds->isNotEmpty()
+            ? OrderPayment::whereIn('order_id', $orderIds)->get()
+            : collect();
+
+        $paymentMap = $payments->groupBy('order_id');
+
+        $ordersData = $orders->map(function ($order) use ($paymentMap) {
+            return [
+                'id'            => $order->id,
+                'orders_id'     => $order->orders_id,
+                'final_total'   => $order->final_total,
+                'active_status' => $order->active_status,
+                'retailer'      => $order->user
+                    ? ['id' => $order->user->id, 'name' => $order->user->name, 'mobile' => $order->user->mobile]
+                    : null,
+                'payments'      => $paymentMap->get($order->id, collect())->values(),
+            ];
+        });
+
+        $totalExpected   = round($orders->sum('final_total'), 2);
+        $digitalVerified = round(
+            $payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2
+        );
+        $cashExpected    = round($totalExpected - $digitalVerified, 2);
+        $cashReceived    = $slip->cash_received;
+        $shortfall       = $cashReceived !== null ? round($cashExpected - $cashReceived, 2) : null;
+        $hasCash         = $payments->where('method', 'cash')->isNotEmpty();
+
+        // --- Close eligibility ---
+        $blockers = [];
+        $unverified = $payments->where('status', 'pending')->count();
+        if ($unverified > 0) {
+            $blockers[] = "{$unverified} payment(s) not verified yet";
+        }
+        if ($hasCash && $cashReceived === null) {
+            $blockers[] = 'Cash received amount not entered';
+        }
+        $canClose = empty($blockers) && $slip->status !== 2;
+
+        return CommonHelper::responseWithData([
+            'slip'      => $slip,
+            'orders'    => $ordersData,
+            'totals'    => [
+                'total_expected'   => $totalExpected,
+                'digital_verified' => $digitalVerified,
+                'cash_expected'    => $cashExpected,
+                'cash_received'    => $cashReceived,
+                'shortfall'        => $shortfall,
+                'has_cash'         => $hasCash,
+            ],
+            'can_close'     => $canClose,
+            'close_blockers'=> $blockers,
+        ]);
+    }
+
+    /**
+     * POST /seller/trips/{id}/reconcile
+     * id = loading_slip_id. Body: { cash_received: float }
+     */
+    public function sellerUpdateReconciliation(Request $request, int $id)
+    {
+        $seller = $this->currentSeller();
+        if (!$seller) return CommonHelper::responseError('seller_not_found');
+
+        $slip = LoadingSlip::find($id);
+        if (!$slip) return CommonHelper::responseError('trip_not_found');
+
+        $validator = Validator::make($request->all(), [
+            'cash_received' => 'required|numeric|min:0',
+        ]);
+        if ($validator->fails()) return CommonHelper::responseError($validator->errors()->first());
+
+        // Recalculate cash_expected fresh
+        $orders          = Order::where('loading_slip_id', $id)->get('final_total');
+        $payments        = OrderPayment::whereIn('order_id', Order::where('loading_slip_id', $id)->pluck('id'))
+                            ->whereIn('method', ['upi', 'cheque', 'signature'])
+                            ->where('status', 'verified')->get();
+        $totalExpected   = round($orders->sum('final_total'), 2);
+        $digitalVerified = round($payments->sum('amount'), 2);
+        $cashExpected    = round($totalExpected - $digitalVerified, 2);
+        $cashReceived    = (float) $request->cash_received;
+        $diff            = round($cashExpected - $cashReceived, 2);
+
+        if ($diff == 0)    $status = 'full_match';
+        elseif ($diff > 0) $status = 'partial_match';
+        else               $status = 'overpaid';
+
+        $slip->cash_received         = $cashReceived;
+        $slip->reconciliation_status = $status;
+        $slip->save();
+
+        return CommonHelper::responseWithData([
+            'reconciliation_status' => $status,
+            'cash_expected'         => $cashExpected,
+            'shortfall'             => $diff,
+        ]);
+    }
+
+    /**
+     * POST /seller/trips/{id}/close
+     * id = loading_slip_id. Marks slip status → 2 (Completed).
+     * Guards: all payments verified + cash_received entered if cash exists.
+     */
+    public function sellerCloseTrip(int $id)
+    {
+        $slip = LoadingSlip::find($id);
+        if (!$slip) return CommonHelper::responseError('trip_not_found');
+
+        if ($slip->status === 2) {
+            return CommonHelper::responseError('trip_already_closed');
+        }
+
+        $orderIds = Order::where('loading_slip_id', $id)->pluck('id');
+        $payments = OrderPayment::whereIn('order_id', $orderIds)->get();
+
+        $unverified = $payments->where('status', 'pending')->count();
+        if ($unverified > 0) {
+            return CommonHelper::responseError("{$unverified} payment(s) still pending verification");
+        }
+
+        $hasCash = $payments->where('method', 'cash')->isNotEmpty();
+        if ($hasCash && $slip->cash_received === null) {
+            return CommonHelper::responseError('Enter cash received from driver before closing trip');
+        }
+
+        $slip->status        = 2; // Completed
+        $slip->reconciled_at = Carbon::now();
+        $slip->reconciled_by = auth()->id();
+        $slip->save();
+
+        return CommonHelper::responseSuccess('trip_closed');
+    }
 
     /**
      * GET /seller/settlements

@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\BrandDistributorMapping;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
+use App\Models\ProductRating;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class RetailerCatalogApiController extends Controller
      */
     public function listProducts(Request $request)
     {
+        try {
         $validator = Validator::make($request->all(), [
             'latitude' => 'required',
             'longitude' => 'required',
@@ -52,6 +54,11 @@ class RetailerCatalogApiController extends Controller
 
         $mappings = BrandDistributorMapping::whereIn('city_id', $cityIds)
             ->get(['brand_id', 'seller_id']);
+
+        $sellers = \App\Models\Seller::whereIn('id', $mappings->pluck('seller_id')->unique())
+            ->get(['id', 'name', 'logo'])
+            ->keyBy('id');
+        $sellerNames = $sellers->pluck('name', 'id');
 
         if ($mappings->isEmpty()) {
             return CommonHelper::responseWithData([], 0);
@@ -115,27 +122,41 @@ class RetailerCatalogApiController extends Controller
             ->get()
             ->groupBy('seller_product_id');
 
-        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp) {
+        // Preload ratings grouped by (product_id, seller_id) for seller-wise avg/count
+        $masterProductIds = $rows->pluck('master_product_id')->unique();
+        $ratingsBySellerProduct = ProductRating::whereIn('product_id', $masterProductIds)
+            ->where('status', 1)
+            ->get(['product_id', 'seller_id', 'rate'])
+            ->groupBy(fn($r) => $r->product_id . '_' . $r->seller_id);
+
+        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct) {
             $first = $group->first();
             $mp = $first->masterProduct;
             $overlapAllowed = (int) ($brandOverlap[$first->mp_brand_id] ?? 0) === 1;
 
-            $offers = $group->map(function ($r) use ($slabsBySp) {
+            $offers = $group->map(function ($r) use ($slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct) {
+                $sellerLogo  = $sellers[$r->sp_seller_id]->logo ?? null;
+                $ratingKey   = $r->master_product_id . '_' . $r->sp_seller_id;
+                $ratingGroup = $ratingsBySellerProduct[$ratingKey] ?? null;
                 return [
-                    'seller_id' => $r->sp_seller_id,
-                    'seller_product_id' => $r->sp_id,
-                    'mrp' => (float) $r->sp_mrp,
-                    'selling_price' => (float) $r->sp_selling_price,
+                    'seller_id'        => $r->sp_seller_id,
+                    'seller_name'      => $sellerNames[$r->sp_seller_id] ?? null,
+                    'seller_image_url' => $sellerLogo ? asset('storage/' . $sellerLogo) : null,
+                    'seller_product_id'=> $r->sp_id,
+                    'mrp'              => (float) $r->sp_mrp,
+                    'selling_price'    => (float) $r->sp_selling_price,
                     'discounted_price' => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
-                    'stock' => (float) $r->sp_stock,
-                    'slab_prices' => isset($slabsBySp[$r->sp_id])
+                    'stock'            => (float) $r->sp_stock,
+                    'slab_prices'      => isset($slabsBySp[$r->sp_id])
                         ? $slabsBySp[$r->sp_id]->map(fn($s) => [
-                            'id' => $s->id,
+                            'id'      => $s->id,
                             'min_qty' => $s->min_qty,
                             'max_qty' => $s->max_qty,
-                            'price' => (float) $s->price,
+                            'price'   => (float) $s->price,
                         ])->values()
                         : [],
+                    'avg_rating'    => $ratingGroup ? round($ratingGroup->avg('rate'), 1) : null,
+                    'total_ratings' => $ratingGroup ? $ratingGroup->count() : 0,
                 ];
             })->sortBy(function ($o) {
                 return $o['discounted_price'] !== null && $o['discounted_price'] > 0 ? $o['discounted_price'] : $o['selling_price'];
@@ -157,8 +178,8 @@ class RetailerCatalogApiController extends Controller
                 'weight' => $first->weight,
                 'image' => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed' => $overlapAllowed,
-                'offers' => $offers,
-                'best_offer' => $offers->first(),
+                'offers'        => $offers,
+                'best_offer'    => $offers->first(),
             ];
         })->values();
 
@@ -166,6 +187,9 @@ class RetailerCatalogApiController extends Controller
         $paged = $grouped->slice($offset, $limit)->values();
 
         return CommonHelper::responseWithData($paged, $total);
+        } catch (\Throwable $e) {
+            return CommonHelper::responseError($e->getMessage() . ' | line: ' . $e->getLine() . ' | file: ' . basename($e->getFile()));
+        }
     }
 
     /**
@@ -202,7 +226,7 @@ class RetailerCatalogApiController extends Controller
             return CommonHelper::responseError('product_not_available_in_your_area');
         }
 
-        $sellerProducts = SellerProduct::with('slabPrices')
+        $sellerProducts = SellerProduct::with(['slabPrices', 'seller'])
             ->where('master_product_variant_id', $variant->id)
             ->whereIn('seller_id', $sellerIds)
             ->where('status', 1)
@@ -217,8 +241,11 @@ class RetailerCatalogApiController extends Controller
         $overlapAllowed = $brand && (int) $brand->is_overlap_allowed === 1;
 
         $offers = $sellerProducts->map(function ($sp) {
+            $sellerLogo = $sp->seller ? $sp->seller->logo : null;
             return [
-                'seller_id' => $sp->seller_id,
+                'seller_id'        => $sp->seller_id,
+                // 'seller_image'     => $sellerLogo,
+                'seller_image_url' => $sellerLogo ? asset('storage/' . $sellerLogo) : null,
                 'seller_product_id' => $sp->id,
                 'mrp' => (float) $sp->mrp,
                 'selling_price' => (float) $sp->selling_price,

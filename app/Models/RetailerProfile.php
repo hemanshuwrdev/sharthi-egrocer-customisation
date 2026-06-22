@@ -24,6 +24,13 @@ class RetailerProfile extends Model
         'verified_lng' => 'float',
     ];
 
+    public function getStorefrontPhotoAttribute($value): ?string
+    {
+        if (!$value) return null;
+        if (str_starts_with($value, 'http')) return $value;
+        return asset('storage/' . $value);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');

@@ -175,6 +175,11 @@ class RetailerCartOrderApiController extends Controller
             ];
         }
 
+        $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
+        $sellers = \App\Models\Seller::whereIn('id', array_keys($groups))
+            ->get(['id', 'name', 'self_pickup_mode', 'door_step_mode'])
+            ->keyBy('id');
+
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
         foreach ($groups as $sellerId => &$group) {
             $schemeLines = $group['scheme_lines'] ?? [];
@@ -185,6 +190,13 @@ class RetailerCartOrderApiController extends Controller
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
             $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
             $group['nearest_scheme']  = $nearest;
+
+            $seller = $sellers[$sellerId] ?? null;
+            $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
+            $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
+            $group['seller_name']           = $seller->name ?? null;
+            $group['self_pickup_mode']       = ($globalSelfPickup === 1 && $sellerSelfPickup === 1) ? 1 : 0;
+            $group['doorstep_delivery_mode'] = ($globalSelfPickup === 0 || $sellerDoorstep === 1) ? 1 : 0;
         }
         unset($group);
 

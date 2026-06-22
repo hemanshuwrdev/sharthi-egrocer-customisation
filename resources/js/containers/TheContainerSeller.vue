@@ -392,6 +392,12 @@ export default {
                     ]
                 },
                 {
+                    name: __('trip_reconciliation'),
+                    icon: 'clipboard-check',
+                    url: '/seller/trips',
+                    permission: 'order_list',
+                },
+                {
                     name: __('settings'),
                     icon: 'cog',
                     url: '/seller/setting',

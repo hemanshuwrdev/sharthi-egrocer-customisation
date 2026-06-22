@@ -18,6 +18,15 @@ class LoadingSlip extends Model
         'total_items',
         'total_orders',
         'created_by',
+        'cash_received',
+        'reconciliation_status',
+        'reconciled_at',
+        'reconciled_by',
+    ];
+
+    protected $casts = [
+        'cash_received' => 'float',
+        'reconciled_at' => 'datetime',
     ];
 
     protected $appends = ['status_text'];

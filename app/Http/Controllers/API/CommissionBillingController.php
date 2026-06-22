@@ -55,9 +55,12 @@ class CommissionBillingController extends Controller
 
     /**
      * GET /seller/billing
-     * Distributor's own billing overview: commission rate, GMV, commission paid.
-     * Optional query: start_date, end_date (Y-m-d) for custom range.
-     * Paginated transaction history: limit (default 20), offset (default 0).
+     * Distributor billing overview — GMV card, charges card, period history.
+     *
+     * Query params:
+     *   period  = monthly (default) | quarterly | yearly
+     *   limit   = rows per page (default 12)
+     *   offset  = pagination offset (default 0)
      */
     public function sellerBilling(Request $request)
     {
@@ -66,36 +69,160 @@ class CommissionBillingController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        $today     = Carbon::today();
-        $monthStart = Carbon::now()->startOfMonth();
-        $monthEnd   = Carbon::now()->endOfMonth();
+        $period = in_array($request->input('period'), ['monthly', 'quarterly', 'yearly'])
+            ? $request->input('period')
+            : 'monthly';
 
-        // Custom date range for transaction history
-        $from = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
-        $to   = $request->filled('end_date')   ? Carbon::parse($request->end_date)->endOfDay()   : null;
+        $now = Carbon::now();
 
+        // ── Current-period window for stat cards ─────────────────────────────
+        [$curStart, $curEnd, $prevStart, $prevEnd] = $this->periodWindows($now, $period);
+
+        $gmvCurrent  = $this->gmv($seller->id, $curStart, $curEnd);
+        $gmvPrevious = $this->gmv($seller->id, $prevStart, $prevEnd);
+        $commCurrent = $this->commissionEarned($seller->id, $curStart, $curEnd);
+
+        $changePercent = $gmvPrevious > 0
+            ? round((($gmvCurrent - $gmvPrevious) / $gmvPrevious) * 100, 1)
+            : null;
+
+        // Predict next period by prorating current elapsed days
+        $elapsed    = max(1, $curStart->diffInDays($now) + 1);
+        $totalDays  = max(1, $curStart->diffInDays($curEnd) + 1);
+        $predicted  = round(($gmvCurrent / $elapsed) * $totalDays, 2);
+
+        $ordersCurrent = AdminCommissionTransaction::where('seller_id', $seller->id)
+            ->where('created_at', '>=', $curStart)
+            ->where('created_at', '<=', $curEnd)
+            ->distinct('order_id')
+            ->count('order_id');
+
+        // ── Period history table ──────────────────────────────────────────────
+        $limit  = (int) $request->input('limit', 12);
+        $offset = (int) $request->input('offset', 0);
+
+        [$groupExpr, $labelExpr, $sortExpr] = $this->periodGroupExpressions($period);
+
+        $rows = AdminCommissionTransaction::selectRaw(
+                "$groupExpr as period_key,
+                 $labelExpr as period_label,
+                 COUNT(DISTINCT order_id) as total_orders,
+                 SUM(order_item_amount)   as gross_gmv,
+                 SUM(amount)              as net_charges"
+            )
+            ->where('seller_id', $seller->id)
+            ->groupByRaw($groupExpr)
+            ->orderByRaw("$sortExpr DESC")
+            ->offset($offset)
+            ->limit($limit)
+            ->get()
+            ->map(fn ($r) => [
+                'period_key'   => $r->period_key,
+                'period_label' => $r->period_label,
+                'total_orders' => (int) $r->total_orders,
+                'gross_gmv'    => round((float) $r->gross_gmv, 2),
+                'net_charges'  => round((float) $r->net_charges, 2),
+            ]);
+
+        $totalPeriods = AdminCommissionTransaction::selectRaw(
+                "COUNT(DISTINCT $groupExpr) as cnt"
+            )
+            ->where('seller_id', $seller->id)
+            ->value('cnt');
+
+        return CommonHelper::responseWithData([
+            'commission_rate' => (float) $seller->commission,
+            'period'          => $period,
+            'gmv_card' => [
+                'current'        => round($gmvCurrent,  2),
+                'previous'       => round($gmvPrevious, 2),
+                'change_percent' => $changePercent,
+                'predicted_next' => $predicted,
+            ],
+            'charges_card' => [
+                'current'      => round($commCurrent, 2),
+                'total_orders' => $ordersCurrent,
+            ],
+            'history' => [
+                'total' => (int) $totalPeriods,
+                'data'  => $rows,
+            ],
+        ]);
+    }
+
+    private function periodWindows(Carbon $now, string $period): array
+    {
+        switch ($period) {
+            case 'quarterly':
+                $curStart  = $now->copy()->firstOfQuarter()->startOfDay();
+                $curEnd    = $now->copy()->lastOfQuarter()->endOfDay();
+                $prevStart = $curStart->copy()->subQuarter()->firstOfQuarter()->startOfDay();
+                $prevEnd   = $curStart->copy()->subDay()->endOfDay();
+                break;
+            case 'yearly':
+                $curStart  = $now->copy()->startOfYear();
+                $curEnd    = $now->copy()->endOfYear();
+                $prevStart = $now->copy()->subYear()->startOfYear();
+                $prevEnd   = $now->copy()->subYear()->endOfYear();
+                break;
+            default: // monthly
+                $curStart  = $now->copy()->startOfMonth();
+                $curEnd    = $now->copy()->endOfMonth();
+                $prevStart = $now->copy()->subMonth()->startOfMonth();
+                $prevEnd   = $now->copy()->subMonth()->endOfMonth();
+        }
+        return [$curStart, $curEnd, $prevStart, $prevEnd];
+    }
+
+    private function periodGroupExpressions(string $period): array
+    {
+        switch ($period) {
+            case 'quarterly':
+                return [
+                    "CONCAT(YEAR(created_at), '-Q', QUARTER(created_at))",
+                    "CONCAT('Q', QUARTER(created_at), ' ', YEAR(created_at))",
+                    "CONCAT(YEAR(created_at), QUARTER(created_at))",
+                ];
+            case 'yearly':
+                return [
+                    "YEAR(created_at)",
+                    "YEAR(created_at)",
+                    "YEAR(created_at)",
+                ];
+            default: // monthly
+                return [
+                    "DATE_FORMAT(created_at, '%Y-%m')",
+                    "DATE_FORMAT(created_at, '%M %Y')",
+                    "DATE_FORMAT(created_at, '%Y-%m')",
+                ];
+        }
+    }
+
+    /**
+     * GET /seller/billing/transactions
+     * Paginated raw transactions for a date window (used by the detail drawer).
+     * Query: start_date, end_date (Y-m-d), limit, offset.
+     */
+    public function sellerBillingTransactions(Request $request)
+    {
+        $seller = $this->currentSeller();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $from  = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
+        $to    = $request->filled('end_date')   ? Carbon::parse($request->end_date)->endOfDay()     : null;
         $limit  = (int) $request->input('limit', 20);
         $offset = (int) $request->input('offset', 0);
 
-        // GMV
-        $gmvToday = $this->gmv($seller->id, $today->copy()->startOfDay(), $today->copy()->endOfDay());
-        $gmvMonth = $this->gmv($seller->id, $monthStart, $monthEnd);
-        $gmvAll   = $this->gmv($seller->id);
-
-        // Commission
-        $commToday = $this->commissionEarned($seller->id, $today->copy()->startOfDay(), $today->copy()->endOfDay());
-        $commMonth = $this->commissionEarned($seller->id, $monthStart, $monthEnd);
-        $commAll   = $this->commissionEarned($seller->id);
-
-        // Transaction history (paginated)
-        $txQuery = AdminCommissionTransaction::where('seller_id', $seller->id)
+        $query = AdminCommissionTransaction::where('seller_id', $seller->id)
             ->orderByDesc('created_at');
 
-        if ($from) $txQuery->where('created_at', '>=', $from);
-        if ($to)   $txQuery->where('created_at', '<=', $to);
+        if ($from) $query->where('created_at', '>=', $from);
+        if ($to)   $query->where('created_at', '<=', $to);
 
-        $totalTx = (clone $txQuery)->count();
-        $transactions = $txQuery->offset($offset)->limit($limit)
+        $total = (clone $query)->count();
+        $rows  = $query->offset($offset)->limit($limit)
             ->select('id', 'order_id', 'order_item_id', 'seller_commission_percentage',
                      'order_item_amount', 'amount as commission_amount', 'created_at')
             ->get()
@@ -103,28 +230,58 @@ class CommissionBillingController extends Controller
                 'added_date' => CommonHelper::formatDate($t->created_at),
             ]));
 
-        return CommonHelper::responseWithData([
-            'commission_rate' => (float) $seller->commission,
-            'gmv' => [
-                'today'     => round($gmvToday, 2),
-                'this_month'=> round($gmvMonth, 2),
-                'all_time'  => round($gmvAll,   2),
-            ],
-            'commission_paid' => [
-                'today'     => round($commToday, 2),
-                'this_month'=> round($commMonth, 2),
-                'all_time'  => round($commAll,   2),
-            ],
-            'transactions' => [
-                'total' => $totalTx,
-                'data'  => $transactions,
-            ],
-        ]);
+        return CommonHelper::responseWithData(['total' => $total, 'data' => $rows]);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
     //  Admin endpoints
     // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * GET /admin/commissions/aggregate
+     * Platform-wide aggregate stat cards for the selected period (mirrors sellerBilling but across ALL sellers).
+     * Query: period = monthly (default) | quarterly | yearly
+     */
+    public function adminAggregate(Request $request)
+    {
+        $period = in_array($request->input('period'), ['monthly', 'quarterly', 'yearly'])
+            ? $request->input('period')
+            : 'monthly';
+
+        $now = Carbon::now();
+        [$curStart, $curEnd, $prevStart, $prevEnd] = $this->periodWindows($now, $period);
+
+        $gmvCurrent  = (float) AdminCommissionTransaction::where('created_at', '>=', $curStart)->where('created_at', '<=', $curEnd)->sum('order_item_amount');
+        $gmvPrevious = (float) AdminCommissionTransaction::where('created_at', '>=', $prevStart)->where('created_at', '<=', $prevEnd)->sum('order_item_amount');
+        $commCurrent = (float) AdminCommissionTransaction::where('created_at', '>=', $curStart)->where('created_at', '<=', $curEnd)->sum('amount');
+
+        $changePercent = $gmvPrevious > 0
+            ? round((($gmvCurrent - $gmvPrevious) / $gmvPrevious) * 100, 1)
+            : null;
+
+        $elapsed   = max(1, $curStart->diffInDays($now) + 1);
+        $totalDays = max(1, $curStart->diffInDays($curEnd) + 1);
+        $predicted = round(($gmvCurrent / $elapsed) * $totalDays, 2);
+
+        $ordersCurrent = AdminCommissionTransaction::where('created_at', '>=', $curStart)
+            ->where('created_at', '<=', $curEnd)
+            ->distinct('order_id')
+            ->count('order_id');
+
+        return CommonHelper::responseWithData([
+            'period'   => $period,
+            'gmv_card' => [
+                'current'        => round($gmvCurrent,  2),
+                'previous'       => round($gmvPrevious, 2),
+                'change_percent' => $changePercent,
+                'predicted_next' => $predicted,
+            ],
+            'charges_card' => [
+                'current'      => round($commCurrent, 2),
+                'total_orders' => $ordersCurrent,
+            ],
+        ]);
+    }
 
     /**
      * GET /admin/commissions/summary

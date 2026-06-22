@@ -58,7 +58,27 @@ class SarthiCustomisation extends Migration
                 $table->integer('total_items')->default(0);
                 $table->integer('total_orders')->default(0);
                 $table->foreignId('created_by')->constrained('admins')->onDelete('cascade');
+                $table->decimal('cash_received', 15, 2)->nullable();
+                $table->enum('reconciliation_status', ['unreconciled', 'partial_match', 'full_match', 'overpaid'])->default('unreconciled');
+                $table->timestamp('reconciled_at')->nullable();
+                $table->unsignedBigInteger('reconciled_by')->nullable();
                 $table->timestamps();
+            });
+        } else {
+            Schema::table('loading_slips', function (Blueprint $table) {
+                if (!Schema::hasColumn('loading_slips', 'cash_received')) {
+                    $table->decimal('cash_received', 15, 2)->nullable()->after('created_by');
+                }
+                if (!Schema::hasColumn('loading_slips', 'reconciliation_status')) {
+                    $table->enum('reconciliation_status', ['unreconciled', 'partial_match', 'full_match', 'overpaid'])
+                          ->default('unreconciled')->after('cash_received');
+                }
+                if (!Schema::hasColumn('loading_slips', 'reconciled_at')) {
+                    $table->timestamp('reconciled_at')->nullable()->after('reconciliation_status');
+                }
+                if (!Schema::hasColumn('loading_slips', 'reconciled_by')) {
+                    $table->unsignedBigInteger('reconciled_by')->nullable()->after('reconciled_at');
+                }
             });
         }
 
@@ -592,15 +612,45 @@ class SarthiCustomisation extends Migration
                 $table->decimal('total_upi', 15, 2)->default(0);
                 $table->decimal('total_cheque', 15, 2)->default(0);
                 $table->decimal('total_signature', 15, 2)->default(0);
-                $table->enum('status', ['open', 'locked'])->default('open');
+                $table->enum('status', ['open', 'locked', 'reconciled'])->default('open');
                 $table->timestamp('locked_at')->nullable();
+                $table->decimal('cash_received', 15, 2)->nullable();
+                $table->enum('reconciliation_status', ['unreconciled', 'partial_match', 'full_match', 'overpaid'])->default('unreconciled');
+                $table->timestamp('reconciled_at')->nullable();
+                $table->unsignedBigInteger('reconciled_by')->nullable();
                 $table->timestamps();
 
                 $table->unique(['delivery_boy_id', 'settlement_date'], 'uniq_ds_driver_date');
                 $table->index('seller_id', 'idx_ds_seller');
             });
+        } else {
+            // Add reconciliation columns if table already existed from a prior migration run
+            Schema::table('driver_settlements', function (Blueprint $table) {
+                if (!Schema::hasColumn('driver_settlements', 'cash_received')) {
+                    $table->decimal('cash_received', 15, 2)->nullable()->after('locked_at');
+                }
+                if (!Schema::hasColumn('driver_settlements', 'reconciliation_status')) {
+                    $table->enum('reconciliation_status', ['unreconciled', 'partial_match', 'full_match', 'overpaid'])
+                          ->default('unreconciled')->after('cash_received');
+                }
+                if (!Schema::hasColumn('driver_settlements', 'reconciled_at')) {
+                    $table->timestamp('reconciled_at')->nullable()->after('reconciliation_status');
+                }
+                if (!Schema::hasColumn('driver_settlements', 'reconciled_by')) {
+                    $table->unsignedBigInteger('reconciled_by')->nullable()->after('reconciled_at');
+                }
+            });
         }
 
+        // Seller-wise product ratings
+        Schema::table('product_ratings', function (Blueprint $table) {
+            if (!Schema::hasColumn('product_ratings', 'seller_id')) {
+                $table->unsignedBigInteger('seller_id')->nullable()->after('product_id');
+                $table->index('seller_id', 'idx_pr_seller');
+            }
+            try { $table->dropUnique(['product_id', 'user_id']); } catch (\Throwable $e) {}
+            try { $table->unique(['product_id', 'user_id', 'seller_id'], 'uniq_pr_product_user_seller'); } catch (\Throwable $e) {}
+        });
     }
 
     /**

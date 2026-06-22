@@ -20,6 +20,98 @@
             </div>
 
             <section class="section">
+
+                <!-- Period tabs -->
+                <div class="d-flex justify-content-end mb-3">
+                    <div class="btn-group" role="group">
+                        <button
+                            v-for="tab in periodTabs" :key="tab.value"
+                            type="button"
+                            class="btn btn-sm"
+                            :class="period === tab.value ? 'btn-primary' : 'btn-outline-primary'"
+                            @click="switchPeriod(tab.value)">
+                            {{ tab.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Aggregate stat cards -->
+                <div v-if="aggLoading && !agg" class="text-center py-4"><b-spinner></b-spinner></div>
+                <b-row v-else-if="agg" class="mb-4">
+
+                    <!-- Total GMV card -->
+                    <b-col md="6" class="mb-3 mb-md-0">
+                        <div class="stat-card stat-card--gmv">
+                            <div class="stat-card__icon-wrap stat-card__icon-wrap--green">
+                                <i class="fa fa-line-chart"></i>
+                            </div>
+                            <div class="stat-card__body">
+                                <div class="stat-card__label">{{ __('gmv_volume') }}</div>
+                                <div class="stat-card__value">
+                                    {{ $currency }}&nbsp;{{ formatAmount(agg.gmv_card.current) }}
+                                </div>
+                                <div class="stat-card__meta">
+                                    <span
+                                        v-if="agg.gmv_card.change_percent !== null"
+                                        class="stat-card__badge"
+                                        :class="agg.gmv_card.change_percent >= 0 ? 'stat-card__badge--up' : 'stat-card__badge--down'">
+                                        <i :class="agg.gmv_card.change_percent >= 0 ? 'fa fa-arrow-up' : 'fa fa-arrow-down'"></i>
+                                        {{ Math.abs(agg.gmv_card.change_percent) }}%
+                                    </span>
+                                    <span class="stat-card__sub">{{ __('vs_previous_period') }}</span>
+                                </div>
+                                <div class="stat-card__divider"></div>
+                                <div class="stat-card__row">
+                                    <div class="stat-card__row-item">
+                                        <div class="stat-card__row-label">{{ __('previous_period') }}</div>
+                                        <div class="stat-card__row-value">{{ $currency }} {{ formatAmount(agg.gmv_card.previous) }}</div>
+                                    </div>
+                                    <div class="stat-card__row-item">
+                                        <div class="stat-card__row-label">{{ __('predicted_next') }}</div>
+                                        <div class="stat-card__row-value text-info">{{ $currency }} {{ formatAmount(agg.gmv_card.predicted_next) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </b-col>
+
+                    <!-- Total Platform Fees card -->
+                    <b-col md="6">
+                        <div class="stat-card stat-card--fees">
+                            <div class="stat-card__icon-wrap stat-card__icon-wrap--blue">
+                                <i class="fa fa-credit-card"></i>
+                            </div>
+                            <div class="stat-card__body">
+                                <div class="stat-card__label">{{ __('platform_service_fees') }}</div>
+                                <div class="stat-card__value stat-card__value--blue">
+                                    {{ $currency }}&nbsp;{{ formatAmount(agg.charges_card.current) }}
+                                </div>
+                                <div class="stat-card__meta">
+                                    <span class="stat-card__badge stat-card__badge--neutral">
+                                        <i class="fa fa-shopping-bag"></i>
+                                        {{ agg.charges_card.total_orders }} {{ __('orders') }}
+                                    </span>
+                                    <span class="stat-card__sub">{{ __('this_period') }}</span>
+                                </div>
+                                <div class="stat-card__divider"></div>
+                                <div class="stat-card__row">
+                                    <div class="stat-card__row-item">
+                                        <div class="stat-card__row-label">{{ __('total_distributors') }}</div>
+                                        <div class="stat-card__row-value fw-bold">{{ summaryData.length }}</div>
+                                    </div>
+                                    <div class="stat-card__row-item">
+                                        <div class="stat-card__row-label">{{ __('per_order_avg') }}</div>
+                                        <div class="stat-card__row-value">
+                                            {{ $currency }} {{ agg.charges_card.total_orders > 0 ? formatAmount(agg.charges_card.current / agg.charges_card.total_orders) : '0.00' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </b-col>
+
+                </b-row>
+
                 <!-- Tab nav -->
                 <ul class="nav nav-tabs mb-3" id="commissionTabs">
                     <li class="nav-item">
@@ -73,14 +165,14 @@
                                         {{ $currency }} {{ row.item.commission_all_time.toFixed(2) }}
                                     </template>
                                     <template #cell(actions)="row">
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            @click="openDistributor(row.item)">
+                                        <router-link
+                                            :to="'/commission_billing/' + row.item.seller_id"
+                                            class="btn btn-sm btn-outline-primary">
                                             {{ __('view_detail') }}
-                                        </button>
+                                        </router-link>
                                     </template>
                                 </b-table>
                             </div>
-                            <!-- Summary totals -->
                             <b-row class="mt-2" v-if="summaryData.length">
                                 <b-col md="3">
                                     <div class="text-success h6">
@@ -93,56 +185,6 @@
                                     </div>
                                 </b-col>
                             </b-row>
-                        </div>
-                    </div>
-
-                    <!-- Distributor detail drill-down -->
-                    <div class="card mt-3" v-if="detailSeller">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="card-title mb-0">
-                                {{ detailSeller.name }} — {{ __('detail') }}
-                                <span class="badge bg-secondary ms-2">{{ detailSeller.commission_rate }}% {{ __('commission') }}</span>
-                            </h4>
-                            <button class="btn btn-sm btn-outline-danger" @click="detailSeller = null; detailData = null">
-                                {{ __('close') }}
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div v-if="detailLoading" class="text-center py-3"><b-spinner></b-spinner></div>
-                            <div v-else-if="detailData">
-                                <!-- GMV + commission cards -->
-                                <b-row class="mb-3">
-                                    <b-col md="2" v-for="(label, key) in gmvKeys" :key="key">
-                                        <div class="card text-center border-0 shadow-sm p-2">
-                                            <div class="text-muted small">{{ label }}</div>
-                                            <div class="fw-bold">{{ $currency }} {{ detailData.gmv[key].toFixed(2) }}</div>
-                                            <div class="text-primary small">{{ __('commission') }}: {{ $currency }} {{ detailData.commission_earned[key].toFixed(2) }}</div>
-                                        </div>
-                                    </b-col>
-                                </b-row>
-                                <!-- Transactions -->
-                                <div class="table-responsive">
-                                    <b-table
-                                        :items="detailData.transactions.data"
-                                        :fields="txFields"
-                                        :bordered="true"
-                                        show-empty
-                                        small
-                                        stacked="md">
-                                        <template #cell(order_item_amount)="row">{{ $currency }} {{ parseFloat(row.item.order_item_amount).toFixed(2) }}</template>
-                                        <template #cell(commission_amount)="row">{{ $currency }} {{ parseFloat(row.item.commission_amount).toFixed(2) }}</template>
-                                        <template #cell(seller_commission_percentage)="row">{{ row.item.seller_commission_percentage }}%</template>
-                                    </b-table>
-                                </div>
-                                <b-pagination
-                                    v-model="detailPage"
-                                    :total-rows="detailData.transactions.total"
-                                    :per-page="detailPerPage"
-                                    @change="loadDetail(detailSeller.seller_id, $event)"
-                                    size="sm"
-                                    class="mt-2"
-                                ></b-pagination>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,31 +282,33 @@ export default {
     components: { DateRangePicker },
     data() {
         return {
+            period: 'monthly',
+            periodTabs: [
+                { value: 'monthly',   label: __('monthly') },
+                { value: 'quarterly', label: __('quarterly') },
+                { value: 'yearly',    label: __('yearly') },
+            ],
             activeTab: 'summary',
             maxDate: new Date(),
+
+            // Aggregate cards
+            aggLoading: false,
+            agg: null,
 
             // Summary tab
             summaryLoading: false,
             summaryData: [],
             summaryFilter: null,
             summaryFields: [
-                { key: 'name',                  label: __('distributor'),          sortable: true },
-                { key: 'mobile',                label: __('mobile'),               sortable: false },
-                { key: 'commission_rate',       label: __('commission_rate'),      sortable: true, class: 'text-center' },
-                { key: 'gmv_this_month',        label: __('gmv_this_month'),       sortable: true, class: 'text-center' },
-                { key: 'commission_this_month', label: __('commission_this_month'),sortable: true, class: 'text-center' },
-                { key: 'gmv_all_time',          label: __('gmv_all_time'),         sortable: true, class: 'text-center' },
-                { key: 'commission_all_time',   label: __('commission_all_time'),  sortable: true, class: 'text-center' },
-                { key: 'actions',               label: __('actions'),              class: 'text-center' },
+                { key: 'name',                  label: __('distributor'),           sortable: true },
+                { key: 'mobile',                label: __('mobile'),                sortable: false },
+                { key: 'commission_rate',       label: __('commission_rate'),       sortable: true,  class: 'text-center' },
+                { key: 'gmv_this_month',        label: __('gmv_this_month'),        sortable: true,  class: 'text-center' },
+                { key: 'commission_this_month', label: __('commission_this_month'), sortable: true,  class: 'text-center' },
+                { key: 'gmv_all_time',          label: __('gmv_all_time'),          sortable: true,  class: 'text-center' },
+                { key: 'commission_all_time',   label: __('commission_all_time'),   sortable: true,  class: 'text-center' },
+                { key: 'actions',               label: __('actions'),               class: 'text-center' },
             ],
-
-            // Distributor detail drill-down
-            detailSeller: null,
-            detailData: null,
-            detailLoading: false,
-            detailPage: 1,
-            detailPerPage: 15,
-            gmvKeys: { today: __('today'), this_month: __('this_month'), all_time: __('all_time') },
 
             // Transactions tab
             txLoading: false,
@@ -275,22 +319,13 @@ export default {
             txDateRange: { startDate: null, endDate: null },
             txSeller: '',
             txFields2: [
-                { key: 'order_id',                    label: __('order_id'),       sortable: true },
-                { key: 'order_item_id',               label: __('order_item_id'),  sortable: true, class: 'text-center' },
-                { key: 'seller_name',                 label: __('seller'),         sortable: true },
-                { key: 'order_item_amount',           label: __('order_item_amount'), class: 'text-center' },
-                { key: 'seller_commission_percentage',label: __('commission') + ' (%)', class: 'text-center' },
-                { key: 'commission_amount',           label: __('commission_amount'), class: 'text-center' },
-                { key: 'added_date',                  label: __('date'),           sortable: true, class: 'text-center' },
-            ],
-
-            txFields: [
-                { key: 'order_id',                    label: __('order_id'),       sortable: true },
-                { key: 'order_item_id',               label: __('order_item_id'),  class: 'text-center' },
-                { key: 'order_item_amount',           label: __('order_item_amount'), class: 'text-center' },
-                { key: 'seller_commission_percentage',label: __('commission') + ' (%)', class: 'text-center' },
-                { key: 'commission_amount',           label: __('commission_amount'), class: 'text-center' },
-                { key: 'added_date',                  label: __('date'),           class: 'text-center' },
+                { key: 'order_id',                     label: __('order_id'),          sortable: true },
+                { key: 'order_item_id',                label: __('order_item_id'),     sortable: true, class: 'text-center' },
+                { key: 'seller_name',                  label: __('seller'),            sortable: true },
+                { key: 'order_item_amount',            label: __('order_item_amount'), class: 'text-center' },
+                { key: 'seller_commission_percentage', label: __('commission') + ' (%)', class: 'text-center' },
+                { key: 'commission_amount',            label: __('commission_amount'), class: 'text-center' },
+                { key: 'added_date',                   label: __('date'),              sortable: true, class: 'text-center' },
             ],
 
             sellers: [],
@@ -308,9 +343,25 @@ export default {
         },
     },
     created() {
+        this.loadAggregate();
         this.loadSummary();
     },
     methods: {
+        switchPeriod(p) {
+            this.period = p;
+            this.loadAggregate();
+        },
+        loadAggregate() {
+            this.aggLoading = true;
+            axios.get(this.$apiUrl + '/commissions/aggregate', {
+                params: { period: this.period }
+            }).then(res => {
+                if (res.data && res.data.data) {
+                    this.agg = res.data.data;
+                }
+                this.aggLoading = false;
+            }).catch(() => { this.aggLoading = false; });
+        },
         loadSummary() {
             this.summaryLoading = true;
             axios.get(this.$apiUrl + '/commissions/summary').then(res => {
@@ -318,21 +369,6 @@ export default {
                 this.sellers = this.summaryData;
                 this.summaryLoading = false;
             }).catch(() => { this.summaryLoading = false; });
-        },
-        openDistributor(item) {
-            this.detailSeller = item;
-            this.detailPage = 1;
-            this.loadDetail(item.seller_id, 1);
-        },
-        loadDetail(sellerId, page = 1) {
-            this.detailLoading = true;
-            const offset = (page - 1) * this.detailPerPage;
-            axios.get(this.$apiUrl + '/commissions/distributor/' + sellerId, {
-                params: { limit: this.detailPerPage, offset }
-            }).then(res => {
-                this.detailData = res.data.data;
-                this.detailLoading = false;
-            }).catch(() => { this.detailLoading = false; });
         },
         loadTransactions(page = 1) {
             this.txLoading = true;
@@ -352,10 +388,96 @@ export default {
                 this.txLoading = false;
             }).catch(() => { this.txLoading = false; });
         },
+        formatAmount(val) {
+            if (!val && val !== 0) return '0.00';
+            if (val >= 10000000) return (val / 10000000).toFixed(2) + ' Cr';
+            if (val >= 100000)   return (val / 100000).toFixed(2) + ' L';
+            return parseFloat(val).toFixed(2);
+        },
     },
 };
 </script>
 
 <style scoped>
 @import "../../../../node_modules/vue2-daterange-picker/dist/vue2-daterange-picker.css";
+
+/* ── Stat cards ────────────────────────────────────────────────── */
+.stat-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    border: 1px solid #f0f0f0;
+    height: 100%;
+    transition: box-shadow 0.2s;
+}
+.stat-card:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.11);
+}
+.stat-card__icon-wrap {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.stat-card__icon-wrap--green { background: #e8f8f1; color: #22c55e; }
+.stat-card__icon-wrap--blue  { background: #e8f0fe; color: #4f8ef7; }
+.stat-card__body { flex: 1; min-width: 0; }
+.stat-card__label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+.stat-card__value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stat-card__value--blue { color: #4f8ef7; }
+.stat-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+.stat-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+}
+.stat-card__badge--up      { background: #dcfce7; color: #16a34a; }
+.stat-card__badge--down    { background: #fee2e2; color: #dc2626; }
+.stat-card__badge--neutral { background: #eff6ff; color: #3b82f6; }
+.stat-card__sub { font-size: 11px; color: #b0b7c3; }
+.stat-card__divider { border-top: 1px solid #f3f4f6; margin: 12px 0; }
+.stat-card__row { display: flex; gap: 24px; }
+.stat-card__row-item { flex: 1; min-width: 0; }
+.stat-card__row-label { font-size: 11px; color: #9ca3af; margin-bottom: 2px; white-space: nowrap; }
+.stat-card__row-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 </style>

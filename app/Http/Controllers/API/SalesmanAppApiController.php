@@ -57,6 +57,39 @@ class SalesmanAppApiController extends Controller
     }
 
     /**
+     * GET /api/salesman/settings  (public — no auth)
+     * App bootstrap settings for the salesman mobile app.
+     */
+    public function appSettings()
+    {
+        $keys = [
+            'currency', 'currency_code', 'decimal_point',
+            'app_name', 'support_number', 'support_email',
+            'google_place_api_key', 'apiKey',
+            'phone_auth_otp', 'firebase_authentication', 'custom_sms_gateway_otp_based',
+        ];
+
+        $data = CommonHelper::getSettings($keys);
+
+        // Derive a single otp_provider string for the app to consume
+        if (!empty($data['phone_auth_otp']) && $data['phone_auth_otp'] == 1) {
+            if (!empty($data['firebase_authentication']) && $data['firebase_authentication'] == 1) {
+                $data['otp_provider'] = 'firebase';
+            } elseif (!empty($data['custom_sms_gateway_otp_based']) && $data['custom_sms_gateway_otp_based'] == 1) {
+                $data['otp_provider'] = 'custom_sms';
+            } else {
+                $data['otp_provider'] = 'sms';
+            }
+        } else {
+            $data['otp_provider'] = 'none';
+        }
+
+        $data['allPermissions'] = \Spatie\Permission\Models\Permission::pluck('name')->toArray();
+
+        return CommonHelper::responseWithData($data);
+    }
+
+    /**
      * GET /api/salesman/retailers/pending
      *
      * Returns retailers that:
@@ -695,6 +728,11 @@ class SalesmanAppApiController extends Controller
             ];
         }
 
+        $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
+        $sellers = \App\Models\Seller::whereIn('id', array_keys($groups))
+            ->get(['id', 'name', 'self_pickup_mode', 'door_step_mode'])
+            ->keyBy('id');
+
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
         foreach ($groups as $sellerId => &$group) {
             $schemeLines = $group['scheme_lines'] ?? [];
@@ -705,6 +743,13 @@ class SalesmanAppApiController extends Controller
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
             $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
             $group['nearest_scheme']  = $nearest;
+
+            $seller = $sellers[$sellerId] ?? null;
+            $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
+            $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
+            $group['seller_name']           = $seller->name ?? null;
+            $group['self_pickup_mode']       = ($globalSelfPickup === 1 && $sellerSelfPickup === 1) ? 1 : 0;
+            $group['doorstep_delivery_mode'] = ($globalSelfPickup === 0 || $sellerDoorstep === 1) ? 1 : 0;
         }
         unset($group);
 
@@ -1024,6 +1069,148 @@ class SalesmanAppApiController extends Controller
         return CommonHelper::responseWithData([
             'message' => __('order_placed_successfully'),
             'orders'  => $createdOrders,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Salesman order history
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * GET /api/salesman/orders
+     * List all orders placed by this salesman.
+     * Filters: retailer_id, status (active_status), start_date, end_date (Y-m-d)
+     * Pagination: limit (default 20), offset (default 0)
+     */
+    public function orderList(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $limit  = (int) $request->input('limit', 20);
+        $offset = (int) $request->input('offset', 0);
+
+        $query = DB::table('orders')
+            ->join('users', 'users.id', '=', 'orders.user_id')
+            ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'orders.user_id')
+            ->where('orders.placed_by_salesman_id', $salesman->id)
+            ->select(
+                'orders.id as order_id',
+                'orders.orders_id',
+                'orders.active_status',
+                'orders.payment_method',
+                'orders.total',
+                'orders.final_total',
+                'orders.salesman_discount',
+                'orders.order_note',
+                'orders.created_at',
+                'users.id as retailer_id',
+                'users.name as retailer_name',
+                'users.mobile as retailer_mobile',
+                'retailer_profiles.shop_name',
+                'retailer_profiles.party_name'
+            )
+            ->orderByDesc('orders.id');
+
+        if ($request->filled('retailer_id')) {
+            $query->where('orders.user_id', $request->retailer_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('orders.active_status', $request->status);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->where('orders.created_at', '>=', Carbon::parse($request->start_date)->startOfDay());
+        }
+
+        if ($request->filled('end_date')) {
+            $query->where('orders.created_at', '<=', Carbon::parse($request->end_date)->endOfDay());
+        }
+
+        $total = (clone $query)->count();
+        $rows  = $query->offset($offset)->limit($limit)->get()->map(function ($row) {
+            $row->status_label = OrderStatusList::getTranslatedName((int) $row->active_status);
+            $row->placed_at    = CommonHelper::formatDate($row->created_at);
+            return $row;
+        });
+
+        return CommonHelper::responseWithData(['total' => $total, 'data' => $rows]);
+    }
+
+    /**
+     * GET /api/salesman/orders/{order_id}
+     * Single order detail — only accessible if placed by this salesman.
+     */
+    public function orderDetail(Request $request, int $orderId)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $order = DB::table('orders')
+            ->join('users', 'users.id', '=', 'orders.user_id')
+            ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'orders.user_id')
+            ->where('orders.id', $orderId)
+            ->where('orders.placed_by_salesman_id', $salesman->id)
+            ->select(
+                'orders.id as order_id',
+                'orders.orders_id',
+                'orders.active_status',
+                'orders.payment_method',
+                'orders.total',
+                'orders.delivery_charge',
+                'orders.wallet_balance',
+                'orders.final_total',
+                'orders.salesman_discount',
+                'orders.order_note',
+                'orders.delivery_time',
+                'orders.address',
+                'orders.mobile',
+                'orders.created_at',
+                'users.id as retailer_id',
+                'users.name as retailer_name',
+                'users.mobile as retailer_mobile',
+                'retailer_profiles.shop_name',
+                'retailer_profiles.party_name',
+                'retailer_profiles.address as shop_address',
+                'retailer_profiles.gst_no'
+            )
+            ->first();
+
+        if (!$order) {
+            return CommonHelper::responseError('order_not_found');
+        }
+
+        $order->status_label = OrderStatusList::getTranslatedName((int) $order->active_status);
+        $order->placed_at    = CommonHelper::formatDate($order->created_at);
+
+        $items = DB::table('order_items')
+            ->where('order_id', $orderId)
+            ->select(
+                'id as order_item_id',
+                'product_name',
+                'variant_name',
+                'product_variant_id',
+                'quantity',
+                'price',
+                'discounted_price',
+                'slab_unit_price',
+                'slab_min_qty',
+                'tax_amount',
+                'tax_percentage',
+                'sub_total',
+                'active_status as item_status',
+                'seller_id'
+            )
+            ->get();
+
+        return CommonHelper::responseWithData([
+            'order' => $order,
+            'items' => $items,
         ]);
     }
 }

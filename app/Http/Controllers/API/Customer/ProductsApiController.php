@@ -1299,7 +1299,7 @@ class ProductsApiController extends Controller
         $sort = $request->get('sort', 'id');
         $order = $request->get('order', 'DESC');
 
-        $product_id = $request->product_id;
+        $product_id = $request->master_product_id ?? $request->product_id;
         if ($product_id != null) {
             $productRatings = ProductRating::with('user', 'images')->where('product_id', $product_id);
             $total = $productRatings->count();
@@ -1338,7 +1338,7 @@ class ProductsApiController extends Controller
         $sort = $request->get('sort', 'id');
         $order = $request->get('order', 'DESC');
 
-        $product_id = $request->product_id;
+        $product_id = $request->master_product_id ?? $request->product_id;
         if ($product_id != null) {
             $productRatingImages = ProductRating::with('images')->where('product_id', $product_id)->get();
             if ($productRatingImages->isNotEmpty()) {

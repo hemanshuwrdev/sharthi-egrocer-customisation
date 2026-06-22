@@ -161,6 +161,7 @@ const ProductSalesReports = () => import("../views/Reports/ProductSalesReports")
 // Commission Reports
 const CommissionReports = () => import("../views/Reports/CommissionReports");
 const CommissionBilling = () => import("../views/Reports/CommissionBilling");
+const CommissionBillingDetail = () => import("../views/Reports/CommissionBillingDetail");
 
 // System Users
 const SystemUsers = () => import("../views/SystemUsers/SystemUsers");
@@ -209,6 +210,8 @@ const SellerWithdrawalRequests = () => import("../views/Sellers/WithdrawalReques
 const SellerProductSalesReports = () => import("../views/Sellers/ProductSalesReports");
 const SellerSalesReports = () => import("../views/Sellers/SalesReports");
 const SellerCommissionBilling = () => import("../views/Sellers/CommissionBilling");
+const SellerTripsList = () => import("../views/Sellers/TripsList");
+const SellerTripReconciliation = () => import("../views/Sellers/TripReconciliation");
 const SellerTaxes = () => import("../views/Sellers/Taxes");
 const SellerBrands = () => import("../views/Sellers/Brands");
 const SellerUnits = () => import("../views/Sellers/Units");
@@ -1371,6 +1374,16 @@ function configRoutes() {
                     },
                 },
                 {
+                    path: "commission_billing/:seller_id",
+                    name: "CommissionBillingDetail",
+                    component: CommissionBillingDetail,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Commission Billing Detail'
+                    },
+                },
+                {
                     path: "pos_reports",
                     name: "POS Reports",
                     component: PosReports,
@@ -2008,6 +2021,26 @@ function configRoutes() {
                         permission: 'order_list',
                         role: sellerRoles,
                         title: 'Billing Overview'
+                    }
+                },
+                {
+                    path: "trips",
+                    name: "SellerTripsList",
+                    component: SellerTripsList,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Trips'
+                    }
+                },
+                {
+                    path: "trips/:id",
+                    name: "SellerTripReconciliation",
+                    component: SellerTripReconciliation,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Trip Reconciliation'
                     }
                 },
                 {

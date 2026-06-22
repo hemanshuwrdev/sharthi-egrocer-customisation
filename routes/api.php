@@ -23,6 +23,7 @@ Route::get('active_languages', [\App\Http\Controllers\API\LanguageApiController:
 Route::post('seller/register', [\App\Http\Controllers\API\AdminAuthController::class, 'sellerRegister']);
 Route::get('seller/privacy_policy', [\App\Http\Controllers\SellerController::class, 'getPrivacyPolicy']);
 Route::get('seller/cities', [\App\Http\Controllers\API\CityApiController::class, 'getCities']);
+Route::post('seller/send_sms', [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
 
 Route::post('delivery_boy/register', [\App\Http\Controllers\API\AdminAuthController::class, 'deliveryBoyRegister']);
 
@@ -459,6 +460,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Sarthi: commission billing — GMV + commission summary for admin
     Route::group(['prefix' => 'commissions'], function () {
+        Route::get('aggregate',            [\App\Http\Controllers\API\CommissionBillingController::class, 'adminAggregate'])->name('admin.commissions.aggregate');
         Route::get('summary',              [\App\Http\Controllers\API\CommissionBillingController::class, 'adminSummary'])->name('admin.commissions.summary');
         Route::get('/',                    [\App\Http\Controllers\API\CommissionBillingController::class, 'adminTransactions'])->name('admin.commissions.transactions');
         Route::get('distributor/{seller_id}', [\App\Http\Controllers\API\CommissionBillingController::class, 'adminDistributorDetail'])->name('admin.commissions.distributor');
@@ -626,9 +628,14 @@ Route::middleware('auth:api')->group(function () {
         Route::get('payments/pending',      [\App\Http\Controllers\API\SettlementController::class, 'sellerPendingPayments'])->name('seller.payments.pending');
         Route::post('payments/verify',      [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifyPayment'])->name('seller.payments.verify');
         Route::get('settlements',           [\App\Http\Controllers\API\SettlementController::class, 'sellerSettlements'])->name('seller.settlements');
+        Route::get('trips',                 [\App\Http\Controllers\API\SettlementController::class, 'sellerTripsList'])->name('seller.trips.list');
+        Route::get('trips/{id}',            [\App\Http\Controllers\API\SettlementController::class, 'sellerTripDetail'])->name('seller.trips.detail');
+        Route::post('trips/{id}/reconcile', [\App\Http\Controllers\API\SettlementController::class, 'sellerUpdateReconciliation'])->name('seller.trips.reconcile');
+        Route::post('trips/{id}/close',     [\App\Http\Controllers\API\SettlementController::class, 'sellerCloseTrip'])->name('seller.trips.close');
 
         // Sarthi: distributor billing overview (GMV + commission)
         Route::get('billing', [\App\Http\Controllers\API\CommissionBillingController::class, 'sellerBilling'])->name('seller.billing');
+        Route::get('billing/transactions', [\App\Http\Controllers\API\CommissionBillingController::class, 'sellerBillingTransactions'])->name('seller.billing.transactions');
 
         Route::get('main_categories', [\App\Http\Controllers\SellerController::class, 'getMainCategories']);
         Route::get('seller_categories', [\App\Http\Controllers\API\CategoryApiController::class, 'getSellerCategories']);
@@ -815,6 +822,8 @@ Route::middleware('auth:api')->group(function () {
             Route::post('remove', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'removeCartItem'])->name('salesman.cart.remove');
         });
         Route::post('orders/place', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'placeOrder'])->name('salesman.orders.place');
+        Route::get('orders', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'orderList'])->name('salesman.orders.list');
+        Route::get('orders/{order_id}', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'orderDetail'])->name('salesman.orders.detail');
     });
 
 
@@ -848,3 +857,6 @@ Route::prefix('oauth')->group(function () {
 
 // Public route for POS invoice
 Route::get('pos/invoice/{id}', [\App\Http\Controllers\API\SellerPosController::class, 'showInvoice']);
+
+// Public salesman app settings (no auth required)
+Route::get('salesman/settings', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'appSettings'])->name('salesman.app.settings');
