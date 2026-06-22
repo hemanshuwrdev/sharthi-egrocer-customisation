@@ -723,19 +723,28 @@ class CustomerAuthController extends Controller
 
     public function editProfile(Request $request)
     {
-        $user = auth()->user();
-        $profileCountryCode = $this->normalizeCountryCode($request->input('country_code', $user->country_code));
+        $authUser = $request->user('api-customers');
+        if (!$authUser) {
+            return CommonHelper::responseError(__('unauthorized'));
+        }
+
+        $userId = $authUser->id;
+        $currentUser = DB::table('users')->where('id', $userId)->whereNull('deleted_at')->first();
+        if (!$currentUser) {
+            return CommonHelper::responseError(__('unauthorized'));
+        }
+
+        $profileCountryCode = $this->normalizeCountryCode($request->input('country_code', $currentUser->country_code));
+
         $validator = Validator::make($request->all(), [
-            'name'   => 'required',
-            'email'  => 'nullable|email|unique:users,email,' . $user->id . ',id,deleted_at,NULL',
+            'name'         => 'required',
+            'email'        => 'nullable|email|unique:users,email,' . $userId . ',id,deleted_at,NULL',
             'country_code' => 'required_with:mobile|nullable|string',
-            'mobile' => [
+            'mobile'       => [
                 'nullable',
                 Rule::unique('users', 'mobile')
-                    ->ignore($user->id)
-                    ->where(function ($query) use ($profileCountryCode) {
-                        $query->where('country_code', $profileCountryCode);
-                    })
+                    ->ignore($userId)
+                    ->where(fn($q) => $q->where('country_code', $profileCountryCode))
                     ->whereNull('deleted_at'),
             ],
         ], [
@@ -746,45 +755,69 @@ class CustomerAuthController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
- 
-        if ($user->mobile == '9876543210') {
+
+        if ($currentUser->mobile == '9876543210') {
             return CommonHelper::responseError("This function is not available in demo mode!");
         }
-        
-        $user->name = $request->name;
+
+        $updates = ['name' => $request->name, 'updated_at' => now()];
+
         if ($request->filled('email')) {
-            $user->email = $request->email;
+            $updates['email'] = $request->email;
         }
 
-        if (isset($request->mobile) && $user->type != 'phone') {
-            $user->mobile = $request->mobile;
-            $user->country_code = $profileCountryCode;
+        if ($request->filled('mobile') && $currentUser->type != 'phone') {
+            $updates['mobile']       = $request->mobile;
+            $updates['country_code'] = $profileCountryCode;
         }
 
         if ($request->hasFile('profile')) {
-            $file = $request->file('profile');
-
-            $fileName = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-
-            $image = Storage::disk('public')->putFileAs('customers', $file, $fileName);
-            $user->profile = $image;
+            $file     = $request->file('profile');
+            $fileName = time() . '_' . $userId . '.' . $file->getClientOriginalExtension();
+            $updates['profile'] = Storage::disk('public')->putFileAs('customers', $file, $fileName);
         }
 
-        if ($user->status == 2) {
-            if (isset($request->referral_code)) {
-                $validCode = User::where('status', 1)
-                    ->where('referral_code', $request->referral_code)->first();
+        if ($currentUser->status == 2) {
+            if ($request->filled('referral_code')) {
+                $validCode = DB::table('users')->where('status', 1)->where('referral_code', $request->referral_code)->whereNull('deleted_at')->first();
                 if ($validCode) {
-                    $user->friends_code = $request->referral_code;
+                    $updates['friends_code'] = $request->referral_code;
                 }
             }
-            $user->status = 1;
-            CommonHelper::setDefaultMailSetting($user->id, 0);
+            $updates['status'] = 1;
+            CommonHelper::setDefaultMailSetting($userId, 0);
         }
 
-        $user->save();
+        DB::table('users')->where('id', $userId)->update($updates);
 
-        return  CommonHelper::responseSuccess('profile_updated_successfully');
+        // Update retailer profile fields sent by the app
+        $retailerUpdates = [];
+        foreach (['shop_name', 'party_name', 'gst_no', 'address', 'city_id', 'gps_lat', 'gps_lng'] as $field) {
+            if ($request->filled($field)) {
+                $retailerUpdates[$field] = $request->input($field);
+            }
+        }
+        if (!empty($retailerUpdates)) {
+            $retailerUpdates['updated_at'] = now();
+            $exists = DB::table('retailer_profiles')->where('user_id', $userId)->exists();
+            if ($exists) {
+                DB::table('retailer_profiles')->where('user_id', $userId)->update($retailerUpdates);
+            } else {
+                $retailerUpdates['user_id']    = $userId;
+                $retailerUpdates['created_at'] = now();
+                DB::table('retailer_profiles')->insert($retailerUpdates);
+            }
+        }
+
+        $updated = User::with('retailerProfile')
+            ->select('id', 'name', 'email', 'country_code', 'mobile', 'profile', 'balance', 'referral_code', 'status', 'verification_status', 'salesman_id')
+            ->find($userId);
+
+        return Response::json([
+            'status'  => 1,
+            'message' => __('profile_updated_successfully'),
+            'user'    => $updated,
+        ]);
     }
 
     public function ResetPassword(Request $request)
