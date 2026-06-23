@@ -752,6 +752,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::group(['prefix' => 'delivery_boy'], function () {
         Route::get('dashboard', [\App\Http\Controllers\DeliveryBoyController::class, 'index']);
+        Route::get('route_list', [\App\Http\Controllers\DeliveryBoyController::class, 'getRouteList']);
         Route::get('orders', [\App\Http\Controllers\DeliveryBoyController::class, 'getOrders']);
         Route::get('order_by_id', [\App\Http\Controllers\DeliveryBoyController::class, 'getOrder']);
         Route::post('get_delivery_boy_status', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'getStatus'])->name('delivery_boys.get_status');

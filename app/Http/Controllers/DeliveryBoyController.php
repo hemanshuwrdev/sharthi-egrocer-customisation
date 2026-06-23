@@ -16,6 +16,7 @@ use App\Models\PanelNotification;
 use App\Models\Setting;
 use App\Models\DeliveryBoyTransaction;
 use App\Models\LiveTracking;
+use App\Models\LoadingSlip;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
@@ -54,6 +55,183 @@ class DeliveryBoyController extends BaseController
         
         return CommonHelper::responseWithData($data);
     }
+
+    public function getRouteList(Request $request)
+    {
+        $deliveryBoy = auth()->user()->deliveryBoy;
+        if (!$deliveryBoy) {
+            return CommonHelper::responseError('Driver not found');
+        }
+        $delivery_boy_id = $deliveryBoy->id;
+
+        // 1. Try to find the active dispatched loading slip
+        $slip = LoadingSlip::with(['vehicle', 'driver'])
+            ->where('driver_id', $delivery_boy_id)
+            ->where('status', 1) // Dispatched
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        // 2. If no active dispatched slip, fall back to any slip today (created or completed or dispatched)
+        if (!$slip) {
+            $slip = LoadingSlip::with(['vehicle', 'driver'])
+                ->where('driver_id', $delivery_boy_id)
+                ->whereDate('created_at', Carbon::today())
+                ->orderBy('id', 'DESC')
+                ->first();
+        }
+
+        $orders = collect();
+        $expectedCash = 0;
+        $totalStops = 0;
+
+        if ($slip) {
+            // Fetch all orders in the loading slip
+            $orders = Order::select(
+                'orders.*',
+                'users.name as user_name',
+                'user_addresses.address as customer_address',
+                'user_addresses.latitude as user_address_latitude',
+                'user_addresses.longitude as user_address_longitude',
+                'cities.zone as city_zone',
+                'rp.party_name',
+                'rp.shop_name',
+                'rp.gst_no as customer_gst',
+                'rp.gps_lat',
+                'rp.gps_lng',
+                'rp.verified_lat',
+                'rp.verified_lng',
+                DB::raw('COALESCE(rp.party_name, rp.shop_name, users.name) as customer_name'),
+                'orders.mobile as customer_mobile'
+            )
+                ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+                ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
+                ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
+                ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
+                ->where('orders.loading_slip_id', $slip->id)
+                ->get();
+        } else {
+            // Fallback: fetch orders assigned to delivery boy with outForDelivery status
+            $orders = Order::select(
+                'orders.*',
+                'users.name as user_name',
+                'user_addresses.address as customer_address',
+                'user_addresses.latitude as user_address_latitude',
+                'user_addresses.longitude as user_address_longitude',
+                'cities.zone as city_zone',
+                'rp.party_name',
+                'rp.shop_name',
+                'rp.gst_no as customer_gst',
+                'rp.gps_lat',
+                'rp.gps_lng',
+                'rp.verified_lat',
+                'rp.verified_lng',
+                DB::raw('COALESCE(rp.party_name, rp.shop_name, users.name) as customer_name'),
+                'orders.mobile as customer_mobile'
+            )
+                ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+                ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
+                ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
+                ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
+                ->where('orders.delivery_boy_id', $delivery_boy_id)
+                ->where('orders.active_status', OrderStatusList::$outForDelivery)
+                ->get();
+        }
+
+        foreach ($orders as $order) {
+            $order->resolved_latitude = floatval($order->latitude ?: ($order->user_address_latitude ?: ($order->verified_lat ?: ($order->gps_lat ?: 0))));
+            $order->resolved_longitude = floatval($order->longitude ?: ($order->user_address_longitude ?: ($order->verified_lng ?: ($order->gps_lng ?: 0))));
+            $order->customer_address = $order->customer_address ?: $order->address;
+            $order->customer_mobile = $order->customer_mobile ?: $order->mobile;
+        }
+
+        if ($orders->isNotEmpty()) {
+            // Sequence routes by spatial proximity using Euclidean distance
+            $sequencedIds = $this->sequenceRoutesByProximity($orders);
+            $orders = $orders->sortBy(function ($order) use ($sequencedIds) {
+                return array_search($order->id, $sequencedIds);
+            })->values();
+
+            // Calculate metrics
+            $totalStops = $orders->count();
+            // Expected cash from COD orders (remaining_final)
+            $expectedCash = $orders->where('payment_method', 'COD')->sum('remaining_final');
+        }
+
+        // Attach items, translated status name, and next stop indication
+        $nextStopFound = false;
+        foreach ($orders as $order) {
+            // Fetch order items with delivered quantity / damage photo
+            $order->items = DB::table('order_items')
+                ->select('id', 'product_name', 'variant_name', 'quantity', 'delivered_quantity', 'damage_photo', 'price')
+                ->where('order_id', $order->id)
+                ->get();
+
+            $order->order_status_name = OrderStatusList::getTranslatedName((int) ($order->active_status ?? 0));
+
+            // Highlight next stop: first stop that is still out_for_delivery/shipped (pending delivery)
+            if (!$nextStopFound && in_array($order->active_status, [
+                OrderStatusList::$outForDelivery,
+                OrderStatusList::$shipped,
+                OrderStatusList::$processed,
+                OrderStatusList::$received
+            ])) {
+                $order->is_next_stop = true;
+                $nextStopFound = true;
+            } else {
+                $order->is_next_stop = false;
+            }
+        }
+
+        $data = [
+            'loading_slip' => $slip,
+            'total_stops' => $totalStops,
+            'expected_cash_collection' => round($expectedCash, 2),
+            'stops' => $orders
+        ];
+
+        return CommonHelper::responseWithData($data);
+    }
+
+    // Nearest Neighbor Routing algorithm to cluster and sequence order stops logically
+    private function sequenceRoutesByProximity($orders)
+    {
+        if ($orders->isEmpty()) return [];
+
+        $unvisited = $orders->values()->all();
+        $sequenced = [];
+
+        // Start with the first order in the list as the anchor stop
+        $current = array_shift($unvisited);
+        $sequenced[] = $current;
+
+        while (!empty($unvisited)) {
+            $nearestIdx = 0;
+            $minDist = doubleval(INF);
+
+            $lat1 = doubleval($current->resolved_latitude);
+            $lon1 = doubleval($current->resolved_longitude);
+
+            foreach ($unvisited as $idx => $candidate) {
+                $lat2 = doubleval($candidate->resolved_latitude);
+                $lon2 = doubleval($candidate->resolved_longitude);
+
+                // Simple Euclidean distance approximation for spatial proximity sequencing
+                $dist = sqrt(pow($lat1 - $lat2, 2) + pow($lon1 - $lon2, 2));
+                if ($dist < $minDist) {
+                    $minDist = $dist;
+                    $nearestIdx = $idx;
+                }
+            }
+
+            $current = $unvisited[$nearestIdx];
+            $sequenced[] = $current;
+            unset($unvisited[$nearestIdx]);
+            $unvisited = array_values($unvisited); // Reindex array keys
+        }
+
+        return collect($sequenced)->pluck('id')->toArray();
+    }
+
     public function doLanguageChange(Request $request)
     {
         Session::put('lang',$request->language);
