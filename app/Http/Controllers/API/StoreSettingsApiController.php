@@ -80,7 +80,6 @@ class StoreSettingsApiController extends Controller
 
             "from_mail" => "",
             "reply_to" => "",
-            "generate_otp" => 0,
 
             "app_mode_customer" => 0,
             "app_mode_customer_remark" => "",
@@ -431,7 +430,6 @@ class StoreSettingsApiController extends Controller
             'delivery_boy_bonus_percentage',
             'delivery_boy_bonus_min_amount',
             'delivery_boy_bonus_max_amount',
-            'generate_otp'
         ];
 
         foreach ($request->all() as $key => $value) {

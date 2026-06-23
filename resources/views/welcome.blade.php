@@ -30,7 +30,7 @@
     if (isInstalled()) {
         $app_name = \App\Models\Setting::get_value('app_name');
         if ($app_name == '' || $app_name == null) {
-            $app_name = 'eGrocer';
+            $app_name = 'Sarthi';
         }
         $support_email = \App\Models\Setting::get_value('support_email');
         if ($support_email == '' || $support_email == null) {

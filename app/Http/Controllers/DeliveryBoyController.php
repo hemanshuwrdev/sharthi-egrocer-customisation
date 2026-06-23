@@ -346,13 +346,6 @@ class DeliveryBoyController extends BaseController
         // Fetch only the limited rows (skip/take applied)
         $orders = $orders->orderBy('orders.updated_at', 'DESC')->skip($offset)->take((int) $limit)->get();
 
-        // Fetch OTP setting once instead of per order
-        $generate_otp = Setting::get_value("generate_otp");
-        foreach ($orders as $key => $row) {
-            if ($generate_otp == 0) {
-                $orders[$key]->otp = 0;
-            }
-        }
 
         // Order items query: no product/variant joins needed (not selected)
         $order_items = Order::select('order_items.*','orders.mobile','orders.total' ,'orders.delivery_charge','orders.discount','orders.promo_code',

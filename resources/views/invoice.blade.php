@@ -1,7 +1,7 @@
 @php
     $appName = \App\Models\Setting::get_value('app_name');
     if($appName == "" || $appName == null){
-        $appName = "eGrocer";
+        $appName = "Sarthi";
     }
 
     $supportEmail = \App\Models\Setting::get_value('support_email');

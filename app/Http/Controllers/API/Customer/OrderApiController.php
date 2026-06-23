@@ -287,12 +287,7 @@ class OrderApiController extends Controller
             $order_total_tax_amt = $totalTax['order_total_tax_amt'];
             $order_total_tax_per = $totalTax['order_total_tax_per'];
 
-            $generate_otp = Setting::get_value("generate_otp");
-            if ($generate_otp == 1) {
-                $otp_number = mt_rand(100000, 999999);
-            } else {
-                $otp_number = 0;
-            }
+            $otp_number = mt_rand(100000, 999999);
 
             /* check for wallet balance */
             if ($wallet_used == 'true') {
@@ -1913,9 +1908,10 @@ class OrderApiController extends Controller
             } else {
                 $res[$i]['additional_charges'] = [];
             }
-            $generate_otp = Setting::get_value("generate_otp");
-            if ($generate_otp == 0) {
-                $res[$key]->otp = 0;
+            if (empty($res[$key]->otp)) {
+                $newOtp = mt_rand(100000, 999999);
+                DB::table('orders')->where('id', $res[$key]->order_id)->update(['otp' => $newOtp]);
+                $res[$key]->otp = $newOtp;
             }
             $product_rating = Setting::get_value("product_rating");
             $res[$key]->product_rating = $product_rating ?? 0;
@@ -1999,6 +1995,7 @@ class OrderApiController extends Controller
                 's.place_name as seller_place_name',
                 's.latitude as seller_latitude',
                 's.longitude as seller_longitude',
+                DB::raw('COALESCE(mpv.image, mp.image) as master_image'),
                 DB::raw('(SELECT status FROM return_requests WHERE order_item_id = oi.id) as return_requested'),
                 DB::raw('(SELECT reason FROM return_requests WHERE order_item_id = oi.id) as return_reason'),
                 DB::raw('(SELECT remarks FROM return_requests WHERE order_item_id = oi.id) as return_remarks')
@@ -2006,6 +2003,8 @@ class OrderApiController extends Controller
                 ->from('order_items as oi')
                 ->leftJoin('product_variants as v', 'oi.product_variant_id', '=', 'v.id')
                 ->leftJoin('products as p', 'v.product_id', '=', 'p.id')
+                ->leftJoin('master_product_variants as mpv', 'oi.master_product_variant_id', '=', 'mpv.id')
+                ->leftJoin('master_products as mp', 'mpv.master_product_id', '=', 'mp.id')
                 ->leftJoin('sellers as s', 'oi.seller_id', '=', 's.id')
                 ->leftJoin("countries as co", "p.made_in", "=", "co.id")
                 ->where('oi.order_id', '=', $row['id'])
@@ -2050,7 +2049,12 @@ class OrderApiController extends Controller
                 }
                 $items[$subkey]->item_rating = CommonHelper::productRatingOfUser($item->product_id, $item->user_id);
             }
-            $items = $items->makeHidden(['image', 'images', 'updated_at', 'deleted_at', 'status', 'current_status', 'country_made_in']);
+            foreach ($items as $item) {
+                if (empty($item->image)) {
+                    $item->image = $item->master_image;
+                }
+            }
+            $items = $items->makeHidden(['images', 'master_image', 'updated_at', 'deleted_at', 'status', 'current_status', 'country_made_in']);
 
             $res[$i]['items'] = $items;
             $res[$i]['status'] = json_decode($res[$i]['status']);

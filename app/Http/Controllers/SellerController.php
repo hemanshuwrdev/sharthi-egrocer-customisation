@@ -437,10 +437,7 @@ class SellerController extends BaseController
         } else {
             $orders = $orders->groupBy('orders.id')->orderBy('orders.id', 'DESC')->get();
         }
-        // Add OTP value dynamically based on setting
-        $generate_otp = Setting::get_value("generate_otp");
         foreach ($orders as $order) {
-            $order->otp = ($generate_otp == 1) ? $order->otp : 0;
             $order->order_status_name = OrderStatusList::getTranslatedName((int) $order->active_status);
         }
         $item_limit = ($request->item_limit);
@@ -632,10 +629,7 @@ class SellerController extends BaseController
 
             return $order;
         });
-        $generate_otp = Setting::get_value("generate_otp");
         foreach ($orders as &$order) {
-
-            $order['otp'] = ($generate_otp == 1) ? $order['otp'] : 0;
 
             $order['order_status_name'] = OrderStatusList::getTranslatedName((int) ($order['active_status'] ?? 0));
 

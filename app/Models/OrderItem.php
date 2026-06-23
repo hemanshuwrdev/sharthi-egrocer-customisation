@@ -41,14 +41,11 @@ protected $casts = [
     }
 
     public function getImageUrlAttribute(){
-
         if($this->image){
-            //$image_url = \Storage::url($this->image);
-            $image_url = asset('storage/'.$this->image);
-            return $image_url;
+            if(str_starts_with($this->image, 'http')) return $this->image;
+            return asset('storage/'.$this->image);
         }
         return $this->image;
-
     }
 
     public function seller()

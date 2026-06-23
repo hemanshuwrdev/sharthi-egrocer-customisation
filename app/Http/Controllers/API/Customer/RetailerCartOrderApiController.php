@@ -152,6 +152,7 @@ class RetailerCartOrderApiController extends Controller
             $subtotal = $unitPrice * (float) $row->qty;
 
             $groups[$row->seller_id]['seller_id'] = (int) $row->seller_id;
+            $sp = $line['seller_product'];
             $groups[$row->seller_id]['items'][] = [
                 'cart_id' => $row->id,
                 'product_variant_id' => $variant->id,
@@ -160,8 +161,11 @@ class RetailerCartOrderApiController extends Controller
                 'brand' => $variant->masterProduct->brand->name ?? null,
                 'sku' => $variant->sku,
                 'unit' => $variant->unit->name ?? null,
-                'image' => $variant->image ?: ($variant->masterProduct->image ?? null),
+                'image' => (function($img) { return $img ? (str_starts_with($img, 'http') ? $img : asset('storage/'.$img)) : null; })($variant->image ?: ($variant->masterProduct->image ?? null)),
                 'qty' => (float) $row->qty,
+                'price' => (float) $sp->selling_price,
+                'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                'mrp' => (float) $sp->mrp,
                 'unit_price' => $unitPrice,
                 'base_price' => $line['base_price'],
                 'slab' => $line['slab'],

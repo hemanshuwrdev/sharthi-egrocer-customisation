@@ -1188,25 +1188,34 @@ class SalesmanAppApiController extends Controller
         $order->status_label = OrderStatusList::getTranslatedName((int) $order->active_status);
         $order->placed_at    = CommonHelper::formatDate($order->created_at);
 
-        $items = DB::table('order_items')
-            ->where('order_id', $orderId)
+        $items = DB::table('order_items as oi')
+            ->leftJoin('master_product_variants as mpv', 'mpv.id', '=', 'oi.master_product_variant_id')
+            ->leftJoin('master_products as mp', 'mp.id', '=', 'mpv.master_product_id')
+            ->where('oi.order_id', $orderId)
             ->select(
-                'id as order_item_id',
-                'product_name',
-                'variant_name',
-                'product_variant_id',
-                'quantity',
-                'price',
-                'discounted_price',
-                'slab_unit_price',
-                'slab_min_qty',
-                'tax_amount',
-                'tax_percentage',
-                'sub_total',
-                'active_status as item_status',
-                'seller_id'
+                'oi.id as order_item_id',
+                'oi.product_name',
+                'oi.variant_name',
+                'oi.product_variant_id',
+                'oi.quantity',
+                'oi.price',
+                'oi.discounted_price',
+                'oi.slab_unit_price',
+                'oi.slab_min_qty',
+                'oi.tax_amount',
+                'oi.tax_percentage',
+                'oi.sub_total',
+                'oi.active_status as item_status',
+                'oi.seller_id',
+                DB::raw('COALESCE(mpv.image, mp.image) as product_image')
             )
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                if ($item->product_image && !str_starts_with($item->product_image, 'http')) {
+                    $item->product_image = asset('storage/' . $item->product_image);
+                }
+                return $item;
+            });
 
         return CommonHelper::responseWithData([
             'order' => $order,
