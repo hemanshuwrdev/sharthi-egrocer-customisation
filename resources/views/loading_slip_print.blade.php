@@ -198,8 +198,18 @@
             font-size: 12px;
             font-weight: bold;
             margin-top: 10px;
-            border-bottom: 2px solid #000;
             padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .transport-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            border-bottom: 2px solid #000;
+            padding-bottom: 6px;
             margin-bottom: 15px;
         }
 
@@ -437,6 +447,11 @@
         <div>Slip No: {{ $slip->slip_no }}</div>
         <div>Page 1</div>
     </div>
+    <div class="transport-meta">
+        <div>Vehicle: {{ $slip->vehicle->name ?? 'N/A' }} ({{ $slip->vehicle->vehicle_number ?? 'N/A' }})</div>
+        <div>Driver: {{ $slip->driver->name ?? 'N/A' }} @if(isset($slip->driver->mobile)) - {{ $slip->driver->mobile }} @endif</div>
+        <div>Total Weight: {{ number_format($slip->total_weight, 2) }} kg</div>
+    </div>
 
 
     <table>
@@ -531,6 +546,9 @@
         </div>
         <div class="sig-box">
             <div class="sig-line">Driver / Delivery Boy</div>
+            @if (isset($slip->driver->name))
+                <div style="font-size: 11px; font-weight: bold; margin-top: 5px; color: #555;">({{ strtoupper($slip->driver->name) }})</div>
+            @endif
         </div>
     </div>
 
