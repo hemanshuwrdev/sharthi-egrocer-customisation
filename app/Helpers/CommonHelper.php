@@ -67,41 +67,6 @@ use Illuminate\Support\Facades\Validator;
 class CommonHelper
 {
 
-    // public static function fixDescriptionImageUrls($html)
-    // {
-    //     if (!$html) return $html;
-
-    //     $baseUrl = request()->getSchemeAndHttpHost();
-
-    //     return preg_replace_callback(
-    //         '/<img[^>]+src=["\']([^"\']+)["\']/i',
-    //         function ($matches) use ($baseUrl) {
-
-    //             $fullTag = $matches[0];
-    //             $src = $matches[1];
-
-    //             // 1. If already absolute → return as is
-    //             if (preg_match('#^https?://#', $src)) {
-    //                 return $fullTag;
-    //             }
-
-    //             // 2. Remove ../ or ./ from start ONLY
-    //             $src = preg_replace('#^(\.\./|\./)+#', '', $src);
-
-    //             // 3. Ensure it starts with "storage/"
-    //             if (!str_starts_with($src, 'storage/')) {
-    //                 $src = 'storage/' . $src;
-    //             }
-
-    //             // 4. Final URL
-    //             $newSrc = $baseUrl . '/' . $src;
-
-    //             // 5. Replace inside tag
-    //             return str_replace($matches[1], $newSrc, $fullTag);
-    //         },
-    //         $html
-    //     );
-    // }
     public static function fixAdminImagePaths($html)
     {
         if (!$html) return $html;
@@ -2734,19 +2699,28 @@ class CommonHelper
 
     public static function downloadOrderInvoice($order_id)
     {
-        $data = CommonHelper::getOrderDetails($order_id, true);
-        if (!$data["order"]) {
-            return CommonHelper::responseError("Order Not found!");
+        try {
+            $data = CommonHelper::getOrderDetails($order_id, true);
+            if (!$data["order"]) {
+                return CommonHelper::responseError("Order Not found!");
+            }
+            $invoice = view('invoiceMpdf', $data)->render();
+
+            $tempDir = storage_path('app/mpdf');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+            $mpdf = new Mpdf([
+                'tempDir' => $tempDir
+            ]);
+            $stylesheet = file_get_contents(public_path('assets/css/custom/bootstrap/bootstrap.min.css')); // external css
+            $mpdf->WriteHTML($stylesheet, 1);
+            $mpdf->WriteHTML($invoice);
+            return $mpdf->Output("Invoice-No:#" . $order_id . '.pdf', Destination::INLINE);
+        } catch (\Throwable $e) {
+            \Log::error("Invoice PDF download error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine() . "\n" . $e->getTraceAsString());
+            return CommonHelper::responseError("Invoice generation error: " . $e->getMessage() . " in " . basename($e->getFile()) . ":" . $e->getLine());
         }
-        $invoice = view('invoiceMpdf', $data)->render();
-
-        $mpdf = new Mpdf();
-        $stylesheet = file_get_contents(asset('assets/css/custom/bootstrap/bootstrap.min.css')); // external css
-        $mpdf->WriteHTML($stylesheet, 1);
-        $mpdf->WriteHTML($invoice);
-        return $mpdf->Output("Invoice-No:#" . $order_id . '.pdf', Destination::INLINE);
-    }
-
     public static function getFirebaseKeys()
     {
         $firebase_array = array(
