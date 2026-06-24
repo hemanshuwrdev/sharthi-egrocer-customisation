@@ -47,9 +47,9 @@ class RetailerCatalogApiController extends Controller
             return CommonHelper::responseWithData([], 0);
         }
 
-        $limit = (int) $request->input('per_page', 25);
-        $page = max((int) $request->input('page', 1), 1);
-        $offset = ($page - 1) * $limit;
+        $limit  = max(1, (int) $request->input('limit', $request->input('per_page', 25)));
+        $offset = max(0, (int) $request->input('offset', 0));
+        $sort   = trim((string) $request->input('sort', ''));
         $filter = trim((string) $request->input('filter', ''));
 
         $mappings = BrandDistributorMapping::whereIn('city_id', $cityIds)
@@ -101,17 +101,45 @@ class RetailerCatalogApiController extends Controller
                     ->orWhere('master_products.hsn', 'like', "%{$filter}%");
             });
         }
-        if ($request->filled('brand_id')) {
-            $query->where('master_products.brand_id', $request->brand_id);
+
+        // category_ids: comma-separated string or array
+        $categoryIds = array_filter(array_map('intval', explode(',', (string) $request->input('category_ids', $request->input('category_id', '')))));
+        if (!empty($categoryIds)) {
+            $query->whereIn('master_products.category_id', $categoryIds);
         }
-        if ($request->filled('category_id')) {
-            $query->where('master_products.category_id', $request->category_id);
+
+        // brand_ids: comma-separated string or array
+        $brandIdsFilter = array_filter(array_map('intval', explode(',', (string) $request->input('brand_ids', $request->input('brand_id', '')))));
+        if (!empty($brandIdsFilter)) {
+            $query->whereIn('master_products.brand_id', $brandIdsFilter);
         }
+
+        // unit_ids: comma-separated
+        $unitIds = array_filter(array_map('intval', explode(',', (string) $request->input('unit_ids', ''))));
+        if (!empty($unitIds)) {
+            $query->whereIn('master_product_variants.unit_id', $unitIds);
+        }
+
+        // sizes: comma-separated weights (paired with unit_ids in legacy; here applied independently)
+        $sizes = array_filter(array_map('trim', explode(',', (string) $request->input('sizes', ''))));
+        if (!empty($sizes)) {
+            $query->whereIn('master_product_variants.weight', $sizes);
+        }
+
         if ($request->filled('parent_company_id')) {
             $query->where('master_products.parent_company_id', $request->parent_company_id);
         }
 
-        $rows = $query->orderBy('master_products.name')
+        // Apply DB-level sort for name/date; price/discount sorts are applied after grouping
+        $dbOrder = match ($sort) {
+            'new'  => ['master_products.id', 'DESC'],
+            'old'  => ['master_products.id', 'ASC'],
+            'a_to_z', 'a-to-z' => ['master_products.name', 'ASC'],
+            'z_to_a', 'z-to-a' => ['master_products.name', 'DESC'],
+            default => ['master_products.name', 'ASC'],
+        };
+
+        $rows = $query->orderBy($dbOrder[0], $dbOrder[1])
             ->orderBy('master_product_variants.id')
             ->get();
 
@@ -182,6 +210,18 @@ class RetailerCatalogApiController extends Controller
                 'best_offer'    => $offers->first(),
             ];
         })->values();
+
+        // Post-group sorts (need best_offer price which is only known after grouping)
+        $grouped = match ($sort) {
+            'low', 'price_low_to_high', 'price-low-to-high' => $grouped->sortBy(fn($p) => $p['best_offer']['discounted_price'] > 0 ? $p['best_offer']['discounted_price'] : $p['best_offer']['selling_price'])->values(),
+            'high', 'price_high_to_low', 'price-high-to-low' => $grouped->sortByDesc(fn($p) => $p['best_offer']['discounted_price'] > 0 ? $p['best_offer']['discounted_price'] : $p['best_offer']['selling_price'])->values(),
+            'discount' => $grouped->sortByDesc(function ($p) {
+                $o = $p['best_offer'];
+                $base = $o['selling_price'] > 0 ? $o['selling_price'] : 1;
+                return $o['discounted_price'] > 0 ? round(($base - $o['discounted_price']) / $base * 100, 2) : 0;
+            })->values(),
+            default => $grouped,
+        };
 
         $total = $grouped->count();
         $paged = $grouped->slice($offset, $limit)->values();

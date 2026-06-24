@@ -52,6 +52,10 @@ use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 use Illuminate\Validation\Rule;
 use App\Models\RatingImages;
+use App\Models\MasterProduct;
+use App\Models\MasterProductVariant;
+use App\Models\SellerProduct;
+use App\Models\SellerProductSlabPrice;
 use App\Models\ProductRating;
 use Carbon\Carbon;
 use App\Notifications\OrderNotification;
@@ -1182,209 +1186,269 @@ class CommonHelper
         return $product_ids;
     }
 
+    public static function getMasterProductIdsSection($section, $seller_ids, $user_id = null)
+    {
+        if (empty($section)) return "";
+
+        $cate_ids = self::normalizeIdArray($section->category_ids);
+        $product_ids = "";
+
+        $hasSellerProduct = function ($query) use ($seller_ids) {
+            $query->select(DB::raw(1))
+                ->from('seller_products as sp')
+                ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
+                ->whereColumn('mpv.master_product_id', 'mp.id')
+                ->whereIn('sp.seller_id', $seller_ids)
+                ->where('sp.status', 1);
+        };
+
+        if (in_array($section->product_type, ['all_products', 'new_added_products', 'most_selling_products'])) {
+            $sql = MasterProduct::select('id as product_id')->from('master_products as mp')
+                ->where('mp.status', 1)
+                ->whereExists($hasSellerProduct);
+            if (!empty($cate_ids)) {
+                $sql->whereIn('mp.category_id', $cate_ids);
+            }
+            $sql->orderBy('mp.id', 'DESC');
+
+        } elseif ($section->product_type == 'products_on_sale') {
+            $hasSaleProduct = function ($query) use ($seller_ids) {
+                $query->select(DB::raw(1))
+                    ->from('seller_products as sp')
+                    ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
+                    ->whereColumn('mpv.master_product_id', 'mp.id')
+                    ->whereIn('sp.seller_id', $seller_ids)
+                    ->where('sp.status', 1)
+                    ->where('sp.discounted_price', '>', 0)
+                    ->whereColumn('sp.discounted_price', '<', 'sp.selling_price');
+            };
+            $sql = MasterProduct::select('id as product_id')->from('master_products as mp')
+                ->where('mp.status', 1)
+                ->whereExists($hasSaleProduct);
+            if (!empty($cate_ids)) {
+                $sql->whereIn('mp.category_id', $cate_ids);
+            }
+            $sql->orderBy('mp.id', 'DESC');
+
+        } elseif ($section->product_type == 'recently_visited_products') {
+            if (!empty($user_id)) {
+                $recentlyVisited = RecentlyVisitedProduct::where('user_id', $user_id)
+                    ->orderBy('visited_at', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(10)
+                    ->pluck('product_id')
+                    ->toArray();
+                $product_ids = implode(",", $recentlyVisited);
+            }
+        } else {
+            // custom_products: product_ids stored in section are master_product IDs
+            $product_ids = implode(',', self::normalizeIdArray($section->product_ids));
+        }
+
+        if (!in_array($section->product_type, ['custom_products', 'recently_visited_products']) && !empty($section->product_type) && isset($sql)) {
+            $pro_id = $sql->get()->pluck('product_id')->toArray();
+            $product_ids = implode(",", $pro_id);
+        }
+
+        return $product_ids;
+    }
+
     public static function getSectionWithProduct($seller_ids, $user_id = 0, $cityIds = [])
     {
         $limit = 8;
-        $offset =  0;
         $sections = Section::orderBy('created_at', 'ASC')->get();
-
         $sections = $sections->makeHidden(['created_at', 'updated_at']);
 
-        // Get settings for product rating and few quantity alert
         $productRatingSetting = (int) (Setting::get_value('product_rating') ?? 0);
         $isProductRatingEnabled = $productRatingSetting === 1;
         $fewQuantityAlertThreshold = (int) (Setting::get_value('few_quantity_left_alert') ?? 0);
 
         foreach ($sections as $key => $section) {
-            $product_ids = self::getProductIdsSection($section, $user_id) ?? "";
-            // Sanitize product_ids: trim, cast to int, keep unique positive IDs.
+            $product_ids = self::getMasterProductIdsSection($section, $seller_ids, $user_id) ?? "";
             $product_ids_array = array_values(array_unique(array_filter(
                 array_map('intval', explode(",", $product_ids)),
-                function ($id) {
-                    return $id > 0;
-                }
+                function ($id) { return $id > 0; }
             )));
 
             if (!empty($product_ids_array)) {
-                $productsQuery = Product::select(
-                    'p.*',
-                    'p.type as d_type',
-                    's.store_name as seller_name',
-                    's.slug as seller_slug',
-                    's.status as seller_status'
-                )
-                    ->from('products as p')
-                    ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
-                    ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
-                    ->where('p.is_approved', 1)
-                    ->where('p.status', 1)
+                $productsQuery = MasterProduct::select('mp.*')
+                    ->from('master_products as mp')
+                    ->leftJoin('categories as c', 'mp.category_id', '=', 'c.id')
+                    ->where('mp.status', 1)
                     ->where('c.status', 1)
-                    ->where('s.status', 1)
-                    ->whereIn('p.seller_id', $seller_ids)
-                    ->whereIn('p.id', $product_ids_array);
+                    ->whereIn('mp.id', $product_ids_array)
+                    ->whereExists(function ($q) use ($seller_ids) {
+                        $q->select(DB::raw(1))
+                            ->from('seller_products as sp')
+                            ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
+                            ->whereColumn('mpv.master_product_id', 'mp.id')
+                            ->whereIn('sp.seller_id', $seller_ids)
+                            ->where('sp.status', 1);
+                    });
 
                 if (!empty($cityIds)) {
-                    $productsQuery->where(function ($q) use ($cityIds) {
-                        $q->whereNotExists(function ($subquery) use ($cityIds) {
-                            $subquery->select(DB::raw(1))
+                    $productsQuery->where(function ($q) use ($cityIds, $seller_ids) {
+                        $q->whereNotExists(function ($sub) use ($cityIds) {
+                            $sub->select(DB::raw(1))
                                 ->from('brand_distributor_mappings as bdm')
-                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereColumn('bdm.brand_id', 'mp.brand_id')
                                 ->whereIn('bdm.city_id', $cityIds);
-                        })
-                        ->orWhereExists(function ($subquery) use ($cityIds) {
-                            $subquery->select(DB::raw(1))
+                        })->orWhereExists(function ($sub) use ($cityIds, $seller_ids) {
+                            $sub->select(DB::raw(1))
                                 ->from('brand_distributor_mappings as bdm')
-                                ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                ->whereColumn('bdm.brand_id', 'mp.brand_id')
                                 ->whereIn('bdm.city_id', $cityIds)
-                                ->whereColumn('bdm.seller_id', 'p.seller_id');
+                                ->whereIn('bdm.seller_id', $seller_ids);
                         });
                     });
                 }
 
-                $products = $productsQuery
-                    ->with('ratings')
-                    ->groupBy('p.id')
-                    ->orderByRaw("FIELD(p.id, " . implode(',', $product_ids_array) . ")")
-                    ->skip($offset)
+                $masterProducts = $productsQuery
+                    ->groupBy('mp.id')
+                    ->orderByRaw("FIELD(mp.id, " . implode(',', $product_ids_array) . ")")
                     ->take($limit)
                     ->get();
-                $products = $products->makeHidden([
-                    'seller_id',
-                    'return_status',
-                    'cancelable_status',
-                    'till_status',
-                    'description',
-                    'status',
-                    'is_approved',
-                    'return_days',
-                    'pincodes',
-                    'cod_allowed',
-                    'pickup_location',
-                    'tags',
-                    'd_type',
-                    'seller_name',
-                    'seller_slug',
-                    'seller_status',
-                    'created_at',
-                    'updated_at',
-                    'deleted_at',
-                    'image',
-                    'other_images'
-                ]);
             } else {
-                $products = collect(); // Return an empty collection if no product IDs
+                $masterProducts = collect();
             }
 
-            $i = 0;
-            foreach ($products as $row) {
+            $productsList = [];
+            foreach ($masterProducts as $row) {
+                // Tax percentage for this master product
+                $taxPercentage = 0.0;
+                if ($row->tax_id) {
+                    $taxPercentage = (float) DB::table('taxes')->where('id', $row->tax_id)->value('percentage');
+                }
 
-
-                $variants = ProductVariant::select(
-                    '*',
-                    DB::raw("(SELECT short_code FROM units u WHERE u.id=stock_unit_id) as stock_unit_name")
-                )
-                    ->with(['unit', 'product.tax'])
-                    ->where('product_id', '=', $row['id'])
-                    ->orderBy('status', 'ASC')
+                // Seller products (variants) available from our sellers
+                $sellerVariants = DB::table('seller_products as sp')
+                    ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
+                    ->leftJoin('units as u', 'mpv.unit_id', '=', 'u.id')
+                    ->select(
+                        'sp.id',
+                        'sp.mrp',
+                        'sp.selling_price',
+                        'sp.discounted_price',
+                        'sp.stock',
+                        'sp.status',
+                        'sp.seller_id',
+                        'mpv.id as master_product_variant_id',
+                        'mpv.weight',
+                        'mpv.sku',
+                        'mpv.unit_id',
+                        'u.short_code as stock_unit_name'
+                    )
+                    ->where('mpv.master_product_id', $row->id)
+                    ->whereIn('sp.seller_id', $seller_ids)
+                    ->where('sp.status', 1)
+                    ->orderBy('sp.id', 'ASC')
                     ->get();
-                $variants = $variants->makeHidden(['product_id', 'measurement_unit_id', 'stock_unit_id', 'deleted_at', 'description']);
-                if (empty($variants)) {
-                    continue;
+
+                if ($sellerVariants->isEmpty()) continue;
+
+                // Build product data
+                $isFavourite = false;
+                if ($user_id) {
+                    $isFavourite = Favorite::where('product_id', $row->id)->where('user_id', $user_id)->exists();
                 }
 
-                $products[$i] = self::getProductDetails($row['id'], $user_id, false);
+                $productData = [
+                    'id'               => $row->id,
+                    'name'             => $row->name,
+                    'slug'             => $row->slug,
+                    'category_id'      => $row->category_id,
+                    'brand_id'         => $row->brand_id,
+                    'tax_id'           => $row->tax_id,
+                    'type'             => $row->type,
+                    'hsn'              => $row->hsn ?? null,
+                    'image_url'        => $row->image ? asset('storage/' . $row->image) : null,
+                    'other_images_urls'=> collect($row->other_images ?? [])->map(fn($img) => asset('storage/' . $img))->toArray(),
+                    'translations'     => $row->translations ?? [],
+                    'is_favorite'      => $isFavourite,
+                ];
 
-                // Get product type and unlimited stock status for few quantity calculation
-                $productType = strtolower((string) ($row->type ?? ''));
-                $isPacketType = $productType === 'packet';
-                $productUnlimitedStock = (int) ($row->is_unlimited_stock ?? 0);
+                // Build variants from seller_products
+                $variantArray = [];
                 $isFewQuantityLeft = false;
-                $variantFewQuantityMap = [];
 
-                // Calculate few_quantity_left for each variant if threshold is set
-                if ($fewQuantityAlertThreshold > 0) {
-                    foreach ($variants as $variant) {
-                        $variantId = $variant->id ?? null;
-                        $variantStock = (int) ($variant->stock ?? 0);
-                        // For packet type, check variant's unlimited stock; otherwise use product's unlimited stock
-                        $variantUnlimitedStock = $isPacketType
-                            ? (int) ($variant->is_unlimited_stock ?? 0)
-                            : $productUnlimitedStock;
+                foreach ($sellerVariants as $sp) {
+                    $sellingPrice    = (float) ($sp->selling_price ?? 0);
+                    $discountedPrice = (float) ($sp->discounted_price ?? 0);
+                    $tax             = $taxPercentage;
 
-                        $variantHasFewQuantity = false;
-                        // Check if variant has few quantity (stock > 0, not unlimited, and <= threshold)
-                        if ($variantUnlimitedStock === 0 && $variantStock > 0 && $variantStock <= $fewQuantityAlertThreshold) {
-                            $variantHasFewQuantity = true;
-                            // For non-packet type, if any variant has few quantity, mark product as having few quantity
-                            if (!$isPacketType) {
-                                $isFewQuantityLeft = true;
-                            }
-                        }
+                    $taxablePrice      = self::doubleNumber($sellingPrice + ($sellingPrice * $tax / 100));
+                    $taxableDiscounted = $discountedPrice > 0
+                        ? self::doubleNumber($discountedPrice + ($discountedPrice * $tax / 100))
+                        : 0.00;
+                    $effectivePrice    = $discountedPrice > 0 ? $discountedPrice : $sellingPrice;
+                    $taxableAmount     = self::doubleNumber($effectivePrice + ($effectivePrice * $tax / 100));
 
-                        if ($variantId !== null) {
-                            $variantFewQuantityMap[$variantId] = $variantHasFewQuantity;
-                        }
+                    $calcDiscountPct = 0;
+                    if ($taxablePrice > 0 && $taxableDiscounted > 0) {
+                        $calcDiscountPct = round(($taxablePrice - $taxableDiscounted) / $taxablePrice * 100, 2);
                     }
 
-                    // For packet type, check if any variant has few quantity
-                    if ($isPacketType && in_array(true, $variantFewQuantityMap, true)) {
-                        $isFewQuantityLeft = true;
-                    }
-                }
-
-                $variantArray = array();
-                for ($k = 0; $k < count($variants); $k++) {
-                    $currentVariantId = $variants[$k]->id ?? null;
-                    $currentVariantFewQuantity = $currentVariantId !== null
-                        ? ($variantFewQuantityMap[$currentVariantId] ?? false)
-                        : false;
-
-                    $variant = $variants[$k];
-
-                    // Add cart count
-                    $variant->cart_count = 0;
+                    $cartCount = 0;
                     if ($user_id) {
-                        $cart = \App\Models\Cart::where('product_variant_id', $variant->id)->where('user_id', $user_id)->first();
-                        if ($cart) {
-                            $variant->cart_count = $cart->qty;
-                        }
+                        $cart = Cart::where('product_variant_id', $sp->id)->where('user_id', $user_id)->first();
+                        $cartCount = $cart ? $cart->qty : 0;
                     }
 
-                    // Get taxable amounts
-                    $taxed = \App\Helpers\ProductHelper::getTaxableAmount($variant->id);
-                    $variant->discounted_price = self::doubleNumber($taxed->taxable_discounted_price ?? $variant->discounted_price);
-                    $variant->price = self::doubleNumber($taxed->taxable_price ?? $variant->price);
-                    $variant->taxable_amount = self::doubleNumber($taxed->taxable_amount);
+                    $stock = (int) ($sp->stock ?? 0);
+                    $hasFewQuantity = $fewQuantityAlertThreshold > 0 && $stock > 0 && $stock <= $fewQuantityAlertThreshold;
+                    if ($hasFewQuantity) $isFewQuantityLeft = true;
 
-                    // Calculate discount percentage
-                    if (!empty($taxed->taxable_price) && $taxed->taxable_price > 0) {
-                        $discount = ($taxed->taxable_price - $taxed->taxable_discounted_price);
-                        $variant->calc_discount_percentage = round(($discount / $taxed->taxable_price) * 100, 2);
-                    } else {
-                        $discount = ($variant->price - $variant->discounted_price);
-                        $variant->calc_discount_percentage = $variant->price > 0 ? round(($discount / $variant->price) * 100, 2) : 0;
-                    }
+                    $slabPrices = SellerProductSlabPrice::where('seller_product_id', $sp->id)
+                        ->orderBy('min_qty')
+                        ->get()
+                        ->map(function ($slab) use ($tax) {
+                            $price = (float) $slab->price;
+                            return [
+                                'min_qty'       => (int) $slab->min_qty,
+                                'max_qty'       => $slab->max_qty !== null ? (int) $slab->max_qty : null,
+                                'price'         => self::doubleNumber($price),
+                                'price_with_tax'=> self::doubleNumber($price + ($price * $tax / 100)),
+                            ];
+                        })->toArray();
 
-                    // Add few_quantity_left
-                    $variant->few_quantity_left = $isPacketType ? $currentVariantFewQuantity : $isFewQuantityLeft;
-
-                    array_push($variantArray, $variant);
+                    $variantArray[] = [
+                        'id'                       => $sp->id,
+                        'master_product_variant_id'=> $sp->master_product_variant_id,
+                        'seller_id'                => $sp->seller_id,
+                        'sku'                      => $sp->sku ?? null,
+                        'weight'                   => $sp->weight ?? null,
+                        'unit_id'                  => $sp->unit_id ?? null,
+                        'stock_unit_name'          => $sp->stock_unit_name ?? '',
+                        'mrp'                      => self::doubleNumber($sp->mrp ?? 0),
+                        'price'                    => $taxablePrice,
+                        'discounted_price'         => $taxableDiscounted,
+                        'taxable_amount'           => $taxableAmount,
+                        'calc_discount_percentage' => $calcDiscountPct,
+                        'stock'                    => $stock,
+                        'status'                   => (int) $sp->status,
+                        'cart_count'               => $cartCount,
+                        'few_quantity_left'        => $hasFewQuantity,
+                        'slab_prices'              => $slabPrices,
+                    ];
                 }
 
-                $products[$i]['variants'] = $variantArray;
+                if (empty($variantArray)) continue;
 
-                // Add product rating information
-                $ratingData = CommonHelper::productAverageRating($row['id']);
-                $products[$i]->rating_count = $ratingData['rating_count'];
-                $products[$i]->average_rating = $ratingData['average_rating'];
-                $products[$i]->product_rating = $isProductRatingEnabled;
+                $ratingData = self::productAverageRating($row->id);
 
-                $i++;
+                $productData['few_quantity_left'] = $isFewQuantityLeft;
+                $productData['variants']          = $variantArray;
+                $productData['rating_count']      = $ratingData['rating_count'];
+                $productData['average_rating']    = $ratingData['average_rating'];
+                $productData['product_rating']    = $isProductRatingEnabled;
+
+                $productsList[] = $productData;
             }
-            $sections[$key]["products"] = $products;
+
+            $sections[$key]["products"] = $productsList;
         }
 
-        $sections =  array_map("array_filter", $sections->toArray());
+        $sections = array_map("array_filter", $sections->toArray());
         $sections = array_filter($sections);
         return $sections;
     }
@@ -2721,6 +2785,7 @@ class CommonHelper
             \Log::error("Invoice PDF download error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine() . "\n" . $e->getTraceAsString());
             return CommonHelper::responseError("Invoice generation error: " . $e->getMessage() . " in " . basename($e->getFile()) . ":" . $e->getLine());
         }
+    }
     public static function getFirebaseKeys()
     {
         $firebase_array = array(
