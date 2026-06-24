@@ -29,14 +29,41 @@ class DeliveryBoyController extends BaseController
         $delivery_boy_id = auth()->user()->deliveryBoy->id;
         $data = array();
 
-        $query = Order::where('delivery_boy_id', $delivery_boy_id)
-            ->where('active_status', OrderStatusList::$outForDelivery);
+        // 1. Try to find the active dispatched loading slip
+        $slip = LoadingSlip::where('driver_id', $delivery_boy_id)
+            ->where('status', 1) // Dispatched
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        // 2. If no active dispatched slip, fall back to any slip today
+        if (!$slip) {
+            $slip = LoadingSlip::where('driver_id', $delivery_boy_id)
+                ->whereDate('created_at', Carbon::today())
+                ->orderBy('id', 'DESC')
+                ->first();
+        }
+
+        $query = Order::query();
+        if ($slip) {
+            $query->where(function($q) use ($slip, $delivery_boy_id) {
+                $q->where('orders.loading_slip_id', $slip->id)
+                  ->orWhere(function($sub) use ($delivery_boy_id) {
+                      $sub->where('orders.delivery_boy_id', $delivery_boy_id)
+                          ->where('orders.active_status', OrderStatusList::$outForDelivery);
+                  });
+            });
+        } else {
+            $query->where('orders.delivery_boy_id', $delivery_boy_id)
+                  ->where('orders.active_status', OrderStatusList::$outForDelivery);
+        }
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $startDate = Carbon::parse($request->start_date)->startOfDay();
             $endDate = Carbon::parse($request->end_date)->endOfDay();
-            $query->whereBetween('delivery_time', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]); // Adjust depending on when 'start trip' is defined
+            $query->where(function($q) use ($startDate, $endDate) {
+                $q->whereBetween('delivery_time', [$startDate, $endDate])
+                  ->orWhereBetween('created_at', [$startDate, $endDate]);
+            });
         } else if ($request->filled('start_date')) {
             $startDate = Carbon::parse($request->start_date)->startOfDay();
             $endDate = Carbon::parse($request->start_date)->endOfDay();
@@ -46,8 +73,8 @@ class DeliveryBoyController extends BaseController
         // Calculate trip metrics
         $data['total_stops'] = (clone $query)->count();
         $data['expected_cash_collection'] = (clone $query)
-            ->where('payment_method', 'COD')
-            ->sum('final_total');
+            ->whereIn('payment_method', ['COD', 'cod'])
+            ->sum('remaining_final');
 
         // Legacy metrics
         $data['order_count'] = Order::where('delivery_boy_id',$delivery_boy_id)->count();
@@ -80,62 +107,44 @@ class DeliveryBoyController extends BaseController
                 ->first();
         }
 
-        $orders = collect();
-        $expectedCash = 0;
-        $totalStops = 0;
+        $ordersQuery = Order::select(
+            'orders.*',
+            'users.name as user_name',
+            'user_addresses.address as customer_address',
+            'user_addresses.latitude as user_address_latitude',
+            'user_addresses.longitude as user_address_longitude',
+            'cities.zone as city_zone',
+            'rp.party_name',
+            'rp.shop_name',
+            'rp.gst_no as customer_gst',
+            'rp.gps_lat',
+            'rp.gps_lng',
+            'rp.verified_lat',
+            'rp.verified_lng',
+            DB::raw('COALESCE(rp.party_name, rp.shop_name, users.name) as customer_name'),
+            'orders.mobile as customer_mobile'
+        )
+            ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
+            ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
+            ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id');
 
         if ($slip) {
-            // Fetch all orders in the loading slip
-            $orders = Order::select(
-                'orders.*',
-                'users.name as user_name',
-                'user_addresses.address as customer_address',
-                'user_addresses.latitude as user_address_latitude',
-                'user_addresses.longitude as user_address_longitude',
-                'cities.zone as city_zone',
-                'rp.party_name',
-                'rp.shop_name',
-                'rp.gst_no as customer_gst',
-                'rp.gps_lat',
-                'rp.gps_lng',
-                'rp.verified_lat',
-                'rp.verified_lng',
-                DB::raw('COALESCE(rp.party_name, rp.shop_name, users.name) as customer_name'),
-                'orders.mobile as customer_mobile'
-            )
-                ->leftJoin('users', 'orders.user_id', '=', 'users.id')
-                ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
-                ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
-                ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
-                ->where('orders.loading_slip_id', $slip->id)
-                ->get();
+            $ordersQuery->where(function ($q) use ($slip, $delivery_boy_id) {
+                $q->where('orders.loading_slip_id', $slip->id)
+                  ->orWhere(function ($sub) use ($delivery_boy_id) {
+                      $sub->where('orders.delivery_boy_id', $delivery_boy_id)
+                          ->where('orders.active_status', OrderStatusList::$outForDelivery);
+                  });
+            });
         } else {
-            // Fallback: fetch orders assigned to delivery boy with outForDelivery status
-            $orders = Order::select(
-                'orders.*',
-                'users.name as user_name',
-                'user_addresses.address as customer_address',
-                'user_addresses.latitude as user_address_latitude',
-                'user_addresses.longitude as user_address_longitude',
-                'cities.zone as city_zone',
-                'rp.party_name',
-                'rp.shop_name',
-                'rp.gst_no as customer_gst',
-                'rp.gps_lat',
-                'rp.gps_lng',
-                'rp.verified_lat',
-                'rp.verified_lng',
-                DB::raw('COALESCE(rp.party_name, rp.shop_name, users.name) as customer_name'),
-                'orders.mobile as customer_mobile'
-            )
-                ->leftJoin('users', 'orders.user_id', '=', 'users.id')
-                ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
-                ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
-                ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
-                ->where('orders.delivery_boy_id', $delivery_boy_id)
-                ->where('orders.active_status', OrderStatusList::$outForDelivery)
-                ->get();
+            $ordersQuery->where('orders.delivery_boy_id', $delivery_boy_id)
+                        ->where('orders.active_status', OrderStatusList::$outForDelivery);
         }
+
+        $orders = $ordersQuery->get();
+        $expectedCash = 0;
+        $totalStops = 0;
 
         foreach ($orders as $order) {
             $order->resolved_latitude = floatval($order->latitude ?: ($order->user_address_latitude ?: ($order->verified_lat ?: ($order->gps_lat ?: 0))));
@@ -153,8 +162,10 @@ class DeliveryBoyController extends BaseController
 
             // Calculate metrics
             $totalStops = $orders->count();
-            // Expected cash from COD orders (remaining_final)
-            $expectedCash = $orders->where('payment_method', 'COD')->sum('remaining_final');
+            // Expected cash from COD orders (remaining_final) - Case Insensitive Filter
+            $expectedCash = $orders->filter(function ($order) {
+                return strtolower($order->payment_method) === 'cod';
+            })->sum('remaining_final');
         }
 
         // Attach items, translated status name, and next stop indication
