@@ -1,288 +1,370 @@
 @php
-    $appName = \App\Models\Setting::get_value('app_name');
-    if($appName == "" || $appName == null){
-        $appName = "Sarthi";
+    $app_name = \App\Models\Setting::get_value('app_name');
+    if($app_name == "" || $app_name == null){
+        $app_name = "eGrocer";
     }
 
-    $supportEmail = \App\Models\Setting::get_value('support_email');
-    if($supportEmail == "" || $supportEmail == null){
-        $supportEmail = "";
+    $logo = \App\Models\Setting::get_value('logo') ?? "";
+    $logo_url = '';
+    if($logo !== ""){
+        $logo_url = url('/').'/storage/'.$logo;
+    }else{
+        $logo_url = asset('images/favicon.png');
     }
-    $supportNumber = \App\Models\Setting::get_value('support_number');
-    if($supportNumber == "" || $supportNumber == null){
-        $supportNumber = "";
+
+    $currency = \App\Models\Setting::get_value('currency') ?? '₹';
+
+    $seller = \App\Models\Seller::with('city')->find($order->seller_id);
+    if (!$seller) {
+        $seller = new \stdClass();
+        $seller->name = $order->seller_name ?? 'N/A';
+        $seller->store_name = $order->store_name ?? 'N/A';
+        $seller->street = $order->seller_formatted_address ?? '';
+        $seller->city_name = $order->seller_place_name ?? '';
+        $seller->state = '';
+        $seller->tax_number = '';
+        $seller->pan_number = '';
+    } else {
+        $seller->city_name = $seller->city->name ?? ($seller->place_name ?? '');
     }
-    $logo = \App\Models\Setting::get_value('logo');
-    $currency = \App\Models\Setting::get_value('currency') ?? '$';
+
+    $retailer = \DB::table('retailer_profiles')->where('user_id', $order->user_id)->first();
+    $customerName = $retailer->party_name ?? ($retailer->shop_name ?? ($order->user_name ?? ''));
+    $customerAddress = $order->address ?: ($order->order_address ?: ($retailer->address ?? ''));
+    $customerMobile = $order->mobile ?: ($order->order_mobile ?: ($retailer->mobile ?? ''));
+    $customerGst = $retailer->gst_no ?? ($order->customer_gst ?? '');
+
+    $loadingSlip = null;
+    if (!empty($order->loading_slip_id)) {
+        $loadingSlip = \App\Models\LoadingSlip::find($order->loading_slip_id);
+    }
+    $shipmentNo = $loadingSlip ? $loadingSlip->slip_no : 'N/A';
 @endphp
 
 @if(\Request::route()->getName() == "customerInvoice")
 <html>
     <head>
-        <title>Invoice Order - {{ $appName }}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+        <title>Invoice Order - {{ $app_name }}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.css')}}">
         <link rel="stylesheet" href="{{ asset('assets/css/custom/common.css') }}">
         <style>
             body {
-                font-family: 'Nunito', sans-serif;
+                font-family: 'Inter', sans-serif;
             }
         </style>
     </head>
     <body>
 @endif
-<style>
-    address {
-        margin-bottom: 1px;
-        font-style: normal;
-        line-height: 1.42857143;
-    }
-    p {
-        margin: 0 0 0px;
-    }
-    .invoice {
-        position: relative;
-        background: #fff;
-        border: 1px solid #f4f4f4;
-        padding: 20px;
-        margin: 10px 25px
-    }
-    .well {
-        min-height: 20px;
-        padding: 19px;
-        margin-bottom: 20px;
-        background-color: #f5f5f5;
-        border: 1px solid #e3e3e3;
-        border-radius: 4px;
-        -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .05);
-        box-shadow: inset 0 1px 1px rgba(0, 0, 0, .05)
-    }
 
-    @media only screen and (max-width: 600px) {
-        .invoice {
-            padding: 0px !important;
-            margin: 0px  !important;
-        }
+<style>
+    .invoice {
+        color: #111;
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        background: #fff;
+        padding: 10px;
+    }
+    .udaan-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+    .udaan-table th,
+    .udaan-table td {
+        border: 1px solid #777;
+        padding: 8px 10px;
+        font-size: 12px;
+        vertical-align: top;
+        text-align: left;
+    }
+    .udaan-table th {
+        background-color: #e2e3e5;
+        color: #000;
+        font-weight: bold;
+        border-bottom: 2px solid #555;
+    }
+    .udaan-totals-table {
+        width: 320px;
+        border-collapse: collapse;
+    }
+    .udaan-totals-table td {
+        padding: 6px 10px;
+        font-size: 12px;
+        border: none;
+    }
+    .udaan-totals-table tr.grand-total td {
+        background-color: #343a40;
+        color: #fff;
+        font-weight: bold;
+        font-size: 14px;
     }
 </style>
-<section class="invoice " id="printMe">
 
-    <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <h5 class="page-header">{{ $appName }}</h5>
-        <h5 class="page-header">Mo. {{ $supportNumber }}</h5>
-    </div>
-    <hr>
-    <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <div class="invoice-col">
-           <b> From</b>
-            <address>
-                <strong>{{ $appName }}</strong>
-            </address>
-            <address>
-                Email: {{ $supportEmail }}<br>
-            </address>
-            <address>
-                Customer Care : {{ $supportNumber }}
-            </address>
-        </div>
-        <div class=" invoice-col">
-            <b>Retail Invoice</b>
-            <address>
-                <b>No : </b>#{{ $order->order_id }}
-            </address>
-            <address>
-                <b>Date: </b>{{ $order->orders_created_at }}
-            </address>
-        </div>
-        <div class="invoice-col">
-            @if($order->order_type == 'doorstep')
-            <b>Shipping Address</b>
-            @else
-            Customer Details
-            @endif
-            <address>
-                <strong>{{ $order->user_name ?? "" }}</strong>
-            </address>
-            @if($order->order_type == 'doorstep')
-            <address>
-                {{ $order->order_address ?? "" }}<br>
-            </address>
-            @endif
-            <address>
-                <strong>{{ implode(' / ', array_filter([$order->order_mobile ?? '', $order->alternate_mobile ?? ''])) }}</strong><br>
-            </address>
-            <address>
-                <strong>{{ $order->user_email }}</strong><br>
-            </address>
-        </div>
-    </div>
-    <hr>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="well">
-                <div class="row"><strong>Item : {{ count($order_items) }}</strong></div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="col-md-4">
-                        <b>Sold By : </b>
-                        <p>Name: {{ $order->seller_name }}</p>
-                        <p>Email: {{ $order->seller_email }}</p>
-                        <p>Mobile No. : {{ $order->seller_mobile }}</p>
-                    </div>
-                    @if($order->order_type == 'doorstep')
-                    <div class="col-md-3">
-                        @if($order->delivery_boy_name)
-                            <p>Delivery By : {{ $order->delivery_boy_name ?? "" }}</p>
-                        @else
-                            <p>Delivery By : Not Assigned</p>
+<section class="invoice" id="printMe">
+    <!-- Header Table -->
+    <table width="100%" style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; border-collapse: collapse;">
+        <tr>
+            <td width="60%" style="vertical-align: middle; border: none; padding: 0;">
+                <table style="border: none; border-collapse: collapse; padding: 0; margin: 0;">
+                    <tr>
+                        <td style="border: none; padding: 0 12px 0 0; vertical-align: middle;"><img src="{{ $logo_url }}" height="42" style="max-height: 42px; width: auto;" alt="Logo"></td>
+                        <td style="border: none; vertical-align: middle; padding: 0;"><span style="color: #000; font-size: 32px; font-weight: 900; letter-spacing: -1.5px; line-height: 1;">{{ $app_name }}</span></td>
+                    </tr>
+                </table>
+            </td>
+            <td width="40%" style="text-align: right; vertical-align: top; border: none; padding: 0;">
+                <table align="right" style="border: none; border-collapse: collapse; font-size: 12px; font-weight: bold; color: #111; padding: 0; margin: 0;">
+                    <tr>
+                        <td align="left" style="color: #555; padding: 2px 5px; border: none;">Invoice ID:</td>
+                        <td align="right" style="padding: 2px 5px; border: none;">INV/{{ date('Y', strtotime($order->orders_created_at ?? $order->created_at)) }}/{{ str_pad($order->order_id, 6, '0', STR_PAD_LEFT) }}</td>
+                    </tr>
+                    <tr>
+                        <td align="left" style="color: #555; padding: 2px 5px; border: none;">Invoice Date:</td>
+                        <td align="right" style="padding: 2px 5px; border: none;">{{ date('Y-m-d', strtotime($order->orders_created_at ?? $order->created_at)) }}</td>
+                    </tr>
+                    <tr>
+                        <td align="left" style="color: #555; padding: 2px 5px; border: none;">Order ID:</td>
+                        <td align="right" style="padding: 2px 5px; border: none;">#{{ $order->order_id }}</td>
+                    </tr>
+                    <tr>
+                        <td align="left" style="color: #555; padding: 2px 5px; border: none;">Shipment No:</td>
+                        <td align="right" style="padding: 2px 5px; border: none;">{{ $shipmentNo }}</td>
+                    </tr>
+                    <tr>
+                        <td align="left" style="color: #555; padding: 2px 5px; border: none;">Page No:</td>
+                        <td align="right" style="padding: 2px 5px; border: none;">1 / 1</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Address columns -->
+    <table width="100%" style="border-collapse: collapse; margin-bottom: 15px; border-bottom: 1.5px solid #000; padding-bottom: 15px;">
+        <tr>
+            <td width="45%" style="vertical-align: top; border: none; padding: 0 15px 0 0;">
+                <h4 style="margin: 0 0 6px 0; font-size: 12px; font-weight: 900; color: #000; text-transform: uppercase;">SHIP FROM:</h4>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;"><strong>{{ $seller->store_name }}</strong></p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">{{ $seller->street }}</p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">{{ $seller->city_name }}{{ $seller->state ? ', ' . $seller->state : '' }}</p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">Place of Supply: {{ strtoupper($seller->city_name) }}</p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">Supply Type: INTRA_STATE</p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">GSTIN: {{ $seller->tax_number }}</p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">PAN: {{ $seller->pan_number }}</p>
+            </td>
+            <td width="40%" style="vertical-align: top; border: none; padding: 0 10px 0 0;">
+                <h4 style="margin: 0 0 6px 0; font-size: 12px; font-weight: 900; color: #000; text-transform: uppercase;">BILL TO/SHIP TO:</h4>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;"><strong>{{ $customerName }}</strong></p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">{{ $customerAddress }}</p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">Mobile: {{ $customerMobile }}</p>
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">GSTIN: {{ $customerGst }}</p>
+            </td>
+            <td width="15%" style="vertical-align: top; text-align: right; border: none; padding: 0;">
+                <div style="display: inline-block; text-align: right;">
+                    <svg width="65" height="65" viewBox="0 0 29 29" fill="black" style="border: 1px solid #ccc; padding: 3px; background: #fff;">
+                        <path d="M0 0h9v9H0zm1 1v7h7V1zm18 18h9v9h-9zm1 1v7h7V19zM0 19h9v9H0zm1 1v7h7V20zM19 0h9v9h-9zm1 1v7h7V1zm-8 11h5v5h-5z" />
+                        <path d="M3 3h3v3H3zm19 0h3v3h-3zM3 22h3v3H3zm9-9h2v2h-2zm4 4h2v2h-2zm-4 4h2v2h-2zm8-4h2v2h-2zm0-4h2v2h-2zm-4-4h2v2h-2z" />
+                    </svg>
+                    <span style="font-size: 7px; color: #666; margin-top: 4px; font-weight: bold; text-align: center; display: block; letter-spacing: 0.5px;">SCAN CODE</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Items Table -->
+    <table class="udaan-table">
+        <thead>
+            <tr>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 45px; text-align: center;">Qty</th>
+                <th style="width: 70px; text-align: right;">Rate</th>
+                <th style="width: 60px; text-align: right;">Disc. Rate</th>
+                <th style="width: 80px; text-align: right;">Net Taxable Amt.</th>
+                <th style="width: 80px; text-align: center;">Tax Type</th>
+                <th style="width: 70px; text-align: right;">Tax</th>
+                <th style="width: 80px; text-align: right;">Total Amt.</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $totalBillQty = 0;
+                $totalNetTaxable = 0;
+                $totalTaxAmount = 0;
+                $totalBillAmt = 0;
+            @endphp
+            @foreach ($order_items as $itemIndex => $item)
+                @php
+                    $pv = \DB::table('product_variants as pv')
+                        ->select('pv.secondary_unit_value', 'u2.short_code as secondary_unit_name')
+                        ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
+                        ->where('pv.id', $item->product_variant_id)
+                        ->first();
+                    $secondary_unit_value = $pv->secondary_unit_value ?? null;
+                    $secondary_unit_name = $pv->secondary_unit_name ?? null;
+
+                    $pkgFormat = '';
+                    $boxQty = '';
+                    if (isset($secondary_unit_value) && $secondary_unit_value > 1) {
+                        $pkgFormat = (int) $secondary_unit_value . ' * ' . $item->variant_name;
+                        $boxes = floor($item->quantity / $secondary_unit_value);
+                        $loose = $item->quantity % $secondary_unit_value;
+                        $secName = $secondary_unit_name ?: 'Box';
+
+                        if ($boxes > 0 && $loose > 0) {
+                            $boxQty = $boxes . ' ' . $secName . ' + ' . $loose . ' nos';
+                        } elseif ($boxes > 0) {
+                            $boxQty = $boxes . ' ' . $secName;
+                        } else {
+                            $boxQty = $loose . ' nos';
+                        }
+                    }
+
+                    $hsn = '';
+                    if (!empty($item->master_product_variant_id)) {
+                        $hsn = \DB::table('master_products as mp')
+                            ->join('master_product_variants as mpv', 'mp.id', '=', 'mpv.master_product_id')
+                            ->where('mpv.id', $item->master_product_variant_id)
+                            ->value('mp.hsn');
+                    }
+                    $hsn = $hsn ?: 'N/A';
+
+                    $taxPct = $item->tax_percentage > 0 ? $item->tax_percentage : 5;
+                    $cgstPct = $taxPct / 2;
+                    $sgstPct = $taxPct / 2;
+
+                    $itemTotal = $item->sub_total;
+                    $netTaxable = $itemTotal / (1 + $taxPct / 100);
+                    $itemTax = $itemTotal - $netTaxable;
+                    $cgstAmt = $itemTax / 2;
+                    $sgstAmt = $itemTax / 2;
+
+                    $rate = ($item->discounted_price != 0 && $item->discounted_price != "") ? $item->discounted_price : $item->price;
+                    $discountRate = 0.0;
+
+                    $totalBillQty += $item->quantity;
+                    $totalNetTaxable += $netTaxable;
+                    $totalTaxAmount += $itemTax;
+                    $totalBillAmt += $itemTotal;
+                @endphp
+                <tr>
+                    <td>
+                        <strong>{{ $item->product_name }}</strong>
+                        @if ($pkgFormat)
+                            <br><span style="color: #111; font-weight: bold; font-size: 10px;">Format: {{ $pkgFormat }}</span>
                         @endif
-                    </div>
-                    @else
-                    <div class="col-md-3">
-                        <strong>
-                            <p>Pickup Store: {{ $order->seller_name ?? "" }}</p>
-                        </strong>
-                        <p>Pickup Address: 
+                        @if ($boxQty)
+                            <span style="color: #df2029; font-weight: bold; margin-left: 10px; font-size: 10px;">({{ $boxQty }})</span>
+                        @endif
+                        <br><span style="color: #555; font-size: 9px;">Variant: {{ $item->variant_name }} | HSN: {{ $hsn }}</span>
+                    </td>
+                    <td style="text-align: center; font-weight: bold;">
+                        {{ number_format($item->quantity, 1) }}
+                    </td>
+                    <td style="text-align: right;">{{ $currency }}{{ number_format($rate, 2) }}</td>
+                    <td style="text-align: right;">{{ $currency }}{{ number_format($discountRate, 2) }}</td>
+                    <td style="text-align: right;">{{ $currency }}{{ number_format($netTaxable, 2) }}</td>
+                    <td style="text-align: center; font-size: 9px; line-height: 1.25;">
+                        CGST({{ number_format($cgstPct, 1) }}%)<br>
+                        SGST({{ number_format($sgstPct, 1) }}%)<br>
+                        <strong>Tax</strong>
+                    </td>
+                    <td style="text-align: right; font-size: 9px; line-height: 1.25;">
+                        {{ number_format($cgstAmt, 2) }}<br>
+                        {{ number_format($sgstAmt, 2) }}<br>
+                        <strong>{{ number_format($itemTax, 2) }}</strong>
+                    </td>
+                    <td style="text-align: right; font-weight: bold;">{{ $currency }}{{ number_format($itemTotal, 2) }}</td>
+                </tr>
+            @endforeach
+            <!-- Total row -->
+            <tr style="font-weight: bold; background-color: #f2f2f2;">
+                <td>Total</td>
+                <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
+                <td></td>
+                <td></td>
+                <td style="text-align: right;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>
+                <td></td>
+                <td style="text-align: right;">{{ $currency }}{{ number_format($totalTaxAmount, 2) }}</td>
+                <td style="text-align: right;">{{ $currency }}{{ number_format($totalBillAmt, 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Totals Area -->
+    <table width="100%" style="border-collapse: collapse; margin-bottom: 15px;">
+        <tr>
+            <td width="50%" style="border: none; padding: 0;"></td>
+            <td width="50%" align="right" style="border: none; padding: 0;">
+                <table class="udaan-totals-table" align="right">
+                    <tr>
+                        <td align="left" style="color: #555;">Taxable Amount</td>
+                        <td align="right" style="font-weight: 500;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td align="left" style="color: #555;">Total Discount</td>
+                        <td align="right" style="font-weight: 500;">
                             @php
-                                $pickupAddress = $order->pickup_address ?? [];
-                                if (is_string($pickupAddress)) {
-                                    $pickupAddress = json_decode($pickupAddress, true) ?? [];
+                                $discount_in_rupees = 0;
+                                if ($order->discount > 0) {
+                                    $discount_in_rupees = ($order->remaining_total * $order->discount) / 100;
                                 }
-                                if (is_array($pickupAddress) && !empty($pickupAddress['pickup_store_address'])) {
-                                    echo $pickupAddress['pickup_store_address'];
-                                } else {
-                                    echo 'Not specified';
-                                }
+                                $totalDiscount = $discount_in_rupees + $order->promo_discount;
                             @endphp
-                        </p>
-                        <p>Pickup Store Timings: 
-                            @php
-                                $pickupAddress = $order->pickup_address ?? [];
-                                if (is_string($pickupAddress)) {
-                                    $pickupAddress = json_decode($pickupAddress, true) ?? [];
-                                }
-                                if (is_array($pickupAddress) && !empty($pickupAddress['opening_time']) && !empty($pickupAddress['closing_time'])) {
-                                    echo $pickupAddress['opening_time'] . ' - ' . $pickupAddress['closing_time'];
-                                } else {
-                                    echo 'Not specified';
-                                }
-                            @endphp
-                        </p>
-                    </div>
+                            {{ $currency }}{{ number_format($totalDiscount, 2) }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="left" style="color: #555;">Net Taxable Amount</td>
+                        <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td align="left" style="color: #555;">Total Tax</td>
+                        <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($totalTaxAmount, 2) }}</td>
+                    </tr>
+                    @if ($order->delivery_charge > 0)
+                        <tr>
+                            <td align="left" style="color: #555;">Delivery Charge</td>
+                            <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($order->delivery_charge, 2) }}</td>
+                        </tr>
                     @endif
+                    <tr class="grand-total">
+                        <td align="left" style="padding: 6px 10px; font-weight: bold; background-color: #343a40; color: #fff;">Grand Total</td>
+                        <td align="right" style="padding: 6px 10px; font-weight: bold; background-color: #343a40; color: #fff;">{{ $currency }}{{ number_format($order->remaining_final, 2) }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Advertisement Banner Table -->
+    <table width="100%" style="border: 1px solid #f8a5c2; background-color: #ffeef2; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; border-collapse: collapse;">
+        <tr>
+            <td style="border: none; padding: 0;">
+                <h3 style="margin: 0; font-size: 15px; color: #df2029; font-weight: 900; letter-spacing: 0.5px;">{{ strtoupper($app_name) }}</h3>
+                <p style="margin: 2px 0 0 0; font-size: 12px; color: #444; font-weight: bold;">Everyday Essentials, Excellent Quality, at Right Price - ORDER NOW</p>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Footer Declarations -->
+    <table width="100%" style="font-size: 10px; color: #444; line-height: 1.35; border-top: 1px solid #aaa; padding-top: 8px; margin-top: 12px; border-collapse: collapse;">
+        <tr>
+            <td width="70%" style="vertical-align: top; border: none; padding: 0;">
+                <p style="margin: 0;"><strong>DECLARATION:</strong> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct. This is a computer generated invoice.</p>
+            </td>
+            <td width="30%" style="text-align: right; vertical-align: bottom; border: none; min-width: 150px; padding: 0;">
+                <div style="font-family: 'Courier New', Courier, monospace; font-size: 12px; margin-bottom: 2px; color: #555; font-style: italic; font-weight: bold;">
+                    {{ $seller->name }}
                 </div>
-                <hr>
-                <div class="row">
-                    <p class="h6 ">Product Details:</p>
-                    <div class="row">
-                        <div class="col-xs-12 table-responsive">
-                            <table class="table table-responsive">
-                                <thead class="text-center">
-                                <tr>
-                                    <th>Sr No.</th>
-                                    <th>Name</th>
-                                    <th>Unit</th>
-                                    <th>Price</th>
-                                    <th>Tax {{ $currency }} (%)</th>
-                                    <th>Qty</th>
-                                    <th>SubTotal ( {{ $currency }} )</th>
-                                </tr>
-                                </thead>
-                                <tbody class="text-center">
-                                @php
-                                    $total_tax_amount = 0;
-                                    $total_quantity = 0;
-                                    $total_sub_total = 0;
-                                @endphp
-                                @foreach($order_items as $index => $item)
-                                    <tr>
-                                        <td>{{ $index+1 }}<br></td>
-                                        <td>{{ $item->product_name }}<br></td>
-                                        <td>{{ $item->variant_name }}<br></td>
-                                        <td>{{ ($item->discounted_price != 0 && $item->discounted_price != "") ? $item->discounted_price : $item->price }}</td>
-                                        <td>{{ $item->tax_amount. "  (" .$item->tax_percentage."%)" }}<br></td>
-                                        <td>{{ $item->quantity }}<br></td>
-                                        <td>{{ $item->sub_total }}<br></td>
-                                        @php
-                                            $total_tax_amount = $total_tax_amount + $item->tax_amount;
-                                            $total_quantity = $total_quantity + $item->quantity;
-                                            $total_sub_total = $total_sub_total + $item->sub_total;
-                                        @endphp
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                                <tfoot class="text-center">
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th>Total</th>
-                                    <td>{{ $total_tax_amount }}<br></td>
-                                    <td>{{ $total_quantity }}<br></td>
-                                    <td>{{ $total_sub_total }}<br></td>
-                                </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+                <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 3px; font-weight: bold; font-size: 9px; display: inline-block;">
+                    Authorised Signatory
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="d-flex justify-content-between">
-        <p><b>Payment Method : </b> {{ strtoupper($order->payment_method) }}</p>
-        <!--accepted payments column
-        <div class="col-xs-6 col-xs-offset-6">
-        <p class="lead">Payment Date: </p>-->
-        <div class="table-responsive">
-            <table>
-                <tbody>
-                    <tr>
-                        <th>Total Order Price ({{ $currency }})</th>
-                        <td>{{ $order->remaining_total }}</td>
-                    </tr>
-                    @if($order->order_type == 'doorstep')
-                    <tr>
-                        <th>Delivery Charge ({{ $currency }})</th>
-                        <td>{{ $order->delivery_charge }}</td>
-                    </tr>
-                    @endif
-                    @if(!empty($order->additional_charges) && is_array($order->additional_charges) && count($order->additional_charges) > 0)
-                        @foreach($order->additional_charges as $charge)
-                            <tr>
-                                <th>{{ $charge['title'] ?? 'Additional Charge' }} ({{ $currency }})</th>
-                                <td>{{ floatval($charge['amount'] ?? 0) }}</td>
-                            </tr>
-                        @endforeach
-                    @endif
-                    <tr>
-                        <th>Discount {{ $currency }} (%)</th>
-                        @php
-                            $discount_in_rupees = 0;
-                            if ( $order->discount > 0) {
-                                $discounted_amount = $order->remaining_total * $order->discount / 100;
-                                $final_total = $order->remaining_total - $discounted_amount;
-                                $discount_in_rupees = $order->remaining_total - $final_total;
-                            }
-                        @endphp
-                        <td>{{ '- ' . $discount_in_rupees . ' (' . $order->discount . '%)'}}</td>
-                    </tr>
-                    <tr>
-                        <th>Promo ({{ $order->promo_code }}) Discount ({{ $currency }})</th>
-                        <td>{{ '- ' . $order->promo_discount }}</td>
-                    </tr>
-                    <tr>
-                        <th>Wallet Used ({{ $currency }})</th>
-                        <td>{{ '- ' . $order->wallet_balance }}</td>
-                    </tr>
-                    <tr>
-                        <th>Final Total ({{ $currency }})</th>
-                        <td>{{ '= ' . $order->remaining_final}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+            </td>
+        </tr>
+    </table>
 </section>
+
 @if(\Request::route()->getName() == "customerInvoice")
     </body>
 </html>

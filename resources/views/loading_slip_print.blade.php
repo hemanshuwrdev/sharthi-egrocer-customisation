@@ -305,7 +305,7 @@
 
         .udaan-address-columns {
             display: grid;
-            grid-template-columns: 1fr 1fr 1.2fr 80px;
+            grid-template-columns: 1.5fr 1.2fr 80px;
             gap: 15px;
             border-bottom: 1.5px solid #000;
             padding-bottom: 12px;
@@ -579,16 +579,6 @@
 
                 <!-- Address Grid -->
                 <div class="udaan-address-columns">
-                    <!-- BILL FROM -->
-                    <div class="udaan-address-col">
-                        <h4>BILL FROM:</h4>
-                        <p><strong>{{ $seller->name }}</strong></p>
-                        <p>{{ $seller->street }}</p>
-                        <p>{{ $seller->city_name }}, {{ $seller->state }}</p>
-                        <p>GSTIN: {{ $seller->tax_number }}</p>
-                        <p>PAN: {{ $seller->pan_number }}</p>       
-                     </div>
-
                     <!-- Ship From -->
                     <div class="udaan-address-col">
                         <h4>Ship From:</h4>
@@ -597,6 +587,8 @@
                         <p>{{ $seller->city_name }}, {{ $seller->state }}</p>
                         <p>Place of Supply: {{ strtoupper($seller->city_name) }}</p>
                         <p>Supply Type: INTRA_STATE</p>
+                        <p>GSTIN: {{ $seller->tax_number }}</p>
+                        <p>PAN: {{ $seller->pan_number }}</p>
                     </div>
 
                     <!-- Bill to / Ship to -->

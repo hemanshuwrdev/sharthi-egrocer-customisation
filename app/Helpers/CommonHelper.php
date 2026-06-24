@@ -2498,7 +2498,7 @@ class CommonHelper
         }
 
         $order_items = $order_items_query->orderBy('order_items.id', 'DESC')->get();
-        if (auth()->user()->role_id == 3) {
+        if (auth()->user() && auth()->user()->role_id == 3) {
             $seller_id =  auth()->user()->seller->id;
 
             $seller_order_items_query = Order::select(
