@@ -96,7 +96,7 @@ class CommonHelper
                     $newSrc = $baseUrl . '/' . ltrim($cleanPath, '/');
 
                     // Carefully replace the exact src attribute to avoid partial match issues
-                    return str_replace(['src="'.$src.'"', "src='".$src."'"], 'src="'.$newSrc.'"', $fullTag);
+                    return str_replace(['src="' . $src . '"', "src='" . $src . "'"], 'src="' . $newSrc . '"', $fullTag);
                 }
 
                 return $fullTag;
@@ -1300,6 +1300,7 @@ class CommonHelper
                                 ->whereIn('bdm.city_id', $cityIds)
                                 ->whereIn('bdm.seller_id', $seller_ids);
                         });
+
                     });
                 }
 
@@ -2786,6 +2787,7 @@ class CommonHelper
             return CommonHelper::responseError("Invoice generation error: " . $e->getMessage() . " in " . basename($e->getFile()) . ":" . $e->getLine());
         }
     }
+
     public static function getFirebaseKeys()
     {
         $firebase_array = array(
