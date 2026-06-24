@@ -1293,14 +1293,14 @@ class CommonHelper
                                 ->from('brand_distributor_mappings as bdm')
                                 ->whereColumn('bdm.brand_id', 'mp.brand_id')
                                 ->whereIn('bdm.city_id', $cityIds);
-                        })->orWhereExists(function ($sub) use ($cityIds, $seller_ids) {
-                            $sub->select(DB::raw(1))
-                                ->from('brand_distributor_mappings as bdm')
-                                ->whereColumn('bdm.brand_id', 'mp.brand_id')
-                                ->whereIn('bdm.city_id', $cityIds)
-                                ->whereIn('bdm.seller_id', $seller_ids);
-                        });
-
+                        })
+                            ->orWhereExists(function ($subquery) use ($cityIds) {
+                                $subquery->select(DB::raw(1))
+                                    ->from('brand_distributor_mappings as bdm')
+                                    ->whereColumn('bdm.brand_id', 'p.brand_id')
+                                    ->whereIn('bdm.city_id', $cityIds)
+                                    ->whereColumn('bdm.seller_id', 'p.seller_id');
+                            });
                     });
                 }
 
@@ -2787,7 +2787,6 @@ class CommonHelper
             return CommonHelper::responseError("Invoice generation error: " . $e->getMessage() . " in " . basename($e->getFile()) . ":" . $e->getLine());
         }
     }
-
     public static function getFirebaseKeys()
     {
         $firebase_array = array(
