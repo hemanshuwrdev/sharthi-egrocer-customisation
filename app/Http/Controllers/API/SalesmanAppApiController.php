@@ -1222,4 +1222,33 @@ class SalesmanAppApiController extends Controller
             'items' => $items,
         ]);
     }
+
+    /**
+     * GET /api/salesman/profile
+     * Returns profile/user details of a salesman by ID (salesman_id or id) or for the logged-in salesman.
+     */
+    public function profile(Request $request)
+    {
+        $id = $request->salesman_id ?? $request->id;
+        if ($id) {
+            $salesman = Salesman::find($id);
+        } else {
+            $salesman = $this->currentSalesman();
+        }
+
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $admin = \App\Models\Admin::find($salesman->admin_id);
+        $data = $salesman->toArray();
+        if ($admin) {
+            $data['email'] = $admin->email ?? $salesman->email;
+            $data['username'] = $admin->username;
+            $data['role_id'] = $admin->role_id;
+        }
+
+        return CommonHelper::responseWithData($data);
+    }
 }
+

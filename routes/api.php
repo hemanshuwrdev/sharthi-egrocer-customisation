@@ -801,6 +801,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('add_fcm_token', [\App\Http\Controllers\API\AdminAuthController::class, 'addFcmToken'])->name('salesman.add_fcm_token');
         Route::post('update_fcm_token', [\App\Http\Controllers\API\AdminAuthController::class, 'updateFcmToken'])->name('salesman.update_fcm_token');
         Route::post('logout', [\App\Http\Controllers\API\AdminAuthController::class, 'logout'])->name('salesman.logout');
+        Route::get('profile', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'profile'])->name('salesman.profile');
 
         // Sarthi: retailer verification (fan-out + first-claim)
         Route::group(['prefix' => 'retailers'], function () {
