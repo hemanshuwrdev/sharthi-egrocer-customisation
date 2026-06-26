@@ -14,9 +14,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
-//
-//
-//
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 //
 //
 //
@@ -83,44 +83,77 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       isLoading: false,
+      isSendingOtp: false,
+      otpSent: false,
+      countryCode: '+91',
       user: {
-        email: this.$isDemo === 1 || this.$isDemo === '1' ? 'delivery@gmail.com' : '',
-        password: this.$isDemo === 1 || this.$isDemo === '1' ? '123456' : '',
+        mobile: '',
+        otp: '',
+        phone_auth_type: 'phone_auth_otp',
         type: 4
       },
-      showPassword: false,
-      loggedUser: _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].user,
-      setting: ""
+      loggedUser: _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].user
     };
   },
   mounted: function mounted() {
     if (this.loggedUser) {
-      this.$router.push('/delivery_boy/login');
+      this.$router.push('/delivery_boy');
     }
   },
   methods: {
-    loginCheck: function loginCheck() {
+    sendOtp: function sendOtp() {
       var _this = this;
+      if (!this.user.mobile) {
+        this.showError("Please enter your mobile number");
+        return;
+      }
+      this.isSendingOtp = true;
+      var url = this.$apiUrl + '/seller/send_sms';
+      var fullPhone = this.countryCode + this.user.mobile;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(url, {
+        phone: fullPhone
+      }).then(function (res) {
+        _this.isSendingOtp = false;
+        var data = res.data;
+        if (data.status === 1) {
+          _this.otpSent = true;
+          _this.showMessage('success', "OTP sent successfully!");
+        } else {
+          _this.showError(data.message);
+        }
+      })["catch"](function (error) {
+        _this.isSendingOtp = false;
+        var errorMsg = error.response && error.response.data && error.response.data.message ? error.response.data.message : error.message || "Failed to send OTP. Please try again.";
+        _this.showError(errorMsg);
+      });
+    },
+    loginCheck: function loginCheck() {
+      var _this2 = this;
       var vm = this;
       this.isLoading = true;
       var url = this.$apiUrl + '/login';
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post(url, this.user).then(function (res) {
+
+      // Pass country_code and mobile along with other user payload
+      var payload = _objectSpread(_objectSpread({}, this.user), {}, {
+        country_code: this.countryCode
+      });
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(url, payload).then(function (res) {
         vm.isLoading = false;
         var data = res.data;
         if (data.status === 1) {
           _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].login(data.data.access_token, data.data.user);
-          _this.$router.push('/delivery_boy');
+          _this2.$router.push('/delivery_boy');
         } else {
           vm.showError(data.message);
         }
       })["catch"](function (error) {
         vm.isLoading = false;
-        if (error.request.statusText) {
-          _this.showError(error.request.statusText);
+        if (error.response && error.response.data && error.response.data.message) {
+          _this2.showError(error.response.data.message);
         } else if (error.message) {
-          _this.showError(error.message);
+          _this2.showError(error.message);
         } else {
-          _this.showError("Something went wrong!");
+          _this2.showError("Something went wrong!");
         }
       });
     }
@@ -278,142 +311,55 @@ var render = function () {
                   },
                 },
                 [
-                  _c(
-                    "div",
-                    {
-                      staticClass:
-                        "form-group position-relative has-icon-left mb-4",
-                    },
-                    [
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.user.email,
-                            expression: "user.email",
-                          },
-                        ],
-                        staticClass: "form-control form-control-xl",
-                        attrs: {
-                          type: "email",
-                          placeholder: "Email Address",
-                          required: "",
-                        },
-                        domProps: { value: _vm.user.email },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.$set(_vm.user, "email", $event.target.value)
-                          },
-                        },
-                      }),
-                      _vm._v(" "),
-                      _vm._m(0),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "div",
-                    {
-                      staticClass: "form-group position-relative has-icon-left",
-                    },
-                    [
-                      (_vm.showPassword ? "text" : "password") === "checkbox"
-                        ? _c("input", {
+                  !_vm.otpSent
+                    ? _c("div", [
+                        _c("div", { staticClass: "form-group mb-4 d-flex" }, [
+                          _c("input", {
                             directives: [
                               {
                                 name: "model",
                                 rawName: "v-model",
-                                value: _vm.user.password,
-                                expression: "user.password",
+                                value: _vm.countryCode,
+                                expression: "countryCode",
                               },
                             ],
                             staticClass: "form-control form-control-xl",
+                            staticStyle: {
+                              width: "90px",
+                              "margin-right": "10px",
+                            },
                             attrs: {
-                              placeholder: "Password",
+                              type: "text",
+                              placeholder: "+91",
                               required: "",
-                              type: "checkbox",
                             },
-                            domProps: {
-                              checked: Array.isArray(_vm.user.password)
-                                ? _vm._i(_vm.user.password, null) > -1
-                                : _vm.user.password,
-                            },
+                            domProps: { value: _vm.countryCode },
                             on: {
-                              change: function ($event) {
-                                var $$a = _vm.user.password,
-                                  $$el = $event.target,
-                                  $$c = $$el.checked ? true : false
-                                if (Array.isArray($$a)) {
-                                  var $$v = null,
-                                    $$i = _vm._i($$a, $$v)
-                                  if ($$el.checked) {
-                                    $$i < 0 &&
-                                      _vm.$set(
-                                        _vm.user,
-                                        "password",
-                                        $$a.concat([$$v])
-                                      )
-                                  } else {
-                                    $$i > -1 &&
-                                      _vm.$set(
-                                        _vm.user,
-                                        "password",
-                                        $$a
-                                          .slice(0, $$i)
-                                          .concat($$a.slice($$i + 1))
-                                      )
-                                  }
-                                } else {
-                                  _vm.$set(_vm.user, "password", $$c)
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
                                 }
+                                _vm.countryCode = $event.target.value
                               },
                             },
-                          })
-                        : (_vm.showPassword ? "text" : "password") === "radio"
-                        ? _c("input", {
+                          }),
+                          _vm._v(" "),
+                          _c("input", {
                             directives: [
                               {
                                 name: "model",
                                 rawName: "v-model",
-                                value: _vm.user.password,
-                                expression: "user.password",
+                                value: _vm.user.mobile,
+                                expression: "user.mobile",
                               },
                             ],
                             staticClass: "form-control form-control-xl",
                             attrs: {
-                              placeholder: "Password",
+                              type: "text",
+                              placeholder: "Mobile Number",
                               required: "",
-                              type: "radio",
                             },
-                            domProps: {
-                              checked: _vm._q(_vm.user.password, null),
-                            },
-                            on: {
-                              change: function ($event) {
-                                return _vm.$set(_vm.user, "password", null)
-                              },
-                            },
-                          })
-                        : _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.user.password,
-                                expression: "user.password",
-                              },
-                            ],
-                            staticClass: "form-control form-control-xl",
-                            attrs: {
-                              placeholder: "Password",
-                              required: "",
-                              type: _vm.showPassword ? "text" : "password",
-                            },
-                            domProps: { value: _vm.user.password },
+                            domProps: { value: _vm.user.mobile },
                             on: {
                               input: function ($event) {
                                 if ($event.target.composing) {
@@ -421,81 +367,116 @@ var render = function () {
                                 }
                                 _vm.$set(
                                   _vm.user,
-                                  "password",
+                                  "mobile",
                                   $event.target.value
                                 )
                               },
                             },
                           }),
-                      _vm._v(" "),
-                      _vm._m(1),
-                      _vm._v(" "),
-                      _c(
-                        "button",
-                        {
-                          staticClass:
-                            "btn btn-sm btn-outline-light font-bold text-primary",
-                          staticStyle: {
-                            "margin-top": "-45px",
-                            position: "absolute",
-                            right: "10px",
-                            cursor: "pointer",
-                          },
-                          attrs: { type: "button" },
-                          on: {
-                            click: function ($event) {
-                              _vm.showPassword = !_vm.showPassword
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "button",
+                          {
+                            staticClass:
+                              "btn btn-primary btn-block btn-lg shadow-lg mt-3 auth-btn",
+                            attrs: { type: "button" },
+                            on: {
+                              click: function ($event) {
+                                return _vm.sendOtp()
+                              },
                             },
                           },
-                        },
-                        [
-                          _c("i", {
-                            class: _vm.showPassword
-                              ? "bi bi-eye-slash"
-                              : "bi bi-eye",
-                          }),
-                        ]
-                      ),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "div",
-                    {
-                      staticClass: "mb-4 text-end",
-                      staticStyle: { "margin-top": "35px" },
-                    },
-                    [
-                      _c(
-                        "router-link",
-                        {
-                          staticClass: "font-bold",
-                          attrs: { to: "/forgot-password" },
-                        },
-                        [_c("span", [_vm._v("Forgot Password?")])]
-                      ),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "button",
-                    {
-                      staticClass:
-                        "btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn",
-                    },
-                    [
-                      _vm._v(
-                        "\n                        Login\n                        "
-                      ),
-                      _vm.isLoading
-                        ? _c("b-spinner", {
-                            attrs: { small: "", label: "Spinning" },
-                          })
-                        : _c("span", { staticClass: "bi bi-arrow-right" }),
-                    ],
-                    1
-                  ),
+                          [
+                            _vm._v(
+                              "\n                            Send OTP\n                            "
+                            ),
+                            _vm.isSendingOtp
+                              ? _c("b-spinner", {
+                                  attrs: { small: "", label: "Spinning" },
+                                })
+                              : _c("span", {
+                                  staticClass: "bi bi-chat-left-text",
+                                }),
+                          ],
+                          1
+                        ),
+                      ])
+                    : _c("div", [
+                        _c(
+                          "div",
+                          {
+                            staticClass:
+                              "form-group position-relative has-icon-left mb-4",
+                          },
+                          [
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.user.otp,
+                                  expression: "user.otp",
+                                },
+                              ],
+                              staticClass: "form-control form-control-xl",
+                              attrs: {
+                                type: "text",
+                                placeholder: "Enter OTP",
+                                required: "",
+                              },
+                              domProps: { value: _vm.user.otp },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.$set(_vm.user, "otp", $event.target.value)
+                                },
+                              },
+                            }),
+                            _vm._v(" "),
+                            _vm._m(0),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "button",
+                          {
+                            staticClass:
+                              "btn btn-primary btn-block btn-lg shadow-lg mt-3 auth-btn",
+                          },
+                          [
+                            _vm._v(
+                              "\n                            Verify & Login\n                            "
+                            ),
+                            _vm.isLoading
+                              ? _c("b-spinner", {
+                                  attrs: { small: "", label: "Spinning" },
+                                })
+                              : _c("span", {
+                                  staticClass: "bi bi-arrow-right",
+                                }),
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "mb-4 text-center mt-3" }, [
+                          _c(
+                            "a",
+                            {
+                              staticClass: "font-bold",
+                              attrs: { href: "javascript:void(0)" },
+                              on: {
+                                click: function ($event) {
+                                  _vm.otpSent = false
+                                },
+                              },
+                            },
+                            [_c("span", [_vm._v("Change Mobile Number")])]
+                          ),
+                        ]),
+                      ]),
                 ]
               ),
               _vm._v(" "),
@@ -506,11 +487,7 @@ var render = function () {
                     "btn btn-primary btn-block btn-lg shadow-lg mt-2 auth-btn",
                   attrs: { to: "/delivery_boy/register" },
                 },
-                [
-                  _vm._v(
-                    "\n                        Register\n                    "
-                  ),
-                ]
+                [_vm._v("\n                    Register\n                ")]
               ),
               _vm._v(" "),
               _c(
@@ -520,11 +497,7 @@ var render = function () {
                     "btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn",
                   attrs: { to: "/login" },
                 },
-                [
-                  _vm._v(
-                    "\n                        Admin Panel\n                    "
-                  ),
-                ]
+                [_vm._v("\n                    Admin Panel\n                ")]
               ),
               _vm._v(" "),
               _c("div", { staticClass: "auth-copyright" }, [
@@ -546,14 +519,6 @@ var render = function () {
   )
 }
 var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "form-control-icon" }, [
-      _c("i", { staticClass: "bi bi-person" }),
-    ])
-  },
   function () {
     var _vm = this
     var _h = _vm.$createElement

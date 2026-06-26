@@ -371,6 +371,11 @@ class SarthiCustomisation extends Migration
             if (!Schema::hasColumn('delivery_boys', 'license_no')) {
                 $table->string('license_no')->nullable()->after('mobile');
             }
+            $table->text('address')->nullable()->change();
+        });
+
+        Schema::table('admins', function (Blueprint $table) {
+            $table->string('email')->nullable()->change();
         });
 
 
@@ -648,8 +653,8 @@ class SarthiCustomisation extends Migration
                 $table->unsignedBigInteger('seller_id')->nullable()->after('product_id');
                 $table->index('seller_id', 'idx_pr_seller');
             }
-            try { $table->dropUnique(['product_id', 'user_id']); } catch (\Throwable $e) {}
-            try { $table->unique(['product_id', 'user_id', 'seller_id'], 'uniq_pr_product_user_seller'); } catch (\Throwable $e) {}
+            // try { $table->dropUnique(['product_id', 'user_id']); } catch (\Throwable $e) {}
+           try { $table->unique(['product_id', 'user_id', 'seller_id'], 'uniq_pr_product_user_seller'); } catch (\Throwable $e) {}
         });
     }
 
@@ -822,6 +827,10 @@ class SarthiCustomisation extends Migration
             if (Schema::hasColumn('delivery_boys', 'license_no')) {
                 $table->dropColumn('license_no');
             }
+        });
+
+        Schema::table('admins', function (Blueprint $table) {
+            $table->string('email')->nullable(false)->change();
         });
     }
 }

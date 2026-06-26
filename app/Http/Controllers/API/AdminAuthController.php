@@ -491,21 +491,24 @@ class AdminAuthController extends Controller
     /*Delivery Boy*/
     public function deliveryBoyRegister(Request $request)
     {
+        if ($request->has('mobile') && (!$request->has('password') || empty($request->password))) {
+            $request->merge([
+                'password' => $request->mobile,
+                'confirm_password' => $request->mobile
+            ]);
+        }
 
         $requestData = $request->all();
         $validator = Validator::make($requestData, [
             'name' => 'required',
-            'email' => 'email|required|unique:admins',
-            'mobile' => 'required',
-            'dob' => 'required',
-            'password' => 'min:6|required_with:confirm_password|same:confirm_password',
+            'mobile' => 'required|unique:delivery_boys,mobile',
+            'dob' => 'nullable',
+            'password' => 'nullable',
             'city_id' => 'required',
             'bonus_type' => 'required',
             'bonus_percentage' => $request->bonus_type == 1 ? 'required' : '',
-            'driving_license' => 'required|mimes:jpeg,jpg,png,gif,pdf',
-            'national_identity_card' => 'required|mimes:jpeg,jpg,png,gif,pdf',
-        ], [
-            'email.unique' => 'The :attribute has already been taken.',
+            'driving_license' => 'nullable|mimes:jpeg,jpg,png,gif,pdf',
+            'national_identity_card' => 'nullable|mimes:jpeg,jpg,png,gif,pdf',
         ]);
 
         if ($validator->fails()) {
@@ -516,7 +519,7 @@ class AdminAuthController extends Controller
         try {
             $data = array();
             $data['username'] = $request->name;
-            $data['email'] = $request->email;
+            $data['email'] = $request->email ?? null;
             $data['password'] = bcrypt($request->password);
             $data['role_id'] = Role::$roleDeliveryBoy;
             $data['created_by'] = 0;
@@ -552,10 +555,12 @@ class AdminAuthController extends Controller
             $deliveryBoy->national_identity_card = $national_identity_card;
             $deliveryBoy->save();
 
-            try {
-                CommonHelper::sendMailAdminStatus("delivery_boy", $deliveryBoy, $deliveryBoy->status, $request->email);
-            } catch (\Exception $e) {
-                Log::error("Register delivery_boy status send mail error", [$e->getMessage()]);
+            if (!empty($request->email)) {
+                try {
+                    CommonHelper::sendMailAdminStatus("delivery_boy", $deliveryBoy, $deliveryBoy->status, $request->email);
+                } catch (\Exception $e) {
+                    Log::error("Register delivery_boy status send mail error", [$e->getMessage()]);
+                }
             }
 
             DB::commit();

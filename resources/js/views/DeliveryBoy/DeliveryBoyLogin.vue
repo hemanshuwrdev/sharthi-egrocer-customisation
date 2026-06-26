@@ -13,46 +13,43 @@
                     <h4>Welcome Back!</h4>
                     <p class="auth-subtitle text-primary">Please login to your Driver Account</p>
                     <form @submit.prevent="loginCheck()">
-                        <div class="form-group position-relative has-icon-left mb-4">
-                            <input type="email" class="form-control form-control-xl" placeholder="Email Address" required
-                                   v-model="user.email">
-                            <div class="form-control-icon">
-                                <i class="bi bi-person"></i>
+                        <div v-if="!otpSent">
+                            <div class="form-group mb-4 d-flex">
+                                <input type="text" class="form-control form-control-xl" placeholder="+91" style="width: 90px; margin-right: 10px;" required v-model="countryCode">
+                                <input type="text" class="form-control form-control-xl" placeholder="Mobile Number" required v-model="user.mobile">
                             </div>
-                        </div>
-                        <div class="form-group position-relative has-icon-left">
-                            <input :type="showPassword ? 'text' : 'password'" class="form-control form-control-xl" placeholder="Password" required
-                                   v-model="user.password">
-                            <div class="form-control-icon">
-                                <i class="bi bi-shield-lock"></i>
-                            </div>
-                            <button type="button" v-on:click="showPassword = !showPassword"
-                                    class="btn btn-sm btn-outline-light font-bold text-primary"
-                                    style="margin-top: -45px;position: absolute; right: 10px; cursor: pointer;">
-                                <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                            <button type="button" class="btn btn-primary btn-block btn-lg shadow-lg mt-3 auth-btn" @click="sendOtp()">
+                                Send OTP
+                                <b-spinner v-if="isSendingOtp" small label="Spinning"></b-spinner>
+                                <span v-else class="bi bi-chat-left-text"></span>
                             </button>
                         </div>
-                        <div class="mb-4 text-end" style="margin-top: 35px;">
-                            <router-link class="font-bold" to="/forgot-password"><span>Forgot Password?</span></router-link>
+                        <div v-else>
+                            <div class="form-group position-relative has-icon-left mb-4">
+                                <input type="text" class="form-control form-control-xl" placeholder="Enter OTP" required v-model="user.otp">
+                                <div class="form-control-icon">
+                                    <i class="bi bi-shield-lock"></i>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-block btn-lg shadow-lg mt-3 auth-btn">
+                                Verify & Login
+                                <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
+                                <span v-else class="bi bi-arrow-right"></span>
+                            </button>
+                            <div class="mb-4 text-center mt-3">
+                                <a href="javascript:void(0)" class="font-bold" @click="otpSent = false"><span>Change Mobile Number</span></a>
+                            </div>
                         </div>
-                       
-                        <button class="btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn">
-                            Login
-                            <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
-                            <span v-else class="bi bi-arrow-right"></span>
-                        </button>
                     </form>
 
-
-                        <router-link to="/delivery_boy/register" class="btn btn-primary btn-block btn-lg shadow-lg mt-2 auth-btn">
-                            Register
-                        </router-link>
-                        <router-link to="/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn">
-                            Admin Panel
-                        </router-link>
+                    <router-link to="/delivery_boy/register" class="btn btn-primary btn-block btn-lg shadow-lg mt-2 auth-btn">
+                        Register
+                    </router-link>
+                    <router-link to="/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn">
+                        Admin Panel
+                    </router-link>
 
                     <div class="auth-copyright">
-
                         <a href="javascript:void(0)" class="text-primary font-weight-normal"> {{ $copyrightDetails }}</a>
                     </div>
                 </div>
@@ -68,29 +65,62 @@ export default {
     data: function () {
         return {
             isLoading: false,
+            isSendingOtp: false,
+            otpSent: false,
+            countryCode: '+91',
             user: {
-                email: (this.$isDemo === 1 || this.$isDemo === '1') ? 'delivery@gmail.com' : '',
-                password: (this.$isDemo === 1 || this.$isDemo === '1') ? '123456' : '',
-                type:4
+                mobile: '',
+                otp: '',
+                phone_auth_type: 'phone_auth_otp',
+                type: 4
             },
-            showPassword: false,
-            loggedUser: Auth.user,
-            setting:""
+            loggedUser: Auth.user
         };
     },
     mounted() {
         if (this.loggedUser) {
-            this.$router.push('/delivery_boy/login');
+            this.$router.push('/delivery_boy');
         }
     },
     methods: {
-
+        sendOtp: function () {
+            if (!this.user.mobile) {
+                this.showError("Please enter your mobile number");
+                return;
+            }
+            this.isSendingOtp = true;
+            let url = this.$apiUrl + '/seller/send_sms';
+            let fullPhone = this.countryCode + this.user.mobile;
+            axios.post(url, { phone: fullPhone }).then(res => {
+                this.isSendingOtp = false;
+                let data = res.data;
+                if (data.status === 1) {
+                    this.otpSent = true;
+                    this.showMessage('success', "OTP sent successfully!");
+                } else {
+                    this.showError(data.message);
+                }
+            }).catch(error => {
+                this.isSendingOtp = false;
+                let errorMsg = error.response && error.response.data && error.response.data.message 
+                    ? error.response.data.message 
+                    : (error.message || "Failed to send OTP. Please try again.");
+                this.showError(errorMsg);
+            });
+        },
         loginCheck: function () {
             let vm = this;
             this.isLoading = true;
 
             let url = this.$apiUrl + '/login';
-            axios.post(url, this.user).then(res => {
+            
+            // Pass country_code and mobile along with other user payload
+            const payload = {
+                ...this.user,
+                country_code: this.countryCode
+            };
+
+            axios.post(url, payload).then(res => {
                 vm.isLoading = false;
                 let data = res.data;
                 if (data.status === 1) {
@@ -101,19 +131,17 @@ export default {
                 }
             }).catch(error => {
                 vm.isLoading = false;
-                if (error.request.statusText) {
-                    this.showError(error.request.statusText);
-                }else if (error.message) {
+                if (error.response && error.response.data && error.response.data.message) {
+                    this.showError(error.response.data.message);
+                } else if (error.message) {
                     this.showError(error.message);
                 } else {
                     this.showError("Something went wrong!");
                 }
-
             });
         }
     }
 }
 </script>
 <style scoped>
-
 </style>

@@ -92,17 +92,16 @@ class DeliveryBoysApiController extends Controller
         $rules = [
             'language_id' => 'required|exists:languages,id',
             'name'        => 'required',
-            'address'     => 'required',
+            'address'     => 'nullable',
         ];
 
         $defaultLanguage = $this->languageService->getDefaultLanguage();
 
         if ($request->language_id == $defaultLanguage->id) {
             $rules = array_merge($rules, [
-                'mobile' => 'required',
-                'license_no' => 'required',
-                'email' => 'email|required|unique:admins,email',
-                 'password' => 'nullable',
+                'mobile' => 'required|unique:delivery_boys,mobile',
+                'license_no' => 'nullable',
+                'password' => 'nullable',
                 'ifsc_code' => 'nullable',
                 'bank_name' => 'nullable',
                 'bank_account_number' => 'nullable',
@@ -189,7 +188,7 @@ class DeliveryBoysApiController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("DeliveryBoy Save Error", [$e->getMessage()]);
-            return CommonHelper::responseError('something_went_wrong');
+            return CommonHelper::responseError($e->getMessage());
         }
     }
 
@@ -203,13 +202,17 @@ class DeliveryBoysApiController extends Controller
             'id'          => 'required|exists:delivery_boys,id',
             'language_id' => 'required|exists:languages,id',
             'name'        => $isDefaultLang ? 'required' : 'nullable|string',
-            'address'     => $isDefaultLang ? 'required' : 'nullable|string',
+            'address'     => 'nullable|string',
         ];
 
         // If password is filled, confirm_password is required and must match
         if ($request->filled('password')) {
             $rules['password'] = 'required|min:6';
             $rules['confirm_password'] = 'required|same:password';
+        }
+
+        if ($isDefaultLang && $request->filled('mobile')) {
+            $rules['mobile'] = 'required|unique:delivery_boys,mobile,' . $request->id;
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -222,19 +225,7 @@ class DeliveryBoysApiController extends Controller
             return CommonHelper::responseError('delivery_boy_not_found');
         }
 
-        // For default language updates, validate email uniqueness in admins table (per admin record).
-        if ($isDefaultLang && $request->filled('email')) {
-            $emailValidator = Validator::make($request->all(), [
-                'email' => [
-                    'required',
-                    'email',
-                    Rule::unique('admins', 'email')->ignore($deliveryBoy->admin_id),
-                ],
-            ]);
-            if ($emailValidator->fails()) {
-                return CommonHelper::responseError($emailValidator->errors()->first());
-            }
-        }
+
 
 
         /** Update main table only for default language */
@@ -284,14 +275,7 @@ class DeliveryBoysApiController extends Controller
                 }
             }
 
-            // Update Admin email when provided (after passing uniqueness validation above).
-            if ($request->filled('email')) {
-                $admin = Admin::find($deliveryBoy->admin_id);
-                if ($admin) {
-                    $admin->email = $request->email;
-                    $admin->save();
-                }
-            }
+
         }
 
         /**  Save or Update Translation (all languages) */

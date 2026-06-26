@@ -655,11 +655,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sortable: true,
         "class": 'text-center'
       }, {
-        key: 'admin.email',
-        label: __('email'),
-        sortable: true,
-        "class": 'text-center'
-      }, {
         key: 'bonus_percentage',
         label: __('bonus'),
         sortable: true,

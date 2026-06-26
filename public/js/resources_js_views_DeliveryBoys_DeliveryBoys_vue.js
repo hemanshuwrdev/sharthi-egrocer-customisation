@@ -210,11 +210,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sortable: true,
         "class": 'text-center'
       }, {
-        key: 'email',
-        label: __('email'),
-        sortable: true,
-        "class": 'text-center'
-      }, {
         key: 'address',
         label: __('address'),
         sortable: true,

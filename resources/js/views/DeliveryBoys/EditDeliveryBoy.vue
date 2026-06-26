@@ -117,25 +117,12 @@
                                             </div>
 
                                             <!-- Address (Translatable) -->
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="form-group">
                                                     <label for="address">{{ __('address') }}</label>
                                                     <textarea name="address" :id="'address_' + lang.id"
                                                         v-model="translations[lang.id].address" rows='3'
                                                         class="form-control" :placeholder="__('address')"></textarea>
-                                                </div>
-                                            </div>
-
-                                            <!-- Other Payment Information (Translatable) -->
-                                            <div class="col-md-6">
-                                                <div class="form-group">
-                                                    <label for="other_payment_info">{{ __('other_payment_information')
-                                                        }}</label>
-                                                    <textarea name="other_payment_info"
-                                                        :id="'other_payment_info_' + lang.id"
-                                                        v-model="translations[lang.id].other_payment_information"
-                                                        rows='3' class="form-control"
-                                                        :placeholder="__('other_payment_information')"></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -158,18 +145,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Date Of Birth -->
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="dob">{{ __('date_of_birth') }}</label>
-                                                <input type="date" name="dob" id="dob" v-model="deliveryBoys.dob"
-                                                    class="form-control" :placeholder="__('date_of_birth')"
-                                                    @input="validateDateOfBirth">
-                                                <span v-if="dobvalidationError" class="error">{{ dobvalidationError
-                                                    }}</span>
-                                            </div>
-                                        </div>
-
                                         <!-- Mobile -->
                                         <div class="col-md-4">
                                             <div class="form-group">
@@ -186,124 +161,18 @@
                                         <!-- License No -->
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="license_no">{{ __('license_no') }}<span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="license_no">{{ __('license_no') }}</label>
                                                 <input type="text" name="license_no" id="license_no"
                                                     v-model="deliveryBoys.license_no" class="form-control"
                                                     :placeholder="__('license_no')">
                                             </div>
                                         </div>
-
-                                        <!-- Email -->
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="email">{{ __('email') }}<span
-                                                        class="text-danger text-xs">*</span></label>
-                                                <input type="text" name="email" id="email" v-model="deliveryBoys.email"
-                                                    :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
-                                                    class="form-control" :placeholder="__('email')">
-                                            </div>
-                                        </div>
-
-                                        <!-- Password (only for admin) -->
-                                        <div class="col-md-4"
-                                            v-if="this.$roleDeliveryBoy !== this.login_user.role.name">
-                                            <div class="form-group">
-                                                <label for="password">{{ __('password') }}<span
-                                                        class="text-danger text-xs">*</span></label>
-                                                <div class="input-group">
-                                                    <input :type="showPassword ? 'text' : 'password'" name="password"
-                                                        id="password" v-model="deliveryBoys.password"
-                                                        class="form-control" :placeholder="__('password')">
-                                                    <button type="button" v-on:click="showPassword = !showPassword"
-                                                        class="btn btn-primary font-bold">
-                                                        <i v-if="showPassword" class="fa fa-eye-slash"
-                                                            aria-hidden="true"></i>
-                                                        <i v-else class="fa fa-eye" aria-hidden="true"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Confirm Password (only for admin) -->
-                                        <div class="col-md-4"
-                                            v-if="this.$roleDeliveryBoy !== this.login_user.role.name">
-                                            <div class="form-group">
-                                                <label for="confirm_password">{{ __('confirm_password') }}<span
-                                                        class="text-danger text-xs"
-                                                        v-if="!deliveryBoys.id || deliveryBoys.password">*</span></label>
-                                                <div class="input-group">
-                                                    <input :type="showConfirmPassword ? 'text' : 'password'"
-                                                        name="confirm_password" id="confirm_password"
-                                                        v-model="deliveryBoys.confirm_password" class="form-control"
-                                                        :placeholder="__('confirm_password')">
-                                                    <button type="button"
-                                                        v-on:click="showConfirmPassword = !showConfirmPassword"
-                                                        class="btn btn-primary font-bold">
-                                                        <i v-if="showConfirmPassword" class="fa fa-eye-slash"
-                                                            aria-hidden="true"></i>
-                                                        <i v-else class="fa fa-eye" aria-hidden="true"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    <!-- Bank Details Section -->
+                                    <!-- City Section -->
                                     <div class="row">
-                                        <!-- Bank's IFSC Code -->
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="ifsc_code">{{ __('bank_ifsc_code') }}
-                                                       </label>
-                                                <input type="text" name="ifsc_code" id="ifsc_code"
-                                                    v-model="deliveryBoys.ifsc_code"
-                                                    :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
-                                                    class="form-control" :placeholder="__('bank_ifsc_code')">
-                                            </div>
-                                        </div>
-
-                                        <!-- Bank Name -->
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="bank_name">{{ __('bank_name') }}
-                                                </label>
-                                                <input type="text" name="bank_name" id="bank_name"
-                                                    v-model="deliveryBoys.bank_name" 
-                                                    :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
-                                                    class="form-control" :placeholder="__('bank_name')">
-                                            </div>
-                                        </div>
-
-                                        <!-- Account Number -->
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="account_number">{{ __('account_number') }}
-                                                    </label>
-                                                <input type="number" name="account_number" id="account_number"
-                                                    v-model="deliveryBoys.bank_account_number" 
-                                                    :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
-                                                    class="form-control" :placeholder="__('account_number')"
-                                                    @input="validateAccountNumber">
-                                                <span v-if="account_numbervalidationError" class="error">{{
-                                                    account_numbervalidationError }}</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Bank Account Name -->
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="account_name">{{ __('bank_account_name') }}
-                                                       </label>
-                                                <input type="text" name="account_name" id="account_name"
-                                                    v-model="deliveryBoys.account_name"
-                                                    :readonly="this.$roleDeliveryBoy === this.login_user.role.name"
-                                                    class="form-control" :placeholder="__('bank_account_name')">
-                                            </div>
-                                        </div>
-
                                         <!-- Select or Search City -->
-                                        <div class="col-md-4">
+                                        <div class="col-md-12">
                                             <div class="form-group">
                                                 <label for="city_name">{{ __('select_or_search_city') }}<span
                                                         class="text-danger text-xs">*</span></label>
@@ -326,28 +195,15 @@
                                         </div>
                                     </div>
 
-                                    <!-- Address and Other Payment Information Section (Default Language) -->
+                                    <!-- Address Section (Default Language) -->
                                     <div class="row" v-if="defaultLanguage">
                                         <!-- Address (Default Language) -->
-                                        <div class="col-md-6">
+                                        <div class="col-md-12">
                                             <div class="form-group">
-                                                <label for="address">{{ __('address') }}<span
-                                                        class="text-danger text-xs">*</span></label>
+                                                <label for="address">{{ __('address') }}</label>
                                                 <textarea name="address" id="address"
                                                     v-model="translations[defaultLanguage.id].address" rows='3'
                                                     class="form-control" :placeholder="__('address')"></textarea>
-                                            </div>
-                                        </div>
-
-                                        <!-- Other Payment Information (Default Language) -->
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="other_payment_info">{{ __('other_payment_information')
-                                                    }}</label>
-                                                <textarea name="other_payment_info" id="other_payment_info"
-                                                    v-model="translations[defaultLanguage.id].other_payment_information"
-                                                    rows='3' class="form-control"
-                                                    :placeholder="__('other_payment_information')"></textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -1011,18 +867,8 @@ export default {
                 switchToDefault();
                 return;
             }
-            if (!this.deliveryBoys.license_no) {
-                this.showError(__('please_fill_license_no') || 'Please fill the license number.');
-                switchToDefault();
-                return;
-            }
             if (!this.deliveryBoys.mobile) {
                 this.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
-                switchToDefault();
-                return;
-            }
-            if (!this.deliveryBoys.email) {
-                this.showError(__('please_fill_email') || 'Please fill the email.');
                 switchToDefault();
                 return;
             }
@@ -1030,22 +876,6 @@ export default {
                 this.showError(__('please_select_city') || 'Please select a city.');
                 switchToDefault();
                 return;
-            }
-
-            // Driving license and national identity card are optional
-
-            // Password validation: optional, but if filled, confirm must match
-            if (this.deliveryBoys.password) {
-                if (!this.deliveryBoys.confirm_password) {
-                    this.showError(__('please_fill_confirm_password') || 'Please fill the confirm password.');
-                    switchToDefault();
-                    return;
-                }
-                if (this.deliveryBoys.password !== this.deliveryBoys.confirm_password) {
-                    this.showError(__('password_and_confirm_password_must_match') || 'Password and confirm password must match.');
-                    switchToDefault();
-                    return;
-                }
             }
 
             // All client-side checks passed — start loading

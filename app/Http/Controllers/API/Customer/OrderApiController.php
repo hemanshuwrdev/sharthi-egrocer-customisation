@@ -2492,13 +2492,23 @@ class OrderApiController extends Controller
             if ($request->has('delivery_time')) {
                 $order->delivery_time = $request->delivery_time;
             }
+            $order->active_status = OrderStatusList::$received;
+            $order->loading_slip_id = null;
+            $order->delivery_boy_id = null;
+            $order->delivery_boy_bonus_amount = 0;
+            $order->delivery_boy_bonus_details = null;
             $order->save();
+
+            // Sync order items active status
+            OrderItem::where('order_id', $order->id)
+                ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+                ->update(['active_status' => OrderStatusList::$received]);
 
             // Log status history
             $orderStatus = [
                 'order_id'      => $order->id,
                 'order_item_id' => 0,
-                'status'        => $order->active_status,
+                'status'        => 'Rescheduled',
                 'created_by'    => auth()->user()->id,
                 'user_type'     => OrderStatus::$userTypeUser,
                 'created_at'    => now()

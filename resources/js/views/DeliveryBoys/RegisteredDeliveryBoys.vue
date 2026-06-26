@@ -178,7 +178,6 @@ export default {
                 { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
                 { key: 'name', label: __('name'), sortable: true, class: 'text-center' },
                 { key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center' },
-                { key: 'admin.email', label: __('email'), sortable: true, class: 'text-center' },
                 { key: 'bonus_percentage', label: __('bonus'), sortable: true, class: 'text-center' },
                 { key: 'documents', label: __('documents'), sortable: true, class: 'text-center' },
                 { key: 'dob', label: __('date_of_birth'), sortable: true, class: 'text-center' },

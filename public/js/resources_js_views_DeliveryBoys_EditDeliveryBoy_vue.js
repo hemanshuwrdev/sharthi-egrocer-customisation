@@ -469,150 +469,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -1022,61 +878,25 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 switchToDefault();
                 return _context.abrupt("return");
               case 10:
-                if (_this6.deliveryBoys.license_no) {
-                  _context.next = 14;
-                  break;
-                }
-                _this6.showError(__('please_fill_license_no') || 'Please fill the license number.');
-                switchToDefault();
-                return _context.abrupt("return");
-              case 14:
                 if (_this6.deliveryBoys.mobile) {
-                  _context.next = 18;
+                  _context.next = 14;
                   break;
                 }
                 _this6.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
                 switchToDefault();
                 return _context.abrupt("return");
-              case 18:
-                if (_this6.deliveryBoys.email) {
-                  _context.next = 22;
-                  break;
-                }
-                _this6.showError(__('please_fill_email') || 'Please fill the email.');
-                switchToDefault();
-                return _context.abrupt("return");
-              case 22:
+              case 14:
                 if (_this6.deliveryBoys.city_id) {
-                  _context.next = 26;
+                  _context.next = 18;
                   break;
                 }
                 _this6.showError(__('please_select_city') || 'Please select a city.');
                 switchToDefault();
                 return _context.abrupt("return");
-              case 26:
-                if (!_this6.deliveryBoys.password) {
-                  _context.next = 35;
-                  break;
-                }
-                if (_this6.deliveryBoys.confirm_password) {
-                  _context.next = 31;
-                  break;
-                }
-                _this6.showError(__('please_fill_confirm_password') || 'Please fill the confirm password.');
-                switchToDefault();
-                return _context.abrupt("return");
-              case 31:
-                if (!(_this6.deliveryBoys.password !== _this6.deliveryBoys.confirm_password)) {
-                  _context.next = 35;
-                  break;
-                }
-                _this6.showError(__('password_and_confirm_password_must_match') || 'Password and confirm password must match.');
-                switchToDefault();
-                return _context.abrupt("return");
-              case 35:
+              case 18:
                 // All client-side checks passed — start loading
                 _this6.isLoading = true;
-                _context.prev = 36;
+                _context.prev = 19;
                 isEdit = !!_this6.deliveryBoys.id;
                 fd = new FormData();
                 if (isEdit) {
@@ -1123,73 +943,73 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                   fd.append('national_identity_card', _this6.deliveryBoys.national_identity_card);
                 }
                 url = isEdit ? _this6.$apiUrl + '/delivery_boys/update' : _this6.$apiUrl + '/delivery_boys/save';
-                _context.next = 65;
+                _context.next = 48;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, fd);
-              case 65:
+              case 48:
                 response = _context.sent;
                 if (!(!response.data || response.data.status !== 1)) {
-                  _context.next = 68;
+                  _context.next = 51;
                   break;
                 }
                 throw new Error(((_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || __('something_went_wrong'));
-              case 68:
+              case 51:
                 if (!isEdit) {
                   _this6.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 }
 
                 // Save non-default language translations
                 _iterator = _createForOfIteratorHelper(_this6.languages);
-                _context.prev = 70;
+                _context.prev = 53;
                 _iterator.s();
-              case 72:
+              case 55:
                 if ((_step = _iterator.n()).done) {
-                  _context.next = 92;
+                  _context.next = 75;
                   break;
                 }
                 lang = _step.value;
                 if (!lang.is_default) {
-                  _context.next = 76;
+                  _context.next = 59;
                   break;
                 }
-                return _context.abrupt("continue", 90);
-              case 76:
+                return _context.abrupt("continue", 73);
+              case 59:
                 t = _this6.translations[lang.id];
                 if (!(!t || !t.name && !t.address && !t.other_payment_information)) {
-                  _context.next = 79;
+                  _context.next = 62;
                   break;
                 }
-                return _context.abrupt("continue", 90);
-              case 79:
+                return _context.abrupt("continue", 73);
+              case 62:
                 tfd = new FormData();
                 tfd.append('id', _this6.deliveryBoys.id);
                 tfd.append('language_id', lang.id);
                 tfd.append('name', (_t$name = t.name) !== null && _t$name !== void 0 ? _t$name : '');
                 tfd.append('address', (_t$address = t.address) !== null && _t$address !== void 0 ? _t$address : '');
                 tfd.append('other_payment_information', (_t$other_payment_info = t.other_payment_information) !== null && _t$other_payment_info !== void 0 ? _t$other_payment_info : '');
-                _context.next = 87;
+                _context.next = 70;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this6.$apiUrl + '/delivery_boys/update', tfd);
-              case 87:
+              case 70:
                 tRes = _context.sent;
                 if (!(!tRes.data || tRes.data.status !== 1)) {
-                  _context.next = 90;
+                  _context.next = 73;
                   break;
                 }
                 throw new Error(((_tRes$data = tRes.data) === null || _tRes$data === void 0 ? void 0 : _tRes$data.message) || __('something_went_wrong'));
-              case 90:
-                _context.next = 72;
+              case 73:
+                _context.next = 55;
                 break;
-              case 92:
-                _context.next = 97;
+              case 75:
+                _context.next = 80;
                 break;
-              case 94:
-                _context.prev = 94;
-                _context.t0 = _context["catch"](70);
+              case 77:
+                _context.prev = 77;
+                _context.t0 = _context["catch"](53);
                 _iterator.e(_context.t0);
-              case 97:
-                _context.prev = 97;
+              case 80:
+                _context.prev = 80;
                 _iterator.f();
-                return _context.finish(97);
-              case 100:
+                return _context.finish(80);
+              case 83:
                 _this6.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
                 if (!_this6.login_user || _this6.login_user.role_id !== 4) {
                   if (_this6.$route.path.includes('/seller')) {
@@ -1202,22 +1022,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                     });
                   }
                 }
-                _context.next = 107;
+                _context.next = 90;
                 break;
-              case 104:
-                _context.prev = 104;
-                _context.t1 = _context["catch"](36);
+              case 87:
+                _context.prev = 87;
+                _context.t1 = _context["catch"](19);
                 _this6.showError(_context.t1.message || (_context.t1 === null || _context.t1 === void 0 ? void 0 : (_error$response = _context.t1.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong') || 'Something went wrong.');
-              case 107:
-                _context.prev = 107;
+              case 90:
+                _context.prev = 90;
                 _this6.isLoading = false;
-                return _context.finish(107);
-              case 110:
+                return _context.finish(90);
+              case 93:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[36, 104, 107, 110], [70, 94, 97, 100]]);
+        }, _callee, null, [[19, 87, 90, 93], [53, 77, 80, 83]]);
       }))();
     }
   }
@@ -2164,134 +1984,71 @@ var render = function () {
                                           ]
                                         ),
                                         _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-6" }, [
-                                          _c(
-                                            "div",
-                                            { staticClass: "form-group" },
-                                            [
-                                              _c(
-                                                "label",
-                                                { attrs: { for: "address" } },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(_vm.__("address"))
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c("textarea", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-md-12" },
+                                          [
+                                            _c(
+                                              "div",
+                                              { staticClass: "form-group" },
+                                              [
+                                                _c(
+                                                  "label",
+                                                  { attrs: { for: "address" } },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(_vm.__("address"))
+                                                    ),
+                                                  ]
+                                                ),
+                                                _vm._v(" "),
+                                                _c("textarea", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        _vm.translations[
+                                                          lang.id
+                                                        ].address,
+                                                      expression:
+                                                        "translations[lang.id].address",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    name: "address",
+                                                    id: "address_" + lang.id,
+                                                    rows: "3",
+                                                    placeholder:
+                                                      _vm.__("address"),
+                                                  },
+                                                  domProps: {
                                                     value:
                                                       _vm.translations[lang.id]
                                                         .address,
-                                                    expression:
-                                                      "translations[lang.id].address",
                                                   },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  name: "address",
-                                                  id: "address_" + lang.id,
-                                                  rows: "3",
-                                                  placeholder:
-                                                    _vm.__("address"),
-                                                },
-                                                domProps: {
-                                                  value:
-                                                    _vm.translations[lang.id]
-                                                      .address,
-                                                },
-                                                on: {
-                                                  input: function ($event) {
-                                                    if (
-                                                      $event.target.composing
-                                                    ) {
-                                                      return
-                                                    }
-                                                    _vm.$set(
-                                                      _vm.translations[lang.id],
-                                                      "address",
-                                                      $event.target.value
-                                                    )
-                                                  },
-                                                },
-                                              }),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-6" }, [
-                                          _c(
-                                            "div",
-                                            { staticClass: "form-group" },
-                                            [
-                                              _c(
-                                                "label",
-                                                {
-                                                  attrs: {
-                                                    for: "other_payment_info",
-                                                  },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "other_payment_information"
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        _vm.translations[
+                                                          lang.id
+                                                        ],
+                                                        "address",
+                                                        $event.target.value
                                                       )
-                                                    )
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c("textarea", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value:
-                                                      _vm.translations[lang.id]
-                                                        .other_payment_information,
-                                                    expression:
-                                                      "translations[lang.id].other_payment_information",
+                                                    },
                                                   },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  name: "other_payment_info",
-                                                  id:
-                                                    "other_payment_info_" +
-                                                    lang.id,
-                                                  rows: "3",
-                                                  placeholder: _vm.__(
-                                                    "other_payment_information"
-                                                  ),
-                                                },
-                                                domProps: {
-                                                  value:
-                                                    _vm.translations[lang.id]
-                                                      .other_payment_information,
-                                                },
-                                                on: {
-                                                  input: function ($event) {
-                                                    if (
-                                                      $event.target.composing
-                                                    ) {
-                                                      return
-                                                    }
-                                                    _vm.$set(
-                                                      _vm.translations[lang.id],
-                                                      "other_payment_information",
-                                                      $event.target.value
-                                                    )
-                                                  },
-                                                },
-                                              }),
-                                            ]
-                                          ),
-                                        ]),
+                                                }),
+                                              ]
+                                            ),
+                                          ]
+                                        ),
                                       ]),
                                     ]
                                   )
@@ -2367,54 +2124,6 @@ var render = function () {
                             _vm._v(" "),
                             _c("div", { staticClass: "col-md-4" }, [
                               _c("div", { staticClass: "form-group" }, [
-                                _c("label", { attrs: { for: "dob" } }, [
-                                  _vm._v(_vm._s(_vm.__("date_of_birth"))),
-                                ]),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.deliveryBoys.dob,
-                                      expression: "deliveryBoys.dob",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "date",
-                                    name: "dob",
-                                    id: "dob",
-                                    placeholder: _vm.__("date_of_birth"),
-                                  },
-                                  domProps: { value: _vm.deliveryBoys.dob },
-                                  on: {
-                                    input: [
-                                      function ($event) {
-                                        if ($event.target.composing) {
-                                          return
-                                        }
-                                        _vm.$set(
-                                          _vm.deliveryBoys,
-                                          "dob",
-                                          $event.target.value
-                                        )
-                                      },
-                                      _vm.validateDateOfBirth,
-                                    ],
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _vm.dobvalidationError
-                                  ? _c("span", { staticClass: "error" }, [
-                                      _vm._v(_vm._s(_vm.dobvalidationError)),
-                                    ])
-                                  : _vm._e(),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
                                 _c("label", { attrs: { for: "mobile" } }, [
                                   _vm._v(_vm._s(_vm.__("mobile"))),
                                   _c(
@@ -2470,11 +2179,6 @@ var render = function () {
                               _c("div", { staticClass: "form-group" }, [
                                 _c("label", { attrs: { for: "license_no" } }, [
                                   _vm._v(_vm._s(_vm.__("license_no"))),
-                                  _c(
-                                    "span",
-                                    { staticClass: "text-danger text-xs" },
-                                    [_vm._v("*")]
-                                  ),
                                 ]),
                                 _vm._v(" "),
                                 _c("input", {
@@ -2511,683 +2215,10 @@ var render = function () {
                                 }),
                               ]),
                             ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", { attrs: { for: "email" } }, [
-                                  _vm._v(_vm._s(_vm.__("email"))),
-                                  _c(
-                                    "span",
-                                    { staticClass: "text-danger text-xs" },
-                                    [_vm._v("*")]
-                                  ),
-                                ]),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.deliveryBoys.email,
-                                      expression: "deliveryBoys.email",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "text",
-                                    name: "email",
-                                    id: "email",
-                                    readonly:
-                                      this.$roleDeliveryBoy ===
-                                      this.login_user.role.name,
-                                    placeholder: _vm.__("email"),
-                                  },
-                                  domProps: { value: _vm.deliveryBoys.email },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.deliveryBoys,
-                                        "email",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            this.$roleDeliveryBoy !== this.login_user.role.name
-                              ? _c("div", { staticClass: "col-md-4" }, [
-                                  _c("div", { staticClass: "form-group" }, [
-                                    _c(
-                                      "label",
-                                      { attrs: { for: "password" } },
-                                      [
-                                        _vm._v(_vm._s(_vm.__("password"))),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass: "text-danger text-xs",
-                                          },
-                                          [_vm._v("*")]
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("div", { staticClass: "input-group" }, [
-                                      (_vm.showPassword
-                                        ? "text"
-                                        : "password") === "checkbox"
-                                        ? _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value:
-                                                  _vm.deliveryBoys.password,
-                                                expression:
-                                                  "deliveryBoys.password",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              name: "password",
-                                              id: "password",
-                                              placeholder: _vm.__("password"),
-                                              type: "checkbox",
-                                            },
-                                            domProps: {
-                                              checked: Array.isArray(
-                                                _vm.deliveryBoys.password
-                                              )
-                                                ? _vm._i(
-                                                    _vm.deliveryBoys.password,
-                                                    null
-                                                  ) > -1
-                                                : _vm.deliveryBoys.password,
-                                            },
-                                            on: {
-                                              change: function ($event) {
-                                                var $$a =
-                                                    _vm.deliveryBoys.password,
-                                                  $$el = $event.target,
-                                                  $$c = $$el.checked
-                                                    ? true
-                                                    : false
-                                                if (Array.isArray($$a)) {
-                                                  var $$v = null,
-                                                    $$i = _vm._i($$a, $$v)
-                                                  if ($$el.checked) {
-                                                    $$i < 0 &&
-                                                      _vm.$set(
-                                                        _vm.deliveryBoys,
-                                                        "password",
-                                                        $$a.concat([$$v])
-                                                      )
-                                                  } else {
-                                                    $$i > -1 &&
-                                                      _vm.$set(
-                                                        _vm.deliveryBoys,
-                                                        "password",
-                                                        $$a
-                                                          .slice(0, $$i)
-                                                          .concat(
-                                                            $$a.slice($$i + 1)
-                                                          )
-                                                      )
-                                                  }
-                                                } else {
-                                                  _vm.$set(
-                                                    _vm.deliveryBoys,
-                                                    "password",
-                                                    $$c
-                                                  )
-                                                }
-                                              },
-                                            },
-                                          })
-                                        : (_vm.showPassword
-                                            ? "text"
-                                            : "password") === "radio"
-                                        ? _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value:
-                                                  _vm.deliveryBoys.password,
-                                                expression:
-                                                  "deliveryBoys.password",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              name: "password",
-                                              id: "password",
-                                              placeholder: _vm.__("password"),
-                                              type: "radio",
-                                            },
-                                            domProps: {
-                                              checked: _vm._q(
-                                                _vm.deliveryBoys.password,
-                                                null
-                                              ),
-                                            },
-                                            on: {
-                                              change: function ($event) {
-                                                return _vm.$set(
-                                                  _vm.deliveryBoys,
-                                                  "password",
-                                                  null
-                                                )
-                                              },
-                                            },
-                                          })
-                                        : _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value:
-                                                  _vm.deliveryBoys.password,
-                                                expression:
-                                                  "deliveryBoys.password",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              name: "password",
-                                              id: "password",
-                                              placeholder: _vm.__("password"),
-                                              type: _vm.showPassword
-                                                ? "text"
-                                                : "password",
-                                            },
-                                            domProps: {
-                                              value: _vm.deliveryBoys.password,
-                                            },
-                                            on: {
-                                              input: function ($event) {
-                                                if ($event.target.composing) {
-                                                  return
-                                                }
-                                                _vm.$set(
-                                                  _vm.deliveryBoys,
-                                                  "password",
-                                                  $event.target.value
-                                                )
-                                              },
-                                            },
-                                          }),
-                                      _vm._v(" "),
-                                      _c(
-                                        "button",
-                                        {
-                                          staticClass:
-                                            "btn btn-primary font-bold",
-                                          attrs: { type: "button" },
-                                          on: {
-                                            click: function ($event) {
-                                              _vm.showPassword =
-                                                !_vm.showPassword
-                                            },
-                                          },
-                                        },
-                                        [
-                                          _vm.showPassword
-                                            ? _c("i", {
-                                                staticClass: "fa fa-eye-slash",
-                                                attrs: {
-                                                  "aria-hidden": "true",
-                                                },
-                                              })
-                                            : _c("i", {
-                                                staticClass: "fa fa-eye",
-                                                attrs: {
-                                                  "aria-hidden": "true",
-                                                },
-                                              }),
-                                        ]
-                                      ),
-                                    ]),
-                                  ]),
-                                ])
-                              : _vm._e(),
-                            _vm._v(" "),
-                            this.$roleDeliveryBoy !== this.login_user.role.name
-                              ? _c("div", { staticClass: "col-md-4" }, [
-                                  _c("div", { staticClass: "form-group" }, [
-                                    _c(
-                                      "label",
-                                      { attrs: { for: "confirm_password" } },
-                                      [
-                                        _vm._v(
-                                          _vm._s(_vm.__("confirm_password"))
-                                        ),
-                                        !_vm.deliveryBoys.id ||
-                                        _vm.deliveryBoys.password
-                                          ? _c(
-                                              "span",
-                                              {
-                                                staticClass:
-                                                  "text-danger text-xs",
-                                              },
-                                              [_vm._v("*")]
-                                            )
-                                          : _vm._e(),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("div", { staticClass: "input-group" }, [
-                                      (_vm.showConfirmPassword
-                                        ? "text"
-                                        : "password") === "checkbox"
-                                        ? _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value:
-                                                  _vm.deliveryBoys
-                                                    .confirm_password,
-                                                expression:
-                                                  "deliveryBoys.confirm_password",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              name: "confirm_password",
-                                              id: "confirm_password",
-                                              placeholder:
-                                                _vm.__("confirm_password"),
-                                              type: "checkbox",
-                                            },
-                                            domProps: {
-                                              checked: Array.isArray(
-                                                _vm.deliveryBoys
-                                                  .confirm_password
-                                              )
-                                                ? _vm._i(
-                                                    _vm.deliveryBoys
-                                                      .confirm_password,
-                                                    null
-                                                  ) > -1
-                                                : _vm.deliveryBoys
-                                                    .confirm_password,
-                                            },
-                                            on: {
-                                              change: function ($event) {
-                                                var $$a =
-                                                    _vm.deliveryBoys
-                                                      .confirm_password,
-                                                  $$el = $event.target,
-                                                  $$c = $$el.checked
-                                                    ? true
-                                                    : false
-                                                if (Array.isArray($$a)) {
-                                                  var $$v = null,
-                                                    $$i = _vm._i($$a, $$v)
-                                                  if ($$el.checked) {
-                                                    $$i < 0 &&
-                                                      _vm.$set(
-                                                        _vm.deliveryBoys,
-                                                        "confirm_password",
-                                                        $$a.concat([$$v])
-                                                      )
-                                                  } else {
-                                                    $$i > -1 &&
-                                                      _vm.$set(
-                                                        _vm.deliveryBoys,
-                                                        "confirm_password",
-                                                        $$a
-                                                          .slice(0, $$i)
-                                                          .concat(
-                                                            $$a.slice($$i + 1)
-                                                          )
-                                                      )
-                                                  }
-                                                } else {
-                                                  _vm.$set(
-                                                    _vm.deliveryBoys,
-                                                    "confirm_password",
-                                                    $$c
-                                                  )
-                                                }
-                                              },
-                                            },
-                                          })
-                                        : (_vm.showConfirmPassword
-                                            ? "text"
-                                            : "password") === "radio"
-                                        ? _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value:
-                                                  _vm.deliveryBoys
-                                                    .confirm_password,
-                                                expression:
-                                                  "deliveryBoys.confirm_password",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              name: "confirm_password",
-                                              id: "confirm_password",
-                                              placeholder:
-                                                _vm.__("confirm_password"),
-                                              type: "radio",
-                                            },
-                                            domProps: {
-                                              checked: _vm._q(
-                                                _vm.deliveryBoys
-                                                  .confirm_password,
-                                                null
-                                              ),
-                                            },
-                                            on: {
-                                              change: function ($event) {
-                                                return _vm.$set(
-                                                  _vm.deliveryBoys,
-                                                  "confirm_password",
-                                                  null
-                                                )
-                                              },
-                                            },
-                                          })
-                                        : _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value:
-                                                  _vm.deliveryBoys
-                                                    .confirm_password,
-                                                expression:
-                                                  "deliveryBoys.confirm_password",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              name: "confirm_password",
-                                              id: "confirm_password",
-                                              placeholder:
-                                                _vm.__("confirm_password"),
-                                              type: _vm.showConfirmPassword
-                                                ? "text"
-                                                : "password",
-                                            },
-                                            domProps: {
-                                              value:
-                                                _vm.deliveryBoys
-                                                  .confirm_password,
-                                            },
-                                            on: {
-                                              input: function ($event) {
-                                                if ($event.target.composing) {
-                                                  return
-                                                }
-                                                _vm.$set(
-                                                  _vm.deliveryBoys,
-                                                  "confirm_password",
-                                                  $event.target.value
-                                                )
-                                              },
-                                            },
-                                          }),
-                                      _vm._v(" "),
-                                      _c(
-                                        "button",
-                                        {
-                                          staticClass:
-                                            "btn btn-primary font-bold",
-                                          attrs: { type: "button" },
-                                          on: {
-                                            click: function ($event) {
-                                              _vm.showConfirmPassword =
-                                                !_vm.showConfirmPassword
-                                            },
-                                          },
-                                        },
-                                        [
-                                          _vm.showConfirmPassword
-                                            ? _c("i", {
-                                                staticClass: "fa fa-eye-slash",
-                                                attrs: {
-                                                  "aria-hidden": "true",
-                                                },
-                                              })
-                                            : _c("i", {
-                                                staticClass: "fa fa-eye",
-                                                attrs: {
-                                                  "aria-hidden": "true",
-                                                },
-                                              }),
-                                        ]
-                                      ),
-                                    ]),
-                                  ]),
-                                ])
-                              : _vm._e(),
                           ]),
                           _vm._v(" "),
                           _c("div", { staticClass: "row" }, [
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", { attrs: { for: "ifsc_code" } }, [
-                                  _vm._v(
-                                    _vm._s(_vm.__("bank_ifsc_code")) +
-                                      "\n                                                   "
-                                  ),
-                                ]),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.deliveryBoys.ifsc_code,
-                                      expression: "deliveryBoys.ifsc_code",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "text",
-                                    name: "ifsc_code",
-                                    id: "ifsc_code",
-                                    readonly:
-                                      this.$roleDeliveryBoy ===
-                                      this.login_user.role.name,
-                                    placeholder: _vm.__("bank_ifsc_code"),
-                                  },
-                                  domProps: {
-                                    value: _vm.deliveryBoys.ifsc_code,
-                                  },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.deliveryBoys,
-                                        "ifsc_code",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", { attrs: { for: "bank_name" } }, [
-                                  _vm._v(
-                                    _vm._s(_vm.__("bank_name")) +
-                                      "\n                                            "
-                                  ),
-                                ]),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.deliveryBoys.bank_name,
-                                      expression: "deliveryBoys.bank_name",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "text",
-                                    name: "bank_name",
-                                    id: "bank_name",
-                                    readonly:
-                                      this.$roleDeliveryBoy ===
-                                      this.login_user.role.name,
-                                    placeholder: _vm.__("bank_name"),
-                                  },
-                                  domProps: {
-                                    value: _vm.deliveryBoys.bank_name,
-                                  },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.deliveryBoys,
-                                        "bank_name",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c(
-                                  "label",
-                                  { attrs: { for: "account_number" } },
-                                  [
-                                    _vm._v(
-                                      _vm._s(_vm.__("account_number")) +
-                                        "\n                                                "
-                                    ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value:
-                                        _vm.deliveryBoys.bank_account_number,
-                                      expression:
-                                        "deliveryBoys.bank_account_number",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "number",
-                                    name: "account_number",
-                                    id: "account_number",
-                                    readonly:
-                                      this.$roleDeliveryBoy ===
-                                      this.login_user.role.name,
-                                    placeholder: _vm.__("account_number"),
-                                  },
-                                  domProps: {
-                                    value: _vm.deliveryBoys.bank_account_number,
-                                  },
-                                  on: {
-                                    input: [
-                                      function ($event) {
-                                        if ($event.target.composing) {
-                                          return
-                                        }
-                                        _vm.$set(
-                                          _vm.deliveryBoys,
-                                          "bank_account_number",
-                                          $event.target.value
-                                        )
-                                      },
-                                      _vm.validateAccountNumber,
-                                    ],
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _vm.account_numbervalidationError
-                                  ? _c("span", { staticClass: "error" }, [
-                                      _vm._v(
-                                        _vm._s(
-                                          _vm.account_numbervalidationError
-                                        )
-                                      ),
-                                    ])
-                                  : _vm._e(),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c(
-                                  "label",
-                                  { attrs: { for: "account_name" } },
-                                  [
-                                    _vm._v(
-                                      _vm._s(_vm.__("bank_account_name")) +
-                                        "\n                                                   "
-                                    ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.deliveryBoys.account_name,
-                                      expression: "deliveryBoys.account_name",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "text",
-                                    name: "account_name",
-                                    id: "account_name",
-                                    readonly:
-                                      this.$roleDeliveryBoy ===
-                                      this.login_user.role.name,
-                                    placeholder: _vm.__("bank_account_name"),
-                                  },
-                                  domProps: {
-                                    value: _vm.deliveryBoys.account_name,
-                                  },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.deliveryBoys,
-                                        "account_name",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
+                            _c("div", { staticClass: "col-md-12" }, [
                               _c(
                                 "div",
                                 { staticClass: "form-group" },
@@ -3293,15 +2324,10 @@ var render = function () {
                           _vm._v(" "),
                           _vm.defaultLanguage
                             ? _c("div", { staticClass: "row" }, [
-                                _c("div", { staticClass: "col-md-6" }, [
+                                _c("div", { staticClass: "col-md-12" }, [
                                   _c("div", { staticClass: "form-group" }, [
                                     _c("label", { attrs: { for: "address" } }, [
                                       _vm._v(_vm._s(_vm.__("address"))),
-                                      _c(
-                                        "span",
-                                        { staticClass: "text-danger text-xs" },
-                                        [_vm._v("*")]
-                                      ),
                                     ]),
                                     _vm._v(" "),
                                     _c("textarea", {
@@ -3340,66 +2366,6 @@ var render = function () {
                                               _vm.defaultLanguage.id
                                             ],
                                             "address",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
-                                  ]),
-                                ]),
-                                _vm._v(" "),
-                                _c("div", { staticClass: "col-md-6" }, [
-                                  _c("div", { staticClass: "form-group" }, [
-                                    _c(
-                                      "label",
-                                      { attrs: { for: "other_payment_info" } },
-                                      [
-                                        _vm._v(
-                                          _vm._s(
-                                            _vm.__("other_payment_information")
-                                          )
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("textarea", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value:
-                                            _vm.translations[
-                                              _vm.defaultLanguage.id
-                                            ].other_payment_information,
-                                          expression:
-                                            "translations[defaultLanguage.id].other_payment_information",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        name: "other_payment_info",
-                                        id: "other_payment_info",
-                                        rows: "3",
-                                        placeholder: _vm.__(
-                                          "other_payment_information"
-                                        ),
-                                      },
-                                      domProps: {
-                                        value:
-                                          _vm.translations[
-                                            _vm.defaultLanguage.id
-                                          ].other_payment_information,
-                                      },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.translations[
-                                              _vm.defaultLanguage.id
-                                            ],
-                                            "other_payment_information",
                                             $event.target.value
                                           )
                                         },
