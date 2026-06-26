@@ -242,9 +242,14 @@ class LoadingSlipsApiController extends Controller
         }
     }
 
-    public function view($id)
+    public function view(Request $request, $id = null)
     {
-        $slip = LoadingSlip::with(['vehicle', 'driver'])->find($id);
+        $slipId = $id ?? $request->id ?? $request->loading_slip_id;
+        if (empty($slipId)) {
+            return CommonHelper::responseError('Loading slip ID is required.');
+        }
+
+        $slip = LoadingSlip::with(['vehicle', 'driver'])->find($slipId);
         if (!$slip) {
             return CommonHelper::responseError('Loading slip not found.');
         }
@@ -257,7 +262,7 @@ class LoadingSlipsApiController extends Controller
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
             ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
-            ->where('orders.loading_slip_id', $id)
+            ->where('orders.loading_slip_id', $slipId)
             ->get();
 
         foreach ($orders as $order) {

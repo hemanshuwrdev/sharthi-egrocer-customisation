@@ -744,6 +744,7 @@ Route::middleware('auth:api')->group(function () {
             Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('seller.loading_slips.save');
             Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('seller.loading_slips.dispatch');
             Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
+            Route::post('view', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
         });
     });
 
@@ -841,6 +842,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('loading_slips.save');
         Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('loading_slips.dispatch');
         Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
+        Route::post('view', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
     });
 
     Route::get('set_seller_wallet_transaction', [\App\Http\Controllers\Controller::class, 'setSellerWalletTransaction']);
