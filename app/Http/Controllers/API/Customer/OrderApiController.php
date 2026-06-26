@@ -2453,8 +2453,13 @@ class OrderApiController extends Controller
         }
     }
 
-    public function rescheduleOrder(Request $request, $id)
+    public function rescheduleOrder(Request $request, $id = null)
     {
+        $orderId = $id ?? $request->id ?? $request->order_id;
+        if (empty($orderId)) {
+            return CommonHelper::responseError("Order ID is required!");
+        }
+
         $validator = Validator::make($request->all(), [
             'delivery_date'   => 'required|date|date_format:Y-m-d|after_or_equal:today',
             'delivery_reason' => 'nullable|string|max:255',
@@ -2465,7 +2470,7 @@ class OrderApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $order = Order::find($id);
+        $order = Order::find($orderId);
         if (empty($order)) {
             return CommonHelper::responseError("Order Not found!");
         }

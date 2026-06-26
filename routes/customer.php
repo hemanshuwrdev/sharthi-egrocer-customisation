@@ -184,7 +184,7 @@ Route::group(['middleware' => ['auth.customer']], function () {
         Route::post('add_transaction', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'addTransaction']);
         Route::post('update_order_status', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'updateOrderStatus']);
         Route::post('delete_order', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'deletePaymentPendingOrder']);
-        Route::put('orders/{id}/reschedule', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'rescheduleOrder']);
+        Route::post('orders/reschedule', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'rescheduleOrder']);
 
         //Phonepe
         Route::get('order_status_phonepe', [\App\Http\Controllers\API\Customer\OrderApiController::class, 'getOrderStatusPhonepe']);
