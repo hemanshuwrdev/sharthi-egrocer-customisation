@@ -21,17 +21,27 @@
                 <div class="card border-0 shadow-sm rounded-lg h-100">
                     <div class="card-header border-0 py-3">
                         <div class="row align-items-center">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <h6 class="m-0 font-weight-bold">{{ __('unassigned_doorstep_orders') }}</h6>
                             </div>
-                            <!-- Zone Selector Filter -->
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center justify-content-md-end gap-2">
-                                    <label class="mb-0 text-muted font-weight-bold mr-2 text-nowrap">{{ __('filter_by_zone') }}:</label>
-                                    <select v-model="selectedZone" @change="getOrders" class="form-control form-select border-0 max-w-200">
-                                        <option value="">{{ __('all_zones') }}</option>
-                                        <option v-for="zone in zones" :key="zone" :value="zone">{{ formatZone(zone) }}</option>
-                                    </select>
+                            <!-- Zone & Rescheduled Selector Filters -->
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center justify-content-md-end gap-3 flex-wrap">
+                                    <div class="d-flex align-items-center">
+                                        <label class="mb-0 text-muted font-weight-bold mr-2 text-nowrap">{{ __('filter_by_zone') }}:</label>
+                                        <select v-model="selectedZone" @change="getOrders" class="form-control form-select border-0 max-w-200 shadow-none">
+                                            <option value="">{{ __('all_zones') }}</option>
+                                            <option v-for="zone in zones" :key="zone" :value="zone">{{ formatZone(zone) }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <label class="mb-0 text-muted font-weight-bold mr-2 text-nowrap">Rescheduled:</label>
+                                        <select v-model="selectedRescheduled" @change="getOrders" class="form-control form-select border-0 max-w-200 shadow-none">
+                                            <option value="">All Orders</option>
+                                            <option value="1">Rescheduled Only</option>
+                                            <option value="0">Regular Only</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -63,7 +73,10 @@
                                         </td>
                                         <td class="font-weight-bold">#{{ order.id }}</td>
                                         <td>
-                                            <div class="font-weight-bold mb-0">{{ order.user_name }}</div>
+                                            <div class="d-flex align-items-center mb-0">
+                                                <span class="font-weight-bold mr-2">{{ order.user_name }}</span>
+                                                <span v-if="order.is_rescheduled" class="badge bg-soft-warning text-warning font-weight-bold">Rescheduled</span>
+                                            </div>
                                             <small class="text-muted text-truncate d-inline-block max-w-250">{{ order.address }}</small>
                                         </td>
                                         <td class="text-center">
@@ -188,6 +201,7 @@ export default {
             vehicles: [],
             drivers: [],
             selectedZone: '',
+            selectedRescheduled: '',
             selectedVehicleId: '',
             selectedVehicle: null,
             selectedDriverId: '',
@@ -256,7 +270,10 @@ export default {
         },
         getOrders() {
             axios.get(this.apiBase + '/loading_slips/orders', {
-                params: { zone: this.selectedZone }
+                params: {
+                    zone: this.selectedZone,
+                    is_rescheduled: this.selectedRescheduled
+                }
             }).then(res => {
                 if (res.data.status === 1) {
                     this.orders = res.data.data;
@@ -333,6 +350,10 @@ export default {
 .bg-soft-primary {
     background-color: rgba(78, 115, 223, 0.1) !important;
     color: #4e73df !important;
+}
+.bg-soft-warning {
+    background-color: rgba(246, 194, 62, 0.1) !important;
+    color: #f6c23e !important;
 }
 .max-w-200 {
     max-width: 200px;

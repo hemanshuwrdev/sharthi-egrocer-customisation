@@ -55,6 +55,7 @@ class LoadingSlipsApiController extends Controller
     public function getOrdersForAssignment(Request $request)
     {
         $zone = $request->input('zone', '');
+        $isRescheduled = $request->input('is_rescheduled', '');
 
         $query = Order::select('orders.*', 'users.name as user_name', 'cities.zone as city_zone')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
@@ -67,6 +68,22 @@ class LoadingSlipsApiController extends Controller
                 OrderStatusList::$processed,
                 OrderStatusList::$shipped
             ]);
+
+        if ($isRescheduled === '1' || $isRescheduled === 1) {
+            $query->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('order_statuses')
+                  ->whereColumn('order_statuses.order_id', 'orders.id')
+                  ->where('order_statuses.status', 'Rescheduled');
+            });
+        } elseif ($isRescheduled === '0' || $isRescheduled === 0) {
+            $query->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('order_statuses')
+                  ->whereColumn('order_statuses.order_id', 'orders.id')
+                  ->where('order_statuses.status', 'Rescheduled');
+            });
+        }
 
         if (auth()->user() && auth()->user()->seller) {
             $sellerId = auth()->user()->seller->id;
@@ -91,6 +108,10 @@ class LoadingSlipsApiController extends Controller
                 $order->weight = $computedWeight;
                 $order->save();
             }
+            $order->is_rescheduled = DB::table('order_statuses')
+                ->where('order_id', $order->id)
+                ->where('status', 'Rescheduled')
+                ->exists();
         }
 
         return CommonHelper::responseWithData($orders);
@@ -276,6 +297,10 @@ class LoadingSlipsApiController extends Controller
 
         foreach ($orders as $order) {
             $order->items = OrderItem::where('order_id', $order->id)->get();
+            $order->is_rescheduled = DB::table('order_statuses')
+                ->where('order_id', $order->id)
+                ->where('status', 'Rescheduled')
+                ->exists();
         }
 
         return CommonHelper::responseWithData([
@@ -434,6 +459,11 @@ class LoadingSlipsApiController extends Controller
                 ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
                 ->where('order_items.order_id', $order->id)
                 ->get();
+
+            $order->is_rescheduled = DB::table('order_statuses')
+                ->where('order_id', $order->id)
+                ->where('status', 'Rescheduled')
+                ->exists();
         }
 
         $app_name = \App\Models\Setting::get_value('app_name') ?: 'Sarthi Wholesale';

@@ -2081,6 +2081,9 @@ class OrderApiController extends Controller
         if (!$data["order"]) {
             return CommonHelper::responseError("Order Not found!");
         }
+        if ($data["order"]->active_status != OrderStatusList::$delivered && $data["order"]->active_status != OrderStatusList::$selfPickupPicked) {
+            return CommonHelper::responseError("Invoice can only be generated after the order has been delivered.");
+        }
         CommonHelper::AdditionalChargesArray($data['order']);
         $invoice = CommonHelper::generateOrderInvoice($data);
         return CommonHelper::responseWithData($invoice);
@@ -2091,6 +2094,9 @@ class OrderApiController extends Controller
         $data = CommonHelper::getOrderDetails($request->order_id, true);
         if (!$data["order"]) {
             return CommonHelper::responseError("Order Not found!");
+        }
+        if ($data["order"]->active_status != OrderStatusList::$delivered && $data["order"]->active_status != OrderStatusList::$selfPickupPicked) {
+            return CommonHelper::responseError("Invoice can only be downloaded after the order has been delivered.");
         }
         CommonHelper::AdditionalChargesArray($data['order']);
         return CommonHelper::downloadOrderInvoice($request->order_id);

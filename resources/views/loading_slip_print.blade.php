@@ -554,6 +554,7 @@
 
     <!-- 3. Party Name Wise Bills (1 page per party) in high-fidelity Udaan style -->
     @foreach ($orders as $orderIndex => $order)
+        @if (!$order->is_rescheduled)
         <div class="party-bill-page">
             <div class="udaan-invoice">
                 <!-- Header -->
@@ -805,6 +806,7 @@
                 </div>
             </div>
         </div>
+        @endif
     @endforeach
 
     <div style="text-align: center; margin-top: 40px;" class="no-print">
