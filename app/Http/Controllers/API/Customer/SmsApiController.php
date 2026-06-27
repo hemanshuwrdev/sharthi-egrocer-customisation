@@ -16,33 +16,49 @@ class SmsApiController extends Controller
      
     public function store(Request $request)
     {
-        $otp = rand(100000, 999999); //generate random code
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'phone' => 'required|string',
         ]);
-        $appName = Setting::where('variable', 'app_name')->value('value');
-
-        $phone = $request->input('phone');
-        $message = "$otp is your verification code from $appName";
-        $success = TwilioHelper::sendSms($phone, $message);
-       
-        if($success == true){
-            // Set OTP expiration time, for example, 10 minutes
-            $expiresAt = Carbon::now()->addMinutes(10);
-
-            // Store the OTP in the database
-           SmsVerification::insert([
-                'phone' => $phone,
-                'otp' => $otp,
-                'status' => 'pending',
-                'expires_at' => $expiresAt,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-            return CommonHelper::responseSuccess("OTP sent Successfully!");
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
         }
-        return CommonHelper::responseError("Sms Gateway error!");
-    
+
+        // Determine configured OTP provider
+        $firebaseEnabled = (int) Setting::where('variable', 'firebase_authentication')->value('value');
+        $otpEnabled      = (int) Setting::where('variable', 'phone_auth_otp')->value('value');
+
+        if (!$otpEnabled) {
+            return CommonHelper::responseError('otp_login_not_enabled');
+        }
+
+        // Firebase OTP is handled entirely on the client side
+        if ($firebaseEnabled) {
+            return CommonHelper::responseWithData(['otp_provider' => 'firebase']);
+        }
+
+        // Twilio flow — generate, send, store
+        $otp         = rand(100000, 999999);
+        $countryCode = ltrim($request->input('country_code', ''), '+');
+        $phone       = '+' . $countryCode . $request->input('phone');
+        $appName     = Setting::where('variable', 'app_name')->value('value');
+        $message     = "$otp is your verification code from $appName";
+
+        $success = TwilioHelper::sendSms($phone, $message);
+        if (!$success) {
+            return CommonHelper::responseError('sms_gateway_error');
+        }
+
+        $expiresAt = Carbon::now()->addMinutes(10);
+        SmsVerification::insert([
+            'phone'      => $phone,
+            'otp'        => $otp,
+            'status'     => 'pending',
+            'expires_at' => $expiresAt,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+
+        return CommonHelper::responseWithData(['otp_provider' => 'twilio']);
     }
     public function verifyContact(Request $request)
     {

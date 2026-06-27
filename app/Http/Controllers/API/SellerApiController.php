@@ -77,13 +77,24 @@ class SellerApiController extends Controller
 
         $sellers = $sellers->orderBy('id', 'DESC')->get();
 
+        // Bulk-load cities with zone for all sellers (city_id is comma-separated)
+        $allCityIds = $sellers->flatMap(function ($s) {
+            return $s->city_id ? array_filter(array_map('intval', explode(',', $s->city_id))) : [];
+        })->unique()->values()->toArray();
+
+        $citiesMap = $allCityIds
+            ? City::whereIn('id', $allCityIds)->get(['id', 'name', 'zone'])->keyBy('id')
+            : collect();
+
         // Format created_at after toArray() so JSON is not re-serialized as ISO by Eloquent date cast
-        $sellers = $sellers->map(function (Seller $seller) {
+        $sellers = $sellers->map(function (Seller $seller) use ($citiesMap) {
             $row = $seller->toArray();
             $rawCreated = $seller->getAttributes()['created_at'] ?? null;
             if ($rawCreated !== null && $rawCreated !== '') {
                 $row['created_at'] = CommonHelper::formatDateTime($rawCreated);
             }
+            $cityIds = $seller->city_id ? array_filter(array_map('intval', explode(',', $seller->city_id))) : [];
+            $row['cities'] = collect($cityIds)->map(fn($id) => $citiesMap->get($id))->filter()->values()->toArray();
             return $row;
         });
 
@@ -109,7 +120,10 @@ class SellerApiController extends Controller
             'pickup_store_address' => 'required_if:self_pickup_mode,1',
             'pickup_latitude' => 'required_if:self_pickup_mode,1',
             'pickup_longitude' => 'required_if:self_pickup_mode,1',
-            'pickup_store_timings' => 'required_if:self_pickup_mode,1'
+            'pickup_store_timings' => 'required_if:self_pickup_mode,1',
+            'upi_id'     => ['nullable', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/'],
+            'upi_mobile' => 'nullable|digits:10',
+            'upi_name'   => 'nullable|string|max:100',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -136,10 +150,9 @@ class SellerApiController extends Controller
             $record->city_id = $request->city_id;
             $record->categories = $request->categories_ids;
             $record->state = $request->state;
-            $record->account_number = $request->account_number;
-            $record->bank_ifsc_code = $request->ifsc_code;
-            $record->bank_name = $request->bank_name;
-            $record->account_name = $request->account_name;
+            $record->upi_id     = $request->upi_id;
+            $record->upi_mobile = $request->upi_mobile;
+            $record->upi_name   = $request->upi_name;
             $record->commission = $request->commission;
             $record->tax_name = $request->tax_name;
             $record->tax_number = $request->tax_number;
@@ -268,12 +281,10 @@ class SellerApiController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        if ($seller->city_id && $seller->admin && $seller->admin->seller) {
-            $cityIds = explode(',', $seller->city_id);
-            $cities = City::whereIn('id', $cityIds)->get(['id', 'name']);
-
-            $seller->admin->seller->cities = $cities;
-        }
+        // Load all assigned cities with zone so the edit form can pre-populate the zone step
+        $cityIds = $seller->city_id ? array_filter(array_map('intval', explode(',', $seller->city_id))) : [];
+        $cities = $cityIds ? City::whereIn('id', $cityIds)->get(['id', 'name', 'zone']) : collect();
+        $seller->cities = $cities;
 
         Seller::setOptimizedResponse(false);
 
@@ -296,7 +307,10 @@ class SellerApiController extends Controller
             'pickup_store_address' => 'required_if:self_pickup_mode,1',
             'pickup_latitude' => 'required_if:self_pickup_mode,1',
             'pickup_longitude' => 'required_if:self_pickup_mode,1',
-            'pickup_store_timings' => 'required_if:self_pickup_mode,1'
+            'pickup_store_timings' => 'required_if:self_pickup_mode,1',
+            'upi_id'     => ['nullable', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/'],
+            'upi_mobile' => 'nullable|digits:10',
+            'upi_name'   => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -345,10 +359,9 @@ class SellerApiController extends Controller
                 $record->city_id = $request->city_id;
                 $record->categories = $request->categories_ids;
                 $record->state = $request->state;
-                $record->account_number = $request->account_number;
-                $record->bank_ifsc_code = $request->ifsc_code;
-                $record->bank_name = $request->bank_name;
-                $record->account_name = $request->account_name;
+                $record->upi_id     = $request->upi_id;
+                $record->upi_mobile = $request->upi_mobile;
+                $record->upi_name   = $request->upi_name;
                 $record->commission = $request->commission;
                 $record->tax_name = $request->tax_name;
                 $record->tax_number = $request->tax_number;

@@ -588,18 +588,34 @@ class DeliveryBoyController extends BaseController
             "app_mode_delivery_boy",
             "app_mode_delivery_boy_remark",
             "apiKey",
-            "enable_road_path_tracking"
+            "enable_road_path_tracking",
+            "phone_auth_otp",
+            "firebase_authentication",
+            "custom_sms_gateway_otp_based",
         );
         $settings = CommonHelper::getSettings($variables);
         $settings = CommonHelper::resolveTranslatedSettings($settings);
-        $settings["allPermissions"] = auth()->user()->allPermissions;
-        $settings = json_encode($settings);
-        $settings = base64_encode($settings);
-        if(!empty($settings)){
-            return CommonHelper::responseWithData($settings);
-        }else{
-            return  CommonHelper::responseError('No settings found!');
+
+        // Derive otp_provider for the app login screen
+        if (!empty($settings['phone_auth_otp']) && $settings['phone_auth_otp'] == 1) {
+            if (!empty($settings['firebase_authentication']) && $settings['firebase_authentication'] == 1) {
+                $settings['otp_provider'] = 'firebase';
+            } elseif (!empty($settings['custom_sms_gateway_otp_based']) && $settings['custom_sms_gateway_otp_based'] == 1) {
+                $settings['otp_provider'] = 'custom_sms';
+            } else {
+                $settings['otp_provider'] = 'sms';
+            }
+        } else {
+            $settings['otp_provider'] = 'none';
         }
+
+        // Return user permissions only if a valid token is passed
+        $user = auth('api')->user();
+        if ($user) {
+            $settings['allPermissions'] = $user->allPermissions;
+        }
+
+        return CommonHelper::responseWithData($settings);
     }
 
     public function getPrivacyPolicy(){

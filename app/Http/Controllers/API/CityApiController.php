@@ -39,6 +39,10 @@ class CityApiController extends Controller
             });
         }
 
+        if ($request->filled('zone')) {
+            $query->where('zone', $request->zone);
+        }
+
         $total = $query->count();
 
         if ($request->limit) {

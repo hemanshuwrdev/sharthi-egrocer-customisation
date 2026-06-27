@@ -17,7 +17,6 @@ class LiveTracking extends Model
         'longitude',
         'tracked_at',
     ];
-
     // Specify the type of the columns
     protected $casts = [
         'latitude' => 'float',

@@ -430,20 +430,148 @@
 
                                             <!-- Non-translatable Cards (only shown in default language tab) -->
                                             <template v-if="language.is_default">
+
+                                                <!-- ── Service Zones & Cities Card ── -->
+                                                <div class="card">
+                                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                                        <h4 class="mb-0">{{ __('service_zones_and_cities') }}</h4>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            @click="toggleAddCityForm">
+                                                            <i :class="showAddCityForm ? 'fa fa-times' : 'fa fa-plus'"></i>
+                                                            {{ showAddCityForm ? __('cancel') : __('add_zone') }}
+                                                        </button>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row" v-if="!showAddCityForm">
+                                                            <!-- Zone selector -->
+                                                            <div class="form-group col-md-5 mt-0">
+                                                                <div class="form-group">
+                                                                    <label>{{ __('zone') }}<i class="text-danger">*</i></label>
+                                                                    <select class="form-control" v-model="selected_zone">
+                                                                        <option value="">{{ __('select_zone') }}</option>
+                                                                        <option v-for="z in zones" :key="z.zone" :value="z.zone">
+                                                                            {{ z.zone }} ({{ z.city_count }} {{ __('cities') }})
+                                                                        </option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <!-- City multi-select -->
+                                                            <div class="form-group col-md-7">
+                                                                <div class="form-group">
+                                                                    <label for="city_name">{{ __('select_cities') }}<i class="text-danger">*</i></label>
+                                                                    <Select2 v-model="city_id" :placeholder="__('select_cities')"
+                                                                        :options="cities_options"
+                                                                        :settings="{ multiple: 'multiple' }" />
+                                                                    <small v-if="!selected_zone && zones.length" class="text-muted">{{ __('select_zone_to_filter_cities') }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Add Zone Form (zone name + boundary drawing) -->
+                                                        <div v-if="showAddCityForm">
+                                                            <p class="text-muted mb-3">
+                                                                <i class="fa fa-info-circle"></i>
+                                                                Enter a zone name, search the area on the map, then <strong>draw the zone boundary</strong> using the polygon or circle tool.
+                                                            </p>
+                                                            <div class="row">
+                                                                <!-- Left: Zone form fields -->
+                                                                <div class="col-md-5">
+                                                                    <div class="form-group mt-0">
+                                                                        <div class="form-group">
+                                                                            <label>{{ __('zone_name') }}<i class="text-danger">*</i></label>
+                                                                            <input type="text" class="form-control" v-model="newCity.zone"
+                                                                                :placeholder="__('zone_name')">
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="form-group mt-0">
+                                                                        <div class="form-group">
+                                                                            <label>{{ __('search_location') }}</label>
+                                                                            <GmapAutocomplete type="search" class="form-control"
+                                                                                :placeholder="__('search_your_location_on_map')"
+                                                                                @place_changed="setCityPlace"
+                                                                                :options="{ fields: ['address_components', 'formatted_address', 'geometry', 'name'], strictBounds: false }"
+                                                                                id="city_map_search">
+                                                                            </GmapAutocomplete>
+                                                                            <small class="text-muted">{{ __('search_to_navigate_map_then_draw_zone_boundary') }}</small>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="form-group mt-0">
+                                                                        <div class="form-group">
+                                                                            <label>{{ __('city_name') }}<i class="text-danger">*</i></label>
+                                                                            <input type="text" class="form-control" v-model="newCity.name"
+                                                                                :placeholder="__('city_name')">
+                                                                            <small class="text-muted">{{ __('auto_filled_from_map_search') }}</small>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <div class="form-group col-md-6 mt-0">
+                                                                            <div class="form-group">
+                                                                                <label>{{ __('latitude') }}</label>
+                                                                                <input type="text" class="form-control" v-model="newCity.latitude" readonly :placeholder="__('latitude')">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="form-group col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label>{{ __('longitude') }}</label>
+                                                                                <input type="text" class="form-control" v-model="newCity.longitude" readonly :placeholder="__('longitude')">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="alert alert-warning py-2 px-3" v-if="!cityVertices">
+                                                                        <i class="fa fa-draw-polygon mr-1"></i>
+                                                                        {{ __('draw_zone_boundary_on_map_using_tools') }}
+                                                                    </div>
+                                                                    <div class="alert alert-success py-2 px-3" v-else>
+                                                                        <i class="fa fa-check-circle mr-1"></i>
+                                                                        {{ __('zone_boundary_drawn_successfully') }}
+                                                                    </div>
+                                                                    <div class="d-flex gap-2">
+                                                                        <button type="button" class="btn btn-success btn-sm" @click="saveNewCity" :disabled="isSavingCity">
+                                                                            <b-spinner v-if="isSavingCity" small class="mr-1"></b-spinner>
+                                                                            {{ isSavingCity ? __('saving') : __('save_zone') }}
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-secondary btn-sm ml-2" @click="toggleAddCityForm">{{ __('cancel') }}</button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Right: Map with polygon drawing -->
+                                                                <div class="col-md-7">
+                                                                    <div class="mb-2 d-flex gap-2">
+                                                                        <button type="button" class="btn btn-sm btn-danger" @click="clearCityDrawing">
+                                                                            <i class="fa fa-trash"></i> {{ __('clear_map') }}
+                                                                        </button>
+                                                                        <span v-if="cityVertices" class="badge bg-success align-self-center ml-2">{{ __('boundary_drawn') }}</span>
+                                                                    </div>
+                                                                    <GmapMap ref="cityMapRef"
+                                                                        :center="cityMapCenter" :zoom="5"
+                                                                        :mapTypeControl="true"
+                                                                        :drawingControl="true"
+                                                                        style="width: 100%; height: 450px;">
+                                                                        <GmapMarker v-for="(m, mi) in cityMapMarkers" :key="mi"
+                                                                            :position="m.position" :draggable="true" :clickable="true" />
+                                                                        <gmap-info-window
+                                                                            :options="{ maxWidth: 300, pixelOffset: { width: 0, height: -35 } }"
+                                                                            :position="cityInfoWindow.position"
+                                                                            :opened="cityInfoWindow.open"
+                                                                            @closeclick="cityInfoWindow.open = false">
+                                                                            <div v-html="cityInfoWindow.template"></div>
+                                                                        </gmap-info-window>
+                                                                    </GmapMap>
+                                                                    <small class="text-muted d-block mt-1">{{ __('use_drawing_tools_on_map_to_draw_zone_boundary') }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- ── END Service Zones & Cities Card ── -->
+
+                                                <!-- ── Store Location Card ── -->
                                                 <div class="card">
                                                     <div class="card-header">
                                                         <h4> {{ __('store_location_information') }}</h4>
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="row">
-                                                            <div class="form-group col-md-4">
-                                                                <label for="city_name">{{ __('select_or_search_city')
-                                                                    }}<i class="text-danger">*</i></label>
-
-                                                                <Select2 v-model="city_id" :placeholder="__('select_cities')"
-                                                                    :options="cities_options"
-                                                                    :settings="{ multiple: 'multiple' }" />
-                                                            </div>
                                                             <div class="form-group col-md-4">
                                                                 <div class="form-group">
                                                                     <label> {{ __('state') }}</label>
@@ -558,48 +686,34 @@
 
                                                 <div class="card" v-if="!isSellerRole">
                                                     <div class="card-header">
-                                                        <h4> {{ __('seller_bank_information') }}</h4>
+                                                        <h4>{{ __('upi_information') }}</h4>
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="row">
-
-                                                            <div class="form-group col-md-3 mt-0">
+                                                            <div class="form-group col-md-4 mt-0">
                                                                 <div class="form-group">
-                                                                    <label>{{ __('bank_name') }}</label>
+                                                                    <label>{{ __('upi_id') }}</label>
                                                                     <input type="text" class="form-control"
-                                                                        v-model="bank_name"
-                                                                        :placeholder="__('bank_name')" >
+                                                                        v-model="upi_id"
+                                                                        :placeholder="__('upi_id_placeholder')">
+                                                                    <small class="text-muted">e.g. name@upi</small>
                                                                 </div>
                                                             </div>
-
-                                                            <div class="form-group col-md-3">
+                                                            <div class="form-group col-md-4">
                                                                 <div class="form-group">
-                                                                    <label> {{ __('account_number') }}</label>
-                                                                    <input type="number" class="form-control"
-                                                                        v-model="account_number"
-                                                                        :placeholder="__('account_number')"
-                                                                        inputmode="numeric" @input="validateAccountNumber">
-                                                                    <span v-if="account_numbervalidationError"
-                                                                        class="error">{{
-                                                                            account_numbervalidationError }}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="form-group col-md-3">
-                                                                <div class="form-group">
-                                                                    <label>{{ __('bank_ifsc_code') }}</label>
+                                                                    <label>{{ __('upi_mobile') }}</label>
                                                                     <input type="text" class="form-control"
-                                                                        v-model="ifsc_code"
-                                                                        :placeholder="__('bank_ifsc_code')" >
+                                                                        v-model="upi_mobile"
+                                                                        :placeholder="__('upi_mobile')"
+                                                                        inputmode="numeric" maxlength="10">
                                                                 </div>
                                                             </div>
-
-                                                            <div class="form-group col-md-3">
+                                                            <div class="form-group col-md-4">
                                                                 <div class="form-group">
-                                                                    <label> {{ __('bank_account_name') }}</label>
-                                                                    <input type="text" class="form-control valid"
-                                                                        v-model="account_name"
-                                                                        :placeholder="__('bank_account_name')" >
+                                                                    <label>{{ __('upi_name') }}</label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="upi_name"
+                                                                        :placeholder="__('upi_name')">
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -912,10 +1026,24 @@ export default {
             categories_ids: [],
             state: "",
             remark: "",
-            account_number: "",
-            ifsc_code: "",
-            bank_name: "",
-            account_name: "",
+            upi_id: "",
+            upi_mobile: "",
+            upi_name: "",
+            zones: [],
+            selected_zone: "",
+            showAddCityForm: false,
+            newCity: {
+                name: '', latitude: '', longitude: '', state: '', zone: '',
+                formatted_address: '', boundary_points: '', geolocation_type: '', radius: '',
+            },
+            cityMapCenter: { lat: 20.5937, lng: 78.9629 },
+            cityMapMarkers: [],
+            cityCurrentOverlay: null,
+            cityVertices: '',
+            cityGeolocationType: '',
+            cityRadius: '',
+            cityInfoWindow: { position: { lat: 0, lng: 0 }, open: false, template: '' },
+            isSavingCity: false,
             commission: "",
             tax_name: "",
             tax_number: "",
@@ -949,7 +1077,7 @@ export default {
             commissionRule: false,
             mobilevalidationError: null,
             commissionvalidationError: null,
-            account_numbervalidationError: null,
+            upi_idValidationError: null,
             isFormLoaded: false, // Flag to prevent form refilling
             isUserTyping: false, // Flag to track if user is actively typing
 
@@ -1040,10 +1168,17 @@ export default {
         city_id: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         categories_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         state: function () { if (!this.id) this.debouncedSave(); },
-        account_number: function () { if (!this.id) this.debouncedSave(); },
-        ifsc_code: function () { if (!this.id) this.debouncedSave(); },
-        bank_name: function () { if (!this.id) this.debouncedSave(); },
-        account_name: function () { if (!this.id) this.debouncedSave(); },
+        upi_id: function () { if (!this.id) this.debouncedSave(); },
+        upi_mobile: function () { if (!this.id) this.debouncedSave(); },
+        upi_name: function () { if (!this.id) this.debouncedSave(); },
+        selected_zone: function (val) {
+            if (val) {
+                this.city_id = [];
+                this.getCities();
+            } else {
+                this.getCities();
+            }
+        },
         commission: function () { if (!this.id) this.debouncedSave(); },
         tax_name: function () { if (!this.id) this.debouncedSave(); },
         tax_number: function () { if (!this.id) this.debouncedSave(); },
@@ -1064,6 +1199,7 @@ export default {
     },
     created: function () {
         this.getCategories();
+        this.getZones();
         this.getCities();
         this.getSellerCommission();
         this.getStoreSettings();
@@ -1233,8 +1369,12 @@ export default {
         },
 
         getCities() {
-            this.isLoading = true
-            axios.get(this.$apiUrl + '/cities')
+            this.isLoading = true;
+            const zone = this.selected_zone || null;
+            const url = zone
+                ? this.$apiUrl + '/cities?zone=' + encodeURIComponent(zone)
+                : this.$apiUrl + '/cities';
+            axios.get(url)
                 .then((response) => {
                     this.isLoading = false
                     let data = response.data;
@@ -1252,6 +1392,170 @@ export default {
                     }
                 });
         },
+        getZones() {
+            axios.get(this.$apiUrl + '/loading_slips/zones')
+                .then((response) => {
+                    const data = response.data;
+                    this.zones = (data.data && Array.isArray(data.data)) ? data.data : [];
+                }).catch(() => {
+                    this.zones = [];
+                });
+        },
+
+        toggleAddCityForm() {
+            this.showAddCityForm = !this.showAddCityForm;
+            if (this.showAddCityForm) {
+                this.newCity.zone = '';
+                this.$nextTick(() => { this.initCityMap(); });
+            } else {
+                this.resetNewCityForm();
+            }
+        },
+
+        initCityMap() {
+            // cityMapRef is inside v-for (language tabs), so Vue gives us an array
+            let mapRef = this.$refs.cityMapRef;
+            if (!mapRef) return;
+            if (Array.isArray(mapRef)) mapRef = mapRef[0];
+            if (!mapRef || !mapRef.$mapPromise) return;
+            mapRef.$mapPromise.then((map) => {
+                const drawingManager = new google.maps.drawing.DrawingManager({
+                    drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                    drawingControl: true,
+                    drawingControlOptions: {
+                        position: google.maps.ControlPosition.TOP_CENTER,
+                        drawingModes: [
+                            google.maps.drawing.OverlayType.POLYGON,
+                            google.maps.drawing.OverlayType.CIRCLE,
+                        ]
+                    },
+                    polygonOptions: { editable: true, strokeColor: '#FF0000', fillColor: '#FF0000', fillOpacity: 0.35 },
+                    circleOptions: { fillColor: '#666666', fillOpacity: 0.5, strokeWeight: 1, clickable: true, editable: true, draggable: true }
+                });
+                drawingManager.setMap(map);
+                this.cityDrawingManager = drawingManager;
+
+                google.maps.event.addListener(drawingManager, 'overlaycomplete', (event) => {
+                    if (this.cityCurrentOverlay) {
+                        this.cityCurrentOverlay.setMap(null);
+                    }
+                    this.cityCurrentOverlay = event.overlay;
+                    if (event.type === 'circle') {
+                        this.cityGeolocationType = 'circle';
+                        this.cityRadius = event.overlay.getRadius();
+                        this.cityVertices = JSON.stringify([{
+                            lat: event.overlay.getCenter().lat(),
+                            lng: event.overlay.getCenter().lng(),
+                        }]);
+                    } else {
+                        this.cityGeolocationType = 'polygon';
+                        this.cityVertices = event.overlay.getPath().getArray();
+                    }
+                });
+            });
+        },
+
+        clearCityDrawing() {
+            if (this.cityCurrentOverlay) {
+                this.cityCurrentOverlay.setMap(null);
+                this.cityCurrentOverlay = null;
+            }
+            this.cityVertices = '';
+            this.cityGeolocationType = '';
+            this.cityRadius = '';
+        },
+
+        setCityPlace(place) {
+            if (!place || !place.geometry) return;
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            this.cityMapCenter = { lat, lng };
+            this.cityMapMarkers = [{ position: { lat, lng } }];
+            this.newCity.latitude = lat;
+            this.newCity.longitude = lng;
+            this.newCity.name = place.name || this.newCity.name;
+            const parts = (place.formatted_address || '').split(',');
+            this.newCity.state = parts.length > 1 ? parts[parts.length - 2].trim() : '';
+            this.newCity.formatted_address = place.formatted_address || '';
+            this.cityInfoWindow = {
+                position: { lat, lng },
+                open: true,
+                template: `<b>${this.newCity.name}</b><br>${this.newCity.formatted_address}`,
+            };
+        },
+
+        async saveNewCity() {
+            if (!this.newCity.name) return this.showError(__('city_name') + ' ' + __('is_required'));
+            if (!this.newCity.zone) return this.showError(__('zone_name') + ' ' + __('is_required'));
+            if (!this.newCity.latitude || !this.newCity.longitude) return this.showError(__('please_search_and_select_city_on_map'));
+            if (!this.cityVertices) return this.showError(__('draw_city_boundary_on_map_required'));
+
+            this.isSavingCity = true;
+            try {
+                const formData = new FormData();
+                for (const key in this.newCity) {
+                    formData.append(key, this.newCity[key] ?? '');
+                }
+                formData.append('language_id', this.defaultLanguageId || 1);
+                formData.append('zone', this.newCity.zone);
+                formData.append('time_to_travel', 0);
+                formData.append('min_amount_for_free_delivery', 0);
+                formData.append('delivery_charge_method', 'fixed_charge');
+                formData.append('fixed_charge', 0);
+                formData.append('geolocation_type', this.cityGeolocationType);
+                formData.append('radius', this.cityRadius || '');
+                if (this.cityGeolocationType === 'circle') {
+                    formData.append('boundary_points', this.cityVertices);
+                } else {
+                    formData.append('boundary_points', JSON.stringify(this.cityVertices));
+                }
+
+                const response = await axios.post(this.$apiUrl + '/cities/save', formData);
+                const newId = response.data?.data?.id;
+                if (newId) {
+                    // Add to cities list and auto-select
+                    this.cities.push({ id: newId, name: this.newCity.name, zone: this.newCity.zone });
+                    if (!Array.isArray(this.city_id)) this.city_id = [];
+                    this.city_id = [...this.city_id, String(newId)];
+
+                    // If zone is new, add it to zones list and select it
+                    const zone = this.newCity.zone;
+                    const zoneExists = this.zones.find(z => z.zone === zone);
+                    if (!zoneExists) {
+                        this.zones.push({ zone, city_count: 1 });
+                    } else {
+                        zoneExists.city_count = (zoneExists.city_count || 0) + 1;
+                    }
+                    if (this.selected_zone !== zone) {
+                        this.selected_zone = zone;
+                    }
+
+                    this.showMessage('success', __('city_saved_successfully'));
+                    this.resetNewCityForm();
+                    this.showAddCityForm = false;
+                    this.getCities();
+                } else {
+                    this.showError(__('something_went_wrong'));
+                }
+            } catch (error) {
+                const msg = error.response?.data?.message || error.message || __('something_went_wrong');
+                this.showError(msg);
+            } finally {
+                this.isSavingCity = false;
+            }
+        },
+
+        resetNewCityForm() {
+            this.newCity = {
+                name: '', latitude: '', longitude: '', state: '', zone: '',
+                formatted_address: '', boundary_points: '', geolocation_type: '', radius: '',
+            };
+            this.cityMapMarkers = [];
+            this.cityMapCenter = { lat: 20.5937, lng: 78.9629 };
+            this.cityInfoWindow = { position: { lat: 0, lng: 0 }, open: false, template: '' };
+            this.clearCityDrawing();
+        },
+
         getCategories() {
 
             this.isLoading = true
@@ -1474,22 +1778,13 @@ export default {
                 this.commissionvalidationError = null;
             }
         },
-        validateAccountNumber() {
-            if (this.account_number < 0) {
-                this.account_numbervalidationError = "Account Number must be numeric value.";
-                this.account_number = null;
-            } else {
-                this.account_numbervalidationError = null;
-            }
-        },
-
         clearForm() {
             if (this.$refs['my-form']) this.$refs['my-form'].reset();
             Object.assign(this, {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
                 store_name: "", street: "", pincode_id: "", city_id: [], categories_ids: [],
-                state: "", remark: "", account_number: "", ifsc_code: "", bank_name: "",
-                account_name: "", commission: "", tax_name: "", tax_number: "", pan_number: "",
+                state: "", remark: "", upi_id: "", upi_mobile: "", upi_name: "",
+                selected_zone: "", commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
                 view_order_otp: 0, assign_delivery_boy: 0, change_order_status_delivered: 0,
                 status: 0, store_logo: "", store_logo_url: "", national_id_card: "",
@@ -1497,7 +1792,7 @@ export default {
                 address_proof_url: "", address_proof_name: "", place_name: "", formatted_address: "",
                 markers: [], self_pickup_mode: 0, door_step_mode: 1, pickup_store_address: "",
                 pickup_latitude: "", pickup_longitude: "", storeTimings: { opening_time: '09:00', closing_time: '18:00' },
-                mobilevalidationError: null, commissionvalidationError: null, account_numbervalidationError: null,
+                mobilevalidationError: null, commissionvalidationError: null, upi_idValidationError: null,
                 isFormLoaded: false, activeLanguageTab: 0
             });
             this.initializeTranslations();
@@ -1518,8 +1813,8 @@ export default {
                     store_name: defaultTranslation ? defaultTranslation.store_name : this.store_name,
                     street: this.street, pincode_id: this.pincode_id,
                     city_id: this.city_id, categories_ids: this.categories_ids, state: this.state,
-                    remark: this.remark, account_number: this.account_number, ifsc_code: this.ifsc_code,
-                    bank_name: this.bank_name, account_name: this.account_name, commission: this.commission,
+                    remark: this.remark, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
+                    upi_name: this.upi_name, selected_zone: this.selected_zone, commission: this.commission,
                     tax_name: this.tax_name, tax_number: this.tax_number, pan_number: this.pan_number,
                     latitude: this.latitude, longitude: this.longitude, place_name: this.place_name,
                     formatted_address: this.formatted_address,
@@ -1682,10 +1977,13 @@ export default {
                         this.categories_ids = emptyIfNull(this.record.categories) ? this.record.categories.split(",") : [];
                         this.state = emptyIfNull(this.record.state);
                         this.remark = emptyIfNull(this.record.remark);
-                        this.account_number = this.record.account_number;
-                        this.ifsc_code = emptyIfNull(this.record.bank_ifsc_code);
-                        this.bank_name = emptyIfNull(this.record.bank_name);
-                        this.account_name = emptyIfNull(this.record.account_name);
+                        this.upi_id = emptyIfNull(this.record.upi_id);
+                        this.upi_mobile = emptyIfNull(this.record.upi_mobile);
+                        this.upi_name = emptyIfNull(this.record.upi_name);
+                        // Pre-select the zone from the first assigned city
+                        if (this.record.cities && this.record.cities.length > 0 && this.record.cities[0].zone) {
+                            this.selected_zone = this.record.cities[0].zone;
+                        }
                         this.commission = this.record.commission;
                         this.tax_name = emptyIfNull(this.record.tax_name);
                         this.tax_number = emptyIfNull(this.record.tax_number);
@@ -1890,10 +2188,9 @@ export default {
                 formData.append('categories_ids', this.categories_ids);
                 formData.append('state', this.state);
                 formData.append('remark', this.remark);
-                formData.append('account_number', this.account_number);
-                formData.append('ifsc_code', this.ifsc_code);
-                formData.append('bank_name', this.bank_name);
-                formData.append('account_name', this.account_name);
+                formData.append('upi_id', this.upi_id || '');
+                formData.append('upi_mobile', this.upi_mobile || '');
+                formData.append('upi_name', this.upi_name || '');
                 formData.append('commission', this.commission);
                 formData.append('tax_name', this.tax_name);
                 formData.append('tax_number', this.tax_number);

@@ -23,7 +23,9 @@ Route::get('active_languages', [\App\Http\Controllers\API\LanguageApiController:
 Route::post('seller/register', [\App\Http\Controllers\API\AdminAuthController::class, 'sellerRegister']);
 Route::get('seller/privacy_policy', [\App\Http\Controllers\SellerController::class, 'getPrivacyPolicy']);
 Route::get('seller/cities', [\App\Http\Controllers\API\CityApiController::class, 'getCities']);
-Route::post('seller/send_sms', [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
+Route::match(['get', 'post'], 'seller/send_sms',       [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
+Route::match(['get', 'post'], 'delivery_boy/send_sms', [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
+Route::match(['get', 'post'], 'salesman/send_sms',     [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
 
 Route::post('delivery_boy/register', [\App\Http\Controllers\API\AdminAuthController::class, 'deliveryBoyRegister']);
 
@@ -768,7 +770,7 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('product_sales_reports', [\App\Http\Controllers\DeliveryBoyController::class, 'getProductSalesReport']);
         Route::get('sales_reports', [\App\Http\Controllers\DeliveryBoyController::class, 'getSalesReport']);
-        Route::get('settings', [\App\Http\Controllers\DeliveryBoyController::class, 'getSettings']);
+        // settings is public — token optional (permissions returned only when token passed)
         Route::get('city', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getCity']);
         Route::get('my_salary', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'getMySalary']);
 
@@ -862,5 +864,6 @@ Route::prefix('oauth')->group(function () {
 // Public route for POS invoice
 Route::get('pos/invoice/{id}', [\App\Http\Controllers\API\SellerPosController::class, 'showInvoice']);
 
-// Public salesman app settings (no auth required)
+// Public settings — token optional (allPermissions returned only when token is passed)
 Route::get('salesman/settings', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'appSettings'])->name('salesman.app.settings');
+Route::get('delivery_boy/settings', [\App\Http\Controllers\DeliveryBoyController::class, 'getSettings'])->name('delivery_boy.app.settings');

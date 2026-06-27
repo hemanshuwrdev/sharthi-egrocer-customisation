@@ -1898,5 +1898,18 @@
     "collected_orders": "Collected Orders",
     "no_payment": "No Payment",
     "all_trips": "All Trips",
-    "not_dispatched": "Not Dispatched"
+    "not_dispatched": "Not Dispatched",
+    "add_zone": "Add Zone",
+    "save_zone": "Save Zone",
+    "save_city": "Save City",
+    "saving": "Saving...",
+    "service_zones_and_cities": "Service Zones & Cities",
+    "select_zone": "Select Zone",
+    "select_zone_to_filter_cities": "Select a zone to filter cities",
+    "search_to_navigate_map_then_draw_zone_boundary": "Search to navigate the map, then draw the zone boundary",
+    "auto_filled_from_map_search": "Auto-filled from map search",
+    "draw_zone_boundary_on_map_using_tools": "Draw the zone boundary on the map using the polygon or circle tool above",
+    "zone_boundary_drawn_successfully": "Zone boundary drawn successfully",
+    "user_is_not_register_with_this_mobile_number": "User is not registered with this mobile number",
+    "sms_gateway_error": "SMS gateway error"
 }

@@ -25,12 +25,132 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../mixins/TranslationHelper.js */ "./resources/js/mixins/TranslationHelper.js");
 var _watch;
 
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -943,10 +1063,41 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       categories_ids: [],
       state: "",
       remark: "",
-      account_number: "",
-      ifsc_code: "",
-      bank_name: "",
-      account_name: "",
+      upi_id: "",
+      upi_mobile: "",
+      upi_name: "",
+      zones: [],
+      selected_zone: "",
+      showAddCityForm: false,
+      newCity: {
+        name: '',
+        latitude: '',
+        longitude: '',
+        state: '',
+        zone: '',
+        formatted_address: '',
+        boundary_points: '',
+        geolocation_type: '',
+        radius: ''
+      },
+      cityMapCenter: {
+        lat: 20.5937,
+        lng: 78.9629
+      },
+      cityMapMarkers: [],
+      cityCurrentOverlay: null,
+      cityVertices: '',
+      cityGeolocationType: '',
+      cityRadius: '',
+      cityInfoWindow: {
+        position: {
+          lat: 0,
+          lng: 0
+        },
+        open: false,
+        template: ''
+      },
+      isSavingCity: false,
       commission: "",
       tax_name: "",
       tax_number: "",
@@ -977,7 +1128,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       commissionRule: false,
       mobilevalidationError: null,
       commissionvalidationError: null,
-      account_numbervalidationError: null,
+      upi_idValidationError: null,
       isFormLoaded: false,
       // Flag to prevent form refilling
       isUserTyping: false,
@@ -1091,17 +1242,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     state: function state() {
       if (!this.id) this.debouncedSave();
     },
-    account_number: function account_number() {
+    upi_id: function upi_id() {
       if (!this.id) this.debouncedSave();
     },
-    ifsc_code: function ifsc_code() {
+    upi_mobile: function upi_mobile() {
       if (!this.id) this.debouncedSave();
     },
-    bank_name: function bank_name() {
+    upi_name: function upi_name() {
       if (!this.id) this.debouncedSave();
     },
-    account_name: function account_name() {
-      if (!this.id) this.debouncedSave();
+    selected_zone: function selected_zone(val) {
+      if (val) {
+        this.city_id = [];
+        this.getCities();
+      } else {
+        this.getCities();
+      }
     },
     commission: function commission() {
       if (!this.id) this.debouncedSave();
@@ -1157,6 +1313,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   created: function created() {
     var _this = this;
     this.getCategories();
+    this.getZones();
     this.getCities();
     this.getSellerCommission();
     this.getStoreSettings();
@@ -1318,7 +1475,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     getCities: function getCities() {
       var _this4 = this;
       this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/cities').then(function (response) {
+      var zone = this.selected_zone || null;
+      var url = zone ? this.$apiUrl + '/cities?zone=' + encodeURIComponent(zone) : this.$apiUrl + '/cities';
+      axios__WEBPACK_IMPORTED_MODULE_2___default().get(url).then(function (response) {
         _this4.isLoading = false;
         var data = response.data;
         var raw = data.data;
@@ -1336,45 +1495,290 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       });
     },
-    getCategories: function getCategories() {
+    getZones: function getZones() {
       var _this5 = this;
+      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/loading_slips/zones').then(function (response) {
+        var data = response.data;
+        _this5.zones = data.data && Array.isArray(data.data) ? data.data : [];
+      })["catch"](function () {
+        _this5.zones = [];
+      });
+    },
+    toggleAddCityForm: function toggleAddCityForm() {
+      var _this6 = this;
+      this.showAddCityForm = !this.showAddCityForm;
+      if (this.showAddCityForm) {
+        this.newCity.zone = '';
+        this.$nextTick(function () {
+          _this6.initCityMap();
+        });
+      } else {
+        this.resetNewCityForm();
+      }
+    },
+    initCityMap: function initCityMap() {
+      var _this7 = this;
+      // cityMapRef is inside v-for (language tabs), so Vue gives us an array
+      var mapRef = this.$refs.cityMapRef;
+      if (!mapRef) return;
+      if (Array.isArray(mapRef)) mapRef = mapRef[0];
+      if (!mapRef || !mapRef.$mapPromise) return;
+      mapRef.$mapPromise.then(function (map) {
+        var drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.POLYGON,
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [google.maps.drawing.OverlayType.POLYGON, google.maps.drawing.OverlayType.CIRCLE]
+          },
+          polygonOptions: {
+            editable: true,
+            strokeColor: '#FF0000',
+            fillColor: '#FF0000',
+            fillOpacity: 0.35
+          },
+          circleOptions: {
+            fillColor: '#666666',
+            fillOpacity: 0.5,
+            strokeWeight: 1,
+            clickable: true,
+            editable: true,
+            draggable: true
+          }
+        });
+        drawingManager.setMap(map);
+        _this7.cityDrawingManager = drawingManager;
+        google.maps.event.addListener(drawingManager, 'overlaycomplete', function (event) {
+          if (_this7.cityCurrentOverlay) {
+            _this7.cityCurrentOverlay.setMap(null);
+          }
+          _this7.cityCurrentOverlay = event.overlay;
+          if (event.type === 'circle') {
+            _this7.cityGeolocationType = 'circle';
+            _this7.cityRadius = event.overlay.getRadius();
+            _this7.cityVertices = JSON.stringify([{
+              lat: event.overlay.getCenter().lat(),
+              lng: event.overlay.getCenter().lng()
+            }]);
+          } else {
+            _this7.cityGeolocationType = 'polygon';
+            _this7.cityVertices = event.overlay.getPath().getArray();
+          }
+        });
+      });
+    },
+    clearCityDrawing: function clearCityDrawing() {
+      if (this.cityCurrentOverlay) {
+        this.cityCurrentOverlay.setMap(null);
+        this.cityCurrentOverlay = null;
+      }
+      this.cityVertices = '';
+      this.cityGeolocationType = '';
+      this.cityRadius = '';
+    },
+    setCityPlace: function setCityPlace(place) {
+      if (!place || !place.geometry) return;
+      var lat = place.geometry.location.lat();
+      var lng = place.geometry.location.lng();
+      this.cityMapCenter = {
+        lat: lat,
+        lng: lng
+      };
+      this.cityMapMarkers = [{
+        position: {
+          lat: lat,
+          lng: lng
+        }
+      }];
+      this.newCity.latitude = lat;
+      this.newCity.longitude = lng;
+      this.newCity.name = place.name || this.newCity.name;
+      var parts = (place.formatted_address || '').split(',');
+      this.newCity.state = parts.length > 1 ? parts[parts.length - 2].trim() : '';
+      this.newCity.formatted_address = place.formatted_address || '';
+      this.cityInfoWindow = {
+        position: {
+          lat: lat,
+          lng: lng
+        },
+        open: true,
+        template: "<b>".concat(this.newCity.name, "</b><br>").concat(this.newCity.formatted_address)
+      };
+    },
+    saveNewCity: function saveNewCity() {
+      var _this8 = this;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+        var _response$data, _response$data$data, formData, key, _this8$newCity$key, response, newId, zone, zoneExists, _error$response, _error$response$data, msg;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (_this8.newCity.name) {
+                  _context.next = 2;
+                  break;
+                }
+                return _context.abrupt("return", _this8.showError(__('city_name') + ' ' + __('is_required')));
+              case 2:
+                if (_this8.newCity.zone) {
+                  _context.next = 4;
+                  break;
+                }
+                return _context.abrupt("return", _this8.showError(__('zone_name') + ' ' + __('is_required')));
+              case 4:
+                if (!(!_this8.newCity.latitude || !_this8.newCity.longitude)) {
+                  _context.next = 6;
+                  break;
+                }
+                return _context.abrupt("return", _this8.showError(__('please_search_and_select_city_on_map')));
+              case 6:
+                if (_this8.cityVertices) {
+                  _context.next = 8;
+                  break;
+                }
+                return _context.abrupt("return", _this8.showError(__('draw_city_boundary_on_map_required')));
+              case 8:
+                _this8.isSavingCity = true;
+                _context.prev = 9;
+                formData = new FormData();
+                for (key in _this8.newCity) {
+                  formData.append(key, (_this8$newCity$key = _this8.newCity[key]) !== null && _this8$newCity$key !== void 0 ? _this8$newCity$key : '');
+                }
+                formData.append('language_id', _this8.defaultLanguageId || 1);
+                formData.append('zone', _this8.newCity.zone);
+                formData.append('time_to_travel', 0);
+                formData.append('min_amount_for_free_delivery', 0);
+                formData.append('delivery_charge_method', 'fixed_charge');
+                formData.append('fixed_charge', 0);
+                formData.append('geolocation_type', _this8.cityGeolocationType);
+                formData.append('radius', _this8.cityRadius || '');
+                if (_this8.cityGeolocationType === 'circle') {
+                  formData.append('boundary_points', _this8.cityVertices);
+                } else {
+                  formData.append('boundary_points', JSON.stringify(_this8.cityVertices));
+                }
+                _context.next = 23;
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this8.$apiUrl + '/cities/save', formData);
+              case 23:
+                response = _context.sent;
+                newId = (_response$data = response.data) === null || _response$data === void 0 ? void 0 : (_response$data$data = _response$data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
+                if (newId) {
+                  // Add to cities list and auto-select
+                  _this8.cities.push({
+                    id: newId,
+                    name: _this8.newCity.name,
+                    zone: _this8.newCity.zone
+                  });
+                  if (!Array.isArray(_this8.city_id)) _this8.city_id = [];
+                  _this8.city_id = [].concat(_toConsumableArray(_this8.city_id), [String(newId)]);
+
+                  // If zone is new, add it to zones list and select it
+                  zone = _this8.newCity.zone;
+                  zoneExists = _this8.zones.find(function (z) {
+                    return z.zone === zone;
+                  });
+                  if (!zoneExists) {
+                    _this8.zones.push({
+                      zone: zone,
+                      city_count: 1
+                    });
+                  } else {
+                    zoneExists.city_count = (zoneExists.city_count || 0) + 1;
+                  }
+                  if (_this8.selected_zone !== zone) {
+                    _this8.selected_zone = zone;
+                  }
+                  _this8.showMessage('success', __('city_saved_successfully'));
+                  _this8.resetNewCityForm();
+                  _this8.showAddCityForm = false;
+                  _this8.getCities();
+                } else {
+                  _this8.showError(__('something_went_wrong'));
+                }
+                _context.next = 32;
+                break;
+              case 28:
+                _context.prev = 28;
+                _context.t0 = _context["catch"](9);
+                msg = ((_error$response = _context.t0.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || _context.t0.message || __('something_went_wrong');
+                _this8.showError(msg);
+              case 32:
+                _context.prev = 32;
+                _this8.isSavingCity = false;
+                return _context.finish(32);
+              case 35:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[9, 28, 32, 35]]);
+      }))();
+    },
+    resetNewCityForm: function resetNewCityForm() {
+      this.newCity = {
+        name: '',
+        latitude: '',
+        longitude: '',
+        state: '',
+        zone: '',
+        formatted_address: '',
+        boundary_points: '',
+        geolocation_type: '',
+        radius: ''
+      };
+      this.cityMapMarkers = [];
+      this.cityMapCenter = {
+        lat: 20.5937,
+        lng: 78.9629
+      };
+      this.cityInfoWindow = {
+        position: {
+          lat: 0,
+          lng: 0
+        },
+        open: false,
+        template: ''
+      };
+      this.clearCityDrawing();
+    },
+    getCategories: function getCategories() {
+      var _this9 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/categories/main').then(function (response) {
-        _this5.isLoading = false;
+        _this9.isLoading = false;
         var data = response.data;
-        _this5.categories = data.data;
+        _this9.categories = data.data;
       })["catch"](function (error) {
         var _error$request2;
-        _this5.isLoading = false;
+        _this9.isLoading = false;
         if (error !== null && error !== void 0 && (_error$request2 = error.request) !== null && _error$request2 !== void 0 && _error$request2.statusText) {
-          _this5.showError(error.request.statusText);
+          _this9.showError(error.request.statusText);
         } else if (error.message) {
-          _this5.showError(error.message);
+          _this9.showError(error.message);
         } else {
-          _this5.showError(__('something_went_wrong'));
+          _this9.showError(__('something_went_wrong'));
         }
       });
     },
     getSellerCommission: function getSellerCommission() {
-      var _this6 = this;
+      var _this10 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$sellerApiUrl + '/seller_commission').then(function (response) {
         var data = response.data;
-        _this6.commission = data.data.value;
+        _this10.commission = data.data.value;
       });
     },
     getStoreSettings: function getStoreSettings() {
-      var _this7 = this;
+      var _this11 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/store_settings').then(function (response) {
         var data = response.data.data;
-        _this7.store_settings = data.store_settingsObject;
+        _this11.store_settings = data.store_settingsObject;
 
         // Load store settings values
         data.store_settings.forEach(function (item) {
           if (item.variable === 'one_seller_cart') {
-            _this7.store_settings.one_seller_cart = item.value === '1' ? 1 : 0;
+            _this11.store_settings.one_seller_cart = item.value === '1' ? 1 : 0;
           }
           if (item.variable === 'self_pickup_mode') {
-            _this7.store_settings.self_pickup_mode = item.value === '1' ? 1 : 0;
+            _this11.store_settings.self_pickup_mode = item.value === '1' ? 1 : 0;
           }
         });
       });
@@ -1410,13 +1814,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     getCurrentLocation: function getCurrentLocation() {
-      var _this8 = this;
+      var _this12 = this;
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
-          _this8.latitude = position.coords.latitude;
-          _this8.longitude = position.coords.longitude;
-          var latlng = new google.maps.LatLng(_this8.latitude, _this8.longitude);
-          _this8.mapConfig(latlng);
+          _this12.latitude = position.coords.latitude;
+          _this12.longitude = position.coords.longitude;
+          var latlng = new google.maps.LatLng(_this12.latitude, _this12.longitude);
+          _this12.mapConfig(latlng);
         });
       } else {
         this.showError("Geolocation is not supported by this browser.");
@@ -1558,14 +1962,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.commissionvalidationError = null;
       }
     },
-    validateAccountNumber: function validateAccountNumber() {
-      if (this.account_number < 0) {
-        this.account_numbervalidationError = "Account Number must be numeric value.";
-        this.account_number = null;
-      } else {
-        this.account_numbervalidationError = null;
-      }
-    },
     clearForm: function clearForm() {
       if (this.$refs['my-form']) this.$refs['my-form'].reset();
       Object.assign(this, {
@@ -1582,10 +1978,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         categories_ids: [],
         state: "",
         remark: "",
-        account_number: "",
-        ifsc_code: "",
-        bank_name: "",
-        account_name: "",
+        upi_id: "",
+        upi_mobile: "",
+        upi_name: "",
+        selected_zone: "",
         commission: "",
         tax_name: "",
         tax_number: "",
@@ -1620,7 +2016,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         },
         mobilevalidationError: null,
         commissionvalidationError: null,
-        account_numbervalidationError: null,
+        upi_idValidationError: null,
         isFormLoaded: false,
         activeLanguageTab: 0
       });
@@ -1647,10 +2043,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           categories_ids: this.categories_ids,
           state: this.state,
           remark: this.remark,
-          account_number: this.account_number,
-          ifsc_code: this.ifsc_code,
-          bank_name: this.bank_name,
-          account_name: this.account_name,
+          upi_id: this.upi_id,
+          upi_mobile: this.upi_mobile,
+          upi_name: this.upi_name,
+          selected_zone: this.selected_zone,
           commission: this.commission,
           tax_name: this.tax_name,
           tax_number: this.tax_number,
@@ -1679,7 +2075,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       } catch (e) {}
     },
     restoreCache: function restoreCache() {
-      var _this9 = this;
+      var _this13 = this;
       try {
         var cached = localStorage.getItem('seller_form_cache');
         if (!cached) return;
@@ -1692,16 +2088,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         Object.keys(data).forEach(function (key) {
           if (key === 'timestamp' || key === 'translations') return;
           if (key === 'storeTimings' && data.storeTimings) {
-            _this9.storeTimings = data.storeTimings;
-          } else if (_this9.hasOwnProperty(key)) {
-            _this9[key] = data[key] !== undefined ? data[key] : _this9[key];
+            _this13.storeTimings = data.storeTimings;
+          } else if (_this13.hasOwnProperty(key)) {
+            _this13[key] = data[key] !== undefined ? data[key] : _this13[key];
           }
         });
         // Restore translations after languages have been initialized.
         if (data.translations && this.languages && this.languages.length > 0) {
           this.languages.forEach(function (language) {
             if (data.translations[language.id]) {
-              _this9.$set(_this9.translations, language.id, _objectSpread(_objectSpread({}, _this9.translations[language.id]), data.translations[language.id]));
+              _this13.$set(_this13.translations, language.id, _objectSpread(_objectSpread({}, _this13.translations[language.id]), data.translations[language.id]));
             }
           });
           var defaultLang = this.languages.find(function (lang) {
@@ -1746,10 +2142,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     debouncedSave: function debouncedSave() {
-      var _this10 = this;
+      var _this14 = this;
       if (this.cacheTimer) clearTimeout(this.cacheTimer);
       this.cacheTimer = setTimeout(function () {
-        return _this10.saveCache();
+        return _this14.saveCache();
       }, 500);
     },
     onInputFocus: function onInputFocus() {
@@ -1757,43 +2153,43 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.isUserTyping = true;
     },
     onInputBlur: function onInputBlur() {
-      var _this11 = this;
+      var _this15 = this;
       // Reset flag when user stops typing (with a small delay)
       setTimeout(function () {
-        _this11.isUserTyping = false;
+        _this15.isUserTyping = false;
       }, 1000);
     },
     getSeller: function getSeller() {
-      var _this12 = this;
+      var _this16 = this;
       // Prevent multiple calls and form refilling
       if (this.isFormLoaded || this.isUserTyping) {
         return;
       }
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/sellers/edit/' + this.id).then(function (response) {
-        _this12.isLoading = false;
+        _this16.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
-          var _this12$record$admin$, _this12$record$admin$2;
+          var _this16$record$admin$, _this16$record$admin$2;
           // Set flag to prevent refilling
-          _this12.isFormLoaded = true;
-          _this12.record = data.data;
+          _this16.isFormLoaded = true;
+          _this16.record = data.data;
 
           // Helper: show empty string when value is null, undefined, or string "null"
           var emptyIfNull = function emptyIfNull(val) {
             return val != null && val !== "null" ? val : "";
           };
-          _this12.admin_id = (_this12$record$admin$ = _this12.record.admin.id) !== null && _this12$record$admin$ !== void 0 ? _this12$record$admin$ : _this12.record.admin_id;
-          _this12.email = (_this12$record$admin$2 = _this12.record.admin.email) !== null && _this12$record$admin$2 !== void 0 ? _this12$record$admin$2 : _this12.record.email;
-          _this12.mobile = _this12.record.mobile;
-          _this12.store_url = _this12.record.store_url;
-          _this12.password = "";
-          _this12.confirm_password = "";
+          _this16.admin_id = (_this16$record$admin$ = _this16.record.admin.id) !== null && _this16$record$admin$ !== void 0 ? _this16$record$admin$ : _this16.record.admin_id;
+          _this16.email = (_this16$record$admin$2 = _this16.record.admin.email) !== null && _this16$record$admin$2 !== void 0 ? _this16$record$admin$2 : _this16.record.email;
+          _this16.mobile = _this16.record.mobile;
+          _this16.store_url = _this16.record.store_url;
+          _this16.password = "";
+          _this16.confirm_password = "";
 
           // Load translations from the seller object
-          var updatedTranslations = _objectSpread({}, _this12.translations);
-          if (_this12.record.translations && Array.isArray(_this12.record.translations)) {
+          var updatedTranslations = _objectSpread({}, _this16.translations);
+          if (_this16.record.translations && Array.isArray(_this16.record.translations)) {
             // Convert array of translation objects to object keyed by language_id
-            _this12.record.translations.forEach(function (trans) {
+            _this16.record.translations.forEach(function (trans) {
               var langId = trans.language_id;
               updatedTranslations[langId] = {
                 name: emptyIfNull(trans.name),
@@ -1804,70 +2200,73 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
 
           // For languages without translations, use base table data for default language
-          _this12.languages.forEach(function (language) {
+          _this16.languages.forEach(function (language) {
             if (!updatedTranslations[language.id] || !updatedTranslations[language.id].name && !updatedTranslations[language.id].store_name) {
               if (language.is_default) {
                 // Default language: use base table data as fallback
                 updatedTranslations[language.id] = {
-                  name: emptyIfNull(_this12.record.name),
-                  store_name: emptyIfNull(_this12.record.store_name),
-                  store_description: emptyIfNull(_this12.record.store_description)
+                  name: emptyIfNull(_this16.record.name),
+                  store_name: emptyIfNull(_this16.record.store_name),
+                  store_description: emptyIfNull(_this16.record.store_description)
                 };
               }
             }
           });
 
           // Set default language values for backward compatibility
-          var defaultLang = _this12.languages.find(function (lang) {
+          var defaultLang = _this16.languages.find(function (lang) {
             return lang.is_default === 1;
           });
           if (defaultLang && updatedTranslations[defaultLang.id]) {
-            _this12.name = emptyIfNull(updatedTranslations[defaultLang.id].name) || emptyIfNull(_this12.record.name);
-            _this12.store_name = emptyIfNull(updatedTranslations[defaultLang.id].store_name) || emptyIfNull(_this12.record.store_name);
-            _this12.store_description = emptyIfNull(updatedTranslations[defaultLang.id].store_description) || emptyIfNull(_this12.record.store_description);
+            _this16.name = emptyIfNull(updatedTranslations[defaultLang.id].name) || emptyIfNull(_this16.record.name);
+            _this16.store_name = emptyIfNull(updatedTranslations[defaultLang.id].store_name) || emptyIfNull(_this16.record.store_name);
+            _this16.store_description = emptyIfNull(updatedTranslations[defaultLang.id].store_description) || emptyIfNull(_this16.record.store_description);
           } else {
-            _this12.name = emptyIfNull(_this12.record.name);
-            _this12.store_name = emptyIfNull(_this12.record.store_name);
-            _this12.store_description = emptyIfNull(_this12.record.store_description);
+            _this16.name = emptyIfNull(_this16.record.name);
+            _this16.store_name = emptyIfNull(_this16.record.store_name);
+            _this16.store_description = emptyIfNull(_this16.record.store_description);
           }
 
           // Single assignment for reactivity
-          _this12.translations = updatedTranslations;
-          _this12.street = emptyIfNull(_this12.record.street);
-          _this12.pincode_id = "";
-          _this12.city_id = emptyIfNull(_this12.record.city_id) ? _this12.record.city_id.split(",") : [];
-          _this12.categories_ids = emptyIfNull(_this12.record.categories) ? _this12.record.categories.split(",") : [];
-          _this12.state = emptyIfNull(_this12.record.state);
-          _this12.remark = emptyIfNull(_this12.record.remark);
-          _this12.account_number = _this12.record.account_number;
-          _this12.ifsc_code = emptyIfNull(_this12.record.bank_ifsc_code);
-          _this12.bank_name = emptyIfNull(_this12.record.bank_name);
-          _this12.account_name = emptyIfNull(_this12.record.account_name);
-          _this12.commission = _this12.record.commission;
-          _this12.tax_name = emptyIfNull(_this12.record.tax_name);
-          _this12.tax_number = emptyIfNull(_this12.record.tax_number);
-          _this12.pan_number = emptyIfNull(_this12.record.pan_number);
-          _this12.latitude = _this12.record.latitude;
-          _this12.longitude = _this12.record.longitude;
-          _this12.place_name = emptyIfNull(_this12.record.place_name);
-          _this12.formatted_address = emptyIfNull(_this12.record.formatted_address);
-          _this12.require_products_approval = _this12.record.require_products_approval;
+          _this16.translations = updatedTranslations;
+          _this16.street = emptyIfNull(_this16.record.street);
+          _this16.pincode_id = "";
+          _this16.city_id = emptyIfNull(_this16.record.city_id) ? _this16.record.city_id.split(",") : [];
+          _this16.categories_ids = emptyIfNull(_this16.record.categories) ? _this16.record.categories.split(",") : [];
+          _this16.state = emptyIfNull(_this16.record.state);
+          _this16.remark = emptyIfNull(_this16.record.remark);
+          _this16.upi_id = emptyIfNull(_this16.record.upi_id);
+          _this16.upi_mobile = emptyIfNull(_this16.record.upi_mobile);
+          _this16.upi_name = emptyIfNull(_this16.record.upi_name);
+          // Pre-select the zone from the first assigned city
+          if (_this16.record.cities && _this16.record.cities.length > 0 && _this16.record.cities[0].zone) {
+            _this16.selected_zone = _this16.record.cities[0].zone;
+          }
+          _this16.commission = _this16.record.commission;
+          _this16.tax_name = emptyIfNull(_this16.record.tax_name);
+          _this16.tax_number = emptyIfNull(_this16.record.tax_number);
+          _this16.pan_number = emptyIfNull(_this16.record.pan_number);
+          _this16.latitude = _this16.record.latitude;
+          _this16.longitude = _this16.record.longitude;
+          _this16.place_name = emptyIfNull(_this16.record.place_name);
+          _this16.formatted_address = emptyIfNull(_this16.record.formatted_address);
+          _this16.require_products_approval = _this16.record.require_products_approval;
           // this.customer_privacy = this.record.customer_privacy;
-          _this12.view_order_otp = _this12.record.view_order_otp;
-          _this12.assign_delivery_boy = _this12.record.assign_delivery_boy;
-          _this12.change_order_status_delivered = _this12.record.change_order_status_delivered;
+          _this16.view_order_otp = _this16.record.view_order_otp;
+          _this16.assign_delivery_boy = _this16.record.assign_delivery_boy;
+          _this16.change_order_status_delivered = _this16.record.change_order_status_delivered;
 
           // Self Pickup fields
-          _this12.self_pickup_mode = _this12.record.self_pickup_mode === null || _this12.record.self_pickup_mode === undefined ? 0 : _this12.record.self_pickup_mode;
-          _this12.door_step_mode = _this12.record.door_step_mode === null || _this12.record.door_step_mode === undefined ? 1 : _this12.record.door_step_mode;
-          _this12.pickup_store_address = emptyIfNull(_this12.record.pickup_store_address);
-          _this12.pickup_latitude = _this12.record.pickup_latitude || "";
-          _this12.pickup_longitude = _this12.record.pickup_longitude || "";
+          _this16.self_pickup_mode = _this16.record.self_pickup_mode === null || _this16.record.self_pickup_mode === undefined ? 0 : _this16.record.self_pickup_mode;
+          _this16.door_step_mode = _this16.record.door_step_mode === null || _this16.record.door_step_mode === undefined ? 1 : _this16.record.door_step_mode;
+          _this16.pickup_store_address = emptyIfNull(_this16.record.pickup_store_address);
+          _this16.pickup_latitude = _this16.record.pickup_latitude || "";
+          _this16.pickup_longitude = _this16.record.pickup_longitude || "";
 
           // Load store timings
-          if (_this12.record.pickup_store_timings) {
+          if (_this16.record.pickup_store_timings) {
             try {
-              var parsedTimings = JSON.parse(_this12.record.pickup_store_timings);
+              var parsedTimings = JSON.parse(_this16.record.pickup_store_timings);
               // Handle both old array format and new object format
               if (Array.isArray(parsedTimings)) {
                 // Convert old format to new format (use first day's timings)
@@ -1875,13 +2274,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   return day.is_open;
                 });
                 if (firstDay) {
-                  _this12.storeTimings = {
+                  _this16.storeTimings = {
                     opening_time: firstDay.opening_time || '09:00',
                     closing_time: firstDay.closing_time || '18:00'
                   };
                 }
               } else {
-                _this12.storeTimings = parsedTimings;
+                _this16.storeTimings = parsedTimings;
               }
             } catch (e) {
               console.log('Error parsing store timings:', e);
@@ -1889,70 +2288,70 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
 
           // Set pickup map marker if coordinates exist
-          if (_this12.pickup_latitude && _this12.pickup_longitude) {
-            _this12.pickupCenter = {
-              lat: parseFloat(_this12.pickup_latitude),
-              lng: parseFloat(_this12.pickup_longitude)
+          if (_this16.pickup_latitude && _this16.pickup_longitude) {
+            _this16.pickupCenter = {
+              lat: parseFloat(_this16.pickup_latitude),
+              lng: parseFloat(_this16.pickup_longitude)
             };
-            _this12.pickupMarkers = [{
+            _this16.pickupMarkers = [{
               position: {
-                lat: parseFloat(_this12.pickup_latitude),
-                lng: parseFloat(_this12.pickup_longitude)
+                lat: parseFloat(_this16.pickup_latitude),
+                lng: parseFloat(_this16.pickup_longitude)
               }
             }];
-            _this12.pickupInfoWindow.position = {
-              lat: parseFloat(_this12.pickup_latitude),
-              lng: parseFloat(_this12.pickup_longitude)
+            _this16.pickupInfoWindow.position = {
+              lat: parseFloat(_this16.pickup_latitude),
+              lng: parseFloat(_this16.pickup_longitude)
             };
-            _this12.pickupInfoWindow.template = "<b>Pickup Location</b><br>".concat(_this12.pickup_store_address);
+            _this16.pickupInfoWindow.template = "<b>Pickup Location</b><br>".concat(_this16.pickup_store_address);
           }
-          _this12.status = _this12.record.status;
-          _this12.store_logo = _this12.record.store_logo;
-          _this12.store_logo_url = _this12.$storageUrl + _this12.record.logo;
-          _this12.national_id_card_url = _this12.$storageUrl + _this12.record.national_identity_card;
-          _this12.address_proof_url = _this12.$storageUrl + _this12.record.address_proof;
+          _this16.status = _this16.record.status;
+          _this16.store_logo = _this16.record.store_logo;
+          _this16.store_logo_url = _this16.$storageUrl + _this16.record.logo;
+          _this16.national_id_card_url = _this16.$storageUrl + _this16.record.national_identity_card;
+          _this16.address_proof_url = _this16.$storageUrl + _this16.record.address_proof;
           var marker = {
-            lat: parseFloat(_this12.latitude),
-            lng: parseFloat(_this12.longitude),
+            lat: parseFloat(_this16.latitude),
+            lng: parseFloat(_this16.longitude),
             draggable: true
           };
-          _this12.markers.push({
+          _this16.markers.push({
             position: marker
           });
-          _this12.center = marker;
-          _this12.infoWindow.position = {
-            lat: parseFloat(_this12.latitude),
-            lng: parseFloat(_this12.longitude)
+          _this16.center = marker;
+          _this16.infoWindow.position = {
+            lat: parseFloat(_this16.latitude),
+            lng: parseFloat(_this16.longitude)
           };
-          _this12.infoWindow.template = "<b>".concat(_this12.place_name, "</b><br>").concat(_this12.formatted_address);
-          _this12.infoWindow.open = true;
+          _this16.infoWindow.template = "<b>".concat(_this16.place_name, "</b><br>").concat(_this16.formatted_address);
+          _this16.infoWindow.open = true;
         } else {
-          _this12.showError(data.message);
+          _this16.showError(data.message);
           setTimeout(function () {
-            _this12.$router.back();
+            _this16.$router.back();
           }, 1000);
         }
       })["catch"](function (error) {
         var _error$request3;
-        _this12.isLoading = false;
+        _this16.isLoading = false;
         if (error !== null && error !== void 0 && (_error$request3 = error.request) !== null && _error$request3 !== void 0 && _error$request3.statusText) {
-          _this12.showError(error.request.statusText);
+          _this16.showError(error.request.statusText);
         } else if (error.message) {
-          _this12.showError(error.message);
+          _this16.showError(error.message);
         } else {
-          _this12.showError(__('something_went_wrong'));
+          _this16.showError(__('something_went_wrong'));
         }
       });
     },
     validateDefaultLanguageForTranslation: function validateDefaultLanguageForTranslation() {
-      var _this13 = this;
+      var _this17 = this;
       var form = this.$refs['my-form'];
 
       // Trigger native browser validation UI
       if (form && !form.reportValidity()) {
         // Switch to default language tab so error field is visible
         this.$nextTick(function () {
-          _this13.switchToDefaultLanguageTab();
+          _this17.switchToDefaultLanguageTab();
         });
         return false;
       }
@@ -1961,7 +2360,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return this.validateDefaultLanguage();
     },
     saveRecord: function saveRecord() {
-      var _this14 = this;
+      var _this18 = this;
       // Validate default language fields
       if (!this.validateDefaultLanguage()) {
         return;
@@ -1990,7 +2389,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.languages.forEach(function (language) {
         if (language.is_default) return; // Skip default, already added
 
-        var translation = _this14.translations[language.id];
+        var translation = _this18.translations[language.id];
         var hasData = translation.name && translation.name.trim() !== '' || translation.store_name && translation.store_name.trim() !== '' || translation.store_description && translation.store_description.trim() !== '';
         if (hasData) {
           allTranslations.push({
@@ -2004,20 +2403,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       // Single save call with all translations
       var saveAll = /*#__PURE__*/function () {
-        var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-          var sellerId, defaultTranslation, formData, url, _response$data, response, apiStatus, _response$data2, apiMessage;
-          return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+        var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+          var sellerId, defaultTranslation, formData, url, _response$data2, response, apiStatus, _response$data3, apiMessage;
+          return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
             while (1) {
-              switch (_context.prev = _context.next) {
+              switch (_context2.prev = _context2.next) {
                 case 0:
-                  sellerId = _this14.id; // For edit mode
-                  defaultTranslation = _this14.translations[defaultLang.id];
+                  sellerId = _this18.id; // For edit mode
+                  defaultTranslation = _this18.translations[defaultLang.id];
                   formData = new FormData(); // Determine URL
-                  url = _this14.$apiUrl + '/sellers/save';
+                  url = _this18.$apiUrl + '/sellers/save';
                   if (sellerId) {
-                    url = _this14.$apiUrl + '/sellers/update';
+                    url = _this18.$apiUrl + '/sellers/update';
                     formData.append('id', sellerId);
-                    formData.append('admin_id', _this14.admin_id);
+                    formData.append('admin_id', _this18.admin_id);
                   }
 
                   // Send default language_id for backward compatibility
@@ -2029,91 +2428,90 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   formData.append('store_description', defaultTranslation.store_description || '');
 
                   // All required fields
-                  formData.append('email', _this14.email);
-                  formData.append('mobile', _this14.mobile);
-                  formData.append('store_url', _this14.store_url);
+                  formData.append('email', _this18.email);
+                  formData.append('mobile', _this18.mobile);
+                  formData.append('store_url', _this18.store_url);
 
                   // Password only for new sellers or when changing
                   if (!sellerId) {
-                    formData.append('password', _this14.password);
-                    formData.append('confirm_password', _this14.confirm_password);
-                  } else if (_this14.password) {
-                    formData.append('password', _this14.password);
-                    formData.append('confirm_password', _this14.confirm_password);
+                    formData.append('password', _this18.password);
+                    formData.append('confirm_password', _this18.confirm_password);
+                  } else if (_this18.password) {
+                    formData.append('password', _this18.password);
+                    formData.append('confirm_password', _this18.confirm_password);
                   }
 
                   // Non-translatable fields
-                  formData.append('street', _this14.street);
-                  formData.append('pincode_id', _this14.pincode_id);
-                  formData.append('city_id', _this14.city_id);
-                  formData.append('categories_ids', _this14.categories_ids);
-                  formData.append('state', _this14.state);
-                  formData.append('remark', _this14.remark);
-                  formData.append('account_number', _this14.account_number);
-                  formData.append('ifsc_code', _this14.ifsc_code);
-                  formData.append('bank_name', _this14.bank_name);
-                  formData.append('account_name', _this14.account_name);
-                  formData.append('commission', _this14.commission);
-                  formData.append('tax_name', _this14.tax_name);
-                  formData.append('tax_number', _this14.tax_number);
-                  formData.append('pan_number', _this14.pan_number);
-                  formData.append('latitude', _this14.latitude);
-                  formData.append('longitude', _this14.longitude);
-                  formData.append('place_name', _this14.place_name);
-                  formData.append('formatted_address', _this14.formatted_address);
-                  formData.append('require_products_approval', _this14.require_products_approval);
-                  formData.append('view_order_otp', _this14.view_order_otp);
-                  formData.append('assign_delivery_boy', _this14.assign_delivery_boy);
-                  formData.append('change_order_status_delivered', _this14.change_order_status_delivered);
-                  formData.append('self_pickup_mode', _this14.self_pickup_mode);
-                  formData.append('door_step_mode', _this14.door_step_mode);
-                  formData.append('pickup_store_address', _this14.pickup_store_address);
-                  formData.append('pickup_latitude', _this14.pickup_latitude);
-                  formData.append('pickup_longitude', _this14.pickup_longitude);
-                  formData.append('pickup_store_timings', JSON.stringify(_this14.storeTimings));
-                  formData.append('status', _this14.status);
+                  formData.append('street', _this18.street);
+                  formData.append('pincode_id', _this18.pincode_id);
+                  formData.append('city_id', _this18.city_id);
+                  formData.append('categories_ids', _this18.categories_ids);
+                  formData.append('state', _this18.state);
+                  formData.append('remark', _this18.remark);
+                  formData.append('upi_id', _this18.upi_id || '');
+                  formData.append('upi_mobile', _this18.upi_mobile || '');
+                  formData.append('upi_name', _this18.upi_name || '');
+                  formData.append('commission', _this18.commission);
+                  formData.append('tax_name', _this18.tax_name);
+                  formData.append('tax_number', _this18.tax_number);
+                  formData.append('pan_number', _this18.pan_number);
+                  formData.append('latitude', _this18.latitude);
+                  formData.append('longitude', _this18.longitude);
+                  formData.append('place_name', _this18.place_name);
+                  formData.append('formatted_address', _this18.formatted_address);
+                  formData.append('require_products_approval', _this18.require_products_approval);
+                  formData.append('view_order_otp', _this18.view_order_otp);
+                  formData.append('assign_delivery_boy', _this18.assign_delivery_boy);
+                  formData.append('change_order_status_delivered', _this18.change_order_status_delivered);
+                  formData.append('self_pickup_mode', _this18.self_pickup_mode);
+                  formData.append('door_step_mode', _this18.door_step_mode);
+                  formData.append('pickup_store_address', _this18.pickup_store_address);
+                  formData.append('pickup_latitude', _this18.pickup_latitude);
+                  formData.append('pickup_longitude', _this18.pickup_longitude);
+                  formData.append('pickup_store_timings', JSON.stringify(_this18.storeTimings));
+                  formData.append('status', _this18.status);
 
                   // Send all translations as JSON array
                   formData.append('translations', JSON.stringify(allTranslations));
 
                   // Files (only for new sellers or when updating)
-                  if (_this14.store_logo) {
-                    formData.append('store_logo', _this14.store_logo);
+                  if (_this18.store_logo) {
+                    formData.append('store_logo', _this18.store_logo);
                   }
-                  if (_this14.national_id_card) {
-                    formData.append('national_id_card', _this14.national_id_card);
+                  if (_this18.national_id_card) {
+                    formData.append('national_id_card', _this18.national_id_card);
                   }
-                  if (_this14.address_proof) {
-                    formData.append('address_proof', _this14.address_proof);
+                  if (_this18.address_proof) {
+                    formData.append('address_proof', _this18.address_proof);
                   }
-                  _context.prev = 46;
-                  _context.next = 49;
+                  _context2.prev = 45;
+                  _context2.next = 48;
                   return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, formData, {
                     headers: {
                       'Content-Type': 'multipart/form-data'
                     }
                   });
-                case 49:
-                  response = _context.sent;
-                  apiStatus = response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.status;
+                case 48:
+                  response = _context2.sent;
+                  apiStatus = response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.status;
                   if (!(apiStatus !== 1)) {
-                    _context.next = 54;
+                    _context2.next = 53;
                     break;
                   }
-                  apiMessage = (response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message) || __('something_went_wrong');
+                  apiMessage = (response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.message) || __('something_went_wrong');
                   throw new Error(apiMessage);
-                case 54:
-                  return _context.abrupt("return", response);
-                case 57:
-                  _context.prev = 57;
-                  _context.t0 = _context["catch"](46);
-                  throw _context.t0;
-                case 60:
+                case 53:
+                  return _context2.abrupt("return", response);
+                case 56:
+                  _context2.prev = 56;
+                  _context2.t0 = _context2["catch"](45);
+                  throw _context2.t0;
+                case 59:
                 case "end":
-                  return _context.stop();
+                  return _context2.stop();
               }
             }
-          }, _callee, null, [[46, 57]]);
+          }, _callee2, null, [[45, 56]]);
         }));
         return function saveAll() {
           return _ref.apply(this, arguments);
@@ -2143,15 +2541,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
         }, 1500);
       })["catch"](function (error) {
-        var _error$response, _error$response2, _error$response2$data, _error$response3, _error$response3$data;
+        var _error$response2, _error$response3, _error$response3$data, _error$response4, _error$response4$data;
         vm.isLoading = false;
         // Laravel validation errors often return 422 with `errors` object
-        if ((error === null || error === void 0 ? void 0 : (_error$response = error.response) === null || _error$response === void 0 ? void 0 : _error$response.status) === 422 && error !== null && error !== void 0 && (_error$response2 = error.response) !== null && _error$response2 !== void 0 && (_error$response2$data = _error$response2.data) !== null && _error$response2$data !== void 0 && _error$response2$data.errors) {
+        if ((error === null || error === void 0 ? void 0 : (_error$response2 = error.response) === null || _error$response2 === void 0 ? void 0 : _error$response2.status) === 422 && error !== null && error !== void 0 && (_error$response3 = error.response) !== null && _error$response3 !== void 0 && (_error$response3$data = _error$response3.data) !== null && _error$response3$data !== void 0 && _error$response3$data.errors) {
           var errors = error.response.data.errors;
           var firstKey = Object.keys(errors)[0];
           var firstMsg = firstKey && Array.isArray(errors[firstKey]) ? errors[firstKey][0] : null;
           vm.showError(firstMsg || error.response.data.message || __('something_went_wrong'));
-        } else if (error !== null && error !== void 0 && (_error$response3 = error.response) !== null && _error$response3 !== void 0 && (_error$response3$data = _error$response3.data) !== null && _error$response3$data !== void 0 && _error$response3$data.message) {
+        } else if (error !== null && error !== void 0 && (_error$response4 = error.response) !== null && _error$response4 !== void 0 && (_error$response4$data = _error$response4.data) !== null && _error$response4$data !== void 0 && _error$response4$data.message) {
           vm.showError(error.response.data.message);
         } else if (error.request && error.request.statusText) {
           vm.showError(error.request.statusText);
@@ -2183,9 +2581,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return true;
     },
     switchToDefaultLanguageTab: function switchToDefaultLanguageTab() {
-      var _this15 = this;
+      var _this19 = this;
       var defaultLangIndex = this.languages.findIndex(function (lang) {
-        return lang.id === _this15.defaultLanguageId;
+        return lang.id === _this19.defaultLanguageId;
       });
       if (defaultLangIndex !== -1) {
         this.activeLanguageTab = defaultLangIndex;
@@ -5444,6 +5842,1182 @@ var render = function () {
                                           _c("div", { staticClass: "card" }, [
                                             _c(
                                               "div",
+                                              {
+                                                staticClass:
+                                                  "card-header d-flex align-items-center justify-content-between",
+                                              },
+                                              [
+                                                _c(
+                                                  "h4",
+                                                  { staticClass: "mb-0" },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__(
+                                                          "service_zones_and_cities"
+                                                        )
+                                                      )
+                                                    ),
+                                                  ]
+                                                ),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "button",
+                                                  {
+                                                    staticClass:
+                                                      "btn btn-sm btn-outline-primary",
+                                                    attrs: { type: "button" },
+                                                    on: {
+                                                      click:
+                                                        _vm.toggleAddCityForm,
+                                                    },
+                                                  },
+                                                  [
+                                                    _c("i", {
+                                                      class: _vm.showAddCityForm
+                                                        ? "fa fa-times"
+                                                        : "fa fa-plus",
+                                                    }),
+                                                    _vm._v(
+                                                      "\n                                                        " +
+                                                        _vm._s(
+                                                          _vm.showAddCityForm
+                                                            ? _vm.__("cancel")
+                                                            : _vm.__("add_zone")
+                                                        ) +
+                                                        "\n                                                    "
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "div",
+                                              { staticClass: "card-body" },
+                                              [
+                                                !_vm.showAddCityForm
+                                                  ? _c(
+                                                      "div",
+                                                      { staticClass: "row" },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group col-md-5 mt-0",
+                                                          },
+                                                          [
+                                                            _c(
+                                                              "div",
+                                                              {
+                                                                staticClass:
+                                                                  "form-group",
+                                                              },
+                                                              [
+                                                                _c("label", [
+                                                                  _vm._v(
+                                                                    _vm._s(
+                                                                      _vm.__(
+                                                                        "zone"
+                                                                      )
+                                                                    )
+                                                                  ),
+                                                                  _c(
+                                                                    "i",
+                                                                    {
+                                                                      staticClass:
+                                                                        "text-danger",
+                                                                    },
+                                                                    [
+                                                                      _vm._v(
+                                                                        "*"
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                ]),
+                                                                _vm._v(" "),
+                                                                _c(
+                                                                  "select",
+                                                                  {
+                                                                    directives:
+                                                                      [
+                                                                        {
+                                                                          name: "model",
+                                                                          rawName:
+                                                                            "v-model",
+                                                                          value:
+                                                                            _vm.selected_zone,
+                                                                          expression:
+                                                                            "selected_zone",
+                                                                        },
+                                                                      ],
+                                                                    staticClass:
+                                                                      "form-control",
+                                                                    on: {
+                                                                      change:
+                                                                        function (
+                                                                          $event
+                                                                        ) {
+                                                                          var $$selectedVal =
+                                                                            Array.prototype.filter
+                                                                              .call(
+                                                                                $event
+                                                                                  .target
+                                                                                  .options,
+                                                                                function (
+                                                                                  o
+                                                                                ) {
+                                                                                  return o.selected
+                                                                                }
+                                                                              )
+                                                                              .map(
+                                                                                function (
+                                                                                  o
+                                                                                ) {
+                                                                                  var val =
+                                                                                    "_value" in
+                                                                                    o
+                                                                                      ? o._value
+                                                                                      : o.value
+                                                                                  return val
+                                                                                }
+                                                                              )
+                                                                          _vm.selected_zone =
+                                                                            $event
+                                                                              .target
+                                                                              .multiple
+                                                                              ? $$selectedVal
+                                                                              : $$selectedVal[0]
+                                                                        },
+                                                                    },
+                                                                  },
+                                                                  [
+                                                                    _c(
+                                                                      "option",
+                                                                      {
+                                                                        attrs: {
+                                                                          value:
+                                                                            "",
+                                                                        },
+                                                                      },
+                                                                      [
+                                                                        _vm._v(
+                                                                          _vm._s(
+                                                                            _vm.__(
+                                                                              "select_zone"
+                                                                            )
+                                                                          )
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                    _vm._v(" "),
+                                                                    _vm._l(
+                                                                      _vm.zones,
+                                                                      function (
+                                                                        z
+                                                                      ) {
+                                                                        return _c(
+                                                                          "option",
+                                                                          {
+                                                                            key: z.zone,
+                                                                            domProps:
+                                                                              {
+                                                                                value:
+                                                                                  z.zone,
+                                                                              },
+                                                                          },
+                                                                          [
+                                                                            _vm._v(
+                                                                              "\n                                                                        " +
+                                                                                _vm._s(
+                                                                                  z.zone
+                                                                                ) +
+                                                                                " (" +
+                                                                                _vm._s(
+                                                                                  z.city_count
+                                                                                ) +
+                                                                                " " +
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "cities"
+                                                                                  )
+                                                                                ) +
+                                                                                ")\n                                                                    "
+                                                                            ),
+                                                                          ]
+                                                                        )
+                                                                      }
+                                                                    ),
+                                                                  ],
+                                                                  2
+                                                                ),
+                                                              ]
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group col-md-7",
+                                                          },
+                                                          [
+                                                            _c(
+                                                              "div",
+                                                              {
+                                                                staticClass:
+                                                                  "form-group",
+                                                              },
+                                                              [
+                                                                _c(
+                                                                  "label",
+                                                                  {
+                                                                    attrs: {
+                                                                      for: "city_name",
+                                                                    },
+                                                                  },
+                                                                  [
+                                                                    _vm._v(
+                                                                      _vm._s(
+                                                                        _vm.__(
+                                                                          "select_cities"
+                                                                        )
+                                                                      )
+                                                                    ),
+                                                                    _c(
+                                                                      "i",
+                                                                      {
+                                                                        staticClass:
+                                                                          "text-danger",
+                                                                      },
+                                                                      [
+                                                                        _vm._v(
+                                                                          "*"
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                  ]
+                                                                ),
+                                                                _vm._v(" "),
+                                                                _c("Select2", {
+                                                                  attrs: {
+                                                                    placeholder:
+                                                                      _vm.__(
+                                                                        "select_cities"
+                                                                      ),
+                                                                    options:
+                                                                      _vm.cities_options,
+                                                                    settings: {
+                                                                      multiple:
+                                                                        "multiple",
+                                                                    },
+                                                                  },
+                                                                  model: {
+                                                                    value:
+                                                                      _vm.city_id,
+                                                                    callback:
+                                                                      function (
+                                                                        $$v
+                                                                      ) {
+                                                                        _vm.city_id =
+                                                                          $$v
+                                                                      },
+                                                                    expression:
+                                                                      "city_id",
+                                                                  },
+                                                                }),
+                                                                _vm._v(" "),
+                                                                !_vm.selected_zone &&
+                                                                _vm.zones.length
+                                                                  ? _c(
+                                                                      "small",
+                                                                      {
+                                                                        staticClass:
+                                                                          "text-muted",
+                                                                      },
+                                                                      [
+                                                                        _vm._v(
+                                                                          _vm._s(
+                                                                            _vm.__(
+                                                                              "select_zone_to_filter_cities"
+                                                                            )
+                                                                          )
+                                                                        ),
+                                                                      ]
+                                                                    )
+                                                                  : _vm._e(),
+                                                              ],
+                                                              1
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
+                                                _vm._v(" "),
+                                                _vm.showAddCityForm
+                                                  ? _c("div", [
+                                                      _c(
+                                                        "p",
+                                                        {
+                                                          staticClass:
+                                                            "text-muted mb-3",
+                                                        },
+                                                        [
+                                                          _c("i", {
+                                                            staticClass:
+                                                              "fa fa-info-circle",
+                                                          }),
+                                                          _vm._v(
+                                                            "\n                                                            Enter a zone name, search the area on the map, then "
+                                                          ),
+                                                          _c("strong", [
+                                                            _vm._v(
+                                                              "draw the zone boundary"
+                                                            ),
+                                                          ]),
+                                                          _vm._v(
+                                                            " using the polygon or circle tool.\n                                                        "
+                                                          ),
+                                                        ]
+                                                      ),
+                                                      _vm._v(" "),
+                                                      _c(
+                                                        "div",
+                                                        { staticClass: "row" },
+                                                        [
+                                                          _c(
+                                                            "div",
+                                                            {
+                                                              staticClass:
+                                                                "col-md-5",
+                                                            },
+                                                            [
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "form-group mt-0",
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "form-group",
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "label",
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "zone_name"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                          _c(
+                                                                            "i",
+                                                                            {
+                                                                              staticClass:
+                                                                                "text-danger",
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                "*"
+                                                                              ),
+                                                                            ]
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "input",
+                                                                        {
+                                                                          directives:
+                                                                            [
+                                                                              {
+                                                                                name: "model",
+                                                                                rawName:
+                                                                                  "v-model",
+                                                                                value:
+                                                                                  _vm
+                                                                                    .newCity
+                                                                                    .zone,
+                                                                                expression:
+                                                                                  "newCity.zone",
+                                                                              },
+                                                                            ],
+                                                                          staticClass:
+                                                                            "form-control",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "text",
+                                                                              placeholder:
+                                                                                _vm.__(
+                                                                                  "zone_name"
+                                                                                ),
+                                                                            },
+                                                                          domProps:
+                                                                            {
+                                                                              value:
+                                                                                _vm
+                                                                                  .newCity
+                                                                                  .zone,
+                                                                            },
+                                                                          on: {
+                                                                            input:
+                                                                              function (
+                                                                                $event
+                                                                              ) {
+                                                                                if (
+                                                                                  $event
+                                                                                    .target
+                                                                                    .composing
+                                                                                ) {
+                                                                                  return
+                                                                                }
+                                                                                _vm.$set(
+                                                                                  _vm.newCity,
+                                                                                  "zone",
+                                                                                  $event
+                                                                                    .target
+                                                                                    .value
+                                                                                )
+                                                                              },
+                                                                          },
+                                                                        }
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "form-group mt-0",
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "form-group",
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "label",
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "search_location"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "GmapAutocomplete",
+                                                                        {
+                                                                          staticClass:
+                                                                            "form-control",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "search",
+                                                                              placeholder:
+                                                                                _vm.__(
+                                                                                  "search_your_location_on_map"
+                                                                                ),
+                                                                              options:
+                                                                                {
+                                                                                  fields:
+                                                                                    [
+                                                                                      "address_components",
+                                                                                      "formatted_address",
+                                                                                      "geometry",
+                                                                                      "name",
+                                                                                    ],
+                                                                                  strictBounds: false,
+                                                                                },
+                                                                              id: "city_map_search",
+                                                                            },
+                                                                          on: {
+                                                                            place_changed:
+                                                                              _vm.setCityPlace,
+                                                                          },
+                                                                        }
+                                                                      ),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "small",
+                                                                        {
+                                                                          staticClass:
+                                                                            "text-muted",
+                                                                        },
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "search_to_navigate_map_then_draw_zone_boundary"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                    ],
+                                                                    1
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "form-group mt-0",
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "form-group",
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "label",
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "city_name"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                          _c(
+                                                                            "i",
+                                                                            {
+                                                                              staticClass:
+                                                                                "text-danger",
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                "*"
+                                                                              ),
+                                                                            ]
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "input",
+                                                                        {
+                                                                          directives:
+                                                                            [
+                                                                              {
+                                                                                name: "model",
+                                                                                rawName:
+                                                                                  "v-model",
+                                                                                value:
+                                                                                  _vm
+                                                                                    .newCity
+                                                                                    .name,
+                                                                                expression:
+                                                                                  "newCity.name",
+                                                                              },
+                                                                            ],
+                                                                          staticClass:
+                                                                            "form-control",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "text",
+                                                                              placeholder:
+                                                                                _vm.__(
+                                                                                  "city_name"
+                                                                                ),
+                                                                            },
+                                                                          domProps:
+                                                                            {
+                                                                              value:
+                                                                                _vm
+                                                                                  .newCity
+                                                                                  .name,
+                                                                            },
+                                                                          on: {
+                                                                            input:
+                                                                              function (
+                                                                                $event
+                                                                              ) {
+                                                                                if (
+                                                                                  $event
+                                                                                    .target
+                                                                                    .composing
+                                                                                ) {
+                                                                                  return
+                                                                                }
+                                                                                _vm.$set(
+                                                                                  _vm.newCity,
+                                                                                  "name",
+                                                                                  $event
+                                                                                    .target
+                                                                                    .value
+                                                                                )
+                                                                              },
+                                                                          },
+                                                                        }
+                                                                      ),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "small",
+                                                                        {
+                                                                          staticClass:
+                                                                            "text-muted",
+                                                                        },
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "auto_filled_from_map_search"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "row",
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "form-group col-md-6 mt-0",
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "div",
+                                                                        {
+                                                                          staticClass:
+                                                                            "form-group",
+                                                                        },
+                                                                        [
+                                                                          _c(
+                                                                            "label",
+                                                                            [
+                                                                              _vm._v(
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "latitude"
+                                                                                  )
+                                                                                )
+                                                                              ),
+                                                                            ]
+                                                                          ),
+                                                                          _vm._v(
+                                                                            " "
+                                                                          ),
+                                                                          _c(
+                                                                            "input",
+                                                                            {
+                                                                              directives:
+                                                                                [
+                                                                                  {
+                                                                                    name: "model",
+                                                                                    rawName:
+                                                                                      "v-model",
+                                                                                    value:
+                                                                                      _vm
+                                                                                        .newCity
+                                                                                        .latitude,
+                                                                                    expression:
+                                                                                      "newCity.latitude",
+                                                                                  },
+                                                                                ],
+                                                                              staticClass:
+                                                                                "form-control",
+                                                                              attrs:
+                                                                                {
+                                                                                  type: "text",
+                                                                                  readonly:
+                                                                                    "",
+                                                                                  placeholder:
+                                                                                    _vm.__(
+                                                                                      "latitude"
+                                                                                    ),
+                                                                                },
+                                                                              domProps:
+                                                                                {
+                                                                                  value:
+                                                                                    _vm
+                                                                                      .newCity
+                                                                                      .latitude,
+                                                                                },
+                                                                              on: {
+                                                                                input:
+                                                                                  function (
+                                                                                    $event
+                                                                                  ) {
+                                                                                    if (
+                                                                                      $event
+                                                                                        .target
+                                                                                        .composing
+                                                                                    ) {
+                                                                                      return
+                                                                                    }
+                                                                                    _vm.$set(
+                                                                                      _vm.newCity,
+                                                                                      "latitude",
+                                                                                      $event
+                                                                                        .target
+                                                                                        .value
+                                                                                    )
+                                                                                  },
+                                                                              },
+                                                                            }
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                  _vm._v(" "),
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "form-group col-md-6",
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "div",
+                                                                        {
+                                                                          staticClass:
+                                                                            "form-group",
+                                                                        },
+                                                                        [
+                                                                          _c(
+                                                                            "label",
+                                                                            [
+                                                                              _vm._v(
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "longitude"
+                                                                                  )
+                                                                                )
+                                                                              ),
+                                                                            ]
+                                                                          ),
+                                                                          _vm._v(
+                                                                            " "
+                                                                          ),
+                                                                          _c(
+                                                                            "input",
+                                                                            {
+                                                                              directives:
+                                                                                [
+                                                                                  {
+                                                                                    name: "model",
+                                                                                    rawName:
+                                                                                      "v-model",
+                                                                                    value:
+                                                                                      _vm
+                                                                                        .newCity
+                                                                                        .longitude,
+                                                                                    expression:
+                                                                                      "newCity.longitude",
+                                                                                  },
+                                                                                ],
+                                                                              staticClass:
+                                                                                "form-control",
+                                                                              attrs:
+                                                                                {
+                                                                                  type: "text",
+                                                                                  readonly:
+                                                                                    "",
+                                                                                  placeholder:
+                                                                                    _vm.__(
+                                                                                      "longitude"
+                                                                                    ),
+                                                                                },
+                                                                              domProps:
+                                                                                {
+                                                                                  value:
+                                                                                    _vm
+                                                                                      .newCity
+                                                                                      .longitude,
+                                                                                },
+                                                                              on: {
+                                                                                input:
+                                                                                  function (
+                                                                                    $event
+                                                                                  ) {
+                                                                                    if (
+                                                                                      $event
+                                                                                        .target
+                                                                                        .composing
+                                                                                    ) {
+                                                                                      return
+                                                                                    }
+                                                                                    _vm.$set(
+                                                                                      _vm.newCity,
+                                                                                      "longitude",
+                                                                                      $event
+                                                                                        .target
+                                                                                        .value
+                                                                                    )
+                                                                                  },
+                                                                              },
+                                                                            }
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              !_vm.cityVertices
+                                                                ? _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "alert alert-warning py-2 px-3",
+                                                                    },
+                                                                    [
+                                                                      _c("i", {
+                                                                        staticClass:
+                                                                          "fa fa-draw-polygon mr-1",
+                                                                      }),
+                                                                      _vm._v(
+                                                                        "\n                                                                    " +
+                                                                          _vm._s(
+                                                                            _vm.__(
+                                                                              "draw_zone_boundary_on_map_using_tools"
+                                                                            )
+                                                                          ) +
+                                                                          "\n                                                                "
+                                                                      ),
+                                                                    ]
+                                                                  )
+                                                                : _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "alert alert-success py-2 px-3",
+                                                                    },
+                                                                    [
+                                                                      _c("i", {
+                                                                        staticClass:
+                                                                          "fa fa-check-circle mr-1",
+                                                                      }),
+                                                                      _vm._v(
+                                                                        "\n                                                                    " +
+                                                                          _vm._s(
+                                                                            _vm.__(
+                                                                              "zone_boundary_drawn_successfully"
+                                                                            )
+                                                                          ) +
+                                                                          "\n                                                                "
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "d-flex gap-2",
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "button",
+                                                                    {
+                                                                      staticClass:
+                                                                        "btn btn-success btn-sm",
+                                                                      attrs: {
+                                                                        type: "button",
+                                                                        disabled:
+                                                                          _vm.isSavingCity,
+                                                                      },
+                                                                      on: {
+                                                                        click:
+                                                                          _vm.saveNewCity,
+                                                                      },
+                                                                    },
+                                                                    [
+                                                                      _vm.isSavingCity
+                                                                        ? _c(
+                                                                            "b-spinner",
+                                                                            {
+                                                                              staticClass:
+                                                                                "mr-1",
+                                                                              attrs:
+                                                                                {
+                                                                                  small:
+                                                                                    "",
+                                                                                },
+                                                                            }
+                                                                          )
+                                                                        : _vm._e(),
+                                                                      _vm._v(
+                                                                        "\n                                                                        " +
+                                                                          _vm._s(
+                                                                            _vm.isSavingCity
+                                                                              ? _vm.__(
+                                                                                  "saving"
+                                                                                )
+                                                                              : _vm.__(
+                                                                                  "save_zone"
+                                                                                )
+                                                                          ) +
+                                                                          "\n                                                                    "
+                                                                      ),
+                                                                    ],
+                                                                    1
+                                                                  ),
+                                                                  _vm._v(" "),
+                                                                  _c(
+                                                                    "button",
+                                                                    {
+                                                                      staticClass:
+                                                                        "btn btn-secondary btn-sm ml-2",
+                                                                      attrs: {
+                                                                        type: "button",
+                                                                      },
+                                                                      on: {
+                                                                        click:
+                                                                          _vm.toggleAddCityForm,
+                                                                      },
+                                                                    },
+                                                                    [
+                                                                      _vm._v(
+                                                                        _vm._s(
+                                                                          _vm.__(
+                                                                            "cancel"
+                                                                          )
+                                                                        )
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                            ]
+                                                          ),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "div",
+                                                            {
+                                                              staticClass:
+                                                                "col-md-7",
+                                                            },
+                                                            [
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "mb-2 d-flex gap-2",
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "button",
+                                                                    {
+                                                                      staticClass:
+                                                                        "btn btn-sm btn-danger",
+                                                                      attrs: {
+                                                                        type: "button",
+                                                                      },
+                                                                      on: {
+                                                                        click:
+                                                                          _vm.clearCityDrawing,
+                                                                      },
+                                                                    },
+                                                                    [
+                                                                      _c("i", {
+                                                                        staticClass:
+                                                                          "fa fa-trash",
+                                                                      }),
+                                                                      _vm._v(
+                                                                        " " +
+                                                                          _vm._s(
+                                                                            _vm.__(
+                                                                              "clear_map"
+                                                                            )
+                                                                          ) +
+                                                                          "\n                                                                    "
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                  _vm._v(" "),
+                                                                  _vm.cityVertices
+                                                                    ? _c(
+                                                                        "span",
+                                                                        {
+                                                                          staticClass:
+                                                                            "badge bg-success align-self-center ml-2",
+                                                                        },
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "boundary_drawn"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                        ]
+                                                                      )
+                                                                    : _vm._e(),
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "GmapMap",
+                                                                {
+                                                                  ref: "cityMapRef",
+                                                                  refInFor: true,
+                                                                  staticStyle: {
+                                                                    width:
+                                                                      "100%",
+                                                                    height:
+                                                                      "450px",
+                                                                  },
+                                                                  attrs: {
+                                                                    center:
+                                                                      _vm.cityMapCenter,
+                                                                    zoom: 5,
+                                                                    mapTypeControl: true,
+                                                                    drawingControl: true,
+                                                                  },
+                                                                },
+                                                                [
+                                                                  _vm._l(
+                                                                    _vm.cityMapMarkers,
+                                                                    function (
+                                                                      m,
+                                                                      mi
+                                                                    ) {
+                                                                      return _c(
+                                                                        "GmapMarker",
+                                                                        {
+                                                                          key: mi,
+                                                                          attrs:
+                                                                            {
+                                                                              position:
+                                                                                m.position,
+                                                                              draggable: true,
+                                                                              clickable: true,
+                                                                            },
+                                                                        }
+                                                                      )
+                                                                    }
+                                                                  ),
+                                                                  _vm._v(" "),
+                                                                  _c(
+                                                                    "gmap-info-window",
+                                                                    {
+                                                                      attrs: {
+                                                                        options:
+                                                                          {
+                                                                            maxWidth: 300,
+                                                                            pixelOffset:
+                                                                              {
+                                                                                width: 0,
+                                                                                height:
+                                                                                  -35,
+                                                                              },
+                                                                          },
+                                                                        position:
+                                                                          _vm
+                                                                            .cityInfoWindow
+                                                                            .position,
+                                                                        opened:
+                                                                          _vm
+                                                                            .cityInfoWindow
+                                                                            .open,
+                                                                      },
+                                                                      on: {
+                                                                        closeclick:
+                                                                          function (
+                                                                            $event
+                                                                          ) {
+                                                                            _vm.cityInfoWindow.open = false
+                                                                          },
+                                                                      },
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "div",
+                                                                        {
+                                                                          domProps:
+                                                                            {
+                                                                              innerHTML:
+                                                                                _vm._s(
+                                                                                  _vm
+                                                                                    .cityInfoWindow
+                                                                                    .template
+                                                                                ),
+                                                                            },
+                                                                        }
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                ],
+                                                                2
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "small",
+                                                                {
+                                                                  staticClass:
+                                                                    "text-muted d-block mt-1",
+                                                                },
+                                                                [
+                                                                  _vm._v(
+                                                                    _vm._s(
+                                                                      _vm.__(
+                                                                        "use_drawing_tools_on_map_to_draw_zone_boundary"
+                                                                      )
+                                                                    )
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                            ],
+                                                            1
+                                                          ),
+                                                        ]
+                                                      ),
+                                                    ])
+                                                  : _vm._e(),
+                                              ]
+                                            ),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c("div", { staticClass: "card" }, [
+                                            _c(
+                                              "div",
                                               { staticClass: "card-header" },
                                               [
                                                 _c("h4", [
@@ -5467,67 +7041,6 @@ var render = function () {
                                                   "div",
                                                   { staticClass: "row" },
                                                   [
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass:
-                                                          "form-group col-md-4",
-                                                      },
-                                                      [
-                                                        _c(
-                                                          "label",
-                                                          {
-                                                            attrs: {
-                                                              for: "city_name",
-                                                            },
-                                                          },
-                                                          [
-                                                            _vm._v(
-                                                              _vm._s(
-                                                                _vm.__(
-                                                                  "select_or_search_city"
-                                                                )
-                                                              )
-                                                            ),
-                                                            _c(
-                                                              "i",
-                                                              {
-                                                                staticClass:
-                                                                  "text-danger",
-                                                              },
-                                                              [_vm._v("*")]
-                                                            ),
-                                                          ]
-                                                        ),
-                                                        _vm._v(" "),
-                                                        _c("Select2", {
-                                                          attrs: {
-                                                            placeholder:
-                                                              _vm.__(
-                                                                "select_cities"
-                                                              ),
-                                                            options:
-                                                              _vm.cities_options,
-                                                            settings: {
-                                                              multiple:
-                                                                "multiple",
-                                                            },
-                                                          },
-                                                          model: {
-                                                            value: _vm.city_id,
-                                                            callback: function (
-                                                              $$v
-                                                            ) {
-                                                              _vm.city_id = $$v
-                                                            },
-                                                            expression:
-                                                              "city_id",
-                                                          },
-                                                        }),
-                                                      ],
-                                                      1
-                                                    ),
-                                                    _vm._v(" "),
                                                     _c(
                                                       "div",
                                                       {
@@ -6198,12 +7711,11 @@ var render = function () {
                                                     [
                                                       _c("h4", [
                                                         _vm._v(
-                                                          " " +
-                                                            _vm._s(
-                                                              _vm.__(
-                                                                "seller_bank_information"
-                                                              )
+                                                          _vm._s(
+                                                            _vm.__(
+                                                              "upi_information"
                                                             )
+                                                          )
                                                         ),
                                                       ]),
                                                     ]
@@ -6223,7 +7735,7 @@ var render = function () {
                                                             "div",
                                                             {
                                                               staticClass:
-                                                                "form-group col-md-3 mt-0",
+                                                                "form-group col-md-4 mt-0",
                                                             },
                                                             [
                                                               _c(
@@ -6237,7 +7749,7 @@ var render = function () {
                                                                     _vm._v(
                                                                       _vm._s(
                                                                         _vm.__(
-                                                                          "bank_name"
+                                                                          "upi_id"
                                                                         )
                                                                       )
                                                                     ),
@@ -6251,9 +7763,9 @@ var render = function () {
                                                                           rawName:
                                                                             "v-model",
                                                                           value:
-                                                                            _vm.bank_name,
+                                                                            _vm.upi_id,
                                                                           expression:
-                                                                            "bank_name",
+                                                                            "upi_id",
                                                                         },
                                                                       ],
                                                                     staticClass:
@@ -6262,12 +7774,12 @@ var render = function () {
                                                                       type: "text",
                                                                       placeholder:
                                                                         _vm.__(
-                                                                          "bank_name"
+                                                                          "upi_id_placeholder"
                                                                         ),
                                                                     },
                                                                     domProps: {
                                                                       value:
-                                                                        _vm.bank_name,
+                                                                        _vm.upi_id,
                                                                     },
                                                                     on: {
                                                                       input:
@@ -6281,11 +7793,24 @@ var render = function () {
                                                                           ) {
                                                                             return
                                                                           }
-                                                                          _vm.bank_name =
+                                                                          _vm.upi_id =
                                                                             $event.target.value
                                                                         },
                                                                     },
                                                                   }),
+                                                                  _vm._v(" "),
+                                                                  _c(
+                                                                    "small",
+                                                                    {
+                                                                      staticClass:
+                                                                        "text-muted",
+                                                                    },
+                                                                    [
+                                                                      _vm._v(
+                                                                        "e.g. name@upi"
+                                                                      ),
+                                                                    ]
+                                                                  ),
                                                                 ]
                                                               ),
                                                             ]
@@ -6295,7 +7820,7 @@ var render = function () {
                                                             "div",
                                                             {
                                                               staticClass:
-                                                                "form-group col-md-3",
+                                                                "form-group col-md-4",
                                                             },
                                                             [
                                                               _c(
@@ -6307,12 +7832,11 @@ var render = function () {
                                                                 [
                                                                   _c("label", [
                                                                     _vm._v(
-                                                                      " " +
-                                                                        _vm._s(
-                                                                          _vm.__(
-                                                                            "account_number"
-                                                                          )
+                                                                      _vm._s(
+                                                                        _vm.__(
+                                                                          "upi_mobile"
                                                                         )
+                                                                      )
                                                                     ),
                                                                   ]),
                                                                   _vm._v(" "),
@@ -6324,28 +7848,30 @@ var render = function () {
                                                                           rawName:
                                                                             "v-model",
                                                                           value:
-                                                                            _vm.account_number,
+                                                                            _vm.upi_mobile,
                                                                           expression:
-                                                                            "account_number",
+                                                                            "upi_mobile",
                                                                         },
                                                                       ],
                                                                     staticClass:
                                                                       "form-control",
                                                                     attrs: {
-                                                                      type: "number",
+                                                                      type: "text",
                                                                       placeholder:
                                                                         _vm.__(
-                                                                          "account_number"
+                                                                          "upi_mobile"
                                                                         ),
                                                                       inputmode:
                                                                         "numeric",
+                                                                      maxlength:
+                                                                        "10",
                                                                     },
                                                                     domProps: {
                                                                       value:
-                                                                        _vm.account_number,
+                                                                        _vm.upi_mobile,
                                                                     },
                                                                     on: {
-                                                                      input: [
+                                                                      input:
                                                                         function (
                                                                           $event
                                                                         ) {
@@ -6356,30 +7882,11 @@ var render = function () {
                                                                           ) {
                                                                             return
                                                                           }
-                                                                          _vm.account_number =
+                                                                          _vm.upi_mobile =
                                                                             $event.target.value
                                                                         },
-                                                                        _vm.validateAccountNumber,
-                                                                      ],
                                                                     },
                                                                   }),
-                                                                  _vm._v(" "),
-                                                                  _vm.account_numbervalidationError
-                                                                    ? _c(
-                                                                        "span",
-                                                                        {
-                                                                          staticClass:
-                                                                            "error",
-                                                                        },
-                                                                        [
-                                                                          _vm._v(
-                                                                            _vm._s(
-                                                                              _vm.account_numbervalidationError
-                                                                            )
-                                                                          ),
-                                                                        ]
-                                                                      )
-                                                                    : _vm._e(),
                                                                 ]
                                                               ),
                                                             ]
@@ -6389,7 +7896,7 @@ var render = function () {
                                                             "div",
                                                             {
                                                               staticClass:
-                                                                "form-group col-md-3",
+                                                                "form-group col-md-4",
                                                             },
                                                             [
                                                               _c(
@@ -6403,7 +7910,7 @@ var render = function () {
                                                                     _vm._v(
                                                                       _vm._s(
                                                                         _vm.__(
-                                                                          "bank_ifsc_code"
+                                                                          "upi_name"
                                                                         )
                                                                       )
                                                                     ),
@@ -6417,9 +7924,9 @@ var render = function () {
                                                                           rawName:
                                                                             "v-model",
                                                                           value:
-                                                                            _vm.ifsc_code,
+                                                                            _vm.upi_name,
                                                                           expression:
-                                                                            "ifsc_code",
+                                                                            "upi_name",
                                                                         },
                                                                       ],
                                                                     staticClass:
@@ -6428,12 +7935,12 @@ var render = function () {
                                                                       type: "text",
                                                                       placeholder:
                                                                         _vm.__(
-                                                                          "bank_ifsc_code"
+                                                                          "upi_name"
                                                                         ),
                                                                     },
                                                                     domProps: {
                                                                       value:
-                                                                        _vm.ifsc_code,
+                                                                        _vm.upi_name,
                                                                     },
                                                                     on: {
                                                                       input:
@@ -6447,80 +7954,7 @@ var render = function () {
                                                                           ) {
                                                                             return
                                                                           }
-                                                                          _vm.ifsc_code =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                ]
-                                                              ),
-                                                            ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "div",
-                                                            {
-                                                              staticClass:
-                                                                "form-group col-md-3",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
-                                                                {
-                                                                  staticClass:
-                                                                    "form-group",
-                                                                },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      " " +
-                                                                        _vm._s(
-                                                                          _vm.__(
-                                                                            "bank_account_name"
-                                                                          )
-                                                                        )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.account_name,
-                                                                          expression:
-                                                                            "account_name",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control valid",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "bank_account_name"
-                                                                        ),
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.account_name,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.account_name =
+                                                                          _vm.upi_name =
                                                                             $event.target.value
                                                                         },
                                                                     },

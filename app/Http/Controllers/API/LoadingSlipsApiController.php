@@ -98,7 +98,16 @@ class LoadingSlipsApiController extends Controller
 
     public function getZones()
     {
-        $zones = City::select('zone')->whereNotNull('zone')->where('zone', '!=', '')->distinct()->pluck('zone');
+        $zones = City::select('zone', \Illuminate\Support\Facades\DB::raw('COUNT(id) as city_count'))
+            ->whereNotNull('zone')
+            ->where('zone', '!=', '')
+            ->groupBy('zone')
+            ->orderBy('zone')
+            ->get()
+            ->map(fn($z) => [
+                'zone'       => $z->zone,
+                'city_count' => (int) $z->city_count,
+            ]);
         return CommonHelper::responseWithData($zones);
     }
 

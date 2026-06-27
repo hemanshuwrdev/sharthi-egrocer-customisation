@@ -14,6 +14,19 @@ class SarthiCustomisation extends Migration
      */
     public function up()
     {
+        // 0. Distributor UPI details (replaces bank details on the form)
+        Schema::table('sellers', function (Blueprint $table) {
+            if (!Schema::hasColumn('sellers', 'upi_id')) {
+                $table->string('upi_id')->nullable()->after('account_name');
+            }
+            if (!Schema::hasColumn('sellers', 'upi_mobile')) {
+                $table->string('upi_mobile', 15)->nullable()->after('upi_id');
+            }
+            if (!Schema::hasColumn('sellers', 'upi_name')) {
+                $table->string('upi_name')->nullable()->after('upi_mobile');
+            }
+        });
+
         // 1. Master Product System (Product Variants)
         Schema::table('product_variants', function (Blueprint $table) {
             if (!Schema::hasColumn('product_variants', 'sku')) {

@@ -47,18 +47,8 @@ class AdminAuthController extends Controller
             $countryCode = $request->country_code ?? '';
             $fullPhone = $countryCode . $mobile;
 
-            $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
-                ->orWhere('phone', $mobile)
-                ->latest('created_at')
-                ->first();
-
-            if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
-                return CommonHelper::responseError('OTP is invalid or has expired.');
-            }
-
-            $otpRecord->status = 'verified';
-            $otpRecord->save();
-
+            // Check user existence BEFORE OTP verification so unregistered users
+            // get the correct error message instead of "OTP invalid"
             if ($request->type == 4) {
                 $deliveryBoy = DeliveryBoy::where('mobile', $mobile)->first();
                 if (!$deliveryBoy) {
@@ -89,6 +79,24 @@ class AdminAuthController extends Controller
             } else {
                 return CommonHelper::responseError('OTP login is only supported for delivery boys, sellers, and salesmen.');
             }
+
+            $firebaseEnabled = (int) \App\Models\Setting::where('variable', 'firebase_authentication')->value('value');
+
+            if (!$firebaseEnabled) {
+                // Twilio flow — verify OTP from sms_verifications table
+                $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
+                    ->orWhere('phone', $mobile)
+                    ->latest('created_at')
+                    ->first();
+
+                if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
+                    return CommonHelper::responseError('OTP is invalid or has expired.');
+                }
+
+                $otpRecord->status = 'verified';
+                $otpRecord->save();
+            }
+            // Firebase OTP is verified client-side — no DB check needed
         } else {
             if ($request->type == 3) {
                 $user = Admin::with('seller')->where('email', request()->email)->first();
@@ -438,10 +446,9 @@ class AdminAuthController extends Controller
         $record->city_id = $request->city_id;
         $record->state = $request->state;
         $record->categories = $request->categories_ids;
-        $record->account_number = $request->account_number;
-        $record->bank_ifsc_code = $request->ifsc_code;
-        $record->bank_name = $request->bank_name;
-        $record->account_name = $request->account_name;
+        $record->upi_id     = $request->upi_id;
+        $record->upi_mobile = $request->upi_mobile;
+        $record->upi_name   = $request->upi_name;
         $record->tax_name = $request->tax_name;
         $record->tax_number = $request->tax_number;
         $record->pan_number = $request->pan_number;

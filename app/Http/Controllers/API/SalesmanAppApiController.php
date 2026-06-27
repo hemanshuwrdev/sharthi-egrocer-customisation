@@ -84,7 +84,11 @@ class SalesmanAppApiController extends Controller
             $data['otp_provider'] = 'none';
         }
 
-        $data['allPermissions'] = \Spatie\Permission\Models\Permission::pluck('name')->toArray();
+        // Return user permissions only if a valid token is passed
+        $user = auth('api')->user();
+        if ($user) {
+            $data['allPermissions'] = $user->allPermissions;
+        }
 
         return CommonHelper::responseWithData($data);
     }
