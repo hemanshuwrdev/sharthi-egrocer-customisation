@@ -24,6 +24,7 @@ class OrderStatusList extends Model
     public static $selfPickupPending = 9;
     public static $selfPickupReady = 10;
     public static $selfPickupPicked = 11;
+    public static $rescheduled = 12;
 
     public static $orderPaymentPending = "Payment Pending";
     public static $orderReceived = "Received";
@@ -33,6 +34,7 @@ class OrderStatusList extends Model
     public static $orderDelivered = "Delivered";
     public static $orderCancelled = "Cancelled";
     public static $orderReturned = "Returned";
+    public static $orderRescheduled = "Rescheduled";
 
     // Self Pickup Status Names
     public static $orderSelfPickupPending = "Pending";
@@ -53,6 +55,7 @@ class OrderStatusList extends Model
             self::$selfPickupPending  => 'pending',              // ID 9
             self::$selfPickupReady    => 'ready_for_pickup',     // ID 10
             self::$selfPickupPicked   => 'picked_up',            // ID 11
+            self::$rescheduled        => 'rescheduled',          // ID 12
         ];
 
         return $statusKeys[$statusId] ?? '';

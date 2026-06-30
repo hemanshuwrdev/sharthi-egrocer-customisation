@@ -323,17 +323,42 @@ export default {
             if (!zone) return 'All';
             return zone.charAt(0).toUpperCase() + zone.slice(1);
         },
-        createLoadingSlip() {
+        createLoadingSlip(confirmStock = false) {
             this.loading = true;
             axios.post(this.apiBase + '/loading_slips/save', {
                 vehicle_id: this.selectedVehicleId,
                 driver_id: this.selectedDriverId,
-                order_ids: this.selectedOrderIds
+                order_ids: this.selectedOrderIds,
+                confirm_stock_shortage: confirmStock
             }).then(res => {
                 this.loading = false;
                 if (res.data.status === 1) {
                     this.showSuccess(__('loading_slip_generated_and_route_optimized_successfully'));
                     this.$router.push(this.urlPrefix + '/loading_slips');
+                } else if (res.data.status === 2) {
+                    let shortageListHtml = '<div class="text-left mt-2" style="max-height: 200px; overflow-y: auto; font-size: 14px;"><ul class="list-group list-group-flush">';
+                    res.data.shortages.forEach(item => {
+                        shortageListHtml += `<li class="list-group-item px-0 py-1 text-danger">
+                            <strong>${item.name}</strong><br>
+                            <span class="text-muted small">Required: <b>${item.required}</b> | Available: <b>${item.available}</b></span>
+                        </li>`;
+                    });
+                    shortageListHtml += '</ul></div>';
+
+                    this.$swal.fire({
+                        title: 'Stock Shortage Warning!',
+                        html: `<p class="mb-2">The following items have insufficient database stock:</p>${shortageListHtml}<p class="mt-3">Are you sure you want to proceed and generate the loading slip?</p>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Proceed',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#37a279',
+                        cancelButtonColor: '#d33'
+                    }).then(result => {
+                        if (result.value) {
+                            this.createLoadingSlip(true);
+                        }
+                    });
                 } else {
                     this.showError(res.data.message);
                 }

@@ -1430,7 +1430,7 @@ class OrdersApiController extends Controller
             if ($request->has('delivery_time')) {
                 $order->delivery_time = $request->delivery_time;
             }
-            $order->active_status = OrderStatusList::$received;
+            $order->active_status = OrderStatusList::$rescheduled;
             $order->loading_slip_id = null;
             $order->delivery_boy_id = null;
             $order->delivery_boy_bonus_amount = 0;
@@ -1440,7 +1440,7 @@ class OrdersApiController extends Controller
             // Sync order items active status
             OrderItem::where('order_id', $order->id)
                 ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
-                ->update(['active_status' => OrderStatusList::$received]);
+                ->update(['active_status' => OrderStatusList::$rescheduled]);
 
             // Log status history
             $orderStatus = [

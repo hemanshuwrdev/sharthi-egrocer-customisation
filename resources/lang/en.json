@@ -1186,6 +1186,7 @@
     "order_item_deleted_successfully": "Order Item Deleted Successfully!",
     "order_updated_successfully": "Order Updated Successfully!",
     "order_rescheduled_successfully": "Order Rescheduled Successfully!",
+    "rescheduled": "Rescheduled",
     "delivery_boy_assigned_successfully_for_this_order": "Driver Assigned Successfully for This Order!",
     "order_not_found": "Order Not Found!",
     "this_delivery_boy_already_assign": "This Driver Already Assign!",

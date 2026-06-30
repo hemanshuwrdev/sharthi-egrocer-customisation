@@ -191,6 +191,19 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -202,6 +215,7 @@ __webpack_require__.r(__webpack_exports__);
       vehicles: [],
       drivers: [],
       selectedZone: '',
+      selectedRescheduled: '',
       selectedVehicleId: '',
       selectedVehicle: null,
       selectedDriverId: '',
@@ -283,7 +297,8 @@ __webpack_require__.r(__webpack_exports__);
       var _this4 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/orders', {
         params: {
-          zone: this.selectedZone
+          zone: this.selectedZone,
+          is_rescheduled: this.selectedRescheduled
         }
       }).then(function (res) {
         if (res.data.status === 1) {
@@ -341,16 +356,38 @@ __webpack_require__.r(__webpack_exports__);
     },
     createLoadingSlip: function createLoadingSlip() {
       var _this7 = this;
+      var confirmStock = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       this.loading = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.apiBase + '/loading_slips/save', {
         vehicle_id: this.selectedVehicleId,
         driver_id: this.selectedDriverId,
-        order_ids: this.selectedOrderIds
+        order_ids: this.selectedOrderIds,
+        confirm_stock_shortage: confirmStock
       }).then(function (res) {
         _this7.loading = false;
         if (res.data.status === 1) {
           _this7.showSuccess(__('loading_slip_generated_and_route_optimized_successfully'));
           _this7.$router.push(_this7.urlPrefix + '/loading_slips');
+        } else if (res.data.status === 2) {
+          var shortageListHtml = '<div class="text-left mt-2" style="max-height: 200px; overflow-y: auto; font-size: 14px;"><ul class="list-group list-group-flush">';
+          res.data.shortages.forEach(function (item) {
+            shortageListHtml += "<li class=\"list-group-item px-0 py-1 text-danger\">\n                            <strong>".concat(item.name, "</strong><br>\n                            <span class=\"text-muted small\">Required: <b>").concat(item.required, "</b> | Available: <b>").concat(item.available, "</b></span>\n                        </li>");
+          });
+          shortageListHtml += '</ul></div>';
+          _this7.$swal.fire({
+            title: 'Stock Shortage Warning!',
+            html: "<p class=\"mb-2\">The following items have insufficient database stock:</p>".concat(shortageListHtml, "<p class=\"mt-3\">Are you sure you want to proceed and generate the loading slip?</p>"),
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Proceed',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#37a279',
+            cancelButtonColor: '#d33'
+          }).then(function (result) {
+            if (result.value) {
+              _this7.createLoadingSlip(true);
+            }
+          });
         } else {
           _this7.showError(res.data.message);
         }
@@ -380,7 +417,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.bg-soft-primary[data-v-54652c95] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n    color: #4e73df !important;\n}\n.max-w-200[data-v-54652c95] {\n    max-width: 200px;\n}\n.max-w-250[data-v-54652c95] {\n    max-width: 250px;\n}\n.transition-all[data-v-54652c95] {\n    transition: all 0.25s ease-in-out;\n}\n.cursor-pointer[data-v-54652c95] {\n    cursor: pointer;\n}\n.gap-2[data-v-54652c95] {\n    gap: 0.5rem;\n}\n.text-xs[data-v-54652c95] {\n    font-size: 0.75rem;\n}\n.position-sticky[data-v-54652c95] {\n    position: sticky;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.bg-soft-primary[data-v-54652c95] {\n    background-color: rgba(78, 115, 223, 0.1) !important;\n    color: #4e73df !important;\n}\n.bg-soft-warning[data-v-54652c95] {\n    background-color: rgba(246, 194, 62, 0.1) !important;\n    color: #f6c23e !important;\n}\n.max-w-200[data-v-54652c95] {\n    max-width: 200px;\n}\n.max-w-250[data-v-54652c95] {\n    max-width: 250px;\n}\n.transition-all[data-v-54652c95] {\n    transition: all 0.25s ease-in-out;\n}\n.cursor-pointer[data-v-54652c95] {\n    cursor: pointer;\n}\n.gap-2[data-v-54652c95] {\n    gap: 0.5rem;\n}\n.text-xs[data-v-54652c95] {\n    font-size: 0.75rem;\n}\n.position-sticky[data-v-54652c95] {\n    position: sticky;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -559,76 +596,136 @@ var render = function () {
         _c("div", { staticClass: "card border-0 shadow-sm rounded-lg h-100" }, [
           _c("div", { staticClass: "card-header border-0 py-3" }, [
             _c("div", { staticClass: "row align-items-center" }, [
-              _c("div", { staticClass: "col-md-6" }, [
+              _c("div", { staticClass: "col-md-4" }, [
                 _c("h6", { staticClass: "m-0 font-weight-bold" }, [
                   _vm._v(_vm._s(_vm.__("unassigned_doorstep_orders"))),
                 ]),
               ]),
               _vm._v(" "),
-              _c("div", { staticClass: "col-md-6" }, [
+              _c("div", { staticClass: "col-md-8" }, [
                 _c(
                   "div",
                   {
                     staticClass:
-                      "d-flex align-items-center justify-content-md-end gap-2",
+                      "d-flex align-items-center justify-content-md-end gap-3 flex-wrap",
                   },
                   [
-                    _c(
-                      "label",
-                      {
-                        staticClass:
-                          "mb-0 text-muted font-weight-bold mr-2 text-nowrap",
-                      },
-                      [_vm._v(_vm._s(_vm.__("filter_by_zone")) + ":")]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "select",
-                      {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.selectedZone,
-                            expression: "selectedZone",
-                          },
-                        ],
-                        staticClass:
-                          "form-control form-select border-0 max-w-200",
-                        on: {
-                          change: [
-                            function ($event) {
-                              var $$selectedVal = Array.prototype.filter
-                                .call($event.target.options, function (o) {
-                                  return o.selected
-                                })
-                                .map(function (o) {
-                                  var val = "_value" in o ? o._value : o.value
-                                  return val
-                                })
-                              _vm.selectedZone = $event.target.multiple
-                                ? $$selectedVal
-                                : $$selectedVal[0]
-                            },
-                            _vm.getOrders,
-                          ],
+                    _c("div", { staticClass: "d-flex align-items-center" }, [
+                      _c(
+                        "label",
+                        {
+                          staticClass:
+                            "mb-0 text-muted font-weight-bold mr-2 text-nowrap",
                         },
-                      },
-                      [
-                        _c("option", { attrs: { value: "" } }, [
-                          _vm._v(_vm._s(_vm.__("all_zones"))),
-                        ]),
-                        _vm._v(" "),
-                        _vm._l(_vm.zones, function (zone) {
-                          return _c(
-                            "option",
-                            { key: zone, domProps: { value: zone } },
-                            [_vm._v(_vm._s(_vm.formatZone(zone)))]
-                          )
-                        }),
-                      ],
-                      2
-                    ),
+                        [_vm._v(_vm._s(_vm.__("filter_by_zone")) + ":")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "select",
+                        {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.selectedZone,
+                              expression: "selectedZone",
+                            },
+                          ],
+                          staticClass:
+                            "form-control form-select border-0 max-w-200 shadow-none",
+                          on: {
+                            change: [
+                              function ($event) {
+                                var $$selectedVal = Array.prototype.filter
+                                  .call($event.target.options, function (o) {
+                                    return o.selected
+                                  })
+                                  .map(function (o) {
+                                    var val = "_value" in o ? o._value : o.value
+                                    return val
+                                  })
+                                _vm.selectedZone = $event.target.multiple
+                                  ? $$selectedVal
+                                  : $$selectedVal[0]
+                              },
+                              _vm.getOrders,
+                            ],
+                          },
+                        },
+                        [
+                          _c("option", { attrs: { value: "" } }, [
+                            _vm._v(_vm._s(_vm.__("all_zones"))),
+                          ]),
+                          _vm._v(" "),
+                          _vm._l(_vm.zones, function (zone) {
+                            return _c(
+                              "option",
+                              { key: zone, domProps: { value: zone } },
+                              [_vm._v(_vm._s(_vm.formatZone(zone)))]
+                            )
+                          }),
+                        ],
+                        2
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "d-flex align-items-center" }, [
+                      _c(
+                        "label",
+                        {
+                          staticClass:
+                            "mb-0 text-muted font-weight-bold mr-2 text-nowrap",
+                        },
+                        [_vm._v("Rescheduled:")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "select",
+                        {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.selectedRescheduled,
+                              expression: "selectedRescheduled",
+                            },
+                          ],
+                          staticClass:
+                            "form-control form-select border-0 max-w-200 shadow-none",
+                          on: {
+                            change: [
+                              function ($event) {
+                                var $$selectedVal = Array.prototype.filter
+                                  .call($event.target.options, function (o) {
+                                    return o.selected
+                                  })
+                                  .map(function (o) {
+                                    var val = "_value" in o ? o._value : o.value
+                                    return val
+                                  })
+                                _vm.selectedRescheduled = $event.target.multiple
+                                  ? $$selectedVal
+                                  : $$selectedVal[0]
+                              },
+                              _vm.getOrders,
+                            ],
+                          },
+                        },
+                        [
+                          _c("option", { attrs: { value: "" } }, [
+                            _vm._v("All Orders"),
+                          ]),
+                          _vm._v(" "),
+                          _c("option", { attrs: { value: "1" } }, [
+                            _vm._v("Rescheduled Only"),
+                          ]),
+                          _vm._v(" "),
+                          _c("option", { attrs: { value: "0" } }, [
+                            _vm._v("Regular Only"),
+                          ]),
+                        ]
+                      ),
+                    ]),
                   ]
                 ),
               ]),
@@ -847,8 +944,30 @@ var render = function () {
                                 _c("td", [
                                   _c(
                                     "div",
-                                    { staticClass: "font-weight-bold mb-0" },
-                                    [_vm._v(_vm._s(order.user_name))]
+                                    {
+                                      staticClass:
+                                        "d-flex align-items-center mb-0",
+                                    },
+                                    [
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass: "font-weight-bold mr-2",
+                                        },
+                                        [_vm._v(_vm._s(order.user_name))]
+                                      ),
+                                      _vm._v(" "),
+                                      order.is_rescheduled
+                                        ? _c(
+                                            "span",
+                                            {
+                                              staticClass:
+                                                "badge bg-soft-warning text-warning font-weight-bold",
+                                            },
+                                            [_vm._v("Rescheduled")]
+                                          )
+                                        : _vm._e(),
+                                    ]
                                   ),
                                   _vm._v(" "),
                                   _c(

@@ -1837,7 +1837,7 @@ class OrderApiController extends Controller
         }
 
         if (isset($request->type)) {
-            $activeTypeStatus = [OrderStatusList::$paymentPending, OrderStatusList::$received, OrderStatusList::$processed, OrderStatusList::$outForDelivery, OrderStatusList::$shipped, OrderStatusList::$selfPickupPending, OrderStatusList::$selfPickupReady];
+            $activeTypeStatus = [OrderStatusList::$paymentPending, OrderStatusList::$received, OrderStatusList::$processed, OrderStatusList::$outForDelivery, OrderStatusList::$shipped, OrderStatusList::$selfPickupPending, OrderStatusList::$selfPickupReady, OrderStatusList::$rescheduled];
             $previousTypeStatus = [OrderStatusList::$delivered, OrderStatusList::$cancelled, OrderStatusList::$returned, OrderStatusList::$selfPickupPicked];
             if ($request->type == Order::$activeType) {
                 $sql = $sql->whereIn('orders.active_status', $activeTypeStatus);
@@ -1879,7 +1879,7 @@ class OrderApiController extends Controller
         }
 
         if (isset($request->type)) {
-            $activeTypeStatus = [OrderStatusList::$paymentPending, OrderStatusList::$received, OrderStatusList::$processed, OrderStatusList::$outForDelivery, OrderStatusList::$shipped, OrderStatusList::$selfPickupPending, OrderStatusList::$selfPickupReady];
+            $activeTypeStatus = [OrderStatusList::$paymentPending, OrderStatusList::$received, OrderStatusList::$processed, OrderStatusList::$outForDelivery, OrderStatusList::$shipped, OrderStatusList::$selfPickupPending, OrderStatusList::$selfPickupReady, OrderStatusList::$rescheduled];
             $previousTypeStatus = [OrderStatusList::$delivered, OrderStatusList::$cancelled, OrderStatusList::$returned, OrderStatusList::$selfPickupPicked];
             if ($request->type == Order::$activeType) {
                 $sql = $sql->whereIn('orders.active_status', $activeTypeStatus);
@@ -2503,7 +2503,7 @@ class OrderApiController extends Controller
             if ($request->has('delivery_time')) {
                 $order->delivery_time = $request->delivery_time;
             }
-            $order->active_status = OrderStatusList::$received;
+            $order->active_status = OrderStatusList::$rescheduled;
             $order->loading_slip_id = null;
             $order->delivery_boy_id = null;
             $order->delivery_boy_bonus_amount = 0;
@@ -2513,7 +2513,7 @@ class OrderApiController extends Controller
             // Sync order items active status
             OrderItem::where('order_id', $order->id)
                 ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
-                ->update(['active_status' => OrderStatusList::$received]);
+                ->update(['active_status' => OrderStatusList::$rescheduled]);
 
             // Log status history
             $orderStatus = [

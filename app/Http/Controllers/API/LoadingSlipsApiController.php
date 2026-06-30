@@ -66,7 +66,8 @@ class LoadingSlipsApiController extends Controller
             ->whereIn('orders.active_status', [
                 OrderStatusList::$received,
                 OrderStatusList::$processed,
-                OrderStatusList::$shipped
+                OrderStatusList::$shipped,
+                OrderStatusList::$rescheduled
             ]);
 
         if ($isRescheduled === '1' || $isRescheduled === 1) {
@@ -173,6 +174,70 @@ class LoadingSlipsApiController extends Controller
                     return CommonHelper::responseError("Order #{$order->id} does not belong to your store.");
                 }
             }
+        }
+
+        // Stock confirmation check
+        $stockShortages = [];
+        $sellerId = auth()->user()->seller->id ?? null;
+
+        // Group items by variant to check total required quantity
+        $variantQuantities = [];
+        foreach ($orders as $order) {
+            $items = OrderItem::where('order_id', $order->id)->get();
+            foreach ($items as $item) {
+                if ($item->master_product_variant_id) {
+                    $key = 'master_' . $item->master_product_variant_id;
+                    if (!isset($variantQuantities[$key])) {
+                        $variantQuantities[$key] = [
+                            'type' => 'master',
+                            'id' => $item->master_product_variant_id,
+                            'name' => $item->product_name . ($item->variant_name ? ' (' . $item->variant_name . ')' : ''),
+                            'qty' => 0,
+                        ];
+                    }
+                    $variantQuantities[$key]['qty'] += $item->quantity;
+                } else {
+                    $key = 'legacy_' . $item->product_variant_id;
+                    if (!isset($variantQuantities[$key])) {
+                        $variantQuantities[$key] = [
+                            'type' => 'legacy',
+                            'id' => $item->product_variant_id,
+                            'name' => $item->product_name . ($item->variant_name ? ' (' . $item->variant_name . ')' : ''),
+                            'qty' => 0,
+                        ];
+                    }
+                    $variantQuantities[$key]['qty'] += $item->quantity;
+                }
+            }
+        }
+
+        foreach ($variantQuantities as $vq) {
+            $currentStock = 0;
+            if ($vq['type'] === 'master') {
+                $sp = SellerProduct::where('seller_id', $sellerId)
+                    ->where('master_product_variant_id', $vq['id'])
+                    ->first();
+                $currentStock = $sp ? (float)$sp->stock : 0;
+            } else {
+                $pv = ProductVariant::find($vq['id']);
+                $currentStock = $pv ? (float)$pv->stock : 0;
+            }
+
+            if ($currentStock < $vq['qty']) {
+                $stockShortages[] = [
+                    'name' => $vq['name'],
+                    'required' => $vq['qty'],
+                    'available' => $currentStock,
+                ];
+            }
+        }
+
+        if (!empty($stockShortages) && !$request->input('confirm_stock_shortage', false)) {
+            return response()->json([
+                'status' => 2,
+                'message' => 'Some items in the selected orders have insufficient database stock. Do you want to proceed anyway?',
+                'shortages' => $stockShortages
+            ]);
         }
 
         $totalWeight = 0;

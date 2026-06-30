@@ -15,7 +15,7 @@ class OrderStatusList extends Seeder
     {
         \App\Models\OrderStatusList::truncate();
 
-        $allStatus = array("Payment Pending","Received","Processed","Shipped","Out For Delivery","Delivered","Cancelled","Returned","Pending","Ready for Pickup","Picked Up");
+        $allStatus = array("Payment Pending","Received","Processed","Shipped","Out For Delivery","Delivered","Cancelled","Returned","Pending","Ready for Pickup","Picked Up","Rescheduled");
         foreach ($allStatus as $status){
             \App\Models\OrderStatusList::create(['status'=>$status]);
         }
