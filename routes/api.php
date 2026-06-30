@@ -758,6 +758,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('route_list', [\App\Http\Controllers\DeliveryBoyController::class, 'getRouteList']);
         Route::get('orders', [\App\Http\Controllers\DeliveryBoyController::class, 'getOrders']);
         Route::get('order_by_id', [\App\Http\Controllers\DeliveryBoyController::class, 'getOrder']);
+         Route::post('orders/reschedule', [\App\Http\Controllers\API\OrdersApiController::class, 'rescheduleOrder']);
         Route::post('get_delivery_boy_status', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'getStatus'])->name('delivery_boys.get_status');
         Route::post('update_status', [\App\Http\Controllers\API\OrdersApiController::class, 'updateStatus'])->name('delivery_boy.update_status');
         Route::get('order_statuses', [\App\Http\Controllers\DeliveryBoyController::class, 'getOrderStatus']);
