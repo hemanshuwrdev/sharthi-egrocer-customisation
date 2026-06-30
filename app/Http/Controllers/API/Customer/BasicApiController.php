@@ -651,9 +651,16 @@ class BasicApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $sellers = Seller::select('sellers.id', 'sellers.name', 'sellers.store_name', 'sellers.logo', DB::raw("ROUND(6371 * acos(cos(radians(" . $request->latitude . "))
+        $sellers = Seller::select(
+                'sellers.id', 'sellers.name', 'sellers.store_name', 'sellers.logo',
+                DB::raw("ROUND(6371 * acos(cos(radians(" . $request->latitude . "))
                                 * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $request->longitude . "))
-                                + sin(radians(" . $request->latitude . ")) * sin(radians(sellers.latitude))), 2) AS distance"), 'cities.max_deliverable_distance')
+                                + sin(radians(" . $request->latitude . ")) * sin(radians(sellers.latitude))), 2) AS distance"),
+                'cities.max_deliverable_distance',
+                DB::raw("(SELECT COUNT(*) FROM products WHERE products.seller_id = sellers.id AND products.status = 1) AS total_products"),
+                DB::raw("(SELECT ROUND(AVG(pr.rate), 1) FROM product_ratings pr WHERE pr.seller_id = sellers.id AND pr.status = 1) AS total_rating"),
+                DB::raw("(SELECT COUNT(*) FROM product_ratings pr WHERE pr.seller_id = sellers.id AND pr.status = 1) AS total_rating_count")
+            )
             ->leftJoin("cities", "sellers.city_id", "cities.id")
             ->where('status', Seller::$statusActive)
             ->whereExists(function ($query) {

@@ -495,14 +495,6 @@
                                                                             <small class="text-muted">{{ __('search_to_navigate_map_then_draw_zone_boundary') }}</small>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="form-group mt-0">
-                                                                        <div class="form-group">
-                                                                            <label>{{ __('city_name') }}<i class="text-danger">*</i></label>
-                                                                            <input type="text" class="form-control" v-model="newCity.name"
-                                                                                :placeholder="__('city_name')">
-                                                                            <small class="text-muted">{{ __('auto_filled_from_map_search') }}</small>
-                                                                        </div>
-                                                                    </div>
                                                                     <div class="row">
                                                                         <div class="form-group col-md-6 mt-0">
                                                                             <div class="form-group">

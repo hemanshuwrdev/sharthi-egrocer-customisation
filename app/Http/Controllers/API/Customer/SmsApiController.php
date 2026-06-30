@@ -16,11 +16,11 @@ class SmsApiController extends Controller
      
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string',
-        ]);
-        if ($validator->fails()) {
-            return CommonHelper::responseError($validator->errors()->first());
+        // Accept phone / mobile / id — delivery boy sends 'id', salesman sends 'phone'
+        $phoneNumber = $request->input('phone') ?? $request->input('mobile') ?? $request->input('id');
+
+        if (!$phoneNumber) {
+            return CommonHelper::responseError('phone number is required');
         }
 
         // Determine configured OTP provider
@@ -36,10 +36,23 @@ class SmsApiController extends Controller
             return CommonHelper::responseWithData(['otp_provider' => 'firebase']);
         }
 
+        // Detect role from route prefix: seller/send_sms=3, delivery_boy/send_sms=4, salesman/send_sms=5
+        $prefixTypeMap = ['seller' => 3, 'delivery_boy' => 4, 'salesman' => 5];
+        $routePrefix   = $request->segment(2);
+        $userType      = $prefixTypeMap[$routePrefix] ?? null;
+
         // Twilio flow — generate, send, store
         $otp         = rand(100000, 999999);
-        $countryCode = ltrim($request->input('country_code', ''), '+');
-        $phone       = '+' . $countryCode . $request->input('phone');
+        $countryCode = ltrim($request->input('country_code', '91'), '+');
+
+        // Normalize: some apps send '+919274048485', others send '9274048485' + country_code
+        if (str_starts_with($phoneNumber, '+')) {
+            $phone = $phoneNumber;
+        } elseif (str_starts_with($phoneNumber, $countryCode)) {
+            $phone = '+' . $phoneNumber;
+        } else {
+            $phone = '+' . $countryCode . $phoneNumber;
+        }
         $appName     = Setting::where('variable', 'app_name')->value('value');
         $message     = "$otp is your verification code from $appName";
 
@@ -51,6 +64,7 @@ class SmsApiController extends Controller
         $expiresAt = Carbon::now()->addMinutes(10);
         SmsVerification::insert([
             'phone'      => $phone,
+            'user_type'  => $userType,
             'otp'        => $otp,
             'status'     => 'pending',
             'expires_at' => $expiresAt,

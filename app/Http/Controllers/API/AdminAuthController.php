@@ -84,8 +84,17 @@ class AdminAuthController extends Controller
 
             if (!$firebaseEnabled) {
                 // Twilio flow — verify OTP from sms_verifications table
-                $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
-                    ->orWhere('phone', $mobile)
+                // send_sms stores phone as '+{countryCode}{mobile}', normalize to match
+                $loginType = (int) $request->type; // 3=seller, 4=delivery_boy, 5=salesman
+                $otpRecord = \App\Models\SmsVerification::where(function ($q) use ($fullPhone, $mobile) {
+                        $q->where('phone', $fullPhone)
+                          ->orWhere('phone', '+' . $fullPhone)
+                          ->orWhere('phone', $mobile);
+                    })
+                    ->where(function ($q) use ($loginType) {
+                        $q->where('user_type', $loginType)
+                          ->orWhereNull('user_type'); // allow legacy rows without user_type
+                    })
                     ->latest('created_at')
                     ->first();
 

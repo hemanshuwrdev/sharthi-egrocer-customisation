@@ -16,6 +16,7 @@
         "laravel/passport": "^10.4",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
+        "lcobucci/clock": "3.2.0",
         "maennchen/zipstream-php": "^2.4",
         "midtrans/midtrans-php": "^2.5",
         "mpdf/mpdf": "^8.1",

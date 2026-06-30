@@ -449,6 +449,17 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -642,7 +653,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           }
         }]
       },
-      series2: []
+      series2: [],
+      showStockWarning: false
     };
   },
   mounted: function mounted() {
@@ -653,6 +665,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     var now = new Date();
     this.currentMonth = months[now.getMonth()];
+    this.checkStockWarning();
     this.getRecord();
     this.getOrderStatus();
     this.getLatestOrders();
@@ -722,6 +735,17 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         return firstNonEmpty != null ? String(firstNonEmpty).trim() : '';
       }
       return '';
+    },
+    checkStockWarning: function checkStockWarning() {
+      var today = new Date().toISOString().slice(0, 10);
+      var dismissed = localStorage.getItem('stock_warning_dismissed');
+      this.showStockWarning = dismissed !== today;
+    },
+    goToStockManagement: function goToStockManagement() {
+      var today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('stock_warning_dismissed', today);
+      this.showStockWarning = false;
+      this.$router.push('/seller/manage_stock');
     },
     getRecord: function getRecord() {
       var _this = this;
@@ -1353,6 +1377,45 @@ var render = function () {
     _vm._v(" "),
     _c("div", { staticClass: "page-content" }, [
       _c("section", { staticClass: "row" }, [
+        _vm.showStockWarning
+          ? _c("div", { staticClass: "col-12" }, [
+              _c(
+                "div",
+                {
+                  staticClass:
+                    "alert alert-warning d-flex align-items-center justify-content-between mb-3",
+                  staticStyle: {
+                    cursor: "pointer",
+                    "border-left": "4px solid #f0ad4e",
+                  },
+                  on: { click: _vm.goToStockManagement },
+                },
+                [
+                  _c(
+                    "div",
+                    { staticClass: "d-flex align-items-center gap-2" },
+                    [
+                      _c("i", {
+                        staticClass: "fa fa-exclamation-triangle me-2",
+                      }),
+                      _vm._v(" "),
+                      _c("span", [
+                        _c("strong", [
+                          _vm._v(_vm._s(_vm.__("stock_update_reminder"))),
+                        ]),
+                        _vm._v(
+                          " — " + _vm._s(_vm.__("click_here_to_update_stock"))
+                        ),
+                      ]),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("i", { staticClass: "fa fa-arrow-right" }),
+                ]
+              ),
+            ])
+          : _vm._e(),
+        _vm._v(" "),
         _c("div", { staticClass: "row" }, [
           _c("div", { staticClass: "col-12 col-xl-6 dashboard-counter" }, [
             _c("div", { staticClass: "row g-2" }, [

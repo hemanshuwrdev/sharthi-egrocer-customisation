@@ -769,16 +769,19 @@ __webpack_require__.r(__webpack_exports__);
       }, {
         name: __('location'),
         icon: 'map',
+        role: true,
         permission: null,
         submenu: [{
           name: __('add_city'),
           icon: 'grid-fill',
           url: '/cities/create',
+          role: true,
           permission: 'city_create'
         }, {
           name: __('manage_cities'),
           icon: 'grid-fill',
           url: '/cities',
+          role: true,
           permission: 'city_list'
         }]
       }, {

@@ -630,10 +630,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('payments/pending',      [\App\Http\Controllers\API\SettlementController::class, 'sellerPendingPayments'])->name('seller.payments.pending');
         Route::post('payments/verify',      [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifyPayment'])->name('seller.payments.verify');
         Route::get('settlements',           [\App\Http\Controllers\API\SettlementController::class, 'sellerSettlements'])->name('seller.settlements');
-        Route::get('trips',                 [\App\Http\Controllers\API\SettlementController::class, 'sellerTripsList'])->name('seller.trips.list');
-        Route::get('trips/{id}',            [\App\Http\Controllers\API\SettlementController::class, 'sellerTripDetail'])->name('seller.trips.detail');
-        Route::post('trips/{id}/reconcile', [\App\Http\Controllers\API\SettlementController::class, 'sellerUpdateReconciliation'])->name('seller.trips.reconcile');
-        Route::post('trips/{id}/close',     [\App\Http\Controllers\API\SettlementController::class, 'sellerCloseTrip'])->name('seller.trips.close');
+        Route::get('trips',                 [\App\Http\Controllers\API\SettlementController::class, 'sellerTripsListUpdated'])->name('seller.trips.list');
+        Route::get('trips/{id}',            [\App\Http\Controllers\API\SettlementController::class, 'sellerTripDetailUpdated'])->name('seller.trips.detail');
+        Route::post('trips/{id}/reconcile', [\App\Http\Controllers\API\SettlementController::class, 'sellerUpdateReconciliationUpdated'])->name('seller.trips.reconcile');
+        Route::post('trips/{id}/close',     [\App\Http\Controllers\API\SettlementController::class, 'sellerCloseTripUpdated'])->name('seller.trips.close');
 
         // Sarthi: distributor billing overview (GMV + commission)
         Route::get('billing', [\App\Http\Controllers\API\CommissionBillingController::class, 'sellerBilling'])->name('seller.billing');
@@ -829,6 +829,16 @@ Route::middleware('auth:api')->group(function () {
         Route::post('orders/place', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'placeOrder'])->name('salesman.orders.place');
         Route::get('orders', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'orderList'])->name('salesman.orders.list');
         Route::get('orders/{order_id}', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'orderDetail'])->name('salesman.orders.detail');
+
+        Route::get('dashboard', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'dashboard'])->name('salesman.dashboard');
+        Route::get('notifications', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'notifications'])->name('salesman.notifications');
+        Route::post('notifications/mark-read', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'markNotificationsRead'])->name('salesman.notifications.mark_read');
+
+        // Salesman payment collection
+        Route::get('payment-methods',          [\App\Http\Controllers\API\SettlementController::class, 'salesmanPaymentMethods'])->name('salesman.payment_methods');
+        Route::post('collect-payment',         [\App\Http\Controllers\API\SettlementController::class, 'salesmanCollectPayment'])->name('salesman.collect_payment');
+        Route::get('settlement/today',         [\App\Http\Controllers\API\SettlementController::class, 'salesmanTodaySummary'])->name('salesman.settlement.today');
+        Route::post('settlement/lock-eod',     [\App\Http\Controllers\API\SettlementController::class, 'salesmanLockEod'])->name('salesman.settlement.lock_eod');
     });
 
 

@@ -833,12 +833,14 @@ export default {
                 {
                     name: __('location'),
                     icon: 'map',
+                    role: true,
                     permission: null,
                     submenu: [
                         {
                             name: __('add_city'),
                             icon: 'grid-fill',
                             url: '/cities/create',
+                            role: true,
                             permission: 'city_create',
                         },
 
@@ -846,6 +848,7 @@ export default {
                             name: __('manage_cities'),
                             icon: 'grid-fill',
                             url: '/cities',
+                            role: true,
                             permission: 'city_list',
                         }
                     ]

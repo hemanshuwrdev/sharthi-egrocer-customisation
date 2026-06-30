@@ -603,7 +603,7 @@ var render = function () {
                         stacked: "md",
                         "show-empty": "",
                         small: "",
-                        "empty-text": "There are no cities to show",
+                        "empty-text": "There are no zones to show",
                       },
                       on: {
                         "update:sortBy": function ($event) {

@@ -6,6 +6,17 @@
         <div class="page-content">
             <section class="row">
 
+                <!-- Daily stock update reminder -->
+                <div class="col-12" v-if="showStockWarning">
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between mb-3" style="cursor:pointer;border-left:4px solid #f0ad4e;" @click="goToStockManagement">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa fa-exclamation-triangle me-2"></i>
+                            <span><strong>{{ __('stock_update_reminder') }}</strong> — {{ __('click_here_to_update_stock') }}</span>
+                        </div>
+                        <i class="fa fa-arrow-right"></i>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-12 col-xl-6 dashboard-counter">
                         <div class="row g-2">
@@ -592,7 +603,8 @@ export default {
                     }
                 }]
             },
-            series2: []
+            series2: [],
+            showStockWarning: false,
         };
     },
     mounted() {
@@ -603,6 +615,7 @@ export default {
         let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         let now = new Date();
         this.currentMonth = months[now.getMonth()];
+        this.checkStockWarning();
         this.getRecord();
         this.getOrderStatus();
         this.getLatestOrders();
@@ -656,6 +669,17 @@ export default {
                 return firstNonEmpty != null ? String(firstNonEmpty).trim() : '';
             }
             return '';
+        },
+        checkStockWarning() {
+            const today = new Date().toISOString().slice(0, 10);
+            const dismissed = localStorage.getItem('stock_warning_dismissed');
+            this.showStockWarning = dismissed !== today;
+        },
+        goToStockManagement() {
+            const today = new Date().toISOString().slice(0, 10);
+            localStorage.setItem('stock_warning_dismissed', today);
+            this.showStockWarning = false;
+            this.$router.push('/seller/manage_stock');
         },
         getRecord: function () {
             let vm = this;

@@ -667,7 +667,73 @@ class SarthiCustomisation extends Migration
                 $table->index('seller_id', 'idx_pr_seller');
             }
             // try { $table->dropUnique(['product_id', 'user_id']); } catch (\Throwable $e) {}
-           try { $table->unique(['product_id', 'user_id', 'seller_id'], 'uniq_pr_product_user_seller'); } catch (\Throwable $e) {}
+            $existingIndexes = collect(DB::select("SHOW INDEX FROM product_ratings"))->pluck('Key_name')->toArray();
+            if (!in_array('uniq_pr_product_user_seller', $existingIndexes)) {
+                $table->unique(['product_id', 'user_id', 'seller_id'], 'uniq_pr_product_user_seller');
+            }
+        });
+
+        // Salesman notifications (bell icon in mobile app)
+        if (!Schema::hasTable('salesman_notifications')) {
+            Schema::create('salesman_notifications', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('salesman_id');
+                $table->string('title');
+                $table->text('message');
+                $table->string('type')->default('general');
+                $table->unsignedBigInteger('order_id')->nullable();
+                $table->timestamp('read_at')->nullable();
+                $table->timestamps();
+                $table->index('salesman_id', 'idx_sn_salesman');
+            });
+        }
+
+        // ── Reconciliation Redesign ────────────────────────────────────────────
+        // Trips are now per-person (driver or salesman) per day, not per loading slip.
+
+        // Add salesman_id to order_payments so salesmen can also collect signed payments.
+        // delivery_boy_id becomes nullable — exactly one of the two is always set per row.
+        Schema::table('order_payments', function (Blueprint $table) {
+            if (!Schema::hasColumn('order_payments', 'salesman_id')) {
+                $table->unsignedBigInteger('salesman_id')->nullable()->after('delivery_boy_id')
+                      ->comment('Set when a salesman collected this payment; mutually exclusive with delivery_boy_id');
+                $table->index(['salesman_id', 'status'], 'idx_op_salesman_status');
+            }
+            if (Schema::hasColumn('order_payments', 'delivery_boy_id')) {
+                $table->unsignedBigInteger('delivery_boy_id')->nullable()->change();
+            }
+        });
+
+        // Salesman EOD settlement summary — mirrors driver_settlements, one row per salesman per day.
+        if (!Schema::hasTable('salesman_settlements')) {
+            Schema::create('salesman_settlements', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('salesman_id')->constrained('salesmen')->onDelete('cascade');
+                $table->unsignedBigInteger('seller_id')->comment('Distributor who owns this salesman');
+                $table->date('settlement_date');
+                $table->integer('total_orders')->default(0);
+                $table->decimal('total_cash', 15, 2)->default(0);
+                $table->decimal('total_upi', 15, 2)->default(0);
+                $table->decimal('total_cheque', 15, 2)->default(0);
+                $table->decimal('total_signature', 15, 2)->default(0);
+                $table->enum('status', ['open', 'locked', 'reconciled'])->default('open');
+                $table->timestamp('locked_at')->nullable();
+                $table->decimal('cash_received', 15, 2)->nullable()->comment('Cash physically handed to distributor');
+                $table->enum('reconciliation_status', ['unreconciled', 'partial_match', 'full_match', 'overpaid'])->default('unreconciled');
+                $table->timestamp('reconciled_at')->nullable();
+                $table->unsignedBigInteger('reconciled_by')->nullable()->comment('admins.id of distributor who reconciled');
+                $table->timestamps();
+
+                $table->unique(['salesman_id', 'settlement_date'], 'uniq_ss_salesman_date');
+                $table->index('seller_id', 'idx_ss_seller');
+            });
+        }
+
+        // OTP role locking — scope OTPs to the role that requested them (3=seller, 4=delivery_boy, 5=salesman)
+        Schema::table('sms_verifications', function (Blueprint $table) {
+            if (!Schema::hasColumn('sms_verifications', 'user_type')) {
+                $table->tinyInteger('user_type')->nullable()->after('phone');
+            }
         });
     }
 
@@ -678,7 +744,24 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        // OTP role locking (reverse)
+        Schema::table('sms_verifications', function (Blueprint $table) {
+            if (Schema::hasColumn('sms_verifications', 'user_type')) {
+                $table->dropColumn('user_type');
+            }
+        });
+
+        // Reconciliation redesign (reverse)
+        Schema::dropIfExists('salesman_settlements');
+        Schema::table('order_payments', function (Blueprint $table) {
+            if (Schema::hasColumn('order_payments', 'salesman_id')) {
+                $table->dropIndex('idx_op_salesman_status');
+                $table->dropColumn('salesman_id');
+            }
+        });
+
         // Settlement (reverse)
+        Schema::dropIfExists('salesman_notifications');
         Schema::dropIfExists('driver_settlements');
         Schema::dropIfExists('order_payments');
         Schema::table('delivery_boys', function (Blueprint $table) {

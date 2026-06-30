@@ -318,11 +318,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
 
 
 
@@ -483,9 +478,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.translations = allTranslations;
     },
     validateDefaultLanguage: function validateDefaultLanguage() {
-      // Validate normal city name
       if (!this.city.name || this.city.name.trim() === '') {
-        this.showError("Please enter city name");
+        this.showError("Please enter zone name");
         this.switchToDefaultLanguageTab();
         return false;
       }
@@ -589,7 +583,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/cities/edit/' + this.city.id).then(function (response) {
         var city = response.data.data;
         if (!city) {
-          _this4.showError("City not found");
+          _this4.showError("Zone not found");
           return;
         }
 
@@ -627,8 +621,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _this4.renderKey++;
         _this4.setMap();
       })["catch"](function (error) {
-        console.error("Error loading city:", error);
-        _this4.showError("Failed to load city");
+        console.error("Error loading zone:", error);
+        _this4.showError("Failed to load zone");
       });
     },
     validateDefaultLanguageForTranslation: function validateDefaultLanguageForTranslation() {
@@ -1721,51 +1715,30 @@ var render = function () {
                                   ])
                                 : _vm._e(),
                               _vm._v(" "),
-                              language.is_default
-                                ? _c("div", { staticClass: "form-group" }, [
-                                    _c("label", { attrs: { for: "name" } }, [
-                                      _vm._v(" " + _vm._s(_vm.__("city_name"))),
-                                      _c(
-                                        "span",
-                                        { staticClass: "text-danger text-sm" },
-                                        [_vm._v("*")]
-                                      ),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.city.name,
-                                          expression: "city.name",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "text",
-                                        name: "name",
-                                        id: "name",
-                                        placeholder: _vm.__("city_name"),
-                                        required: "",
-                                        readonly: "",
-                                      },
-                                      domProps: { value: _vm.city.name },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.city,
-                                            "name",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
-                                  ])
-                                : _vm._e(),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.city.name,
+                                    expression: "city.name",
+                                  },
+                                ],
+                                attrs: { type: "hidden", name: "name" },
+                                domProps: { value: _vm.city.name },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.city,
+                                      "name",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
                               _vm._v(" "),
                               language.is_default
                                 ? _c("div", { staticClass: "form-group" }, [

@@ -100,12 +100,7 @@
                                                 readonly>
                                         </div>
 
-                                        <div class="form-group" v-if="language.is_default">
-                                            <label for="name"> {{ __('city_name') }}<span
-                                                    class="text-danger text-sm">*</span></label>
-                                            <input type="text" class="form-control" name="name" id="name"
-                                                v-model="city.name" :placeholder="__('city_name')" required readonly>
-                                        </div>
+                                        <input type="hidden" name="name" v-model="city.name">
 
                                         <div class="form-group" v-if="language.is_default">
                                             <label for="state"> {{ __('state_name') }}<span
@@ -459,9 +454,8 @@ export default {
         },
         validateDefaultLanguage() {
 
-            // Validate normal city name
             if (!this.city.name || this.city.name.trim() === '') {
-                this.showError("Please enter city name");
+                this.showError("Please enter zone name");
                 this.switchToDefaultLanguageTab();
                 return false;
             }
@@ -564,7 +558,7 @@ export default {
                     const city = response.data.data;
 
                     if (!city) {
-                        this.showError("City not found");
+                        this.showError("Zone not found");
                         return;
                     }
 
@@ -618,8 +612,8 @@ export default {
 
                 })
                 .catch(error => {
-                    console.error("Error loading city:", error);
-                    this.showError("Failed to load city");
+                    console.error("Error loading zone:", error);
+                    this.showError("Failed to load zone");
                 });
         }
         ,

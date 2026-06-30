@@ -126,6 +126,12 @@ class RetailerCatalogApiController extends Controller
             $query->whereIn('master_product_variants.weight', $sizes);
         }
 
+        // seller_id: filter to a specific distributor
+        $sellerIdFilter = (int) $request->input('seller_id', 0);
+        if ($sellerIdFilter > 0) {
+            $query->where('seller_products.seller_id', $sellerIdFilter);
+        }
+
         if ($request->filled('parent_company_id')) {
             $query->where('master_products.parent_company_id', $request->parent_company_id);
         }

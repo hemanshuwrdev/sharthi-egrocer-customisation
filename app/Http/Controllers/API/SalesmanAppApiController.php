@@ -1211,6 +1211,7 @@ class SalesmanAppApiController extends Controller
                 'oi.sub_total',
                 'oi.active_status as item_status',
                 'oi.seller_id',
+                'oi.is_free_item',
                 DB::raw('COALESCE(mpv.image, mp.image) as product_image')
             )
             ->get()
@@ -1225,6 +1226,99 @@ class SalesmanAppApiController extends Controller
             'order' => $order,
             'items' => $items,
         ]);
+    }
+
+    /**
+     * GET /api/salesman/dashboard
+     * Home screen stats: assigned retailers, today's order activity, pending KYC count, route progress.
+     */
+    public function dashboard(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $today = Carbon::today();
+
+        // Total retailers assigned to this salesman (visit target)
+        $totalRetailers = User::where('salesman_id', $salesman->id)->count();
+
+        // Retailers this salesman placed at least one order for today (proxy for visited)
+        $visitedToday = DB::table('orders')
+            ->where('placed_by_salesman_id', $salesman->id)
+            ->whereDate('created_at', $today)
+            ->distinct('user_id')
+            ->count('user_id');
+
+        // Pending KYC: retailers in territory not yet verified
+        $cityIds = $this->territoryCityIds((int) $salesman->seller_id);
+        $pendingKyc = 0;
+        if (!empty($cityIds)) {
+            $pendingKyc = User::join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
+                ->whereIn('retailer_profiles.city_id', $cityIds)
+                ->where('users.verification_status', 'pending')
+                ->whereNull('users.salesman_id')
+                ->count();
+        }
+
+        $routeCompletion = $totalRetailers > 0
+            ? round(($visitedToday / $totalRetailers) * 100, 1)
+            : 0;
+
+        return CommonHelper::responseWithData([
+            'visited_today'              => $visitedToday,
+            'visit_target'               => $totalRetailers,
+            'pending_kyc_count'          => $pendingKyc,
+            'route_completion_percentage' => $routeCompletion,
+        ]);
+    }
+
+    /**
+     * GET /api/salesman/notifications
+     * Returns the latest 50 notifications sent to this salesman (via admin_id).
+     */
+    public function notifications(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $notifications = DB::table('salesman_notifications')
+            ->where('salesman_id', $salesman->id)
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        $unreadCount = DB::table('salesman_notifications')
+            ->where('salesman_id', $salesman->id)
+            ->whereNull('read_at')
+            ->count();
+
+        return CommonHelper::responseWithData([
+            'unread_count'  => $unreadCount,
+            'notifications' => $notifications,
+        ]);
+    }
+
+    /**
+     * POST /api/salesman/notifications/mark-read
+     * Marks all notifications as read for the logged-in salesman.
+     */
+    public function markNotificationsRead(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        DB::table('salesman_notifications')
+            ->where('salesman_id', $salesman->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => Carbon::now()]);
+
+        return CommonHelper::responseWithData(['message' => 'Notifications marked as read.']);
     }
 
     /**
