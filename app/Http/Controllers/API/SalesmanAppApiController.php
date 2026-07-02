@@ -452,9 +452,34 @@ class SalesmanAppApiController extends Controller
 
         $rows = $query->orderByDesc('users.id')->get();
 
+        // Pending address change requests in this salesman's territory
+        $addressChangeRequests = \App\Models\RetailerAddressChangeRequest::with(['retailer:id,name,mobile'])
+            ->whereIn('new_city_id', $cityIds)
+            ->whereIn('status', ['pending', 'assigned'])
+            ->where(function ($q) use ($salesman) {
+                $q->whereNull('assigned_salesman_id')
+                  ->orWhere('assigned_salesman_id', $salesman->id);
+            })
+            ->latest()
+            ->get()
+            ->map(fn ($r) => [
+                'id'           => $r->id,
+                'status'       => $r->status,
+                'retailer_id'  => $r->user_id,
+                'name'         => $r->retailer?->name,
+                'mobile'       => $r->retailer?->mobile,
+                'new_address'  => $r->new_address,
+                'new_gps_lat'  => $r->new_gps_lat,
+                'new_gps_lng'  => $r->new_gps_lng,
+                'reason'       => $r->reason,
+                'requested_at' => $r->created_at->toDateTimeString(),
+            ]);
+
         return CommonHelper::responseWithData([
-            'total' => $rows->count(),
-            'data'  => $rows,
+            'total'                         => $rows->count(),
+            'data'                          => $rows,
+            'address_change_requests_count' => $addressChangeRequests->count(),
+            'address_change_requests'       => $addressChangeRequests,
         ]);
     }
 

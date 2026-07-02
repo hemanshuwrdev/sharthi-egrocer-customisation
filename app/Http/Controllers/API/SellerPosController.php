@@ -24,49 +24,47 @@ class SellerPosController extends Controller
     {
         try {
             $search = $request->input('search', '');
-            $limit = $request->input('limit', 0);
+            $limit  = (int) $request->input('limit', 20);
 
-            // Get POS users
+            // All app users (retailers), enriched with shop_name if they have a profile
+            $retailers = DB::table('users')
+                ->leftJoin('retailer_profiles', 'users.id', '=', 'retailer_profiles.user_id')
+                ->select(
+                    'users.id',
+                    'users.name',
+                    'users.mobile',
+                    DB::raw("'retailer' as user_type"),
+                    'users.email',
+                    'retailer_profiles.shop_name'
+                );
+
+            if (!empty($search)) {
+                $retailers->where(function ($q) use ($search) {
+                    $q->where('users.name', 'like', '%' . $search . '%')
+                      ->orWhere('users.mobile', 'like', '%' . $search . '%')
+                      ->orWhere('retailer_profiles.shop_name', 'like', '%' . $search . '%');
+                });
+            }
+
+            // POS walk-in users (added directly from POS)
             $posUsers = DB::table('pos_users')
-                ->select('id', 'name', 'phone as mobile', DB::raw("'pos' as user_type"), DB::raw("NULL as email"));
+                ->select('id', 'name', 'phone as mobile', DB::raw("'pos' as user_type"), DB::raw("NULL as email"), DB::raw("NULL as shop_name"));
 
-            // Apply search if provided
             if (!empty($search)) {
-                $posUsers->where(function ($query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('phone', 'like', '%' . $search . '%');
+                $posUsers->where(function ($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('phone', 'like', '%' . $search . '%');
                 });
             }
 
-            $posUsers->orderBy('id', 'DESC');
-
-            // Get regular users
-            $regUsers = DB::table('users')
-                ->select('id', 'name', 'mobile', DB::raw("'user' as user_type"), 'email');
-
-            // Apply search if provided
-            if (!empty($search)) {
-                $regUsers->where(function ($query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('mobile', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%');
-                });
-            }
-
-            $regUsers->orderBy('id', 'DESC');
-
-            // Combine users
-            $query = $posUsers->union($regUsers);
-
-            // Apply limit if specified
-            if ($limit > 0) {
-                $users = $query->limit($limit)->get();
-            } else {
-                $users = $query->get();
-            }
+            $users = $retailers->union($posUsers)
+                ->orderByDesc('id')
+                ->limit($limit > 0 ? $limit : 20)
+                ->get();
 
             return CommonHelper::responseWithData($users);
         } catch (\Exception $e) {
+            Log::error('POS getUsersList: ' . $e->getMessage());
             return CommonHelper::responseError($e->getMessage());
         }
     }
@@ -327,6 +325,7 @@ class SellerPosController extends Controller
                             'measurement' => $variant->secondary_unit_value ?: $variant->weight,
                             'measurement_unit_name' => $variant->unit ? $variant->unit->short_code : '',
                             'sku' => $variant->sku,
+                            'secondary_unit_value' => (float) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
                             'price' => $sp ? (float) $sp->selling_price : 0,
                             'mrp' => $sp ? (float) $sp->mrp : 0,
                             'discounted_price' => $sp && $sp->discounted_price !== null ? (float) $sp->discounted_price : 0,

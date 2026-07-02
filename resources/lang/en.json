@@ -1915,5 +1915,13 @@
     "sms_gateway_error": "SMS gateway error",
     "stock_update_reminder": "Reminder: Please update your product stock for today",
     "click_here_to_update_stock": "Click here to go to Stock Management",
-    "no_data_found": "No data found"
+    "no_data_found": "No data found",
+    "driver_not_linked_to_distributor" : "Driver is not linked to any distributor",
+
+    "address_change_request_already_pending": "You already have a pending address change request. Please wait for it to be verified.",
+    "address_change_request_not_found": "Address change request not found or not in your territory.",
+    "already_being_verified_by_another_salesman": "This request is already being verified by another salesman.",
+    "address_change_verified": "Address change verified successfully. Retailer profile has been updated.",
+    "no_address_change_request_found": "No address change request found.",
+    "address_change_request_submitted": "Your address change request has been submitted. A salesman will visit your new location to verify."
 }

@@ -610,11 +610,10 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/seller/reports/thermal-print', [App\Http\Controllers\SellerController::class, 'thermalPrint']);
             Route::post('/seller/thermal-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveThermalSettings']);
             Route::get('/seller/thermal-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getThermalSettings']);
-            Route::get('/seller/order-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getOrderSettings']);
-            Route::post('/seller/order-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveOrderSettings']);
         });
+        Route::get('order-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getOrderSettings']);
+        Route::post('order-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveOrderSettings']);
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
-        Route::get('settings', [\App\Http\Controllers\SellerController::class, 'getSettings']);
         Route::group(['prefix' => 'delivery_boys'], function () {
             Route::get('/', [\App\Http\Controllers\SellerController::class, 'getDeliveryBoys']);
             Route::get('bonus_settings', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'getDeliveryBoyBonusSettings'])->name('seller.delivery_boys.bonus_settings');
@@ -835,6 +834,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('notifications', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'notifications'])->name('salesman.notifications');
         Route::post('notifications/mark-read', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'markNotificationsRead'])->name('salesman.notifications.mark_read');
 
+        // Sarthi: retailer address change re-verification
+        Route::get('address-change-requests',              [\App\Http\Controllers\API\RetailerAddressChangeController::class, 'pendingRequests'])->name('salesman.address_change.list');
+        Route::post('address-change-requests/{id}/verify', [\App\Http\Controllers\API\RetailerAddressChangeController::class, 'verifyRequest'])->name('salesman.address_change.verify');
+
         // Salesman payment collection
         Route::get('payment-methods',          [\App\Http\Controllers\API\SettlementController::class, 'salesmanPaymentMethods'])->name('salesman.payment_methods');
         Route::post('collect-payment',         [\App\Http\Controllers\API\SettlementController::class, 'salesmanCollectPayment'])->name('salesman.collect_payment');
@@ -876,5 +879,7 @@ Route::prefix('oauth')->group(function () {
 Route::get('pos/invoice/{id}', [\App\Http\Controllers\API\SellerPosController::class, 'showInvoice']);
 
 // Public settings — token optional (allPermissions returned only when token is passed)
+Route::get('seller/settings', [\App\Http\Controllers\SellerController::class, 'getSettings'])->name('seller.app.settings');
+Route::get('distributor/settings', [\App\Http\Controllers\SellerController::class, 'getSettings'])->name('distributor.app.settings');
 Route::get('salesman/settings', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'appSettings'])->name('salesman.app.settings');
 Route::get('delivery_boy/settings', [\App\Http\Controllers\DeliveryBoyController::class, 'getSettings'])->name('delivery_boy.app.settings');

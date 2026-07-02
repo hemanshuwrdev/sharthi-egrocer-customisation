@@ -14,6 +14,7 @@ use App\Models\PanelNotification;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ReturnRequest;
+use App\Models\Role;
 use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\UserAddress;
@@ -1140,15 +1141,41 @@ class SellerController extends BaseController
             "app_mode_seller_remark",
             "seller_commission",
             "text_gen_key",
-            "self_pickup_mode"
+            "self_pickup_mode",
+            "phone_auth_otp",
+            "firebase_authentication",
+            "custom_sms_gateway_otp_based"
         );
         $settings = CommonHelper::getSettings($variables);
         $settings = CommonHelper::resolveTranslatedSettings($settings);
-        $settings["allPermissions"] = auth()->user()->allPermissions;
-        $settings["view_customer_detail"] = Seller::select('customer_privacy')->where('admin_id', auth()->user()->id)->first()->customer_privacy;
-        $settings["assign_delivery_boy"] = Seller::select('assign_delivery_boy')->where('admin_id', auth()->user()->id)->first()->assign_delivery_boy;
-        $settings["view_order_otp"] = Seller::select('view_order_otp')->where('admin_id', auth()->user()->id)->first()->view_order_otp;
-        $settings["change_order_status_delivered"] = Seller::select('change_order_status_delivered')->where('admin_id', auth()->user()->id)->first()->change_order_status_delivered;
+
+        $settings['type'] = Role::$roleSeller; // 3 for distributor/seller
+
+        // Derive otp_provider for distributor app login screen
+        if (!empty($settings['phone_auth_otp']) && $settings['phone_auth_otp'] == 1) {
+            if (!empty($settings['firebase_authentication']) && $settings['firebase_authentication'] == 1) {
+                $settings['otp_provider'] = 'firebase';
+            } elseif (!empty($settings['custom_sms_gateway_otp_based']) && $settings['custom_sms_gateway_otp_based'] == 1) {
+                $settings['otp_provider'] = 'custom_sms';
+            } else {
+                $settings['otp_provider'] = 'sms';
+            }
+        } else {
+            $settings['otp_provider'] = 'none';
+        }
+
+        // Return user permissions and privacy settings only if a valid token is passed
+        $user = auth('api')->user();
+        if ($user) {
+            $settings["allPermissions"] = $user->allPermissions;
+            $seller = Seller::where('admin_id', $user->id)->first();
+            if ($seller) {
+                $settings["view_customer_detail"] = $seller->customer_privacy ?? 0;
+                $settings["assign_delivery_boy"] = $seller->assign_delivery_boy ?? 0;
+                $settings["view_order_otp"] = $seller->view_order_otp ?? 0;
+                $settings["change_order_status_delivered"] = $seller->change_order_status_delivered ?? 0;
+            }
+        }
         $settings["demo_mode"] = env('DEMO_MODE', 0);
         $settings = json_encode($settings);
         $settings = base64_encode($settings);
@@ -1221,17 +1248,21 @@ class SellerController extends BaseController
             }
         }
 
-        // Split city_id into array of IDs if it contains commas
-        $cityIds = array_filter(array_map('trim', explode(',', $city_id)));
-
-        // Retrieve delivery boys scoped to the seller's cities, and owned by this seller or system-wide (NULL/0)
+        // For loading slip context (no order_id), show all seller-owned drivers.
+        // City filter only applies when fetching drivers for a specific order delivery.
         $deliveryBoys = DeliveryBoy::with(['admin', 'translations'])
-            ->whereIn('city_id', $cityIds)
             ->where(function ($query) use ($seller_id) {
                 $query->where('seller_id', $seller_id)
                       ->orWhereNull('seller_id')
                       ->orWhere('seller_id', 0);
             });
+
+        if ($request->order_id) {
+            $cityIds = array_filter(array_map('trim', explode(',', $city_id)));
+            if (!empty($cityIds)) {
+                $deliveryBoys->whereIn('city_id', $cityIds);
+            }
+        }
 
         // Filter by status if specified in the request
         if ($request->has('filterStatus') && $request->input('filterStatus') !== '') {

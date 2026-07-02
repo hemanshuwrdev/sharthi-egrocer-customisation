@@ -12,6 +12,7 @@ use App\Models\SellerProductSlabPrice;
  *
  * Centralizes:
  *  - Validating a (seller, master_variant) pair (assignment + activation + stock)
+ *  - Enforcing secondary-unit (box) based quantity stepping
  *  - Resolving the slab-matched unit price at the moment of order
  *  - Decrementing seller_products.stock
  */
@@ -24,11 +25,13 @@ class MasterCatalogOrderHelper
      *          'seller_product' => SellerProduct|null,
      *          'master_variant' => MasterProductVariant|null,
      *          'unit_price' => float, 'slab' => [min_qty, max_qty]|null,
-     *          'base_price' => float ]
+     *          'base_price' => float,
+     *          'step' => float, 'secondary_unit' => string|null,
+     *          'min_secondary_qty' => int, 'min_qty' => float ]
      */
     public static function resolveLine(int $sellerId, int $masterProductVariantId, float $qty): array
     {
-        $variant = MasterProductVariant::with('masterProduct')->find($masterProductVariantId);
+        $variant = MasterProductVariant::with(['masterProduct', 'secondaryUnit'])->find($masterProductVariantId);
         if (!$variant || !$variant->masterProduct) {
             return self::fail('master_variant_not_found');
         }
@@ -43,6 +46,14 @@ class MasterCatalogOrderHelper
         if (!$sp || (int) $sp->status !== 1) {
             return self::fail('seller_product_not_active');
         }
+
+        // ── Secondary-unit (box) step validation ──────────────────────────────
+        $qtyError = self::validateSecondaryQty($variant, $sp, $qty);
+        if ($qtyError) {
+            return self::fail($qtyError);
+        }
+        // ──────────────────────────────────────────────────────────────────────
+
         if ((float) $sp->stock < $qty) {
             return self::fail('insufficient_stock');
         }
@@ -66,19 +77,68 @@ class MasterCatalogOrderHelper
 
         $unitPrice = $matched ? (float) $matched->price : $base;
 
+        // Stepper metadata (used by mobile app to render the quantity stepper widget)
+        $step          = (float) ($variant->secondary_unit_value ?? 1);
+        $step          = $step > 0 ? $step : 1;
+        $minQty        = $step;
+        $secondaryUnit = $variant->secondaryUnit ? $variant->secondaryUnit->name : null;
+
         return [
-            'ok' => true,
-            'error' => null,
+            'ok'             => true,
+            'error'          => null,
             'seller_product' => $sp,
             'master_variant' => $variant,
-            'unit_price' => $unitPrice,
-            'base_price' => $base,
-            'slab' => $matched ? [
+            'unit_price'     => $unitPrice,
+            'base_price'     => $base,
+            'slab'           => $matched ? [
                 'min_qty' => (int) $matched->min_qty,
                 'max_qty' => $matched->max_qty !== null ? (int) $matched->max_qty : null,
-                'price' => (float) $matched->price,
+                'price'   => (float) $matched->price,
             ] : null,
+            // Stepper metadata — passed directly to app/frontend
+            'step'           => $step,          // e.g. 20 (packets per box)
+            'secondary_unit' => $secondaryUnit, // e.g. "Box"
+            'min_qty'        => $minQty,        // e.g. 20 (= 1 box × 20 packets)
         ];
+    }
+
+    /**
+     * Validate that $qty is a whole-box multiple of secondary_unit_value.
+     *
+     * Wholesaler rule:
+     *   - 1 box = secondary_unit_value packets (e.g. 20 packets per box)
+     *   - Retailer orders in full boxes only: 20, 40, 60 ...
+     *
+     * Returns an error string key on failure, null on success.
+     * Products with no secondary unit configured (NULL / 0) → no restriction applied.
+     */
+    public static function validateSecondaryQty(
+        MasterProductVariant $variant,
+        SellerProduct $sp,
+        float $qty
+    ): ?string {
+        $step = (float) ($variant->secondary_unit_value ?? 0);
+
+        // No secondary unit configured → no box restriction, any qty ≥ 1 is fine
+        if ($step <= 0) {
+            return null;
+        }
+
+        $minQty = $step; // e.g. step=20 → minQty=20
+
+        // Must meet minimum order quantity
+        if ($qty < $minQty) {
+            return 'minimum_qty_is_' . (int) $minQty;
+        }
+
+        // Must be an exact multiple of step (float-safe epsilon check)
+        $remainder = fmod($qty, $step);
+        $epsilon   = 0.0001;
+        if ($remainder > $epsilon && ($step - $remainder) > $epsilon) {
+            return 'qty_must_be_multiple_of_' . (int) $step;
+        }
+
+        return null; // ✓ valid
     }
 
     /**
@@ -145,13 +205,17 @@ class MasterCatalogOrderHelper
     private static function fail(string $err): array
     {
         return [
-            'ok' => false,
-            'error' => $err,
-            'seller_product' => null,
-            'master_variant' => null,
-            'unit_price' => 0,
-            'base_price' => 0,
-            'slab' => null,
+            'ok'                => false,
+            'error'             => $err,
+            'seller_product'    => null,
+            'master_variant'    => null,
+            'unit_price'        => 0,
+            'base_price'        => 0,
+            'slab'              => null,
+            'step'              => 1,
+            'secondary_unit'    => null,
+            'min_secondary_qty' => 1,
+            'min_qty'           => 1,
         ];
     }
 }

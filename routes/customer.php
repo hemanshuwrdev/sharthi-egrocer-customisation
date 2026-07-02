@@ -89,6 +89,10 @@ Route::group(['middleware' => ['auth.customer']], function () {
         // Sarthi: retailer's own QR (available after salesman verification)
         Route::get('get_retailer_qr', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'getRetailerQr']);
 
+        // Sarthi: retailer address change request
+        Route::post('address-change-request',        [\App\Http\Controllers\API\RetailerAddressChangeController::class, 'submitRequest'])->name('retailer.address_change.submit');
+        Route::get('address-change-request/status',  [\App\Http\Controllers\API\RetailerAddressChangeController::class, 'myRequestStatus'])->name('retailer.address_change.status');
+
         // Transactions
         Route::get('get_user_transactions', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getUserTransactions']);
         Route::post('add_wallet_balance', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'addWalletBalance']);

@@ -415,6 +415,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -1812,64 +1813,6 @@ var render = function () {
                                                 }),
                                               ]
                                             ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "div",
-                                              { staticClass: "col-md-6 mb-3" },
-                                              [
-                                                _c("label", [
-                                                  _vm._v(
-                                                    _vm._s(_vm.__("type"))
-                                                  ),
-                                                ]),
-                                                _vm._v(" "),
-                                                _c(
-                                                  "div",
-                                                  [
-                                                    _c("b-form-radio-group", {
-                                                      attrs: {
-                                                        options: [
-                                                          {
-                                                            text: _vm.__(
-                                                              "single"
-                                                            ),
-                                                            value: "single",
-                                                          },
-                                                          {
-                                                            text: _vm.__(
-                                                              "variable"
-                                                            ),
-                                                            value: "variable",
-                                                          },
-                                                        ],
-                                                        buttons: "",
-                                                        "button-variant":
-                                                          "outline-primary",
-                                                      },
-                                                      on: {
-                                                        change:
-                                                          _vm.onTypeChange,
-                                                      },
-                                                      model: {
-                                                        value: _vm.product.type,
-                                                        callback: function (
-                                                          $$v
-                                                        ) {
-                                                          _vm.$set(
-                                                            _vm.product,
-                                                            "type",
-                                                            $$v
-                                                          )
-                                                        },
-                                                        expression:
-                                                          "product.type",
-                                                      },
-                                                    }),
-                                                  ],
-                                                  1
-                                                ),
-                                              ]
-                                            ),
                                           ]
                                         : _vm._e(),
                                       _vm._v(" "),
@@ -2390,284 +2333,6 @@ var render = function () {
         ]),
         _vm._v(" "),
         _c("div", { staticClass: "card mt-3" }, [
-          _c("div", { staticClass: "card-header" }, [
-            _c("h4", [_vm._v(_vm._s(_vm.__("seo_settings")))]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "card-body" }, [
-            _vm.languages.length > 0
-              ? _c(
-                  "div",
-                  { staticClass: "col-md-12 mb-3" },
-                  [
-                    _c(
-                      "b-tabs",
-                      {
-                        attrs: { "content-class": "mt-3" },
-                        model: {
-                          value: _vm.activeSeoLanguageTab,
-                          callback: function ($$v) {
-                            _vm.activeSeoLanguageTab = $$v
-                          },
-                          expression: "activeSeoLanguageTab",
-                        },
-                      },
-                      _vm._l(_vm.languages, function (language) {
-                        return _c(
-                          "b-tab",
-                          {
-                            key: "seo-" + language.id,
-                            attrs: { lazy: "" },
-                            scopedSlots: _vm._u(
-                              [
-                                {
-                                  key: "title",
-                                  fn: function () {
-                                    return [
-                                      _c(
-                                        "span",
-                                        {
-                                          class: {
-                                            "text-primary font-weight-bold":
-                                              language.is_default,
-                                          },
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                    " +
-                                              _vm._s(language.name) +
-                                              "\n                                "
-                                          ),
-                                        ]
-                                      ),
-                                    ]
-                                  },
-                                  proxy: true,
-                                },
-                              ],
-                              null,
-                              true
-                            ),
-                          },
-                          [
-                            _vm._v(" "),
-                            _vm.translations[language.id]
-                              ? _c("div", { staticClass: "row" }, [
-                                  _c("div", { staticClass: "col-md-6" }, [
-                                    _c(
-                                      "div",
-                                      { staticClass: "form-group mb-3" },
-                                      [
-                                        _c("label", [
-                                          _vm._v(_vm._s(_vm.__("meta_title"))),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("input", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value:
-                                                _vm.translations[language.id]
-                                                  .meta_title,
-                                              expression:
-                                                "translations[language.id].meta_title",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            type: "text",
-                                            placeholder:
-                                              _vm.__("enter_meta_title"),
-                                          },
-                                          domProps: {
-                                            value:
-                                              _vm.translations[language.id]
-                                                .meta_title,
-                                          },
-                                          on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.translations[language.id],
-                                                "meta_title",
-                                                $event.target.value
-                                              )
-                                            },
-                                          },
-                                        }),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      { staticClass: "form-group mb-3" },
-                                      [
-                                        _c("label", [
-                                          _vm._v(
-                                            _vm._s(_vm.__("meta_keywords"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("input", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value:
-                                                _vm.translations[language.id]
-                                                  .meta_keywords,
-                                              expression:
-                                                "translations[language.id].meta_keywords",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            type: "text",
-                                            placeholder: _vm.__(
-                                              "enter_meta_keywords"
-                                            ),
-                                          },
-                                          domProps: {
-                                            value:
-                                              _vm.translations[language.id]
-                                                .meta_keywords,
-                                          },
-                                          on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.translations[language.id],
-                                                "meta_keywords",
-                                                $event.target.value
-                                              )
-                                            },
-                                          },
-                                        }),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      { staticClass: "form-group mb-3" },
-                                      [
-                                        _c("label", [
-                                          _vm._v(
-                                            _vm._s(_vm.__("schema_markup"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("input", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value:
-                                                _vm.translations[language.id]
-                                                  .schema_markup,
-                                              expression:
-                                                "translations[language.id].schema_markup",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            type: "text",
-                                            placeholder: _vm.__(
-                                              "enter_schema_markup"
-                                            ),
-                                          },
-                                          domProps: {
-                                            value:
-                                              _vm.translations[language.id]
-                                                .schema_markup,
-                                          },
-                                          on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.translations[language.id],
-                                                "schema_markup",
-                                                $event.target.value
-                                              )
-                                            },
-                                          },
-                                        }),
-                                      ]
-                                    ),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("div", { staticClass: "col-md-6" }, [
-                                    _c(
-                                      "div",
-                                      { staticClass: "form-group mb-3" },
-                                      [
-                                        _c("label", [
-                                          _vm._v(
-                                            _vm._s(_vm.__("meta_description"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("textarea", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value:
-                                                _vm.translations[language.id]
-                                                  .meta_description,
-                                              expression:
-                                                "translations[language.id].meta_description",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            rows: "4",
-                                            placeholder: _vm.__(
-                                              "enter_meta_description"
-                                            ),
-                                          },
-                                          domProps: {
-                                            value:
-                                              _vm.translations[language.id]
-                                                .meta_description,
-                                          },
-                                          on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.translations[language.id],
-                                                "meta_description",
-                                                $event.target.value
-                                              )
-                                            },
-                                          },
-                                        }),
-                                      ]
-                                    ),
-                                  ]),
-                                ])
-                              : _vm._e(),
-                          ]
-                        )
-                      }),
-                      1
-                    ),
-                  ],
-                  1
-                )
-              : _vm._e(),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "card mt-3" }, [
           _c(
             "div",
             {
@@ -2701,6 +2366,35 @@ var render = function () {
           ),
           _vm._v(" "),
           _c("div", { staticClass: "card-body" }, [
+            _c("div", { staticClass: "col-md-6 mb-3" }, [
+              _c("label", [_vm._v(_vm._s(_vm.__("type")))]),
+              _vm._v(" "),
+              _c(
+                "div",
+                [
+                  _c("b-form-radio-group", {
+                    attrs: {
+                      options: [
+                        { text: _vm.__("single"), value: "single" },
+                        { text: _vm.__("variable"), value: "variable" },
+                      ],
+                      buttons: "",
+                      "button-variant": "outline-primary",
+                    },
+                    on: { change: _vm.onTypeChange },
+                    model: {
+                      value: _vm.product.type,
+                      callback: function ($$v) {
+                        _vm.$set(_vm.product, "type", $$v)
+                      },
+                      expression: "product.type",
+                    },
+                  }),
+                ],
+                1
+              ),
+            ]),
+            _vm._v(" "),
             _c("div", { staticClass: "table-responsive" }, [
               _c(
                 "table",
@@ -3034,6 +2728,284 @@ var render = function () {
                   "\n                "
               ),
             ]),
+          ]),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "card mt-3" }, [
+          _c("div", { staticClass: "card-header" }, [
+            _c("h4", [_vm._v(_vm._s(_vm.__("seo_settings")))]),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "card-body" }, [
+            _vm.languages.length > 0
+              ? _c(
+                  "div",
+                  { staticClass: "col-md-12 mb-3" },
+                  [
+                    _c(
+                      "b-tabs",
+                      {
+                        attrs: { "content-class": "mt-3" },
+                        model: {
+                          value: _vm.activeSeoLanguageTab,
+                          callback: function ($$v) {
+                            _vm.activeSeoLanguageTab = $$v
+                          },
+                          expression: "activeSeoLanguageTab",
+                        },
+                      },
+                      _vm._l(_vm.languages, function (language) {
+                        return _c(
+                          "b-tab",
+                          {
+                            key: "seo-" + language.id,
+                            attrs: { lazy: "" },
+                            scopedSlots: _vm._u(
+                              [
+                                {
+                                  key: "title",
+                                  fn: function () {
+                                    return [
+                                      _c(
+                                        "span",
+                                        {
+                                          class: {
+                                            "text-primary font-weight-bold":
+                                              language.is_default,
+                                          },
+                                        },
+                                        [
+                                          _vm._v(
+                                            "\n                                    " +
+                                              _vm._s(language.name) +
+                                              "\n                                "
+                                          ),
+                                        ]
+                                      ),
+                                    ]
+                                  },
+                                  proxy: true,
+                                },
+                              ],
+                              null,
+                              true
+                            ),
+                          },
+                          [
+                            _vm._v(" "),
+                            _vm.translations[language.id]
+                              ? _c("div", { staticClass: "row" }, [
+                                  _c("div", { staticClass: "col-md-6" }, [
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group mb-3" },
+                                      [
+                                        _c("label", [
+                                          _vm._v(_vm._s(_vm.__("meta_title"))),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value:
+                                                _vm.translations[language.id]
+                                                  .meta_title,
+                                              expression:
+                                                "translations[language.id].meta_title",
+                                            },
+                                          ],
+                                          staticClass: "form-control",
+                                          attrs: {
+                                            type: "text",
+                                            placeholder:
+                                              _vm.__("enter_meta_title"),
+                                          },
+                                          domProps: {
+                                            value:
+                                              _vm.translations[language.id]
+                                                .meta_title,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                _vm.translations[language.id],
+                                                "meta_title",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group mb-3" },
+                                      [
+                                        _c("label", [
+                                          _vm._v(
+                                            _vm._s(_vm.__("meta_keywords"))
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value:
+                                                _vm.translations[language.id]
+                                                  .meta_keywords,
+                                              expression:
+                                                "translations[language.id].meta_keywords",
+                                            },
+                                          ],
+                                          staticClass: "form-control",
+                                          attrs: {
+                                            type: "text",
+                                            placeholder: _vm.__(
+                                              "enter_meta_keywords"
+                                            ),
+                                          },
+                                          domProps: {
+                                            value:
+                                              _vm.translations[language.id]
+                                                .meta_keywords,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                _vm.translations[language.id],
+                                                "meta_keywords",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group mb-3" },
+                                      [
+                                        _c("label", [
+                                          _vm._v(
+                                            _vm._s(_vm.__("schema_markup"))
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value:
+                                                _vm.translations[language.id]
+                                                  .schema_markup,
+                                              expression:
+                                                "translations[language.id].schema_markup",
+                                            },
+                                          ],
+                                          staticClass: "form-control",
+                                          attrs: {
+                                            type: "text",
+                                            placeholder: _vm.__(
+                                              "enter_schema_markup"
+                                            ),
+                                          },
+                                          domProps: {
+                                            value:
+                                              _vm.translations[language.id]
+                                                .schema_markup,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                _vm.translations[language.id],
+                                                "schema_markup",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "col-md-6" }, [
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group mb-3" },
+                                      [
+                                        _c("label", [
+                                          _vm._v(
+                                            _vm._s(_vm.__("meta_description"))
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("textarea", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value:
+                                                _vm.translations[language.id]
+                                                  .meta_description,
+                                              expression:
+                                                "translations[language.id].meta_description",
+                                            },
+                                          ],
+                                          staticClass: "form-control",
+                                          attrs: {
+                                            rows: "4",
+                                            placeholder: _vm.__(
+                                              "enter_meta_description"
+                                            ),
+                                          },
+                                          domProps: {
+                                            value:
+                                              _vm.translations[language.id]
+                                                .meta_description,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                _vm.translations[language.id],
+                                                "meta_description",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                  ]),
+                                ])
+                              : _vm._e(),
+                          ]
+                        )
+                      }),
+                      1
+                    ),
+                  ],
+                  1
+                )
+              : _vm._e(),
           ]),
         ]),
         _vm._v(" "),

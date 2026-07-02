@@ -138,6 +138,8 @@
                                             class="form-control form-control-sm" v-model.number="row.item.stock" />
                                     </template>
 
+
+
                                     <template #cell(slab_count)="row">
                                         <button class="btn btn-sm btn-outline-secondary" @click="openSlabs(row.item)">
                                             <i class="fa fa-list"></i>

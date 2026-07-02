@@ -658,6 +658,8 @@ class SarthiCustomisation extends Migration
                     $table->unsignedBigInteger('reconciled_by')->nullable()->after('reconciled_at');
                 }
             });
+            // Ensure status enum includes 'reconciled' (was added after initial deploy)
+            DB::statement("ALTER TABLE driver_settlements MODIFY status ENUM('open','locked','reconciled') NOT NULL DEFAULT 'open'");
         }
 
         // Seller-wise product ratings
@@ -685,6 +687,46 @@ class SarthiCustomisation extends Migration
                 $table->timestamp('read_at')->nullable();
                 $table->timestamps();
                 $table->index('salesman_id', 'idx_sn_salesman');
+            });
+        }
+
+        // ── Retailer Address Change Requests ─────────────────────────────────
+        if (!Schema::hasTable('retailer_address_change_requests')) {
+            Schema::create('retailer_address_change_requests', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id')->comment('Retailer user ID');
+                $table->text('reason')->nullable();
+
+                // Old address snapshot (captured at request time)
+                $table->text('old_address')->nullable();
+                $table->unsignedBigInteger('old_city_id')->nullable();
+                $table->decimal('old_gps_lat', 10, 7)->nullable();
+                $table->decimal('old_gps_lng', 10, 7)->nullable();
+
+                // New requested address
+                $table->text('new_address');
+                $table->unsignedBigInteger('new_city_id');
+                $table->decimal('new_gps_lat', 10, 7);
+                $table->decimal('new_gps_lng', 10, 7);
+
+                // Workflow status
+                $table->enum('status', ['pending', 'assigned', 'verified', 'rejected'])->default('pending');
+                $table->unsignedBigInteger('assigned_salesman_id')->nullable();
+
+                // Filled by salesman on re-verification
+                $table->decimal('verified_lat', 10, 7)->nullable();
+                $table->decimal('verified_lng', 10, 7)->nullable();
+                $table->string('storefront_photo')->nullable();
+                $table->text('verification_notes')->nullable();
+                $table->unsignedBigInteger('verified_by_salesman_id')->nullable();
+                $table->timestamp('verified_at')->nullable();
+
+                $table->text('rejected_reason')->nullable();
+                $table->timestamps();
+
+                $table->index('user_id', 'idx_racr_user');
+                $table->index('status', 'idx_racr_status');
+                $table->index('new_city_id', 'idx_racr_city');
             });
         }
 
@@ -750,6 +792,9 @@ class SarthiCustomisation extends Migration
                 $table->dropColumn('user_type');
             }
         });
+
+        // Address change requests (reverse)
+        Schema::dropIfExists('retailer_address_change_requests');
 
         // Reconciliation redesign (reverse)
         Schema::dropIfExists('salesman_settlements');

@@ -127,21 +127,7 @@
                                                 <input type="text" class="form-control" v-model="product.hsn" />
                                             </div>
 
-                                            <div class="col-md-6 mb-3">
-                                                <label>{{ __('type') }}</label>
-                                                <div>
-                                                    <b-form-radio-group
-                                                        v-model="product.type"
-                                                        :options="[
-                                                            { text: __('single'), value: 'single' },
-                                                            { text: __('variable'), value: 'variable' }
-                                                        ]"
-                                                        buttons
-                                                        button-variant="outline-primary"
-                                                        @change="onTypeChange">
-                                                    </b-form-radio-group>
-                                                </div>
-                                            </div>
+                                            
                                         </template>
 
                                         <!-- Description (translated, TinyMCE) -->
@@ -250,57 +236,7 @@
                         <b-spinner label="Loading languages..."></b-spinner>
                     </div>
                 </div>
-            </div>
-
-            <!-- SEO Settings card with language tabs -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h4>{{ __('seo_settings') }}</h4>
-                </div>
-                <div class="card-body">
-                    <div class="col-md-12 mb-3" v-if="languages.length > 0">
-                        <b-tabs v-model="activeSeoLanguageTab" content-class="mt-3">
-                            <b-tab v-for="language in languages" :key="'seo-' + language.id" lazy>
-                                <template #title>
-                                    <span :class="{ 'text-primary font-weight-bold': language.is_default }">
-                                        {{ language.name }}
-                                    </span>
-                                </template>
-                                <div v-if="translations[language.id]" class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label>{{ __('meta_title') }}</label>
-                                            <input type="text" class="form-control"
-                                                v-model="translations[language.id].meta_title"
-                                                :placeholder="__('enter_meta_title')" />
-                                        </div>
-                                        <div class="form-group mb-3">
-                                            <label>{{ __('meta_keywords') }}</label>
-                                            <input type="text" class="form-control"
-                                                v-model="translations[language.id].meta_keywords"
-                                                :placeholder="__('enter_meta_keywords')" />
-                                        </div>
-                                        <div class="form-group mb-3">
-                                            <label>{{ __('schema_markup') }}</label>
-                                            <input type="text" class="form-control"
-                                                v-model="translations[language.id].schema_markup"
-                                                :placeholder="__('enter_schema_markup')" />
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label>{{ __('meta_description') }}</label>
-                                            <textarea class="form-control" rows="4"
-                                                v-model="translations[language.id].meta_description"
-                                                :placeholder="__('enter_meta_description')"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </b-tab>
-                        </b-tabs>
-                    </div>
-                </div>
-            </div>
+            </div>           
 
             <!-- Variants (no per-language) -->
             <div class="card mt-3">
@@ -314,6 +250,21 @@
                     </button>
                 </div>
                 <div class="card-body">
+                    <div class="col-md-6 mb-3">
+                                                <label>{{ __('type') }}</label>
+                                                <div>
+                                                    <b-form-radio-group
+                                                        v-model="product.type"
+                                                        :options="[
+                                                            { text: __('single'), value: 'single' },
+                                                            { text: __('variable'), value: 'variable' }
+                                                        ]"
+                                                        buttons
+                                                        button-variant="outline-primary"
+                                                        @change="onTypeChange">
+                                                    </b-form-radio-group>
+                                                </div>
+                                            </div>
                     <div class="table-responsive">
                         <table class="table table-bordered align-middle">
                             <thead class="table-light">
@@ -382,6 +333,56 @@
                             ? __('single_type_one_variant_hint')
                             : __('variable_type_multiple_variants_hint') }}
                     </small>
+                </div>
+            </div>
+
+             <!-- SEO Settings card with language tabs -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h4>{{ __('seo_settings') }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="col-md-12 mb-3" v-if="languages.length > 0">
+                        <b-tabs v-model="activeSeoLanguageTab" content-class="mt-3">
+                            <b-tab v-for="language in languages" :key="'seo-' + language.id" lazy>
+                                <template #title>
+                                    <span :class="{ 'text-primary font-weight-bold': language.is_default }">
+                                        {{ language.name }}
+                                    </span>
+                                </template>
+                                <div v-if="translations[language.id]" class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label>{{ __('meta_title') }}</label>
+                                            <input type="text" class="form-control"
+                                                v-model="translations[language.id].meta_title"
+                                                :placeholder="__('enter_meta_title')" />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label>{{ __('meta_keywords') }}</label>
+                                            <input type="text" class="form-control"
+                                                v-model="translations[language.id].meta_keywords"
+                                                :placeholder="__('enter_meta_keywords')" />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label>{{ __('schema_markup') }}</label>
+                                            <input type="text" class="form-control"
+                                                v-model="translations[language.id].schema_markup"
+                                                :placeholder="__('enter_schema_markup')" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label>{{ __('meta_description') }}</label>
+                                            <textarea class="form-control" rows="4"
+                                                v-model="translations[language.id].meta_description"
+                                                :placeholder="__('enter_meta_description')"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </b-tab>
+                        </b-tabs>
+                    </div>
                 </div>
             </div>
 

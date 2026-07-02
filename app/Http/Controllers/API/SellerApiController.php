@@ -150,6 +150,10 @@ class SellerApiController extends Controller
             $record->city_id = $request->city_id;
             $record->categories = $request->categories_ids;
             $record->state = $request->state;
+            $record->bank_name = $request->bank_name;
+            $record->account_number = $request->account_number;
+            $record->bank_ifsc_code = $request->bank_ifsc_code ?? $request->ifsc_code;
+            $record->account_name = $request->account_name;
             $record->upi_id     = $request->upi_id;
             $record->upi_mobile = $request->upi_mobile;
             $record->upi_name   = $request->upi_name;
@@ -359,6 +363,10 @@ class SellerApiController extends Controller
                 $record->city_id = $request->city_id;
                 $record->categories = $request->categories_ids;
                 $record->state = $request->state;
+                $record->bank_name = $request->bank_name;
+                $record->account_number = $request->account_number;
+                $record->bank_ifsc_code = $request->bank_ifsc_code ?? $request->ifsc_code;
+                $record->account_name = $request->account_name;
                 $record->upi_id     = $request->upi_id;
                 $record->upi_mobile = $request->upi_mobile;
                 $record->upi_name   = $request->upi_name;

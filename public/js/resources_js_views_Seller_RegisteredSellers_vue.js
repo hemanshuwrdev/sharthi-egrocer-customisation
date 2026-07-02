@@ -241,6 +241,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -1117,6 +1128,70 @@ var render = function () {
                                           ),
                                         ]),
                                       ]),
+                                      _vm._v(" "),
+                                      row.item.bank_name
+                                        ? _c("tr", [
+                                            _c("th", [
+                                              _vm._v(
+                                                " " +
+                                                  _vm._s(_vm.__("bank_name"))
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("td", [
+                                              _vm._v(
+                                                " : " +
+                                                  _vm._s(row.item.bank_name)
+                                              ),
+                                            ]),
+                                          ])
+                                        : _vm._e(),
+                                      _vm._v(" "),
+                                      row.item.account_number
+                                        ? _c("tr", [
+                                            _c("th", [
+                                              _vm._v(
+                                                " " +
+                                                  _vm._s(
+                                                    _vm.__("account_number")
+                                                  )
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("td", [
+                                              _vm._v(
+                                                " : " +
+                                                  _vm._s(
+                                                    row.item.account_number
+                                                  )
+                                              ),
+                                            ]),
+                                          ])
+                                        : _vm._e(),
+                                      _vm._v(" "),
+                                      row.item.bank_ifsc_code ||
+                                      row.item.ifsc_code
+                                        ? _c("tr", [
+                                            _c("th", [
+                                              _vm._v(
+                                                " " +
+                                                  _vm._s(
+                                                    _vm.__("bank_ifsc_code")
+                                                  )
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("td", [
+                                              _vm._v(
+                                                " : " +
+                                                  _vm._s(
+                                                    row.item.bank_ifsc_code ||
+                                                      row.item.ifsc_code
+                                                  )
+                                              ),
+                                            ]),
+                                          ])
+                                        : _vm._e(),
                                     ]
                                   ),
                                   _vm._v(" "),

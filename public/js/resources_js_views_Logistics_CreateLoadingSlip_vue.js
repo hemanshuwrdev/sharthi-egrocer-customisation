@@ -295,11 +295,11 @@ __webpack_require__.r(__webpack_exports__);
     },
     getOrders: function getOrders() {
       var _this4 = this;
+      var params = {};
+      if (this.selectedZone) params.zone = this.selectedZone;
+      if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/orders', {
-        params: {
-          zone: this.selectedZone,
-          is_rescheduled: this.selectedRescheduled
-        }
+        params: params
       }).then(function (res) {
         if (res.data.status === 1) {
           _this4.orders = res.data.data;
@@ -336,7 +336,8 @@ __webpack_require__.r(__webpack_exports__);
       this.calculateWeightSum();
     },
     calculateWeightSum: function calculateWeightSum() {
-      var _this6 = this;
+      var _this6 = this,
+        _this$selectedVehicle;
       var sum = 0;
       this.orders.forEach(function (order) {
         if (_this6.selectedOrderIds.includes(order.id)) {
@@ -344,8 +345,9 @@ __webpack_require__.r(__webpack_exports__);
         }
       });
       this.totalSelectedWeight = parseFloat(sum.toFixed(2));
-      if (this.selectedVehicle) {
-        this.loadPercent = Math.min(this.totalSelectedWeight / parseFloat(this.selectedVehicle.capacity) * 100, 120);
+      var capacity = parseFloat(((_this$selectedVehicle = this.selectedVehicle) === null || _this$selectedVehicle === void 0 ? void 0 : _this$selectedVehicle.capacity) || 0);
+      if (this.selectedVehicle && capacity > 0) {
+        this.loadPercent = Math.min(this.totalSelectedWeight / capacity * 100, 120);
       } else {
         this.loadPercent = 0;
       }
@@ -1440,13 +1442,7 @@ var render = function () {
                     {
                       staticClass:
                         "btn btn-primary btn-block btn-lg shadow-sm font-weight-bold rounded-pill",
-                      attrs: {
-                        type: "submit",
-                        disabled:
-                          _vm.loading ||
-                          _vm.selectedOrderIds.length === 0 ||
-                          _vm.loadPercent > 100,
-                      },
+                      attrs: { type: "submit" },
                     },
                     [
                       _vm.loading

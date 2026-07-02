@@ -43,49 +43,16 @@ class AdminAuthController extends Controller
         }
 
         if ($request->phone_auth_type == 'phone_auth_otp') {
-            $mobile = $request->mobile ?? $request->phone ?? $request->id;
+            $mobile      = $request->mobile ?? $request->phone ?? $request->id;
             $countryCode = $request->country_code ?? '';
-            $fullPhone = $countryCode . $mobile;
-
-            // Check user existence BEFORE OTP verification so unregistered users
-            // get the correct error message instead of "OTP invalid"
-            if ($request->type == 4) {
-                $deliveryBoy = DeliveryBoy::where('mobile', $mobile)->first();
-                if (!$deliveryBoy) {
-                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
-                }
-                $user = Admin::with('deliveryBoy')->where('id', $deliveryBoy->admin_id)->first();
-                if (!$user) {
-                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
-                }
-            } elseif ($request->type == 3) {
-                $seller = \App\Models\Seller::where('mobile', $mobile)->first();
-                if (!$seller) {
-                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
-                }
-                $user = Admin::with('seller')->where('id', $seller->admin_id)->first();
-                if (!$user) {
-                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
-                }
-            } elseif ($request->type == 5) {
-                $salesman = Salesman::where('mobile', $mobile)->first();
-                if (!$salesman) {
-                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
-                }
-                $user = Admin::with('salesman')->where('id', $salesman->admin_id)->first();
-                if (!$user) {
-                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
-                }
-            } else {
-                return CommonHelper::responseError('OTP login is only supported for delivery boys, sellers, and salesmen.');
-            }
+            $fullPhone   = $countryCode . $mobile;
+            $loginType   = (int) $request->type; // 3=seller, 4=delivery_boy, 5=salesman
 
             $firebaseEnabled = (int) \App\Models\Setting::where('variable', 'firebase_authentication')->value('value');
 
+            // Verify OTP FIRST — wrong OTP returns "invalid OTP" regardless of whether
+            // the user exists. This prevents leaking whether a number is registered.
             if (!$firebaseEnabled) {
-                // Twilio flow — verify OTP from sms_verifications table
-                // send_sms stores phone as '+{countryCode}{mobile}', normalize to match
-                $loginType = (int) $request->type; // 3=seller, 4=delivery_boy, 5=salesman
                 $otpRecord = \App\Models\SmsVerification::where(function ($q) use ($fullPhone, $mobile) {
                         $q->where('phone', $fullPhone)
                           ->orWhere('phone', '+' . $fullPhone)
@@ -93,7 +60,7 @@ class AdminAuthController extends Controller
                     })
                     ->where(function ($q) use ($loginType) {
                         $q->where('user_type', $loginType)
-                          ->orWhereNull('user_type'); // allow legacy rows without user_type
+                          ->orWhereNull('user_type');
                     })
                     ->latest('created_at')
                     ->first();
@@ -106,6 +73,38 @@ class AdminAuthController extends Controller
                 $otpRecord->save();
             }
             // Firebase OTP is verified client-side — no DB check needed
+
+            // OTP passed — now check user existence
+            if ($loginType == 4) {
+                $deliveryBoy = DeliveryBoy::where('mobile', $mobile)->first();
+                if (!$deliveryBoy) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+                $user = Admin::with('deliveryBoy')->where('id', $deliveryBoy->admin_id)->first();
+                if (!$user) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+            } elseif ($loginType == 3) {
+                $seller = \App\Models\Seller::where('mobile', $mobile)->first();
+                if (!$seller) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+                $user = Admin::with('seller')->where('id', $seller->admin_id)->first();
+                if (!$user) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+            } elseif ($loginType == 5) {
+                $salesman = Salesman::where('mobile', $mobile)->first();
+                if (!$salesman) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+                $user = Admin::with('salesman')->where('id', $salesman->admin_id)->first();
+                if (!$user) {
+                    return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
+                }
+            } else {
+                return CommonHelper::responseError('OTP login is only supported for delivery boys, sellers, and salesmen.');
+            }
         } else {
             if ($request->type == 3) {
                 $user = Admin::with('seller')->where('email', request()->email)->first();
@@ -455,6 +454,10 @@ class AdminAuthController extends Controller
         $record->city_id = $request->city_id;
         $record->state = $request->state;
         $record->categories = $request->categories_ids;
+        $record->bank_name = $request->bank_name;
+        $record->account_number = $request->account_number;
+        $record->bank_ifsc_code = $request->ifsc_code ?? $request->bank_ifsc_code;
+        $record->account_name = $request->account_name;
         $record->upi_id     = $request->upi_id;
         $record->upi_mobile = $request->upi_mobile;
         $record->upi_name   = $request->upi_name;

@@ -43,7 +43,7 @@ class RetailerCartOrderApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'product_variant_id' => 'required|exists:master_product_variants,id',
-            'qty' => 'required|numeric|min:1',
+            'qty' => 'required|numeric|min:0.001',
             'latitude' => 'nullable',
             'longitude' => 'nullable',
             'seller_id' => 'nullable|exists:sellers,id',
@@ -98,11 +98,15 @@ class RetailerCartOrderApiController extends Controller
         $cart->save();
 
         return CommonHelper::responseWithData([
-            'cart_id' => $cart->id,
-            'seller_id' => $sellerId,
-            'unit_price' => $line['unit_price'],
-            'slab' => $line['slab'],
-            'message' => __('item_added_to_cart_successfully'),
+            'cart_id'          => $cart->id,
+            'seller_id'        => $sellerId,
+            'unit_price'       => $line['unit_price'],
+            'slab'             => $line['slab'],
+            // Stepper metadata — mobile app uses these to configure the qty widget
+            'step'             => $line['step'],           // e.g. 20 (packets per box)
+            'secondary_unit'   => $line['secondary_unit'], // e.g. "Box"
+            'min_qty'          => $line['min_qty'],         // e.g. 20 (start value)
+            'message'          => __('item_added_to_cart_successfully'),
         ]);
     }
 
@@ -125,7 +129,7 @@ class RetailerCartOrderApiController extends Controller
         }
 
         $variantIds = $items->pluck('master_product_variant_id')->unique();
-        $variants = MasterProductVariant::with(['masterProduct.brand', 'masterProduct.parentCompany', 'unit'])
+        $variants = MasterProductVariant::with(['masterProduct.brand', 'masterProduct.parentCompany', 'unit', 'secondaryUnit'])
             ->whereIn('id', $variantIds)
             ->get()
             ->keyBy('id');
@@ -162,14 +166,18 @@ class RetailerCartOrderApiController extends Controller
                 'sku' => $variant->sku,
                 'unit' => $variant->unit->name ?? null,
                 'image' => (function($img) { return $img ? (str_starts_with($img, 'http') ? $img : asset('storage/'.$img)) : null; })($variant->image ?: ($variant->masterProduct->image ?? null)),
-                'qty' => (float) $row->qty,
-                'price' => (float) $sp->selling_price,
+                'qty'              => (float) $row->qty,
+                'price'            => (float) $sp->selling_price,
                 'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
-                'mrp' => (float) $sp->mrp,
-                'unit_price' => $unitPrice,
-                'base_price' => $line['base_price'],
-                'slab' => $line['slab'],
-                'sub_total' => $subtotal,
+                'mrp'              => (float) $sp->mrp,
+                'unit_price'       => $unitPrice,
+                'base_price'       => $line['base_price'],
+                'slab'             => $line['slab'],
+                'sub_total'        => $subtotal,
+                // Stepper metadata — app configures qty widget per item
+                'step'             => $line['step'],           // e.g. 20
+                'secondary_unit'   => $line['secondary_unit'], // e.g. "Box"
+                'min_qty'          => $line['min_qty'],         // e.g. 20
             ];
             $groups[$row->seller_id]['sub_total'] = ($groups[$row->seller_id]['sub_total'] ?? 0) + $subtotal;
             $groups[$row->seller_id]['scheme_lines'][] = [
@@ -535,7 +543,12 @@ class RetailerCartOrderApiController extends Controller
                             'order_id' => $orderId,
                             'orders_id' => $ordersId,
                             'product_name' => $mv->masterProduct->name ?? '',
-                            'variant_name' => $mv->sku ?? '',
+                            'variant_name' => implode(' | ', array_filter([
+                                $mv->sku ?? '',
+                                $mv->secondary_unit_value
+                                    ? ((int)$mv->secondary_unit_value . ' ' . ($mv->secondaryUnit?->name ?? 'units') . '/box')
+                                    : null,
+                            ])),
                             'product_variant_id' => 0,
                             'master_product_variant_id' => $mv->id,
                             'seller_product_id' => $sp->id,

@@ -209,6 +209,9 @@ class RetailerCatalogApiController extends Controller
                 'unit' => $first->unit ? $first->unit->name : null,
                 'secondary_unit' => $first->secondaryUnit ? $first->secondaryUnit->name : null,
                 'secondary_unit_value' => $first->secondary_unit_value,
+                // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box
+                'qty_step'       => (float) ($first->secondary_unit_value ?? 1) ?: 1,
+                'min_qty'        => (float) ($first->secondary_unit_value ?? 1) ?: 1,
                 'weight' => $first->weight,
                 'image' => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed' => $overlapAllowed,
@@ -319,6 +322,9 @@ class RetailerCatalogApiController extends Controller
             'unit' => $variant->unit ? $variant->unit->name : null,
             'secondary_unit' => $variant->secondaryUnit ? $variant->secondaryUnit->name : null,
             'secondary_unit_value' => $variant->secondary_unit_value,
+            // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box
+            'qty_step'       => (float) ($variant->secondary_unit_value ?? 1) ?: 1,
+            'min_qty'        => (float) ($variant->secondary_unit_value ?? 1) ?: 1,
             'weight' => $variant->weight,
             'image' => $variant->image ?: $variant->masterProduct->image,
             'description' => $variant->masterProduct->description,

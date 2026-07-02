@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusList;
 use App\Models\ProductVariant;
+use App\Models\SellerProduct;
 use App\Models\Unit;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -100,19 +101,26 @@ class LoadingSlipsApiController extends Controller
             $query->where('cities.zone', $zone);
         }
 
+        // Add is_rescheduled flag via subquery — avoids N+1 per order
+        $query->addSelect(DB::raw(
+            'EXISTS(SELECT 1 FROM order_statuses WHERE order_statuses.order_id = orders.id AND order_statuses.status = "Rescheduled") as is_rescheduled'
+        ));
+
         $orders = $query->orderBy('orders.id', 'ASC')->get();
 
-        // Calculate and save order weight dynamically if not saved already
-        foreach ($orders as $order) {
-            $computedWeight = self::calculateOrderWeight($order->id);
-            if ($order->weight === null || (float)$order->weight !== (float)$computedWeight) {
-                $order->weight = $computedWeight;
-                $order->save();
+        // Back-fill weight only for orders that have never had it calculated (null).
+        // Do NOT recalculate on every request — that causes N×M queries and deadlocks.
+        $needsWeight = $orders->filter(fn($o) => $o->weight === null)->pluck('id');
+        if ($needsWeight->isNotEmpty()) {
+            foreach ($needsWeight as $orderId) {
+                $weight = self::calculateOrderWeight($orderId);
+                Order::where('id', $orderId)->update(['weight' => $weight]);
             }
-            $order->is_rescheduled = DB::table('order_statuses')
-                ->where('order_id', $order->id)
-                ->where('status', 'Rescheduled')
-                ->exists();
+            // Reload weights for those orders
+            $weights = Order::whereIn('id', $needsWeight)->pluck('weight', 'id');
+            $orders->each(function ($o) use ($weights) {
+                if (isset($weights[$o->id])) $o->weight = $weights[$o->id];
+            });
         }
 
         return CommonHelper::responseWithData($orders);
@@ -120,16 +128,11 @@ class LoadingSlipsApiController extends Controller
 
     public function getZones()
     {
-        $zones = City::select('zone', \Illuminate\Support\Facades\DB::raw('COUNT(id) as city_count'))
-            ->whereNotNull('zone')
+        $zones = City::whereNotNull('zone')
             ->where('zone', '!=', '')
-            ->groupBy('zone')
+            ->distinct()
             ->orderBy('zone')
-            ->get()
-            ->map(fn($z) => [
-                'zone'       => $z->zone,
-                'city_count' => (int) $z->city_count,
-            ]);
+            ->pluck('zone');
         return CommonHelper::responseWithData($zones);
     }
 

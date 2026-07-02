@@ -139,7 +139,18 @@
                                                 <th> {{__('pan_no')}}</th>
                                                 <td> : {{ row.item.pan_number }}</td>
                                             </tr>
-                                            
+                                            <tr v-if="row.item.bank_name">
+                                                <th> {{__('bank_name')}}</th>
+                                                <td> : {{ row.item.bank_name }}</td>
+                                            </tr>
+                                            <tr v-if="row.item.account_number">
+                                                <th> {{__('account_number')}}</th>
+                                                <td> : {{ row.item.account_number }}</td>
+                                            </tr>
+                                            <tr v-if="row.item.bank_ifsc_code || row.item.ifsc_code">
+                                                <th> {{__('bank_ifsc_code')}}</th>
+                                                <td> : {{ row.item.bank_ifsc_code || row.item.ifsc_code }}</td>
+                                            </tr>
                                         </table>
                                         <p> <a target="_blank" :href="row.item.national_identity_card_url" class="badge bg-success"> <i class="fa fa-eye"></i>  {{__('national_identity_card')}}</a></p>
                                         <p><a target="_blank" :href="row.item.address_proof_url" class="badge bg-success"> <i class="fa fa-eye"></i>  {{__('address_proof')}} </a></p>

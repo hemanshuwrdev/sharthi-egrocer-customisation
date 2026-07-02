@@ -177,7 +177,7 @@
                             </div>
 
                             <!-- Action button -->
-                            <button type="submit" class="btn btn-primary btn-block btn-lg shadow-sm font-weight-bold rounded-pill" :disabled="loading || selectedOrderIds.length === 0 || loadPercent > 100">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg shadow-sm font-weight-bold rounded-pill">
                                 <b-spinner v-if="loading" small class="mr-2"></b-spinner>
                                 <i v-else class="fa fa-magic mr-2"></i>{{ __('generate_slip_and_sequence_route') }}
                             </button>
@@ -269,12 +269,10 @@ export default {
                 });
         },
         getOrders() {
-            axios.get(this.apiBase + '/loading_slips/orders', {
-                params: {
-                    zone: this.selectedZone,
-                    is_rescheduled: this.selectedRescheduled
-                }
-            }).then(res => {
+            const params = {};
+            if (this.selectedZone) params.zone = this.selectedZone;
+            if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
+            axios.get(this.apiBase + '/loading_slips/orders', { params }).then(res => {
                 if (res.data.status === 1) {
                     this.orders = res.data.data;
                     this.selectedOrderIds = [];
@@ -313,8 +311,9 @@ export default {
             });
             this.totalSelectedWeight = parseFloat(sum.toFixed(2));
             
-            if (this.selectedVehicle) {
-                this.loadPercent = Math.min((this.totalSelectedWeight / parseFloat(this.selectedVehicle.capacity)) * 100, 120);
+            const capacity = parseFloat(this.selectedVehicle?.capacity || 0);
+            if (this.selectedVehicle && capacity > 0) {
+                this.loadPercent = Math.min((this.totalSelectedWeight / capacity) * 100, 120);
             } else {
                 this.loadPercent = 0;
             }

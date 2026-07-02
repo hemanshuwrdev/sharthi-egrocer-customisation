@@ -375,6 +375,21 @@ class SettlementController extends Controller
                 'proof_photo'     => $proofPath,
                 'status'          => 'pending',
             ]);
+
+            // Auto-create settlement row so distributor sees this trip immediately
+            $today = Carbon::today();
+            DriverSettlement::firstOrCreate(
+                ['delivery_boy_id' => $driver->id, 'settlement_date' => $today->toDateString()],
+                [
+                    'seller_id'    => $seller->id,
+                    'total_orders' => 0,
+                    'total_cash'   => 0,
+                    'total_upi'    => 0,
+                    'total_cheque' => 0,
+                    'total_signature' => 0,
+                    'status'       => 'open',
+                ]
+            );
         } catch (\Throwable $e) {
             Log::error('collectPayment failed: ' . $e->getMessage());
             return CommonHelper::responseError('something_went_wrong');
@@ -866,63 +881,154 @@ class SettlementController extends Controller
 
     /**
      * GET /seller/trips  (updated)
-     * Returns driver trips AND salesman trips merged, sorted by date.
-     * Query: filter (name search), type (driver|salesman|all, default all), page
+     * Returns merged list of driver + salesman settlements for this distributor.
+     * Query: filter (person name search), type (driver|salesman|all), page
      */
     public function sellerTripsListUpdated(Request $request)
     {
         $seller = $this->currentSeller();
         if (!$seller) return CommonHelper::responseError('seller_not_found');
 
-        $filter  = $request->input('filter', '');
+        $filter  = strtolower($request->input('filter', ''));
         $type    = $request->input('type', 'all');
         $page    = max(1, (int) $request->input('page', 1));
         $perPage = 15;
 
-        $driverRows   = collect();
-        $salesmanRows = collect();
+        $rows = collect();
 
-        if (in_array($type, ['all', 'driver'])) {
-            $q = DriverSettlement::with('deliveryBoy:id,name,mobile')->where('seller_id', $seller->id)->orderByDesc('settlement_date');
-            if ($filter) $q->whereHas('deliveryBoy', fn ($d) => $d->where('name', 'like', "%{$filter}%"));
-            $driverRows = $q->get()->map(fn ($r) => [
-                'id'                     => $r->id,
-                'type'                   => 'driver',
-                'person_name'            => optional($r->deliveryBoy)->name,
-                'person_mobile'          => optional($r->deliveryBoy)->mobile,
-                'settlement_date'        => $r->settlement_date,
-                'status'                 => $r->status,
-                'reconciliation_status'  => $r->reconciliation_status,
-                'total_cash'             => $r->total_cash,
-                'total_upi'              => $r->total_upi,
-                'total_cheque'           => $r->total_cheque,
-                'total_signature'        => $r->total_signature,
-                'cash_received'          => $r->cash_received,
-            ]);
+        if ($type !== 'salesman') {
+            // Aggregate real payment totals directly from order_payments.
+            // settlement.total_cash stays 0 until driver locks EOD, so we can't use it here.
+            $driverIds = DeliveryBoy::where('seller_id', $seller->id)->pluck('id');
+
+            $driverAgg = DB::table('order_payments')
+                ->join('delivery_boys', 'delivery_boys.id', '=', 'order_payments.delivery_boy_id')
+                ->whereIn('order_payments.delivery_boy_id', $driverIds)
+                ->selectRaw('
+                    order_payments.delivery_boy_id,
+                    delivery_boys.name  as person_name,
+                    delivery_boys.mobile as person_mobile,
+                    DATE(order_payments.created_at) as pay_date,
+                    ROUND(SUM(IF(order_payments.method="cash",      order_payments.amount, 0)), 2) as total_cash,
+                    ROUND(SUM(IF(order_payments.method="upi",       order_payments.amount, 0)), 2) as total_upi,
+                    ROUND(SUM(IF(order_payments.method="cheque",    order_payments.amount, 0)), 2) as total_cheque,
+                    ROUND(SUM(IF(order_payments.method="signature", order_payments.amount, 0)), 2) as total_signature,
+                    COUNT(DISTINCT order_payments.order_id) as total_orders
+                ')
+                ->groupByRaw('order_payments.delivery_boy_id, delivery_boys.name, delivery_boys.mobile, DATE(order_payments.created_at)')
+                ->get();
+
+            // Load settlements as a lookup map for reconciliation meta (cash_received, recon_status, etc.)
+            $driverSettlements = DriverSettlement::where('seller_id', $seller->id)
+                ->get()
+                ->keyBy(fn ($ds) => $ds->delivery_boy_id . '_' . (
+                    $ds->settlement_date instanceof Carbon
+                        ? $ds->settlement_date->format('Y-m-d')
+                        : (string) $ds->settlement_date
+                ));
+
+            foreach ($driverAgg as $agg) {
+                if ($filter && stripos($agg->person_name ?? '', $filter) === false) continue;
+                $key = $agg->delivery_boy_id . '_' . $agg->pay_date;
+                $ds  = $driverSettlements->get($key);
+
+                // Ensure a settlement row exists so the detail view has a valid ID to link to.
+                if (!$ds) {
+                    $ds = DriverSettlement::firstOrCreate(
+                        ['delivery_boy_id' => $agg->delivery_boy_id, 'settlement_date' => $agg->pay_date],
+                        ['seller_id' => $seller->id, 'total_orders' => 0, 'total_cash' => 0,
+                         'total_upi' => 0, 'total_cheque' => 0, 'total_signature' => 0, 'status' => 'open']
+                    );
+                    $driverSettlements->put($key, $ds);
+                }
+
+                $rows->push([
+                    'id'                   => $ds->id,
+                    'type'                 => 'driver',
+                    'person_name'          => $agg->person_name ?: '-',
+                    'person_mobile'        => $agg->person_mobile ?? '',
+                    'date'                 => $agg->pay_date,
+                    'total_orders'         => (int) $agg->total_orders,
+                    'total_cash'           => (float) $agg->total_cash,
+                    'total_upi'            => (float) $agg->total_upi,
+                    'total_cheque'         => (float) $agg->total_cheque,
+                    'total_signature'      => (float) $agg->total_signature,
+                    'cash_received'        => $ds->cash_received,
+                    'reconciliation_status'=> $ds->reconciliation_status ?? 'unreconciled',
+                    'status'               => $ds->status ?? 'open',
+                    'status_text'          => ucfirst($ds->status ?? 'open'),
+                    'sort_key'             => $agg->pay_date . '_' . $agg->delivery_boy_id,
+                ]);
+            }
         }
 
-        if (in_array($type, ['all', 'salesman'])) {
-            $q = SalesmanSettlement::with('salesman:id,name,mobile')->where('seller_id', $seller->id)->orderByDesc('settlement_date');
-            if ($filter) $q->whereHas('salesman', fn ($s) => $s->where('name', 'like', "%{$filter}%"));
-            $salesmanRows = $q->get()->map(fn ($r) => [
-                'id'                     => $r->id,
-                'type'                   => 'salesman',
-                'person_name'            => optional($r->salesman)->name,
-                'person_mobile'          => optional($r->salesman)->mobile,
-                'settlement_date'        => $r->settlement_date,
-                'status'                 => $r->status,
-                'reconciliation_status'  => $r->reconciliation_status,
-                'total_cash'             => $r->total_cash,
-                'total_upi'              => $r->total_upi,
-                'total_cheque'           => $r->total_cheque,
-                'total_signature'        => $r->total_signature,
-                'cash_received'          => $r->cash_received,
-            ]);
+        if ($type !== 'driver') {
+            $salesmanIds = Salesman::where('seller_id', $seller->id)->pluck('id');
+
+            $salesmanAgg = DB::table('order_payments')
+                ->join('salesmen', 'salesmen.id', '=', 'order_payments.salesman_id')
+                ->whereIn('order_payments.salesman_id', $salesmanIds)
+                ->whereNotNull('order_payments.salesman_id')
+                ->selectRaw('
+                    order_payments.salesman_id,
+                    salesmen.name   as person_name,
+                    salesmen.mobile as person_mobile,
+                    DATE(order_payments.created_at) as pay_date,
+                    ROUND(SUM(IF(order_payments.method="cash",      order_payments.amount, 0)), 2) as total_cash,
+                    ROUND(SUM(IF(order_payments.method="upi",       order_payments.amount, 0)), 2) as total_upi,
+                    ROUND(SUM(IF(order_payments.method="cheque",    order_payments.amount, 0)), 2) as total_cheque,
+                    ROUND(SUM(IF(order_payments.method="signature", order_payments.amount, 0)), 2) as total_signature,
+                    COUNT(DISTINCT order_payments.order_id) as total_orders
+                ')
+                ->groupByRaw('order_payments.salesman_id, salesmen.name, salesmen.mobile, DATE(order_payments.created_at)')
+                ->get();
+
+            $salesmanSettlements = SalesmanSettlement::where('seller_id', $seller->id)
+                ->get()
+                ->keyBy(fn ($ss) => $ss->salesman_id . '_' . (
+                    $ss->settlement_date instanceof Carbon
+                        ? $ss->settlement_date->format('Y-m-d')
+                        : (string) $ss->settlement_date
+                ));
+
+            foreach ($salesmanAgg as $agg) {
+                if ($filter && stripos($agg->person_name ?? '', $filter) === false) continue;
+                $key = $agg->salesman_id . '_' . $agg->pay_date;
+                $ss  = $salesmanSettlements->get($key);
+
+                // Ensure a settlement row exists so the detail view has a valid ID to link to.
+                if (!$ss) {
+                    $ss = SalesmanSettlement::firstOrCreate(
+                        ['salesman_id' => $agg->salesman_id, 'settlement_date' => $agg->pay_date],
+                        ['seller_id' => $seller->id, 'total_orders' => 0, 'total_cash' => 0,
+                         'total_upi' => 0, 'total_cheque' => 0, 'total_signature' => 0, 'status' => 'open']
+                    );
+                    $salesmanSettlements->put($key, $ss);
+                }
+
+                $rows->push([
+                    'id'                   => $ss->id,
+                    'type'                 => 'salesman',
+                    'person_name'          => $agg->person_name ?: '-',
+                    'person_mobile'        => $agg->person_mobile ?? '',
+                    'date'                 => $agg->pay_date,
+                    'total_orders'         => (int) $agg->total_orders,
+                    'total_cash'           => (float) $agg->total_cash,
+                    'total_upi'            => (float) $agg->total_upi,
+                    'total_cheque'         => (float) $agg->total_cheque,
+                    'total_signature'      => (float) $agg->total_signature,
+                    'cash_received'        => $ss->cash_received,
+                    'reconciliation_status'=> $ss->reconciliation_status ?? 'unreconciled',
+                    'status'               => $ss->status ?? 'open',
+                    'status_text'          => ucfirst($ss->status ?? 'open'),
+                    'sort_key'             => $agg->pay_date . '_' . $agg->salesman_id,
+                ]);
+            }
         }
 
-        $all   = $driverRows->merge($salesmanRows)->sortByDesc('settlement_date')->values();
-        $total = $all->count();
-        $data  = $all->skip(($page - 1) * $perPage)->take($perPage)->values();
+        $sorted = $rows->sortByDesc('sort_key')->values();
+        $total  = $sorted->count();
+        $data   = $sorted->skip(($page - 1) * $perPage)->take($perPage)->values();
 
         return CommonHelper::responseWithData(['total' => $total, 'data' => $data]);
     }
@@ -930,6 +1036,7 @@ class SettlementController extends Controller
     /**
      * GET /seller/trips/{id}  (updated)
      * Query: type=driver (default) | type=salesman
+     * id = driver_settlement.id or salesman_settlement.id
      */
     public function sellerTripDetailUpdated(Request $request, int $id)
     {
@@ -938,62 +1045,152 @@ class SettlementController extends Controller
 
         $type = $request->input('type', 'driver');
 
-        if ($type === 'driver') {
-            $settlement    = DriverSettlement::with('deliveryBoy:id,name,mobile')->where('seller_id', $seller->id)->find($id);
-            if (!$settlement) return CommonHelper::responseError('trip_not_found');
-            $personId      = $settlement->delivery_boy_id;
-            $personName    = optional($settlement->deliveryBoy)->name;
-            $orders        = Order::with('user:id,name,mobile')->where('delivery_boy_id', $personId)->whereDate('created_at', $settlement->settlement_date)->get();
-            $payments      = OrderPayment::whereIn('order_id', $orders->pluck('id'))->where('delivery_boy_id', $personId)->get();
+        if ($type === 'salesman') {
+            $settlement = SalesmanSettlement::with('salesman:id,name,mobile')->find($id);
+            // verify this salesman belongs to the current seller
+            if (!$settlement || !Salesman::where('id', $settlement->salesman_id)->where('seller_id', $seller->id)->exists()) {
+                return CommonHelper::responseError('settlement_not_found');
+            }
+
+            $date     = $settlement->settlement_date instanceof Carbon
+                            ? $settlement->settlement_date->toDateString()
+                            : (string) $settlement->settlement_date;
+            $personId = $settlement->salesman_id;
+            $payments = OrderPayment::where('salesman_id', $personId)->whereDate('created_at', $date)->get();
+            $person   = ['name' => $settlement->salesman?->name ?? '-', 'mobile' => $settlement->salesman?->mobile ?? ''];
         } else {
-            $settlement    = SalesmanSettlement::with('salesman:id,name,mobile')->where('seller_id', $seller->id)->find($id);
-            if (!$settlement) return CommonHelper::responseError('trip_not_found');
-            $personId      = $settlement->salesman_id;
-            $personName    = optional($settlement->salesman)->name;
-            $orders        = Order::with('user:id,name,mobile')->where('placed_by_salesman_id', $personId)->whereDate('created_at', $settlement->settlement_date)->get();
-            $payments      = OrderPayment::whereIn('order_id', $orders->pluck('id'))->where('salesman_id', $personId)->get();
+            $settlement = DriverSettlement::with('deliveryBoy:id,name,mobile')->find($id);
+            // verify this driver belongs to the current seller
+            if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+                return CommonHelper::responseError('settlement_not_found');
+            }
+
+            $date     = $settlement->settlement_date instanceof Carbon
+                            ? $settlement->settlement_date->toDateString()
+                            : (string) $settlement->settlement_date;
+            $personId = $settlement->delivery_boy_id;
+            $payments = OrderPayment::where('delivery_boy_id', $personId)->whereDate('created_at', $date)->get();
+            $person   = ['name' => $settlement->deliveryBoy?->name ?? '-', 'mobile' => $settlement->deliveryBoy?->mobile ?? ''];
         }
 
-        $paymentMap      = $payments->groupBy('order_id');
-        $totalExpected   = round($orders->sum('final_total'), 2);
-        $digitalVerified = round($payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2);
-        $cashExpected    = round($totalExpected - $digitalVerified, 2);
-        $cashReceived    = $settlement->cash_received;
-        $hasCash         = $payments->where('method', 'cash')->isNotEmpty();
-        $unverified      = $payments->where('status', 'pending')->count();
+        $orderIds   = $payments->pluck('order_id')->unique();
+        $orders     = Order::with(['user:id,name,mobile', 'loadingSlip:id,slip_no'])->whereIn('id', $orderIds)->get();
+        $paymentMap = $payments->groupBy('order_id');
+
+        $totalExpected        = round($orders->sum('final_total'), 2);
+        $digitalVerified      = round($payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2);
+        // Cash expected = actual cash the driver collected (not total_expected minus digital_verified,
+        // which wrongly inflates cash_expected when digital payments are unverified).
+        $cashExpected         = round($payments->where('method', 'cash')->sum('amount'), 2);
+        $cashReceived         = $settlement->cash_received;
+        $hasCash              = $payments->where('method', 'cash')->isNotEmpty();
+        $unverifiedDigital    = $payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'pending')->count();
+
+        // Detect legacy close: old sellerCloseTrip only set loading_slip.status=2,
+        // it never updated driver_settlement.status. If all orders' slips are closed, treat as reconciled.
+        $effectiveStatus = $settlement->status;
+        if ($effectiveStatus !== 'reconciled' && $orders->isNotEmpty()) {
+            $slipIds = $orders->pluck('loading_slip_id')->filter()->unique()->values();
+            if ($slipIds->isNotEmpty()) {
+                $hasOpenSlip = LoadingSlip::whereIn('id', $slipIds)->where('status', '!=', 2)->exists();
+                if (!$hasOpenSlip) {
+                    $effectiveStatus = 'reconciled';
+                }
+            }
+        }
+
+        // If already reconciled, check for new payments after close → needs re-reconcile
+        if ($effectiveStatus === 'reconciled' && $settlement->reconciled_at) {
+            $reconciledAt   = $settlement->reconciled_at instanceof Carbon
+                ? $settlement->reconciled_at
+                : Carbon::parse($settlement->reconciled_at);
+            $hasNewPayments = $payments->filter(fn ($p) => Carbon::parse($p->created_at)->gt($reconciledAt))->isNotEmpty();
+            if ($hasNewPayments) {
+                $effectiveStatus = 'needs_rereconcile';
+            }
+        }
+
+        $isClosed = $effectiveStatus === 'reconciled';
+
+        // Compute reconciliation_status dynamically so it reflects current totals, not the stored snapshot
+        if ($effectiveStatus === 'reconciled' || $effectiveStatus === 'needs_rereconcile') {
+            $cashRec = (float) ($settlement->cash_received ?? 0);
+            if (!$hasCash) {
+                $dynamicReconStatus = $unverifiedDigital === 0 ? 'full_match' : 'partial_match';
+            } else {
+                $cashDiff = round($cashExpected - $cashRec, 2);
+                if ($cashDiff == 0 && $unverifiedDigital === 0) {
+                    $dynamicReconStatus = 'full_match';
+                } elseif ($cashRec > $cashExpected) {
+                    $dynamicReconStatus = 'overpaid';
+                } else {
+                    $dynamicReconStatus = 'partial_match';
+                }
+            }
+        } else {
+            $dynamicReconStatus = $settlement->reconciliation_status ?? 'unreconciled';
+        }
+
+        $statusTextMap = [
+            'open'              => 'Open',
+            'locked'            => 'Locked',
+            'reconciled'        => 'Reconciled',
+            'needs_rereconcile' => 'Needs Re-Reconcile',
+        ];
 
         $blockers = [];
-        if ($unverified > 0) $blockers[] = "{$unverified} payment(s) not verified yet";
-        if ($hasCash && $cashReceived === null) $blockers[] = 'Cash received amount not entered';
+        if ($unverifiedDigital > 0) $blockers[] = "{$unverifiedDigital} digital payment(s) not verified yet";
+        if ($hasCash) $blockers[] = 'Enter cash received to close';
+        $canClose = ($unverifiedDigital === 0) && !$isClosed;
+
+        $settlementData = [
+            'id'                   => $settlement->id,
+            'type'                 => $type,
+            'person'               => $person,
+            'date'                 => $date,
+            'total_orders'         => $settlement->total_orders,
+            'cash_received'        => $settlement->cash_received,
+            'reconciliation_status'=> $dynamicReconStatus,
+            'status'               => $effectiveStatus,
+            'status_text'          => $statusTextMap[$effectiveStatus] ?? ucfirst($effectiveStatus),
+        ];
 
         return CommonHelper::responseWithData([
-            'type'        => $type,
-            'person_name' => $personName,
-            'settlement'  => $settlement,
-            'orders'      => $orders->map(fn ($o) => [
-                'id'            => $o->id,
-                'orders_id'     => $o->orders_id,
-                'final_total'   => $o->final_total,
-                'active_status' => $o->active_status,
-                'retailer'      => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
-                'payments'      => $paymentMap->get($o->id, collect())->values(),
+            'settlement'     => $settlementData,
+            'orders'         => $orders->map(fn ($o) => [
+                'id'              => $o->id,
+                'orders_id'       => $o->orders_id,
+                'final_total'     => $o->final_total,
+                'active_status'   => $o->active_status,
+                'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
+                'retailer'        => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+                'payments'        => $paymentMap->get($o->id, collect())->values(),
             ]),
-            'totals' => [
-                'total_expected'   => $totalExpected,
-                'digital_verified' => $digitalVerified,
-                'cash_expected'    => $cashExpected,
-                'cash_received'    => $cashReceived,
-                'shortfall'        => $cashReceived !== null ? round($cashExpected - $cashReceived, 2) : null,
-                'has_cash'         => $hasCash,
+            'totals'         => [
+                'total_expected'    => $totalExpected,
+                'total_collected'   => round($payments->sum('amount'), 2),
+                'digital_verified'  => $digitalVerified,
+                'cash_expected'     => $cashExpected,
+                'cash_received'     => $cashReceived,
+                'shortfall'         => $cashReceived !== null ? round($cashExpected - $cashReceived, 2) : null,
+                'has_cash'          => $hasCash,
+                'total_cash'        => round($payments->where('method', 'cash')->sum('amount'), 2),
+                'total_upi'         => round($payments->where('method', 'upi')->sum('amount'), 2),
+                'total_cheque'      => round($payments->where('method', 'cheque')->sum('amount'), 2),
+                'total_signature'   => round($payments->where('method', 'signature')->sum('amount'), 2),
+                'verified_upi'      => round($payments->where('method', 'upi')->where('status', 'verified')->sum('amount'), 2),
+                'verified_cheque'   => round($payments->where('method', 'cheque')->where('status', 'verified')->sum('amount'), 2),
+                'verified_signature'=> round($payments->where('method', 'signature')->where('status', 'verified')->sum('amount'), 2),
+                'unverified_digital'=> $unverifiedDigital,
             ],
-            'can_close'      => empty($blockers) && $settlement->status !== 'reconciled',
+            'can_close'      => $canClose,
             'close_blockers' => $blockers,
         ]);
     }
 
     /**
      * POST /seller/trips/{id}/reconcile  (updated)
-     * Body: cash_received, type (driver|salesman)
+     * Body: cash_received. Query: type=driver|salesman
      */
     public function sellerUpdateReconciliationUpdated(Request $request, int $id)
     {
@@ -1003,61 +1200,97 @@ class SettlementController extends Controller
         $validator = Validator::make($request->all(), ['cash_received' => 'required|numeric|min:0']);
         if ($validator->fails()) return CommonHelper::responseError($validator->errors()->first());
 
-        $type       = $request->input('type', 'driver');
-        $settlement = $type === 'salesman'
-            ? SalesmanSettlement::where('seller_id', $seller->id)->find($id)
-            : DriverSettlement::where('seller_id', $seller->id)->find($id);
+        $type = $request->input('type', 'driver');
 
-        if (!$settlement) return CommonHelper::responseError('trip_not_found');
+        if ($type === 'salesman') {
+            $settlement = SalesmanSettlement::find($id);
+            if (!$settlement || !Salesman::where('id', $settlement->salesman_id)->where('seller_id', $seller->id)->exists()) {
+                return CommonHelper::responseError('settlement_not_found');
+            }
+        } else {
+            $settlement = DriverSettlement::find($id);
+            if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+                return CommonHelper::responseError('settlement_not_found');
+            }
+        }
 
-        $personId      = $type === 'salesman' ? $settlement->salesman_id : $settlement->delivery_boy_id;
-        $personCol     = $type === 'salesman' ? 'placed_by_salesman_id' : 'delivery_boy_id';
-        $paymentCol    = $type === 'salesman' ? 'salesman_id' : 'delivery_boy_id';
+        $date      = $settlement->settlement_date instanceof Carbon
+                        ? $settlement->settlement_date->toDateString()
+                        : (string) $settlement->settlement_date;
+        $personKey = $type === 'salesman' ? 'salesman_id' : 'delivery_boy_id';
+        $personId  = $type === 'salesman' ? $settlement->salesman_id : $settlement->delivery_boy_id;
 
-        $orderIds        = Order::where($personCol, $personId)->whereDate('created_at', $settlement->settlement_date)->pluck('id');
-        $totalExpected   = round(Order::whereIn('id', $orderIds)->sum('final_total'), 2);
-        $digitalVerified = round(OrderPayment::whereIn('order_id', $orderIds)->where($paymentCol, $personId)->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2);
-        $cashExpected    = round($totalExpected - $digitalVerified, 2);
-        $cashReceived    = (float) $request->cash_received;
-        $diff            = round($cashExpected - $cashReceived, 2);
+        $payments     = OrderPayment::where($personKey, $personId)->whereDate('created_at', $date)->get();
+        $cashExpected = round($payments->where('method', 'cash')->sum('amount'), 2);
+        $cashReceived = (float) $request->cash_received;
+        $diff         = round($cashExpected - $cashReceived, 2);
 
-        $status = $diff == 0 ? 'full_match' : ($diff > 0 ? 'partial_match' : 'overpaid');
+        $reconStatus = $diff == 0 ? 'full_match' : ($diff > 0 ? 'partial_match' : 'overpaid');
 
         $settlement->cash_received         = $cashReceived;
-        $settlement->reconciliation_status = $status;
+        $settlement->reconciliation_status = $reconStatus;
         $settlement->save();
 
-        return CommonHelper::responseWithData(['reconciliation_status' => $status, 'cash_expected' => $cashExpected, 'shortfall' => $diff]);
+        return CommonHelper::responseWithData(['reconciliation_status' => $reconStatus, 'cash_expected' => $cashExpected, 'shortfall' => $diff]);
     }
 
     /**
      * POST /seller/trips/{id}/close  (updated)
-     * Body: type (driver|salesman)
+     * Query: type=driver|salesman. Sets settlement status → reconciled.
      */
     public function sellerCloseTripUpdated(Request $request, int $id)
     {
         $seller = $this->currentSeller();
         if (!$seller) return CommonHelper::responseError('seller_not_found');
 
-        $type       = $request->input('type', 'driver');
-        $settlement = $type === 'salesman'
-            ? SalesmanSettlement::where('seller_id', $seller->id)->find($id)
-            : DriverSettlement::where('seller_id', $seller->id)->find($id);
+        $type = $request->input('type', 'driver');
 
-        if (!$settlement) return CommonHelper::responseError('trip_not_found');
-        if ($settlement->status === 'reconciled') return CommonHelper::responseError('trip_already_closed');
+        if ($type === 'salesman') {
+            $settlement = SalesmanSettlement::find($id);
+            if (!$settlement || !Salesman::where('id', $settlement->salesman_id)->where('seller_id', $seller->id)->exists()) {
+                return CommonHelper::responseError('settlement_not_found');
+            }
+        } else {
+            $settlement = DriverSettlement::find($id);
+            if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+                return CommonHelper::responseError('settlement_not_found');
+            }
+        }
+        $date      = $settlement->settlement_date instanceof \Carbon\Carbon
+                        ? $settlement->settlement_date->toDateString()
+                        : (string) $settlement->settlement_date;
+        $personKey = $type === 'salesman' ? 'salesman_id' : 'delivery_boy_id';
+        $personId  = $type === 'salesman' ? $settlement->salesman_id : $settlement->delivery_boy_id;
 
-        $personId   = $type === 'salesman' ? $settlement->salesman_id : $settlement->delivery_boy_id;
-        $personCol  = $type === 'salesman' ? 'placed_by_salesman_id' : 'delivery_boy_id';
-        $paymentCol = $type === 'salesman' ? 'salesman_id' : 'delivery_boy_id';
+        $payments = OrderPayment::where($personKey, $personId)->whereDate('created_at', $date)->get();
 
-        $orderIds   = Order::where($personCol, $personId)->whereDate('created_at', $settlement->settlement_date)->pluck('id');
-        $payments   = OrderPayment::whereIn('order_id', $orderIds)->where($paymentCol, $personId)->get();
-        $unverified = $payments->where('status', 'pending')->count();
+        if ($settlement->status === 'reconciled') {
+            // Allow re-close only when new payments arrived after the last reconciliation
+            $reconciledAt = $settlement->reconciled_at
+                ? Carbon::parse($settlement->reconciled_at)
+                : Carbon::parse('2000-01-01');
+            $hasNew = $payments->filter(fn ($p) => Carbon::parse($p->created_at)->gt($reconciledAt))->isNotEmpty();
+            if (!$hasNew) {
+                return CommonHelper::responseError('trip_already_closed');
+            }
+        }
 
-        if ($unverified > 0) return CommonHelper::responseError("{$unverified} payment(s) still pending verification");
-        if ($payments->where('method', 'cash')->isNotEmpty() && $settlement->cash_received === null) {
-            return CommonHelper::responseError('Enter cash received before closing trip');
+        // Only digital payments (UPI / cheque / signature) require explicit verification.
+        // Cash is reconciled via the cash_received input below.
+        $unverifiedDigital = $payments->whereIn('method', ['upi', 'cheque', 'signature'])
+                                       ->where('status', 'pending')->count();
+        if ($unverifiedDigital > 0) {
+            return CommonHelper::responseError("{$unverifiedDigital} digital payment(s) still pending verification");
+        }
+
+        // Reconcile cash inline so the distributor closes in a single action.
+        // Auto-set cash_received from actual cash payments — no manual input needed
+        $cashCollected = round($payments->where('method', 'cash')->sum('amount'), 2);
+        if ($cashCollected > 0) {
+            $settlement->cash_received         = $cashCollected;
+            $settlement->reconciliation_status = 'full_match';
+        } else {
+            $settlement->reconciliation_status = 'full_match';
         }
 
         $settlement->status        = 'reconciled';

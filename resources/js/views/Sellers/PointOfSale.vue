@@ -270,7 +270,9 @@
                                         </div>
                                         <div v-for="user in filteredUsers" :key="user.id + '-' + user.user_type"
                                             class="search-option" @click="selectUser(user)">
-                                            {{ user.name }}
+                                            {{ user.shop_name || user.name }}
+                                            <small v-if="user.shop_name && user.name" class="text-muted ms-1">({{ user.name }})</small>
+                                            <small v-if="user.mobile" class="text-muted ms-1">{{ user.mobile }}</small>
                                         </div>
                                     </div>
                                 </div>
@@ -334,7 +336,7 @@
                                             <button class="btn btn-outline-secondary"
                                                 @click="decreaseQuantity(index)">-</button>
                                             <input type="number" class="form-control text-center"
-                                                v-model="item.quantity" min="1" @change="updateCartItem(index)">
+                                                v-model.number="item.quantity" :min="getVariantStep(item.variant)" :step="getVariantStep(item.variant)" @change="updateCartItem(index)">
                                             <button class="btn btn-outline-secondary"
                                                 @click="increaseQuantity(index, item)">+</button>
                                         </div>
@@ -459,7 +461,7 @@
                                 <div class="form-group mt-3"
                                     v-if="selectedProduct.variants && selectedProduct.variants.length > 0">
                                     <label for="variant" class="form-label">{{ __('variant') }}</label>
-                                    <select id="variant" class="form-select" v-model="selectedVariant">
+                                    <select id="variant" class="form-select" v-model="selectedVariant" @change="productQuantity = getVariantStep(selectedVariant)">
                                         <option v-for="variant in selectedProduct.variants" :key="variant.id"
                                             :value="variant">
                                             {{ variant.measurement }} {{ variant.measurement_unit_name }}
@@ -474,10 +476,10 @@
                                     <label for="quantity" class="form-label">{{ __('quantity') }}</label>
                                     <div class="input-group">
                                         <button class="btn btn-outline-secondary"
-                                            @click="productQuantity > 1 ? productQuantity-- : 1">-</button>
+                                            @click="productQuantity > getVariantStep(selectedVariant) ? productQuantity -= getVariantStep(selectedVariant) : getVariantStep(selectedVariant)">-</button>
                                         <input type="number" class="form-control text-center" id="quantity"
-                                            v-model="productQuantity" min="1">
-                                        <button class="btn btn-outline-secondary" @click="productQuantity++">+</button>
+                                            v-model.number="productQuantity" :min="getVariantStep(selectedVariant)" :step="getVariantStep(selectedVariant)">
+                                        <button class="btn btn-outline-secondary" @click="productQuantity += getVariantStep(selectedVariant)">+</button>
                                     </div>
                                 </div>
 
@@ -855,6 +857,11 @@ export default {
         document.body.classList.remove('pos-active');
     },
     methods: {
+        getVariantStep(variant) {
+            if (!variant) return 1;
+            const s = parseFloat(variant.secondary_unit_value);
+            return (s && s > 0) ? s : 1;
+        },
         // Add this method to handle closing the dropdown when clicking outside
         handleClickOutside(event) {
             const searchSelect = this.$el.querySelector('.search-select');
@@ -936,10 +943,10 @@ export default {
 
         viewProductDetails(product) {
             this.selectedProduct = product;
-            this.productQuantity = 1;
             if (product.variants && product.variants.length > 0) {
                 this.selectedVariant = product.variants[0];
             }
+            this.productQuantity = this.getVariantStep(this.selectedVariant);
 
             // Show the modal using bootstrap
             if (this.productDetailsModal) {
@@ -1069,42 +1076,46 @@ export default {
         },
 
         increaseQuantity(index, item) {
+            const step = this.getVariantStep(item.variant);
             // For unlimited stock products, just increase quantity
             if (item.is_unlimited_stock) {
-                item.quantity += 1;
+                item.quantity += step;
                 this.saveTabsToStorage();
                 return;
             }
 
             // For limited stock products, check stock
-            if (item.quantity >= item.variant.stock) {
+            if ((item.quantity + step) > item.variant.stock) {
                 toastr.error(this.__('not_enough_stock_available'));
                 return;
             }
 
             // Check max stock limit if applicable
-            if (item.max_stock && item.quantity >= item.max_stock) {
+            if (item.max_stock && (item.quantity + step) > item.max_stock) {
                 toastr.error(this.__('not_enough_stock_available'));
                 return;
             }
 
-            item.quantity += 1;
+            item.quantity += step;
             this.saveTabsToStorage();
         },
 
         decreaseQuantity(index) {
-            if (this.cart[index].quantity > 1) {
-                this.cart[index].quantity--;
+            const item = this.cart[index];
+            const step = this.getVariantStep(item.variant);
+            if (item.quantity > step) {
+                item.quantity -= step;
                 this.saveTabsToStorage();
             }
         },
 
         updateCartItem(index) {
             const item = this.cart[index];
+            const step = this.getVariantStep(item.variant);
 
-            // Ensure quantity is at least 1
-            if (item.quantity < 1) {
-                item.quantity = 1;
+            // Ensure quantity is at least step
+            if (item.quantity < step) {
+                item.quantity = step;
                 this.saveTabsToStorage();
                 return;
             }
@@ -1438,13 +1449,14 @@ export default {
                 ? variant.discounted_price
                 : variant.price;
 
+            const step = this.getVariantStep(variant);
             const cartItem = {
                 product_id: product.id,
                 product_variant_id: variant.id,
                 name: product.name,
                 variant_name: `${variant.measurement} ${variant.measurement_unit_name}`,
                 price: price,
-                quantity: 1,
+                quantity: step,
                 image: product.image_url,
                 variant: variant, // Store the full variant object for reference
                 is_unlimited_stock: product.is_unlimited_stock // Store product's unlimited stock flag
@@ -1459,14 +1471,14 @@ export default {
             if (existingIndex !== -1) {
                 // For unlimited stock products, just increase quantity
                 if (product.is_unlimited_stock) {
-                    this.cart[existingIndex].quantity += 1;
+                    this.cart[existingIndex].quantity += step;
                 } else {
                     // For limited stock products, check stock
-                    if (this.cart[existingIndex].quantity >= variant.stock) {
+                    if ((this.cart[existingIndex].quantity + step) > variant.stock) {
                         toastr.error(this.__('not_enough_stock_available'));
                         return;
                     }
-                    this.cart[existingIndex].quantity += 1;
+                    this.cart[existingIndex].quantity += step;
                 }
 
                 toastr.success(this.__('quantity_updated'));

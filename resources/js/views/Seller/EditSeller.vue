@@ -676,6 +676,48 @@
 
                                                 </div>
 
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h4>{{ __('seller_bank_information') }}</h4>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="form-group col-md-3 mt-0">
+                                                                <div class="form-group">
+                                                                    <label>{{ __('bank_name') }}</label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="bank_name"
+                                                                        :placeholder="__('bank_name')">
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-3 mt-0">
+                                                                <div class="form-group">
+                                                                    <label>{{ __('account_number') }}</label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="account_number"
+                                                                        :placeholder="__('account_number')">
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-3 mt-0">
+                                                                <div class="form-group">
+                                                                    <label>{{ __('bank_ifsc_code') }}</label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="bank_ifsc_code"
+                                                                        :placeholder="__('bank_ifsc_code')">
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-3 mt-0">
+                                                                <div class="form-group">
+                                                                    <label>{{ __('bank_account_name') }}</label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="account_name"
+                                                                        :placeholder="__('bank_account_name')">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                                 <div class="card" v-if="!isSellerRole">
                                                     <div class="card-header">
                                                         <h4>{{ __('upi_information') }}</h4>
@@ -1018,6 +1060,10 @@ export default {
             categories_ids: [],
             state: "",
             remark: "",
+            bank_name: "",
+            account_number: "",
+            bank_ifsc_code: "",
+            account_name: "",
             upi_id: "",
             upi_mobile: "",
             upi_name: "",
@@ -1775,7 +1821,7 @@ export default {
             Object.assign(this, {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
                 store_name: "", street: "", pincode_id: "", city_id: [], categories_ids: [],
-                state: "", remark: "", upi_id: "", upi_mobile: "", upi_name: "",
+                state: "", remark: "", bank_name: "", account_number: "", bank_ifsc_code: "", account_name: "", upi_id: "", upi_mobile: "", upi_name: "",
                 selected_zone: "", commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
                 view_order_otp: 0, assign_delivery_boy: 0, change_order_status_delivered: 0,
@@ -1805,7 +1851,7 @@ export default {
                     store_name: defaultTranslation ? defaultTranslation.store_name : this.store_name,
                     street: this.street, pincode_id: this.pincode_id,
                     city_id: this.city_id, categories_ids: this.categories_ids, state: this.state,
-                    remark: this.remark, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
+                    remark: this.remark, bank_name: this.bank_name, account_number: this.account_number, bank_ifsc_code: this.bank_ifsc_code, account_name: this.account_name, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
                     upi_name: this.upi_name, selected_zone: this.selected_zone, commission: this.commission,
                     tax_name: this.tax_name, tax_number: this.tax_number, pan_number: this.pan_number,
                     latitude: this.latitude, longitude: this.longitude, place_name: this.place_name,
@@ -1969,6 +2015,10 @@ export default {
                         this.categories_ids = emptyIfNull(this.record.categories) ? this.record.categories.split(",") : [];
                         this.state = emptyIfNull(this.record.state);
                         this.remark = emptyIfNull(this.record.remark);
+                        this.bank_name = emptyIfNull(this.record.bank_name);
+                        this.account_number = emptyIfNull(this.record.account_number);
+                        this.bank_ifsc_code = emptyIfNull(this.record.bank_ifsc_code || this.record.ifsc_code);
+                        this.account_name = emptyIfNull(this.record.account_name);
                         this.upi_id = emptyIfNull(this.record.upi_id);
                         this.upi_mobile = emptyIfNull(this.record.upi_mobile);
                         this.upi_name = emptyIfNull(this.record.upi_name);
@@ -2180,6 +2230,11 @@ export default {
                 formData.append('categories_ids', this.categories_ids);
                 formData.append('state', this.state);
                 formData.append('remark', this.remark);
+                formData.append('bank_name', this.bank_name || '');
+                formData.append('account_number', this.account_number || '');
+                formData.append('bank_ifsc_code', this.bank_ifsc_code || '');
+                formData.append('ifsc_code', this.bank_ifsc_code || '');
+                formData.append('account_name', this.account_name || '');
                 formData.append('upi_id', this.upi_id || '');
                 formData.append('upi_mobile', this.upi_mobile || '');
                 formData.append('upi_name', this.upi_name || '');

@@ -632,6 +632,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -837,6 +839,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     document.body.classList.remove('pos-active');
   },
   methods: {
+    getVariantStep: function getVariantStep(variant) {
+      if (!variant) return 1;
+      var s = parseFloat(variant.secondary_unit_value);
+      return s && s > 0 ? s : 1;
+    },
     // Add this method to handle closing the dropdown when clicking outside
     handleClickOutside: function handleClickOutside(event) {
       var searchSelect = this.$el.querySelector('.search-select');
@@ -910,10 +917,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     viewProductDetails: function viewProductDetails(product) {
       this.selectedProduct = product;
-      this.productQuantity = 1;
       if (product.variants && product.variants.length > 0) {
         this.selectedVariant = product.variants[0];
       }
+      this.productQuantity = this.getVariantStep(this.selectedVariant);
 
       // Show the modal using bootstrap
       if (this.productDetailsModal) {
@@ -1034,39 +1041,43 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.saveTabsToStorage();
     },
     increaseQuantity: function increaseQuantity(index, item) {
+      var step = this.getVariantStep(item.variant);
       // For unlimited stock products, just increase quantity
       if (item.is_unlimited_stock) {
-        item.quantity += 1;
+        item.quantity += step;
         this.saveTabsToStorage();
         return;
       }
 
       // For limited stock products, check stock
-      if (item.quantity >= item.variant.stock) {
+      if (item.quantity + step > item.variant.stock) {
         toastr.error(this.__('not_enough_stock_available'));
         return;
       }
 
       // Check max stock limit if applicable
-      if (item.max_stock && item.quantity >= item.max_stock) {
+      if (item.max_stock && item.quantity + step > item.max_stock) {
         toastr.error(this.__('not_enough_stock_available'));
         return;
       }
-      item.quantity += 1;
+      item.quantity += step;
       this.saveTabsToStorage();
     },
     decreaseQuantity: function decreaseQuantity(index) {
-      if (this.cart[index].quantity > 1) {
-        this.cart[index].quantity--;
+      var item = this.cart[index];
+      var step = this.getVariantStep(item.variant);
+      if (item.quantity > step) {
+        item.quantity -= step;
         this.saveTabsToStorage();
       }
     },
     updateCartItem: function updateCartItem(index) {
       var item = this.cart[index];
+      var step = this.getVariantStep(item.variant);
 
-      // Ensure quantity is at least 1
-      if (item.quantity < 1) {
-        item.quantity = 1;
+      // Ensure quantity is at least step
+      if (item.quantity < step) {
+        item.quantity = step;
         this.saveTabsToStorage();
         return;
       }
@@ -1378,13 +1389,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         return;
       }
       var price = variant.discounted_price > 0 ? variant.discounted_price : variant.price;
+      var step = this.getVariantStep(variant);
       var cartItem = {
         product_id: product.id,
         product_variant_id: variant.id,
         name: product.name,
         variant_name: "".concat(variant.measurement, " ").concat(variant.measurement_unit_name),
         price: price,
-        quantity: 1,
+        quantity: step,
         image: product.image_url,
         variant: variant,
         // Store the full variant object for reference
@@ -1398,14 +1410,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (existingIndex !== -1) {
         // For unlimited stock products, just increase quantity
         if (product.is_unlimited_stock) {
-          this.cart[existingIndex].quantity += 1;
+          this.cart[existingIndex].quantity += step;
         } else {
           // For limited stock products, check stock
-          if (this.cart[existingIndex].quantity >= variant.stock) {
+          if (this.cart[existingIndex].quantity + step > variant.stock) {
             toastr.error(this.__('not_enough_stock_available'));
             return;
           }
-          this.cart[existingIndex].quantity += 1;
+          this.cart[existingIndex].quantity += step;
         }
         toastr.success(this.__('quantity_updated'));
       } else {
@@ -3325,9 +3337,24 @@ var render = function () {
                               [
                                 _vm._v(
                                   "\n                                        " +
-                                    _vm._s(user.name) +
-                                    "\n                                    "
+                                    _vm._s(user.shop_name || user.name) +
+                                    "\n                                        "
                                 ),
+                                user.shop_name && user.name
+                                  ? _c(
+                                      "small",
+                                      { staticClass: "text-muted ms-1" },
+                                      [_vm._v("(" + _vm._s(user.name) + ")")]
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                user.mobile
+                                  ? _c(
+                                      "small",
+                                      { staticClass: "text-muted ms-1" },
+                                      [_vm._v(_vm._s(user.mobile))]
+                                    )
+                                  : _vm._e(),
                               ]
                             )
                           }),
@@ -3459,13 +3486,18 @@ var render = function () {
                                 directives: [
                                   {
                                     name: "model",
-                                    rawName: "v-model",
+                                    rawName: "v-model.number",
                                     value: item.quantity,
                                     expression: "item.quantity",
+                                    modifiers: { number: true },
                                   },
                                 ],
                                 staticClass: "form-control text-center",
-                                attrs: { type: "number", min: "1" },
+                                attrs: {
+                                  type: "number",
+                                  min: _vm.getVariantStep(item.variant),
+                                  step: _vm.getVariantStep(item.variant),
+                                },
                                 domProps: { value: item.quantity },
                                 on: {
                                   change: function ($event) {
@@ -3478,8 +3510,11 @@ var render = function () {
                                     _vm.$set(
                                       item,
                                       "quantity",
-                                      $event.target.value
+                                      _vm._n($event.target.value)
                                     )
+                                  },
+                                  blur: function ($event) {
+                                    return _vm.$forceUpdate()
                                   },
                                 },
                               }),
@@ -3927,23 +3962,31 @@ var render = function () {
                                 staticClass: "form-select",
                                 attrs: { id: "variant" },
                                 on: {
-                                  change: function ($event) {
-                                    var $$selectedVal = Array.prototype.filter
-                                      .call(
-                                        $event.target.options,
-                                        function (o) {
-                                          return o.selected
-                                        }
+                                  change: [
+                                    function ($event) {
+                                      var $$selectedVal = Array.prototype.filter
+                                        .call(
+                                          $event.target.options,
+                                          function (o) {
+                                            return o.selected
+                                          }
+                                        )
+                                        .map(function (o) {
+                                          var val =
+                                            "_value" in o ? o._value : o.value
+                                          return val
+                                        })
+                                      _vm.selectedVariant = $event.target
+                                        .multiple
+                                        ? $$selectedVal
+                                        : $$selectedVal[0]
+                                    },
+                                    function ($event) {
+                                      _vm.productQuantity = _vm.getVariantStep(
+                                        _vm.selectedVariant
                                       )
-                                      .map(function (o) {
-                                        var val =
-                                          "_value" in o ? o._value : o.value
-                                        return val
-                                      })
-                                    _vm.selectedVariant = $event.target.multiple
-                                      ? $$selectedVal
-                                      : $$selectedVal[0]
-                                  },
+                                    },
+                                  ],
                                 },
                               },
                               _vm._l(
@@ -3999,9 +4042,11 @@ var render = function () {
                               staticClass: "btn btn-outline-secondary",
                               on: {
                                 click: function ($event) {
-                                  _vm.productQuantity > 1
-                                    ? _vm.productQuantity--
-                                    : 1
+                                  _vm.productQuantity >
+                                  _vm.getVariantStep(_vm.selectedVariant)
+                                    ? (_vm.productQuantity -=
+                                        _vm.getVariantStep(_vm.selectedVariant))
+                                    : _vm.getVariantStep(_vm.selectedVariant)
                                 },
                               },
                             },
@@ -4012,20 +4057,31 @@ var render = function () {
                             directives: [
                               {
                                 name: "model",
-                                rawName: "v-model",
+                                rawName: "v-model.number",
                                 value: _vm.productQuantity,
                                 expression: "productQuantity",
+                                modifiers: { number: true },
                               },
                             ],
                             staticClass: "form-control text-center",
-                            attrs: { type: "number", id: "quantity", min: "1" },
+                            attrs: {
+                              type: "number",
+                              id: "quantity",
+                              min: _vm.getVariantStep(_vm.selectedVariant),
+                              step: _vm.getVariantStep(_vm.selectedVariant),
+                            },
                             domProps: { value: _vm.productQuantity },
                             on: {
                               input: function ($event) {
                                 if ($event.target.composing) {
                                   return
                                 }
-                                _vm.productQuantity = $event.target.value
+                                _vm.productQuantity = _vm._n(
+                                  $event.target.value
+                                )
+                              },
+                              blur: function ($event) {
+                                return _vm.$forceUpdate()
                               },
                             },
                           }),
@@ -4036,7 +4092,9 @@ var render = function () {
                               staticClass: "btn btn-outline-secondary",
                               on: {
                                 click: function ($event) {
-                                  _vm.productQuantity++
+                                  _vm.productQuantity += _vm.getVariantStep(
+                                    _vm.selectedVariant
+                                  )
                                 },
                               },
                             },

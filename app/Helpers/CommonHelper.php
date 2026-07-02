@@ -1277,32 +1277,32 @@ class CommonHelper
                     ->where('mp.status', 1)
                     ->where('c.status', 1)
                     ->whereIn('mp.id', $product_ids_array)
-                    ->whereExists(function ($q) use ($seller_ids) {
+                    ->whereExists(function ($q) use ($seller_ids, $cityIds) {
                         $q->select(DB::raw(1))
                             ->from('seller_products as sp')
                             ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
                             ->whereColumn('mpv.master_product_id', 'mp.id')
                             ->whereIn('sp.seller_id', $seller_ids)
                             ->where('sp.status', 1);
-                    });
 
-                if (!empty($cityIds)) {
-                    $productsQuery->where(function ($q) use ($cityIds, $seller_ids) {
-                        $q->whereNotExists(function ($sub) use ($cityIds) {
-                            $sub->select(DB::raw(1))
-                                ->from('brand_distributor_mappings as bdm')
-                                ->whereColumn('bdm.brand_id', 'mp.brand_id')
-                                ->whereIn('bdm.city_id', $cityIds);
-                        })
-                            ->orWhereExists(function ($subquery) use ($cityIds) {
-                                $subquery->select(DB::raw(1))
-                                    ->from('brand_distributor_mappings as bdm')
-                                    ->whereColumn('bdm.brand_id', 'p.brand_id')
-                                    ->whereIn('bdm.city_id', $cityIds)
-                                    ->whereColumn('bdm.seller_id', 'p.seller_id');
+                        if (!empty($cityIds)) {
+                            $q->where(function ($sub) use ($cityIds) {
+                                $sub->whereNotExists(function ($subquery) use ($cityIds) {
+                                    $subquery->select(DB::raw(1))
+                                        ->from('brand_distributor_mappings as bdm')
+                                        ->whereColumn('bdm.brand_id', 'mp.brand_id')
+                                        ->whereIn('bdm.city_id', $cityIds);
+                                })
+                                ->orWhereExists(function ($subquery) use ($cityIds) {
+                                    $subquery->select(DB::raw(1))
+                                        ->from('brand_distributor_mappings as bdm')
+                                        ->whereColumn('bdm.brand_id', 'mp.brand_id')
+                                        ->whereIn('bdm.city_id', $cityIds)
+                                        ->whereColumn('bdm.seller_id', 'sp.seller_id');
+                                });
                             });
+                        }
                     });
-                }
 
                 $masterProducts = $productsQuery
                     ->groupBy('mp.id')

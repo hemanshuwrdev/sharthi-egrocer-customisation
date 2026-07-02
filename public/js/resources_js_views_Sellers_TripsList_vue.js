@@ -127,53 +127,94 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'SellerTripsList',
   data: function data() {
     return {
       loading: false,
-      slips: [],
+      rows: [],
       total: 0,
       page: 1,
-      perPage: 10,
-      filter: ''
+      perPage: 15,
+      filter: '',
+      typeFilter: 'all',
+      typeOptions: [{
+        value: 'all',
+        label: 'All'
+      }, {
+        value: 'driver',
+        label: 'Driver'
+      }, {
+        value: 'salesman',
+        label: 'Salesman'
+      }]
     };
   },
   created: function created() {
     this.load();
   },
   methods: {
+    setType: function setType(t) {
+      this.typeFilter = t;
+      this.page = 1;
+      this.load();
+    },
     load: function load() {
       var _this = this;
       this.loading = true;
       axios.get(this.$apiUrl + '/seller/trips', {
         params: {
           page: this.page,
-          filter: this.filter
+          filter: this.filter,
+          type: this.typeFilter
         }
       }).then(function (res) {
-        _this.slips = res.data.data.data || res.data.data || [];
-        _this.total = res.data.data.total || _this.slips.length;
+        var d = res.data.data;
+        _this.rows = d.data || [];
+        _this.total = d.total || _this.rows.length;
         _this.loading = false;
       })["catch"](function () {
         _this.loading = false;
       });
     },
-    slipStatusClass: function slipStatusClass(s) {
+    fmt: function fmt(val) {
+      if (val == null) return '0.00';
+      return parseFloat(val).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    },
+    settlementStatusClass: function settlementStatusClass(s) {
       return {
-        0: 'bg-warning text-dark',
-        1: 'bg-info',
-        2: 'bg-success',
-        3: 'bg-danger'
+        open: 'bg-warning text-dark',
+        locked: 'bg-info',
+        reconciled: 'bg-success'
       }[s] || 'bg-secondary';
     },
-    slipStatusIcon: function slipStatusIcon(s) {
+    settlementStatusIcon: function settlementStatusIcon(s) {
       return {
-        0: 'fa fa-clock-o',
-        1: 'fa fa-truck',
-        2: 'fa fa-check-circle',
-        3: 'fa fa-times-circle'
+        open: 'fa fa-clock-o',
+        locked: 'fa fa-lock',
+        reconciled: 'fa fa-check-circle'
       }[s] || 'fa fa-circle';
     },
     reconLabel: function reconLabel(s) {
@@ -221,7 +262,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.recon-pill[data-v-a90058fc] {\n    display: inline-flex; align-items: center;\n    font-size: 11px; font-weight: 700;\n    padding: 4px 10px; border-radius: 20px;\n}\n.recon-pill--grey[data-v-a90058fc]   { background: #f3f4f6; color: #6b7280;\n}\n.recon-pill--orange[data-v-a90058fc] { background: #fff7ed; color: #ea580c;\n}\n.recon-pill--green[data-v-a90058fc]  { background: #dcfce7; color: #16a34a;\n}\n.recon-pill--blue[data-v-a90058fc]   { background: #e0f2fe; color: #0284c7;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.bg-purple[data-v-a90058fc] { background-color: #7c3aed !important; color: #fff !important;\n}\n.recon-pill[data-v-a90058fc] {\n    display: inline-flex; align-items: center;\n    font-size: 11px; font-weight: 700;\n    padding: 4px 10px; border-radius: 20px;\n}\n.recon-pill--grey[data-v-a90058fc]   { background: #f3f4f6; color: #6b7280;\n}\n.recon-pill--orange[data-v-a90058fc] { background: #fff7ed; color: #ea580c;\n}\n.recon-pill--green[data-v-a90058fc]  { background: #dcfce7; color: #16a34a;\n}\n.recon-pill--blue[data-v-a90058fc]   { background: #e0f2fe; color: #0284c7;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -412,50 +453,89 @@ var render = function () {
                 _vm._v(_vm._s(_vm.__("all_trips"))),
               ]),
               _vm._v(" "),
-              _c("div", { staticClass: "d-flex gap-2" }, [
-                _c("input", {
-                  directives: [
+              _c(
+                "div",
+                { staticClass: "d-flex gap-2 align-items-center flex-wrap" },
+                [
+                  _c(
+                    "div",
                     {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.filter,
-                      expression: "filter",
+                      staticClass: "btn-group btn-group-sm",
+                      attrs: { role: "group" },
                     },
-                  ],
-                  staticClass: "form-control form-control-sm",
-                  staticStyle: { "min-width": "220px" },
-                  attrs: {
-                    type: "text",
-                    placeholder:
-                      _vm.__("search") +
-                      " " +
-                      _vm.__("slip_no") +
-                      " / " +
-                      _vm.__("driver"),
-                  },
-                  domProps: { value: _vm.filter },
-                  on: {
-                    input: [
-                      function ($event) {
-                        if ($event.target.composing) {
-                          return
-                        }
-                        _vm.filter = $event.target.value
+                    _vm._l(_vm.typeOptions, function (t) {
+                      return _c(
+                        "button",
+                        {
+                          key: t.value,
+                          staticClass: "btn",
+                          class:
+                            _vm.typeFilter === t.value
+                              ? "btn-primary"
+                              : "btn-outline-secondary",
+                          attrs: { type: "button" },
+                          on: {
+                            click: function ($event) {
+                              return _vm.setType(t.value)
+                            },
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n                                " +
+                              _vm._s(t.label) +
+                              "\n                            "
+                          ),
+                        ]
+                      )
+                    }),
+                    0
+                  ),
+                  _vm._v(" "),
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.filter,
+                        expression: "filter",
                       },
-                      _vm.load,
                     ],
-                  },
-                }),
-                _vm._v(" "),
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-sm btn-outline-secondary",
-                    on: { click: _vm.load },
-                  },
-                  [_c("i", { staticClass: "fa fa-refresh" })]
-                ),
-              ]),
+                    staticClass: "form-control form-control-sm",
+                    staticStyle: { "min-width": "200px" },
+                    attrs: {
+                      type: "text",
+                      placeholder:
+                        _vm.__("search") +
+                        " " +
+                        _vm.__("driver") +
+                        " / " +
+                        _vm.__("salesman"),
+                    },
+                    domProps: { value: _vm.filter },
+                    on: {
+                      input: [
+                        function ($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.filter = $event.target.value
+                        },
+                        _vm.load,
+                      ],
+                    },
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-outline-secondary",
+                      on: { click: _vm.load },
+                    },
+                    [_c("i", { staticClass: "fa fa-refresh" })]
+                  ),
+                ]
+              ),
             ]
           ),
           _vm._v(" "),
@@ -467,9 +547,9 @@ var render = function () {
                   [_c("b-spinner")],
                   1
                 )
-              : _vm.slips.length === 0
+              : _vm.rows.length === 0
               ? _c("div", { staticClass: "text-center text-muted py-5" }, [
-                  _c("i", { staticClass: "fa fa-truck fa-2x mb-2 d-block" }),
+                  _c("i", { staticClass: "fa fa-users fa-2x mb-2 d-block" }),
                   _vm._v(
                     "\n                        " +
                       _vm._s(_vm.__("no_data_found")) +
@@ -484,15 +564,15 @@ var render = function () {
                       _c("thead", { staticClass: "table-light" }, [
                         _c("tr", [
                           _c("th", { staticClass: "ps-3" }, [
-                            _vm._v(_vm._s(_vm.__("slip_no"))),
+                            _vm._v(_vm._s(_vm.__("date"))),
                           ]),
+                          _vm._v(" "),
+                          _c("th", [_vm._v(_vm._s(_vm.__("type")))]),
                           _vm._v(" "),
                           _c("th", [_vm._v(_vm._s(_vm.__("driver_rider")))]),
                           _vm._v(" "),
-                          _c("th", [_vm._v(_vm._s(_vm.__("vehicle_details")))]),
-                          _vm._v(" "),
-                          _c("th", { staticClass: "text-center" }, [
-                            _vm._v(_vm._s(_vm.__("orders"))),
+                          _c("th", { staticClass: "text-end" }, [
+                            _vm._v(_vm._s(_vm.__("cash"))),
                           ]),
                           _vm._v(" "),
                           _c("th", { staticClass: "text-center" }, [
@@ -511,52 +591,85 @@ var render = function () {
                       _vm._v(" "),
                       _c(
                         "tbody",
-                        _vm._l(_vm.slips, function (slip) {
-                          return _c("tr", { key: slip.id }, [
+                        _vm._l(_vm.rows, function (row) {
+                          return _c("tr", { key: row.type + "_" + row.id }, [
                             _c("td", { staticClass: "ps-3" }, [
+                              _c("span", { staticClass: "fw-bold" }, [
+                                _vm._v(_vm._s(row.date)),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("td", [
                               _c(
                                 "span",
-                                { staticClass: "fw-bold text-primary" },
-                                [_vm._v(_vm._s(slip.slip_no))]
+                                {
+                                  staticClass: "badge",
+                                  class:
+                                    row.type === "driver"
+                                      ? "bg-info"
+                                      : "bg-purple",
+                                },
+                                [
+                                  _c("i", {
+                                    staticClass: "me-1",
+                                    class:
+                                      row.type === "driver"
+                                        ? "fa fa-truck"
+                                        : "fa fa-user-tie",
+                                  }),
+                                  _vm._v(
+                                    "\n                                            " +
+                                      _vm._s(
+                                        row.type === "driver"
+                                          ? _vm.__("driver")
+                                          : _vm.__("salesman")
+                                      ) +
+                                      "\n                                        "
+                                  ),
+                                ]
                               ),
                             ]),
                             _vm._v(" "),
                             _c("td", [
                               _c("div", { staticClass: "fw-semibold" }, [
-                                _vm._v(
-                                  _vm._s(slip.driver ? slip.driver.name : "-")
-                                ),
+                                _vm._v(_vm._s(row.person_name)),
                               ]),
                               _vm._v(" "),
                               _c("div", { staticClass: "text-muted small" }, [
-                                _vm._v(
-                                  _vm._s(slip.driver ? slip.driver.mobile : "")
-                                ),
+                                _vm._v(_vm._s(row.person_mobile)),
                               ]),
                             ]),
                             _vm._v(" "),
-                            _c("td", [
-                              _c("div", { staticClass: "fw-semibold" }, [
+                            _c("td", { staticClass: "text-end" }, [
+                              _c("span", { staticClass: "fw-bold" }, [
                                 _vm._v(
-                                  _vm._s(slip.vehicle ? slip.vehicle.name : "-")
+                                  _vm._s(_vm.$currency) +
+                                    " " +
+                                    _vm._s(_vm.fmt(row.total_cash))
                                 ),
                               ]),
                               _vm._v(" "),
-                              _c("div", { staticClass: "text-muted small" }, [
-                                _vm._v(
-                                  _vm._s(
-                                    slip.vehicle
-                                      ? slip.vehicle.vehicle_number
-                                      : ""
+                              row.total_upi > 0 || row.total_cheque > 0
+                                ? _c(
+                                    "div",
+                                    { staticClass: "text-muted small" },
+                                    [
+                                      _vm._v(
+                                        "\n                                            + " +
+                                          _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(
+                                            _vm.fmt(
+                                              (row.total_upi || 0) +
+                                                (row.total_cheque || 0) +
+                                                (row.total_signature || 0)
+                                            )
+                                          ) +
+                                          " digital\n                                        "
+                                      ),
+                                    ]
                                   )
-                                ),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("td", { staticClass: "text-center" }, [
-                              _c("span", { staticClass: "badge bg-primary" }, [
-                                _vm._v(_vm._s(slip.total_orders)),
-                              ]),
+                                : _vm._e(),
                             ]),
                             _vm._v(" "),
                             _c("td", { staticClass: "text-center" }, [
@@ -564,16 +677,16 @@ var render = function () {
                                 "span",
                                 {
                                   staticClass: "badge",
-                                  class: _vm.slipStatusClass(slip.status),
+                                  class: _vm.settlementStatusClass(row.status),
                                 },
                                 [
                                   _c("i", {
                                     staticClass: "me-1",
-                                    class: _vm.slipStatusIcon(slip.status),
+                                    class: _vm.settlementStatusIcon(row.status),
                                   }),
                                   _vm._v(
                                     "\n                                            " +
-                                      _vm._s(slip.status_text) +
+                                      _vm._s(row.status_text) +
                                       "\n                                        "
                                   ),
                                 ]
@@ -586,14 +699,14 @@ var render = function () {
                                 {
                                   staticClass: "recon-pill",
                                   class: _vm.reconClass(
-                                    slip.reconciliation_status || "unreconciled"
+                                    row.reconciliation_status || "unreconciled"
                                   ),
                                 },
                                 [
                                   _c("i", {
                                     staticClass: "me-1",
                                     class: _vm.reconIcon(
-                                      slip.reconciliation_status ||
+                                      row.reconciliation_status ||
                                         "unreconciled"
                                     ),
                                   }),
@@ -601,7 +714,7 @@ var render = function () {
                                     "\n                                            " +
                                       _vm._s(
                                         _vm.reconLabel(
-                                          slip.reconciliation_status ||
+                                          row.reconciliation_status ||
                                             "unreconciled"
                                         )
                                       ) +
@@ -615,22 +728,37 @@ var render = function () {
                               "td",
                               { staticClass: "text-center" },
                               [
-                                slip.status >= 1
+                                row.id
                                   ? _c(
                                       "router-link",
                                       {
-                                        staticClass: "btn btn-sm btn-primary",
+                                        staticClass: "btn btn-sm",
+                                        class:
+                                          row.status === "reconciled"
+                                            ? "btn-outline-success"
+                                            : "btn-primary",
                                         attrs: {
-                                          to: "/seller/trips/" + slip.id,
+                                          to: {
+                                            path: "/seller/trips/" + row.id,
+                                            query: { type: row.type },
+                                          },
                                         },
                                       },
                                       [
                                         _c("i", {
-                                          staticClass: "fa fa-retweet mr-1",
+                                          staticClass: "me-1",
+                                          class:
+                                            row.status === "reconciled"
+                                              ? "fa fa-check-circle"
+                                              : "fa fa-retweet",
                                         }),
                                         _vm._v(
-                                          " " +
-                                            _vm._s(_vm.__("reconcile")) +
+                                          "\n                                            " +
+                                            _vm._s(
+                                              row.status === "reconciled"
+                                                ? _vm.__("view")
+                                                : _vm.__("reconcile")
+                                            ) +
                                             "\n                                        "
                                         ),
                                       ]
@@ -638,7 +766,7 @@ var render = function () {
                                   : _c(
                                       "span",
                                       { staticClass: "text-muted small" },
-                                      [_vm._v(_vm._s(_vm.__("not_dispatched")))]
+                                      [_vm._v("-")]
                                     ),
                               ],
                               1
