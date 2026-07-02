@@ -604,6 +604,8 @@ class SalesmanAppApiController extends Controller
                 'unit'                 => $r->unit ? $r->unit->name : null,
                 'secondary_unit'       => $r->secondaryUnit ? $r->secondaryUnit->name : null,
                 'secondary_unit_value' => $r->secondary_unit_value,
+                'qty_step'             => (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
+                'min_qty'              => (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
                 'weight'               => $r->weight,
                 'image'                => $r->image ?: ($mp ? $mp->image : null),
                 'offer'                => $offer,
@@ -714,7 +716,7 @@ class SalesmanAppApiController extends Controller
         }
 
         $variantIds = $items->pluck('master_product_variant_id')->unique();
-        $variants = MasterProductVariant::with(['masterProduct.brand', 'unit'])
+        $variants = MasterProductVariant::with(['masterProduct.brand', 'unit', 'secondaryUnit'])
             ->whereIn('id', $variantIds)->get()->keyBy('id');
 
         $groups = [];
@@ -743,6 +745,10 @@ class SalesmanAppApiController extends Controller
                 'brand'    => $variant->masterProduct->brand->name ?? null,
                 'sku'      => $variant->sku,
                 'unit'     => $variant->unit->name ?? null,
+                'secondary_unit' => $variant->secondaryUnit->name ?? null,
+                'secondary_unit_value' => $variant->secondary_unit_value,
+                'qty_step' => (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
+                'min_qty'  => (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
                 'image'    => $variant->image ?: ($variant->masterProduct->image ?? null),
                 'qty'      => (float) $row->qty,
                 'unit_price' => $unitPrice,

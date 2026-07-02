@@ -9,8 +9,9 @@ class Scheme extends Model
 {
     use HasFactory;
 
-    public const TYPE_BUY_X_GET_Y = 'buy_x_get_y';
-    public const TYPE_GROUP_DISCOUNT = 'group_discount';
+    public const TYPE_BUY_X_GET_Y          = 'buy_x_get_y';
+    public const TYPE_GROUP_DISCOUNT_PRICE  = 'group_discount_price';
+    public const TYPE_GROUP_DISCOUNT_QTY    = 'group_discount_qty';
 
     protected $table = 'schemes';
 

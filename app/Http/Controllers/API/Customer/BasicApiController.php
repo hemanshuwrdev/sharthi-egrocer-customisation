@@ -204,142 +204,177 @@ class BasicApiController extends Controller
         return CommonHelper::responseWithData($data);
     }
 
-    // Favorites
+    // Favorites — Sarthi master catalog
     public function getFavorites(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
-            'latitude' => 'required',
+            'latitude'  => 'required',
             'longitude' => 'required',
-        ], [
-            'latitude.required' => 'The latitude field is required.',
-            'longitude.required' => 'The longitude field is required.'
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $userId = auth()->user()->id;
+        $limit  = max(1, (int) ($request->limit ?? 10));
+        $offset = max(0, (int) ($request->offset ?? 0));
 
-        $user_id = auth()->user()->id;
-        $limit = ($request->limit) ?? 10;
-        $offset = ($request->offset) ?? 0;
+        $variantIds = Favorite::where('user_id', $userId)
+            ->whereNotNull('master_product_variant_id')
+            ->orderBy('created_at', 'DESC')
+            ->pluck('master_product_variant_id');
 
-        $total = Favorite::select(DB::raw('COUNT(favorites.id) AS total'))->from('favorites')->Join('products', 'favorites.product_id', '=', 'products.id')->where('favorites.user_id', '=', $user_id)->first();
-
-        try {
-            $products = Favorite::select(
-                'favorites.id',
-                'favorites.user_id',
-                'favorites.product_id',
-                'products.tax_id',
-                'products.row_order',
-                'products.name',
-                'products.slug',
-                'products.category_id',
-                'products.indicator',
-                'products.manufacturer',
-                'products.made_in',
-                'products.return_status',
-                'products.cancelable_status',
-                'products.till_status',
-                'products.image',
-                'products.seller_id',
-                'taxes.percentage as tax_percentage',
-                'taxes.title as tax_title',
-                'products.description',
-                'products.status',
-                'products.created_at',
-                'cities.boundary_points',
-                'co.name as country_made_in'
-            )
-                ->Join('products', 'favorites.product_id', '=', 'products.id')
-                ->leftJoin("countries as co", "products.made_in", "=", "co.id")
-                ->leftJoin('sellers', 'products.seller_id', '=', 'sellers.id')
-                ->leftJoin('cities', 'sellers.city_id', '=', 'cities.id')
-                ->leftJoin('taxes', 'products.tax_id', '=', 'taxes.id')
-                ->where('favorites.user_id', '=', $user_id)
-                ->orderBy('favorites.created_at', 'DESC')
-                ->skip($offset)->take($limit)->get();
-        } catch (\Exception $e) {
-            Log::info("Favorites Error : " . $e->getMessage());
-            throw $e;
-            return CommonHelper::responseError("Something Went Wrong!");
-        }
-        $productArray = array();
-        foreach ($products as $key => $row) {
-            array_push($productArray, CommonHelper::getProductDetails($row->product_id, $user_id, true, $request));
-        }
-
-        foreach ($productArray as $product) {
-            if (empty($product->variants) || !is_array($product->variants)) {
-                continue;
-            }
-            foreach ($product->variants as $variant) {
-                $variantId = is_object($variant) ? $variant->id : ($variant['id'] ?? null);
-                if (!$variantId) {
-                    continue;
-                }
-                $stockUnitId = ProductVariant::where('id', $variantId)->value('stock_unit_id');
-                $unit = $stockUnitId ? Unit::find($stockUnitId) : null;
-                if (is_object($variant)) {
-                    $variant->unit = $unit;
-                } else {
-                    $variant['unit'] = $unit ? $unit->toArray() : null;
-                }
-            }
-        }
-
-        if (!empty($productArray)) {
-            return CommonHelper::responseWithData($productArray, $total->total);
-        } else {
+        if ($variantIds->isEmpty()) {
             return CommonHelper::responseError('no_items_found');
         }
+
+        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+        if (empty($cityIds)) {
+            return CommonHelper::responseWithData([], 0);
+        }
+
+        $mappings  = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->get(['brand_id', 'seller_id']);
+        $brandIds  = $mappings->pluck('brand_id')->unique()->values();
+        $sellerIds = $mappings->pluck('seller_id')->unique()->values();
+        $allowedPairs = $mappings->map(fn($m) => $m->brand_id . '_' . $m->seller_id)->unique()->flip();
+
+        $sellers     = \App\Models\Seller::whereIn('id', $sellerIds)->get(['id', 'name', 'logo'])->keyBy('id');
+        $sellerNames = $sellers->pluck('name', 'id');
+        $brandOverlap = Brand::whereIn('id', $brandIds)->pluck('is_overlap_allowed', 'id');
+
+        $rows = \App\Models\MasterProductVariant::query()
+            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit'])
+            ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->join('seller_products', 'seller_products.master_product_variant_id', '=', 'master_product_variants.id')
+            ->whereIn('master_product_variants.id', $variantIds)
+            ->whereIn('master_products.brand_id', $brandIds)
+            ->whereIn('seller_products.seller_id', $sellerIds)
+            ->where('master_products.status', 1)
+            ->where('master_product_variants.status', 1)
+            ->where('seller_products.status', 1)
+            ->where('seller_products.selling_price', '>', 0)
+            ->select(
+                'master_product_variants.*',
+                'master_products.brand_id as mp_brand_id',
+                'seller_products.id as sp_id',
+                'seller_products.seller_id as sp_seller_id',
+                'seller_products.mrp as sp_mrp',
+                'seller_products.selling_price as sp_selling_price',
+                'seller_products.discounted_price as sp_discounted_price',
+                'seller_products.stock as sp_stock'
+            )
+            ->get()
+            ->filter(fn($r) => isset($allowedPairs[$r->mp_brand_id . '_' . $r->sp_seller_id]));
+
+        $slabsBySp = \App\Models\SellerProductSlabPrice::whereIn('seller_product_id', $rows->pluck('sp_id')->unique())
+            ->orderBy('min_qty')
+            ->get()
+            ->groupBy('seller_product_id');
+
+        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers) {
+            $first = $group->first();
+            $mp    = $first->masterProduct;
+            $overlapAllowed = (int) ($brandOverlap[$first->mp_brand_id] ?? 0) === 1;
+
+            $offers = $group->map(function ($r) use ($slabsBySp, $sellerNames, $sellers) {
+                $sellerLogo = $sellers[$r->sp_seller_id]->logo ?? null;
+                return [
+                    'seller_id'         => $r->sp_seller_id,
+                    'seller_name'       => $sellerNames[$r->sp_seller_id] ?? null,
+                    'seller_image_url'  => $sellerLogo ? asset('storage/' . $sellerLogo) : null,
+                    'seller_product_id' => $r->sp_id,
+                    'mrp'               => (float) $r->sp_mrp,
+                    'selling_price'     => (float) $r->sp_selling_price,
+                    'discounted_price'  => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
+                    'stock'             => (float) $r->sp_stock,
+                    'slab_prices'       => isset($slabsBySp[$r->sp_id])
+                        ? $slabsBySp[$r->sp_id]->map(fn($s) => [
+                            'id'      => $s->id,
+                            'min_qty' => $s->min_qty,
+                            'max_qty' => $s->max_qty,
+                            'price'   => (float) $s->price,
+                        ])->values()
+                        : [],
+                ];
+            })->sortBy(fn($o) => $o['discounted_price'] > 0 ? $o['discounted_price'] : $o['selling_price'])->values();
+
+            return [
+                'product_variant_id'   => $first->id,
+                'product_id'           => $first->master_product_id,
+                'master_product_name'  => $mp ? $mp->name : null,
+                'brand'                => $mp && $mp->brand ? $mp->brand->name : null,
+                'brand_id'             => $mp ? $mp->brand_id : null,
+                'parent_company'       => $mp && $mp->parentCompany ? $mp->parentCompany->name : null,
+                'category'             => $mp && $mp->category ? $mp->category->name : null,
+                'category_id'          => $mp ? $mp->category_id : null,
+                'sku'                  => $first->sku,
+                'unit'                 => $first->unit ? $first->unit->name : null,
+                'secondary_unit'       => $first->secondaryUnit ? $first->secondaryUnit->name : null,
+                'secondary_unit_value' => $first->secondary_unit_value,
+                'qty_step'             => (float) ($first->secondary_unit_value ?? 1) ?: 1,
+                'min_qty'              => (float) ($first->secondary_unit_value ?? 1) ?: 1,
+                'weight'               => $first->weight,
+                'image'                => $first->image ?: ($mp ? $mp->image : null),
+                'overlap_allowed'      => $overlapAllowed,
+                'offers'               => $offers,
+                'best_offer'           => $offers->first(),
+                'is_favorite'          => true,
+            ];
+        })->values();
+
+        $total = $grouped->count();
+        $paged = $grouped->slice($offset, $limit)->values();
+
+        if ($paged->isEmpty()) {
+            return CommonHelper::responseError('no_items_found');
+        }
+        return CommonHelper::responseWithData($paged, $total);
     }
 
     public function addToFavorite(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'product_id' => 'required',
+            'product_variant_id' => 'required|exists:master_product_variants,id',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
-        $favorite = Favorite::where('user_id', auth()->user()->id)->where('product_id', $request->product_id)->first();
-        if ($favorite) {
+
+        $userId    = auth()->user()->id;
+        $variantId = (int) $request->product_variant_id;
+
+        $exists = Favorite::where('user_id', $userId)->where('master_product_variant_id', $variantId)->exists();
+        if ($exists) {
             return CommonHelper::responseError('product_already_added_as_favorite');
-        } else {
-            $product = Product::where('id', $request->product_id)->first();
-            if (!empty($product)) {
-                $favorite = new Favorite();
-                $favorite->user_id = auth()->user()->id;
-                $favorite->product_id = $request->product_id;
-                $favorite->save();
-                return CommonHelper::responseSuccess('item_added_in_users_favorite_list_successfully');
-            } else {
-                return CommonHelper::responseError('no_products_found');
-            }
         }
+
+        $favorite                          = new Favorite();
+        $favorite->user_id                 = $userId;
+        $favorite->product_id              = 0;
+        $favorite->master_product_variant_id = $variantId;
+        $favorite->save();
+
+        return CommonHelper::responseSuccess('item_added_in_users_favorite_list_successfully');
     }
+
     public function removeFromFavorite(Request $request)
     {
-        $favorite = Favorite::where('user_id', auth()->user()->id);
-        if (isset($request->product_id)) {
-            $favorite->where('product_id', $request->product_id)->first();
-            if ($favorite) {
-                $favorite->delete();
-                return CommonHelper::responseSuccess('item_removed_from_users_favorite_list_successfully');
-            } else {
-                return CommonHelper::responseError('no_product_found');
-            }
-        } else {
-            $favorite->get();
-            if (count($favorite) > 0) {
-                $favorite->delete();
-                return CommonHelper::responseSuccess('all_items_removed_from_users_favorite_list_successfully');
-            } else {
-                return CommonHelper::responseError('no_product_found');
-            }
+        $userId = auth()->user()->id;
+
+        if ($request->filled('product_variant_id')) {
+            $deleted = Favorite::where('user_id', $userId)
+                ->where('master_product_variant_id', (int) $request->product_variant_id)
+                ->delete();
+            return $deleted
+                ? CommonHelper::responseSuccess('item_removed_from_users_favorite_list_successfully')
+                : CommonHelper::responseError('no_product_found');
         }
+
+        // Remove all
+        $count = Favorite::where('user_id', $userId)->delete();
+        return $count
+            ? CommonHelper::responseSuccess('all_items_removed_from_users_favorite_list_successfully')
+            : CommonHelper::responseError('no_product_found');
     }
 
     // Faqs

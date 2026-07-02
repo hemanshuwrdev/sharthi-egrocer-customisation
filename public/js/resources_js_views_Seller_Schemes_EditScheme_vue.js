@@ -162,6 +162,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -273,13 +277,16 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     removeSlab: function removeSlab(index) {
       this.record.slabs.splice(index, 1);
     },
+    isGroupType: function isGroupType() {
+      return this.record.type === 'group_discount_price' || this.record.type === 'group_discount_qty';
+    },
     saveRecord: function saveRecord() {
       var _this3 = this;
       if (this.record.type === 'buy_x_get_y' && (!this.record.buy_product || !this.record.free_product)) {
         this.showError("Please select buy and free products.");
         return;
       }
-      if (this.record.type === 'group_discount' && this.record.products.length === 0) {
+      if (this.isGroupType() && this.record.products.length === 0) {
         this.showError("Please select at least one product.");
         return;
       }
@@ -299,7 +306,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         formData.append('buy_qty', this.record.buy_qty);
         formData.append('free_seller_product_id', this.record.free_product.id);
         formData.append('free_qty', this.record.free_qty);
-      } else {
+      } else if (this.isGroupType()) {
         this.record.products.forEach(function (p, index) {
           formData.append('product_ids[' + index + ']', p.id);
         });
@@ -657,8 +664,14 @@ var render = function () {
                             _vm._v(" "),
                             _c(
                               "option",
-                              { attrs: { value: "group_discount" } },
-                              [_vm._v(_vm._s(_vm.__("group_discount")))]
+                              { attrs: { value: "group_discount_price" } },
+                              [_vm._v(_vm._s(_vm.__("group_discount_price")))]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "option",
+                              { attrs: { value: "group_discount_qty" } },
+                              [_vm._v(_vm._s(_vm.__("group_discount_qty")))]
                             ),
                           ]
                         ),
@@ -861,11 +874,24 @@ var render = function () {
                                             "label",
                                             { staticClass: "small" },
                                             [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__("minimum_basket_value")
-                                                )
-                                              ),
+                                              _vm.record.type ===
+                                              "group_discount_qty"
+                                                ? _c("span", [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__("minimum_units")
+                                                      )
+                                                    ),
+                                                  ])
+                                                : _c("span", [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__(
+                                                          "minimum_basket_value"
+                                                        )
+                                                      ) + " (₹)"
+                                                    ),
+                                                  ]),
                                             ]
                                           ),
                                           _vm._v(" "),
@@ -881,7 +907,7 @@ var render = function () {
                                             staticClass: "form-control",
                                             attrs: {
                                               type: "number",
-                                              step: "0.01",
+                                              step: "1",
                                               min: "1",
                                               required: "",
                                             },

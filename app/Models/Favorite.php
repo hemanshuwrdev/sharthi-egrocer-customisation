@@ -9,7 +9,8 @@ class Favorite extends Model
 {
     use HasFactory;
     protected $hidden = [];
-    protected $appends = ['image_url'];
+    protected $appends = [];
+    protected $fillable = ['user_id', 'product_id', 'master_product_variant_id'];
    
     public function images(){
         return $this->hasMany(ProductImages::class,'product_id','product_id')

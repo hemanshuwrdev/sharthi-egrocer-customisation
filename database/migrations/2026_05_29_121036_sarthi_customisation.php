@@ -121,6 +121,16 @@ class SarthiCustomisation extends Migration
         //     $table->index(['product_variant_id', 'min_qty'], 'idx_psp_variant_minqty');
         // });
 
+        // 3-pre. Sarthi: favorites — add master_product_variant_id so retailer can favourite master-catalog SKUs
+        if (Schema::hasTable('favorites')) {
+            Schema::table('favorites', function (Blueprint $table) {
+                if (!Schema::hasColumn('favorites', 'master_product_variant_id')) {
+                    $table->unsignedBigInteger('master_product_variant_id')->nullable()->after('product_id');
+                    $table->index('master_product_variant_id', 'idx_fav_master_variant');
+                }
+            });
+        }
+
         // 3. Slab snapshot + master catalog references on order_items (frozen at order time)
         Schema::table('order_items', function (Blueprint $table) {
             if (!Schema::hasColumn('order_items', 'slab_unit_price')) {
@@ -499,9 +509,9 @@ class SarthiCustomisation extends Migration
         if (!Schema::hasTable('schemes')) {
             Schema::create('schemes', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('seller_id')->constrained('sellers')->onDelete('cascade')->comment('Distributor who owns the scheme');
+                $table->foreignId('seller_id')->constrained('sellers')->onDelete('cascade');
                 $table->string('name');
-                $table->enum('type', ['buy_x_get_y', 'group_discount']);
+                $table->enum('type', ['buy_x_get_y', 'group_discount_price', 'group_discount_qty']);
                 // buy_x_get_y fields (NULL for group_discount)
                 $table->unsignedBigInteger('buy_seller_product_id')->nullable();
                 $table->unsignedInteger('buy_qty')->nullable();
@@ -540,6 +550,16 @@ class SarthiCustomisation extends Migration
 
                 $table->index(['scheme_id', 'min_value'], 'idx_schemeslabs_minval');
             });
+        }
+
+        // 10.d-pre. Migrate existing 'group_discount' records to 'group_discount_price' and expand enum
+        if (Schema::hasTable('schemes')) {
+            // Step 1: expand enum to include all old + new values so the UPDATE below is valid
+            DB::statement("ALTER TABLE schemes MODIFY COLUMN type ENUM('buy_x_get_y','group_discount','group_discount_price','group_discount_qty') NOT NULL");
+            // Step 2: rename existing data
+            DB::table('schemes')->where('type', 'group_discount')->update(['type' => 'group_discount_price']);
+            // Step 3: drop the legacy value
+            DB::statement("ALTER TABLE schemes MODIFY COLUMN type ENUM('buy_x_get_y','group_discount_price','group_discount_qty') NOT NULL");
         }
 
         // 10.d Scheme snapshot on orders (kept even if scheme is later deleted/edited)
@@ -827,6 +847,11 @@ class SarthiCustomisation extends Migration
         ])->delete();
 
         // Scheme engine (reverse FK order)
+        if (Schema::hasTable('schemes')) {
+            DB::statement("ALTER TABLE schemes MODIFY COLUMN type ENUM('buy_x_get_y','group_discount','group_discount_price','group_discount_qty') NOT NULL");
+            DB::table('schemes')->whereIn('type', ['group_discount_price', 'group_discount_qty'])->update(['type' => 'group_discount']);
+            DB::statement("ALTER TABLE schemes MODIFY COLUMN type ENUM('buy_x_get_y','group_discount') NOT NULL");
+        }
         Schema::dropIfExists('scheme_slabs');
         Schema::dropIfExists('scheme_products');
         Schema::dropIfExists('schemes');

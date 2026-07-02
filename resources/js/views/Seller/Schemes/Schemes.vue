@@ -47,7 +47,8 @@
 
                                 <template #cell(type)="row">
                                     <span v-if="row.item.type === 'buy_x_get_y'" class="badge bg-info">{{ __('buy_x_get_y') }}</span>
-                                    <span v-else class="badge bg-primary">{{ __('group_discount') }}</span>
+                                    <span v-else-if="row.item.type === 'group_discount_qty'" class="badge bg-warning text-dark">{{ __('group_discount_qty') }}</span>
+                                    <span v-else class="badge bg-primary">{{ __('group_discount_price') }}</span>
                                 </template>
 
                                 <template #cell(offer)="row">
@@ -58,7 +59,7 @@
                                     <template v-else>
                                         <span class="badge bg-secondary me-1" v-for="(p, i) in row.item.products" :key="i">{{ p }}</span><br>
                                         <small v-for="(s, i) in row.item.slabs" :key="'s' + i" class="d-block">
-                                            ≥ {{ s.min_value }} → {{ s.discount_value }}{{ s.discount_type === 'percentage' ? '%' : '' }} {{ __('off') }}
+                                            ≥ {{ s.min_value }}{{ row.item.type === 'group_discount_qty' ? ' units' : ' ₹' }} → {{ s.discount_value }}{{ s.discount_type === 'percentage' ? '%' : ' ₹' }} {{ __('off') }}
                                         </small>
                                     </template>
                                 </template>

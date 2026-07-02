@@ -134,7 +134,7 @@ class SchemesApiController extends Controller
 
         $rules = [
             'name'       => 'required|string|max:255',
-            'type'       => 'required|in:buy_x_get_y,group_discount',
+            'type'       => 'required|in:buy_x_get_y,group_discount_price,group_discount_qty',
             'start_date' => 'required|date',
             'end_date'   => 'required|date|after_or_equal:start_date',
             'status'     => 'required|integer|in:0,1',
@@ -163,7 +163,8 @@ class SchemesApiController extends Controller
         }
 
         // Every referenced product must belong to this distributor.
-        $referenced = $request->type === 'buy_x_get_y'
+        $isBxgy = $request->type === 'buy_x_get_y';
+        $referenced = $isBxgy
             ? [(int) $request->buy_seller_product_id, (int) $request->free_seller_product_id]
             : array_map('intval', $request->product_ids);
         $owned = SellerProduct::where('seller_id', $sellerId)->whereIn('id', $referenced)->count();
@@ -225,6 +226,8 @@ class SchemesApiController extends Controller
             ? trim(($sp->masterProductVariant->masterProduct->name ?? '') . ' — ' . ($sp->masterProductVariant->sku ?? ''))
             : null;
 
+        $isBxgy = $s->type === Scheme::TYPE_BUY_X_GET_Y;
+
         return [
             'id'         => $s->id,
             'name'       => $s->name,
@@ -232,16 +235,18 @@ class SchemesApiController extends Controller
             'start_date' => $s->start_date,
             'end_date'   => $s->end_date,
             'status'     => $s->status,
-            'buy_product'  => $productName($s->buyProduct),
-            'buy_qty'      => $s->buy_qty,
-            'free_product' => $productName($s->freeProduct),
-            'free_qty'     => $s->free_qty,
-            'products'     => $s->schemeProducts->map(fn ($p) => $productName($p->sellerProduct))->filter()->values(),
-            'slabs'        => $s->schemeSlabs->map(fn ($sl) => [
+            // BXGY fields (null for group types)
+            'buy_product'  => $isBxgy ? $productName($s->buyProduct)  : null,
+            'buy_qty'      => $isBxgy ? $s->buy_qty                   : null,
+            'free_product' => $isBxgy ? $productName($s->freeProduct) : null,
+            'free_qty'     => $isBxgy ? $s->free_qty                  : null,
+            // Group fields (null for BXGY)
+            'products'     => !$isBxgy ? $s->schemeProducts->map(fn ($p) => $productName($p->sellerProduct))->filter()->values() : [],
+            'slabs'        => !$isBxgy ? $s->schemeSlabs->map(fn ($sl) => [
                 'min_value'      => (float) $sl->min_value,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => (float) $sl->discount_value,
-            ])->values(),
+            ])->values() : [],
         ];
     }
 }

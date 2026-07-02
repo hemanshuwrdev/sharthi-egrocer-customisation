@@ -17,10 +17,10 @@ class SchemeEngine
      * [
      *   'scheme_id'       => int,
      *   'name'            => string,
-     *   'type'            => 'buy_x_get_y' | 'group_discount',
-     *   'benefit'         => float,   // money value used to pick the best scheme
-     *   'scheme_discount' => float,   // amount to subtract from order total (group only)
-     *   'free_items'      => [ ['seller_product_id', 'master_product_variant_id', 'qty', 'product_name', 'variant_name', 'unit_value'], ... ],
+     *   'type'            => 'buy_x_get_y' | 'group_discount_price' | 'group_discount_qty',
+     *   'benefit'         => float,
+     *   'scheme_discount' => float,
+     *   'free_items'      => [...],
      * ]
      */
     public static function evaluate(int $sellerId, array $lines): ?array
@@ -29,11 +29,11 @@ class SchemeEngine
             return null;
         }
 
-        $qtyByProduct = [];
+        $qtyByProduct   = [];
         $totalByProduct = [];
         foreach ($lines as $line) {
             $spId = (int) $line['seller_product_id'];
-            $qtyByProduct[$spId] = ($qtyByProduct[$spId] ?? 0) + (float) $line['qty'];
+            $qtyByProduct[$spId]   = ($qtyByProduct[$spId]   ?? 0) + (float) $line['qty'];
             $totalByProduct[$spId] = ($totalByProduct[$spId] ?? 0) + (float) $line['line_total'];
         }
 
@@ -44,9 +44,12 @@ class SchemeEngine
 
         $best = null;
         foreach ($schemes as $scheme) {
-            $result = $scheme->type === Scheme::TYPE_BUY_X_GET_Y
-                ? self::evaluateBuyXGetY($scheme, $qtyByProduct)
-                : self::evaluateGroupDiscount($scheme, $totalByProduct);
+            $result = match ($scheme->type) {
+                Scheme::TYPE_BUY_X_GET_Y         => self::evaluateBuyXGetY($scheme, $qtyByProduct),
+                Scheme::TYPE_GROUP_DISCOUNT_PRICE => self::evaluateGroupDiscountPrice($scheme, $totalByProduct),
+                Scheme::TYPE_GROUP_DISCOUNT_QTY   => self::evaluateGroupDiscountQty($scheme, $qtyByProduct, $totalByProduct),
+                default                           => null,
+            };
 
             if ($result !== null && ($best === null || $result['benefit'] > $best['benefit'])) {
                 $best = $result;
@@ -59,12 +62,6 @@ class SchemeEngine
     /**
      * Find the single nearest scheme that is NOT yet triggered — the one requiring
      * the smallest additional spend / qty to unlock.
-     *
-     * For buy_x_get_y : gap = (buy_qty - currentQty) × unit_price. Skipped when already applied.
-     * For group_discount: gap = nextSlab.min_value - currentGroupTotal (next unmet slab, even if a
-     *                     lower slab is already the applied_scheme — shows upgrade opportunity).
-     *
-     * Returns null when the cart is empty, all schemes are fully unlocked, or no active schemes exist.
      */
     public static function nearestUnapplied(int $sellerId, array $lines, ?int $appliedSchemeId = null): ?array
     {
@@ -90,23 +87,21 @@ class SchemeEngine
             ])
             ->get();
 
-        $nearest = null; // ['amountNeeded', 'minimumAmount', 'qtyNeeded', 'scheme', 'nextSlab', 'currentBuyQty', 'currentGroupTotal']
+        $nearest = null;
 
         foreach ($schemes as $scheme) {
             if ($scheme->type === Scheme::TYPE_BUY_X_GET_Y) {
-                // BXGY has no "upgrade" concept — skip if already the applied scheme.
                 if ($scheme->id === $appliedSchemeId) {
                     continue;
                 }
-
                 if (!$scheme->buy_seller_product_id || !$scheme->buy_qty || !$scheme->free_seller_product_id || !$scheme->free_qty) {
                     continue;
                 }
 
-                $currentQty    = (float) ($qtyByProduct[(int) $scheme->buy_seller_product_id] ?? 0);
-                $rawQtyNeeded  = (float) $scheme->buy_qty - $currentQty;
+                $currentQty   = (float) ($qtyByProduct[(int) $scheme->buy_seller_product_id] ?? 0);
+                $rawQtyNeeded = (float) $scheme->buy_qty - $currentQty;
                 if ($rawQtyNeeded <= 0) {
-                    continue; // already qualifies (SchemeEngine picked something better)
+                    continue;
                 }
 
                 $buyProduct = $scheme->buyProduct;
@@ -120,12 +115,13 @@ class SchemeEngine
                     continue;
                 }
 
-                $qtyNeeded     = (int) ceil($rawQtyNeeded);
-                $amountNeeded  = round($qtyNeeded * $unitPrice, 2);
+                $qtyNeeded    = (int) ceil($rawQtyNeeded);
+                $amountNeeded = round($qtyNeeded * $unitPrice, 2);
                 $minimumAmount = round((float) $scheme->buy_qty * $unitPrice, 2);
 
                 if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
                     $nearest = [
+                        'type'               => Scheme::TYPE_BUY_X_GET_Y,
                         'amountNeeded'       => $amountNeeded,
                         'minimumAmount'      => $minimumAmount,
                         'qtyNeeded'          => $qtyNeeded,
@@ -133,10 +129,13 @@ class SchemeEngine
                         'nextSlab'           => null,
                         'currentBuyQty'      => $currentQty,
                         'currentGroupTotal'  => null,
+                        'currentGroupQty'    => null,
+                        'groupQtyNeeded'     => null,
+                        'minimumGroupQty'    => null,
                     ];
                 }
 
-            } else { // group_discount
+            } elseif ($scheme->type === Scheme::TYPE_GROUP_DISCOUNT_PRICE) {
                 $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
                 if (empty($groupIds)) {
                     continue;
@@ -147,14 +146,13 @@ class SchemeEngine
                     $groupTotal += $totalByProduct[(int) $spId] ?? 0;
                 }
 
-                // Next unmet slab — works for both unapplied schemes and upgrade hints.
                 $nextSlab = $scheme->schemeSlabs
                     ->where('min_value', '>', $groupTotal)
                     ->sortBy('min_value')
                     ->first();
 
                 if (!$nextSlab) {
-                    continue; // all slabs already unlocked or no slabs defined
+                    continue;
                 }
 
                 $amountNeeded  = round((float) $nextSlab->min_value - $groupTotal, 2);
@@ -162,12 +160,59 @@ class SchemeEngine
 
                 if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
                     $nearest = [
+                        'type'               => Scheme::TYPE_GROUP_DISCOUNT_PRICE,
                         'amountNeeded'       => $amountNeeded,
                         'minimumAmount'      => $minimumAmount,
+                        'qtyNeeded'          => null,
                         'scheme'             => $scheme,
                         'nextSlab'           => $nextSlab,
                         'currentBuyQty'      => null,
                         'currentGroupTotal'  => round($groupTotal, 2),
+                        'currentGroupQty'    => null,
+                        'groupQtyNeeded'     => null,
+                        'minimumGroupQty'    => null,
+                    ];
+                }
+
+            } elseif ($scheme->type === Scheme::TYPE_GROUP_DISCOUNT_QTY) {
+                $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
+                if (empty($groupIds)) {
+                    continue;
+                }
+
+                $groupQty   = 0.0;
+                $groupTotal = 0.0;
+                foreach ($groupIds as $spId) {
+                    $groupQty   += $qtyByProduct[(int) $spId]   ?? 0;
+                    $groupTotal += $totalByProduct[(int) $spId] ?? 0;
+                }
+
+                $nextSlab = $scheme->schemeSlabs
+                    ->where('min_value', '>', $groupQty)
+                    ->sortBy('min_value')
+                    ->first();
+
+                if (!$nextSlab) {
+                    continue;
+                }
+
+                $groupQtyNeeded  = (int) ceil((float) $nextSlab->min_value - $groupQty);
+                $minimumGroupQty = (int) $nextSlab->min_value;
+
+                // Use qty gap as the comparison metric (treat as "amount needed" for ranking)
+                if ($nearest === null || $groupQtyNeeded < $nearest['amountNeeded']) {
+                    $nearest = [
+                        'type'               => Scheme::TYPE_GROUP_DISCOUNT_QTY,
+                        'amountNeeded'       => $groupQtyNeeded,
+                        'minimumAmount'      => null,
+                        'qtyNeeded'          => null,
+                        'scheme'             => $scheme,
+                        'nextSlab'           => $nextSlab,
+                        'currentBuyQty'      => null,
+                        'currentGroupTotal'  => round($groupTotal, 2),
+                        'currentGroupQty'    => round($groupQty, 2),
+                        'groupQtyNeeded'     => $groupQtyNeeded,
+                        'minimumGroupQty'    => $minimumGroupQty,
                     ];
                 }
             }
@@ -178,7 +223,8 @@ class SchemeEngine
         }
 
         $s      = $nearest['scheme'];
-        $isBxgy = $s->type === Scheme::TYPE_BUY_X_GET_Y;
+        $type   = $s->type;
+        $isBxgy = $type === Scheme::TYPE_BUY_X_GET_Y;
 
         $buyProductData  = null;
         $freeProductData = null;
@@ -195,12 +241,11 @@ class SchemeEngine
 
             $fp      = $s->freeProduct;
             $fvariant = $fp ? $fp->masterProductVariant : null;
-            $fprice  = $fp ? (float) ($fp->discounted_price && (float) $fp->discounted_price > 0 ? $fp->discounted_price : $fp->selling_price) : 0;
             $freeProductData = $fp ? [
                 'id'         => $fp->id,
                 'name'       => trim(($fvariant->masterProduct->name ?? '') . ' — ' . ($fvariant->sku ?? '')),
                 'image'      => $fp->image ?? ($fvariant->masterProduct->image ?? null),
-                'unit_price' => $fprice,
+                'unit_price' => (float) ($fp->discounted_price && (float) $fp->discounted_price > 0 ? $fp->discounted_price : $fp->selling_price),
             ] : null;
         }
 
@@ -230,19 +275,24 @@ class SchemeEngine
         return [
             'id'                  => $s->id,
             'name'                => $s->name,
-            'offer_type'          => $s->type,
-            'amount_needed'       => $nearest['amountNeeded'],
-            'minimum_amount'      => $nearest['minimumAmount'],
+            'offer_type'          => $type,
             // BXGY fields
+            'amount_needed'       => $isBxgy ? $nearest['amountNeeded'] : ($type === Scheme::TYPE_GROUP_DISCOUNT_PRICE ? $nearest['amountNeeded'] : null),
+            'minimum_amount'      => $isBxgy ? $nearest['minimumAmount'] : ($type === Scheme::TYPE_GROUP_DISCOUNT_PRICE ? $nearest['minimumAmount'] : null),
             'buy_qty'             => $isBxgy ? (int) $s->buy_qty  : null,
             'get_qty'             => $isBxgy ? (int) $s->free_qty : null,
             'current_buy_qty'     => $isBxgy ? $nearest['currentBuyQty'] : null,
-            'qty_needed'          => $isBxgy ? $nearest['qtyNeeded']     : null,
+            'qty_needed'          => $isBxgy ? $nearest['qtyNeeded'] : null,
             'buy_product'         => $buyProductData,
             'free_product'        => $freeProductData,
-            // group_discount fields
+            // group_discount_price fields
             'current_group_total' => !$isBxgy ? $nearest['currentGroupTotal'] : null,
-            'next_slab'           => $nextSlabData,
+            // group_discount_qty fields
+            'current_group_qty'   => $type === Scheme::TYPE_GROUP_DISCOUNT_QTY ? $nearest['currentGroupQty'] : null,
+            'group_qty_needed'    => $type === Scheme::TYPE_GROUP_DISCOUNT_QTY ? $nearest['groupQtyNeeded'] : null,
+            'minimum_group_qty'   => $type === Scheme::TYPE_GROUP_DISCOUNT_QTY ? $nearest['minimumGroupQty'] : null,
+            // shared group fields
+            'next_slab'           => !$isBxgy ? $nextSlabData : null,
             'products'            => $productsData,
             'slabs'               => !$isBxgy ? $s->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
                 'min_value'      => (float) $sl->min_value,
@@ -264,7 +314,7 @@ class SchemeEngine
         }
 
         $multiples = (int) floor($cartQty / $scheme->buy_qty);
-        $freeQty = $multiples * (int) $scheme->free_qty;
+        $freeQty   = $multiples * (int) $scheme->free_qty;
 
         $freeProduct = SellerProduct::with('masterProductVariant.masterProduct')
             ->find($scheme->free_seller_product_id);
@@ -272,7 +322,6 @@ class SchemeEngine
             return null;
         }
 
-        // Stock must cover the free units PLUS whatever the cart already takes of the same product.
         $alreadyInCart = $qtyByProduct[(int) $freeProduct->id] ?? 0;
         if ((float) $freeProduct->stock < $freeQty + $alreadyInCart) {
             return null;
@@ -301,7 +350,7 @@ class SchemeEngine
         ];
     }
 
-    private static function evaluateGroupDiscount(Scheme $scheme, array $totalByProduct): ?array
+    private static function evaluateGroupDiscountPrice(Scheme $scheme, array $totalByProduct): ?array
     {
         $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
         if (empty($groupIds)) {
@@ -336,7 +385,53 @@ class SchemeEngine
         return [
             'scheme_id'       => $scheme->id,
             'name'            => $scheme->name,
-            'type'            => Scheme::TYPE_GROUP_DISCOUNT,
+            'type'            => Scheme::TYPE_GROUP_DISCOUNT_PRICE,
+            'benefit'         => $discount,
+            'scheme_discount' => $discount,
+            'free_items'      => [],
+        ];
+    }
+
+    private static function evaluateGroupDiscountQty(Scheme $scheme, array $qtyByProduct, array $totalByProduct): ?array
+    {
+        $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
+        if (empty($groupIds)) {
+            return null;
+        }
+
+        $groupQty   = 0.0;
+        $groupTotal = 0.0;
+        foreach ($groupIds as $spId) {
+            $groupQty   += $qtyByProduct[(int) $spId]   ?? 0;
+            $groupTotal += $totalByProduct[(int) $spId] ?? 0;
+        }
+        if ($groupQty <= 0) {
+            return null;
+        }
+
+        // Slab min_value is unit count for this type
+        $matched = $scheme->schemeSlabs
+            ->where('min_value', '<=', $groupQty)
+            ->sortByDesc('min_value')
+            ->first();
+        if (!$matched) {
+            return null;
+        }
+
+        // Discount is applied to the ₹ group total
+        $discount = $matched->discount_type === 'percentage'
+            ? round($groupTotal * (float) $matched->discount_value / 100, 2)
+            : (float) $matched->discount_value;
+        $discount = min($discount, $groupTotal);
+
+        if ($discount <= 0) {
+            return null;
+        }
+
+        return [
+            'scheme_id'       => $scheme->id,
+            'name'            => $scheme->name,
+            'type'            => Scheme::TYPE_GROUP_DISCOUNT_QTY,
             'benefit'         => $discount,
             'scheme_discount' => $discount,
             'free_items'      => [],

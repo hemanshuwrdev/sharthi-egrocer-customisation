@@ -114,6 +114,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -492,10 +493,20 @@ var render = function () {
                               ? _c("span", { staticClass: "badge bg-info" }, [
                                   _vm._v(_vm._s(_vm.__("buy_x_get_y"))),
                                 ])
+                              : row.item.type === "group_discount_qty"
+                              ? _c(
+                                  "span",
+                                  { staticClass: "badge bg-warning text-dark" },
+                                  [_vm._v(_vm._s(_vm.__("group_discount_qty")))]
+                                )
                               : _c(
                                   "span",
                                   { staticClass: "badge bg-primary" },
-                                  [_vm._v(_vm._s(_vm.__("group_discount")))]
+                                  [
+                                    _vm._v(
+                                      _vm._s(_vm.__("group_discount_price"))
+                                    ),
+                                  ]
                                 ),
                           ]
                         },
@@ -549,12 +560,18 @@ var render = function () {
                                         _vm._v(
                                           "\n                                        ≥ " +
                                             _vm._s(s.min_value) +
+                                            _vm._s(
+                                              row.item.type ===
+                                                "group_discount_qty"
+                                                ? " units"
+                                                : " ₹"
+                                            ) +
                                             " → " +
                                             _vm._s(s.discount_value) +
                                             _vm._s(
                                               s.discount_type === "percentage"
                                                 ? "%"
-                                                : ""
+                                                : " ₹"
                                             ) +
                                             " " +
                                             _vm._s(_vm.__("off")) +

@@ -36,7 +36,8 @@
                                         <label for="type">{{ __('scheme_type') }}</label>
                                         <select class="form-control" v-model="record.type" required>
                                             <option value="buy_x_get_y">{{ __('buy_x_get_y') }}</option>
-                                            <option value="group_discount">{{ __('group_discount') }}</option>
+                                            <option value="group_discount_price">{{ __('group_discount_price') }}</option>
+                                            <option value="group_discount_qty">{{ __('group_discount_qty') }}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -69,7 +70,7 @@
                                     </div>
                                 </template>
 
-                                <!-- Group discount fields -->
+                                <!-- Group discount fields (shared for both group types) -->
                                 <template v-else>
                                     <div class="col-md-12">
                                         <div class="form-group">
@@ -82,8 +83,11 @@
                                             <label>{{ __('discount_slabs') }}</label>
                                             <div class="row mb-2 align-items-end" v-for="(slab, index) in record.slabs" :key="index">
                                                 <div class="col-md-4">
-                                                    <label class="small">{{ __('minimum_basket_value') }}</label>
-                                                    <input type="number" step="0.01" min="1" v-model="slab.min_value" class="form-control" required>
+                                                    <label class="small">
+                                                        <span v-if="record.type === 'group_discount_qty'">{{ __('minimum_units') }}</span>
+                                                        <span v-else>{{ __('minimum_basket_value') }} (₹)</span>
+                                                    </label>
+                                                    <input type="number" step="1" min="1" v-model="slab.min_value" class="form-control" required>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="small">{{ __('discount_type') }}</label>
@@ -216,12 +220,15 @@ export default {
         removeSlab(index) {
             this.record.slabs.splice(index, 1);
         },
+        isGroupType() {
+            return this.record.type === 'group_discount_price' || this.record.type === 'group_discount_qty';
+        },
         saveRecord() {
             if (this.record.type === 'buy_x_get_y' && (!this.record.buy_product || !this.record.free_product)) {
                 this.showError("Please select buy and free products.");
                 return;
             }
-            if (this.record.type === 'group_discount' && this.record.products.length === 0) {
+            if (this.isGroupType() && this.record.products.length === 0) {
                 this.showError("Please select at least one product.");
                 return;
             }
@@ -241,7 +248,7 @@ export default {
                 formData.append('buy_qty', this.record.buy_qty);
                 formData.append('free_seller_product_id', this.record.free_product.id);
                 formData.append('free_qty', this.record.free_qty);
-            } else {
+            } else if (this.isGroupType()) {
                 this.record.products.forEach((p, index) => {
                     formData.append('product_ids[' + index + ']', p.id);
                 });

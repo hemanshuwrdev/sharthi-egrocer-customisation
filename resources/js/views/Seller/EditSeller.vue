@@ -676,7 +676,7 @@
 
                                                 </div>
 
-                                                <div class="card">
+                                                <div class="card" v-if="isSellerRole">
                                                     <div class="card-header">
                                                         <h4>{{ __('seller_bank_information') }}</h4>
                                                     </div>

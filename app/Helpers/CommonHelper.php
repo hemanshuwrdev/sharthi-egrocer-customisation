@@ -1325,6 +1325,7 @@ class CommonHelper
                 $sellerVariants = DB::table('seller_products as sp')
                     ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
                     ->leftJoin('units as u', 'mpv.unit_id', '=', 'u.id')
+                    ->leftJoin('units as sec_u', 'mpv.secondary_unit_id', '=', 'sec_u.id')
                     ->select(
                         'sp.id',
                         'sp.mrp',
@@ -1337,7 +1338,9 @@ class CommonHelper
                         'mpv.weight',
                         'mpv.sku',
                         'mpv.unit_id',
-                        'u.short_code as stock_unit_name'
+                        'mpv.secondary_unit_value',
+                        'u.short_code as stock_unit_name',
+                        'sec_u.name as secondary_unit_name'
                     )
                     ->where('mpv.master_product_id', $row->id)
                     ->whereIn('sp.seller_id', $seller_ids)
@@ -1420,6 +1423,10 @@ class CommonHelper
                         'weight'                   => $sp->weight ?? null,
                         'unit_id'                  => $sp->unit_id ?? null,
                         'stock_unit_name'          => $sp->stock_unit_name ?? '',
+                        'secondary_unit'           => $sp->secondary_unit_name ?? null,
+                        'secondary_unit_value'     => $sp->secondary_unit_value ?? 1,
+                        'qty_step'                 => (float) (($sp->secondary_unit_value ?? 1) > 0 ? $sp->secondary_unit_value : 1),
+                        'min_qty'                  => (float) (($sp->secondary_unit_value ?? 1) > 0 ? $sp->secondary_unit_value : 1),
                         'mrp'                      => self::doubleNumber($sp->mrp ?? 0),
                         'price'                    => $taxablePrice,
                         'discounted_price'         => $taxableDiscounted,
