@@ -72,4 +72,40 @@ class OrderStatusList extends Model
 
         return __($key);
     }
+
+    public static function getStatusNameTranslated($statusInput): string
+    {
+        if (is_numeric($statusInput)) {
+            return self::getTranslatedName((int)$statusInput);
+        }
+
+        if (is_string($statusInput)) {
+            $nameLower = trim(strtolower($statusInput));
+            $map = [
+                'payment pending'   => 1,
+                'received'          => 2,
+                'processed'         => 3,
+                'shipped'           => 4,
+                'out for delivery'  => 5,
+                'delivered'         => 6,
+                'cancelled'         => 7,
+                'returned'          => 8,
+                'pending'           => 9,
+                'ready for pickup'  => 10,
+                'picked up'         => 11,
+                'rescheduled'       => 12,
+            ];
+            if (isset($map[$nameLower])) {
+                return self::getTranslatedName($map[$nameLower]);
+            }
+            
+            // Try translating direct key if it exists in translation
+            $translated = __($nameLower);
+            if ($translated !== $nameLower) {
+                return $translated;
+            }
+        }
+
+        return (string)$statusInput;
+    }
 }

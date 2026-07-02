@@ -1923,5 +1923,9 @@
     "already_being_verified_by_another_salesman": "This request is already being verified by another salesman.",
     "address_change_verified": "Address change verified successfully. Retailer profile has been updated.",
     "no_address_change_request_found": "No address change request found.",
-    "address_change_request_submitted": "Your address change request has been submitted. A salesman will visit your new location to verify."
+    "address_change_request_submitted": "Your address change request has been submitted. A salesman will visit your new location to verify.",
+    "upi_id": "UPI ID",
+    "upi_mobile": "UPI Mobile Number",
+    "upi_name": "UPI Name",
+    "upi_information": "UPI Information"
 }

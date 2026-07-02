@@ -226,11 +226,16 @@ class LoadingSlipsApiController extends Controller
                 $currentStock = $pv ? (float)$pv->stock : 0;
             }
 
-            if ($currentStock < $vq['qty']) {
+            // Since stock was already decremented at order placement, the actual physical stock
+            // available in the warehouse is the remaining database stock plus the quantity
+            // already reserved/subtracted for the orders on this loading slip.
+            $physicalAvailableStock = $currentStock + $vq['qty'];
+
+            if ($physicalAvailableStock < $vq['qty']) {
                 $stockShortages[] = [
                     'name' => $vq['name'],
                     'required' => $vq['qty'],
-                    'available' => $currentStock,
+                    'available' => $physicalAvailableStock,
                 ];
             }
         }

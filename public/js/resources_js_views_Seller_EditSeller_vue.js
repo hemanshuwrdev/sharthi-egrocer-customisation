@@ -8021,7 +8021,7 @@ var render = function () {
                                                                       type: "text",
                                                                       placeholder:
                                                                         _vm.__(
-                                                                          "upi_id_placeholder"
+                                                                          "upi_id"
                                                                         ),
                                                                     },
                                                                     domProps: {

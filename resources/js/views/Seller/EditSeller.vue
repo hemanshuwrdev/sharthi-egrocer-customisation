@@ -729,7 +729,7 @@
                                                                     <label>{{ __('upi_id') }}</label>
                                                                     <input type="text" class="form-control"
                                                                         v-model="upi_id"
-                                                                        :placeholder="__('upi_id_placeholder')">
+                                                                        :placeholder="__('upi_id')">
                                                                     <small class="text-muted">e.g. name@upi</small>
                                                                 </div>
                                                             </div>

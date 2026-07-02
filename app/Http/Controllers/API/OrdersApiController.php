@@ -417,8 +417,10 @@ class OrdersApiController extends Controller
         }
 
         if (auth()->user()->role_id != Role::$roleSuperAdmin) {
-            if ($order->active_status > $request->status_id) {
-                return CommonHelper::responseError("You can not update this order status to " . $selectedStatus . "!");
+            if ($order->active_status != OrderStatusList::$rescheduled) {
+                if ($order->active_status > $request->status_id) {
+                    return CommonHelper::responseError("You can not update this order status to " . $selectedStatus . "!");
+                }
             }
         }
 
@@ -757,8 +759,10 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError('order_is_already_cancelled');
         }
 
-        if ($order->active_status > $request->status_id) {
-            return CommonHelper::responseError('you_cannot_update_this_order_status_to' . " " . $selectedStatus . "!");
+        if ($order->active_status != OrderStatusList::$rescheduled) {
+            if ($order->active_status > $request->status_id) {
+                return CommonHelper::responseError('you_cannot_update_this_order_status_to' . " " . $selectedStatus . "!");
+            }
         }
 
         if ($order->active_status == OrderStatusList::$paymentPending) {

@@ -1969,7 +1969,7 @@ class OrderApiController extends Controller
             $data = array();
             foreach ($orderStatus as $status) {
                 $subData = array();
-                array_push($subData, $status->status, CommonHelper::formatDateTime($status->created_at));
+                array_push($subData, OrderStatusList::getStatusNameTranslated($status->status), CommonHelper::formatDateTime($status->created_at));
                 array_push($data, $subData);
             }
             $res[$i]['status'] = json_encode($data);

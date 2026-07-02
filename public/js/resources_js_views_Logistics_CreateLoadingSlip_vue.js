@@ -364,7 +364,7 @@ __webpack_require__.r(__webpack_exports__);
         vehicle_id: this.selectedVehicleId,
         driver_id: this.selectedDriverId,
         order_ids: this.selectedOrderIds,
-        confirm_stock_shortage: confirmStock
+        confirm_stock_shortage: confirmStock === true
       }).then(function (res) {
         _this7.loading = false;
         if (res.data.status === 1) {
@@ -1131,7 +1131,7 @@ var render = function () {
                   on: {
                     submit: function ($event) {
                       $event.preventDefault()
-                      return _vm.createLoadingSlip.apply(null, arguments)
+                      return _vm.createLoadingSlip(false)
                     },
                   },
                 },

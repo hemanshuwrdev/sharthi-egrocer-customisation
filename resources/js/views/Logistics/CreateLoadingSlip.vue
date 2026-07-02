@@ -121,7 +121,7 @@
                         <h6 class="m-0 font-weight-bold">{{ __('logistics_planner') }}</h6>
                     </div>
                     <div class="card-body">
-                        <form @submit.prevent="createLoadingSlip">
+                        <form @submit.prevent="createLoadingSlip(false)">
                             <!-- Vehicle Select -->
                             <div class="form-group mb-3">
                                 <label class="form-control-label text-muted font-weight-bold mb-1">{{ __('select_delivery_vehicle') }} <span class="text-danger">*</span></label>
@@ -328,7 +328,7 @@ export default {
                 vehicle_id: this.selectedVehicleId,
                 driver_id: this.selectedDriverId,
                 order_ids: this.selectedOrderIds,
-                confirm_stock_shortage: confirmStock
+                confirm_stock_shortage: confirmStock === true
             }).then(res => {
                 this.loading = false;
                 if (res.data.status === 1) {

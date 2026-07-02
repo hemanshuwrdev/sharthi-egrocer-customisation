@@ -170,6 +170,26 @@ return new class extends Migration
                 $table->string('mobile')->nullable()->change();
             });
         }
+
+        // Update historical rescheduled orders to have active_status = 12
+        $orders = DB::table('orders')->get();
+        foreach ($orders as $order) {
+            $latestStatus = DB::table('order_statuses')
+                ->where('order_id', $order->id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($latestStatus && trim(strtolower($latestStatus->status)) === 'rescheduled') {
+                DB::table('orders')
+                    ->where('id', $order->id)
+                    ->update(['active_status' => \App\Models\OrderStatusList::$rescheduled]);
+
+                DB::table('order_items')
+                    ->where('order_id', $order->id)
+                    ->whereNotIn('active_status', [\App\Models\OrderStatusList::$cancelled, \App\Models\OrderStatusList::$returned])
+                    ->update(['active_status' => \App\Models\OrderStatusList::$rescheduled]);
+            }
+        }
     }
 
     /**
