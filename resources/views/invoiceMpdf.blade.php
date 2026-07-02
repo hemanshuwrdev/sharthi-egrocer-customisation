@@ -155,10 +155,25 @@
                     </td>
                     <td width="15%" style="vertical-align: top; text-align: right; border: none; padding: 0;">
                         <div style="display: inline-block; text-align: right;">
-                            <svg width="65" height="65" viewBox="0 0 29 29" fill="black" style="border: 1px solid #ccc; padding: 3px; background: #fff;">
-                                <path d="M0 0h9v9H0zm1 1v7h7V1zm18 18h9v9h-9zm1 1v7h7V19zM0 19h9v9H0zm1 1v7h7V20zM19 0h9v9h-9zm1 1v7h7V1zm-8 11h5v5h-5z" />
-                                <path d="M3 3h3v3H3zm19 0h3v3h-3zM3 22h3v3H3zm9-9h2v2h-2zm4 4h2v2h-2zm-4 4h2v2h-2zm8-4h2v2h-2zm0-4h2v2h-2zm-4-4h2v2h-2z" />
-                            </svg>
+                            @if (isset($seller) && !empty($seller->upi_id))
+                                @php
+                                    $upiId = trim($seller->upi_id);
+                                    $upiName = trim(!empty($seller->upi_name) ? $seller->upi_name : (!empty($seller->store_name) ? $seller->store_name : $app_name));
+                                    $amountToPay = floatval(isset($order->remaining_final) ? $order->remaining_final : ($order->final_total ?? 0));
+                                    $amount = number_format($amountToPay, 2, '.', '');
+                                    $note = 'Payment for Order #' . ($order->order_id ?? ($order->id ?? ''));
+                                    $upiUrl = "upi://pay?pa=" . rawurlencode($upiId) . "&pn=" . rawurlencode($upiName) . "&am=" . $amount . "&cu=INR&tn=" . rawurlencode($note);
+                                    $qrCodeSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(65)->margin(0)->generate($upiUrl);
+                                    $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvg);
+                                @endphp
+                                <a href="{{ $upiUrl }}" style="text-decoration: none; display: inline-block;">
+                                    <img src="{{ $qrCodeBase64 }}" width="65" height="65" style="border: 1px solid #ccc; padding: 3px; background: #fff;" alt="UPI QR Code" />
+                                </a>
+                            @else
+                                <div style="border: 1px solid #ccc; padding: 3px; background: #fff; width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; font-size: 6px; font-weight: bold; color: red; text-align: center; box-sizing: border-box; line-height: 1.2;">
+                                    UPI ID NOT SET
+                                </div>
+                            @endif
                             <span style="font-size: 7px; color: #666; margin-top: 4px; font-weight: bold; text-align: center; display: block; letter-spacing: 0.5px;">SCAN CODE</span>
                         </div>
                     </td>
