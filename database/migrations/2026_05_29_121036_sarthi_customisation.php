@@ -798,6 +798,16 @@ class SarthiCustomisation extends Migration
             }
         });
 
+        // Ensure Rescheduled status (ID 12) exists in the order_status_lists table
+        $rescheduledExists = DB::table('order_status_lists')->where('id', 12)->exists();
+        if (!$rescheduledExists) {
+            DB::table('order_status_lists')->where('status', 'Rescheduled')->delete();
+            DB::table('order_status_lists')->insert([
+                'id' => 12,
+                'status' => 'Rescheduled'
+            ]);
+        }
+
         $orders = DB::table('orders')->get();
         foreach ($orders as $order) {
             $latestStatus = DB::table('order_statuses')
