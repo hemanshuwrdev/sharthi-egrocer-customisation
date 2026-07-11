@@ -128,6 +128,10 @@ class SarthiCustomisation extends Migration
                     $table->unsignedBigInteger('master_product_variant_id')->nullable()->after('product_id');
                     $table->index('master_product_variant_id', 'idx_fav_master_variant');
                 }
+                if (!Schema::hasColumn('favorites', 'seller_id')) {
+                    $table->unsignedBigInteger('seller_id')->nullable()->after('master_product_variant_id');
+                    $table->index('seller_id', 'idx_fav_seller');
+                }
             });
         }
 
@@ -808,6 +812,16 @@ class SarthiCustomisation extends Migration
             ]);
         }
 
+        // POS orders in mainline: expand order_type enum + make user_id nullable
+        if (Schema::hasColumn('orders', 'order_type')) {
+            DB::statement("ALTER TABLE orders MODIFY COLUMN order_type ENUM('doorstep','selfpickup','pos') NOT NULL DEFAULT 'doorstep'");
+        }
+        Schema::table('orders', function (Blueprint $table) {
+            if (Schema::hasColumn('orders', 'user_id')) {
+                $table->unsignedBigInteger('user_id')->nullable()->change();
+            }
+        });
+
         $orders = DB::table('orders')->get();
         foreach ($orders as $order) {
             $latestStatus = DB::table('order_statuses')
@@ -835,6 +849,12 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        // POS mainline order_type shrink back + user_id not-nullable
+        DB::statement("ALTER TABLE orders MODIFY COLUMN order_type ENUM('doorstep','selfpickup') NOT NULL DEFAULT 'doorstep'");
+        Schema::table('orders', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id')->nullable(false)->change();
+        });
+
         // OTP role locking (reverse)
         Schema::table('sms_verifications', function (Blueprint $table) {
             if (Schema::hasColumn('sms_verifications', 'user_type')) {

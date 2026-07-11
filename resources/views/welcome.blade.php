@@ -219,7 +219,7 @@ $copyright_details =
         @auth
         /* Login*/
         window.UserPermissions = {!! json_encode(Auth::user()->allPermissions, true) !!};
-        window.Role = "{!! Auth::user()->role->name !!}";
+        window.Role = "{!! Auth::user()->role->name ?? '' !!}";
         @else
             /* Not Login*/
             window.UserPermissions = [];

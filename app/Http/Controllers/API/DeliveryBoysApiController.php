@@ -6,6 +6,9 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\DeliveryBoy;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderStatusList;
 use App\Models\Role;
 use App\Models\Seller;
 use App\Services\LanguageService;
@@ -537,5 +540,119 @@ class DeliveryBoysApiController extends Controller
                 'message' => $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * POST /delivery_boy/order/not_delivered
+     * Mark an order as not delivered with a reason.
+     * Body: order_id, reason (shop_closed|refused|other), reason_note (nullable)
+     */
+    public function markNotDelivered(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id'    => 'required|exists:orders,id',
+            'reason'      => 'required|in:shop_closed,refused,other',
+            'reason_note' => 'nullable|string|max:500',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $deliveryBoy = auth()->user()->deliveryBoy ?? null;
+        if (!$deliveryBoy) {
+            return CommonHelper::responseError('unauthorized');
+        }
+
+        $order = Order::find($request->order_id);
+        if ($order->delivery_boy_id != $deliveryBoy->id) {
+            return CommonHelper::responseError('order_not_assigned_to_you');
+        }
+        if ($order->active_status != OrderStatusList::$outForDelivery) {
+            return CommonHelper::responseError('order_must_be_out_for_delivery');
+        }
+
+        $note = $request->reason;
+        if ($request->reason_note) {
+            $note .= ': ' . $request->reason_note;
+        }
+
+        $order->active_status   = OrderStatusList::$notDelivered;
+        $order->delivery_reason = $note;
+        $order->save();
+
+        OrderItem::where('order_id', $order->id)->update(['active_status' => OrderStatusList::$notDelivered]);
+
+        return CommonHelper::responseSuccess('order_marked_as_not_delivered');
+    }
+
+    /**
+     * POST /delivery_boy/order/partial_deliver
+     * Mark an order as partially delivered, update per-item delivered qty + damage photos,
+     * and recalculate order.final_total based on what was actually delivered.
+     * Body: order_id, items[{order_item_id, delivered_qty, damage_photo(file)}]
+     */
+    public function markPartialDelivery(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id'                   => 'required|exists:orders,id',
+            'items'                      => 'required|array|min:1',
+            'items.*.order_item_id'      => 'required|integer|exists:order_items,id',
+            'items.*.delivered_qty'      => 'required|numeric|min:0',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $deliveryBoy = auth()->user()->deliveryBoy ?? null;
+        if (!$deliveryBoy) {
+            return CommonHelper::responseError('unauthorized');
+        }
+
+        $order = Order::find($request->order_id);
+        if ($order->delivery_boy_id != $deliveryBoy->id) {
+            return CommonHelper::responseError('order_not_assigned_to_you');
+        }
+        if ($order->active_status != OrderStatusList::$outForDelivery) {
+            return CommonHelper::responseError('order_must_be_out_for_delivery');
+        }
+
+        DB::transaction(function () use ($request, $order) {
+            foreach ($request->items as $idx => $itemData) {
+                $orderItem = OrderItem::where('id', $itemData['order_item_id'])
+                    ->where('order_id', $order->id)
+                    ->first();
+                if (!$orderItem) continue;
+
+                $orderItem->delivered_quantity = (float) $itemData['delivered_qty'];
+
+                // Handle damage photo upload if provided
+                if (!empty($request->file("items.{$idx}.damage_photo"))) {
+                    $photo = $request->file("items.{$idx}.damage_photo");
+                    $path  = $photo->store('damage_photos', 'public');
+                    $orderItem->damage_photo = $path;
+                }
+
+                $orderItem->save();
+            }
+
+            // Recalculate final_total based on delivered quantities only
+            $orderItems   = OrderItem::where('order_id', $order->id)->get();
+            $newTotal     = 0.0;
+            foreach ($orderItems as $oi) {
+                $deliveredQty = $oi->delivered_quantity ?? $oi->quantity;
+                $unitPrice    = (float) ($oi->discounted_price && (float) $oi->discounted_price > 0
+                    ? $oi->discounted_price
+                    : $oi->price);
+                $newTotal += $deliveredQty * $unitPrice;
+            }
+
+            $order->final_total  = round($newTotal, 2);
+            $order->active_status = OrderStatusList::$partialDelivery;
+            $order->save();
+
+            OrderItem::where('order_id', $order->id)->update(['active_status' => OrderStatusList::$partialDelivery]);
+        });
+
+        return CommonHelper::responseSuccess('order_marked_as_partial_delivery');
     }
 }

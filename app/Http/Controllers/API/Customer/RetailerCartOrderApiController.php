@@ -13,6 +13,7 @@ use App\Models\MasterProductVariant;
 use App\Models\Seller;
 use App\Models\SellerProduct;
 use App\Models\Setting;
+use App\Models\OrderStatus;
 use App\Models\OrderStatusList;
 use App\Services\SchemeEngine;
 use Illuminate\Http\Request;
@@ -195,13 +196,14 @@ class RetailerCartOrderApiController extends Controller
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
         foreach ($groups as $sellerId => &$group) {
             $schemeLines = $group['scheme_lines'] ?? [];
-            $scheme  = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
-            $nearest = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $scheme['scheme_id'] ?? null);
+            $scheme      = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
+            $appliedId   = $scheme['scheme_id'] ?? null;
+
             unset($group['scheme_lines']);
             $group['applied_scheme']  = $scheme;
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
             $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
-            $group['nearest_scheme']  = $nearest;
+            $group['nearest_scheme']  = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $appliedId);
 
             $seller = $sellers[$sellerId] ?? null;
             $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
@@ -215,9 +217,38 @@ class RetailerCartOrderApiController extends Controller
         $groupsOut = collect($groups)->values();
         $grand = $groupsOut->sum('final_total');
 
+        $deliveryCharge = 0;
+        $deliveryChargeDetails = [];
+
+        if ($request->get('is_checkout') == 1 && $request->get('is_self_pickup') != 1) {
+            $latitude  = $request->get('latitude');
+            $longitude = $request->get('longitude');
+
+            if ($latitude && $longitude) {
+                $sellerIds  = array_keys($groups);
+                $subTotal   = $groupsOut->sum('sub_total');
+                $isFreeDelivery = $request->get('is_free_delivery', 0);
+
+                if ($isFreeDelivery == 1) {
+                    $deliveryCharge = 0;
+                } else {
+                    $deliveryData = CommonHelper::getAllDeliveryCharge($latitude, $longitude, $sellerIds, $subTotal);
+                    if (!empty($deliveryData['status']) && $deliveryData['status'] == 1) {
+                        $deliveryCharge        = $deliveryData['data']['total_delivery_charge'] ?? 0;
+                        $deliveryChargeDetails = $deliveryData['data']['sellers_info'] ?? [];
+                    }
+                }
+            }
+        }
+
+        $grandTotal = round($grand + $deliveryCharge, 2);
+
         return CommonHelper::responseWithData([
-            'groups' => $groupsOut,
-            'grand_total' => $grand,
+            'groups'                  => $groupsOut,
+            'sub_total'               => round($grand, 2),
+            'delivery_charge'         => (float) $deliveryCharge,
+            'delivery_charge_details' => $deliveryChargeDetails,
+            'grand_total'             => $grandTotal,
         ]);
     }
 
@@ -261,6 +292,15 @@ class RetailerCartOrderApiController extends Controller
 
     public function removeFromCart(Request $request)
     {
+        $user = auth()->user();
+
+        if ($request->input('is_remove_all') == 1) {
+            Cart::where('user_id', $user->id)
+                ->whereNull('placed_by_salesman_id')
+                ->delete();
+            return CommonHelper::responseSuccess('all_items_removed_from_users_cart_successfully');
+        }
+
         $validator = Validator::make($request->all(), [
             'cart_id' => 'required|exists:carts,id',
         ]);
@@ -268,7 +308,6 @@ class RetailerCartOrderApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $user = auth()->user();
         $deleted = Cart::where('id', $request->cart_id)
             ->where('user_id', $user->id)
             ->whereNull('placed_by_salesman_id')
@@ -607,6 +646,14 @@ class RetailerCartOrderApiController extends Controller
 
                         MasterCatalogOrderHelper::decrementStock((int) $free['seller_product_id'], (float) $free['qty']);
                     }
+
+                    CommonHelper::setOrderStatus([
+                        'order_id'      => $orderId,
+                        'order_item_id' => 0,
+                        'status'        => OrderStatusList::$received,
+                        'created_by'    => $user->id,
+                        'user_type'     => OrderStatus::$userTypeUser,
+                    ]);
 
                     $createdOrders[] = [
                         'order_id' => $orderId,

@@ -574,7 +574,6 @@ Route::middleware('auth:api')->group(function () {
         // Point of Sale Routes
         Route::group(['prefix' => 'pos'], function () {
             Route::get('users', [\App\Http\Controllers\API\SellerPosController::class, 'getUsersList']);
-            Route::post('register_user', [\App\Http\Controllers\API\SellerPosController::class, 'registerUser']);
             Route::post('place_order', [\App\Http\Controllers\API\SellerPosController::class, 'placeOrder']);
             Route::post('update_order', [\App\Http\Controllers\API\SellerPosController::class, 'updateOrder']);
             Route::get('products', [\App\Http\Controllers\API\SellerPosController::class, 'getProducts']);
@@ -795,6 +794,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('collect_payment',        [\App\Http\Controllers\API\SettlementController::class, 'collectPayment'])->name('delivery_boy.collect_payment');
         Route::get('settlement/today',        [\App\Http\Controllers\API\SettlementController::class, 'todaySummary'])->name('delivery_boy.settlement.today');
         Route::post('settlement/lock_eod',    [\App\Http\Controllers\API\SettlementController::class, 'lockEod'])->name('delivery_boy.settlement.lock_eod');
+
+        // Sarthi: delivery outcome
+        Route::post('order/not_delivered',    [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'markNotDelivered'])->name('delivery_boy.order.not_delivered');
     });
 
     /*salesman app (login session)*/
@@ -841,6 +843,7 @@ Route::middleware('auth:api')->group(function () {
         // Salesman payment collection
         Route::get('payment-methods',          [\App\Http\Controllers\API\SettlementController::class, 'salesmanPaymentMethods'])->name('salesman.payment_methods');
         Route::post('collect-payment',         [\App\Http\Controllers\API\SettlementController::class, 'salesmanCollectPayment'])->name('salesman.collect_payment');
+        Route::get('collections',              [\App\Http\Controllers\API\SalesmanAppApiController::class, 'collectionHistory'])->name('salesman.collections');
         Route::get('settlement/today',         [\App\Http\Controllers\API\SettlementController::class, 'salesmanTodaySummary'])->name('salesman.settlement.today');
         Route::post('settlement/lock-eod',     [\App\Http\Controllers\API\SettlementController::class, 'salesmanLockEod'])->name('salesman.settlement.lock_eod');
     });
@@ -883,3 +886,7 @@ Route::get('seller/settings', [\App\Http\Controllers\SellerController::class, 'g
 Route::get('distributor/settings', [\App\Http\Controllers\SellerController::class, 'getSettings'])->name('distributor.app.settings');
 Route::get('salesman/settings', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'appSettings'])->name('salesman.app.settings');
 Route::get('delivery_boy/settings', [\App\Http\Controllers\DeliveryBoyController::class, 'getSettings'])->name('delivery_boy.app.settings');
+
+
+
+

@@ -11,8 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusList;
 use App\Models\PanelNotification;
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Models\SellerProduct;
 use App\Models\ReturnRequest;
 use App\Models\Role;
 use App\Models\Seller;
@@ -41,8 +40,7 @@ class SellerController extends BaseController
 
         $seller_id = auth()->user()->seller->id;
         $orderIds = OrderItem::where('seller_id', $seller_id)->get()->pluck('order_id')->toArray() ?? [];
-        $productsIds = Product::where('seller_id', $seller_id)->get()->pluck('id')->toArray() ?? [];
-        $productsIds_stock = Product::where('seller_id', $seller_id)->where('is_unlimited_stock', 0)->get()->pluck('id')->toArray() ?? [];
+
 
         $data = array();
 
@@ -56,7 +54,7 @@ class SellerController extends BaseController
         );
         $data['pending_order_count'] = Order::whereIn('id', $orderIds)->whereNotIn('active_status', $ignoreStatus)->count() ?? 0;
 
-        $data['product_count'] = Product::where('seller_id', $seller_id)->get()->count() ?? 0;
+        $data['product_count'] = SellerProduct::where('seller_id', $seller_id)->where('status', 1)->count();
 
         $data['salesman_count'] = \App\Models\Salesman::where('seller_id', $seller_id)->count() ?? 0;
 
@@ -84,23 +82,24 @@ class SellerController extends BaseController
         } else {
             $data['category_count'] = 0;
         }
-        $data['packet_products'] = ProductVariant::select("*")->leftJoin('products', 'product_variants.product_id', '=', 'products.id')->where('products.type', 'packet')->whereIn('product_id', $productsIds)->get()->count();
-        $data['loose_products'] = ProductVariant::select("*")->leftJoin('products', 'product_variants.product_id', '=', 'products.id')->where('products.type', 'loose')->whereIn('product_id', $productsIds)->get()->count();
-        $data['sold_out_count'] = ProductVariant::where('status', ProductVariant::$statusSoldOut)
-            ->whereIn('product_id', $productsIds_stock)
+        $data['packet_products'] = 0;
+        $data['loose_products']  = 0;
+
+        $data['sold_out_count'] = SellerProduct::where('seller_id', $seller_id)
+            ->where('status', 1)
             ->where('stock', '<=', 0)
-            ->where('stock', '<=', 0)->get()->count();
+            ->count();
 
         $low_stock = Setting::where('variable', 'low_stock_limit')->first();
-        $low_stock_limit = 0;
-        if ($low_stock) {
-            $low_stock_limit = $low_stock->value;
+        $low_stock_limit = $low_stock ? (int) $low_stock->value : 0;
+
+        $lowStockQuery = SellerProduct::where('seller_id', $seller_id)
+            ->where('status', 1)
+            ->where('stock', '>', 0);
+        if ($low_stock_limit > 0) {
+            $lowStockQuery->where('stock', '<=', $low_stock_limit);
         }
-        $data['low_stock_count'] = ProductVariant::where('status', ProductVariant::$statusAvailable)->whereIn('product_id', $productsIds_stock);
-        if ($low_stock_limit !== 0) {
-            $data['low_stock_count'] = $data['low_stock_count']->where('stock', '<=', $low_stock_limit);
-        }
-        $data['low_stock_count'] = $data['low_stock_count']->get()->count();
+        $data['low_stock_count'] = $lowStockQuery->count();
 
 
         $balance = (float) Seller::where('id', $seller_id)->value('balance') ?? 0;
@@ -384,7 +383,7 @@ class SellerController extends BaseController
             ->leftJoin('delivery_boys', 'orders.delivery_boy_id', '=', 'delivery_boys.id')
             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
             ->where('order_items.seller_id', $seller_id)
-            ->where('orders.order_type', 'doorstep');
+            ->whereIn('orders.order_type', ['doorstep', 'pos']);
 
         if (isset($request->startDate) && $request->startDate != "" && isset($request->endDate) && $request->endDate != "") {
             $orders = $orders->whereBetween('order_items.created_at', [$startDate, $endDate]);
@@ -1160,8 +1159,10 @@ class SellerController extends BaseController
             } else {
                 $settings['otp_provider'] = 'sms';
             }
+            $settings['login_type'] = 'mobile';
         } else {
             $settings['otp_provider'] = 'none';
+            $settings['login_type'] = 'email';
         }
 
         // Return user permissions and privacy settings only if a valid token is passed

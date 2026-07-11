@@ -46,7 +46,7 @@ class SalesmanApiController extends Controller
             'name' => 'required|string',
             'mobile' => 'required|numeric|unique:salesmen,mobile',
             'email' => 'required|email|unique:admins,email',
-            'password' => 'required|string|min:6',
+            'password' => 'nullable|string|min:6',
             'brands' => 'required|array|min:1',
         ]);
 
@@ -65,7 +65,7 @@ class SalesmanApiController extends Controller
             $admin = new Admin();
             $admin->username = $request->name;
             $admin->email = $request->email;
-            $admin->password = Hash::make($request->password);
+            $admin->password = Hash::make($request->filled('password') ? $request->password : \Illuminate\Support\Str::random(12));
             $admin->role_id = Role::$roleSalesman;
             $admin->created_by = auth()->user()->id;
             $admin->save();

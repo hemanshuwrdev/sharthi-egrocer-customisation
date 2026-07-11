@@ -80,8 +80,10 @@ class SalesmanAppApiController extends Controller
             } else {
                 $data['otp_provider'] = 'sms';
             }
+            $data['login_type'] = 'mobile';
         } else {
             $data['otp_provider'] = 'none';
+            $data['login_type'] = 'email';
         }
 
         // Return user permissions only if a valid token is passed
@@ -293,7 +295,37 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.gst_no',
                 'retailer_profiles.verified_at',
                 'cities.name as city_name',
-                DB::raw('(SELECT MAX(orders.created_at) FROM orders WHERE orders.user_id = users.id) as last_order_at')
+                DB::raw('(SELECT MAX(orders.created_at) FROM orders WHERE orders.user_id = users.id) as last_order_at'),
+                DB::raw('(
+                    SELECT COALESCE(SUM(op.amount), 0) - COALESCE((
+                        SELECT SUM(op2.amount)
+                        FROM order_payments op2
+                        JOIN orders o2 ON o2.id = op2.order_id
+                        WHERE o2.user_id = users.id
+                          AND op2.method IN ("cash","upi","cheque")
+                          AND op2.delivery_boy_id IS NULL
+                    ), 0)
+                    FROM orders o
+                    JOIN order_payments op ON op.order_id = o.id
+                        AND op.method = "signature"
+                        AND op.delivery_boy_id IS NOT NULL
+                    WHERE o.user_id = users.id
+                ) as total_due'),
+                DB::raw('(
+                    SELECT COUNT(DISTINCT o.id)
+                    FROM orders o
+                    JOIN order_payments op ON op.order_id = o.id
+                        AND op.method = "signature"
+                        AND op.delivery_boy_id IS NOT NULL
+                    WHERE o.user_id = users.id
+                      AND (
+                          SELECT COALESCE(SUM(op2.amount), 0)
+                          FROM order_payments op2
+                          WHERE op2.order_id = o.id
+                            AND op2.method IN ("cash","upi","cheque")
+                            AND op2.delivery_boy_id IS NULL
+                      ) < op.amount
+                ) as due_payments_count')
             )
             ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
@@ -331,12 +363,78 @@ class SalesmanAppApiController extends Controller
         $recentOrders = Order::where('user_id', $retailer->id)
             ->orderByDesc('id')
             ->limit(5)
-            ->get(['id', 'total', 'final_total', 'active_status', 'payment_method', 'created_at']);
+            ->select([
+                'id', 'total', 'final_total', 'active_status', 'created_at',
+                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
+            ])
+            ->get();
+
+        // Due payments: orders that have a driver signature payment (regardless of order status)
+        $duePayments = DB::table('orders as o')
+            ->join('order_payments as op', function ($join) {
+                $join->on('op.order_id', '=', 'o.id')
+                     ->where('op.method', 'signature')
+                     ->whereNotNull('op.delivery_boy_id');
+            })
+            ->where('o.user_id', $retailer->id)
+            ->select(
+                'o.id as order_id',
+                'o.active_status',
+                'o.final_total',
+                'o.created_at as order_date',
+                'op.amount as due_amount',
+                'op.id as payment_id',
+                DB::raw('(
+                    SELECT COALESCE(SUM(op2.amount), 0)
+                    FROM order_payments op2
+                    WHERE op2.order_id = o.id
+                      AND op2.method IN ("cash","upi","cheque")
+                      AND op2.delivery_boy_id IS NULL
+                ) as already_collected')
+            )
+            ->get()
+            ->map(function ($row) {
+                $row->remaining_due = max(0, round((float)$row->due_amount - (float)$row->already_collected, 2));
+                return $row;
+            })
+            ->filter(fn ($row) => $row->remaining_due > 0)
+            ->values();
+
+        // Payments already collected by this salesman for this retailer's orders
+        $collectedPayments = DB::table('order_payments as op')
+            ->join('orders as o', 'o.id', '=', 'op.order_id')
+            ->where('o.user_id', $retailer->id)
+            ->where('op.salesman_id', $salesman->id)
+            ->whereIn('op.method', ['cash', 'upi', 'cheque'])
+            ->select(
+                'op.id as payment_id',
+                'op.order_id',
+                'o.orders_id',
+                'op.method',
+                'op.amount',
+                'op.status',
+                'op.proof_photo',
+                'op.created_at as collected_at'
+            )
+            ->orderByDesc('op.id')
+            ->get()
+            ->map(function ($row) {
+                if ($row->proof_photo && !str_starts_with($row->proof_photo, 'http')) {
+                    $row->proof_photo = asset('storage/' . $row->proof_photo);
+                }
+                return $row;
+            });
 
         return CommonHelper::responseWithData([
-            'user'          => $retailer,
-            'profile'       => $retailer->retailerProfile,
-            'recent_orders' => $recentOrders,
+            'user'                    => $retailer,
+            'profile'                 => $retailer->retailerProfile,
+            'recent_orders'           => $recentOrders,
+            'due_payments'            => $duePayments,
+            'total_due'               => round($duePayments->sum('remaining_due'), 2),
+            'due_payments_count'      => $duePayments->count(),
+            'collected_payments'      => $collectedPayments,
+            'total_collected'         => round($collectedPayments->sum('amount'), 2),
+            'collected_payments_count' => $collectedPayments->count(),
         ]);
     }
 
@@ -378,7 +476,11 @@ class SalesmanAppApiController extends Controller
         $recentOrders = Order::where('user_id', $retailer->id)
             ->orderByDesc('id')
             ->limit(5)
-            ->get(['id', 'total', 'final_total', 'active_status', 'payment_method', 'created_at']);
+            ->select([
+                'id', 'total', 'final_total', 'active_status', 'created_at',
+                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
+            ])
+            ->get();
 
         return CommonHelper::responseWithData([
             'user'          => $retailer,
@@ -961,6 +1063,16 @@ class SalesmanAppApiController extends Controller
                         'updated_at'              => now(),
                     ]);
 
+                    // Insert initial order_status row so customer order tracking works
+                    \App\Models\OrderStatus::create([
+                        'order_id'      => $orderId,
+                        'order_item_id' => 0,
+                        'status'        => OrderStatusList::$received,
+                        'created_by'    => $salesman->admin_id,
+                        'user_type'     => \App\Models\OrderStatus::$userTypeAdmin,
+                        'created_at'    => now(),
+                    ]);
+
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];
                         $sp = $r['seller_product'];
@@ -1135,7 +1247,6 @@ class SalesmanAppApiController extends Controller
                 'orders.id as order_id',
                 'orders.orders_id',
                 'orders.active_status',
-                'orders.payment_method',
                 'orders.total',
                 'orders.final_total',
                 'orders.salesman_discount',
@@ -1145,7 +1256,8 @@ class SalesmanAppApiController extends Controller
                 'users.name as retailer_name',
                 'users.mobile as retailer_mobile',
                 'retailer_profiles.shop_name',
-                'retailer_profiles.party_name'
+                'retailer_profiles.party_name',
+                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method')
             )
             ->orderByDesc('orders.id');
 
@@ -1195,16 +1307,18 @@ class SalesmanAppApiController extends Controller
                 'orders.id as order_id',
                 'orders.orders_id',
                 'orders.active_status',
-                'orders.payment_method',
                 'orders.total',
                 'orders.delivery_charge',
                 'orders.wallet_balance',
                 'orders.final_total',
                 'orders.salesman_discount',
+                'orders.scheme_id',
+                'orders.scheme_discount',
                 'orders.order_note',
                 'orders.delivery_time',
                 'orders.address',
                 'orders.mobile',
+                'orders.otp',
                 'orders.created_at',
                 'users.id as retailer_id',
                 'users.name as retailer_name',
@@ -1212,7 +1326,8 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.shop_name',
                 'retailer_profiles.party_name',
                 'retailer_profiles.address as shop_address',
-                'retailer_profiles.gst_no'
+                'retailer_profiles.gst_no',
+                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method')
             )
             ->first();
 
@@ -1222,6 +1337,12 @@ class SalesmanAppApiController extends Controller
 
         $order->status_label = OrderStatusList::getTranslatedName((int) $order->active_status);
         $order->placed_at    = CommonHelper::formatDate($order->created_at);
+
+        if (empty($order->otp)) {
+            $newOtp = mt_rand(100000, 999999);
+            DB::table('orders')->where('id', $orderId)->update(['otp' => $newOtp]);
+            $order->otp = $newOtp;
+        }
 
         $items = DB::table('order_items as oi')
             ->leftJoin('master_product_variants as mpv', 'mpv.id', '=', 'oi.master_product_variant_id')
@@ -1253,9 +1374,22 @@ class SalesmanAppApiController extends Controller
                 return $item;
             });
 
+        $payments = DB::table('order_payments')
+            ->where('order_id', $orderId)
+            ->select('id', 'method', 'amount', 'status', 'proof_photo', 'verified_at', 'created_at')
+            ->orderBy('id')
+            ->get()
+            ->map(function ($p) {
+                if ($p->proof_photo && !str_starts_with($p->proof_photo, 'http')) {
+                    $p->proof_photo = asset('storage/' . $p->proof_photo);
+                }
+                return $p;
+            });
+
         return CommonHelper::responseWithData([
-            'order' => $order,
-            'items' => $items,
+            'order'    => $order,
+            'items'    => $items,
+            'payments' => $payments,
         ]);
     }
 
@@ -1378,6 +1512,95 @@ class SalesmanAppApiController extends Controller
         }
 
         return CommonHelper::responseWithData($data);
+    }
+
+    /**
+     * GET /api/salesman/collections
+     * Due payment collection history for the logged-in salesman.
+     *
+     * Filters (all optional):
+     *   retailer_id  — filter by specific retailer
+     *   method       — cash | upi | cheque
+     *   status       — pending | verified
+     *   start_date   — YYYY-MM-DD
+     *   end_date     — YYYY-MM-DD
+     *   page, per_page
+     */
+    public function collectionHistory(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $perPage = (int) $request->input('per_page', 20);
+        $page    = max((int) $request->input('page', 1), 1);
+        $offset  = ($page - 1) * $perPage;
+
+        $query = DB::table('order_payments as op')
+            ->join('orders as o', 'o.id', '=', 'op.order_id')
+            ->join('users as u', 'u.id', '=', 'o.user_id')
+            ->leftJoin('retailer_profiles as rp', 'rp.user_id', '=', 'u.id')
+            ->where('op.salesman_id', $salesman->id)
+            ->whereIn('op.method', ['cash', 'upi', 'cheque'])
+            ->select(
+                'op.id as payment_id',
+                'op.order_id',
+                'o.orders_id',
+                'op.method',
+                'op.amount',
+                'op.status',
+                'op.proof_photo',
+                'op.verified_at',
+                'op.created_at as collected_at',
+                'u.id as retailer_id',
+                'u.name as retailer_name',
+                'u.mobile as retailer_mobile',
+                'rp.shop_name',
+                'rp.party_name'
+            );
+
+        if ($request->filled('retailer_id')) {
+            $query->where('o.user_id', (int) $request->retailer_id);
+        }
+
+        $filterMethod = $request->input('method');
+        if ($filterMethod && in_array($filterMethod, ['cash', 'upi', 'cheque'], true)) {
+            $query->where('op.method', $filterMethod);
+        }
+
+        $filterStatus = $request->input('status');
+        if ($filterStatus && in_array($filterStatus, ['pending', 'verified'], true)) {
+            $query->where('op.status', $filterStatus);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('op.created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('op.created_at', '<=', $request->end_date);
+        }
+
+        $total          = (clone $query)->count();
+        $totalCollected = (clone $query)->sum('op.amount');
+
+        $rows = $query->orderByDesc('op.id')
+            ->offset($offset)
+            ->limit($perPage)
+            ->get()
+            ->map(function ($row) {
+                if ($row->proof_photo && !str_starts_with($row->proof_photo, 'http')) {
+                    $row->proof_photo = asset('storage/' . $row->proof_photo);
+                }
+                return $row;
+            });
+
+        return CommonHelper::responseWithData([
+            'total'           => $total,
+            'total_collected' => round((float) $totalCollected, 2),
+            'data'            => $rows,
+        ]);
     }
 }
 

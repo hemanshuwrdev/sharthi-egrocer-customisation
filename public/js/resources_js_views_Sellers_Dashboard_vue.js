@@ -460,6 +460,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
 
 
 
@@ -654,12 +655,16 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }]
       },
       series2: [],
-      showStockWarning: false
+      showStockWarning: false,
+      midnightTimer: null
     };
   },
   mounted: function mounted() {
     // Set the initial number of items
     this.orderTotalRows = this.orders.length;
+  },
+  beforeDestroy: function beforeDestroy() {
+    clearTimeout(this.midnightTimer);
   },
   created: function created() {
     var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -737,61 +742,71 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       return '';
     },
     checkStockWarning: function checkStockWarning() {
-      var today = new Date().toISOString().slice(0, 10);
+      var now = new Date();
+      var today = now.toISOString().slice(0, 10);
       var dismissed = localStorage.getItem('stock_warning_dismissed');
-      this.showStockWarning = dismissed !== today;
+
+      // Show only during 00:00–00:59 window and not yet dismissed today
+      if (now.getHours() === 0 && dismissed !== today) {
+        this.showStockWarning = true;
+      }
+
+      // Schedule to fire at the next midnight regardless of current time
+      this.scheduleMidnightWarning();
     },
-    goToStockManagement: function goToStockManagement() {
+    scheduleMidnightWarning: function scheduleMidnightWarning() {
+      var _this = this;
+      var now = new Date();
+      var nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 0);
+      var msUntilMidnight = nextMidnight - now;
+      this.midnightTimer = setTimeout(function () {
+        var today = new Date().toISOString().slice(0, 10);
+        var dismissed = localStorage.getItem('stock_warning_dismissed');
+        if (dismissed !== today) {
+          _this.showStockWarning = true;
+        }
+        // Reschedule for next midnight
+        _this.scheduleMidnightWarning();
+      }, msUntilMidnight);
+    },
+    dismissStockWarning: function dismissStockWarning() {
       var today = new Date().toISOString().slice(0, 10);
       localStorage.setItem('stock_warning_dismissed', today);
       this.showStockWarning = false;
+    },
+    goToStockManagement: function goToStockManagement() {
+      this.dismissStockWarning();
       this.$router.push('/seller/manage_stock');
     },
     getRecord: function getRecord() {
-      var _this = this;
+      var _this2 = this;
       var vm = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$sellerApiUrl + '/dashboard').then(function (res) {
         vm.isLoading = false;
         var data = res.data;
         if (data.status === 1) {
-          _this.record = data.data;
+          _this2.record = data.data;
 
           // barChart / pie: name can be string or object by lang code – use helper so we never push [object Object]
-          _this.graphCategories = data.data.category_product_count;
-          _this.graphCategories.forEach(function (category) {
+          _this2.graphCategories = data.data.category_product_count;
+          _this2.graphCategories.forEach(function (category) {
             if (category.product_count !== 0) {
-              _this.options2.labels.push(_this.getCategoryDisplayName(category.name));
-              _this.series2.push(category.product_count);
+              _this2.options2.labels.push(_this2.getCategoryDisplayName(category.name));
+              _this2.series2.push(category.product_count);
             }
           });
           // pieChart
-          _this.graphOrders = data.data.weekly_sales;
-          _this.graphOrders.forEach(function (order) {
-            _this.options.xaxis.categories.push(moment__WEBPACK_IMPORTED_MODULE_4___default()(order.order_date).format('DD-MMM'));
-            _this.series[0].data.push(order.total_sale);
+          _this2.graphOrders = data.data.weekly_sales;
+          _this2.graphOrders.forEach(function (order) {
+            _this2.options.xaxis.categories.push(moment__WEBPACK_IMPORTED_MODULE_4___default()(order.order_date).format('DD-MMM'));
+            _this2.series[0].data.push(order.total_sale);
           });
-          _this.$refs.apexBarChart.updateSeries([{
-            data: _this.series[0].data
+          _this2.$refs.apexBarChart.updateSeries([{
+            data: _this2.series[0].data
           }], false, true);
         }
-      })["catch"](function (error) {
-        vm.isLoading = false;
-        if (error.request && error.request.statusText) {
-          _this.showError(error.request.statusText);
-        } else if (error.message) {
-          _this.showError(error.message);
-        } else {
-          _this.showError("Something went wrong!");
-        }
-      });
-    },
-    getOrderStatus: function getOrderStatus() {
-      var _this2 = this;
-      var vm = this;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
-        _this2.isLoading = false;
-        _this2.statuses = response.data.data;
       })["catch"](function (error) {
         vm.isLoading = false;
         if (error.request && error.request.statusText) {
@@ -803,8 +818,25 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         }
       });
     },
-    getLatestOrders: function getLatestOrders() {
+    getOrderStatus: function getOrderStatus() {
       var _this3 = this;
+      var vm = this;
+      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
+        _this3.isLoading = false;
+        _this3.statuses = response.data.data;
+      })["catch"](function (error) {
+        vm.isLoading = false;
+        if (error.request && error.request.statusText) {
+          _this3.showError(error.request.statusText);
+        } else if (error.message) {
+          _this3.showError(error.message);
+        } else {
+          _this3.showError("Something went wrong!");
+        }
+      });
+    },
+    getLatestOrders: function getLatestOrders() {
+      var _this4 = this;
       this.isLoading = true;
       var vm = this;
       var param = {
@@ -819,18 +851,18 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       }).then(function (response) {
         var data = response.data;
         if (data.status === 1) {
-          _this3.orders = response.data.data.orders;
-          _this3.orderTotalRows = _this3.orders.length;
-          _this3.isLoading = false;
+          _this4.orders = response.data.data.orders;
+          _this4.orderTotalRows = _this4.orders.length;
+          _this4.isLoading = false;
         }
       })["catch"](function (error) {
         vm.isLoading = false;
         if (error.request && error.request.statusText) {
-          _this3.showError(error.request.statusText);
+          _this4.showError(error.request.statusText);
         } else if (error.message) {
-          _this3.showError(error.message);
+          _this4.showError(error.message);
         } else {
-          _this3.showError("Something went wrong!");
+          _this4.showError("Something went wrong!");
         }
       });
     }
@@ -1384,16 +1416,16 @@ var render = function () {
                 {
                   staticClass:
                     "alert alert-warning d-flex align-items-center justify-content-between mb-3",
-                  staticStyle: {
-                    cursor: "pointer",
-                    "border-left": "4px solid #f0ad4e",
-                  },
-                  on: { click: _vm.goToStockManagement },
+                  staticStyle: { "border-left": "4px solid #f0ad4e" },
                 },
                 [
                   _c(
                     "div",
-                    { staticClass: "d-flex align-items-center gap-2" },
+                    {
+                      staticClass: "d-flex align-items-center gap-2",
+                      staticStyle: { cursor: "pointer" },
+                      on: { click: _vm.goToStockManagement },
+                    },
                     [
                       _c("i", {
                         staticClass: "fa fa-exclamation-triangle me-2",
@@ -1407,10 +1439,21 @@ var render = function () {
                           " — " + _vm._s(_vm.__("click_here_to_update_stock"))
                         ),
                       ]),
+                      _vm._v(" "),
+                      _c("i", { staticClass: "fa fa-arrow-right ms-2" }),
                     ]
                   ),
                   _vm._v(" "),
-                  _c("i", { staticClass: "fa fa-arrow-right" }),
+                  _c("button", {
+                    staticClass: "btn-close ms-3",
+                    attrs: { type: "button", "aria-label": "Dismiss" },
+                    on: {
+                      click: function ($event) {
+                        $event.stopPropagation()
+                        return _vm.dismissStockWarning.apply(null, arguments)
+                      },
+                    },
+                  }),
                 ]
               ),
             ])

@@ -108,7 +108,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         return;
       }
       this.isSendingOtp = true;
-      var url = this.$apiUrl + '/seller/send_sms';
+      var url = this.$apiUrl + '/delivery_boy/send_sms';
       var fullPhone = this.countryCode + this.user.mobile;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(url, {
         phone: fullPhone

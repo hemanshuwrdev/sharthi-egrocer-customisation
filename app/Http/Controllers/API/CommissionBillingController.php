@@ -4,10 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
-use App\Models\AdminCommissionTransaction;
 use App\Models\Seller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CommissionBillingController extends Controller
 {
@@ -23,30 +23,39 @@ class CommissionBillingController extends Controller
     }
 
     /**
-     * GMV = SUM(order_item_amount) from admin_commission_transactions for a seller.
-     * order_item_amount is the gross item value before commission deduction.
+     * Base query: order_items joined with orders, filtered by seller and delivered status.
+     * Optionally filtered by date range on orders.created_at.
      */
-    private function gmv(int $sellerId, ?Carbon $from = null, ?Carbon $to = null): float
+    private function orderItemsQuery(int $sellerId, ?Carbon $from = null, ?Carbon $to = null)
     {
-        $q = AdminCommissionTransaction::where('seller_id', $sellerId);
+        $q = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $sellerId)
+            ->where('orders.active_status', 6) // delivered
+            ->whereNotIn('order_items.active_status', [7, 8]); // exclude cancelled/returned
 
-        if ($from) $q->where('created_at', '>=', $from);
-        if ($to)   $q->where('created_at', '<=', $to);
+        if ($from) $q->where('orders.created_at', '>=', $from);
+        if ($to)   $q->where('orders.created_at', '<=', $to);
 
-        return (float) $q->sum('order_item_amount');
+        return $q;
     }
 
-    /**
-     * Commission earned (admin's share) from admin_commission_transactions.
-     */
-    private function commissionEarned(int $sellerId, ?Carbon $from = null, ?Carbon $to = null): float
+    private function gmv(int $sellerId, ?Carbon $from = null, ?Carbon $to = null): float
     {
-        $q = AdminCommissionTransaction::where('seller_id', $sellerId);
+        return (float) $this->orderItemsQuery($sellerId, $from, $to)->sum('order_items.sub_total');
+    }
 
-        if ($from) $q->where('created_at', '>=', $from);
-        if ($to)   $q->where('created_at', '<=', $to);
+    private function commissionEarned(int $sellerId, float $commissionRate, ?Carbon $from = null, ?Carbon $to = null): float
+    {
+        $gmv = $this->gmv($sellerId, $from, $to);
+        return round($gmv * $commissionRate / 100, 2);
+    }
 
-        return (float) $q->sum('amount');
+    private function orderCount(int $sellerId, ?Carbon $from = null, ?Carbon $to = null): int
+    {
+        return (int) $this->orderItemsQuery($sellerId, $from, $to)
+            ->distinct('order_items.order_id')
+            ->count('order_items.order_id');
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -69,33 +78,29 @@ class CommissionBillingController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
+        $commissionRate = (float) $seller->commission;
+
         $period = in_array($request->input('period'), ['monthly', 'quarterly', 'yearly'])
             ? $request->input('period')
             : 'monthly';
 
         $now = Carbon::now();
 
-        // ── Current-period window for stat cards ─────────────────────────────
         [$curStart, $curEnd, $prevStart, $prevEnd] = $this->periodWindows($now, $period);
 
         $gmvCurrent  = $this->gmv($seller->id, $curStart, $curEnd);
         $gmvPrevious = $this->gmv($seller->id, $prevStart, $prevEnd);
-        $commCurrent = $this->commissionEarned($seller->id, $curStart, $curEnd);
+        $commCurrent = $this->commissionEarned($seller->id, $commissionRate, $curStart, $curEnd);
 
         $changePercent = $gmvPrevious > 0
             ? round((($gmvCurrent - $gmvPrevious) / $gmvPrevious) * 100, 1)
             : null;
 
-        // Predict next period by prorating current elapsed days
-        $elapsed    = max(1, $curStart->diffInDays($now) + 1);
-        $totalDays  = max(1, $curStart->diffInDays($curEnd) + 1);
-        $predicted  = round(($gmvCurrent / $elapsed) * $totalDays, 2);
+        $elapsed   = max(1, $curStart->diffInDays($now) + 1);
+        $totalDays = max(1, $curStart->diffInDays($curEnd) + 1);
+        $predicted = round(($gmvCurrent / $elapsed) * $totalDays, 2);
 
-        $ordersCurrent = AdminCommissionTransaction::where('seller_id', $seller->id)
-            ->where('created_at', '>=', $curStart)
-            ->where('created_at', '<=', $curEnd)
-            ->distinct('order_id')
-            ->count('order_id');
+        $ordersCurrent = $this->orderCount($seller->id, $curStart, $curEnd);
 
         // ── Period history table ──────────────────────────────────────────────
         $limit  = (int) $request->input('limit', 12);
@@ -103,16 +108,19 @@ class CommissionBillingController extends Controller
 
         [$groupExpr, $labelExpr, $sortExpr] = $this->periodGroupExpressions($period);
 
-        $rows = AdminCommissionTransaction::selectRaw(
-                "$groupExpr as period_key,
-                 $labelExpr as period_label,
-                 COUNT(DISTINCT order_id) as total_orders,
-                 SUM(order_item_amount)   as gross_gmv,
-                 SUM(amount)              as net_charges"
-            )
-            ->where('seller_id', $seller->id)
+        $rows = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $seller->id)
+            ->where('orders.active_status', 6)
+            ->whereNotIn('order_items.active_status', [7, 8])
+            ->selectRaw("
+                {$groupExpr} as period_key,
+                {$labelExpr} as period_label,
+                COUNT(DISTINCT order_items.order_id) as total_orders,
+                SUM(order_items.sub_total) as gross_gmv
+            ")
             ->groupByRaw($groupExpr)
-            ->orderByRaw("$sortExpr DESC")
+            ->orderByRaw("{$sortExpr} DESC")
             ->offset($offset)
             ->limit($limit)
             ->get()
@@ -121,17 +129,19 @@ class CommissionBillingController extends Controller
                 'period_label' => $r->period_label,
                 'total_orders' => (int) $r->total_orders,
                 'gross_gmv'    => round((float) $r->gross_gmv, 2),
-                'net_charges'  => round((float) $r->net_charges, 2),
+                'net_charges'  => round((float) $r->gross_gmv * $commissionRate / 100, 2),
             ]);
 
-        $totalPeriods = AdminCommissionTransaction::selectRaw(
-                "COUNT(DISTINCT $groupExpr) as cnt"
-            )
-            ->where('seller_id', $seller->id)
+        $totalPeriods = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $seller->id)
+            ->where('orders.active_status', 6)
+            ->whereNotIn('order_items.active_status', [7, 8])
+            ->selectRaw("COUNT(DISTINCT {$groupExpr}) as cnt")
             ->value('cnt');
 
         return CommonHelper::responseWithData([
-            'commission_rate' => (float) $seller->commission,
+            'commission_rate' => $commissionRate,
             'period'          => $period,
             'gmv_card' => [
                 'current'        => round($gmvCurrent,  2),
@@ -179,29 +189,28 @@ class CommissionBillingController extends Controller
         switch ($period) {
             case 'quarterly':
                 return [
-                    "CONCAT(YEAR(created_at), '-Q', QUARTER(created_at))",
-                    "CONCAT('Q', QUARTER(created_at), ' ', YEAR(created_at))",
-                    "CONCAT(YEAR(created_at), QUARTER(created_at))",
+                    "CONCAT(YEAR(orders.created_at), '-Q', QUARTER(orders.created_at))",
+                    "CONCAT('Q', QUARTER(orders.created_at), ' ', YEAR(orders.created_at))",
+                    "CONCAT(YEAR(orders.created_at), QUARTER(orders.created_at))",
                 ];
             case 'yearly':
                 return [
-                    "YEAR(created_at)",
-                    "YEAR(created_at)",
-                    "YEAR(created_at)",
+                    "YEAR(orders.created_at)",
+                    "YEAR(orders.created_at)",
+                    "YEAR(orders.created_at)",
                 ];
             default: // monthly
                 return [
-                    "DATE_FORMAT(created_at, '%Y-%m')",
-                    "DATE_FORMAT(created_at, '%M %Y')",
-                    "DATE_FORMAT(created_at, '%Y-%m')",
+                    "DATE_FORMAT(orders.created_at, '%Y-%m')",
+                    "DATE_FORMAT(orders.created_at, '%M %Y')",
+                    "DATE_FORMAT(orders.created_at, '%Y-%m')",
                 ];
         }
     }
 
     /**
      * GET /seller/billing/transactions
-     * Paginated raw transactions for a date window (used by the detail drawer).
-     * Query: start_date, end_date (Y-m-d), limit, offset.
+     * Paginated delivered order items for a date window.
      */
     public function sellerBillingTransactions(Request $request)
     {
@@ -210,25 +219,44 @@ class CommissionBillingController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
+        $commissionRate = (float) $seller->commission;
         $from  = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
         $to    = $request->filled('end_date')   ? Carbon::parse($request->end_date)->endOfDay()     : null;
         $limit  = (int) $request->input('limit', 20);
         $offset = (int) $request->input('offset', 0);
 
-        $query = AdminCommissionTransaction::where('seller_id', $seller->id)
-            ->orderByDesc('created_at');
+        $query = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $seller->id)
+            ->where('orders.active_status', 6)
+            ->whereNotIn('order_items.active_status', [7, 8])
+            ->select(
+                'order_items.id',
+                'order_items.order_id',
+                'order_items.product_name',
+                'order_items.variant_name',
+                'order_items.quantity',
+                'order_items.sub_total as order_item_amount',
+                'orders.created_at'
+            )
+            ->orderByDesc('order_items.id');
 
-        if ($from) $query->where('created_at', '>=', $from);
-        if ($to)   $query->where('created_at', '<=', $to);
+        if ($from) $query->where('orders.created_at', '>=', $from);
+        if ($to)   $query->where('orders.created_at', '<=', $to);
 
         $total = (clone $query)->count();
-        $rows  = $query->offset($offset)->limit($limit)
-            ->select('id', 'order_id', 'order_item_id', 'seller_commission_percentage',
-                     'order_item_amount', 'amount as commission_amount', 'created_at')
-            ->get()
-            ->map(fn ($t) => array_merge($t->toArray(), [
-                'added_date' => CommonHelper::formatDate($t->created_at),
-            ]));
+        $rows  = $query->offset($offset)->limit($limit)->get()
+            ->map(fn ($t) => [
+                'id'                          => $t->id,
+                'order_id'                    => $t->order_id,
+                'product_name'                => $t->product_name,
+                'variant_name'                => $t->variant_name,
+                'quantity'                    => $t->quantity,
+                'order_item_amount'           => round((float) $t->order_item_amount, 2),
+                'commission_amount'           => round((float) $t->order_item_amount * $commissionRate / 100, 2),
+                'seller_commission_percentage'=> $commissionRate,
+                'added_date'                  => CommonHelper::formatDate($t->created_at),
+            ]);
 
         return CommonHelper::responseWithData(['total' => $total, 'data' => $rows]);
     }
@@ -239,8 +267,6 @@ class CommissionBillingController extends Controller
 
     /**
      * GET /admin/commissions/aggregate
-     * Platform-wide aggregate stat cards for the selected period (mirrors sellerBilling but across ALL sellers).
-     * Query: period = monthly (default) | quarterly | yearly
      */
     public function adminAggregate(Request $request)
     {
@@ -251,9 +277,19 @@ class CommissionBillingController extends Controller
         $now = Carbon::now();
         [$curStart, $curEnd, $prevStart, $prevEnd] = $this->periodWindows($now, $period);
 
-        $gmvCurrent  = (float) AdminCommissionTransaction::where('created_at', '>=', $curStart)->where('created_at', '<=', $curEnd)->sum('order_item_amount');
-        $gmvPrevious = (float) AdminCommissionTransaction::where('created_at', '>=', $prevStart)->where('created_at', '<=', $prevEnd)->sum('order_item_amount');
-        $commCurrent = (float) AdminCommissionTransaction::where('created_at', '>=', $curStart)->where('created_at', '<=', $curEnd)->sum('amount');
+        $baseQ = fn ($from, $to) => DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('sellers', 'sellers.id', '=', 'order_items.seller_id')
+            ->where('orders.active_status', 6)
+            ->whereNotIn('order_items.active_status', [7, 8])
+            ->where('orders.created_at', '>=', $from)
+            ->where('orders.created_at', '<=', $to);
+
+        $gmvCurrent  = (float) $baseQ($curStart, $curEnd)->sum('order_items.sub_total');
+        $gmvPrevious = (float) $baseQ($prevStart, $prevEnd)->sum('order_items.sub_total');
+        $commCurrent = (float) $baseQ($curStart, $curEnd)
+            ->selectRaw('SUM(order_items.sub_total * sellers.commission / 100) as comm')
+            ->value('comm');
 
         $changePercent = $gmvPrevious > 0
             ? round((($gmvCurrent - $gmvPrevious) / $gmvPrevious) * 100, 1)
@@ -263,10 +299,14 @@ class CommissionBillingController extends Controller
         $totalDays = max(1, $curStart->diffInDays($curEnd) + 1);
         $predicted = round(($gmvCurrent / $elapsed) * $totalDays, 2);
 
-        $ordersCurrent = AdminCommissionTransaction::where('created_at', '>=', $curStart)
-            ->where('created_at', '<=', $curEnd)
-            ->distinct('order_id')
-            ->count('order_id');
+        $ordersCurrent = (int) DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.active_status', 6)
+            ->whereNotIn('order_items.active_status', [7, 8])
+            ->where('orders.created_at', '>=', $curStart)
+            ->where('orders.created_at', '<=', $curEnd)
+            ->distinct('order_items.order_id')
+            ->count('order_items.order_id');
 
         return CommonHelper::responseWithData([
             'period'   => $period,
@@ -285,8 +325,6 @@ class CommissionBillingController extends Controller
 
     /**
      * GET /admin/commissions/summary
-     * Per-distributor summary: commission%, GMV this month, commission earned this month, GMV all-time.
-     * Optional query: seller_id for single distributor.
      */
     public function adminSummary(Request $request)
     {
@@ -303,20 +341,22 @@ class CommissionBillingController extends Controller
         $sellers = $query->orderBy('name')->get();
 
         $data = $sellers->map(function ($seller) use ($monthStart, $monthEnd) {
+            $rate = (float) $seller->commission;
+
             $gmvMonth = $this->gmv($seller->id, $monthStart, $monthEnd);
             $gmvAll   = $this->gmv($seller->id);
-            $commMonth = $this->commissionEarned($seller->id, $monthStart, $monthEnd);
-            $commAll   = $this->commissionEarned($seller->id);
+            $commMonth = $this->commissionEarned($seller->id, $rate, $monthStart, $monthEnd);
+            $commAll   = $this->commissionEarned($seller->id, $rate);
 
             return [
-                'seller_id'           => $seller->id,
-                'name'                => $seller->name,
-                'mobile'              => $seller->mobile,
-                'commission_rate'     => (float) $seller->commission,
-                'gmv_this_month'      => round($gmvMonth, 2),
-                'commission_this_month' => round($commMonth, 2),
-                'gmv_all_time'        => round($gmvAll, 2),
-                'commission_all_time' => round($commAll, 2),
+                'seller_id'               => $seller->id,
+                'name'                    => $seller->name,
+                'mobile'                  => $seller->mobile,
+                'commission_rate'         => $rate,
+                'gmv_this_month'          => round($gmvMonth, 2),
+                'commission_this_month'   => round($commMonth, 2),
+                'gmv_all_time'            => round($gmvAll,   2),
+                'commission_all_time'     => round($commAll,  2),
             ];
         });
 
@@ -325,36 +365,37 @@ class CommissionBillingController extends Controller
 
     /**
      * GET /admin/commissions
-     * All commission transactions with filters.
-     * Optional query: seller_id, start_date, end_date (Y-m-d), limit, offset.
      */
     public function adminTransactions(Request $request)
     {
-        $query = AdminCommissionTransaction::with([])
-            ->join('sellers', 'sellers.id', '=', 'admin_commission_transactions.seller_id')
+        $query = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('sellers', 'sellers.id', '=', 'order_items.seller_id')
+            ->where('orders.active_status', 6)
+            ->whereNotIn('order_items.active_status', [7, 8])
             ->select(
-                'admin_commission_transactions.id',
-                'admin_commission_transactions.order_id',
-                'admin_commission_transactions.order_item_id',
-                'admin_commission_transactions.seller_id',
+                'order_items.id',
+                'order_items.order_id',
+                'order_items.seller_id',
                 'sellers.name as seller_name',
-                'admin_commission_transactions.seller_commission_percentage',
-                'admin_commission_transactions.order_item_amount',
-                'admin_commission_transactions.amount as commission_amount',
-                'admin_commission_transactions.created_at'
+                'sellers.commission as seller_commission_percentage',
+                'order_items.product_name',
+                'order_items.variant_name',
+                'order_items.quantity',
+                'order_items.sub_total as order_item_amount',
+                DB::raw('order_items.sub_total * sellers.commission / 100 as commission_amount'),
+                'orders.created_at'
             )
-            ->orderByDesc('admin_commission_transactions.id');
+            ->orderByDesc('order_items.id');
 
         if ($request->filled('seller_id')) {
-            $query->where('admin_commission_transactions.seller_id', $request->seller_id);
+            $query->where('order_items.seller_id', $request->seller_id);
         }
         if ($request->filled('start_date')) {
-            $query->where('admin_commission_transactions.created_at', '>=',
-                Carbon::parse($request->start_date)->startOfDay());
+            $query->where('orders.created_at', '>=', Carbon::parse($request->start_date)->startOfDay());
         }
         if ($request->filled('end_date')) {
-            $query->where('admin_commission_transactions.created_at', '<=',
-                Carbon::parse($request->end_date)->endOfDay());
+            $query->where('orders.created_at', '<=', Carbon::parse($request->end_date)->endOfDay());
         }
 
         $total  = (clone $query)->count();
@@ -362,17 +403,25 @@ class CommissionBillingController extends Controller
         $offset = (int) $request->input('offset', 0);
 
         $rows = $query->offset($offset)->limit($limit)->get()
-            ->map(fn ($t) => array_merge($t->toArray(), [
-                'added_date' => CommonHelper::formatDate($t->created_at),
-            ]));
+            ->map(fn ($t) => [
+                'id'                          => $t->id,
+                'order_id'                    => $t->order_id,
+                'seller_id'                   => $t->seller_id,
+                'seller_name'                 => $t->seller_name,
+                'product_name'                => $t->product_name,
+                'variant_name'                => $t->variant_name,
+                'quantity'                    => $t->quantity,
+                'order_item_amount'           => round((float) $t->order_item_amount, 2),
+                'commission_amount'           => round((float) $t->commission_amount, 2),
+                'seller_commission_percentage'=> (float) $t->seller_commission_percentage,
+                'added_date'                  => CommonHelper::formatDate($t->created_at),
+            ]);
 
         return CommonHelper::responseWithData(['total' => $total, 'data' => $rows]);
     }
 
     /**
      * GET /admin/commissions/distributor/{seller_id}
-     * Single distributor deep dive: overview + full transaction history.
-     * Optional query: start_date, end_date, limit, offset.
      */
     public function adminDistributorDetail(Request $request, int $sellerId)
     {
@@ -381,6 +430,7 @@ class CommissionBillingController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
+        $rate       = (float) $seller->commission;
         $today      = Carbon::today();
         $monthStart = Carbon::now()->startOfMonth();
         $monthEnd   = Carbon::now()->endOfMonth();
@@ -391,27 +441,46 @@ class CommissionBillingController extends Controller
         $limit  = (int) $request->input('limit', 20);
         $offset = (int) $request->input('offset', 0);
 
-        $txQuery = AdminCommissionTransaction::where('seller_id', $sellerId)
-            ->orderByDesc('created_at');
+        $txQuery = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $sellerId)
+            ->where('orders.active_status', 6)
+            ->whereNotIn('order_items.active_status', [7, 8])
+            ->select(
+                'order_items.id',
+                'order_items.order_id',
+                'order_items.product_name',
+                'order_items.variant_name',
+                'order_items.quantity',
+                'order_items.sub_total as order_item_amount',
+                DB::raw("order_items.sub_total * {$rate} / 100 as commission_amount"),
+                'orders.created_at'
+            )
+            ->orderByDesc('order_items.id');
 
-        if ($from) $txQuery->where('created_at', '>=', $from);
-        if ($to)   $txQuery->where('created_at', '<=', $to);
+        if ($from) $txQuery->where('orders.created_at', '>=', $from);
+        if ($to)   $txQuery->where('orders.created_at', '<=', $to);
 
         $totalTx = (clone $txQuery)->count();
-        $transactions = $txQuery->offset($offset)->limit($limit)
-            ->select('id', 'order_id', 'order_item_id', 'seller_commission_percentage',
-                     'order_item_amount', 'amount as commission_amount', 'created_at')
-            ->get()
-            ->map(fn ($t) => array_merge($t->toArray(), [
-                'added_date' => CommonHelper::formatDate($t->created_at),
-            ]));
+        $transactions = $txQuery->offset($offset)->limit($limit)->get()
+            ->map(fn ($t) => [
+                'id'                          => $t->id,
+                'order_id'                    => $t->order_id,
+                'product_name'                => $t->product_name,
+                'variant_name'                => $t->variant_name,
+                'quantity'                    => $t->quantity,
+                'order_item_amount'           => round((float) $t->order_item_amount, 2),
+                'commission_amount'           => round((float) $t->commission_amount, 2),
+                'seller_commission_percentage'=> $rate,
+                'added_date'                  => CommonHelper::formatDate($t->created_at),
+            ]);
 
         return CommonHelper::responseWithData([
             'seller' => [
                 'id'              => $seller->id,
                 'name'            => $seller->name,
                 'mobile'          => $seller->mobile,
-                'commission_rate' => (float) $seller->commission,
+                'commission_rate' => $rate,
             ],
             'gmv' => [
                 'today'      => round($this->gmv($sellerId, $today->copy()->startOfDay(), $today->copy()->endOfDay()), 2),
@@ -419,9 +488,9 @@ class CommissionBillingController extends Controller
                 'all_time'   => round($this->gmv($sellerId), 2),
             ],
             'commission_earned' => [
-                'today'      => round($this->commissionEarned($sellerId, $today->copy()->startOfDay(), $today->copy()->endOfDay()), 2),
-                'this_month' => round($this->commissionEarned($sellerId, $monthStart, $monthEnd), 2),
-                'all_time'   => round($this->commissionEarned($sellerId), 2),
+                'today'      => round($this->commissionEarned($sellerId, $rate, $today->copy()->startOfDay(), $today->copy()->endOfDay()), 2),
+                'this_month' => round($this->commissionEarned($sellerId, $rate, $monthStart, $monthEnd), 2),
+                'all_time'   => round($this->commissionEarned($sellerId, $rate), 2),
             ],
             'transactions' => [
                 'total' => $totalTx,

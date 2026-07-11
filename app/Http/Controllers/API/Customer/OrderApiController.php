@@ -1972,7 +1972,14 @@ class OrderApiController extends Controller
                 array_push($subData, OrderStatusList::getStatusNameTranslated($status->status), CommonHelper::formatDateTime($status->created_at));
                 array_push($data, $subData);
             }
-            $res[$i]['status'] = json_encode($data);
+            // Fallback: if no history rows, synthesize from current active_status
+            if (empty($data)) {
+                $data[] = [
+                    OrderStatusList::getStatusNameTranslated((int) $row->active_status),
+                    CommonHelper::formatDateTime($row->created_at),
+                ];
+            }
+            $res[$i]['status'] = $data;
 
             $items = OrderItem::with('images')->select(
                 'oi.*',
@@ -2057,10 +2064,12 @@ class OrderApiController extends Controller
             $items = $items->makeHidden(['images', 'master_image', 'updated_at', 'deleted_at', 'status', 'current_status', 'country_made_in']);
 
             $res[$i]['items'] = $items;
-            $res[$i]['status'] = json_decode($res[$i]['status']);
             $res[$i]['product_rating'] = $isProductRatingEnabled;
             $res[$i]['final_total'] = strval($row['final_total']);
             $res[$i]['total'] = strval($row['total']);
+            $res[$i]['sub_total'] = strval(
+                collect($items)->where('is_free_item', 0)->sum('sub_total')
+            );
             if ($row->order_type == 'selfpickup') {
                 unset($res[$i]['delivery_charge']);
             }

@@ -22,6 +22,7 @@ use App\Models\UserToken;
 use App\Models\DeliveryBoyTransaction;
 use App\Models\ProductVariant;
 use App\Models\PromoCode;
+use App\Models\OrderPayment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,7 +53,7 @@ class OrdersApiController extends Controller
             'orders.wallet_balance',
             'orders.final_total',
             'orders.remaining_final',
-            'orders.payment_method',
+            DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
             'orders.delivery_time',
             'orders.additional_charges',
             'orders.active_status',
@@ -61,7 +62,7 @@ class OrdersApiController extends Controller
             $sellerNameSubquery
         )
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
-            ->where('orders.order_type', 'doorstep');
+            ->whereIn('orders.order_type', ['doorstep', 'pos']);
 
         // Only parse dates when actually provided
         if (isset($request->startDate) && $request->startDate != "" && isset($request->endDate) && $request->endDate != "") {
@@ -185,7 +186,7 @@ class OrdersApiController extends Controller
             'orders.wallet_balance',
             'orders.final_total',
             'orders.remaining_final',
-            'orders.payment_method',
+            DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
             'orders.delivery_time',
             'orders.additional_charges',
             'orders.active_status',
@@ -424,6 +425,159 @@ class OrdersApiController extends Controller
             }
         }
 
+        // Handle reschedule inline when status_id = 12
+        if ((int)$request->status_id === OrderStatusList::$rescheduled) {
+            $rescheduleValidator = Validator::make($request->all(), [
+                'delivery_date'   => 'required|date|date_format:Y-m-d|after_or_equal:today',
+                'delivery_reason' => 'required|string|max:255',
+                'delivery_time'   => 'required|string|max:100',
+            ]);
+            if ($rescheduleValidator->fails()) {
+                return CommonHelper::responseError($rescheduleValidator->errors()->first());
+            }
+
+            if (in_array($order->active_status, [
+                OrderStatusList::$delivered,
+                OrderStatusList::$cancelled,
+                OrderStatusList::$returned,
+                OrderStatusList::$selfPickupPicked,
+                OrderStatusList::$partialDelivery,
+            ])) {
+                return CommonHelper::responseError("Cannot reschedule an order that is already delivered, cancelled, or returned.");
+            }
+
+            DB::beginTransaction();
+            try {
+                $order->delivery_date   = $request->delivery_date;
+                $order->delivery_reason = $request->delivery_reason;
+                $order->delivery_time   = $request->delivery_time;
+                $order->active_status   = OrderStatusList::$rescheduled;
+                $order->loading_slip_id = null;
+                $order->delivery_boy_id = null;
+                $order->delivery_boy_bonus_amount  = 0;
+                $order->delivery_boy_bonus_details = null;
+                $order->save();
+
+                OrderItem::where('order_id', $order->id)
+                    ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+                    ->update(['active_status' => OrderStatusList::$rescheduled]);
+
+                OrderStatus::create([
+                    'order_id'      => $order->id,
+                    'order_item_id' => 0,
+                    'status'        => 'Rescheduled',
+                    'created_by'    => auth()->user()->id,
+                    'user_type'     => OrderStatus::$userTypeAdmin,
+                    'created_at'    => now(),
+                ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Reschedule via update_status error: " . $e->getMessage());
+                return CommonHelper::responseError("Something went wrong while rescheduling the order.");
+            }
+
+            return CommonHelper::responseSuccess(__('order_rescheduled_successfully'));
+        }
+
+        // Handle partial delivery inline when status_id = 13
+        if ((int)$request->status_id === OrderStatusList::$partialDelivery) {
+            $partialValidator = Validator::make($request->all(), [
+                'items'                 => 'required|array|min:1',
+                'items.*.order_item_id' => 'required|integer|exists:order_items,id',
+                'items.*.delivered_qty' => 'required|numeric|min:0',
+            ]);
+            if ($partialValidator->fails()) {
+                return CommonHelper::responseError($partialValidator->errors()->first());
+            }
+
+            if ($order->active_status != OrderStatusList::$outForDelivery) {
+                return CommonHelper::responseError('order_must_be_out_for_delivery');
+            }
+
+            // Delivery boy guard
+            if (auth()->user()->role_id == Role::$roleDeliveryBoy) {
+                $deliveryBoy = auth()->user()->deliveryBoy;
+                if (!$deliveryBoy || $order->delivery_boy_id != $deliveryBoy->id) {
+                    return CommonHelper::responseError('order_not_assigned_to_you');
+                }
+            }
+
+            DB::beginTransaction();
+            try {
+                foreach ($request->items as $idx => $itemData) {
+                    $orderItem = \App\Models\OrderItem::where('id', $itemData['order_item_id'])
+                        ->where('order_id', $order->id)->first();
+                    if (!$orderItem) continue;
+
+                    $orderItem->delivered_quantity = (float) $itemData['delivered_qty'];
+
+                    if (!empty($request->file("items.{$idx}.damage_photo"))) {
+                        $photo = $request->file("items.{$idx}.damage_photo");
+                        $orderItem->damage_photo = $photo->store('damage_photos', 'public');
+                    }
+                    $orderItem->save();
+                }
+
+                $allItems = \App\Models\OrderItem::where('order_id', $order->id)->get();
+                $newTotal = 0.0;
+                foreach ($allItems as $oi) {
+                    $deliveredQty = $oi->delivered_quantity ?? $oi->quantity;
+                    $unitPrice = (float) ($oi->discounted_price && (float)$oi->discounted_price > 0
+                        ? $oi->discounted_price : $oi->price);
+                    $newTotal += $deliveredQty * $unitPrice;
+                }
+
+                $order->final_total   = round($newTotal, 2);
+                $order->active_status = OrderStatusList::$partialDelivery;
+                $order->save();
+
+                \App\Models\OrderItem::where('order_id', $order->id)
+                    ->update(['active_status' => OrderStatusList::$partialDelivery]);
+
+                OrderStatus::create([
+                    'order_id'      => $order->id,
+                    'order_item_id' => 0,
+                    'status'        => 'Partial Delivery',
+                    'created_by'    => auth()->user()->id,
+                    'user_type'     => OrderStatus::$userTypeAdmin,
+                    'created_at'    => now(),
+                ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Partial delivery via update_status error: " . $e->getMessage());
+                return CommonHelper::responseError("Something went wrong while marking partial delivery.");
+            }
+
+            return CommonHelper::responseSuccess(__('order_marked_as_partial_delivery'));
+        }
+
+        // Handle delivered inline when status_id = 6 — require OTP + per-item delivered qty
+        if ((int)$request->status_id === OrderStatusList::$delivered) {
+            $deliveredValidator = Validator::make($request->all(), [
+                'otp'                   => 'required|string',
+                'items'                 => 'required|array|min:1',
+                'items.*.order_item_id' => 'required|integer|exists:order_items,id',
+                'items.*.delivered_qty' => 'required|numeric|min:0',
+            ]);
+            if ($deliveredValidator->fails()) {
+                return CommonHelper::responseError($deliveredValidator->errors()->first());
+            }
+
+            // Verify OTP against order
+            if ($order->otp != $request->otp) {
+                return CommonHelper::responseError('invalid_otp');
+            }
+
+            // Payment must be collected before marking delivered
+            if (!OrderPayment::where('order_id', $order->id)->exists()) {
+                return CommonHelper::responseError('payment_must_be_collected_before_delivery');
+            }
+        }
+
         DB::beginTransaction();
         try {
 
@@ -442,22 +596,24 @@ class OrdersApiController extends Controller
 
                         if ($order->payment_method == DeliveryBoyTransaction::$paymentTypeCod) {
 
+                            $codAmount = floatval($order->remaining_final ?? $order->final_total);
+
                             $transactionData = [
                                 'user_id' => $order->user_id,
                                 'order_id' => $order->id,
                                 'delivery_boy_id' => $deliveryBoy->id,
                                 'type' => $order->payment_method,
-                                'amount' => $order->remaining_final,
+                                'amount' => $codAmount,
                                 'status' => Transaction::$statusSuccess,
                                 'message' => "Delivery boy " . OrderStatusList::$orderDelivered . " this order. Order payment method was " . Transaction::$paymentTypeCod,
-                                'transaction_date' => now(), // Cleaner than date('Y-m-d H:i:s')
+                                'transaction_date' => now(),
                             ];
 
                             $transaction = DeliveryBoyTransaction::create($transactionData);
 
                             $order->transaction_id = $transaction->id ?? 0;
 
-                            $deliveryBoy->cash_received = floatval($deliveryBoy->cash_received) + floatval($order->remaining_final);
+                            $deliveryBoy->cash_received = floatval($deliveryBoy->cash_received) + $codAmount;
                         }
 
                         $deliveryBoy->save();
@@ -1400,7 +1556,8 @@ class OrdersApiController extends Controller
             OrderStatusList::$delivered,
             OrderStatusList::$cancelled,
             OrderStatusList::$returned,
-            OrderStatusList::$selfPickupPicked
+            OrderStatusList::$selfPickupPicked,
+            OrderStatusList::$partialDelivery,
         ])) {
             return CommonHelper::responseError("Cannot reschedule an order that is already delivered, cancelled, or returned.");
         }

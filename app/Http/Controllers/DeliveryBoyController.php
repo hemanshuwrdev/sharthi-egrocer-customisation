@@ -605,8 +605,10 @@ class DeliveryBoyController extends BaseController
             } else {
                 $settings['otp_provider'] = 'sms';
             }
+            $settings['login_type'] = 'mobile';
         } else {
             $settings['otp_provider'] = 'none';
+            $settings['login_type'] = 'email';
         }
 
         // Return user permissions only if a valid token is passed

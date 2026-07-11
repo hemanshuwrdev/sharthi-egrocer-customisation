@@ -288,6 +288,57 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -310,6 +361,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       username: "",
       email: "",
       mobile: "",
+      country_code: "91",
       store_url: "",
       password: "",
       showPassword: false,
@@ -321,6 +373,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       tax_number: "",
       pan_number: "",
       store_description: "",
+      // UPI
+      upi_id: "",
+      upi_mobile: "",
+      upi_name: "",
+      // OTP
+      otp: "",
+      otp_sent: false,
+      otp_sending: false,
+      otp_countdown: 0,
+      otp_timer_interval: null,
+      otp_firebase: false,
       status: 0,
       store_logo: "",
       store_logo_url: "",
@@ -347,12 +410,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     this.getCities();
     this.getSellerCommission();
   },
-  mounted: function mounted() {},
+  beforeDestroy: function beforeDestroy() {
+    clearInterval(this.otp_timer_interval);
+  },
   computed: {
     categories_options: function categories_options() {
       var temp = [];
       this.categories.forEach(function (category) {
-        //Only Main Categories
         if (category.parent_id == 0) {
           temp.push({
             id: category.id,
@@ -369,10 +433,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/categories').then(function (response) {
         var data = response.data;
         _this.categories = data.data;
-        console.log(_this.categories);
       });
     },
-    // Get editor configuration with safe fallbacks
     getEditorConfig: function getEditorConfig() {
       var plugins = this.$editorPlugins && Array.isArray(this.$editorPlugins) ? this.$editorPlugins : ["autolink", "lists", "link", "image", "charmap", "anchor", "searchreplace", "visualblocks", "media", "table", "wordcount", "code", "codesample"];
       var toolbar = this.$editorToolbar || "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | charmap | code | removeformat";
@@ -400,6 +462,48 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.mobilevalidationError = null;
       }
     },
+    sendOtp: function sendOtp() {
+      var _this3 = this;
+      if (!this.mobile) {
+        this.showError('Please enter mobile number first.');
+        return;
+      }
+      this.otp_sending = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/seller/send_sms', {
+        mobile: this.mobile,
+        country_code: this.country_code
+      }).then(function (res) {
+        _this3.otp_sending = false;
+        var data = res.data;
+        if (data.status === 1) {
+          _this3.otp_sent = true;
+          if (data.data && data.data.otp_provider === 'firebase') {
+            _this3.otp_firebase = true;
+            _this3.showMessage('success', 'Mobile number verified via Firebase.');
+          } else {
+            _this3.otp_firebase = false;
+            _this3.startCountdown();
+            _this3.showMessage('success', 'OTP sent to your mobile number.');
+          }
+        } else {
+          _this3.showError(data.message || 'Failed to send OTP.');
+        }
+      })["catch"](function () {
+        _this3.otp_sending = false;
+        _this3.showError('Failed to send OTP. Please try again.');
+      });
+    },
+    startCountdown: function startCountdown() {
+      var _this4 = this;
+      this.otp_countdown = 60;
+      clearInterval(this.otp_timer_interval);
+      this.otp_timer_interval = setInterval(function () {
+        _this4.otp_countdown--;
+        if (_this4.otp_countdown <= 0) {
+          clearInterval(_this4.otp_timer_interval);
+        }
+      }, 1000);
+    },
     handleFileStoreLogo: function handleFileStoreLogo() {
       this.store_logo = this.$refs.file_store_logo.files[0];
       this.store_logo_url = URL.createObjectURL(this.store_logo);
@@ -407,8 +511,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     dropFileStoreLogo: function dropFileStoreLogo(event) {
       event.preventDefault();
       this.$refs.file_store_logo.files = event.dataTransfer.files;
-      this.handleFileStoreLogo(); // Trigger the onChange event manually
-      // Clean up
+      this.handleFileStoreLogo();
       event.currentTarget.classList.add('bg-gray-100');
       event.currentTarget.classList.remove('bg-green-300');
     },
@@ -419,8 +522,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     dropFileNationalIdCard: function dropFileNationalIdCard(event) {
       event.preventDefault();
       this.$refs.file_national_id_card.files = event.dataTransfer.files;
-      this.handleFileNationalIdCard(); // Trigger the onChange event manually
-      // Clean up
+      this.handleFileNationalIdCard();
       event.currentTarget.classList.add('bg-gray-100');
       event.currentTarget.classList.remove('bg-green-300');
     },
@@ -432,35 +534,43 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     dropFileAddressProof: function dropFileAddressProof(event) {
       event.preventDefault();
       this.$refs.file_address_proof.files = event.dataTransfer.files;
-      this.handleFileAddressProof(); // Trigger the onChange event manually
-      // Clean up
+      this.handleFileAddressProof();
       event.currentTarget.classList.add('bg-gray-100');
       event.currentTarget.classList.remove('bg-green-300');
     },
     getCities: function getCities() {
-      var _this3 = this;
+      var _this5 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/cities').then(function (response) {
-        _this3.isLoading = false;
+        _this5.isLoading = false;
         var data = response.data;
         var raw = data.data;
-        _this3.cities = raw && raw.cities ? raw.cities : Array.isArray(raw) ? raw : [];
+        _this5.cities = raw && raw.cities ? raw.cities : Array.isArray(raw) ? raw : [];
       })["catch"](function () {
-        _this3.isLoading = false;
-        _this3.cities = [];
+        _this5.isLoading = false;
+        _this5.cities = [];
       });
     },
     setCityId: function setCityId() {
       this.city_id = this.city && this.city.id !== undefined ? this.city.id : 0;
     },
     sellerRegister: function sellerRegister() {
-      var _this4 = this;
+      var _this6 = this;
+      if (!this.otp_sent) {
+        this.showError('Please verify your mobile number first.');
+        return;
+      }
+      if (!this.otp_firebase && !this.otp) {
+        this.showError('Please enter the OTP received on your mobile.');
+        return;
+      }
       var vm = this;
       this.isLoading = true;
       var formData = new FormData();
-      formData.append('username', this.username);
       formData.append('name', this.name);
       formData.append('email', this.email);
       formData.append('mobile', this.mobile);
+      formData.append('country_code', this.country_code);
+      formData.append('otp', this.otp);
       formData.append('store_url', this.store_url);
       formData.append('password', this.password);
       formData.append('confirm_password', this.confirm_password);
@@ -470,23 +580,24 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       formData.append('tax_number', this.tax_number);
       formData.append('pan_number', this.pan_number);
       formData.append('store_description', this.store_description);
+      formData.append('city_id', this.city_id);
+      formData.append('commission', this.commission);
+      formData.append('upi_id', this.upi_id);
+      formData.append('upi_mobile', this.upi_mobile);
+      formData.append('upi_name', this.upi_name);
       formData.append('store_logo', this.store_logo);
       formData.append('national_id_card', this.national_id_card);
       formData.append('address_proof', this.address_proof);
-      formData.append('city_id', this.city_id);
-      formData.append('commission', this.commission);
-      var url = this.$apiUrl + '/seller/register';
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post(url, formData, {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/seller/register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       }).then(function (res) {
         var data = res.data;
         if (data.status === 1) {
-          _this4.showMessage("success", data.message);
+          _this6.showMessage("success", data.message);
           setTimeout(function () {
             vm.$swal.close();
-            //Auth.logout();
             vm.$router.push({
               path: '/seller/login'
             });
@@ -497,12 +608,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       })["catch"](function (error) {
         vm.isLoading = false;
-        if (error.request.statusText) {
-          _this4.showError(error.request.statusText);
+        if (error.request && error.request.statusText) {
+          _this6.showError(error.request.statusText);
         } else if (error.message) {
-          _this4.showError(error.message);
+          _this6.showError(error.message);
         } else {
-          _this4.showError("Something went wrong!");
+          _this6.showError("Something went wrong!");
         }
       });
     }
@@ -825,34 +936,65 @@ var render = function () {
                         _c("div", { staticClass: "form-group" }, [
                           _vm._m(2),
                           _vm._v(" "),
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.mobile,
-                                expression: "mobile",
-                              },
-                            ],
-                            staticClass: "form-control",
-                            attrs: {
-                              type: "text",
-                              placeholder: "Enter mobile number",
-                              inputmode: "numeric",
-                            },
-                            domProps: { value: _vm.mobile },
-                            on: {
-                              input: [
-                                function ($event) {
-                                  if ($event.target.composing) {
-                                    return
-                                  }
-                                  _vm.mobile = $event.target.value
+                          _c("div", { staticClass: "input-group" }, [
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.mobile,
+                                  expression: "mobile",
                                 },
-                                _vm.validateMobileNumber,
                               ],
-                            },
-                          }),
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                placeholder: "Enter mobile number",
+                                inputmode: "numeric",
+                              },
+                              domProps: { value: _vm.mobile },
+                              on: {
+                                input: [
+                                  function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.mobile = $event.target.value
+                                  },
+                                  _vm.validateMobileNumber,
+                                ],
+                              },
+                            }),
+                            _vm._v(" "),
+                            _c(
+                              "button",
+                              {
+                                staticClass: "btn btn-outline-primary",
+                                attrs: {
+                                  type: "button",
+                                  disabled:
+                                    _vm.otp_sending ||
+                                    _vm.otp_countdown > 0 ||
+                                    !_vm.mobile,
+                                },
+                                on: { click: _vm.sendOtp },
+                              },
+                              [
+                                _vm.otp_sending
+                                  ? _c("b-spinner", { attrs: { small: "" } })
+                                  : _vm.otp_countdown > 0
+                                  ? _c("span", [
+                                      _vm._v(
+                                        "Resend (" +
+                                          _vm._s(_vm.otp_countdown) +
+                                          "s)"
+                                      ),
+                                    ])
+                                  : _c("span", [_vm._v("Send OTP")]),
+                              ],
+                              1
+                            ),
+                          ]),
                           _vm._v(" "),
                           _vm.mobilevalidationError
                             ? _c("span", { staticClass: "error" }, [
@@ -861,6 +1003,47 @@ var render = function () {
                             : _vm._e(),
                         ]),
                       ]),
+                      _vm._v(" "),
+                      _vm.otp_sent && !_vm.otp_firebase
+                        ? _c("div", { staticClass: "form-group col-md-4" }, [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(3),
+                              _vm._v(" "),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.otp,
+                                    expression: "otp",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  type: "text",
+                                  placeholder: "Enter OTP received on mobile",
+                                  inputmode: "numeric",
+                                  maxlength: "6",
+                                },
+                                domProps: { value: _vm.otp },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.otp = $event.target.value
+                                  },
+                                },
+                              }),
+                            ]),
+                          ])
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.otp_firebase
+                        ? _c("div", { staticClass: "form-group col-md-4" }, [
+                            _vm._m(4),
+                          ])
+                        : _vm._e(),
                       _vm._v(" "),
                       _c("div", { staticClass: "form-group col-md-4" }, [
                         _c("div", { staticClass: "form-group" }, [
@@ -1144,7 +1327,7 @@ var render = function () {
                             "div",
                             { staticClass: "form-group" },
                             [
-                              _vm._m(3),
+                              _vm._m(5),
                               _vm._v(" "),
                               _c("Select2", {
                                 attrs: {
@@ -1173,7 +1356,7 @@ var render = function () {
                     _c("div", { staticClass: "row" }, [
                       _c("div", { staticClass: "form-group col-md-4" }, [
                         _c("div", { staticClass: "form-group" }, [
-                          _vm._m(4),
+                          _vm._m(6),
                           _vm._v(" "),
                           _c("input", {
                             directives: [
@@ -1207,7 +1390,7 @@ var render = function () {
                         "div",
                         { staticClass: "col-md-4" },
                         [
-                          _vm._m(5),
+                          _vm._m(7),
                           _vm._v(" "),
                           _c("multiselect", {
                             attrs: {
@@ -1288,7 +1471,6 @@ var render = function () {
                             attrs: {
                               type: "text",
                               placeholder: "Enter tax name.",
-                              required: "",
                             },
                             domProps: { value: _vm.tax_name },
                             on: {
@@ -1320,7 +1502,6 @@ var render = function () {
                             attrs: {
                               type: "text",
                               placeholder: "Enter tax number.",
-                              required: "",
                             },
                             domProps: { value: _vm.tax_number },
                             on: {
@@ -1367,7 +1548,7 @@ var render = function () {
                       ]),
                       _vm._v(" "),
                       _c("div", { staticClass: "form-group col-md-4" }, [
-                        _vm._m(6),
+                        _c("label", [_vm._v("Commission (%)")]),
                         _vm._v(" "),
                         _c("input", {
                           directives: [
@@ -1402,9 +1583,106 @@ var render = function () {
                           : _vm._e(),
                       ]),
                       _vm._v(" "),
+                      _vm._m(8),
+                      _vm._v(" "),
                       _c("div", { staticClass: "form-group col-md-4" }, [
                         _c("div", { staticClass: "form-group" }, [
-                          _vm._m(7),
+                          _c("label", [_vm._v("UPI ID")]),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.upi_id,
+                                expression: "upi_id",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: {
+                              type: "text",
+                              placeholder: "e.g. name@upi",
+                            },
+                            domProps: { value: _vm.upi_id },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.upi_id = $event.target.value
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group col-md-4" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _c("label", [_vm._v("UPI Mobile")]),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.upi_mobile,
+                                expression: "upi_mobile",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: {
+                              type: "text",
+                              placeholder: "Mobile linked to UPI",
+                              inputmode: "numeric",
+                              maxlength: "10",
+                            },
+                            domProps: { value: _vm.upi_mobile },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.upi_mobile = $event.target.value
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group col-md-4" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _c("label", [_vm._v("UPI Account Name")]),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.upi_name,
+                                expression: "upi_name",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: {
+                              type: "text",
+                              placeholder: "Account holder name",
+                            },
+                            domProps: { value: _vm.upi_name },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.upi_name = $event.target.value
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group col-md-4" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(9),
                           _vm._v(" "),
                           _c("input", {
                             ref: "file_national_id_card",
@@ -1438,7 +1716,7 @@ var render = function () {
                                     ]),
                                   ]
                                 : [
-                                    _vm._m(8),
+                                    _vm._m(10),
                                     _vm._v(" "),
                                     _c("label", [
                                       _vm._v(
@@ -1498,7 +1776,7 @@ var render = function () {
                       _vm._v(" "),
                       _c("div", { staticClass: "form-group col-md-4" }, [
                         _c("div", { staticClass: "form-group" }, [
-                          _vm._m(9),
+                          _vm._m(11),
                           _vm._v(" "),
                           _c("input", {
                             ref: "file_address_proof",
@@ -1523,7 +1801,7 @@ var render = function () {
                             [
                               _vm.address_proof_name == ""
                                 ? [
-                                    _vm._m(10),
+                                    _vm._m(12),
                                     _vm._v(" "),
                                     _c("label", [
                                       _vm._v(
@@ -1590,7 +1868,7 @@ var render = function () {
                       ]),
                       _vm._v(" "),
                       _c("div", { staticClass: "form-group col-md-4" }, [
-                        _vm._m(11),
+                        _vm._m(13),
                         _vm._v(" "),
                         _c("input", {
                           ref: "file_store_logo",
@@ -1628,7 +1906,7 @@ var render = function () {
                                   ]),
                                 ]
                               : [
-                                  _vm._m(12),
+                                  _vm._m(14),
                                   _vm._v(" "),
                                   _c("label", [
                                     _vm._v(
@@ -1664,7 +1942,7 @@ var render = function () {
                         "div",
                         { staticClass: "form-group col-md-12" },
                         [
-                          _vm._m(13),
+                          _vm._m(15),
                           _vm._v(" "),
                           _c("editor", {
                             attrs: {
@@ -1756,6 +2034,30 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("label", [
+      _vm._v("OTP "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "form-group" }, [
+      _c("label", [_vm._v("Mobile Verification")]),
+      _vm._v(" "),
+      _c("div", { staticClass: "alert alert-success py-2 mb-0" }, [
+        _c("i", { staticClass: "fa fa-check-circle" }),
+        _vm._v(
+          " Number verified via Firebase\n                                        "
+        ),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
       _vm._v("Categories "),
       _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
     ])
@@ -1782,9 +2084,13 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [
-      _vm._v("Commission (%) "),
-      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    return _c("div", { staticClass: "col-md-12 mt-3 mb-1" }, [
+      _c("h6", { staticClass: "text-muted font-weight-bold" }, [
+        _vm._v("UPI Details "),
+        _c("small", { staticClass: "text-secondary" }, [_vm._v("(optional)")]),
+      ]),
+      _vm._v(" "),
+      _c("hr", { staticClass: "mt-1 mb-2" }),
     ])
   },
   function () {

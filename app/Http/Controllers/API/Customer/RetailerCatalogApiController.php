@@ -102,10 +102,17 @@ class RetailerCatalogApiController extends Controller
             });
         }
 
-        // category_ids: comma-separated string or array
-        $categoryIds = array_filter(array_map('intval', explode(',', (string) $request->input('category_ids', $request->input('category_id', '')))));
+        // category_ids: comma-separated — expand to include all descendant sub-categories
+        $categoryIds = array_values(array_filter(array_map('intval', explode(',', (string) $request->input('category_ids', $request->input('category_id', ''))))));
         if (!empty($categoryIds)) {
-            $query->whereIn('master_products.category_id', $categoryIds);
+            $allCategoryIds = $categoryIds;
+            $toCheck = $categoryIds;
+            while (!empty($toCheck)) {
+                $children = \App\Models\Category::whereIn('parent_id', $toCheck)->where('status', 1)->pluck('id')->toArray();
+                $toCheck = array_values(array_diff($children, $allCategoryIds));
+                $allCategoryIds = array_merge($allCategoryIds, $children);
+            }
+            $query->whereIn('master_products.category_id', array_unique($allCategoryIds));
         }
 
         // brand_ids: comma-separated string or array
@@ -134,6 +141,25 @@ class RetailerCatalogApiController extends Controller
 
         if ($request->filled('parent_company_id')) {
             $query->where('master_products.parent_company_id', $request->parent_company_id);
+        }
+
+        // section_id: look up section, resolve master_product IDs, filter
+        $sectionId = (int) $request->input('section_id', 0);
+        if ($sectionId > 0) {
+            $section = \App\Models\Section::find($sectionId);
+            if ($section) {
+                $masterProductIds = CommonHelper::getMasterProductIdsSection($section, $sellerIds->toArray());
+                $masterProductIdsArray = array_values(array_unique(array_filter(
+                    array_map('intval', explode(',', $masterProductIds ?? '')),
+                    fn($id) => $id > 0
+                )));
+                if (!empty($masterProductIdsArray)) {
+                    $query->whereIn('master_products.id', $masterProductIdsArray);
+                } else {
+                    // Section exists but has no products for this city — return empty
+                    return CommonHelper::responseWithData([], 0);
+                }
+            }
         }
 
         // Apply DB-level sort for name/date; price/discount sorts are applied after grouping
@@ -232,10 +258,46 @@ class RetailerCatalogApiController extends Controller
             default => $grouped,
         };
 
+        // Compute categories and price range from full result (before price filter + pagination)
+        $categories = $grouped->map(fn($p) => [
+            'id'   => $p['category_id'],
+            'name' => $p['category'],
+        ])->filter(fn($c) => $c['id'])->unique('id')->values();
+
+        $allPrices = $grouped->map(function ($p) {
+            $o = $p['best_offer'];
+            return ($o['discounted_price'] !== null && $o['discounted_price'] > 0)
+                ? $o['discounted_price']
+                : $o['selling_price'];
+        });
+        $overallMinPrice = $allPrices->isNotEmpty() ? (float) $allPrices->min() : 0;
+        $overallMaxPrice = $allPrices->isNotEmpty() ? (float) $allPrices->max() : 0;
+
+        // min_price / max_price filter on best_offer effective price
+        $minPrice = $request->input('min_price');
+        $maxPrice = $request->input('max_price');
+        if ($minPrice !== null || $maxPrice !== null) {
+            $grouped = $grouped->filter(function ($p) use ($minPrice, $maxPrice) {
+                $o = $p['best_offer'];
+                $effectivePrice = ($o['discounted_price'] !== null && $o['discounted_price'] > 0)
+                    ? $o['discounted_price']
+                    : $o['selling_price'];
+                if ($minPrice !== null && $effectivePrice < (float) $minPrice) return false;
+                if ($maxPrice !== null && $effectivePrice > (float) $maxPrice) return false;
+                return true;
+            })->values();
+        }
+
         $total = $grouped->count();
         $paged = $grouped->slice($offset, $limit)->values();
 
-        return CommonHelper::responseWithData($paged, $total);
+        return CommonHelper::responseWithData([
+            'total'     => $total,
+            'min_price' => $overallMinPrice,
+            'max_price' => $overallMaxPrice,
+            'categories'=> $categories,
+            'data'      => $paged,
+        ]);
         } catch (\Throwable $e) {
             return CommonHelper::responseError($e->getMessage() . ' | line: ' . $e->getLine() . ' | file: ' . basename($e->getFile()));
         }
@@ -293,6 +355,7 @@ class RetailerCatalogApiController extends Controller
             $sellerLogo = $sp->seller ? $sp->seller->logo : null;
             return [
                 'seller_id'        => $sp->seller_id,
+                'seller_name'      => $sp->seller ? $sp->seller->getAttributeValue('name') : null,
                 // 'seller_image'     => $sellerLogo,
                 'seller_image_url' => $sellerLogo ? asset('storage/' . $sellerLogo) : null,
                 'seller_product_id' => $sp->id,

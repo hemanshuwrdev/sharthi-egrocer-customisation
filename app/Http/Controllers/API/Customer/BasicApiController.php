@@ -219,10 +219,14 @@ class BasicApiController extends Controller
         $limit  = max(1, (int) ($request->limit ?? 10));
         $offset = max(0, (int) ($request->offset ?? 0));
 
-        $variantIds = Favorite::where('user_id', $userId)
+        $favorites = Favorite::where('user_id', $userId)
             ->whereNotNull('master_product_variant_id')
             ->orderBy('created_at', 'DESC')
-            ->pluck('master_product_variant_id');
+            ->get(['master_product_variant_id', 'seller_id']);
+
+        $variantIds = $favorites->pluck('master_product_variant_id');
+        // Map variant_id → seller_id so we can highlight the favorited seller in the response
+        $favSellerByVariant = $favorites->pluck('seller_id', 'master_product_variant_id');
 
         if ($variantIds->isEmpty()) {
             return CommonHelper::responseError('no_items_found');
@@ -271,7 +275,7 @@ class BasicApiController extends Controller
             ->get()
             ->groupBy('seller_product_id');
 
-        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers) {
+        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $favSellerByVariant) {
             $first = $group->first();
             $mp    = $first->masterProduct;
             $overlapAllowed = (int) ($brandOverlap[$first->mp_brand_id] ?? 0) === 1;
@@ -316,6 +320,7 @@ class BasicApiController extends Controller
                 'weight'               => $first->weight,
                 'image'                => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed'      => $overlapAllowed,
+                'favorited_seller_id'  => $favSellerByVariant[$first->id] ?? null,
                 'offers'               => $offers,
                 'best_offer'           => $offers->first(),
                 'is_favorite'          => true,
@@ -335,6 +340,7 @@ class BasicApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'product_variant_id' => 'required|exists:master_product_variants,id',
+            'seller_id'          => 'nullable|exists:sellers,id',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -342,16 +348,21 @@ class BasicApiController extends Controller
 
         $userId    = auth()->user()->id;
         $variantId = (int) $request->product_variant_id;
+        $sellerId  = $request->filled('seller_id') ? (int) $request->seller_id : null;
 
-        $exists = Favorite::where('user_id', $userId)->where('master_product_variant_id', $variantId)->exists();
-        if ($exists) {
+        $query = Favorite::where('user_id', $userId)->where('master_product_variant_id', $variantId);
+        if ($sellerId) {
+            $query->where('seller_id', $sellerId);
+        }
+        if ($query->exists()) {
             return CommonHelper::responseError('product_already_added_as_favorite');
         }
 
-        $favorite                          = new Favorite();
-        $favorite->user_id                 = $userId;
-        $favorite->product_id              = 0;
+        $favorite                            = new Favorite();
+        $favorite->user_id                   = $userId;
+        $favorite->product_id                = 0;
         $favorite->master_product_variant_id = $variantId;
+        $favorite->seller_id                 = $sellerId;
         $favorite->save();
 
         return CommonHelper::responseSuccess('item_added_in_users_favorite_list_successfully');
@@ -362,9 +373,12 @@ class BasicApiController extends Controller
         $userId = auth()->user()->id;
 
         if ($request->filled('product_variant_id')) {
-            $deleted = Favorite::where('user_id', $userId)
-                ->where('master_product_variant_id', (int) $request->product_variant_id)
-                ->delete();
+            $query = Favorite::where('user_id', $userId)
+                ->where('master_product_variant_id', (int) $request->product_variant_id);
+            if ($request->filled('seller_id')) {
+                $query->where('seller_id', (int) $request->seller_id);
+            }
+            $deleted = $query->delete();
             return $deleted
                 ? CommonHelper::responseSuccess('item_removed_from_users_favorite_list_successfully')
                 : CommonHelper::responseError('no_product_found');

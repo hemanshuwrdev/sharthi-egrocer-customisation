@@ -94,18 +94,24 @@ class CustomerAuthController extends Controller
                     return CommonHelper::responseError('OTP is required.');
                 }
 
-                $fullPhone = $loginCountryCode . $request->id;
-                $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
-                    ->orWhere('phone', $request->id)
-                    ->latest('created_at')
-                    ->first();
+                $firebaseEnabled = (int) Setting::where('variable', 'firebase_authentication')->value('value');
 
-                if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
-                    return CommonHelper::responseError('OTP is invalid or has expired.');
+                if (!$firebaseEnabled) {
+                    // Twilio flow: verify OTP from DB
+                    $fullPhone = $loginCountryCode . $request->id;
+                    $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
+                        ->orWhere('phone', $request->id)
+                        ->latest('created_at')
+                        ->first();
+
+                    if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
+                        return CommonHelper::responseError('OTP is invalid or has expired.');
+                    }
+
+                    $otpRecord->status = 'verified';
+                    $otpRecord->save();
                 }
-
-                $otpRecord->status = 'verified';
-                $otpRecord->save();
+                // Firebase flow: OTP already verified client-side, no DB record exists — trust Firebase
             }
 
             if ($request->phone_auth_type == 'phone_auth_password') {

@@ -10,8 +10,10 @@ class SmsVerification extends Model
     use HasFactory;
 
     protected $fillable = [
-        'contact_number','code','status' 
+        'contact_number','code','status'
     ];
+
+    protected $dates = ['expires_at'];
     public function store($request)
         {
         $this->fill($request->all());

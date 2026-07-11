@@ -87,6 +87,7 @@ class SchemeEngine
             ])
             ->get();
 
+
         $nearest = null;
 
         foreach ($schemes as $scheme) {
@@ -146,6 +147,11 @@ class SchemeEngine
                     $groupTotal += $totalByProduct[(int) $spId] ?? 0;
                 }
 
+                // Only surface if at least one group product is in cart
+                if ($groupTotal <= 0) {
+                    continue;
+                }
+
                 $nextSlab = $scheme->schemeSlabs
                     ->where('min_value', '>', $groupTotal)
                     ->sortBy('min_value')
@@ -185,6 +191,11 @@ class SchemeEngine
                 foreach ($groupIds as $spId) {
                     $groupQty   += $qtyByProduct[(int) $spId]   ?? 0;
                     $groupTotal += $totalByProduct[(int) $spId] ?? 0;
+                }
+
+                // Only surface if at least one group product is in cart
+                if ($groupQty <= 0) {
+                    continue;
                 }
 
                 $nextSlab = $scheme->schemeSlabs

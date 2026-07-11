@@ -65,7 +65,7 @@ class AdminAuthController extends Controller
                     ->latest('created_at')
                     ->first();
 
-                if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
+                if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || \Carbon\Carbon::parse($otpRecord->expires_at)->lt(\Carbon\Carbon::now())) {
                     return CommonHelper::responseError('OTP is invalid or has expired.');
                 }
 
@@ -297,19 +297,22 @@ class AdminAuthController extends Controller
     {
         $requestData = $request->all();
         $validator = Validator::make($requestData, [
-            'name' => 'required',
-            'email' => 'email|required|unique:admins',
-            'mobile' => 'required',
-            'otp' => 'required',
-            'password' => 'min:6|required_with:confirm_password|same:confirm_password',
-            'categories_ids' => 'required',
-            'store_name' => 'required',
-            'city_id' => 'required',
-            'commission' => 'required',
+            'name'             => 'required',
+            'email'            => 'email|required|unique:admins',
+            'mobile'           => 'required',
+            'otp'              => 'required',
+            'password'         => 'min:6|required_with:confirm_password|same:confirm_password',
+            'categories_ids'   => 'required',
+            'store_name'       => 'required',
+            'store_description'=> 'required',
+            'city_id'          => 'required',
+            'commission'       => 'nullable',
             'national_id_card' => 'required|mimes:jpeg,jpg,png,gif,pdf',
-            'address_proof' => 'required|mimes:jpeg,jpg,png,gif,pdf',
-            'store_logo' => 'required|mimes:jpeg,jpg,png,gif,pdf',
-            'store_description' => 'required',
+            'address_proof'    => 'required|mimes:jpeg,jpg,png,gif,pdf',
+            'store_logo'       => 'required|mimes:jpeg,jpg,png,gif,pdf',
+            'upi_id'           => ['nullable', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/'],
+            'upi_mobile'       => 'nullable|digits:10',
+            'upi_name'         => 'nullable|string|max:100',
         ], [
             'email.unique' => 'The :attribute has already been taken.',
         ]);
@@ -318,21 +321,45 @@ class AdminAuthController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $mobile = $request->mobile;
-        $countryCode = $request->country_code ?? '';
-        $fullPhone = $countryCode . $mobile;
+        $firebaseEnabled = (int) \App\Models\Setting::where('variable', 'firebase_authentication')->value('value');
 
-        $otpRecord = \App\Models\SmsVerification::where('phone', $fullPhone)
-            ->orWhere('phone', $mobile)
-            ->latest('created_at')
-            ->first();
+        $otpRecord = null;
+        if (!$firebaseEnabled) {
+            $mobile      = $request->mobile;
+            $countryCode = ltrim($request->country_code ?? '91', '+');
 
-        if (!$otpRecord || $otpRecord->otp != $request->otp || $otpRecord->status != 'pending' || $otpRecord->expires_at < \Carbon\Carbon::now()) {
-            return CommonHelper::responseError('OTP is invalid or has expired.');
+            // Normalize to the same format SmsApiController uses when storing
+            if (str_starts_with($mobile, '+')) {
+                $fullPhone = $mobile;
+            } elseif (str_starts_with($mobile, $countryCode)) {
+                $fullPhone = '+' . $mobile;
+            } else {
+                $fullPhone = '+' . $countryCode . $mobile;
+            }
+
+            $otpRecord = \App\Models\SmsVerification::where(function ($q) use ($fullPhone, $countryCode, $mobile) {
+                    $q->where('phone', $fullPhone)
+                      ->orWhere('phone', '+' . $countryCode . $mobile)
+                      ->orWhere('phone', $mobile);
+                })
+                ->where(function ($q) {
+                    $q->where('user_type', 3)->orWhereNull('user_type');
+                })
+                ->where('status', 'pending')
+                ->latest('created_at')
+                ->first();
+
+            if (!$otpRecord) {
+                return CommonHelper::responseError('OTP record not found. Please resend OTP.');
+            }
+            if ($otpRecord->otp != $request->otp) {
+                return CommonHelper::responseError('OTP does not match. Please check and try again.');
+            }
+            if (\Carbon\Carbon::parse($otpRecord->expires_at)->lt(\Carbon\Carbon::now())) {
+                return CommonHelper::responseError('OTP has expired. Please resend OTP.');
+            }
         }
-
-        $otpRecord->status = 'verified';
-        $otpRecord->save();
+        // Firebase OTP is verified client-side — no DB check needed (same as login)
 
         DB::beginTransaction();
         try {
@@ -352,14 +379,23 @@ class AdminAuthController extends Controller
             $seller->email = $request->email;
             $seller->mobile = $request->mobile;
             $seller->status = Seller::$statusRegistered;
-            $seller->store_url = $request->store_url;
-            $seller->categories = $request->categories_ids;
-            $seller->tax_name = $request->tax_name;
-            $seller->tax_number = $request->tax_number;
-            $seller->pan_number = $request->pan_number;
-            $seller->city_id = $request->city_id;
+            $seller->store_url         = $request->store_url;
+            $seller->categories        = $request->categories_ids;
+            $seller->tax_name          = $request->tax_name;
+            $seller->tax_number        = $request->tax_number;
+            $seller->pan_number        = $request->pan_number;
+            $seller->city_id           = $request->city_id;
+            $seller->state             = $request->state;
+            $seller->pincode_id        = $request->pincode_id ?? 0;
             $seller->store_description = $request->store_description;
-            $seller->commission = $request->commission;
+            $seller->commission        = $request->commission;
+            $seller->bank_name         = $request->bank_name;
+            $seller->account_number    = $request->account_number;
+            $seller->bank_ifsc_code    = $request->ifsc_code ?? $request->bank_ifsc_code;
+            $seller->account_name      = $request->account_name;
+            $seller->upi_id            = $request->upi_id;
+            $seller->upi_mobile        = $request->upi_mobile;
+            $seller->upi_name          = $request->upi_name;
 
             // Store latitude and longitude from the selected city
             $city = City::find($request->city_id);
@@ -397,6 +433,12 @@ class AdminAuthController extends Controller
                 CommonHelper::sendMailAdminStatus("seller", $seller, $seller->status, $request->email);
             } catch (\Exception $e) {
                 Log::error("Register Seller status send mail error", [$e->getMessage()]);
+            }
+
+            // Mark OTP as used only after successful registration
+            if ($otpRecord) {
+                $otpRecord->status = 'verified';
+                $otpRecord->save();
             }
 
             DB::commit();

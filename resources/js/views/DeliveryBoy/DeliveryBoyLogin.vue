@@ -89,7 +89,7 @@ export default {
                 return;
             }
             this.isSendingOtp = true;
-            let url = this.$apiUrl + '/seller/send_sms';
+            let url = this.$apiUrl + '/delivery_boy/send_sms';
             let fullPhone = this.countryCode + this.user.mobile;
             axios.post(url, { phone: fullPhone }).then(res => {
                 this.isSendingOtp = false;

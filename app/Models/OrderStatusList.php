@@ -26,6 +26,10 @@ class OrderStatusList extends Model
     public static $selfPickupPicked = 11;
     public static $rescheduled = 12;
 
+    // Sarthi delivery outcome statuses
+    public static $partialDelivery = 13;
+    public static $notDelivered = 14;
+
     public static $orderPaymentPending = "Payment Pending";
     public static $orderReceived = "Received";
     public static $orderProcessed = "Processed";
@@ -35,6 +39,8 @@ class OrderStatusList extends Model
     public static $orderCancelled = "Cancelled";
     public static $orderReturned = "Returned";
     public static $orderRescheduled = "Rescheduled";
+    public static $orderPartialDelivery = "Partial Delivery";
+    public static $orderNotDelivered = "Not Delivered";
 
     // Self Pickup Status Names
     public static $orderSelfPickupPending = "Pending";
@@ -56,6 +62,8 @@ class OrderStatusList extends Model
             self::$selfPickupReady    => 'ready_for_pickup',     // ID 10
             self::$selfPickupPicked   => 'picked_up',            // ID 11
             self::$rescheduled        => 'rescheduled',          // ID 12
+            self::$partialDelivery    => 'partial_delivery',     // ID 13
+            self::$notDelivered       => 'not_delivered',        // ID 14
         ];
 
         return $statusKeys[$statusId] ?? '';
@@ -94,6 +102,8 @@ class OrderStatusList extends Model
                 'ready for pickup'  => 10,
                 'picked up'         => 11,
                 'rescheduled'       => 12,
+                'partial_delivery'  => 13,
+                'not_delivered'     => 14,
             ];
             if (isset($map[$nameLower])) {
                 return self::getTranslatedName($map[$nameLower]);

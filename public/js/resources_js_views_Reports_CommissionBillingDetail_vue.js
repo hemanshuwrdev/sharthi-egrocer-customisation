@@ -196,7 +196,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
 
 
 
@@ -629,11 +628,7 @@ var render = function () {
                     },
                     [
                       _vm._v(
-                        "\n                                " +
-                          _vm._s(
-                            _vm.seller ? _vm.seller.name : _vm.__("detail")
-                          ) +
-                          "\n                            "
+                        _vm._s(_vm.seller ? _vm.seller.name : _vm.__("detail"))
                       ),
                     ]
                   ),
@@ -662,78 +657,66 @@ var render = function () {
             : _vm.data
             ? [
                 _c("div", { staticClass: "card mb-3" }, [
-                  _c(
-                    "div",
-                    { staticClass: "card-body py-3" },
-                    [
-                      _c(
-                        "b-row",
-                        { staticClass: "align-items-center" },
-                        [
-                          _c("b-col", { attrs: { md: "6" } }, [
-                            _c("h5", { staticClass: "mb-0 fw-bold" }, [
-                              _vm._v(_vm._s(_vm.seller.name)),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "text-muted small" }, [
-                              _vm._v(_vm._s(_vm.seller.mobile)),
-                            ]),
+                  _c("div", { staticClass: "card-body py-3" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "d-flex align-items-center justify-content-between",
+                      },
+                      [
+                        _c("div", [
+                          _c("h5", { staticClass: "mb-0 fw-bold" }, [
+                            _vm._v(_vm._s(_vm.seller.name)),
                           ]),
                           _vm._v(" "),
+                          _c("div", { staticClass: "text-muted small" }, [
+                            _vm._v(_vm._s(_vm.seller.mobile)),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "mx-3" }, [
                           _c(
-                            "b-col",
-                            { staticClass: "text-md-end", attrs: { md: "3" } },
+                            "span",
+                            { staticClass: "badge bg-primary px-3 py-2" },
                             [
-                              _c(
-                                "span",
-                                { staticClass: "badge bg-primary fs-6" },
-                                [
-                                  _vm._v(
-                                    "\n                                    " +
-                                      _vm._s(_vm.__("commission_rate")) +
-                                      ": " +
-                                      _vm._s(_vm.seller.commission_rate) +
-                                      "%\n                                "
-                                  ),
-                                ]
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(_vm.__("commission_rate")) +
+                                  ": " +
+                                  _vm._s(_vm.seller.commission_rate) +
+                                  "%\n                                "
                               ),
                             ]
                           ),
-                          _vm._v(" "),
-                          _c(
-                            "b-col",
-                            {
-                              staticClass: "text-md-end mt-2 mt-md-0",
-                              attrs: { md: "3" },
-                            },
-                            [
-                              _c(
-                                "router-link",
-                                {
-                                  staticClass:
-                                    "btn btn-sm btn-outline-secondary",
-                                  attrs: { to: "/commission_billing" },
-                                },
-                                [
-                                  _c("i", {
-                                    staticClass: "fa fa-arrow-left me-1",
-                                  }),
-                                  _vm._v(
-                                    " " +
-                                      _vm._s(_vm.__("back")) +
-                                      "\n                                "
-                                  ),
-                                ]
-                              ),
-                            ],
-                            1
-                          ),
-                        ],
-                        1
-                      ),
-                    ],
-                    1
-                  ),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          [
+                            _c(
+                              "router-link",
+                              {
+                                staticClass: "btn btn-sm btn-outline-secondary",
+                                attrs: { to: "/commission_billing" },
+                              },
+                              [
+                                _c("i", {
+                                  staticClass: "fa fa-arrow-left mr-1",
+                                }),
+                                _vm._v(
+                                  " " +
+                                    _vm._s(_vm.__("back")) +
+                                    "\n                                "
+                                ),
+                              ]
+                            ),
+                          ],
+                          1
+                        ),
+                      ]
+                    ),
+                  ]),
                 ]),
                 _vm._v(" "),
                 _c(
@@ -1071,9 +1054,14 @@ var render = function () {
                                   _vm._v(" "),
                                   _c(
                                     "b-col",
-                                    { attrs: { md: "4", "offset-md": "4" } },
+                                    {
+                                      staticClass:
+                                        "pr-0 d-flex justify-content-end",
+                                      attrs: { md: "4", "offset-md": "4" },
+                                    },
                                     [
                                       _c("b-pagination", {
+                                        staticClass: "mb-0",
                                         attrs: {
                                           "total-rows":
                                             _vm.data.transactions.total,

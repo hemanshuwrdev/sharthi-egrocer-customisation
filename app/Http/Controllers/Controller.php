@@ -295,7 +295,7 @@ class Controller extends BaseController
                 try {
 
                     if (is_object($item->productVariant)) {
-
+                        // Legacy product catalog flow
                         $productId = $item->productVariant->product_id;
                         $product_info = $productInfo->get($productId);
 
@@ -306,6 +306,9 @@ class Controller extends BaseController
                         } else {
                             $this->processSellerTransaction($item, $product_info);
                         }
+                    } elseif ($item->master_product_variant_id) {
+                        // Sarthi master catalog flow — no product_variant, process directly
+                        $this->processSellerTransaction($item, null);
                     }
                 } catch (\Exception $e) {
                     Log::error("Set seller wallet transaction :", [$e->getMessage()]);

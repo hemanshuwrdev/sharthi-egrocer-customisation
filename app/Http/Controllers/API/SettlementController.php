@@ -248,7 +248,9 @@ class SettlementController extends Controller
         if ($order && $order->loading_slip_id) {
             $slip = LoadingSlip::find($order->loading_slip_id);
             if ($slip && $slip->reconciliation_status !== 'full_match') {
-                $orderIds        = Order::where('loading_slip_id', $slip->id)->pluck('id');
+                $orderIds        = Order::where('loading_slip_id', $slip->id)
+                                        ->where('active_status', '!=', \App\Models\OrderStatusList::$notDelivered)
+                                        ->pluck('id');
                 $totalExpected   = round(Order::whereIn('id', $orderIds)->sum('final_total'), 2);
                 $digitalVerified = round(
                     OrderPayment::whereIn('order_id', $orderIds)
@@ -574,7 +576,7 @@ class SettlementController extends Controller
             ];
         });
 
-        $totalExpected   = round($orders->sum('final_total'), 2);
+        $totalExpected   = round($orders->where('active_status', '!=', \App\Models\OrderStatusList::$notDelivered)->sum('final_total'), 2);
         $digitalVerified = round(
             $payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2
         );
@@ -627,8 +629,10 @@ class SettlementController extends Controller
         ]);
         if ($validator->fails()) return CommonHelper::responseError($validator->errors()->first());
 
-        // Recalculate cash_expected fresh
-        $orders          = Order::where('loading_slip_id', $id)->get('final_total');
+        // Recalculate cash_expected fresh (exclude not_delivered orders)
+        $orders          = Order::where('loading_slip_id', $id)
+                            ->where('active_status', '!=', \App\Models\OrderStatusList::$notDelivered)
+                            ->get('final_total');
         $payments        = OrderPayment::whereIn('order_id', Order::where('loading_slip_id', $id)->pluck('id'))
                             ->whereIn('method', ['upi', 'cheque', 'signature'])
                             ->where('status', 'verified')->get();
@@ -730,6 +734,7 @@ class SettlementController extends Controller
 
     /**
      * GET /salesman/payment-methods
+     * Salesman collects actual money (cash/upi/cheque) for delivered orders where driver took signature.
      */
     public function salesmanPaymentMethods()
     {
@@ -739,22 +744,26 @@ class SettlementController extends Controller
         $seller = $salesman->seller_id ? Seller::find($salesman->seller_id) : null;
         if (!$seller) return CommonHelper::responseError('salesman_not_linked_to_distributor');
 
-        $enabled = array_values($this->sellerEnabledMethods($seller));
-        $meta = [
-            'cash'      => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null],
-            'upi'       => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
-            'cheque'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
-            'signature' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Customer signature'],
+        $allMeta = [
+            'cash'   => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null],
+            'upi'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
+            'cheque' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
         ];
 
+        $enabled = array_values(array_filter(
+            $this->sellerEnabledMethods($seller),
+            fn ($m) => isset($allMeta[$m])
+        ));
+
         return CommonHelper::responseWithData([
-            'methods' => array_values(array_map(fn ($m) => array_merge(['method' => $m], $meta[$m]), $enabled))
+            'methods' => array_values(array_map(fn ($m) => array_merge(['method' => $m], $allMeta[$m]), $enabled))
         ]);
     }
 
     /**
      * POST /salesman/collect-payment
-     * Body: order_id, method, amount, proof_photo (for upi/cheque/signature)
+     * Body: order_id, method (cash/upi/cheque), amount, proof_photo (for upi/cheque)
+     * Only allowed for orders that are delivered and have a driver signature payment but no salesman collection yet.
      */
     public function salesmanCollectPayment(Request $request)
     {
@@ -766,29 +775,52 @@ class SettlementController extends Controller
 
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|integer|exists:orders,id',
-            'method'   => 'required|in:cash,upi,cheque,signature',
+            'method'   => 'required|in:cash,upi,cheque',
         ]);
         if ($validator->fails()) return CommonHelper::responseError($validator->errors()->first());
 
-        $method = $request->method;
+        $method = $request->input('method');
         $enabledMethods = array_values($this->sellerEnabledMethods($seller));
         if (!in_array($method, $enabledMethods, true)) return CommonHelper::responseError('payment_method_not_allowed');
-        if (!$request->filled('amount')) return CommonHelper::responseError('amount_required_for_' . $method);
-        if (in_array($method, ['upi', 'cheque', 'signature'], true) && !$request->hasFile('proof_photo') && !$request->filled('proof_photo')) {
+        if (!$request->filled('amount')) return CommonHelper::responseError('amount_required');
+        if (in_array($method, ['upi', 'cheque'], true) && !$request->hasFile('proof_photo') && !$request->filled('proof_photo')) {
             return CommonHelper::responseError('proof_photo_required_for_' . $method);
         }
 
-        $order = Order::where('id', $request->order_id)->where('placed_by_salesman_id', $salesman->id)->first();
-        if (!$order) return CommonHelper::responseError('order_not_assigned_to_you');
+        $order = Order::where('id', $request->order_id)
+            ->where('active_status', 6)
+            ->first();
+        if (!$order) return CommonHelper::responseError('order_not_delivered');
 
-        if (OrderPayment::where('order_id', $order->id)->where('method', $method)->exists()) {
-            return CommonHelper::responseError('payment_method_already_collected_for_this_order');
+        // Confirm driver already collected signature for this order
+        $driverSignature = OrderPayment::where('order_id', $order->id)
+            ->where('method', 'signature')
+            ->whereNotNull('delivery_boy_id')
+            ->first();
+        if (!$driverSignature) return CommonHelper::responseError('no_driver_signature_for_this_order');
+
+        $dueAmount = (float) $driverSignature->amount;
+
+        // Sum of what salesman has already collected for this order
+        $alreadyCollected = (float) OrderPayment::where('order_id', $order->id)
+            ->whereIn('method', ['cash', 'upi', 'cheque'])
+            ->whereNull('delivery_boy_id')
+            ->sum('amount');
+
+        $remaining = round($dueAmount - $alreadyCollected, 2);
+
+        if ($remaining <= 0) {
+            return CommonHelper::responseError('payment_already_fully_collected_for_this_order');
+        }
+
+        if ((float) $request->amount > $remaining) {
+            return CommonHelper::responseError('amount_cannot_exceed_remaining_due_of_' . $remaining);
         }
 
         $proofPath = null;
         if ($request->hasFile('proof_photo')) {
             $file      = $request->file('proof_photo');
-            $proofPath = Storage::disk('public')->putFileAs('payment_proofs', $file, time() . '_' . $order->id . '.' . $file->getClientOriginalExtension());
+            $proofPath = Storage::disk('public')->putFile('payment_proofs', $file);
         } elseif ($request->filled('proof_photo')) {
             $proofPath = (string) $request->proof_photo;
         }
@@ -1140,8 +1172,8 @@ class SettlementController extends Controller
 
         $blockers = [];
         if ($unverifiedDigital > 0) $blockers[] = "{$unverifiedDigital} digital payment(s) not verified yet";
-        if ($hasCash) $blockers[] = 'Enter cash received to close';
-        $canClose = ($unverifiedDigital === 0) && !$isClosed;
+        if ($hasCash && $settlement->cash_received === null) $blockers[] = 'Enter cash received to close';
+        $canClose = ($unverifiedDigital === 0) && (!$hasCash || $settlement->cash_received !== null) && !$isClosed;
 
         $settlementData = [
             'id'                   => $settlement->id,

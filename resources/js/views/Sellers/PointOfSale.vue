@@ -254,7 +254,7 @@
                     </button>
                 </div>
 
-                <div class="card mb-4">
+                <div class="card mb-4 customer-card">
                     <div class="card-header">
                         <h4>{{ __('customer') }} {{__('details')}}</h4>
                     </div>
@@ -327,7 +327,17 @@
                                             <strong>{{ item.variant ? `${item.variant.measurement}
                                                 ${item.variant.measurement_unit_name}` : item.variant_name }}</strong>
                                         </p>
-                                        <div class="price">
+                                        <div class="price d-flex align-items-center gap-1">
+                                            <span class="text-muted small">{{ $currency }}</span>
+                                            <input type="number"
+                                                class="form-control form-control-sm price-edit-input"
+                                                v-model.number="item.custom_price"
+                                                :placeholder="item.price"
+                                                min="0" step="0.01"
+                                                @change="saveTabsToStorage"
+                                                title="Override price">
+                                        </div>
+                                        <div v-if="item.custom_price > 0 && item.custom_price != item.price" class="text-muted" style="font-size:11px; text-decoration:line-through;">
                                             {{ $currency }} {{ item.price }}
                                         </div>
                                     </div>
@@ -342,7 +352,7 @@
                                         </div>
                                     </div>
                                     <div class="item-total">
-                                        {{ $currency }} {{ (item.price * item.quantity).toFixed(2) }}
+                                        {{ $currency }} {{ (effectivePrice(item) * item.quantity).toFixed(2) }}
                                     </div>
                                     <div class="item-actions">
                                         <button class="btn btn-danger btn-sm" @click="removeFromCart(index)">
@@ -379,6 +389,7 @@
                             </div>
 
                             <div class="mt-4">
+                                <!-- Payment method disabled temporarily
                                 <div class="mb-3">
                                     <label for="paymentMethod" class="form-label">{{ __('select_payment_method')
                                         }}</label>
@@ -388,6 +399,7 @@
                                         <option value="card">{{ __('card_payment') }}</option>
                                     </select>
                                 </div>
+                                -->
 
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-outline-primary flex-grow-1" @click="placeOrderAndPrint"
@@ -862,6 +874,9 @@ export default {
             const s = parseFloat(variant.secondary_unit_value);
             return (s && s > 0) ? s : 1;
         },
+        effectivePrice(item) {
+            return (item.custom_price > 0) ? item.custom_price : item.price;
+        },
         // Add this method to handle closing the dropdown when clicking outside
         handleClickOutside(event) {
             const searchSelect = this.$el.querySelector('.search-select');
@@ -1039,6 +1054,7 @@ export default {
                 name: this.selectedProduct.name,
                 variant_name: `${this.selectedVariant.measurement} ${this.selectedVariant.measurement_unit_name}`,
                 price: price,
+                custom_price: null,
                 quantity: this.productQuantity,
                 image: this.selectedProduct.image_url,
                 variant: this.selectedVariant // Store the full variant object for reference
@@ -1150,7 +1166,7 @@ export default {
         },
 
         calculateSubtotal() {
-            return this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            return this.cart.reduce((total, item) => total + (this.effectivePrice(item) * item.quantity), 0);
         },
 
         calculateDiscountAmount() {
@@ -1456,6 +1472,7 @@ export default {
                 name: product.name,
                 variant_name: `${variant.measurement} ${variant.measurement_unit_name}`,
                 price: price,
+                custom_price: null,
                 quantity: step,
                 image: product.image_url,
                 variant: variant, // Store the full variant object for reference
@@ -1739,7 +1756,11 @@ export default {
 
             // Construct order data
             let orderData = {
-                items: this.getActiveTab.cart,
+                items: this.getActiveTab.cart.map(item => ({
+                    product_variant_id: item.product_variant_id,
+                    quantity: item.quantity,
+                    custom_price: (item.custom_price > 0) ? item.custom_price : null,
+                })),
                 payment_method: this.getActiveTab.paymentMethod,
                 subtotal: this.calculateSubtotal(),
                 total: this.calculateFinalTotal(),
@@ -2311,6 +2332,20 @@ body.pos-active #main {
     font-size: 13px;
 }
 
+.price-edit-input {
+    width: 90px;
+    font-weight: bold;
+    color: #435ebe;
+    font-size: 13px;
+    padding: 2px 6px;
+    height: 28px;
+}
+
+.price-edit-input:focus {
+    border-color: #435ebe;
+    box-shadow: 0 0 0 0.15rem rgba(67, 94, 190, 0.25);
+}
+
 .item-quantity {
     width: 120px;
     margin: 10px 0;
@@ -2577,6 +2612,11 @@ body.pos-active #main {
     font-size: 85%;
 }
 
+.customer-card,
+.customer-card .card-body {
+    overflow: visible !important;
+}
+
 .search-select {
     position: relative;
     width: 100%;
@@ -2592,7 +2632,7 @@ body.pos-active #main {
     border-radius: 0 0 4px 4px;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 1000;
+    z-index: 1050;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 

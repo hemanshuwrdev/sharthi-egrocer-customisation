@@ -8,12 +8,13 @@
 
                 <!-- Daily stock update reminder -->
                 <div class="col-12" v-if="showStockWarning">
-                    <div class="alert alert-warning d-flex align-items-center justify-content-between mb-3" style="cursor:pointer;border-left:4px solid #f0ad4e;" @click="goToStockManagement">
-                        <div class="d-flex align-items-center gap-2">
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between mb-3" style="border-left:4px solid #f0ad4e;">
+                        <div class="d-flex align-items-center gap-2" style="cursor:pointer;" @click="goToStockManagement">
                             <i class="fa fa-exclamation-triangle me-2"></i>
                             <span><strong>{{ __('stock_update_reminder') }}</strong> — {{ __('click_here_to_update_stock') }}</span>
+                            <i class="fa fa-arrow-right ms-2"></i>
                         </div>
-                        <i class="fa fa-arrow-right"></i>
+                        <button type="button" class="btn-close ms-3" @click.stop="dismissStockWarning" aria-label="Dismiss"></button>
                     </div>
                 </div>
 
@@ -605,11 +606,15 @@ export default {
             },
             series2: [],
             showStockWarning: false,
+            midnightTimer: null,
         };
     },
     mounted() {
         // Set the initial number of items
         this.orderTotalRows = this.orders.length
+    },
+    beforeDestroy() {
+        clearTimeout(this.midnightTimer);
     },
     created() {
         let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -671,14 +676,41 @@ export default {
             return '';
         },
         checkStockWarning() {
-            const today = new Date().toISOString().slice(0, 10);
+            const now = new Date();
+            const today = now.toISOString().slice(0, 10);
             const dismissed = localStorage.getItem('stock_warning_dismissed');
-            this.showStockWarning = dismissed !== today;
+
+            // Show only during 00:00–00:59 window and not yet dismissed today
+            if (now.getHours() === 0 && dismissed !== today) {
+                this.showStockWarning = true;
+            }
+
+            // Schedule to fire at the next midnight regardless of current time
+            this.scheduleMidnightWarning();
         },
-        goToStockManagement() {
+        scheduleMidnightWarning() {
+            const now = new Date();
+            const nextMidnight = new Date(now);
+            nextMidnight.setHours(24, 0, 0, 0);
+            const msUntilMidnight = nextMidnight - now;
+
+            this.midnightTimer = setTimeout(() => {
+                const today = new Date().toISOString().slice(0, 10);
+                const dismissed = localStorage.getItem('stock_warning_dismissed');
+                if (dismissed !== today) {
+                    this.showStockWarning = true;
+                }
+                // Reschedule for next midnight
+                this.scheduleMidnightWarning();
+            }, msUntilMidnight);
+        },
+        dismissStockWarning() {
             const today = new Date().toISOString().slice(0, 10);
             localStorage.setItem('stock_warning_dismissed', today);
             this.showStockWarning = false;
+        },
+        goToStockManagement() {
+            this.dismissStockWarning();
             this.$router.push('/seller/manage_stock');
         },
         getRecord: function () {

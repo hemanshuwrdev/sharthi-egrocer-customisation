@@ -1922,13 +1922,7 @@ class CommonHelper
                 $order_total_tax_amt = $totalTax['order_total_tax_amt'];
                 $order_total_tax_per = $totalTax['order_total_tax_per'];
 
-                $generate_otp = Setting::get_value("generate_otp");
-
-                if ($generate_otp == 1) {
-                    $otp_number = mt_rand(100000, 999999);
-                } else {
-                    $otp_number = 0;
-                }
+                $otp_number = mt_rand(100000, 999999);
 
 
                 if ($i === 1) {
@@ -2350,7 +2344,7 @@ class CommonHelper
         }
 
         if ($order_type == 'doorstep') {
-            $query = str_replace('orders.active_status = order_status_lists.id', 'orders.active_status = order_status_lists.id AND orders.order_type = "doorstep"', $query);
+            $query = str_replace('orders.active_status = order_status_lists.id', 'orders.active_status = order_status_lists.id AND orders.order_type IN ("doorstep","pos")', $query);
         } elseif ($order_type == 'selfpickup') {
             $query = str_replace('orders.active_status = order_status_lists.id', 'orders.active_status = order_status_lists.id AND orders.order_type = "selfpickup"', $query);
         }
@@ -2431,6 +2425,7 @@ class CommonHelper
             'users.email as user_email',
             'users.mobile as user_mobile',
             'users.country_code as user_country_code',
+            'orders.otp',
             'address.*',
             'address.address as customer_address',
             'address.landmark as customer_landmark',
@@ -2758,6 +2753,13 @@ class CommonHelper
         // Display order placed time using admin date/time format (store settings)
         if ($order && !empty($order->orders_created_at)) {
             $order->orders_created_at = self::formatDateTime($order->orders_created_at);
+        }
+
+        // Safety net: old orders may have no OTP stored — generate and persist one now
+        if ($order && empty($order->otp)) {
+            $newOtp = mt_rand(100000, 999999);
+            \App\Models\Order::where('id', $order->order_id)->update(['otp' => $newOtp]);
+            $order->otp = $newOtp;
         }
 
         return array("order" => $order, "order_items" => $order_items);

@@ -15,9 +15,7 @@
                                 <li class="breadcrumb-item">
                                     <router-link to="/commission_billing">{{ __('commission_billing') }}</router-link>
                                 </li>
-                                <li class="breadcrumb-item active" aria-current="page">
-                                    {{ seller ? seller.name : __('detail') }}
-                                </li>
+                                <li class="breadcrumb-item active" aria-current="page">{{ seller ? seller.name : __('detail') }}</li>
                             </ol>
                         </nav>
                     </div>
@@ -37,22 +35,22 @@
                     <!-- Seller info bar -->
                     <div class="card mb-3">
                         <div class="card-body py-3">
-                            <b-row class="align-items-center">
-                                <b-col md="6">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
                                     <h5 class="mb-0 fw-bold">{{ seller.name }}</h5>
                                     <div class="text-muted small">{{ seller.mobile }}</div>
-                                </b-col>
-                                <b-col md="3" class="text-md-end">
-                                    <span class="badge bg-primary fs-6">
+                                </div>
+                                <div class="mx-3">
+                                    <span class="badge bg-primary px-3 py-2">
                                         {{ __('commission_rate') }}: {{ seller.commission_rate }}%
                                     </span>
-                                </b-col>
-                                <b-col md="3" class="text-md-end mt-2 mt-md-0">
+                                </div>
+                                <div>
                                     <router-link to="/commission_billing" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fa fa-arrow-left me-1"></i> {{ __('back') }}
+                                        <i class="fa fa-arrow-left mr-1"></i> {{ __('back') }}
                                     </router-link>
-                                </b-col>
-                            </b-row>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -158,13 +156,14 @@
                                             {{ __('total_commission') }}: {{ $currency }} {{ data.commission_earned.all_time.toFixed(2) }}
                                         </div>
                                     </b-col>
-                                    <b-col md="4" offset-md="4">
+                                    <b-col md="4" offset-md="4" class="pr-0 d-flex justify-content-end">
                                         <b-pagination
                                             v-model="page"
                                             :total-rows="data.transactions.total"
                                             :per-page="perPage"
                                             @change="load"
                                             size="sm"
+                                            class="mb-0"
                                         ></b-pagination>
                                     </b-col>
                                 </b-row>

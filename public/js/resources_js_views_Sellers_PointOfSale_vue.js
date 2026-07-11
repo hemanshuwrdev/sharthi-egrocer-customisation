@@ -634,6 +634,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -844,6 +856,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var s = parseFloat(variant.secondary_unit_value);
       return s && s > 0 ? s : 1;
     },
+    effectivePrice: function effectivePrice(item) {
+      return item.custom_price > 0 ? item.custom_price : item.price;
+    },
     // Add this method to handle closing the dropdown when clicking outside
     handleClickOutside: function handleClickOutside(event) {
       var searchSelect = this.$el.querySelector('.search-select');
@@ -1009,6 +1024,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         name: this.selectedProduct.name,
         variant_name: "".concat(this.selectedVariant.measurement, " ").concat(this.selectedVariant.measurement_unit_name),
         price: price,
+        custom_price: null,
         quantity: this.productQuantity,
         image: this.selectedProduct.image_url,
         variant: this.selectedVariant // Store the full variant object for reference
@@ -1109,8 +1125,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.saveTabsToStorage();
     },
     calculateSubtotal: function calculateSubtotal() {
+      var _this6 = this;
       return this.cart.reduce(function (total, item) {
-        return total + item.price * item.quantity;
+        return total + _this6.effectivePrice(item) * item.quantity;
       }, 0);
     },
     calculateDiscountAmount: function calculateDiscountAmount() {
@@ -1253,7 +1270,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.saveTabsToStorage();
     },
     applyAdditionalCharges: function applyAdditionalCharges() {
-      var _this6 = this;
+      var _this7 = this;
       // Reset errors
       this.chargeErrors = this.tempAdditionalCharges.map(function () {
         return {};
@@ -1263,13 +1280,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var hasError = false;
       this.tempAdditionalCharges.forEach(function (charge, index) {
         if (!charge.charge_name.trim()) {
-          _this6.$set(_this6.chargeErrors, index, _objectSpread(_objectSpread({}, _this6.chargeErrors[index]), {}, {
+          _this7.$set(_this7.chargeErrors, index, _objectSpread(_objectSpread({}, _this7.chargeErrors[index]), {}, {
             name: 'Charge name is required'
           }));
           hasError = true;
         }
         if (!charge.amount || charge.amount <= 0) {
-          _this6.$set(_this6.chargeErrors, index, _objectSpread(_objectSpread({}, _this6.chargeErrors[index]), {}, {
+          _this7.$set(_this7.chargeErrors, index, _objectSpread(_objectSpread({}, _this7.chargeErrors[index]), {}, {
             amount: 'Amount must be greater than 0'
           }));
           hasError = true;
@@ -1396,6 +1413,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         name: product.name,
         variant_name: "".concat(variant.measurement, " ").concat(variant.measurement_unit_name),
         price: price,
+        custom_price: null,
         quantity: step,
         image: product.image_url,
         variant: variant,
@@ -1436,7 +1454,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.saveTabsToStorage();
     },
     confirmExit: function confirmExit() {
-      var _this7 = this;
+      var _this8 = this;
       this.$swal.fire({
         title: __('are_you_sure'),
         text: __('any_unsaved_bills_will_be_lost'),
@@ -1447,7 +1465,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }).then(function (result) {
         if (result.isConfirmed) {
           // Reset tabs to initial state before clearing storage
-          _this7.tabs = [{
+          _this8.tabs = [{
             id: 'tab-' + Date.now(),
             cart: [],
             selectedUser: null,
@@ -1468,12 +1486,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     },
     debounceSearch: function debounceSearch() {
-      var _this8 = this;
+      var _this9 = this;
       if (this.searchTimeout) {
         clearTimeout(this.searchTimeout);
       }
       this.searchTimeout = setTimeout(function () {
-        _this8.getProducts();
+        _this9.getProducts();
       }, 500);
     },
     navigateToProduct: function navigateToProduct(productId) {
@@ -1502,7 +1520,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.saveTabsToStorage();
     },
     closeTab: function closeTab(index) {
-      var _this9 = this;
+      var _this10 = this;
       // Don't allow closing the tab when viewing a previous order
       if (this.viewingPreviousOrder && this.activeTabIndex === index) {
         toastr.warning('Cannot close tab while viewing a previous bill');
@@ -1526,7 +1544,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           cancelButtonText: __('cancel')
         }).then(function (result) {
           if (result.isConfirmed) {
-            _this9.doCloseTab(index);
+            _this10.doCloseTab(index);
           }
         });
       } else {
@@ -1559,7 +1577,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     clearCart: function clearCart() {
-      var _this10 = this;
+      var _this11 = this;
       // If viewing a previous order, ask for confirmation before clearing
       if (this.viewingPreviousOrder) {
         this.$swal.fire({
@@ -1571,7 +1589,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           cancelButtonText: __('cancel')
         }).then(function (result) {
           if (result.isConfirmed) {
-            _this10.doCartClear();
+            _this11.doCartClear();
           }
         });
       } else {
@@ -1631,7 +1649,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.placeOrder(true);
     },
     placeOrder: function placeOrder() {
-      var _this11 = this;
+      var _this12 = this;
       var print = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       if (this.getActiveTab.cart.length === 0) {
         this.$swal.fire({
@@ -1658,8 +1676,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           // For existing items in previous orders, we need to make sure
           // we're not counting their original quantity against available stock
           var originalQuantity = 0;
-          if (_this11.viewingPreviousOrder && _this11.currentViewingOrder) {
-            var originalItem = _this11.currentViewingOrder.items.find(function (origItem) {
+          if (_this12.viewingPreviousOrder && _this12.currentViewingOrder) {
+            var originalItem = _this12.currentViewingOrder.items.find(function (origItem) {
               return origItem.product_variant_id === item.product_variant_id;
             });
             if (originalItem) {
@@ -1669,7 +1687,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
           // Check if requested quantity (minus original quantity for updates) exceeds available stock
           if (item.quantity - originalQuantity > item.variant.stock) {
-            _this11.$swal.fire({
+            _this12.$swal.fire({
               icon: 'error',
               title: 'Not enough stock',
               text: "Not enough stock available for ".concat(item.name, ". Available: ").concat(item.variant.stock),
@@ -1694,7 +1712,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _iterator.f();
       }
       var orderData = {
-        items: this.getActiveTab.cart,
+        items: this.getActiveTab.cart.map(function (item) {
+          return {
+            product_variant_id: item.product_variant_id,
+            quantity: item.quantity,
+            custom_price: item.custom_price > 0 ? item.custom_price : null
+          };
+        }),
         payment_method: this.getActiveTab.paymentMethod,
         subtotal: this.calculateSubtotal(),
         total: this.calculateFinalTotal(),
@@ -1729,18 +1753,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }).then(function (result) {
         if (result.isConfirmed) {
           // Show loading
-          _this11.$swal.fire({
+          _this12.$swal.fire({
             title: 'Processing',
             text: "Processing order ".concat(actionText, "..."),
             allowOutsideClick: false,
             allowEscapeKey: false,
             didOpen: function didOpen() {
-              _this11.$swal.showLoading();
+              _this12.$swal.showLoading();
             }
           });
 
           // Determine which API endpoint to use based on whether we're updating or creating
-          var apiEndpoint = _this11.viewingPreviousOrder ? '/api/seller/pos/update_order' : '/api/seller/pos/place_order';
+          var apiEndpoint = _this12.viewingPreviousOrder ? '/api/seller/pos/update_order' : '/api/seller/pos/place_order';
 
           // Send order to API
           axios.post(apiEndpoint, orderData).then(function (response) {
@@ -1750,10 +1774,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               // Only show print dialog if print parameter is true
               if (print) {
                 // Try to print via iframe first
-                _this11.printInvoice(orderId);
+                _this12.printInvoice(orderId);
 
                 // Show a notification with a link to open the invoice directly if needed
-                _this11.$swal.fire({
+                _this12.$swal.fire({
                   position: 'top-end',
                   icon: 'info',
                   title: 'Invoice Printing',
@@ -1763,26 +1787,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   timerProgressBar: true
                 });
               }
-              if (!_this11.viewingPreviousOrder) {
+              if (!_this12.viewingPreviousOrder) {
                 // Save the order to local storage for previous bills feature
-                _this11.saveOrderToHistory(orderId, orderData);
+                _this12.saveOrderToHistory(orderId, orderData);
 
                 // Remove current tab instead of just clearing it
-                if (_this11.tabs.length > 1) {
+                if (_this12.tabs.length > 1) {
                   // If there are multiple tabs, remove the current one
-                  _this11.doCloseTab(_this11.activeTabIndex);
+                  _this12.doCloseTab(_this12.activeTabIndex);
                 } else {
-                  _this11.doCartClearSilent();
+                  _this12.doCartClearSilent();
                 }
-                _this11.saveTabsToStorage();
+                _this12.saveTabsToStorage();
               } else {
                 // Update the order in localStorage
-                _this11.updateOrderInHistory(orderData);
+                _this12.updateOrderInHistory(orderData);
 
                 // After updating, exit the previous bill view
-                _this11.exitPreviousBillView();
+                _this12.exitPreviousBillView();
               }
-              _this11.$swal.fire({
+              _this12.$swal.fire({
                 icon: 'success',
                 title: "Order ".concat(actionText, "d"),
                 text: "Order ".concat(actionText, "d successfully"),
@@ -1790,7 +1814,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                 confirmButtonText: 'OK'
               });
             } else {
-              _this11.$swal.fire({
+              _this12.$swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: response.data.message || "Error ".concat(actionText, "ing order"),
@@ -1803,7 +1827,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             if (error.response && error.response.data && error.response.data.message) {
               errorMessage = error.response.data.message;
             }
-            _this11.$swal.fire({
+            _this12.$swal.fire({
               icon: 'error',
               title: 'Error',
               text: errorMessage,
@@ -1984,7 +2008,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     },
     searchCustomers: function searchCustomers() {
-      var _this12 = this;
+      var _this13 = this;
       clearTimeout(this.searchTimeout);
       this.showCustomerResults = true;
       if (!this.customerSearchTerm || this.customerSearchTerm.trim().length < 2) {
@@ -1994,11 +2018,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.searchTimeout = setTimeout(function () {
         axios.get('/api/seller/pos/users', {
           params: {
-            search: _this12.customerSearchTerm.trim()
+            search: _this13.customerSearchTerm.trim()
           }
         }).then(function (response) {
           if (response.data.status) {
-            _this12.filteredUsers = response.data.data;
+            _this13.filteredUsers = response.data.data;
           }
         })["catch"](function (error) {
           console.error('Error searching customers:', error);
@@ -2018,10 +2042,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.saveTabsToStorage();
     },
     fetchStoreName: function fetchStoreName() {
-      var _this13 = this;
+      var _this14 = this;
       axios.get('/api/seller/pos/store-name').then(function (response) {
         if (response.data.status) {
-          _this13.storeName = response.data.data.store_name;
+          _this14.storeName = response.data.data.store_name;
         }
       })["catch"](function (error) {
         console.error('Error fetching store name:', error);
@@ -2086,7 +2110,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.product-card[data-v-3a395e78] {\n    border: 1px solid #e9ecef;\n    border-radius: 8px;\n    overflow: hidden;\n    transition: all 0.3s ease;\n    cursor: pointer;\n    height: 100%;\n    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);\n}\n.product-card[data-v-3a395e78]:hover {\n    transform: translateY(-5px);\n    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);\n}\n.product-image[data-v-3a395e78] {\n    height: 160px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    overflow: hidden;\n    background-color: #f8f9fa;\n    padding: 10px;\n}\n.product-image img[data-v-3a395e78] {\n    max-height: 140px;\n    max-width: 100%;\n    -o-object-fit: contain;\n       object-fit: contain;\n    display: block;\n    margin: 0 auto;\n}\n.product-info[data-v-3a395e78] {\n    padding: 12px;\n}\n.product-name-measure-row[data-v-3a395e78] {\n    flex-wrap: nowrap;\n}\n.product-title[data-v-3a395e78] {\n    font-size: 16px;\n    overflow: hidden;\n    display: -webkit-box;\n    -webkit-line-clamp: 2;\n    -webkit-box-orient: vertical;\n    min-width: 0;\n}\n.single-variant[data-v-3a395e78] {\n    font-size: 0.75rem;\n    color: #6c757d;\n    white-space: nowrap;\n    flex-shrink: 0;\n}\n.variant-info[data-v-3a395e78] {\n    font-weight: 600;\n}\n.form-select-sm[data-v-3a395e78] {\n    font-size: 0.8rem;\n    padding: 0.25rem 0.5rem;\n    height: 30px;\n}\n.mini-select[data-v-3a395e78] {\n    font-size: 0.75rem;\n    padding: 0.2rem 0.4rem;\n    height: 25px;\n}\n.short-select[data-v-3a395e78] {\n    width: auto;\n    min-width: 80px;\n    max-width: 120px;\n}\n.btn-xs[data-v-3a395e78] {\n    padding: 0.2rem 0.5rem;\n    font-size: 0.8rem;\n    line-height: 1.2;\n    margin-top: 5px;\n}\n.no-variants[data-v-3a395e78] {\n    padding: 8px 0;\n    text-align: center;\n    font-size: 12px;\n}\n.product-price[data-v-3a395e78] {\n    font-weight: bold;\n    color: #435ebe;\n    margin-bottom: 5px;\n}\n.original-price[data-v-3a395e78] {\n    text-decoration: line-through;\n    color: #6c757d;\n    font-size: 11px;\n    font-weight: normal;\n    margin-left: 4px;\n}\n.add-btn[data-v-3a395e78] {\n    padding: 2px 6px;\n    font-size: 12px;\n}\n.product-price .discounted[data-v-3a395e78] {\n    color: #dc3545;\n}\n.product-price .original-price[data-v-3a395e78] {\n    text-decoration: line-through;\n    color: #6c757d;\n    font-size: 12px;\n    margin-left: 5px;\n}\n.cart-items[data-v-3a395e78] {\n    max-height: 400px;\n    overflow-y: auto;\n}\n.cart-item[data-v-3a395e78] {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    padding: 10px 0;\n    border-bottom: 1px solid #e9ecef;\n    position: relative;\n}\n.item-image[data-v-3a395e78] {\n    width: 60px;\n    height: 60px;\n    overflow: hidden;\n    border-radius: 4px;\n    margin-right: 10px;\n    border: 1px solid #e9ecef;\n}\n.item-image img[data-v-3a395e78] {\n    width: 100%;\n    height: 100%;\n    -o-object-fit: cover;\n       object-fit: cover;\n}\n.item-details[data-v-3a395e78] {\n    flex: 1;\n    min-width: 150px;\n    padding-right: 10px;\n}\n.item-details h5[data-v-3a395e78] {\n    font-size: 14px;\n    margin-bottom: 3px;\n    font-weight: 600;\n}\n.item-details p.variant-info[data-v-3a395e78] {\n    font-size: 12px;\n    color: #6c757d;\n    margin-bottom: 5px;\n    font-weight: 600;\n}\n.item-details .price[data-v-3a395e78] {\n    font-weight: bold;\n    color: #435ebe;\n    font-size: 13px;\n}\n.item-quantity[data-v-3a395e78] {\n    width: 120px;\n    margin: 10px 0;\n}\n.item-quantity .form-control[data-v-3a395e78] {\n    padding: 0.25rem 0.5rem;\n    text-align: center;\n}\n.item-quantity .input-group[data-v-3a395e78] {\n    flex-wrap: nowrap;\n}\n.item-total[data-v-3a395e78] {\n    width: 80px;\n    text-align: right;\n    font-weight: bold;\n    margin-right: 10px;\n}\n.item-actions[data-v-3a395e78] {\n    margin-left: auto;\n}\n@media (min-width: 768px) {\n.cart-item[data-v-3a395e78] {\n        flex-wrap: nowrap;\n}\n.item-quantity[data-v-3a395e78] {\n        margin: 0 10px;\n}\n}\n@media (max-width: 767.98px) {\n.cart-item[data-v-3a395e78] {\n        padding: 15px 0;\n}\n.item-details[data-v-3a395e78] {\n        width: calc(100% - 70px);\n}\n.item-quantity[data-v-3a395e78] {\n        width: 60%;\n}\n.item-total[data-v-3a395e78] {\n        width: 30%;\n        margin-left: auto;\n}\n.item-actions[data-v-3a395e78] {\n        position: absolute;\n        top: 10px;\n        right: 0;\n}\n}\n@media (min-width: 576px) {\n.product-image[data-v-3a395e78] {\n        height: 110px;\n}\n.product-actions .d-flex[data-v-3a395e78] {\n        flex-direction: column;\n        align-items: stretch;\n        gap: 6px;\n}\n.product-actions .btn[data-v-3a395e78] {\n        width: 100%;\n        font-size: 0.75rem;\n        padding: 0.25rem 0.4rem;\n        text-align: center;\n}\n.product-price[data-v-3a395e78] {\n        font-size: 0.8rem;\n}\n.product-info[data-v-3a395e78] {\n        padding: 8px;\n}\n.product-title[data-v-3a395e78] {\n        font-size: 13px;\n}\n}\n.item-quantity .form-control[data-v-3a395e78]::-webkit-outer-spin-button,\n.item-quantity .form-control[data-v-3a395e78]::-webkit-inner-spin-button {\n    -webkit-appearance: none;\n    margin: 0;\n}\n.item-quantity .form-control[type=number][data-v-3a395e78] {\n    -moz-appearance: textfield;\n}\n.fullscreen-header[data-v-3a395e78] {\n    background: #e2e3e7;\n    color: white;\n    margin-bottom: 15px;\n}\n.fullscreen-header h5[data-v-3a395e78] {\n    margin-bottom: 0;\n}\n.pos-tabs-container[data-v-3a395e78] {\n    background: #fff;\n    padding: 10px;\n    border-radius: 4px;\n    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);\n}\n.pos-tabs-wrapper[data-v-3a395e78] {\n    display: flex;\n    width: 100%;\n    gap: 8px;\n    overflow-x: auto;\n    -webkit-overflow-scrolling: touch;\n    scrollbar-width: none;\n    /* Firefox */\n    padding-bottom: 2px;\n}\n.pos-tabs-wrapper[data-v-3a395e78]::-webkit-scrollbar {\n    display: none;\n    /* Chrome / Safari */\n}\n.pos-tab[data-v-3a395e78] {\n    width: auto;\n    flex: 0 0 auto;\n    padding: 10px 15px;\n    background-color: #f8f9fa;\n    border: 1px solid #dee2e6;\n    border-radius: 8px;\n    cursor: pointer;\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    transition: all 0.2s;\n}\n.pos-tab[data-v-3a395e78]:hover {\n    background-color: #e9ecef;\n}\n.pos-tab.active[data-v-3a395e78] {\n    background-color: #37a279;\n    color: white;\n    border-color: #37a279;\n}\n.pos-tab-close[data-v-3a395e78] {\n    font-size: 18px;\n    margin-left: 8px;\n    cursor: pointer;\n}\n.pos-tab-close[data-v-3a395e78]:hover {\n    color: #dc3545;\n}\n@media (max-width: 575.98px) {\n.fullscreen-header .btn[data-v-3a395e78],\n    .fullscreen-header h5[data-v-3a395e78] {\n        font-size: 0.8rem;\n        white-space: nowrap;\n}\n.fullscreen-header h5[data-v-3a395e78] {\n        margin-bottom: 0;\n}\n.pos-tab[data-v-3a395e78] {\n        padding: 5px 8px;\n        font-size: 0.78rem;\n        white-space: nowrap;\n}\n.pos-tab-close[data-v-3a395e78] {\n        font-size: 14px;\n        margin-left: 4px;\n}\n.pos-tabs-container[data-v-3a395e78] {\n        padding: 6px;\n}\n\n    /* Hide \"Hold Bill & Create Another\" text, keep only + icon */\n.pos-tabs-wrapper>.btn[data-v-3a395e78] {\n        font-size: 0;\n        padding: 5px 10px;\n        line-height: 1;\n}\n.pos-tabs-wrapper>.btn .fas[data-v-3a395e78] {\n        font-size: 0.9rem;\n}\n}\n.previous-bill-tab[data-v-3a395e78] {\n    background-color: #007bff !important;\n    color: white !important;\n    border-color: #007bff !important;\n    position: relative;\n}\n.previous-bill-tab[data-v-3a395e78]::after {\n    content: \"Editing\";\n    position: absolute;\n    top: -8px;\n    right: 5px;\n    background-color: #dc3545;\n    color: white;\n    font-size: 10px;\n    padding: 2px 5px;\n    border-radius: 3px;\n    font-weight: bold;\n}\n.disabled-tab[data-v-3a395e78] {\n    opacity: 0.6;\n    cursor: not-allowed;\n    background-color: #f0f0f0 !important;\n}\n.disabled-tab[data-v-3a395e78]:hover {\n    background-color: #f0f0f0 !important;\n}\n.previous-bill-badge[data-v-3a395e78] {\n    animation: pulse-data-v-3a395e78 2s infinite;\n}\n@keyframes pulse-data-v-3a395e78 {\n0% {\n        transform: scale(1);\n        opacity: 1;\n}\n50% {\n        transform: scale(1.05);\n        opacity: 0.8;\n}\n100% {\n        transform: scale(1);\n        opacity: 1;\n}\n}\n.previous-bill-indicator[data-v-3a395e78] {\n    border-left: 4px solid #0d6efd;\n}\n.badge[data-v-3a395e78] {\n    font-size: 85%;\n}\n.search-select[data-v-3a395e78] {\n    position: relative;\n    width: 100%;\n}\n.search-results[data-v-3a395e78] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    right: 0;\n    background: white;\n    border: 1px solid #ddd;\n    border-radius: 0 0 4px 4px;\n    max-height: 200px;\n    overflow-y: auto;\n    z-index: 1000;\n    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);\n}\n.search-option[data-v-3a395e78] {\n    padding: 8px 12px;\n    cursor: pointer;\n    border-bottom: 1px solid #f0f0f0;\n}\n.search-option[data-v-3a395e78]:hover {\n    background-color: #f5f5f5;\n}\n.search-option[data-v-3a395e78]:last-child {\n    border-bottom: none;\n}\n.out-of-stock[data-v-3a395e78] {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 32px;\n}\n.out-of-stock .badge[data-v-3a395e78] {\n    font-size: 0.75rem;\n    padding: 0.4rem 0.6rem;\n    font-weight: 600;\n    background-color: #dc3545 !important;\n    color: white;\n    border-radius: 4px;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.product-card[data-v-3a395e78] {\n    border: 1px solid #e9ecef;\n    border-radius: 8px;\n    overflow: hidden;\n    transition: all 0.3s ease;\n    cursor: pointer;\n    height: 100%;\n    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);\n}\n.product-card[data-v-3a395e78]:hover {\n    transform: translateY(-5px);\n    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);\n}\n.product-image[data-v-3a395e78] {\n    height: 160px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    overflow: hidden;\n    background-color: #f8f9fa;\n    padding: 10px;\n}\n.product-image img[data-v-3a395e78] {\n    max-height: 140px;\n    max-width: 100%;\n    -o-object-fit: contain;\n       object-fit: contain;\n    display: block;\n    margin: 0 auto;\n}\n.product-info[data-v-3a395e78] {\n    padding: 12px;\n}\n.product-name-measure-row[data-v-3a395e78] {\n    flex-wrap: nowrap;\n}\n.product-title[data-v-3a395e78] {\n    font-size: 16px;\n    overflow: hidden;\n    display: -webkit-box;\n    -webkit-line-clamp: 2;\n    -webkit-box-orient: vertical;\n    min-width: 0;\n}\n.single-variant[data-v-3a395e78] {\n    font-size: 0.75rem;\n    color: #6c757d;\n    white-space: nowrap;\n    flex-shrink: 0;\n}\n.variant-info[data-v-3a395e78] {\n    font-weight: 600;\n}\n.form-select-sm[data-v-3a395e78] {\n    font-size: 0.8rem;\n    padding: 0.25rem 0.5rem;\n    height: 30px;\n}\n.mini-select[data-v-3a395e78] {\n    font-size: 0.75rem;\n    padding: 0.2rem 0.4rem;\n    height: 25px;\n}\n.short-select[data-v-3a395e78] {\n    width: auto;\n    min-width: 80px;\n    max-width: 120px;\n}\n.btn-xs[data-v-3a395e78] {\n    padding: 0.2rem 0.5rem;\n    font-size: 0.8rem;\n    line-height: 1.2;\n    margin-top: 5px;\n}\n.no-variants[data-v-3a395e78] {\n    padding: 8px 0;\n    text-align: center;\n    font-size: 12px;\n}\n.product-price[data-v-3a395e78] {\n    font-weight: bold;\n    color: #435ebe;\n    margin-bottom: 5px;\n}\n.original-price[data-v-3a395e78] {\n    text-decoration: line-through;\n    color: #6c757d;\n    font-size: 11px;\n    font-weight: normal;\n    margin-left: 4px;\n}\n.add-btn[data-v-3a395e78] {\n    padding: 2px 6px;\n    font-size: 12px;\n}\n.product-price .discounted[data-v-3a395e78] {\n    color: #dc3545;\n}\n.product-price .original-price[data-v-3a395e78] {\n    text-decoration: line-through;\n    color: #6c757d;\n    font-size: 12px;\n    margin-left: 5px;\n}\n.cart-items[data-v-3a395e78] {\n    max-height: 400px;\n    overflow-y: auto;\n}\n.cart-item[data-v-3a395e78] {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    padding: 10px 0;\n    border-bottom: 1px solid #e9ecef;\n    position: relative;\n}\n.item-image[data-v-3a395e78] {\n    width: 60px;\n    height: 60px;\n    overflow: hidden;\n    border-radius: 4px;\n    margin-right: 10px;\n    border: 1px solid #e9ecef;\n}\n.item-image img[data-v-3a395e78] {\n    width: 100%;\n    height: 100%;\n    -o-object-fit: cover;\n       object-fit: cover;\n}\n.item-details[data-v-3a395e78] {\n    flex: 1;\n    min-width: 150px;\n    padding-right: 10px;\n}\n.item-details h5[data-v-3a395e78] {\n    font-size: 14px;\n    margin-bottom: 3px;\n    font-weight: 600;\n}\n.item-details p.variant-info[data-v-3a395e78] {\n    font-size: 12px;\n    color: #6c757d;\n    margin-bottom: 5px;\n    font-weight: 600;\n}\n.item-details .price[data-v-3a395e78] {\n    font-weight: bold;\n    color: #435ebe;\n    font-size: 13px;\n}\n.price-edit-input[data-v-3a395e78] {\n    width: 90px;\n    font-weight: bold;\n    color: #435ebe;\n    font-size: 13px;\n    padding: 2px 6px;\n    height: 28px;\n}\n.price-edit-input[data-v-3a395e78]:focus {\n    border-color: #435ebe;\n    box-shadow: 0 0 0 0.15rem rgba(67, 94, 190, 0.25);\n}\n.item-quantity[data-v-3a395e78] {\n    width: 120px;\n    margin: 10px 0;\n}\n.item-quantity .form-control[data-v-3a395e78] {\n    padding: 0.25rem 0.5rem;\n    text-align: center;\n}\n.item-quantity .input-group[data-v-3a395e78] {\n    flex-wrap: nowrap;\n}\n.item-total[data-v-3a395e78] {\n    width: 80px;\n    text-align: right;\n    font-weight: bold;\n    margin-right: 10px;\n}\n.item-actions[data-v-3a395e78] {\n    margin-left: auto;\n}\n@media (min-width: 768px) {\n.cart-item[data-v-3a395e78] {\n        flex-wrap: nowrap;\n}\n.item-quantity[data-v-3a395e78] {\n        margin: 0 10px;\n}\n}\n@media (max-width: 767.98px) {\n.cart-item[data-v-3a395e78] {\n        padding: 15px 0;\n}\n.item-details[data-v-3a395e78] {\n        width: calc(100% - 70px);\n}\n.item-quantity[data-v-3a395e78] {\n        width: 60%;\n}\n.item-total[data-v-3a395e78] {\n        width: 30%;\n        margin-left: auto;\n}\n.item-actions[data-v-3a395e78] {\n        position: absolute;\n        top: 10px;\n        right: 0;\n}\n}\n@media (min-width: 576px) {\n.product-image[data-v-3a395e78] {\n        height: 110px;\n}\n.product-actions .d-flex[data-v-3a395e78] {\n        flex-direction: column;\n        align-items: stretch;\n        gap: 6px;\n}\n.product-actions .btn[data-v-3a395e78] {\n        width: 100%;\n        font-size: 0.75rem;\n        padding: 0.25rem 0.4rem;\n        text-align: center;\n}\n.product-price[data-v-3a395e78] {\n        font-size: 0.8rem;\n}\n.product-info[data-v-3a395e78] {\n        padding: 8px;\n}\n.product-title[data-v-3a395e78] {\n        font-size: 13px;\n}\n}\n.item-quantity .form-control[data-v-3a395e78]::-webkit-outer-spin-button,\n.item-quantity .form-control[data-v-3a395e78]::-webkit-inner-spin-button {\n    -webkit-appearance: none;\n    margin: 0;\n}\n.item-quantity .form-control[type=number][data-v-3a395e78] {\n    -moz-appearance: textfield;\n}\n.fullscreen-header[data-v-3a395e78] {\n    background: #e2e3e7;\n    color: white;\n    margin-bottom: 15px;\n}\n.fullscreen-header h5[data-v-3a395e78] {\n    margin-bottom: 0;\n}\n.pos-tabs-container[data-v-3a395e78] {\n    background: #fff;\n    padding: 10px;\n    border-radius: 4px;\n    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);\n}\n.pos-tabs-wrapper[data-v-3a395e78] {\n    display: flex;\n    width: 100%;\n    gap: 8px;\n    overflow-x: auto;\n    -webkit-overflow-scrolling: touch;\n    scrollbar-width: none;\n    /* Firefox */\n    padding-bottom: 2px;\n}\n.pos-tabs-wrapper[data-v-3a395e78]::-webkit-scrollbar {\n    display: none;\n    /* Chrome / Safari */\n}\n.pos-tab[data-v-3a395e78] {\n    width: auto;\n    flex: 0 0 auto;\n    padding: 10px 15px;\n    background-color: #f8f9fa;\n    border: 1px solid #dee2e6;\n    border-radius: 8px;\n    cursor: pointer;\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    transition: all 0.2s;\n}\n.pos-tab[data-v-3a395e78]:hover {\n    background-color: #e9ecef;\n}\n.pos-tab.active[data-v-3a395e78] {\n    background-color: #37a279;\n    color: white;\n    border-color: #37a279;\n}\n.pos-tab-close[data-v-3a395e78] {\n    font-size: 18px;\n    margin-left: 8px;\n    cursor: pointer;\n}\n.pos-tab-close[data-v-3a395e78]:hover {\n    color: #dc3545;\n}\n@media (max-width: 575.98px) {\n.fullscreen-header .btn[data-v-3a395e78],\n    .fullscreen-header h5[data-v-3a395e78] {\n        font-size: 0.8rem;\n        white-space: nowrap;\n}\n.fullscreen-header h5[data-v-3a395e78] {\n        margin-bottom: 0;\n}\n.pos-tab[data-v-3a395e78] {\n        padding: 5px 8px;\n        font-size: 0.78rem;\n        white-space: nowrap;\n}\n.pos-tab-close[data-v-3a395e78] {\n        font-size: 14px;\n        margin-left: 4px;\n}\n.pos-tabs-container[data-v-3a395e78] {\n        padding: 6px;\n}\n\n    /* Hide \"Hold Bill & Create Another\" text, keep only + icon */\n.pos-tabs-wrapper>.btn[data-v-3a395e78] {\n        font-size: 0;\n        padding: 5px 10px;\n        line-height: 1;\n}\n.pos-tabs-wrapper>.btn .fas[data-v-3a395e78] {\n        font-size: 0.9rem;\n}\n}\n.previous-bill-tab[data-v-3a395e78] {\n    background-color: #007bff !important;\n    color: white !important;\n    border-color: #007bff !important;\n    position: relative;\n}\n.previous-bill-tab[data-v-3a395e78]::after {\n    content: \"Editing\";\n    position: absolute;\n    top: -8px;\n    right: 5px;\n    background-color: #dc3545;\n    color: white;\n    font-size: 10px;\n    padding: 2px 5px;\n    border-radius: 3px;\n    font-weight: bold;\n}\n.disabled-tab[data-v-3a395e78] {\n    opacity: 0.6;\n    cursor: not-allowed;\n    background-color: #f0f0f0 !important;\n}\n.disabled-tab[data-v-3a395e78]:hover {\n    background-color: #f0f0f0 !important;\n}\n.previous-bill-badge[data-v-3a395e78] {\n    animation: pulse-data-v-3a395e78 2s infinite;\n}\n@keyframes pulse-data-v-3a395e78 {\n0% {\n        transform: scale(1);\n        opacity: 1;\n}\n50% {\n        transform: scale(1.05);\n        opacity: 0.8;\n}\n100% {\n        transform: scale(1);\n        opacity: 1;\n}\n}\n.previous-bill-indicator[data-v-3a395e78] {\n    border-left: 4px solid #0d6efd;\n}\n.badge[data-v-3a395e78] {\n    font-size: 85%;\n}\n.customer-card[data-v-3a395e78],\n.customer-card .card-body[data-v-3a395e78] {\n    overflow: visible !important;\n}\n.search-select[data-v-3a395e78] {\n    position: relative;\n    width: 100%;\n}\n.search-results[data-v-3a395e78] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    right: 0;\n    background: white;\n    border: 1px solid #ddd;\n    border-radius: 0 0 4px 4px;\n    max-height: 200px;\n    overflow-y: auto;\n    z-index: 1050;\n    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);\n}\n.search-option[data-v-3a395e78] {\n    padding: 8px 12px;\n    cursor: pointer;\n    border-bottom: 1px solid #f0f0f0;\n}\n.search-option[data-v-3a395e78]:hover {\n    background-color: #f5f5f5;\n}\n.search-option[data-v-3a395e78]:last-child {\n    border-bottom: none;\n}\n.out-of-stock[data-v-3a395e78] {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 32px;\n}\n.out-of-stock .badge[data-v-3a395e78] {\n    font-size: 0.75rem;\n    padding: 0.4rem 0.6rem;\n    font-weight: 600;\n    background-color: #dc3545 !important;\n    color: white;\n    border-radius: 4px;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -3257,7 +3281,7 @@ var render = function () {
           ),
         ]),
         _vm._v(" "),
-        _c("div", { staticClass: "card mb-4" }, [
+        _c("div", { staticClass: "card mb-4 customer-card" }, [
           _c("div", { staticClass: "card-header" }, [
             _c("h4", [
               _vm._v(
@@ -3456,15 +3480,81 @@ var render = function () {
                               ]),
                             ]),
                             _vm._v(" "),
-                            _c("div", { staticClass: "price" }, [
-                              _vm._v(
-                                "\n                                        " +
-                                  _vm._s(_vm.$currency) +
-                                  " " +
-                                  _vm._s(item.price) +
-                                  "\n                                    "
-                              ),
-                            ]),
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "price d-flex align-items-center gap-1",
+                              },
+                              [
+                                _c(
+                                  "span",
+                                  { staticClass: "text-muted small" },
+                                  [_vm._v(_vm._s(_vm.$currency))]
+                                ),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model.number",
+                                      value: item.custom_price,
+                                      expression: "item.custom_price",
+                                      modifiers: { number: true },
+                                    },
+                                  ],
+                                  staticClass:
+                                    "form-control form-control-sm price-edit-input",
+                                  attrs: {
+                                    type: "number",
+                                    placeholder: item.price,
+                                    min: "0",
+                                    step: "0.01",
+                                    title: "Override price",
+                                  },
+                                  domProps: { value: item.custom_price },
+                                  on: {
+                                    change: _vm.saveTabsToStorage,
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        item,
+                                        "custom_price",
+                                        _vm._n($event.target.value)
+                                      )
+                                    },
+                                    blur: function ($event) {
+                                      return _vm.$forceUpdate()
+                                    },
+                                  },
+                                }),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            item.custom_price > 0 &&
+                            item.custom_price != item.price
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass: "text-muted",
+                                    staticStyle: {
+                                      "font-size": "11px",
+                                      "text-decoration": "line-through",
+                                    },
+                                  },
+                                  [
+                                    _vm._v(
+                                      "\n                                        " +
+                                        _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(item.price) +
+                                        "\n                                    "
+                                    ),
+                                  ]
+                                )
+                              : _vm._e(),
                           ]),
                           _vm._v(" "),
                           _c("div", { staticClass: "item-quantity" }, [
@@ -3540,7 +3630,9 @@ var render = function () {
                                 _vm._s(_vm.$currency) +
                                 " " +
                                 _vm._s(
-                                  (item.price * item.quantity).toFixed(2)
+                                  (
+                                    _vm.effectivePrice(item) * item.quantity
+                                  ).toFixed(2)
                                 ) +
                                 "\n                                "
                             ),
@@ -3660,61 +3752,6 @@ var render = function () {
                   ),
                   _vm._v(" "),
                   _c("div", { staticClass: "mt-4" }, [
-                    _c("div", { staticClass: "mb-3" }, [
-                      _c(
-                        "label",
-                        {
-                          staticClass: "form-label",
-                          attrs: { for: "paymentMethod" },
-                        },
-                        [_vm._v(_vm._s(_vm.__("select_payment_method")))]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "select",
-                        {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.paymentMethod,
-                              expression: "paymentMethod",
-                            },
-                          ],
-                          staticClass: "form-select",
-                          attrs: { id: "paymentMethod" },
-                          on: {
-                            change: function ($event) {
-                              var $$selectedVal = Array.prototype.filter
-                                .call($event.target.options, function (o) {
-                                  return o.selected
-                                })
-                                .map(function (o) {
-                                  var val = "_value" in o ? o._value : o.value
-                                  return val
-                                })
-                              _vm.paymentMethod = $event.target.multiple
-                                ? $$selectedVal
-                                : $$selectedVal[0]
-                            },
-                          },
-                        },
-                        [
-                          _c("option", { attrs: { value: "cash" } }, [
-                            _vm._v(_vm._s(_vm.__("cash"))),
-                          ]),
-                          _vm._v(" "),
-                          _c("option", { attrs: { value: "upi" } }, [
-                            _vm._v(_vm._s(_vm.__("upi"))),
-                          ]),
-                          _vm._v(" "),
-                          _c("option", { attrs: { value: "card" } }, [
-                            _vm._v(_vm._s(_vm.__("card_payment"))),
-                          ]),
-                        ]
-                      ),
-                    ]),
-                    _vm._v(" "),
                     _c("div", { staticClass: "d-flex gap-2" }, [
                       _c(
                         "button",

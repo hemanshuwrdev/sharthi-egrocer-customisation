@@ -1187,6 +1187,12 @@
     "order_updated_successfully": "Order Updated Successfully!",
     "order_rescheduled_successfully": "Order Rescheduled Successfully!",
     "rescheduled": "Rescheduled",
+    "partial_delivery": "Partial Delivery",
+    "not_delivered": "Not Delivered",
+    "order_marked_as_not_delivered": "Order marked as not delivered successfully",
+    "order_marked_as_partial_delivery": "Order marked as partial delivery successfully",
+    "order_not_assigned_to_you": "This order is not assigned to you",
+    "order_must_be_out_for_delivery": "Order must be in out for delivery status",
     "delivery_boy_assigned_successfully_for_this_order": "Driver Assigned Successfully for This Order!",
     "order_not_found": "Order Not Found!",
     "this_delivery_boy_already_assign": "This Driver Already Assign!",
@@ -1802,7 +1808,6 @@
     "scheme_deleted_successfully": "Scheme deleted successfully",
     "scheme_not_found": "Scheme not found",
     "product_not_owned_by_seller": "One or more selected products do not belong to your store",
-
     "commission_billing": "Commission Billing",
     "billing_overview": "Billing Overview",
     "distributor_summary": "Distributor Summary",
@@ -1825,7 +1830,6 @@
     "no_billing_data_available": "No billing data available",
     "view_detail": "View Detail",
     "all_time": "All Time",
-
     "monthly": "Monthly",
     "quarterly": "Quarterly",
     "yearly": "Yearly",
@@ -1919,8 +1923,7 @@
     "stock_update_reminder": "Reminder: Please update your product stock for today",
     "click_here_to_update_stock": "Click here to go to Stock Management",
     "no_data_found": "No data found",
-    "driver_not_linked_to_distributor" : "Driver is not linked to any distributor",
-
+    "driver_not_linked_to_distributor": "Driver is not linked to any distributor",
     "address_change_request_already_pending": "You already have a pending address change request. Please wait for it to be verified.",
     "address_change_request_not_found": "Address change request not found or not in your territory.",
     "already_being_verified_by_another_salesman": "This request is already being verified by another salesman.",
@@ -1930,5 +1933,8 @@
     "upi_id": "UPI ID",
     "upi_mobile": "UPI Mobile Number",
     "upi_name": "UPI Name",
-    "upi_information": "UPI Information"
+    "upi_information": "UPI Information",
+    "payment_summary": "Payment Summary",
+    "total_orders": "Total Orders",
+    "close_and_reconcile": "Close and Reconcile"
 }

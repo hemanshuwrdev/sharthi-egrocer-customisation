@@ -30,11 +30,15 @@ class Auth {
 
     logout () {
         let role_id = this.user.role_id;
-        //return;
+        // Preserve keys that should survive logout
+        const stockWarningDismissed = window.localStorage.getItem('stock_warning_dismissed');
         window.localStorage.clear();
         window.localStorage.removeItem('token');
         window.localStorage.removeItem('user');
         window.localStorage.removeItem('loginCheck');
+        if (stockWarningDismissed) {
+            window.localStorage.setItem('stock_warning_dismissed', stockWarningDismissed);
+        }
 
         if (role_id === 3) {
             window.location.replace('/seller/login');
