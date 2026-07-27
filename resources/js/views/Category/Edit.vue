@@ -133,8 +133,8 @@
                                             Markup Generator</a></p>
                                 </b-popover>
                             </label>
-                            <input type="text" class="form-control" v-model="translations[language.id].schema_markup"
-                                :placeholder="__('enter_schema_markup')">
+                            <textarea class="form-control" v-model="translations[language.id].schema_markup"
+                                :placeholder="__('enter_schema_markup')" rows="4"></textarea>
                         </div>
 
                         <div class="form-group">

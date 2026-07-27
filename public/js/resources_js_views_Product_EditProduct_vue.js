@@ -6174,7 +6174,7 @@ var render = function () {
                                                       ),
                                                     ]),
                                                     _vm._v(" "),
-                                                    _c("input", {
+                                                    _c("textarea", {
                                                       directives: [
                                                         {
                                                           name: "model",
@@ -6190,7 +6190,7 @@ var render = function () {
                                                       staticClass:
                                                         "form-control",
                                                       attrs: {
-                                                        type: "text",
+                                                        rows: "4",
                                                         placeholder: _vm.__(
                                                           "enter_schema_markup"
                                                         ),

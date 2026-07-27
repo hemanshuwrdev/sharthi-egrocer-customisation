@@ -2212,7 +2212,7 @@ var render = function () {
                                 1
                               ),
                               _vm._v(" "),
-                              _c("input", {
+                              _c("textarea", {
                                 directives: [
                                   {
                                     name: "model",
@@ -2226,8 +2226,8 @@ var render = function () {
                                 ],
                                 staticClass: "form-control",
                                 attrs: {
-                                  type: "text",
                                   placeholder: _vm.__("enter_schema_markup"),
+                                  rows: "4",
                                 },
                                 domProps: {
                                   value:

@@ -366,9 +366,9 @@
                                         </div>
                                         <div class="form-group mb-3">
                                             <label>{{ __('schema_markup') }}</label>
-                                            <input type="text" class="form-control"
+                                            <textarea class="form-control" rows="4"
                                                 v-model="translations[language.id].schema_markup"
-                                                :placeholder="__('enter_schema_markup')" />
+                                                :placeholder="__('enter_schema_markup')"></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
