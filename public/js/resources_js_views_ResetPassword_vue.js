@@ -399,8 +399,8 @@ var render = function () {
                       [
                         _c("i", {
                           class: _vm.showPassword
-                            ? "bi bi-eye-slash"
-                            : "bi bi-eye",
+                            ? "bi bi-eye"
+                            : "bi bi-eye-slash",
                         }),
                       ]
                     ),
@@ -556,8 +556,8 @@ var render = function () {
                       [
                         _c("i", {
                           class: _vm.showPasswordConfirmation
-                            ? "bi bi-eye-slash"
-                            : "bi bi-eye",
+                            ? "bi bi-eye"
+                            : "bi bi-eye-slash",
                         }),
                       ]
                     ),

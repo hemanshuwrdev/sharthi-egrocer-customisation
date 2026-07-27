@@ -29,7 +29,7 @@
                             <button type="button" v-on:click="showPassword = !showPassword"
                                     class="btn btn-sm btn-outline-light font-bold text-primary"
                                     style="margin-top: -45px;position: absolute; right: 10px; cursor: pointer;">
-                                <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                                <i :class="showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'"></i>
                             </button>
                         </div>
                         <div class="mb-4 text-end" style="margin-top: 35px;">

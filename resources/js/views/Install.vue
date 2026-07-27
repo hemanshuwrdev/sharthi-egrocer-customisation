@@ -139,8 +139,8 @@
                                                 <div class="input-group">
                                                     <input :type="showAdminPassword ? 'text' : 'password'" placeholder="Admin Password" v-model="database.admin_password" name="admin_password" id="admin_password" class="form-control" required autocomplete="off">
                                                     <button type="button" v-on:click="showAdminPassword = !showAdminPassword" class="btn btn-primary font-bold">
-                                                        <i v-if="showAdminPassword" class="fa fa-eye-slash" aria-hidden="true"></i>
-                                                        <i v-else class="fa fa-eye" aria-hidden="true"></i>
+                                                        <i v-if="showAdminPassword" class="fa fa-eye" aria-hidden="true"></i>
+                                                        <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
                                                     </button>
                                                 </div>
 

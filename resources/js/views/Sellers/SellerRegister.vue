@@ -82,9 +82,9 @@
                                                     v-model="password" placeholder="Enter password.">
                                                 <button type="button" v-on:click="showPassword = !showPassword"
                                                     class="btn btn-primary font-bold">
-                                                    <i v-if="showPassword" class="fa fa-eye-slash"
+                                                    <i v-if="showPassword" class="fa fa-eye"
                                                         aria-hidden="true"></i>
-                                                    <i v-else class="fa fa-eye" aria-hidden="true"></i>
+                                                    <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -100,9 +100,9 @@
                                                 <button type="button"
                                                     v-on:click="showConfirmPassword = !showConfirmPassword"
                                                     class="btn btn-primary font-bold">
-                                                    <i v-if="showConfirmPassword" class="fa fa-eye-slash"
+                                                    <i v-if="showConfirmPassword" class="fa fa-eye"
                                                         aria-hidden="true"></i>
-                                                    <i v-else class="fa fa-eye" aria-hidden="true"></i>
+                                                    <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
                                                 </button>
                                             </div>
                                         </div>

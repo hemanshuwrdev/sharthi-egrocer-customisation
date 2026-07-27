@@ -52,8 +52,8 @@
                         <div class="input-group">
                             <input :type="showPassword ? 'text' : 'password'" name="password" id="password" v-model="deliveryBoys.password" class="form-control" placeholder="Enter password.">
                             <button type="button" v-on:click="showPassword = !showPassword" class="btn btn-primary font-bold">
-                                <i v-if="showPassword" class="fa fa-eye-slash" aria-hidden="true"></i>
-                                <i v-else class="fa fa-eye" aria-hidden="true"></i>
+                                <i v-if="showPassword" class="fa fa-eye" aria-hidden="true"></i>
+                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
@@ -64,8 +64,8 @@
                         <div class="input-group">
                             <input :type="showConfirmPassword ? 'text' : 'password'" name="confirm_password" id="confirm_password" v-model="deliveryBoys.confirm_password" class="form-control" placeholder="Enter again password.">
                             <button type="button" v-on:click="showConfirmPassword = !showConfirmPassword" class="btn btn-primary font-bold">
-                                <i v-if="showConfirmPassword" class="fa fa-eye-slash" aria-hidden="true"></i>
-                                <i v-else class="fa fa-eye" aria-hidden="true"></i>
+                                <i v-if="showConfirmPassword" class="fa fa-eye" aria-hidden="true"></i>
+                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>

@@ -4027,7 +4027,7 @@ var render = function () {
                                                                   _vm.showPassword
                                                                     ? _c("i", {
                                                                         staticClass:
-                                                                          "fa fa-eye-slash",
+                                                                          "fa fa-eye",
                                                                         attrs: {
                                                                           "aria-hidden":
                                                                             "true",
@@ -4035,7 +4035,7 @@ var render = function () {
                                                                       })
                                                                     : _c("i", {
                                                                         staticClass:
-                                                                          "fa fa-eye",
+                                                                          "fa fa-eye-slash",
                                                                         attrs: {
                                                                           "aria-hidden":
                                                                             "true",
@@ -4301,7 +4301,7 @@ var render = function () {
                                                                   _vm.showConfirmPassword
                                                                     ? _c("i", {
                                                                         staticClass:
-                                                                          "fa fa-eye-slash",
+                                                                          "fa fa-eye",
                                                                         attrs: {
                                                                           "aria-hidden":
                                                                             "true",
@@ -4309,7 +4309,7 @@ var render = function () {
                                                                       })
                                                                     : _c("i", {
                                                                         staticClass:
-                                                                          "fa fa-eye",
+                                                                          "fa fa-eye-slash",
                                                                         attrs: {
                                                                           "aria-hidden":
                                                                             "true",

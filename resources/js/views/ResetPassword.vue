@@ -22,7 +22,7 @@
                             <button type="button" v-on:click="showPassword = !showPassword"
                                     class="btn btn-sm btn-outline-light font-bold text-primary"
                                     style="margin-top: -45px;position: absolute; right: 10px; cursor: pointer;" >
-                                <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                                <i :class="showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'"></i>
                             </button>
                         </div>
                         <div class="form-group position-relative has-icon-left">
@@ -31,7 +31,7 @@
                             <button type="button" v-on:click="showPasswordConfirmation = !showPasswordConfirmation"
                                     class="btn btn-sm btn-outline-light font-bold text-primary"
                                     style="margin-top: -45px;position: absolute; right: 10px; cursor: pointer;" >
-                                <i :class="showPasswordConfirmation ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                                <i :class="showPasswordConfirmation ? 'bi bi-eye' : 'bi bi-eye-slash'"></i>
                             </button>
                         </div>
                         <button class="btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn">

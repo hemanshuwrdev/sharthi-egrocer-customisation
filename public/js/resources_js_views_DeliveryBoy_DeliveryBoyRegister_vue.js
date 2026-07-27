@@ -942,11 +942,11 @@ var render = function () {
                           [
                             _vm.showPassword
                               ? _c("i", {
-                                  staticClass: "fa fa-eye-slash",
+                                  staticClass: "fa fa-eye",
                                   attrs: { "aria-hidden": "true" },
                                 })
                               : _c("i", {
-                                  staticClass: "fa fa-eye",
+                                  staticClass: "fa fa-eye-slash",
                                   attrs: { "aria-hidden": "true" },
                                 }),
                           ]
@@ -1107,11 +1107,11 @@ var render = function () {
                           [
                             _vm.showConfirmPassword
                               ? _c("i", {
-                                  staticClass: "fa fa-eye-slash",
+                                  staticClass: "fa fa-eye",
                                   attrs: { "aria-hidden": "true" },
                                 })
                               : _c("i", {
-                                  staticClass: "fa fa-eye",
+                                  staticClass: "fa fa-eye-slash",
                                   attrs: { "aria-hidden": "true" },
                                 }),
                           ]
