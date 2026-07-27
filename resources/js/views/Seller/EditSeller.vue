@@ -91,79 +91,61 @@
 
                                             <div class="row">
                                                 <div class="form-group col-md-4">
-                                                    <div class="form-group">
-                                                        <label>{{ __('seller_name') }} <i class="text-danger"
-                                                                v-if="language.is_default">*</i></label>
-                                                        <input type="text" class="form-control"
-                                                            :required="language.is_default ? true : undefined"
-                                                            v-model="translations[language.id].name"
-                                                            :placeholder="__('enter_seller_name')" @focus="onInputFocus"
-                                                            @blur="onInputBlur">
-                                                    </div>
+                                                    <label>{{ __('seller_name') }} <i class="text-danger" v-if="language.is_default">*</i></label>
+                                                    <input type="text" class="form-control"
+                                                        :required="language.is_default ? true : undefined"
+                                                        v-model="translations[language.id].name"
+                                                        :placeholder="__('enter_seller_name')" @focus="onInputFocus"
+                                                        @blur="onInputBlur">
                                                 </div>
 
                                                 <!-- Non-translatable Fields (only shown in default language tab) -->
                                                 <template v-if="language.is_default">
                                                     <div class="form-group col-md-4">
-                                                        <div class="form-group">
-                                                            <label>{{ __('email') }} <i
-                                                                    class="text-danger">*</i></label>
-                                                            <input type="email" class="form-control" v-model="email"
-                                                                :placeholder="__('enter_email')" @focus="onInputFocus"
-                                                                @blur="onInputBlur">
-                                                        </div>
+                                                        <label>{{ __('email') }} <i class="text-danger">*</i></label>
+                                                        <input type="email" class="form-control" v-model="email"
+                                                            :placeholder="__('enter_email')" @focus="onInputFocus"
+                                                            @blur="onInputBlur">
                                                     </div>
 
                                                     <div class="form-group col-md-4">
-                                                        <div class="form-group">
-                                                            <label>{{ __('mobile') }}<i
-                                                                    class="text-danger">*</i></label>
-                                                            <input type="text" class="form-control" v-model="mobile"
-                                                                :placeholder="__('enter_mobile_number')" inputmode="numeric"
-                                                                required @input="validateMobileNumber"
-                                                                @focus="onInputFocus" @blur="onInputBlur">
-                                                            <span v-if="mobilevalidationError" class="error">{{
-                                                                mobilevalidationError
-                                                                }}</span>
+                                                        <label>{{ __('mobile') }} <i class="text-danger">*</i></label>
+                                                        <input type="text" class="form-control" v-model="mobile"
+                                                            :placeholder="__('enter_mobile_number')" inputmode="numeric"
+                                                            required @input="validateMobileNumber"
+                                                            @focus="onInputFocus" @blur="onInputBlur">
+                                                        <span v-if="mobilevalidationError" class="error">{{ mobilevalidationError }}</span>
+                                                    </div>
+
+                                                    <div class="form-group col-md-4" v-if="!isSellerRole">
+                                                        <label>{{ __('password') }} <i v-if="!id" class="text-danger">*</i></label>
+                                                        <div class="input-group">
+                                                            <input :type="showPassword ? 'text' : 'password'"
+                                                                class="form-control" v-model="password"
+                                                                :placeholder="__('enter_password')" >
+                                                            <button type="button"
+                                                                v-on:click="showPassword = !showPassword"
+                                                                class="btn btn-primary font-bold">
+                                                                <i v-if="showPassword" class="fa fa-eye"
+                                                                    aria-hidden="true"></i>
+                                                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
 
                                                     <div class="form-group col-md-4" v-if="!isSellerRole">
-                                                        <div class="form-group">
-                                                            <label>{{ __('password') }} <i v-if="!id"
-                                                                    class="text-danger">*</i></label>
-                                                            <div class="input-group">
-                                                                <input :type="showPassword ? 'text' : 'password'"
-                                                                    class="form-control" v-model="password"
-                                                                    :placeholder="__('enter_password')" >
-                                                                <button type="button"
-                                                                    v-on:click="showPassword = !showPassword"
-                                                                    class="btn btn-primary font-bold">
-                                                                    <i v-if="showPassword" class="fa fa-eye"
-                                                                        aria-hidden="true"></i>
-                                                                    <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
-                                                                </button>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="form-group col-md-4" v-if="!isSellerRole">
-                                                        <div class="form-group">
-                                                            <label>{{ __('confirm_password') }}<i v-if="!id"
-                                                                    class="text-danger">*</i></label>
-                                                            <div class="input-group">
-                                                                <input :type="showConfirmPassword ? 'text' : 'password'"
-                                                                    class="form-control" v-model="confirm_password"
-                                                                    :placeholder="__('enter_confirm_password')" >
-                                                                <button type="button"
-                                                                    v-on:click="showConfirmPassword = !showConfirmPassword"
-                                                                    class="btn btn-primary font-bold">
-                                                                    <i v-if="showConfirmPassword"
-                                                                        class="fa fa-eye" aria-hidden="true"></i>
-                                                                    <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
-                                                                </button>
-                                                            </div>
+                                                        <label>{{ __('confirm_password') }} <i v-if="!id" class="text-danger">*</i></label>
+                                                        <div class="input-group">
+                                                            <input :type="showConfirmPassword ? 'text' : 'password'"
+                                                                class="form-control" v-model="confirm_password"
+                                                                :placeholder="__('enter_confirm_password')" >
+                                                            <button type="button"
+                                                                v-on:click="showConfirmPassword = !showConfirmPassword"
+                                                                class="btn btn-primary font-bold">
+                                                                <i v-if="showConfirmPassword"
+                                                                    class="fa fa-eye" aria-hidden="true"></i>
+                                                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </template>
@@ -202,21 +184,23 @@
                                                                 </div>
                                                             </div>
                                                             <div class="form-group col-md-3">
-                                                                <label class="control-label">{{ __('product_status')
-                                                                    }}</label><br>
-                                                                <div id="status" class="btn-group">
-                                                                    <label class="btn btn-primary"
-                                                                        data-toggle-class="btn-primary"
-                                                                        data-toggle-passive-class="btn-default">
-                                                                        <input type="radio" v-model="status" value="1">
-                                                                        {{ __('active') }}
-                                                                    </label>
-                                                                    <label class="btn btn-danger"
-                                                                        data-toggle-class="btn-danger"
-                                                                        data-toggle-passive-class="btn-default">
-                                                                        <input type="radio" v-model="status" value="3">
-                                                                        {{ __('deactive') }}
-                                                                    </label>
+                                                                <div class="form-group">
+                                                                    <label class="control-label d-block">{{ __('product_status')
+                                                                        }}</label>
+                                                                    <div id="status" class="btn-group">
+                                                                        <label class="btn btn-primary"
+                                                                            data-toggle-class="btn-primary"
+                                                                            data-toggle-passive-class="btn-default">
+                                                                            <input type="radio" v-model="status" value="1">
+                                                                            {{ __('active') }}
+                                                                        </label>
+                                                                        <label class="btn btn-danger"
+                                                                            data-toggle-class="btn-danger"
+                                                                            data-toggle-passive-class="btn-default">
+                                                                            <input type="radio" v-model="status" value="3">
+                                                                            {{ __('deactive') }}
+                                                                        </label>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <div class="form-group col-md-4">

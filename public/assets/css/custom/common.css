@@ -1400,7 +1400,6 @@ body.theme-dark.rtl .modal-header .modal-title {
 .nav-tabs + .tab-content {
     margin-top: 15px;
 }
-.tab-content .form-group:first-child,
 .tab-content .mb-3:first-child {
     margin-top: 10px;
 }
