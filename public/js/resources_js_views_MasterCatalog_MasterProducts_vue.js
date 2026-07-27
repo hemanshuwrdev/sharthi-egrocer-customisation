@@ -169,11 +169,11 @@ __webpack_require__.r(__webpack_exports__);
         "class": 'text-center'
       }, {
         key: 'brand',
-        label: __('brand'),
+        label: __('brand') ? __('brand').charAt(0).toUpperCase() + __('brand').slice(1) : 'Brand',
         "class": 'text-center'
       }, {
         key: 'variants_count',
-        label: __('variants'),
+        label: __('variants') ? __('variants').charAt(0).toUpperCase() + __('variants').slice(1) : 'Variants',
         "class": 'text-center'
       }, {
         key: 'status',
