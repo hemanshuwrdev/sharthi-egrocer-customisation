@@ -1935,5 +1935,6 @@
     "upi_information": "UPI Information",
     "payment_summary": "Payment Summary",
     "total_orders": "Total Orders",
-    "close_and_reconcile": "Close and Reconcile"
+    "close_and_reconcile": "Close and Reconcile",
+    "hsn_code": "HSN Code"
 }

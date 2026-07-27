@@ -50,7 +50,7 @@
 
                         <hr>
                         <router-link to="/seller/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-2">
-                            Seller Panel</router-link>
+                            Distributor Panel</router-link>
                         <router-link to="/delivery_boy/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-2">
                             Driver Panel</router-link>
 

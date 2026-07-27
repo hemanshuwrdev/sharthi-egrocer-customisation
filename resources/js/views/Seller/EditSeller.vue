@@ -574,7 +574,7 @@
                                                                     <GmapAutocomplete type="search" class="form-control"
                                                                         :placeholder="__('search_your_location_on_map')"
                                                                         @place_changed="setPlace"
-                                                                        :options="{ fields: ['formatted_address', 'geometry', 'name'], strictBounds: false }"
+                                                                        :options="{ fields: ['formatted_address', 'geometry', 'name', 'address_components'], strictBounds: false }"
                                                                         id="location">
                                                                     </GmapAutocomplete>
 
@@ -1643,6 +1643,27 @@ export default {
                 let addressArr = this.currentPlace.formatted_address.split(",");
                 this.street = addressArr[0] + " " + addressArr[1];
 
+                // Extract state from Google Places response
+                let stateName = "";
+                if (this.currentPlace.address_components) {
+                    for (let comp of this.currentPlace.address_components) {
+                        if (comp.types && comp.types.includes('administrative_area_level_1')) {
+                            stateName = comp.long_name;
+                            break;
+                        }
+                    }
+                }
+                if (!stateName && this.currentPlace.formatted_address) {
+                    if (addressArr.length >= 3) {
+                        stateName = addressArr[addressArr.length - 2].trim();
+                    } else if (addressArr.length === 2) {
+                        stateName = addressArr[1].trim();
+                    }
+                }
+                if (stateName) {
+                    this.state = stateName;
+                }
+
                 this.place_name = this.currentPlace.name;
                 this.formatted_address = this.currentPlace.formatted_address;
 
@@ -1676,12 +1697,33 @@ export default {
             let geocoder = new google.maps.Geocoder;
             geocoder.geocode({ 'location': latlng }, function (results, status) {
                 if (status === 'OK') {
-                    if (results[1]) {
-                        let clikedPlace = results[1];
-
+                    let clikedPlace = results[0] || results[1];
+                    if (clikedPlace) {
                         let addressArr = clikedPlace.formatted_address.split(",");
                         vm.street = addressArr[0] + " " + addressArr[1];
-                        vm.place_name = addressArr[1];
+
+                        // Extract state from Geocode response
+                        let stateName = "";
+                        if (clikedPlace.address_components) {
+                            for (let comp of clikedPlace.address_components) {
+                                if (comp.types && comp.types.includes('administrative_area_level_1')) {
+                                    stateName = comp.long_name;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!stateName && clikedPlace.formatted_address) {
+                            if (addressArr.length >= 3) {
+                                stateName = addressArr[addressArr.length - 2].trim();
+                            } else if (addressArr.length === 2) {
+                                stateName = addressArr[1].trim();
+                            }
+                        }
+                        if (stateName) {
+                            vm.state = stateName;
+                        }
+
+                        vm.place_name = addressArr[1] || addressArr[0];
                         vm.formatted_address = clikedPlace.formatted_address;
                         vm.infoWindow.position = { lat: vm.latitude, lng: vm.longitude }
                         vm.infoWindow.template = `<b>${vm.place_name}</b><br>${vm.formatted_address}`

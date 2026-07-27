@@ -519,7 +519,7 @@ var render = function () {
                       "btn btn-primary btn-block btn-lg shadow-lg mt-2",
                     attrs: { to: "/seller/login" },
                   },
-                  [_vm._v("\n                        Seller Panel")]
+                  [_vm._v("\n                        Distributor Panel")]
                 ),
                 _vm._v(" "),
                 _c(

@@ -263,7 +263,7 @@ var render = function () {
               _c("h4", [_vm._v("Welcome Back!")]),
               _vm._v(" "),
               _c("p", { staticClass: "auth-subtitle text-primary" }, [
-                _vm._v("Please login to your Seller Account"),
+                _vm._v("Please login to your Distributor Account"),
               ]),
               _vm._v(" "),
               _c(

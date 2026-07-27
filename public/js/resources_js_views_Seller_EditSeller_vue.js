@@ -24,6 +24,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
 /* harmony import */ var _mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../mixins/TranslationHelper.js */ "./resources/js/mixins/TranslationHelper.js");
 var _watch;
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -1824,6 +1825,36 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.longitude = this.currentPlace.geometry.location.lng();
         var addressArr = this.currentPlace.formatted_address.split(",");
         this.street = addressArr[0] + " " + addressArr[1];
+
+        // Extract state from Google Places response
+        var stateName = "";
+        if (this.currentPlace.address_components) {
+          var _iterator = _createForOfIteratorHelper(this.currentPlace.address_components),
+            _step;
+          try {
+            for (_iterator.s(); !(_step = _iterator.n()).done;) {
+              var comp = _step.value;
+              if (comp.types && comp.types.includes('administrative_area_level_1')) {
+                stateName = comp.long_name;
+                break;
+              }
+            }
+          } catch (err) {
+            _iterator.e(err);
+          } finally {
+            _iterator.f();
+          }
+        }
+        if (!stateName && this.currentPlace.formatted_address) {
+          if (addressArr.length >= 3) {
+            stateName = addressArr[addressArr.length - 2].trim();
+          } else if (addressArr.length === 2) {
+            stateName = addressArr[1].trim();
+          }
+        }
+        if (stateName) {
+          this.state = stateName;
+        }
         this.place_name = this.currentPlace.name;
         this.formatted_address = this.currentPlace.formatted_address;
         this.infoWindow.position = {
@@ -1861,11 +1892,41 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         'location': latlng
       }, function (results, status) {
         if (status === 'OK') {
-          if (results[1]) {
-            var clikedPlace = results[1];
+          var clikedPlace = results[0] || results[1];
+          if (clikedPlace) {
             var addressArr = clikedPlace.formatted_address.split(",");
             vm.street = addressArr[0] + " " + addressArr[1];
-            vm.place_name = addressArr[1];
+
+            // Extract state from Geocode response
+            var stateName = "";
+            if (clikedPlace.address_components) {
+              var _iterator2 = _createForOfIteratorHelper(clikedPlace.address_components),
+                _step2;
+              try {
+                for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+                  var comp = _step2.value;
+                  if (comp.types && comp.types.includes('administrative_area_level_1')) {
+                    stateName = comp.long_name;
+                    break;
+                  }
+                }
+              } catch (err) {
+                _iterator2.e(err);
+              } finally {
+                _iterator2.f();
+              }
+            }
+            if (!stateName && clikedPlace.formatted_address) {
+              if (addressArr.length >= 3) {
+                stateName = addressArr[addressArr.length - 2].trim();
+              } else if (addressArr.length === 2) {
+                stateName = addressArr[1].trim();
+              }
+            }
+            if (stateName) {
+              vm.state = stateName;
+            }
+            vm.place_name = addressArr[1] || addressArr[0];
             vm.formatted_address = clikedPlace.formatted_address;
             vm.infoWindow.position = {
               lat: vm.latitude,
@@ -7095,6 +7156,7 @@ var render = function () {
                                                                       "formatted_address",
                                                                       "geometry",
                                                                       "name",
+                                                                      "address_components",
                                                                     ],
                                                                     strictBounds: false,
                                                                   },
