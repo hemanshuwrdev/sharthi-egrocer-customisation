@@ -43,7 +43,7 @@
                                     <div class="row">
                                         <!-- Name (translated) -->
                                         <div class="col-md-6 mb-3">
-                                            <label>{{ __('name') }}
+                                            <label>{{ __('Product Name') }}
                                                 <i class="text-danger" v-if="language.is_default">*</i>
                                             </label>
                                             <input type="text" class="form-control"
@@ -93,8 +93,8 @@
                                             </div>
 
                                             <div class="col-md-6 mb-3">
-                                                <label>{{ __('brand') }}</label>
-                                                <select class="form-control form-select" v-model="product.brand_id">
+                                                <label>{{ __('brand') }} <i class="text-danger">*</i></label>
+                                                <select class="form-control form-select" v-model="product.brand_id" required>
                                                     <option :value="null">-- {{ __('select') }} --</option>
                                                     <option v-for="b in brands" :key="b.id" :value="b.id">
                                                         {{ b.name }}
@@ -103,8 +103,8 @@
                                             </div>
 
                                             <div class="col-md-6 mb-3">
-                                                <label>{{ __('category') }}</label>
-                                                <select class="form-control form-select" v-model="product.category_id">
+                                                <label>{{ __('category') }} <i class="text-danger">*</i></label>
+                                                <select class="form-control form-select" v-model="product.category_id" required>
                                                     <option :value="null">-- {{ __('select') }} --</option>
                                                     <option v-for="c in categories" :key="c.id" :value="c.id">
                                                         {{ c.name }}
@@ -144,7 +144,7 @@
                                         <template v-if="language.is_default">
                                             <div class="col-md-6">
                                                 <div class="form-group mb-3">
-                                                    <label>{{ __('image') }}</label>
+                                                    <label>{{ __('image') }} <i class="text-danger" v-if="!isEdit">*</i></label>
                                                     <input type="file" name="image" accept="image/*"
                                                         ref="file_image" v-on:change="fileImage"
                                                         class="file-input" />
@@ -384,16 +384,15 @@
                         </b-tabs>
                     </div>
                 </div>
-            </div>
-
-            <div class="card-footer mt-3 text-end">
-                <router-link to="/master_catalog/products" class="btn btn-secondary me-2">
-                    {{ __('cancel') }}
-                </router-link>
-                <button type="submit" class="btn btn-primary" :disabled="isSaving">
-                    {{ __('save') }}
-                    <b-spinner small v-if="isSaving"></b-spinner>
-                </button>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary me-2" :disabled="isSaving">
+                        {{ __('save') }}
+                        <b-spinner small v-if="isSaving"></b-spinner>
+                    </button>
+                    <router-link to="/master_catalog/products" class="btn btn-secondary">
+                        {{ __('cancel') }}
+                    </router-link>
+                </div>
             </div>
         </form>
     </div>
@@ -807,6 +806,21 @@ export default {
             }
             if (!dt.description || !dt.description.trim()) {
                 this.showError(__('please_fill_description_in_default_language'));
+                this.switchToDefaultLanguageTab();
+                return false;
+            }
+            if (!this.product.brand_id) {
+                this.showError(__('please_select_brand'));
+                this.switchToDefaultLanguageTab();
+                return false;
+            }
+            if (!this.product.category_id) {
+                this.showError(__('please_select_category'));
+                this.switchToDefaultLanguageTab();
+                return false;
+            }
+            if (!this.isEdit && !this.imageFile) {
+                this.showError(__('please_select_main_image'));
                 this.switchToDefaultLanguageTab();
                 return false;
             }

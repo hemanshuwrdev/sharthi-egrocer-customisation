@@ -161,7 +161,7 @@
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="form-group mb-3">
-                                                                <label>{{ __('brands') }}</label>
+                                                                <label>{{ __('brands') }} <i class="text-danger">*</i></label>
                                                                 <multiselect v-model="brand" :options="translatedBrands"
                                                                     :placeholder="__('select_and_search_brands')"
                                                                     label="name" track-by="id" required
@@ -2444,13 +2444,14 @@ export default {
         },
 
         saveRecord: function () {
-            // Validate default language
-            if (!this.validateDefaultLanguage()) {
+            // Validate brand selection
+            if (!this.brand || !this.brand.id || this.brand.id == 0) {
+                this.showError(__('please_select_brand'));
                 return;
             }
 
-            // Validate stock vs measurement
-            if (!this.validateStockWithMeasurement()) {
+            // Validate default language
+            if (!this.validateDefaultLanguage()) {
                 return;
             }
 

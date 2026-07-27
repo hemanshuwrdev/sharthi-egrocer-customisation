@@ -76,7 +76,7 @@ class MasterProductApiController extends Controller
     public function save(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'brand_id' => 'nullable|exists:brands,id',
+            'brand_id' => 'required|exists:brands,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             'tax_id' => 'nullable|exists:taxes,id',
@@ -175,7 +175,7 @@ class MasterProductApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:master_products,id',
-            'brand_id' => 'nullable|exists:brands,id',
+            'brand_id' => 'required|exists:brands,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             'tax_id' => 'nullable|exists:taxes,id',

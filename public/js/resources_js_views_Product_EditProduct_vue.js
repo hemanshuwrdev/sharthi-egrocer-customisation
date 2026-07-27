@@ -2504,13 +2504,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     saveRecord: function saveRecord() {
       var _this31 = this;
-      // Validate default language
-      if (!this.validateDefaultLanguage()) {
+      // Validate brand selection
+      if (!this.brand || !this.brand.id || this.brand.id == 0) {
+        this.showError(__('please_select_brand'));
         return;
       }
 
-      // Validate stock vs measurement
-      if (!this.validateStockWithMeasurement()) {
+      // Validate default language
+      if (!this.validateDefaultLanguage()) {
         return;
       }
 
@@ -4596,7 +4597,15 @@ var render = function () {
                                                                   _vm.__(
                                                                     "brands"
                                                                   )
-                                                                )
+                                                                ) + " "
+                                                              ),
+                                                              _c(
+                                                                "i",
+                                                                {
+                                                                  staticClass:
+                                                                    "text-danger",
+                                                                },
+                                                                [_vm._v("*")]
                                                               ),
                                                             ]),
                                                             _vm._v(" "),

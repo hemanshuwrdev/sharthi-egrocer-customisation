@@ -666,6 +666,7 @@ class ProductApisController extends Controller
             'loose_measurement.*' => ['required_if:type,loose', 'numeric', Rule::notIn([0]),],
             'loose_stock_unit_id' => ['required_if:type,loose', 'nullable', 'numeric'],
             'category_id' => 'required',
+            'brand_id' => 'required',
             'barcode' => 'nullable|unique:products,barcode',
         ];
 
@@ -703,6 +704,7 @@ class ProductApisController extends Controller
             'seller_id.required' => 'The seller name field is required.',
             'is_unlimited_stock.required' => 'The Stock Limit field is required.',
             'category_id.required' => 'The Category name field is required.',
+            'brand_id.required' => 'The Brand field is required.',
             'packet_measurement.*.required_if' => 'The Packet Measurement is required when the type is "Packet".',
             'packet_measurement.*.numeric' => 'The Packet Measurement  must be a number.',
             'packet_measurement.*.not_in' => 'The Packet Measurement must not be zero.',
@@ -1066,6 +1068,7 @@ class ProductApisController extends Controller
             'loose_stock_unit_id' => ['required_if:type,loose', 'nullable', 'numeric'],
 
             'category_id' => 'required',
+            'brand_id' => 'required',
 
             // Barcode should be globally unique (excluding current product on update)
             'barcode' => [

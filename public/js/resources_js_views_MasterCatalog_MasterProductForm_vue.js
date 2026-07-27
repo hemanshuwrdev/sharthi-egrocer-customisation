@@ -415,7 +415,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -834,6 +833,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.switchToDefaultLanguageTab();
         return false;
       }
+      if (!this.product.brand_id) {
+        this.showError(__('please_select_brand'));
+        this.switchToDefaultLanguageTab();
+        return false;
+      }
+      if (!this.product.category_id) {
+        this.showError(__('please_select_category'));
+        this.switchToDefaultLanguageTab();
+        return false;
+      }
+      if (!this.isEdit && !this.imageFile) {
+        this.showError(__('please_select_main_image'));
+        this.switchToDefaultLanguageTab();
+        return false;
+      }
       if (!this.visibleVariants.length) {
         this.showError(__('at_least_one_variant_required'));
         return false;
@@ -1168,7 +1182,7 @@ var render = function () {
                                         [
                                           _c("label", [
                                             _vm._v(
-                                              _vm._s(_vm.__("name")) +
+                                              _vm._s(_vm.__("Product Name")) +
                                                 "\n                                            "
                                             ),
                                             language.is_default
@@ -1470,7 +1484,16 @@ var render = function () {
                                               [
                                                 _c("label", [
                                                   _vm._v(
-                                                    _vm._s(_vm.__("brand"))
+                                                    _vm._s(_vm.__("brand")) +
+                                                      " "
+                                                  ),
+                                                  _c(
+                                                    "i",
+                                                    {
+                                                      staticClass:
+                                                        "text-danger",
+                                                    },
+                                                    [_vm._v("*")]
                                                   ),
                                                 ]),
                                                 _vm._v(" "),
@@ -1489,6 +1512,7 @@ var render = function () {
                                                     ],
                                                     staticClass:
                                                       "form-control form-select",
+                                                    attrs: { required: "" },
                                                     on: {
                                                       change: function (
                                                         $event
@@ -1571,7 +1595,16 @@ var render = function () {
                                               [
                                                 _c("label", [
                                                   _vm._v(
-                                                    _vm._s(_vm.__("category"))
+                                                    _vm._s(_vm.__("category")) +
+                                                      " "
+                                                  ),
+                                                  _c(
+                                                    "i",
+                                                    {
+                                                      staticClass:
+                                                        "text-danger",
+                                                    },
+                                                    [_vm._v("*")]
                                                   ),
                                                 ]),
                                                 _vm._v(" "),
@@ -1591,6 +1624,7 @@ var render = function () {
                                                     ],
                                                     staticClass:
                                                       "form-control form-select",
+                                                    attrs: { required: "" },
                                                     on: {
                                                       change: function (
                                                         $event
@@ -1877,8 +1911,20 @@ var render = function () {
                                                   [
                                                     _c("label", [
                                                       _vm._v(
-                                                        _vm._s(_vm.__("image"))
+                                                        _vm._s(
+                                                          _vm.__("image")
+                                                        ) + " "
                                                       ),
+                                                      !_vm.isEdit
+                                                        ? _c(
+                                                            "i",
+                                                            {
+                                                              staticClass:
+                                                                "text-danger",
+                                                            },
+                                                            [_vm._v("*")]
+                                                          )
+                                                        : _vm._e(),
                                                     ]),
                                                     _vm._v(" "),
                                                     _c("input", {
@@ -3007,48 +3053,48 @@ var render = function () {
                 )
               : _vm._e(),
           ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "card-footer" },
+            [
+              _c(
+                "button",
+                {
+                  staticClass: "btn btn-primary me-2",
+                  attrs: { type: "submit", disabled: _vm.isSaving },
+                },
+                [
+                  _vm._v(
+                    "\n                    " +
+                      _vm._s(_vm.__("save")) +
+                      "\n                    "
+                  ),
+                  _vm.isSaving
+                    ? _c("b-spinner", { attrs: { small: "" } })
+                    : _vm._e(),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "router-link",
+                {
+                  staticClass: "btn btn-secondary",
+                  attrs: { to: "/master_catalog/products" },
+                },
+                [
+                  _vm._v(
+                    "\n                    " +
+                      _vm._s(_vm.__("cancel")) +
+                      "\n                "
+                  ),
+                ]
+              ),
+            ],
+            1
+          ),
         ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-footer mt-3 text-end" },
-          [
-            _c(
-              "router-link",
-              {
-                staticClass: "btn btn-secondary me-2",
-                attrs: { to: "/master_catalog/products" },
-              },
-              [
-                _vm._v(
-                  "\n                " +
-                    _vm._s(_vm.__("cancel")) +
-                    "\n            "
-                ),
-              ]
-            ),
-            _vm._v(" "),
-            _c(
-              "button",
-              {
-                staticClass: "btn btn-primary",
-                attrs: { type: "submit", disabled: _vm.isSaving },
-              },
-              [
-                _vm._v(
-                  "\n                " +
-                    _vm._s(_vm.__("save")) +
-                    "\n                "
-                ),
-                _vm.isSaving
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
       ]
     ),
   ])
