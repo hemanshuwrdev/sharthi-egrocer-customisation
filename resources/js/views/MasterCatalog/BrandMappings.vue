@@ -68,8 +68,10 @@
                             </template>
 
                             <template #cell(cities)="row">
-                                <span v-for="c in row.item.cities" :key="c.id" class="badge bg-secondary me-1">{{ c.name }}</span>
-                                <span class="badge bg-light text-dark">{{ row.item.city_count }} {{ __('cities') }}</span>
+                                <div class="d-flex flex-wrap justify-content-center align-items-center gap-1 py-1">
+                                    <span v-for="c in row.item.cities" :key="c.id" class="badge bg-secondary">{{ c.name }}</span>
+                                    <span class="badge bg-light text-dark border fw-bold">{{ row.item.city_count }} {{ __('zones') }}</span>
+                                </div>
                             </template>
 
                             <template #cell(actions)="row">
@@ -143,9 +145,9 @@ export default {
     data() {
         return {
             fields: [
-                { key: 'brand', label: __('brand'), class: 'text-center' },
+                { key: 'brand', label: __('brand') ? __('brand').charAt(0).toUpperCase() + __('brand').slice(1) : 'Brand', class: 'text-center' },
                 { key: 'seller', label: __('distributor'), class: 'text-center' },
-                { key: 'cities', label: __('cities'), class: 'text-center' },
+                { key: 'cities', label: __('zones'), class: 'text-center' },
                 { key: 'actions', label: __('actions'), class: 'text-center' },
             ],
             mappings: [],

@@ -151,13 +151,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
     return {
       fields: [{
         key: 'brand',
-        label: __('brand'),
+        label: __('brand') ? __('brand').charAt(0).toUpperCase() + __('brand').slice(1) : 'Brand',
         "class": 'text-center'
       }, {
         key: 'seller',
@@ -165,7 +167,7 @@ __webpack_require__.r(__webpack_exports__);
         "class": 'text-center'
       }, {
         key: 'cities',
-        label: __('cities'),
+        label: __('zones'),
         "class": 'text-center'
       }, {
         key: 'actions',
@@ -609,27 +611,40 @@ var render = function () {
                       key: "cell(cities)",
                       fn: function (row) {
                         return [
-                          _vm._l(row.item.cities, function (c) {
-                            return _c(
-                              "span",
-                              {
-                                key: c.id,
-                                staticClass: "badge bg-secondary me-1",
-                              },
-                              [_vm._v(_vm._s(c.name))]
-                            )
-                          }),
-                          _vm._v(" "),
                           _c(
-                            "span",
-                            { staticClass: "badge bg-light text-dark" },
+                            "div",
+                            {
+                              staticClass:
+                                "d-flex flex-wrap justify-content-center align-items-center gap-1 py-1",
+                            },
                             [
-                              _vm._v(
-                                _vm._s(row.item.city_count) +
-                                  " " +
-                                  _vm._s(_vm.__("cities"))
+                              _vm._l(row.item.cities, function (c) {
+                                return _c(
+                                  "span",
+                                  {
+                                    key: c.id,
+                                    staticClass: "badge bg-secondary",
+                                  },
+                                  [_vm._v(_vm._s(c.name))]
+                                )
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "span",
+                                {
+                                  staticClass:
+                                    "badge bg-light text-dark border fw-bold",
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(row.item.city_count) +
+                                      " " +
+                                      _vm._s(_vm.__("zones"))
+                                  ),
+                                ]
                               ),
-                            ]
+                            ],
+                            2
                           ),
                         ]
                       },
