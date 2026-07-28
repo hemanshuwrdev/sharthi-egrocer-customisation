@@ -1743,6 +1743,7 @@
     "distributor": "Distributor",
     "cities": "Zones",
     "overlap_allowed": "Overlap Allowed",
+    "if_allowed_multiple_distributors_can_sell_this_brand_in_the_same_territory": "If allowed, multiple distributors can sell this brand in the same territory.",
     "select_one_or_more_cities": "Select one or more cities",
     "select_brand_distributor_and_cities": "Please select a brand, distributor and at least one zone",
     "this_will_remove_distributor_access_to_this_brand": "This will remove distributor access to this brand. The distributor will no longer see products of this brand.",
