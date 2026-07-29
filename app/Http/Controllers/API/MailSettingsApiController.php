@@ -20,11 +20,11 @@ class MailSettingsApiController extends Controller
     }
     public function save(Request $request)
     {
-        $validator = Validator::make($request->all(),[
-            'status_ids' => 'required',
-            'mail_statuses' => 'required',
-            'mobile_statuses' => 'required',
-            'sms_statuses' => 'required'
+            $validator = Validator::make($request->all(),[
+                'status_ids' => 'required',
+                'mail_statuses' => 'required',
+                'mobile_statuses' => 'required',
+                'sms_statuses' => 'required'
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -44,5 +44,4 @@ class MailSettingsApiController extends Controller
 
         CommonHelper::saveMailSetting($user_id,$user_type,$status_ids,$mail_statuses,$mobile_statuses,$sms_statuses);
         return CommonHelper::responseSuccess('notification_settings_saved_successfully');
-    }
-}
+}}

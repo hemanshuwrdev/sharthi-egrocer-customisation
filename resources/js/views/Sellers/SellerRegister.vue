@@ -55,8 +55,8 @@
                                         </div>
                                     </div>
 
-                                    <!-- OTP field — shown after OTP is sent via SMS (not Firebase) -->
-                                    <div class="form-group col-md-4" v-if="otp_sent && !otp_firebase">
+                                    <!-- OTP field — shown after OTP is sent, via either SMS or Firebase -->
+                                    <div class="form-group col-md-4" v-if="otp_sent">
                                         <div class="form-group">
                                             <label>OTP <i class="text-danger">*</i></label>
                                             <input type="text" class="form-control" v-model="otp"
@@ -64,15 +64,7 @@
                                                 inputmode="numeric" maxlength="6">
                                         </div>
                                     </div>
-                                    <!-- Firebase verified badge -->
-                                    <div class="form-group col-md-4" v-if="otp_firebase">
-                                        <div class="form-group">
-                                            <label>Mobile Verification</label>
-                                            <div class="alert alert-success py-2 mb-0">
-                                                <i class="fa fa-check-circle"></i> Number verified via Firebase
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <div id="seller-register-recaptcha"></div>
 
                                     <div class="form-group col-md-4">
                                         <div class="form-group">
@@ -322,6 +314,7 @@ import { VuejsDatatableFactory } from "vuejs-datatable";
 import Select2 from "v-select2-component";
 import Multiselect from "vue-multiselect";
 import Editor from "@tinymce/tinymce-vue";
+import { sendFirebaseOtp, confirmFirebaseOtp } from '../../firebasePhoneAuth';
 
 export default {
     components: {
@@ -366,6 +359,7 @@ export default {
             otp_countdown: 0,
             otp_timer_interval: null,
             otp_firebase: false,
+            firebase_confirmation_result: null,
 
             status: 0,
             store_logo: "",
@@ -461,22 +455,35 @@ export default {
                 mobile: this.mobile,
                 country_code: this.country_code,
             }).then(res => {
-                this.otp_sending = false;
                 const data = res.data;
-                if (data.status === 1) {
-                    this.otp_sent = true;
-                    if (data.data && data.data.otp_provider === 'firebase') {
-                        this.otp_firebase = true;
-                        this.showMessage('success', 'Mobile number verified via Firebase.');
-                    } else {
-                        this.otp_firebase = false;
-                        this.startCountdown();
-                        this.showMessage('success', 'OTP sent to your mobile number.');
-                    }
-                } else {
+                if (data.status !== 1) {
+                    this.otp_sending = false;
                     this.showError(data.message || 'Failed to send OTP.');
+                    return;
                 }
 
+                if (data.data && data.data.otp_provider === 'firebase') {
+                    const fullPhone = '+' + (this.country_code || '91').replace('+', '') + this.mobile;
+                    sendFirebaseOtp(this.$apiUrl, 'seller-register-recaptcha', fullPhone)
+                        .then(confirmationResult => {
+                            this.otp_sending = false;
+                            this.firebase_confirmation_result = confirmationResult;
+                            this.otp_sent = true;
+                            this.otp_firebase = true;
+                            this.startCountdown();
+                            this.showMessage('success', 'OTP sent to your mobile number.');
+                        })
+                        .catch(err => {
+                            this.otp_sending = false;
+                            this.showError(err.message || 'Failed to send OTP via Firebase.');
+                        });
+                } else {
+                    this.otp_sending = false;
+                    this.otp_sent = true;
+                    this.otp_firebase = false;
+                    this.startCountdown();
+                    this.showMessage('success', 'OTP sent to your mobile number.');
+                }
             }).catch(() => {
                 this.otp_sending = false;
                 this.showError('Failed to send OTP. Please try again.');
@@ -547,11 +554,29 @@ export default {
                 this.showError('Please verify your mobile number first.');
                 return;
             }
-            if (!this.otp_firebase && !this.otp) {
+            if (!this.otp) {
                 this.showError('Please enter the OTP received on your mobile.');
                 return;
             }
 
+            if (this.otp_firebase) {
+                if (!this.firebase_confirmation_result) {
+                    this.showError('Please request the OTP again.');
+                    return;
+                }
+                this.isLoading = true;
+                confirmFirebaseOtp(this.firebase_confirmation_result, this.otp)
+                    .then(() => this.submitSellerRegister())
+                    .catch(() => {
+                        this.isLoading = false;
+                        this.showError('Invalid OTP. Please check and try again.');
+                    });
+                return;
+            }
+
+            this.submitSellerRegister();
+        },
+        submitSellerRegister: function () {
             let vm = this;
             this.isLoading = true;
 

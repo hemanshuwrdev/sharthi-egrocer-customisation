@@ -92,6 +92,7 @@
                                                 </template>
                                             </td>
                                         </tr>
+                                        <!--
                                         <tr v-if="this.$roleDeliveryBoy !== this.login_user.role.name">
                                             <th class="th-width">{{ __('assign_delivery_boy') }}</th>
                                             <td>
@@ -148,6 +149,7 @@
                                                 </form>
                                             </td>
                                         </tr>
+                                        -->
                                     </tbody>
                                 </table>
                             </div>
@@ -197,8 +199,8 @@
                                             <td>{{ order.total }}</td>
                                         </tr>
                                         <tr>
-                                            <th class="th-width">{{ __('discount') }} {{ $currency }}( % )</th>
-                                            <td>{{ discount_in_rupees + ' ( ' + order.discount + '% )' }}</td>
+                                            <th class="th-width">{{ __('discount') }} ({{ $currency }})</th>
+                                            <td>{{ order.discount }}</td>
                                         </tr>
                                         <tr>
                                             <th class="th-width">{{ __('wallet_used') }} ({{ $currency }})</th>
@@ -288,7 +290,14 @@
                                                 {{ __('view_item_details') }}
                                             </b-button>
                                         </div>
-                                        <div class="col-6" v-if="isSellerRoute">
+                                        <div class="col-6" v-if="isSellerRoute && item.master_product_id">
+                                            <router-link
+                                                :to="{ name: 'EditMasterProduct', params: { id: item.master_product_id } }"
+                                                v-b-tooltip.hover title="View Product"
+                                                class="btn btn-block btn-light-primary">{{
+                                                    __('view_product') }}</router-link>
+                                        </div>
+                                        <div class="col-6" v-else-if="isSellerRoute">
                                             <router-link
                                                 :to="{ name: 'SellerViewProduct', params: { id: item.product_id } }"
                                                 v-b-tooltip.hover title="View Product"
@@ -301,6 +310,14 @@
                                                 v-b-tooltip.hover title="View Product"
                                                 class="btn btn-block btn-light-primary">{{
                                                     __('view_product') }}</router-link>
+                                        </div>
+                                        <div class="col-6" v-else-if="item.master_product_id">
+                                            <router-link
+                                                :to="{ name: 'EditMasterProduct', params: { id: item.master_product_id } }"
+                                                v-b-tooltip.hover title="View Product"
+                                                class="btn btn-block btn-light-primary">{{
+                                                    __('view_product')
+                                                }}</router-link>
                                         </div>
                                         <div class="col-6" v-else>
                                             <router-link :to="{ name: 'ViewProduct', params: { id: item.product_id } }"
@@ -384,7 +401,6 @@ export default {
             order: [],
             order_items: [],
 
-            discount_in_rupees: 0,
             whatsapp_message: "",
 
             order_status_id: "",
@@ -493,11 +509,6 @@ export default {
         if (this.id) {
             this.getOrderStatus();
             this.getOrder();
-        }
-        if (this.order.discount > 0) {
-            let discounted_amount = this.order.total * this.order.discount / 100;
-            let remaining_final = this.order.total - discounted_amount;
-            this.discount_in_rupees = this.order.total - remaining_final;
         }
 
     },

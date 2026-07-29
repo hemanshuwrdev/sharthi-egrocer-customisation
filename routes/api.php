@@ -26,6 +26,7 @@ Route::get('seller/cities', [\App\Http\Controllers\API\CityApiController::class,
 Route::match(['get', 'post'], 'seller/send_sms',       [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
 Route::match(['get', 'post'], 'delivery_boy/send_sms', [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
 Route::match(['get', 'post'], 'salesman/send_sms',     [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
+Route::get('firebase/public_config', [\App\Http\Controllers\API\FirebaseApiController::class, 'publicConfig']);
 
 Route::post('delivery_boy/register', [\App\Http\Controllers\API\AdminAuthController::class, 'deliveryBoyRegister']);
 

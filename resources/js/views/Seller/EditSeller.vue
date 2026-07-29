@@ -416,7 +416,7 @@
                                             <template v-if="language.is_default">
 
                                                 <!-- ── Service Zones & Cities Card ── -->
-                                                <div class="card">
+                                                <div class="card" v-if="!isSellerRole">
                                                     <div class="card-header d-flex align-items-center justify-content-between">
                                                         <h4 class="mb-0">{{ __('service_zones_and_cities') }}</h4>
                                                         <button type="button" class="btn btn-sm btn-outline-primary"
@@ -702,7 +702,7 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="card" v-if="!isSellerRole">
+                                                <div class="card">
                                                     <div class="card-header">
                                                         <h4>{{ __('upi_information') }}</h4>
                                                     </div>

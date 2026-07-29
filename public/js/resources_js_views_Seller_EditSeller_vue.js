@@ -5882,367 +5882,89 @@ var render = function () {
                                     _vm._v(" "),
                                     language.is_default
                                       ? [
-                                          _c("div", { staticClass: "card" }, [
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "card-header d-flex align-items-center justify-content-between",
-                                              },
-                                              [
-                                                _c(
-                                                  "h4",
-                                                  { staticClass: "mb-0" },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.__(
-                                                          "service_zones_and_cities"
-                                                        )
-                                                      )
-                                                    ),
-                                                  ]
-                                                ),
-                                                _vm._v(" "),
-                                                _c(
-                                                  "button",
-                                                  {
-                                                    staticClass:
-                                                      "btn btn-sm btn-outline-primary",
-                                                    attrs: { type: "button" },
-                                                    on: {
-                                                      click:
-                                                        _vm.toggleAddCityForm,
+                                          !_vm.isSellerRole
+                                            ? _c(
+                                                "div",
+                                                { staticClass: "card" },
+                                                [
+                                                  _c(
+                                                    "div",
+                                                    {
+                                                      staticClass:
+                                                        "card-header d-flex align-items-center justify-content-between",
                                                     },
-                                                  },
-                                                  [
-                                                    _c("i", {
-                                                      class: _vm.showAddCityForm
-                                                        ? "fa fa-times"
-                                                        : "fa fa-plus",
-                                                    }),
-                                                    _vm._v(
-                                                      "\n                                                        " +
-                                                        _vm._s(
-                                                          _vm.showAddCityForm
-                                                            ? _vm.__("cancel")
-                                                            : _vm.__("add_zone")
-                                                        ) +
-                                                        "\n                                                    "
-                                                    ),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "div",
-                                              { staticClass: "card-body" },
-                                              [
-                                                !_vm.showAddCityForm
-                                                  ? _c(
-                                                      "div",
-                                                      { staticClass: "row" },
-                                                      [
-                                                        _c(
-                                                          "div",
-                                                          {
-                                                            staticClass:
-                                                              "form-group col-md-5 mt-0",
-                                                          },
-                                                          [
-                                                            _c(
-                                                              "div",
-                                                              {
-                                                                staticClass:
-                                                                  "form-group",
-                                                              },
-                                                              [
-                                                                _c("label", [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      _vm.__(
-                                                                        "zone"
-                                                                      )
-                                                                    )
-                                                                  ),
-                                                                  _c(
-                                                                    "i",
-                                                                    {
-                                                                      staticClass:
-                                                                        "text-danger",
-                                                                    },
-                                                                    [
-                                                                      _vm._v(
-                                                                        "*"
-                                                                      ),
-                                                                    ]
-                                                                  ),
-                                                                ]),
-                                                                _vm._v(" "),
-                                                                _c(
-                                                                  "select",
-                                                                  {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.selected_zone,
-                                                                          expression:
-                                                                            "selected_zone",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    on: {
-                                                                      change:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          var $$selectedVal =
-                                                                            Array.prototype.filter
-                                                                              .call(
-                                                                                $event
-                                                                                  .target
-                                                                                  .options,
-                                                                                function (
-                                                                                  o
-                                                                                ) {
-                                                                                  return o.selected
-                                                                                }
-                                                                              )
-                                                                              .map(
-                                                                                function (
-                                                                                  o
-                                                                                ) {
-                                                                                  var val =
-                                                                                    "_value" in
-                                                                                    o
-                                                                                      ? o._value
-                                                                                      : o.value
-                                                                                  return val
-                                                                                }
-                                                                              )
-                                                                          _vm.selected_zone =
-                                                                            $event
-                                                                              .target
-                                                                              .multiple
-                                                                              ? $$selectedVal
-                                                                              : $$selectedVal[0]
-                                                                        },
-                                                                    },
-                                                                  },
-                                                                  [
-                                                                    _c(
-                                                                      "option",
-                                                                      {
-                                                                        attrs: {
-                                                                          value:
-                                                                            "",
-                                                                        },
-                                                                      },
-                                                                      [
-                                                                        _vm._v(
-                                                                          _vm._s(
-                                                                            _vm.__(
-                                                                              "select_zone"
-                                                                            )
-                                                                          )
-                                                                        ),
-                                                                      ]
-                                                                    ),
-                                                                    _vm._v(" "),
-                                                                    _vm._l(
-                                                                      _vm.zones,
-                                                                      function (
-                                                                        z
-                                                                      ) {
-                                                                        return _c(
-                                                                          "option",
-                                                                          {
-                                                                            key: z.zone,
-                                                                            domProps:
-                                                                              {
-                                                                                value:
-                                                                                  z.zone,
-                                                                              },
-                                                                          },
-                                                                          [
-                                                                            _vm._v(
-                                                                              "\n                                                                        " +
-                                                                                _vm._s(
-                                                                                  z.zone
-                                                                                ) +
-                                                                                " (" +
-                                                                                _vm._s(
-                                                                                  z.city_count
-                                                                                ) +
-                                                                                " " +
-                                                                                _vm._s(
-                                                                                  _vm.__(
-                                                                                    "cities"
-                                                                                  )
-                                                                                ) +
-                                                                                ")\n                                                                    "
-                                                                            ),
-                                                                          ]
-                                                                        )
-                                                                      }
-                                                                    ),
-                                                                  ],
-                                                                  2
-                                                                ),
-                                                              ]
-                                                            ),
-                                                          ]
-                                                        ),
-                                                        _vm._v(" "),
-                                                        _c(
-                                                          "div",
-                                                          {
-                                                            staticClass:
-                                                              "form-group col-md-7",
-                                                          },
-                                                          [
-                                                            _c(
-                                                              "div",
-                                                              {
-                                                                staticClass:
-                                                                  "form-group",
-                                                              },
-                                                              [
-                                                                _c(
-                                                                  "label",
-                                                                  {
-                                                                    attrs: {
-                                                                      for: "city_name",
-                                                                    },
-                                                                  },
-                                                                  [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "select_cities"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                    _c(
-                                                                      "i",
-                                                                      {
-                                                                        staticClass:
-                                                                          "text-danger",
-                                                                      },
-                                                                      [
-                                                                        _vm._v(
-                                                                          "*"
-                                                                        ),
-                                                                      ]
-                                                                    ),
-                                                                  ]
-                                                                ),
-                                                                _vm._v(" "),
-                                                                _c("Select2", {
-                                                                  attrs: {
-                                                                    placeholder:
-                                                                      _vm.__(
-                                                                        "select_cities"
-                                                                      ),
-                                                                    options:
-                                                                      _vm.cities_options,
-                                                                    settings: {
-                                                                      multiple:
-                                                                        "multiple",
-                                                                    },
-                                                                  },
-                                                                  model: {
-                                                                    value:
-                                                                      _vm.city_id,
-                                                                    callback:
-                                                                      function (
-                                                                        $$v
-                                                                      ) {
-                                                                        _vm.city_id =
-                                                                          $$v
-                                                                      },
-                                                                    expression:
-                                                                      "city_id",
-                                                                  },
-                                                                }),
-                                                                _vm._v(" "),
-                                                                !_vm.selected_zone &&
-                                                                _vm.zones.length
-                                                                  ? _c(
-                                                                      "small",
-                                                                      {
-                                                                        staticClass:
-                                                                          "text-muted",
-                                                                      },
-                                                                      [
-                                                                        _vm._v(
-                                                                          _vm._s(
-                                                                            _vm.__(
-                                                                              "select_zone_to_filter_cities"
-                                                                            )
-                                                                          )
-                                                                        ),
-                                                                      ]
-                                                                    )
-                                                                  : _vm._e(),
-                                                              ],
-                                                              1
-                                                            ),
-                                                          ]
-                                                        ),
-                                                      ]
-                                                    )
-                                                  : _vm._e(),
-                                                _vm._v(" "),
-                                                _vm.showAddCityForm
-                                                  ? _c("div", [
+                                                    [
                                                       _c(
-                                                        "p",
-                                                        {
-                                                          staticClass:
-                                                            "text-muted mb-3",
-                                                        },
+                                                        "h4",
+                                                        { staticClass: "mb-0" },
                                                         [
-                                                          _c("i", {
-                                                            staticClass:
-                                                              "fa fa-info-circle",
-                                                          }),
                                                           _vm._v(
-                                                            "\n                                                            Enter a zone name, search the area on the map, then "
-                                                          ),
-                                                          _c("strong", [
-                                                            _vm._v(
-                                                              "draw the zone boundary"
-                                                            ),
-                                                          ]),
-                                                          _vm._v(
-                                                            " using the polygon or circle tool.\n                                                        "
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "service_zones_and_cities"
+                                                              )
+                                                            )
                                                           ),
                                                         ]
                                                       ),
                                                       _vm._v(" "),
                                                       _c(
-                                                        "div",
-                                                        { staticClass: "row" },
+                                                        "button",
+                                                        {
+                                                          staticClass:
+                                                            "btn btn-sm btn-outline-primary",
+                                                          attrs: {
+                                                            type: "button",
+                                                          },
+                                                          on: {
+                                                            click:
+                                                              _vm.toggleAddCityForm,
+                                                          },
+                                                        },
                                                         [
-                                                          _c(
+                                                          _c("i", {
+                                                            class:
+                                                              _vm.showAddCityForm
+                                                                ? "fa fa-times"
+                                                                : "fa fa-plus",
+                                                          }),
+                                                          _vm._v(
+                                                            "\n                                                        " +
+                                                              _vm._s(
+                                                                _vm.showAddCityForm
+                                                                  ? _vm.__(
+                                                                      "cancel"
+                                                                    )
+                                                                  : _vm.__(
+                                                                      "add_zone"
+                                                                    )
+                                                              ) +
+                                                              "\n                                                    "
+                                                          ),
+                                                        ]
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "div",
+                                                    {
+                                                      staticClass: "card-body",
+                                                    },
+                                                    [
+                                                      !_vm.showAddCityForm
+                                                        ? _c(
                                                             "div",
                                                             {
                                                               staticClass:
-                                                                "col-md-5",
+                                                                "row",
                                                             },
                                                             [
                                                               _c(
                                                                 "div",
                                                                 {
                                                                   staticClass:
-                                                                    "form-group mt-0",
+                                                                    "form-group col-md-5 mt-0",
                                                                 },
                                                                 [
                                                                   _c(
@@ -6258,7 +5980,7 @@ var render = function () {
                                                                           _vm._v(
                                                                             _vm._s(
                                                                               _vm.__(
-                                                                                "zone_name"
+                                                                                "zone"
                                                                               )
                                                                             )
                                                                           ),
@@ -6280,7 +6002,7 @@ var render = function () {
                                                                         " "
                                                                       ),
                                                                       _c(
-                                                                        "input",
+                                                                        "select",
                                                                         {
                                                                           directives:
                                                                             [
@@ -6289,52 +6011,113 @@ var render = function () {
                                                                                 rawName:
                                                                                   "v-model",
                                                                                 value:
-                                                                                  _vm
-                                                                                    .newCity
-                                                                                    .zone,
+                                                                                  _vm.selected_zone,
                                                                                 expression:
-                                                                                  "newCity.zone",
+                                                                                  "selected_zone",
                                                                               },
                                                                             ],
                                                                           staticClass:
                                                                             "form-control",
-                                                                          attrs:
-                                                                            {
-                                                                              type: "text",
-                                                                              placeholder:
-                                                                                _vm.__(
-                                                                                  "zone_name"
-                                                                                ),
-                                                                            },
-                                                                          domProps:
-                                                                            {
-                                                                              value:
-                                                                                _vm
-                                                                                  .newCity
-                                                                                  .zone,
-                                                                            },
                                                                           on: {
-                                                                            input:
+                                                                            change:
                                                                               function (
                                                                                 $event
                                                                               ) {
-                                                                                if (
+                                                                                var $$selectedVal =
+                                                                                  Array.prototype.filter
+                                                                                    .call(
+                                                                                      $event
+                                                                                        .target
+                                                                                        .options,
+                                                                                      function (
+                                                                                        o
+                                                                                      ) {
+                                                                                        return o.selected
+                                                                                      }
+                                                                                    )
+                                                                                    .map(
+                                                                                      function (
+                                                                                        o
+                                                                                      ) {
+                                                                                        var val =
+                                                                                          "_value" in
+                                                                                          o
+                                                                                            ? o._value
+                                                                                            : o.value
+                                                                                        return val
+                                                                                      }
+                                                                                    )
+                                                                                _vm.selected_zone =
                                                                                   $event
                                                                                     .target
-                                                                                    .composing
-                                                                                ) {
-                                                                                  return
-                                                                                }
-                                                                                _vm.$set(
-                                                                                  _vm.newCity,
-                                                                                  "zone",
-                                                                                  $event
-                                                                                    .target
-                                                                                    .value
-                                                                                )
+                                                                                    .multiple
+                                                                                    ? $$selectedVal
+                                                                                    : $$selectedVal[0]
                                                                               },
                                                                           },
-                                                                        }
+                                                                        },
+                                                                        [
+                                                                          _c(
+                                                                            "option",
+                                                                            {
+                                                                              attrs:
+                                                                                {
+                                                                                  value:
+                                                                                    "",
+                                                                                },
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "select_zone"
+                                                                                  )
+                                                                                )
+                                                                              ),
+                                                                            ]
+                                                                          ),
+                                                                          _vm._v(
+                                                                            " "
+                                                                          ),
+                                                                          _vm._l(
+                                                                            _vm.zones,
+                                                                            function (
+                                                                              z
+                                                                            ) {
+                                                                              return _c(
+                                                                                "option",
+                                                                                {
+                                                                                  key: z.zone,
+                                                                                  domProps:
+                                                                                    {
+                                                                                      value:
+                                                                                        z.zone,
+                                                                                    },
+                                                                                },
+                                                                                [
+                                                                                  _vm._v(
+                                                                                    "\n                                                                        " +
+                                                                                      _vm._s(
+                                                                                        z.zone
+                                                                                      ) +
+                                                                                      " (" +
+                                                                                      _vm._s(
+                                                                                        z.city_count
+                                                                                      ) +
+                                                                                      " " +
+                                                                                      _vm._s(
+                                                                                        _vm.__(
+                                                                                          "cities"
+                                                                                        )
+                                                                                      ) +
+                                                                                      ")\n                                                                    "
+                                                                                  ),
+                                                                                ]
+                                                                              )
+                                                                            }
+                                                                          ),
+                                                                        ],
+                                                                        2
                                                                       ),
                                                                     ]
                                                                   ),
@@ -6345,7 +6128,7 @@ var render = function () {
                                                                 "div",
                                                                 {
                                                                   staticClass:
-                                                                    "form-group mt-0",
+                                                                    "form-group col-md-7",
                                                                 },
                                                                 [
                                                                   _c(
@@ -6357,13 +6140,31 @@ var render = function () {
                                                                     [
                                                                       _c(
                                                                         "label",
+                                                                        {
+                                                                          attrs:
+                                                                            {
+                                                                              for: "city_name",
+                                                                            },
+                                                                        },
                                                                         [
                                                                           _vm._v(
                                                                             _vm._s(
                                                                               _vm.__(
-                                                                                "search_location"
+                                                                                "select_cities"
                                                                               )
                                                                             )
+                                                                          ),
+                                                                          _c(
+                                                                            "i",
+                                                                            {
+                                                                              staticClass:
+                                                                                "text-danger",
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                "*"
+                                                                              ),
+                                                                            ]
                                                                           ),
                                                                         ]
                                                                       ),
@@ -6371,570 +6172,832 @@ var render = function () {
                                                                         " "
                                                                       ),
                                                                       _c(
-                                                                        "GmapAutocomplete",
+                                                                        "Select2",
                                                                         {
-                                                                          staticClass:
-                                                                            "form-control",
                                                                           attrs:
                                                                             {
-                                                                              type: "search",
                                                                               placeholder:
                                                                                 _vm.__(
-                                                                                  "search_your_location_on_map"
+                                                                                  "select_cities"
                                                                                 ),
                                                                               options:
+                                                                                _vm.cities_options,
+                                                                              settings:
                                                                                 {
-                                                                                  fields:
-                                                                                    [
-                                                                                      "address_components",
-                                                                                      "formatted_address",
-                                                                                      "geometry",
-                                                                                      "name",
-                                                                                    ],
-                                                                                  strictBounds: false,
+                                                                                  multiple:
+                                                                                    "multiple",
                                                                                 },
-                                                                              id: "city_map_search",
                                                                             },
-                                                                          on: {
-                                                                            place_changed:
-                                                                              _vm.setCityPlace,
-                                                                          },
+                                                                          model:
+                                                                            {
+                                                                              value:
+                                                                                _vm.city_id,
+                                                                              callback:
+                                                                                function (
+                                                                                  $$v
+                                                                                ) {
+                                                                                  _vm.city_id =
+                                                                                    $$v
+                                                                                },
+                                                                              expression:
+                                                                                "city_id",
+                                                                            },
                                                                         }
                                                                       ),
                                                                       _vm._v(
                                                                         " "
                                                                       ),
-                                                                      _c(
-                                                                        "small",
-                                                                        {
-                                                                          staticClass:
-                                                                            "text-muted",
-                                                                        },
-                                                                        [
-                                                                          _vm._v(
-                                                                            _vm._s(
-                                                                              _vm.__(
-                                                                                "search_to_navigate_map_then_draw_zone_boundary"
-                                                                              )
-                                                                            )
-                                                                          ),
-                                                                        ]
-                                                                      ),
-                                                                    ],
-                                                                    1
-                                                                  ),
-                                                                ]
-                                                              ),
-                                                              _vm._v(" "),
-                                                              _c(
-                                                                "div",
-                                                                {
-                                                                  staticClass:
-                                                                    "row",
-                                                                },
-                                                                [
-                                                                  _c(
-                                                                    "div",
-                                                                    {
-                                                                      staticClass:
-                                                                        "form-group col-md-6 mt-0",
-                                                                    },
-                                                                    [
-                                                                      _c(
-                                                                        "div",
-                                                                        {
-                                                                          staticClass:
-                                                                            "form-group",
-                                                                        },
-                                                                        [
-                                                                          _c(
-                                                                            "label",
-                                                                            [
-                                                                              _vm._v(
-                                                                                _vm._s(
-                                                                                  _vm.__(
-                                                                                    "latitude"
-                                                                                  )
-                                                                                )
-                                                                              ),
-                                                                            ]
-                                                                          ),
-                                                                          _vm._v(
-                                                                            " "
-                                                                          ),
-                                                                          _c(
-                                                                            "input",
-                                                                            {
-                                                                              directives:
-                                                                                [
-                                                                                  {
-                                                                                    name: "model",
-                                                                                    rawName:
-                                                                                      "v-model",
-                                                                                    value:
-                                                                                      _vm
-                                                                                        .newCity
-                                                                                        .latitude,
-                                                                                    expression:
-                                                                                      "newCity.latitude",
-                                                                                  },
-                                                                                ],
-                                                                              staticClass:
-                                                                                "form-control",
-                                                                              attrs:
-                                                                                {
-                                                                                  type: "text",
-                                                                                  readonly:
-                                                                                    "",
-                                                                                  placeholder:
-                                                                                    _vm.__(
-                                                                                      "latitude"
-                                                                                    ),
-                                                                                },
-                                                                              domProps:
-                                                                                {
-                                                                                  value:
-                                                                                    _vm
-                                                                                      .newCity
-                                                                                      .latitude,
-                                                                                },
-                                                                              on: {
-                                                                                input:
-                                                                                  function (
-                                                                                    $event
-                                                                                  ) {
-                                                                                    if (
-                                                                                      $event
-                                                                                        .target
-                                                                                        .composing
-                                                                                    ) {
-                                                                                      return
-                                                                                    }
-                                                                                    _vm.$set(
-                                                                                      _vm.newCity,
-                                                                                      "latitude",
-                                                                                      $event
-                                                                                        .target
-                                                                                        .value
-                                                                                    )
-                                                                                  },
-                                                                              },
-                                                                            }
-                                                                          ),
-                                                                        ]
-                                                                      ),
-                                                                    ]
-                                                                  ),
-                                                                  _vm._v(" "),
-                                                                  _c(
-                                                                    "div",
-                                                                    {
-                                                                      staticClass:
-                                                                        "form-group col-md-6",
-                                                                    },
-                                                                    [
-                                                                      _c(
-                                                                        "div",
-                                                                        {
-                                                                          staticClass:
-                                                                            "form-group",
-                                                                        },
-                                                                        [
-                                                                          _c(
-                                                                            "label",
-                                                                            [
-                                                                              _vm._v(
-                                                                                _vm._s(
-                                                                                  _vm.__(
-                                                                                    "longitude"
-                                                                                  )
-                                                                                )
-                                                                              ),
-                                                                            ]
-                                                                          ),
-                                                                          _vm._v(
-                                                                            " "
-                                                                          ),
-                                                                          _c(
-                                                                            "input",
-                                                                            {
-                                                                              directives:
-                                                                                [
-                                                                                  {
-                                                                                    name: "model",
-                                                                                    rawName:
-                                                                                      "v-model",
-                                                                                    value:
-                                                                                      _vm
-                                                                                        .newCity
-                                                                                        .longitude,
-                                                                                    expression:
-                                                                                      "newCity.longitude",
-                                                                                  },
-                                                                                ],
-                                                                              staticClass:
-                                                                                "form-control",
-                                                                              attrs:
-                                                                                {
-                                                                                  type: "text",
-                                                                                  readonly:
-                                                                                    "",
-                                                                                  placeholder:
-                                                                                    _vm.__(
-                                                                                      "longitude"
-                                                                                    ),
-                                                                                },
-                                                                              domProps:
-                                                                                {
-                                                                                  value:
-                                                                                    _vm
-                                                                                      .newCity
-                                                                                      .longitude,
-                                                                                },
-                                                                              on: {
-                                                                                input:
-                                                                                  function (
-                                                                                    $event
-                                                                                  ) {
-                                                                                    if (
-                                                                                      $event
-                                                                                        .target
-                                                                                        .composing
-                                                                                    ) {
-                                                                                      return
-                                                                                    }
-                                                                                    _vm.$set(
-                                                                                      _vm.newCity,
-                                                                                      "longitude",
-                                                                                      $event
-                                                                                        .target
-                                                                                        .value
-                                                                                    )
-                                                                                  },
-                                                                              },
-                                                                            }
-                                                                          ),
-                                                                        ]
-                                                                      ),
-                                                                    ]
-                                                                  ),
-                                                                ]
-                                                              ),
-                                                              _vm._v(" "),
-                                                              !_vm.cityVertices
-                                                                ? _c(
-                                                                    "div",
-                                                                    {
-                                                                      staticClass:
-                                                                        "alert alert-warning py-2 px-3",
-                                                                    },
-                                                                    [
-                                                                      _c("i", {
-                                                                        staticClass:
-                                                                          "fa fa-draw-polygon mr-1",
-                                                                      }),
-                                                                      _vm._v(
-                                                                        "\n                                                                    " +
-                                                                          _vm._s(
-                                                                            _vm.__(
-                                                                              "draw_zone_boundary_on_map_using_tools"
-                                                                            )
-                                                                          ) +
-                                                                          "\n                                                                "
-                                                                      ),
-                                                                    ]
-                                                                  )
-                                                                : _c(
-                                                                    "div",
-                                                                    {
-                                                                      staticClass:
-                                                                        "alert alert-success py-2 px-3",
-                                                                    },
-                                                                    [
-                                                                      _c("i", {
-                                                                        staticClass:
-                                                                          "fa fa-check-circle mr-1",
-                                                                      }),
-                                                                      _vm._v(
-                                                                        "\n                                                                    " +
-                                                                          _vm._s(
-                                                                            _vm.__(
-                                                                              "zone_boundary_drawn_successfully"
-                                                                            )
-                                                                          ) +
-                                                                          "\n                                                                "
-                                                                      ),
-                                                                    ]
-                                                                  ),
-                                                              _vm._v(" "),
-                                                              _c(
-                                                                "div",
-                                                                {
-                                                                  staticClass:
-                                                                    "d-flex gap-2",
-                                                                },
-                                                                [
-                                                                  _c(
-                                                                    "button",
-                                                                    {
-                                                                      staticClass:
-                                                                        "btn btn-success btn-sm",
-                                                                      attrs: {
-                                                                        type: "button",
-                                                                        disabled:
-                                                                          _vm.isSavingCity,
-                                                                      },
-                                                                      on: {
-                                                                        click:
-                                                                          _vm.saveNewCity,
-                                                                      },
-                                                                    },
-                                                                    [
-                                                                      _vm.isSavingCity
+                                                                      !_vm.selected_zone &&
+                                                                      _vm.zones
+                                                                        .length
                                                                         ? _c(
-                                                                            "b-spinner",
+                                                                            "small",
                                                                             {
                                                                               staticClass:
-                                                                                "mr-1",
-                                                                              attrs:
-                                                                                {
-                                                                                  small:
-                                                                                    "",
-                                                                                },
-                                                                            }
+                                                                                "text-muted",
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "select_zone_to_filter_cities"
+                                                                                  )
+                                                                                )
+                                                                              ),
+                                                                            ]
                                                                           )
                                                                         : _vm._e(),
-                                                                      _vm._v(
-                                                                        "\n                                                                        " +
-                                                                          _vm._s(
-                                                                            _vm.isSavingCity
-                                                                              ? _vm.__(
-                                                                                  "saving"
-                                                                                )
-                                                                              : _vm.__(
-                                                                                  "save_zone"
-                                                                                )
-                                                                          ) +
-                                                                          "\n                                                                    "
-                                                                      ),
                                                                     ],
                                                                     1
-                                                                  ),
-                                                                  _vm._v(" "),
-                                                                  _c(
-                                                                    "button",
-                                                                    {
-                                                                      staticClass:
-                                                                        "btn btn-secondary btn-sm ml-2",
-                                                                      attrs: {
-                                                                        type: "button",
-                                                                      },
-                                                                      on: {
-                                                                        click:
-                                                                          _vm.toggleAddCityForm,
-                                                                      },
-                                                                    },
-                                                                    [
-                                                                      _vm._v(
-                                                                        _vm._s(
-                                                                          _vm.__(
-                                                                            "cancel"
-                                                                          )
-                                                                        )
-                                                                      ),
-                                                                    ]
                                                                   ),
                                                                 ]
                                                               ),
                                                             ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "div",
-                                                            {
-                                                              staticClass:
-                                                                "col-md-7",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
-                                                                {
+                                                          )
+                                                        : _vm._e(),
+                                                      _vm._v(" "),
+                                                      _vm.showAddCityForm
+                                                        ? _c("div", [
+                                                            _c(
+                                                              "p",
+                                                              {
+                                                                staticClass:
+                                                                  "text-muted mb-3",
+                                                              },
+                                                              [
+                                                                _c("i", {
                                                                   staticClass:
-                                                                    "mb-2 d-flex gap-2",
-                                                                },
-                                                                [
-                                                                  _c(
-                                                                    "button",
-                                                                    {
-                                                                      staticClass:
-                                                                        "btn btn-sm btn-danger",
-                                                                      attrs: {
-                                                                        type: "button",
-                                                                      },
-                                                                      on: {
-                                                                        click:
-                                                                          _vm.clearCityDrawing,
-                                                                      },
-                                                                    },
-                                                                    [
-                                                                      _c("i", {
+                                                                    "fa fa-info-circle",
+                                                                }),
+                                                                _vm._v(
+                                                                  "\n                                                            Enter a zone name, search the area on the map, then "
+                                                                ),
+                                                                _c("strong", [
+                                                                  _vm._v(
+                                                                    "draw the zone boundary"
+                                                                  ),
+                                                                ]),
+                                                                _vm._v(
+                                                                  " using the polygon or circle tool.\n                                                        "
+                                                                ),
+                                                              ]
+                                                            ),
+                                                            _vm._v(" "),
+                                                            _c(
+                                                              "div",
+                                                              {
+                                                                staticClass:
+                                                                  "row",
+                                                              },
+                                                              [
+                                                                _c(
+                                                                  "div",
+                                                                  {
+                                                                    staticClass:
+                                                                      "col-md-5",
+                                                                  },
+                                                                  [
+                                                                    _c(
+                                                                      "div",
+                                                                      {
                                                                         staticClass:
-                                                                          "fa fa-trash",
-                                                                      }),
-                                                                      _vm._v(
-                                                                        " " +
-                                                                          _vm._s(
-                                                                            _vm.__(
-                                                                              "clear_map"
-                                                                            )
-                                                                          ) +
-                                                                          "\n                                                                    "
-                                                                      ),
-                                                                    ]
-                                                                  ),
-                                                                  _vm._v(" "),
-                                                                  _vm.cityVertices
-                                                                    ? _c(
-                                                                        "span",
-                                                                        {
-                                                                          staticClass:
-                                                                            "badge bg-success align-self-center ml-2",
-                                                                        },
-                                                                        [
-                                                                          _vm._v(
-                                                                            _vm._s(
-                                                                              _vm.__(
-                                                                                "boundary_drawn"
-                                                                              )
-                                                                            )
-                                                                          ),
-                                                                        ]
-                                                                      )
-                                                                    : _vm._e(),
-                                                                ]
-                                                              ),
-                                                              _vm._v(" "),
-                                                              _c(
-                                                                "GmapMap",
-                                                                {
-                                                                  ref: "cityMapRef",
-                                                                  refInFor: true,
-                                                                  staticStyle: {
-                                                                    width:
-                                                                      "100%",
-                                                                    height:
-                                                                      "450px",
-                                                                  },
-                                                                  attrs: {
-                                                                    center:
-                                                                      _vm.cityMapCenter,
-                                                                    zoom: 5,
-                                                                    mapTypeControl: true,
-                                                                    drawingControl: true,
-                                                                  },
-                                                                },
-                                                                [
-                                                                  _vm._l(
-                                                                    _vm.cityMapMarkers,
-                                                                    function (
-                                                                      m,
-                                                                      mi
-                                                                    ) {
-                                                                      return _c(
-                                                                        "GmapMarker",
-                                                                        {
-                                                                          key: mi,
-                                                                          attrs:
-                                                                            {
-                                                                              position:
-                                                                                m.position,
-                                                                              draggable: true,
-                                                                              clickable: true,
-                                                                            },
-                                                                        }
-                                                                      )
-                                                                    }
-                                                                  ),
-                                                                  _vm._v(" "),
-                                                                  _c(
-                                                                    "gmap-info-window",
-                                                                    {
-                                                                      attrs: {
-                                                                        options:
+                                                                          "form-group mt-0",
+                                                                      },
+                                                                      [
+                                                                        _c(
+                                                                          "div",
                                                                           {
-                                                                            maxWidth: 300,
-                                                                            pixelOffset:
+                                                                            staticClass:
+                                                                              "form-group",
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "label",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    _vm.__(
+                                                                                      "zone_name"
+                                                                                    )
+                                                                                  )
+                                                                                ),
+                                                                                _c(
+                                                                                  "i",
+                                                                                  {
+                                                                                    staticClass:
+                                                                                      "text-danger",
+                                                                                  },
+                                                                                  [
+                                                                                    _vm._v(
+                                                                                      "*"
+                                                                                    ),
+                                                                                  ]
+                                                                                ),
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "input",
                                                                               {
-                                                                                width: 0,
-                                                                                height:
-                                                                                  -35,
+                                                                                directives:
+                                                                                  [
+                                                                                    {
+                                                                                      name: "model",
+                                                                                      rawName:
+                                                                                        "v-model",
+                                                                                      value:
+                                                                                        _vm
+                                                                                          .newCity
+                                                                                          .zone,
+                                                                                      expression:
+                                                                                        "newCity.zone",
+                                                                                    },
+                                                                                  ],
+                                                                                staticClass:
+                                                                                  "form-control",
+                                                                                attrs:
+                                                                                  {
+                                                                                    type: "text",
+                                                                                    placeholder:
+                                                                                      _vm.__(
+                                                                                        "zone_name"
+                                                                                      ),
+                                                                                  },
+                                                                                domProps:
+                                                                                  {
+                                                                                    value:
+                                                                                      _vm
+                                                                                        .newCity
+                                                                                        .zone,
+                                                                                  },
+                                                                                on: {
+                                                                                  input:
+                                                                                    function (
+                                                                                      $event
+                                                                                    ) {
+                                                                                      if (
+                                                                                        $event
+                                                                                          .target
+                                                                                          .composing
+                                                                                      ) {
+                                                                                        return
+                                                                                      }
+                                                                                      _vm.$set(
+                                                                                        _vm.newCity,
+                                                                                        "zone",
+                                                                                        $event
+                                                                                          .target
+                                                                                          .value
+                                                                                      )
+                                                                                    },
+                                                                                },
+                                                                              }
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                    _vm._v(" "),
+                                                                    _c(
+                                                                      "div",
+                                                                      {
+                                                                        staticClass:
+                                                                          "form-group mt-0",
+                                                                      },
+                                                                      [
+                                                                        _c(
+                                                                          "div",
+                                                                          {
+                                                                            staticClass:
+                                                                              "form-group",
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "label",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    _vm.__(
+                                                                                      "search_location"
+                                                                                    )
+                                                                                  )
+                                                                                ),
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "GmapAutocomplete",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "form-control",
+                                                                                attrs:
+                                                                                  {
+                                                                                    type: "search",
+                                                                                    placeholder:
+                                                                                      _vm.__(
+                                                                                        "search_your_location_on_map"
+                                                                                      ),
+                                                                                    options:
+                                                                                      {
+                                                                                        fields:
+                                                                                          [
+                                                                                            "address_components",
+                                                                                            "formatted_address",
+                                                                                            "geometry",
+                                                                                            "name",
+                                                                                          ],
+                                                                                        strictBounds: false,
+                                                                                      },
+                                                                                    id: "city_map_search",
+                                                                                  },
+                                                                                on: {
+                                                                                  place_changed:
+                                                                                    _vm.setCityPlace,
+                                                                                },
+                                                                              }
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "small",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "text-muted",
                                                                               },
-                                                                          },
-                                                                        position:
-                                                                          _vm
-                                                                            .cityInfoWindow
-                                                                            .position,
-                                                                        opened:
-                                                                          _vm
-                                                                            .cityInfoWindow
-                                                                            .open,
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    _vm.__(
+                                                                                      "search_to_navigate_map_then_draw_zone_boundary"
+                                                                                    )
+                                                                                  )
+                                                                                ),
+                                                                              ]
+                                                                            ),
+                                                                          ],
+                                                                          1
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                    _vm._v(" "),
+                                                                    _c(
+                                                                      "div",
+                                                                      {
+                                                                        staticClass:
+                                                                          "row",
                                                                       },
-                                                                      on: {
-                                                                        closeclick:
-                                                                          function (
-                                                                            $event
-                                                                          ) {
-                                                                            _vm.cityInfoWindow.open = false
+                                                                      [
+                                                                        _c(
+                                                                          "div",
+                                                                          {
+                                                                            staticClass:
+                                                                              "form-group col-md-6 mt-0",
                                                                           },
-                                                                      },
-                                                                    },
-                                                                    [
-                                                                      _c(
-                                                                        "div",
-                                                                        {
-                                                                          domProps:
-                                                                            {
-                                                                              innerHTML:
+                                                                          [
+                                                                            _c(
+                                                                              "div",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "form-group",
+                                                                              },
+                                                                              [
+                                                                                _c(
+                                                                                  "label",
+                                                                                  [
+                                                                                    _vm._v(
+                                                                                      _vm._s(
+                                                                                        _vm.__(
+                                                                                          "latitude"
+                                                                                        )
+                                                                                      )
+                                                                                    ),
+                                                                                  ]
+                                                                                ),
+                                                                                _vm._v(
+                                                                                  " "
+                                                                                ),
+                                                                                _c(
+                                                                                  "input",
+                                                                                  {
+                                                                                    directives:
+                                                                                      [
+                                                                                        {
+                                                                                          name: "model",
+                                                                                          rawName:
+                                                                                            "v-model",
+                                                                                          value:
+                                                                                            _vm
+                                                                                              .newCity
+                                                                                              .latitude,
+                                                                                          expression:
+                                                                                            "newCity.latitude",
+                                                                                        },
+                                                                                      ],
+                                                                                    staticClass:
+                                                                                      "form-control",
+                                                                                    attrs:
+                                                                                      {
+                                                                                        type: "text",
+                                                                                        readonly:
+                                                                                          "",
+                                                                                        placeholder:
+                                                                                          _vm.__(
+                                                                                            "latitude"
+                                                                                          ),
+                                                                                      },
+                                                                                    domProps:
+                                                                                      {
+                                                                                        value:
+                                                                                          _vm
+                                                                                            .newCity
+                                                                                            .latitude,
+                                                                                      },
+                                                                                    on: {
+                                                                                      input:
+                                                                                        function (
+                                                                                          $event
+                                                                                        ) {
+                                                                                          if (
+                                                                                            $event
+                                                                                              .target
+                                                                                              .composing
+                                                                                          ) {
+                                                                                            return
+                                                                                          }
+                                                                                          _vm.$set(
+                                                                                            _vm.newCity,
+                                                                                            "latitude",
+                                                                                            $event
+                                                                                              .target
+                                                                                              .value
+                                                                                          )
+                                                                                        },
+                                                                                    },
+                                                                                  }
+                                                                                ),
+                                                                              ]
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "div",
+                                                                          {
+                                                                            staticClass:
+                                                                              "form-group col-md-6",
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "div",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "form-group",
+                                                                              },
+                                                                              [
+                                                                                _c(
+                                                                                  "label",
+                                                                                  [
+                                                                                    _vm._v(
+                                                                                      _vm._s(
+                                                                                        _vm.__(
+                                                                                          "longitude"
+                                                                                        )
+                                                                                      )
+                                                                                    ),
+                                                                                  ]
+                                                                                ),
+                                                                                _vm._v(
+                                                                                  " "
+                                                                                ),
+                                                                                _c(
+                                                                                  "input",
+                                                                                  {
+                                                                                    directives:
+                                                                                      [
+                                                                                        {
+                                                                                          name: "model",
+                                                                                          rawName:
+                                                                                            "v-model",
+                                                                                          value:
+                                                                                            _vm
+                                                                                              .newCity
+                                                                                              .longitude,
+                                                                                          expression:
+                                                                                            "newCity.longitude",
+                                                                                        },
+                                                                                      ],
+                                                                                    staticClass:
+                                                                                      "form-control",
+                                                                                    attrs:
+                                                                                      {
+                                                                                        type: "text",
+                                                                                        readonly:
+                                                                                          "",
+                                                                                        placeholder:
+                                                                                          _vm.__(
+                                                                                            "longitude"
+                                                                                          ),
+                                                                                      },
+                                                                                    domProps:
+                                                                                      {
+                                                                                        value:
+                                                                                          _vm
+                                                                                            .newCity
+                                                                                            .longitude,
+                                                                                      },
+                                                                                    on: {
+                                                                                      input:
+                                                                                        function (
+                                                                                          $event
+                                                                                        ) {
+                                                                                          if (
+                                                                                            $event
+                                                                                              .target
+                                                                                              .composing
+                                                                                          ) {
+                                                                                            return
+                                                                                          }
+                                                                                          _vm.$set(
+                                                                                            _vm.newCity,
+                                                                                            "longitude",
+                                                                                            $event
+                                                                                              .target
+                                                                                              .value
+                                                                                          )
+                                                                                        },
+                                                                                    },
+                                                                                  }
+                                                                                ),
+                                                                              ]
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                    _vm._v(" "),
+                                                                    !_vm.cityVertices
+                                                                      ? _c(
+                                                                          "div",
+                                                                          {
+                                                                            staticClass:
+                                                                              "alert alert-warning py-2 px-3",
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "i",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "fa fa-draw-polygon mr-1",
+                                                                              }
+                                                                            ),
+                                                                            _vm._v(
+                                                                              "\n                                                                    " +
                                                                                 _vm._s(
+                                                                                  _vm.__(
+                                                                                    "draw_zone_boundary_on_map_using_tools"
+                                                                                  )
+                                                                                ) +
+                                                                                "\n                                                                "
+                                                                            ),
+                                                                          ]
+                                                                        )
+                                                                      : _c(
+                                                                          "div",
+                                                                          {
+                                                                            staticClass:
+                                                                              "alert alert-success py-2 px-3",
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "i",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "fa fa-check-circle mr-1",
+                                                                              }
+                                                                            ),
+                                                                            _vm._v(
+                                                                              "\n                                                                    " +
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "zone_boundary_drawn_successfully"
+                                                                                  )
+                                                                                ) +
+                                                                                "\n                                                                "
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                    _vm._v(" "),
+                                                                    _c(
+                                                                      "div",
+                                                                      {
+                                                                        staticClass:
+                                                                          "d-flex gap-2",
+                                                                      },
+                                                                      [
+                                                                        _c(
+                                                                          "button",
+                                                                          {
+                                                                            staticClass:
+                                                                              "btn btn-success btn-sm",
+                                                                            attrs:
+                                                                              {
+                                                                                type: "button",
+                                                                                disabled:
+                                                                                  _vm.isSavingCity,
+                                                                              },
+                                                                            on: {
+                                                                              click:
+                                                                                _vm.saveNewCity,
+                                                                            },
+                                                                          },
+                                                                          [
+                                                                            _vm.isSavingCity
+                                                                              ? _c(
+                                                                                  "b-spinner",
+                                                                                  {
+                                                                                    staticClass:
+                                                                                      "mr-1",
+                                                                                    attrs:
+                                                                                      {
+                                                                                        small:
+                                                                                          "",
+                                                                                      },
+                                                                                  }
+                                                                                )
+                                                                              : _vm._e(),
+                                                                            _vm._v(
+                                                                              "\n                                                                        " +
+                                                                                _vm._s(
+                                                                                  _vm.isSavingCity
+                                                                                    ? _vm.__(
+                                                                                        "saving"
+                                                                                      )
+                                                                                    : _vm.__(
+                                                                                        "save_zone"
+                                                                                      )
+                                                                                ) +
+                                                                                "\n                                                                    "
+                                                                            ),
+                                                                          ],
+                                                                          1
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "button",
+                                                                          {
+                                                                            staticClass:
+                                                                              "btn btn-secondary btn-sm ml-2",
+                                                                            attrs:
+                                                                              {
+                                                                                type: "button",
+                                                                              },
+                                                                            on: {
+                                                                              click:
+                                                                                _vm.toggleAddCityForm,
+                                                                            },
+                                                                          },
+                                                                          [
+                                                                            _vm._v(
+                                                                              _vm._s(
+                                                                                _vm.__(
+                                                                                  "cancel"
+                                                                                )
+                                                                              )
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                  ]
+                                                                ),
+                                                                _vm._v(" "),
+                                                                _c(
+                                                                  "div",
+                                                                  {
+                                                                    staticClass:
+                                                                      "col-md-7",
+                                                                  },
+                                                                  [
+                                                                    _c(
+                                                                      "div",
+                                                                      {
+                                                                        staticClass:
+                                                                          "mb-2 d-flex gap-2",
+                                                                      },
+                                                                      [
+                                                                        _c(
+                                                                          "button",
+                                                                          {
+                                                                            staticClass:
+                                                                              "btn btn-sm btn-danger",
+                                                                            attrs:
+                                                                              {
+                                                                                type: "button",
+                                                                              },
+                                                                            on: {
+                                                                              click:
+                                                                                _vm.clearCityDrawing,
+                                                                            },
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "i",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "fa fa-trash",
+                                                                              }
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " " +
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "clear_map"
+                                                                                  )
+                                                                                ) +
+                                                                                "\n                                                                    "
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _vm.cityVertices
+                                                                          ? _c(
+                                                                              "span",
+                                                                              {
+                                                                                staticClass:
+                                                                                  "badge bg-success align-self-center ml-2",
+                                                                              },
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    _vm.__(
+                                                                                      "boundary_drawn"
+                                                                                    )
+                                                                                  )
+                                                                                ),
+                                                                              ]
+                                                                            )
+                                                                          : _vm._e(),
+                                                                      ]
+                                                                    ),
+                                                                    _vm._v(" "),
+                                                                    _c(
+                                                                      "GmapMap",
+                                                                      {
+                                                                        ref: "cityMapRef",
+                                                                        refInFor: true,
+                                                                        staticStyle:
+                                                                          {
+                                                                            width:
+                                                                              "100%",
+                                                                            height:
+                                                                              "450px",
+                                                                          },
+                                                                        attrs: {
+                                                                          center:
+                                                                            _vm.cityMapCenter,
+                                                                          zoom: 5,
+                                                                          mapTypeControl: true,
+                                                                          drawingControl: true,
+                                                                        },
+                                                                      },
+                                                                      [
+                                                                        _vm._l(
+                                                                          _vm.cityMapMarkers,
+                                                                          function (
+                                                                            m,
+                                                                            mi
+                                                                          ) {
+                                                                            return _c(
+                                                                              "GmapMarker",
+                                                                              {
+                                                                                key: mi,
+                                                                                attrs:
+                                                                                  {
+                                                                                    position:
+                                                                                      m.position,
+                                                                                    draggable: true,
+                                                                                    clickable: true,
+                                                                                  },
+                                                                              }
+                                                                            )
+                                                                          }
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "gmap-info-window",
+                                                                          {
+                                                                            attrs:
+                                                                              {
+                                                                                options:
+                                                                                  {
+                                                                                    maxWidth: 300,
+                                                                                    pixelOffset:
+                                                                                      {
+                                                                                        width: 0,
+                                                                                        height:
+                                                                                          -35,
+                                                                                      },
+                                                                                  },
+                                                                                position:
                                                                                   _vm
                                                                                     .cityInfoWindow
-                                                                                    .template
-                                                                                ),
+                                                                                    .position,
+                                                                                opened:
+                                                                                  _vm
+                                                                                    .cityInfoWindow
+                                                                                    .open,
+                                                                              },
+                                                                            on: {
+                                                                              closeclick:
+                                                                                function (
+                                                                                  $event
+                                                                                ) {
+                                                                                  _vm.cityInfoWindow.open = false
+                                                                                },
                                                                             },
-                                                                        }
-                                                                      ),
-                                                                    ]
-                                                                  ),
-                                                                ],
-                                                                2
-                                                              ),
-                                                              _vm._v(" "),
-                                                              _c(
-                                                                "small",
-                                                                {
-                                                                  staticClass:
-                                                                    "text-muted d-block mt-1",
-                                                                },
-                                                                [
-                                                                  _vm._v(
-                                                                    _vm._s(
-                                                                      _vm.__(
-                                                                        "use_drawing_tools_on_map_to_draw_zone_boundary"
-                                                                      )
-                                                                    )
-                                                                  ),
-                                                                ]
-                                                              ),
-                                                            ],
-                                                            1
-                                                          ),
-                                                        ]
-                                                      ),
-                                                    ])
-                                                  : _vm._e(),
-                                              ]
-                                            ),
-                                          ]),
+                                                                          },
+                                                                          [
+                                                                            _c(
+                                                                              "div",
+                                                                              {
+                                                                                domProps:
+                                                                                  {
+                                                                                    innerHTML:
+                                                                                      _vm._s(
+                                                                                        _vm
+                                                                                          .cityInfoWindow
+                                                                                          .template
+                                                                                      ),
+                                                                                  },
+                                                                              }
+                                                                            ),
+                                                                          ]
+                                                                        ),
+                                                                      ],
+                                                                      2
+                                                                    ),
+                                                                    _vm._v(" "),
+                                                                    _c(
+                                                                      "small",
+                                                                      {
+                                                                        staticClass:
+                                                                          "text-muted d-block mt-1",
+                                                                      },
+                                                                      [
+                                                                        _vm._v(
+                                                                          _vm._s(
+                                                                            _vm.__(
+                                                                              "use_drawing_tools_on_map_to_draw_zone_boundary"
+                                                                            )
+                                                                          )
+                                                                        ),
+                                                                      ]
+                                                                    ),
+                                                                  ],
+                                                                  1
+                                                                ),
+                                                              ]
+                                                            ),
+                                                          ])
+                                                        : _vm._e(),
+                                                    ]
+                                                  ),
+                                                ]
+                                              )
+                                            : _vm._e(),
                                           _vm._v(" "),
                                           _c("div", { staticClass: "card" }, [
                                             _c(
@@ -7948,279 +8011,262 @@ var render = function () {
                                               )
                                             : _vm._e(),
                                           _vm._v(" "),
-                                          !_vm.isSellerRole
-                                            ? _c(
-                                                "div",
-                                                { staticClass: "card" },
-                                                [
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass:
-                                                        "card-header",
-                                                    },
-                                                    [
-                                                      _c("h4", [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "upi_information"
-                                                            )
-                                                          )
-                                                        ),
-                                                      ]),
-                                                    ]
+                                          _c("div", { staticClass: "card" }, [
+                                            _c(
+                                              "div",
+                                              { staticClass: "card-header" },
+                                              [
+                                                _c("h4", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__("upi_information")
+                                                    )
                                                   ),
-                                                  _vm._v(" "),
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass: "card-body",
-                                                    },
-                                                    [
-                                                      _c(
-                                                        "div",
-                                                        { staticClass: "row" },
-                                                        [
-                                                          _c(
-                                                            "div",
-                                                            {
-                                                              staticClass:
-                                                                "form-group col-md-4 mt-0",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
+                                                ]),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "div",
+                                              { staticClass: "card-body" },
+                                              [
+                                                _c(
+                                                  "div",
+                                                  { staticClass: "row" },
+                                                  [
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-4 mt-0",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "upi_id"
+                                                                  )
+                                                                )
+                                                              ),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
                                                                 {
-                                                                  staticClass:
-                                                                    "form-group",
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.upi_id,
+                                                                  expression:
+                                                                    "upi_id",
                                                                 },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "upi_id"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.upi_id,
-                                                                          expression:
-                                                                            "upi_id",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "upi_id"
-                                                                        ),
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.upi_id,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.upi_id =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                  _vm._v(" "),
-                                                                  _c(
-                                                                    "small",
-                                                                    {
-                                                                      staticClass:
-                                                                        "text-muted",
-                                                                    },
-                                                                    [
-                                                                      _vm._v(
-                                                                        "e.g. name@upi"
-                                                                      ),
-                                                                    ]
+                                                              ],
+                                                              staticClass:
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "upi_id"
                                                                   ),
-                                                                ]
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.upi_id,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.upi_id =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                            _vm._v(" "),
+                                                            _c(
+                                                              "small",
+                                                              {
+                                                                staticClass:
+                                                                  "text-muted",
+                                                              },
+                                                              [
+                                                                _vm._v(
+                                                                  "e.g. name@upi"
+                                                                ),
+                                                              ]
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-4",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "upi_mobile"
+                                                                  )
+                                                                )
                                                               ),
-                                                            ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "div",
-                                                            {
-                                                              staticClass:
-                                                                "form-group col-md-4",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
                                                                 {
-                                                                  staticClass:
-                                                                    "form-group",
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.upi_mobile,
+                                                                  expression:
+                                                                    "upi_mobile",
                                                                 },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "upi_mobile"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.upi_mobile,
-                                                                          expression:
-                                                                            "upi_mobile",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "upi_mobile"
-                                                                        ),
-                                                                      inputmode:
-                                                                        "numeric",
-                                                                      maxlength:
-                                                                        "10",
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.upi_mobile,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.upi_mobile =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                ]
-                                                              ),
-                                                            ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "div",
-                                                            {
+                                                              ],
                                                               staticClass:
-                                                                "form-group col-md-4",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
-                                                                {
-                                                                  staticClass:
-                                                                    "form-group",
-                                                                },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "upi_name"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.upi_name,
-                                                                          expression:
-                                                                            "upi_name",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "upi_name"
-                                                                        ),
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.upi_name,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.upi_name =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                ]
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "upi_mobile"
+                                                                  ),
+                                                                inputmode:
+                                                                  "numeric",
+                                                                maxlength: "10",
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.upi_mobile,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.upi_mobile =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-4",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "upi_name"
+                                                                  )
+                                                                )
                                                               ),
-                                                            ]
-                                                          ),
-                                                        ]
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              )
-                                            : _vm._e(),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
+                                                                {
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.upi_name,
+                                                                  expression:
+                                                                    "upi_name",
+                                                                },
+                                                              ],
+                                                              staticClass:
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "upi_name"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.upi_name,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.upi_name =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            ),
+                                          ]),
                                           _vm._v(" "),
                                           _c("div", { staticClass: "card" }, [
                                             _c(

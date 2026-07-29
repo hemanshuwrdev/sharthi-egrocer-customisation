@@ -209,12 +209,12 @@ export default {
                     url: '/seller/orders',
                     permission: 'order_list'
                 },
-                {
-                    name: __('self_pickup_orders'),
-                    icon: 'shopping-cart',
-                    url: '/seller/self_pickup_orders',
-                    permission: 'self_pickup_order_list'
-                },
+                // {
+                //     name: __('self_pickup_orders'),
+                //     icon: 'shopping-cart',
+                //     url: '/seller/self_pickup_orders',
+                //     permission: 'self_pickup_order_list'
+                // },
                 {
                     name: __('categories'),
                     icon: 'bullseye',

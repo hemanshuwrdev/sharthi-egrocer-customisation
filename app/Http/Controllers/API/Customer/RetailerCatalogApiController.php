@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\BrandDistributorMapping;
+use App\Models\Favorite;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
 use App\Models\ProductRating;
@@ -70,6 +71,10 @@ class RetailerCatalogApiController extends Controller
 
         $brandOverlap = Brand::whereIn('id', $brandIds)
             ->pluck('is_overlap_allowed', 'id');
+
+        $favoriteVariantIds = auth()->user()
+            ? Favorite::where('user_id', auth()->user()->id)->pluck('master_product_variant_id')->flip()
+            : collect();
 
         $query = MasterProductVariant::query()
             ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit'])
@@ -189,7 +194,7 @@ class RetailerCatalogApiController extends Controller
             ->get(['product_id', 'seller_id', 'rate'])
             ->groupBy(fn($r) => $r->product_id . '_' . $r->seller_id);
 
-        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct) {
+        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct, $favoriteVariantIds) {
             $first = $group->first();
             $mp = $first->masterProduct;
             $overlapAllowed = (int) ($brandOverlap[$first->mp_brand_id] ?? 0) === 1;
@@ -241,6 +246,7 @@ class RetailerCatalogApiController extends Controller
                 'weight' => $first->weight,
                 'image' => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed' => $overlapAllowed,
+                'is_favorite'   => $favoriteVariantIds->has($first->id),
                 'offers'        => $offers,
                 'best_offer'    => $offers->first(),
             ];
@@ -380,6 +386,7 @@ class RetailerCatalogApiController extends Controller
             'brand' => $brand ? $brand->name : null,
             'brand_id' => $brandId,
             'parent_company' => $variant->masterProduct->parentCompany ? $variant->masterProduct->parentCompany->name : null,
+            'category_id' => $variant->masterProduct->category_id,
             'category' => $variant->masterProduct->category ? $variant->masterProduct->category->name : null,
             'sku' => $variant->sku,
             'unit' => $variant->unit ? $variant->unit->name : null,
@@ -393,6 +400,9 @@ class RetailerCatalogApiController extends Controller
             'description' => $variant->masterProduct->description,
             'short_description' => $variant->masterProduct->short_description,
             'overlap_allowed' => $overlapAllowed,
+            'is_favorite' => auth()->user()
+                ? Favorite::where('user_id', auth()->user()->id)->where('master_product_variant_id', $variant->id)->exists()
+                : false,
             'offers' => $offers,
             'best_offer' => $offers->first(),
         ]);

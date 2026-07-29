@@ -390,6 +390,23 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -404,7 +421,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       id: null,
       order: [],
       order_items: [],
-      discount_in_rupees: 0,
       whatsapp_message: "",
       order_status_id: "",
       selectedItems: [],
@@ -521,11 +537,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     if (this.id) {
       this.getOrderStatus();
       this.getOrder();
-    }
-    if (this.order.discount > 0) {
-      var discounted_amount = this.order.total * this.order.discount / 100;
-      var remaining_final = this.order.total - discounted_amount;
-      this.discount_in_rupees = this.order.total - remaining_final;
     }
   },
   methods: {
@@ -1239,335 +1250,6 @@ var render = function () {
                               2
                             ),
                           ]),
-                          _vm._v(" "),
-                          this.$roleDeliveryBoy !== this.login_user.role.name
-                            ? _c("tr", [
-                                _c("th", { staticClass: "th-width" }, [
-                                  _vm._v(_vm._s(_vm.__("assign_delivery_boy"))),
-                                ]),
-                                _vm._v(" "),
-                                _c("td", [
-                                  _c(
-                                    "form",
-                                    {
-                                      ref: "my-form",
-                                      staticClass: "row g-3 align-items-center",
-                                      on: {
-                                        submit: function ($event) {
-                                          $event.preventDefault()
-                                          return _vm.assignDeliveryBoy.apply(
-                                            null,
-                                            arguments
-                                          )
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "input-group" },
-                                        [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass: "visually-hidden",
-                                              attrs: { for: "delivery_boy_id" },
-                                            },
-                                            [
-                                              _vm._v(
-                                                _vm._s(_vm.__("delivery_boy"))
-                                              ),
-                                            ]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "select",
-                                            {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value: _vm.delivery_boy_id,
-                                                  expression: "delivery_boy_id",
-                                                },
-                                              ],
-                                              staticClass:
-                                                "form-control form-select",
-                                              attrs: {
-                                                id: "delivery_boy_id",
-                                                name: "status",
-                                              },
-                                              on: {
-                                                change: function ($event) {
-                                                  var $$selectedVal =
-                                                    Array.prototype.filter
-                                                      .call(
-                                                        $event.target.options,
-                                                        function (o) {
-                                                          return o.selected
-                                                        }
-                                                      )
-                                                      .map(function (o) {
-                                                        var val =
-                                                          "_value" in o
-                                                            ? o._value
-                                                            : o.value
-                                                        return val
-                                                      })
-                                                  _vm.delivery_boy_id = $event
-                                                    .target.multiple
-                                                    ? $$selectedVal
-                                                    : $$selectedVal[0]
-                                                },
-                                              },
-                                            },
-                                            [
-                                              _c(
-                                                "option",
-                                                { attrs: { value: "" } },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "select_delivery_boy"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _vm._l(
-                                                _vm.deliveryBoys,
-                                                function (boy) {
-                                                  return _c(
-                                                    "option",
-                                                    {
-                                                      domProps: {
-                                                        value: boy.id,
-                                                      },
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.getDisplayName(
-                                                            boy.name
-                                                          )
-                                                        ) +
-                                                          " (" +
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "pending_order_count"
-                                                            )
-                                                          ) +
-                                                          ": " +
-                                                          _vm._s(
-                                                            boy.pending_order_count
-                                                          ) +
-                                                          ")\n                                                        "
-                                                      ),
-                                                    ]
-                                                  )
-                                                }
-                                              ),
-                                            ],
-                                            2
-                                          ),
-                                          _vm._v(" "),
-                                          _vm.$can("order_update")
-                                            ? _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "input-group-append",
-                                                },
-                                                [
-                                                  _c(
-                                                    "button",
-                                                    {
-                                                      staticClass:
-                                                        "btn btn-primary",
-                                                      attrs: {
-                                                        type: "submit",
-                                                        disabled:
-                                                          _vm.delivery_boy_id ===
-                                                            "" ||
-                                                          _vm.isLoadingDboy,
-                                                      },
-                                                    },
-                                                    [
-                                                      _vm.isLoadingDboy
-                                                        ? [
-                                                            _c("b-spinner", {
-                                                              attrs: {
-                                                                small: "",
-                                                                label:
-                                                                  "Spinning",
-                                                              },
-                                                            }),
-                                                          ]
-                                                        : _vm._e(),
-                                                      _vm._v(
-                                                        " " +
-                                                          _vm._s(
-                                                            _vm.__("update")
-                                                          ) +
-                                                          " "
-                                                      ),
-                                                    ],
-                                                    2
-                                                  ),
-                                                ]
-                                              )
-                                            : _vm._e(),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                ]),
-                              ])
-                            : _vm._e(),
-                          _vm._v(" "),
-                          _c("tr", [
-                            _c("th", { staticClass: "th-width" }, [
-                              _vm._v(_vm._s(_vm.__("update_status"))),
-                            ]),
-                            _vm._v(" "),
-                            _c("td", [
-                              _c(
-                                "form",
-                                {
-                                  ref: "my-form",
-                                  staticClass: "row g-3 align-items-center",
-                                  on: {
-                                    submit: function ($event) {
-                                      $event.preventDefault()
-                                      return _vm.updateStatus.apply(
-                                        null,
-                                        arguments
-                                      )
-                                    },
-                                  },
-                                },
-                                [
-                                  _c("div", { staticClass: "input-group" }, [
-                                    _c(
-                                      "label",
-                                      {
-                                        staticClass: "visually-hidden",
-                                        attrs: { for: "status" },
-                                      },
-                                      [_vm._v(_vm._s(_vm.__("status")))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "select",
-                                      {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value: _vm.order_status_id,
-                                            expression: "order_status_id",
-                                          },
-                                        ],
-                                        staticClass: "form-control form-select",
-                                        attrs: { id: "status", name: "status" },
-                                        on: {
-                                          change: function ($event) {
-                                            var $$selectedVal =
-                                              Array.prototype.filter
-                                                .call(
-                                                  $event.target.options,
-                                                  function (o) {
-                                                    return o.selected
-                                                  }
-                                                )
-                                                .map(function (o) {
-                                                  var val =
-                                                    "_value" in o
-                                                      ? o._value
-                                                      : o.value
-                                                  return val
-                                                })
-                                            _vm.order_status_id = $event.target
-                                              .multiple
-                                              ? $$selectedVal
-                                              : $$selectedVal[0]
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _c("option", { attrs: { value: "" } }, [
-                                          _vm._v(
-                                            _vm._s(
-                                              _vm.__("select_order_status")
-                                            )
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _vm._l(_vm.statuses, function (status) {
-                                          return _c(
-                                            "option",
-                                            { domProps: { value: status.id } },
-                                            [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.getStatusDisplayName(
-                                                    status
-                                                  )
-                                                )
-                                              ),
-                                            ]
-                                          )
-                                        }),
-                                      ],
-                                      2
-                                    ),
-                                    _vm._v(" "),
-                                    _vm.$can("order_update")
-                                      ? _c(
-                                          "div",
-                                          { staticClass: "input-group-append" },
-                                          [
-                                            _c(
-                                              "button",
-                                              {
-                                                staticClass: "btn btn-primary",
-                                                attrs: {
-                                                  type: "submit",
-                                                  disabled:
-                                                    _vm.order_status_id ===
-                                                      "" ||
-                                                    _vm.isLoadingUstatus,
-                                                },
-                                              },
-                                              [
-                                                _vm.isLoadingUstatus
-                                                  ? [
-                                                      _c("b-spinner", {
-                                                        attrs: {
-                                                          small: "",
-                                                          label: "Spinning",
-                                                        },
-                                                      }),
-                                                    ]
-                                                  : _vm._e(),
-                                                _vm._v(
-                                                  " " +
-                                                    _vm._s(_vm.__("update")) +
-                                                    " "
-                                                ),
-                                              ],
-                                              2
-                                            ),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                  ]),
-                                ]
-                              ),
-                            ]),
-                          ]),
                         ]),
                       ]),
                     ]),
@@ -1707,22 +1389,13 @@ var render = function () {
                             _c("th", { staticClass: "th-width" }, [
                               _vm._v(
                                 _vm._s(_vm.__("discount")) +
-                                  " " +
+                                  " (" +
                                   _vm._s(_vm.$currency) +
-                                  "( % )"
+                                  ")"
                               ),
                             ]),
                             _vm._v(" "),
-                            _c("td", [
-                              _vm._v(
-                                _vm._s(
-                                  _vm.discount_in_rupees +
-                                    " ( " +
-                                    _vm.order.discount +
-                                    "% )"
-                                )
-                              ),
-                            ]),
+                            _c("td", [_vm._v(_vm._s(_vm.order.discount))]),
                           ]),
                           _vm._v(" "),
                           _c("tr", [
@@ -2057,7 +1730,39 @@ var render = function () {
                                 1
                               ),
                               _vm._v(" "),
-                              _vm.isSellerRoute
+                              _vm.isSellerRoute && item.master_product_id
+                                ? _c(
+                                    "div",
+                                    { staticClass: "col-6" },
+                                    [
+                                      _c(
+                                        "router-link",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "b-tooltip",
+                                              rawName: "v-b-tooltip.hover",
+                                              modifiers: { hover: true },
+                                            },
+                                          ],
+                                          staticClass:
+                                            "btn btn-block btn-light-primary",
+                                          attrs: {
+                                            to: {
+                                              name: "EditMasterProduct",
+                                              params: {
+                                                id: item.master_product_id,
+                                              },
+                                            },
+                                            title: "View Product",
+                                          },
+                                        },
+                                        [_vm._v(_vm._s(_vm.__("view_product")))]
+                                      ),
+                                    ],
+                                    1
+                                  )
+                                : _vm.isSellerRoute
                                 ? _c(
                                     "div",
                                     { staticClass: "col-6" },
@@ -2108,6 +1813,38 @@ var render = function () {
                                             to: {
                                               name: "DeliveryBoyViewProduct",
                                               params: { id: item.product_id },
+                                            },
+                                            title: "View Product",
+                                          },
+                                        },
+                                        [_vm._v(_vm._s(_vm.__("view_product")))]
+                                      ),
+                                    ],
+                                    1
+                                  )
+                                : item.master_product_id
+                                ? _c(
+                                    "div",
+                                    { staticClass: "col-6" },
+                                    [
+                                      _c(
+                                        "router-link",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "b-tooltip",
+                                              rawName: "v-b-tooltip.hover",
+                                              modifiers: { hover: true },
+                                            },
+                                          ],
+                                          staticClass:
+                                            "btn btn-block btn-light-primary",
+                                          attrs: {
+                                            to: {
+                                              name: "EditMasterProduct",
+                                              params: {
+                                                id: item.master_product_id,
+                                              },
                                             },
                                             title: "View Product",
                                           },

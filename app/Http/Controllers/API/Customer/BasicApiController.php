@@ -373,22 +373,34 @@ class BasicApiController extends Controller
         $userId = auth()->user()->id;
 
         if ($request->filled('product_variant_id')) {
+            $validator = Validator::make($request->all(), [
+                'product_variant_id' => 'required|exists:master_product_variants,id',
+                'seller_id'          => 'nullable|exists:sellers,id',
+            ]);
+            if ($validator->fails()) {
+                return CommonHelper::responseError($validator->errors()->first());
+            }
+
             $query = Favorite::where('user_id', $userId)
                 ->where('master_product_variant_id', (int) $request->product_variant_id);
             if ($request->filled('seller_id')) {
                 $query->where('seller_id', (int) $request->seller_id);
             }
-            $deleted = $query->delete();
-            return $deleted
-                ? CommonHelper::responseSuccess('item_removed_from_users_favorite_list_successfully')
-                : CommonHelper::responseError('no_product_found');
+
+            if (!$query->exists()) {
+                return CommonHelper::responseError('product_not_found_in_favorite_list');
+            }
+
+            $query->delete();
+            return CommonHelper::responseSuccess('item_removed_from_users_favorite_list_successfully');
         }
 
         // Remove all
-        $count = Favorite::where('user_id', $userId)->delete();
-        return $count
-            ? CommonHelper::responseSuccess('all_items_removed_from_users_favorite_list_successfully')
-            : CommonHelper::responseError('no_product_found');
+        if (!Favorite::where('user_id', $userId)->exists()) {
+            return CommonHelper::responseError('no_product_found');
+        }
+        Favorite::where('user_id', $userId)->delete();
+        return CommonHelper::responseSuccess('all_items_removed_from_users_favorite_list_successfully');
     }
 
     // Faqs
@@ -700,23 +712,22 @@ class BasicApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+        $sellerIds = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->pluck('seller_id')->unique();
+
         $sellers = Seller::select(
                 'sellers.id', 'sellers.name', 'sellers.store_name', 'sellers.logo',
                 DB::raw("ROUND(6371 * acos(cos(radians(" . $request->latitude . "))
                                 * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $request->longitude . "))
                                 + sin(radians(" . $request->latitude . ")) * sin(radians(sellers.latitude))), 2) AS distance"),
                 'cities.max_deliverable_distance',
-                DB::raw("(SELECT COUNT(*) FROM products WHERE products.seller_id = sellers.id AND products.status = 1) AS total_products"),
+                DB::raw("(SELECT COUNT(*) FROM seller_products WHERE seller_products.seller_id = sellers.id AND seller_products.status = 1 AND seller_products.selling_price > 0) AS total_products"),
                 DB::raw("(SELECT ROUND(AVG(pr.rate), 1) FROM product_ratings pr WHERE pr.seller_id = sellers.id AND pr.status = 1) AS total_rating"),
                 DB::raw("(SELECT COUNT(*) FROM product_ratings pr WHERE pr.seller_id = sellers.id AND pr.status = 1) AS total_rating_count")
             )
             ->leftJoin("cities", "sellers.city_id", "cities.id")
             ->where('status', Seller::$statusActive)
-            ->whereExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('products')
-                    ->whereColumn('products.seller_id', 'sellers.id');
-            })
+            ->whereIn('sellers.id', $sellerIds)
             ->orderBy('distance', 'asc')
             ->get();
 
@@ -944,6 +955,7 @@ class BasicApiController extends Controller
     }
     public function saveMailSetting(Request $request)
     {
+        try{
         $validator = Validator::make($request->all(), [
             'status_ids' => 'required',
             'mail_statuses' => 'required',
@@ -963,8 +975,12 @@ class BasicApiController extends Controller
             return CommonHelper::responseError('status_ids_is_not_belongs_to_order_status_list_id');
         }
 
-        CommonHelper::saveMailSetting($user_id, $user_type, $status_ids, $mail_statuses, $mobile_statuses, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        CommonHelper::saveMailSetting($user_id, $user_type, $status_ids, $mail_statuses, $mobile_statuses, array_fill(0, count($status_ids), 0));
         return CommonHelper::responseSuccess('notification_settings_saved_successfully');
+        } catch (\Exception $e) {
+            Log::error('Save Mail Setting : ' . $e->getMessage());
+            return CommonHelper::responseError("something_went_wrong");
+        }
     }
 
     public function deleteSellerAccount(Request $request)

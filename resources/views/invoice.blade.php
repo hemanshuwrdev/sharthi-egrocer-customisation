@@ -320,11 +320,7 @@
                         <td align="left" style="color: #555;">Total Discount</td>
                         <td align="right" style="font-weight: 500;">
                             @php
-                                $discount_in_rupees = 0;
-                                if ($order->discount > 0) {
-                                    $discount_in_rupees = ($order->remaining_total * $order->discount) / 100;
-                                }
-                                $totalDiscount = $discount_in_rupees + $order->promo_discount;
+                                $totalDiscount = $order->discount + $order->promo_discount;
                             @endphp
                             {{ $currency }}{{ number_format($totalDiscount, 2) }}
                         </td>

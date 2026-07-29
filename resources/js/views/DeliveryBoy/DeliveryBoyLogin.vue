@@ -41,6 +41,7 @@
                             </div>
                         </div>
                     </form>
+                    <div id="delivery-boy-login-recaptcha"></div>
 
                     <router-link to="/delivery_boy/register" class="btn btn-primary btn-block btn-lg shadow-lg mt-2 auth-btn">
                         Register
@@ -60,6 +61,7 @@
 <script>
 import axios from 'axios';
 import Auth from '../../Auth.js';
+import { sendFirebaseOtp, confirmFirebaseOtp } from '../../firebasePhoneAuth';
 
 export default {
     data: function () {
@@ -67,6 +69,8 @@ export default {
             isLoading: false,
             isSendingOtp: false,
             otpSent: false,
+            otpFirebase: false,
+            firebaseConfirmationResult: null,
             countryCode: '+91',
             user: {
                 mobile: '',
@@ -92,28 +96,63 @@ export default {
             let url = this.$apiUrl + '/delivery_boy/send_sms';
             let fullPhone = this.countryCode + this.user.mobile;
             axios.post(url, { phone: fullPhone }).then(res => {
-                this.isSendingOtp = false;
                 let data = res.data;
-                if (data.status === 1) {
+                if (data.status !== 1) {
+                    this.isSendingOtp = false;
+                    this.showError(data.message);
+                    return;
+                }
+
+                if (data.data && data.data.otp_provider === 'firebase') {
+                    sendFirebaseOtp(this.$apiUrl, 'delivery-boy-login-recaptcha', fullPhone)
+                        .then(confirmationResult => {
+                            this.isSendingOtp = false;
+                            this.firebaseConfirmationResult = confirmationResult;
+                            this.otpFirebase = true;
+                            this.otpSent = true;
+                            this.showMessage('success', "OTP sent successfully!");
+                        })
+                        .catch(err => {
+                            this.isSendingOtp = false;
+                            this.showError(err.message || 'Failed to send OTP via Firebase.');
+                        });
+                } else {
+                    this.isSendingOtp = false;
+                    this.otpFirebase = false;
                     this.otpSent = true;
                     this.showMessage('success', "OTP sent successfully!");
-                } else {
-                    this.showError(data.message);
                 }
             }).catch(error => {
                 this.isSendingOtp = false;
-                let errorMsg = error.response && error.response.data && error.response.data.message 
-                    ? error.response.data.message 
+                let errorMsg = error.response && error.response.data && error.response.data.message
+                    ? error.response.data.message
                     : (error.message || "Failed to send OTP. Please try again.");
                 this.showError(errorMsg);
             });
         },
         loginCheck: function () {
+            if (this.otpFirebase) {
+                if (!this.firebaseConfirmationResult) {
+                    this.showError('Please request the OTP again.');
+                    return;
+                }
+                this.isLoading = true;
+                confirmFirebaseOtp(this.firebaseConfirmationResult, this.user.otp)
+                    .then(() => this.submitLogin())
+                    .catch(() => {
+                        this.isLoading = false;
+                        this.showError('Invalid OTP. Please check and try again.');
+                    });
+                return;
+            }
+            this.submitLogin();
+        },
+        submitLogin: function () {
             let vm = this;
             this.isLoading = true;
 
             let url = this.$apiUrl + '/login';
-            
+
             // Pass country_code and mobile along with other user payload
             const payload = {
                 ...this.user,

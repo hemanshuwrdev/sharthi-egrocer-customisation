@@ -305,7 +305,7 @@ class SellerApiController extends Controller
             'store_name' => 'required',
             'categories_ids' => 'required',
             'commission' => 'required',
-            'city_id' => 'required',
+            'city_id' => 'nullable',
             'latitude' => 'required',
             'longitude' => 'required',
             'pickup_store_address' => 'required_if:self_pickup_mode,1',
@@ -360,7 +360,9 @@ class SellerApiController extends Controller
                 $record->store_url = $request->store_url;
                 $record->street = $request->street;
                 $record->pincode_id = ($request->pincode_id) ?? 0;
-                $record->city_id = $request->city_id;
+                if ($request->filled('city_id')) {
+                    $record->city_id = $request->city_id;
+                }
                 $record->categories = $request->categories_ids;
                 $record->state = $request->state;
                 $record->bank_name = $request->bank_name;

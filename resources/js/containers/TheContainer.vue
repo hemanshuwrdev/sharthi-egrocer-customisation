@@ -254,6 +254,9 @@ export default {
                         },
                     ]
                 },
+                /* Sarthi: legacy per-seller product catalog, superseded by Master Catalog +
+                   Distributor Product Control. Units/Taxes/Brands/Media moved into
+                   'master_catalog' below since MasterProductForm.vue still depends on them.
                 {
                     name: __('products'),
                     icon: 'cubes',
@@ -278,22 +281,10 @@ export default {
                             permission: 'approve_requests',
                         },
                         {
-                            name: __('units'),
-                            icon: 'grid-fill',
-                            url: '/units',
-                            permission: 'units',
-                        },
-                        {
                             name: __('product_ratings'),
                             icon: 'grid-fill',
                             url: '/product_ratings',
                             permission: 'product_ratings',
-                        },
-                        {
-                            name: __('media'),
-                            icon: 'grid-fill',
-                            url: '/media',
-                            permission: 'manage_media',
                         },
                         {
                             name: __('bulk_upload'),
@@ -308,18 +299,6 @@ export default {
                             permission: 'manage_product_bulk_upload',
                         },
                         {
-                            name: __('taxes'),
-                            icon: 'grid-fill',
-                            url: '/taxes',
-                            permission: 'taxes',
-                        },
-                        {
-                            name: __('brands'),
-                            icon: 'grid-fill',
-                            url: '/brands',
-                            permission: 'brands',
-                        },
-                        {
                             name: __('product_order'),
                             icon: 'grid-fill',
                             url: '/product_order',
@@ -327,6 +306,7 @@ export default {
                         },
                     ]
                 },
+                */
                 {
                     name: __('master_catalog'),
                     icon: 'cubes',
@@ -350,14 +330,40 @@ export default {
                             url: '/master_catalog/brand_mappings',
                             permission: 'product_list',
                         },
+                        {
+                            name: __('units'),
+                            icon: 'grid-fill',
+                            url: '/units',
+                            permission: 'units',
+                        },
+                        {
+                            name: __('taxes'),
+                            icon: 'grid-fill',
+                            url: '/taxes',
+                            permission: 'taxes',
+                        },
+                        {
+                            name: __('brands'),
+                            icon: 'grid-fill',
+                            url: '/brands',
+                            permission: 'brands',
+                        },
+                        {
+                            name: __('media'),
+                            icon: 'grid-fill',
+                            url: '/media',
+                            permission: 'manage_media',
+                        },
                     ]
                 },
+                /*
                 {
                     name: __('stock_management'),
                     icon: 'cubes',
                     url: '/manage_stock',
                     permission: 'stock_management',
                 },
+                */
                 {
                     name: __('sellers'),
                     icon: 'male',

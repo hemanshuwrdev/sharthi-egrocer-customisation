@@ -228,7 +228,10 @@ class SettlementController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $payment = OrderPayment::whereHas('deliveryBoy', fn ($q) => $q->where('seller_id', $seller->id))
+        $payment = OrderPayment::where(function ($q) use ($seller) {
+                $q->whereHas('deliveryBoy', fn ($qq) => $qq->where('seller_id', $seller->id))
+                  ->orWhereHas('salesman', fn ($qq) => $qq->where('seller_id', $seller->id));
+            })
             ->find($request->payment_id);
 
         if (!$payment) {

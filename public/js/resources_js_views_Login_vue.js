@@ -521,16 +521,6 @@ var render = function () {
                   },
                   [_vm._v("\n                        Distributor Panel")]
                 ),
-                _vm._v(" "),
-                _c(
-                  "router-link",
-                  {
-                    staticClass:
-                      "btn btn-primary btn-block btn-lg shadow-lg mt-2",
-                    attrs: { to: "/delivery_boy/login" },
-                  },
-                  [_vm._v("\n                        Driver Panel")]
-                ),
               ],
               1
             ),

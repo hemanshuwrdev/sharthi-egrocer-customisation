@@ -444,11 +444,21 @@ export default {
                 this.loading     = false;
             }).catch(() => { this.loading = false; });
         },
+        markPaymentVerifiedLocally(paymentId) {
+            for (const order of this.orders) {
+                const payment = (order.payments || []).find(p => p.id === paymentId);
+                if (payment) {
+                    this.$set(payment, 'status', 'verified');
+                    break;
+                }
+            }
+        },
         verifyPayment(paymentId) {
             this.verifyingId = paymentId;
             axios.post(this.$apiUrl + '/seller/payments/verify', { payment_id: paymentId })
                 .then(() => {
                     this.verifyingId = null;
+                    this.markPaymentVerifiedLocally(paymentId);
                     this.$toasted.success(__('payment_verified'));
                     this.load();
                 })
@@ -456,7 +466,8 @@ export default {
                     this.verifyingId = null;
                     const msg = err.response?.data?.message || '';
                     if (msg === 'already_verified') {
-                        // DB already has it verified — reload to sync UI
+                        // DB already has it verified — sync UI immediately, then reload totals
+                        this.markPaymentVerifiedLocally(paymentId);
                         this.load();
                     } else {
                         this.$toasted.error(msg || __('something_went_wrong'));

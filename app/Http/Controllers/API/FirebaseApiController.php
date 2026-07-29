@@ -69,6 +69,21 @@ class FirebaseApiController extends Controller
         return CommonHelper::responseSuccess('firebase_settings_saved_successfully');
     }
 
+    /**
+     * Public, unauthenticated Firebase Web SDK config — needed by pages that run
+     * before the user has a token yet (seller registration, delivery boy login OTP).
+     * Only exposes the client-safe web config, never the service-account json.
+     */
+    public function publicConfig()
+    {
+        $keys = ['firebase_apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId', 'measurementId'];
+        $config = [];
+        foreach ($keys as $key) {
+            $config[$key] = \App\Models\Setting::get_value($key) ?? '';
+        }
+        return CommonHelper::responseWithData($config);
+    }
+
     public function firebaseMessagingJsCode()
     {
 
