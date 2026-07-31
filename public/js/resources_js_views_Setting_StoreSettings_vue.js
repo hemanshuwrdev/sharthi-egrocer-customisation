@@ -1657,9 +1657,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
 
 
 
@@ -12344,28 +12341,21 @@ var render = function () {
                                         ]
                                       ),
                                       _vm._v(" "),
-                                      _c(
-                                        "i",
-                                        {
-                                          staticClass:
-                                            "fa fa-question-circle tooltip-icon",
-                                        },
-                                        [
-                                          _c(
-                                            "span",
-                                            { staticClass: "tooltip-text" },
-                                            [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "product_will_be_add_incart_without_login"
-                                                  )
-                                                )
-                                              ),
-                                            ]
+                                      _c("i", {
+                                        directives: [
+                                          {
+                                            name: "b-tooltip",
+                                            rawName: "v-b-tooltip.hover",
+                                            modifiers: { hover: true },
+                                          },
+                                        ],
+                                        staticClass: "fa fa-question-circle",
+                                        attrs: {
+                                          title: _vm.__(
+                                            "product_will_be_add_incart_without_login"
                                           ),
-                                        ]
-                                      ),
+                                        },
+                                      }),
                                       _vm._v(" "),
                                       _c(
                                         "div",
@@ -12482,28 +12472,22 @@ var render = function () {
                                             { staticClass: "text-danger" },
                                             [_vm._v("* ")]
                                           ),
-                                          _c(
-                                            "i",
-                                            {
-                                              staticClass:
-                                                "fa fa-question-circle tooltip-icon",
-                                            },
-                                            [
-                                              _c(
-                                                "span",
-                                                { staticClass: "tooltip-text" },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "notification_delay_after_cart_addition_tooltip"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
+                                          _c("i", {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "fa fa-question-circle",
+                                            attrs: {
+                                              title: _vm.__(
+                                                "notification_delay_after_cart_addition_tooltip"
                                               ),
-                                            ]
-                                          ),
+                                            },
+                                          }),
                                           _vm._v(" "),
                                           _c(
                                             "div",
@@ -12620,28 +12604,22 @@ var render = function () {
                                             { staticClass: "text-danger" },
                                             [_vm._v("* ")]
                                           ),
-                                          _c(
-                                            "i",
-                                            {
-                                              staticClass:
-                                                "fa fa-question-circle tooltip-icon",
-                                            },
-                                            [
-                                              _c(
-                                                "span",
-                                                { staticClass: "tooltip-text" },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "notification_delay_after_cart_addition_tooltip"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
+                                          _c("i", {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "fa fa-question-circle",
+                                            attrs: {
+                                              title: _vm.__(
+                                                "notification_delay_after_cart_addition_tooltip"
                                               ),
-                                            ]
-                                          ),
+                                            },
+                                          }),
                                           _vm._v(" "),
                                           _c(
                                             "div",
@@ -12758,28 +12736,22 @@ var render = function () {
                                             { staticClass: "text-danger" },
                                             [_vm._v("* ")]
                                           ),
-                                          _c(
-                                            "i",
-                                            {
-                                              staticClass:
-                                                "fa fa-question-circle tooltip-icon",
-                                            },
-                                            [
-                                              _c(
-                                                "span",
-                                                { staticClass: "tooltip-text" },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "notification_stop_time_tooltip"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
+                                          _c("i", {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "fa fa-question-circle",
+                                            attrs: {
+                                              title: _vm.__(
+                                                "notification_stop_time_tooltip"
                                               ),
-                                            ]
-                                          ),
+                                            },
+                                          }),
                                           _vm._v(" "),
                                           _c(
                                             "div",

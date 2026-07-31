@@ -1471,10 +1471,9 @@
                                                     <div class="row">
                                                         <div class="form-group col-md-6 mt-0">
                                                             <label for="low_stock_limit">{{ __('cart_notification') }}
-                                                            </label> <i class="fa fa-question-circle tooltip-icon">
-                                                                <span class="tooltip-text">{{
-                                                                    __('product_will_be_add_incart_without_login')
-                                                                    }}</span></i>
+                                                            </label> <i class="fa fa-question-circle"
+                                                                v-b-tooltip.hover
+                                                                :title="__('product_will_be_add_incart_without_login')"></i>
                                                             <div class="form-check form-switch">
                                                                 <input type="checkbox" true-value="1" false-value="0"
                                                                     class="form-check-input" name="cart_notification"
@@ -1487,10 +1486,9 @@
                                                             <label for="notification_delay_after_cart_addition"> {{
                                                                 __('notification_delay_after_cart_addition') }}</label>
                                                             <i class="text-danger">* </i><i
-                                                                class="fa fa-question-circle tooltip-icon"> <span
-                                                                    class="tooltip-text">{{
-                                                                        __('notification_delay_after_cart_addition_tooltip')
-                                                                    }}</span></i>
+                                                                class="fa fa-question-circle"
+                                                                v-b-tooltip.hover
+                                                                :title="__('notification_delay_after_cart_addition_tooltip')"></i>
                                                             <div class="input-group">
                                                                 <div class="input-group-prepend">
                                                                     <div class="input-group-text myDivClass"
@@ -1511,10 +1509,9 @@
                                                             <label for="notification_interval"> {{
                                                                 __('notification_interval') }}</label> <i
                                                                 class="text-danger">* </i><i
-                                                                class="fa fa-question-circle tooltip-icon"> <span
-                                                                    class="tooltip-text">{{
-                                                                        __('notification_delay_after_cart_addition_tooltip')
-                                                                    }}</span></i>
+                                                                class="fa fa-question-circle"
+                                                                v-b-tooltip.hover
+                                                                :title="__('notification_delay_after_cart_addition_tooltip')"></i>
                                                             <div class="input-group">
                                                                 <div class="input-group-prepend">
                                                                     <div class="input-group-text myDivClass"
@@ -1535,9 +1532,9 @@
                                                             <label for="notification_stop_time"> {{
                                                                 __('notification_stop_time') }}</label> <i
                                                                 class="text-danger">* </i><i
-                                                                class="fa fa-question-circle tooltip-icon"> <span
-                                                                    class="tooltip-text">{{
-                                                                        __('notification_stop_time_tooltip') }}</span></i>
+                                                                class="fa fa-question-circle"
+                                                                v-b-tooltip.hover
+                                                                :title="__('notification_stop_time_tooltip')"></i>
                                                             <div class="input-group">
                                                                 <div class="input-group-prepend">
                                                                     <div class="input-group-text myDivClass"
