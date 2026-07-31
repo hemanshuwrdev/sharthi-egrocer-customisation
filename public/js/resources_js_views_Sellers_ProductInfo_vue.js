@@ -137,13 +137,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -223,32 +216,6 @@ __webpack_require__.r(__webpack_exports__);
         _this.isLoading = false;
         _this.products = response.data.data.products;
         _this.totalRows = _this.products.length;
-      });
-    },
-    deleteRecord: function deleteRecord(index, id) {
-      var _this2 = this;
-      this.$swal.fire({
-        title: __('are_you_sure'),
-        text: __('you_want_to_be_able_to_revert_this'),
-        confirmButtonText: __('yes_sure'),
-        cancelButtonText: __('cancel'),
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#37a279',
-        cancelButtonColor: '#d33'
-      }).then(function (result) {
-        if (result.value) {
-          _this2.isLoading = true;
-          var postData = {
-            id: id
-          };
-          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this2.$apiUrl + '/products/delete', postData).then(function (response) {
-            _this2.isLoading = false;
-            var data = response.data;
-            _this2.products.splice(index, 1);
-            _this2.showSuccess(data.message);
-          });
-        }
       });
     }
   }
@@ -638,7 +605,7 @@ var render = function () {
                           return [
                             _c(
                               "div",
-                              { staticStyle: { width: "120px" } },
+                              { staticStyle: { width: "60px" } },
                               [
                                 _c(
                                   "router-link",
@@ -653,65 +620,16 @@ var render = function () {
                                     staticClass: "btn btn-primary btn-sm",
                                     attrs: {
                                       to: {
-                                        name: "SellerViewProduct",
-                                        params: {
-                                          id: row.item.id,
-                                          record: row.item,
+                                        name: "SellerMyProducts",
+                                        query: {
+                                          master_product_id:
+                                            row.item.product_id,
                                         },
                                       },
-                                      title: _vm.__("view"),
+                                      title: _vm.__("view_product"),
                                     },
                                   },
                                   [_c("i", { staticClass: "fa fa-eye" })]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "router-link",
-                                  {
-                                    directives: [
-                                      {
-                                        name: "b-tooltip",
-                                        rawName: "v-b-tooltip.hover",
-                                        modifiers: { hover: true },
-                                      },
-                                    ],
-                                    staticClass: "btn btn-success btn-sm",
-                                    attrs: {
-                                      to: {
-                                        name: "SellerEditProduct",
-                                        params: {
-                                          id: row.item.id,
-                                          record: row.item,
-                                        },
-                                      },
-                                      title: _vm.__("edit"),
-                                    },
-                                  },
-                                  [_c("i", { staticClass: "fa fa-pencil-alt" })]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "button",
-                                  {
-                                    directives: [
-                                      {
-                                        name: "b-tooltip",
-                                        rawName: "v-b-tooltip.hover",
-                                        modifiers: { hover: true },
-                                      },
-                                    ],
-                                    staticClass: "btn btn-danger btn-sm",
-                                    attrs: { title: _vm.__("delete") },
-                                    on: {
-                                      click: function ($event) {
-                                        return _vm.deleteRecord(
-                                          row.index,
-                                          row.item.product_variant_id
-                                        )
-                                      },
-                                    },
-                                  },
-                                  [_c("i", { staticClass: "fa fa-trash" })]
                                 ),
                               ],
                               1

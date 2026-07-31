@@ -79,18 +79,11 @@
                                     <img :src="$storageUrl + row.item.image" height="50" v-if="row.item.image"/>
                                 </template>
                                 <template #cell(actions)="row">
-                                    <div style="width: 120px">
+                                    <div style="width: 60px">
                                         <router-link
-                                            :to="{ name: 'SellerViewProduct',params: { id: row.item.id, record : row.item }}"
-                                            v-b-tooltip.hover :title="__('view')" class="btn btn-primary btn-sm"><i
+                                            :to="{ name: 'SellerMyProducts', query: { master_product_id: row.item.product_id } }"
+                                            v-b-tooltip.hover :title="__('view_product')" class="btn btn-primary btn-sm"><i
                                             class="fa fa-eye"></i></router-link>
-                                        <router-link
-                                            :to="{ name: 'SellerEditProduct',params: { id: row.item.id, record : row.item }}"
-                                            v-b-tooltip.hover :title="__('edit')" class="btn btn-success btn-sm"><i
-                                            class="fa fa-pencil-alt"></i></router-link>
-                                        <button class="btn btn-danger btn-sm" v-b-tooltip.hover :title="__('delete')"
-                                                @click="deleteRecord(row.index,row.item.product_variant_id)"><i
-                                            class="fa fa-trash"></i></button>
                                     </div>
                                 </template>
                             </b-table>
@@ -182,35 +175,6 @@ export default {
                 this.isLoading = false;
                 this.products = response.data.data.products;
                 this.totalRows = this.products.length
-            });
-        },
-
-        deleteRecord(index, id) {
-
-            this.$swal.fire({
-                title: __('are_you_sure'),
-                text: __('you_want_to_be_able_to_revert_this'),
-                confirmButtonText: __('yes_sure'),
-                cancelButtonText: __('cancel'),
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#37a279',
-                cancelButtonColor: '#d33',
-            }).then(result => {
-
-                if (result.value) {
-                    this.isLoading = true
-                    let postData = {
-                        id: id
-                    }
-                    axios.post(this.$apiUrl + '/products/delete', postData)
-                        .then((response) => {
-                            this.isLoading = false
-                            let data = response.data;
-                            this.products.splice(index, 1)
-                            this.showSuccess(data.message)
-                        });
-                }
             });
         },
     }
