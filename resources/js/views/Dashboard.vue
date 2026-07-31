@@ -346,6 +346,9 @@
                                             <img :src="$baseUrl + '/assets/images/dashboard/Delivered.svg'"
                                                 class="img-fluid" />
                                         </div>
+                                        <div v-else-if="status.status == 'Rescheduled'" class="stats-icon purple">
+                                            <i class="fa fa-history"></i>
+                                        </div>
                                         <div v-else class="stats-icon purple">
                                             <i class="iconly-boldBag"></i>
                                         </div>

@@ -292,6 +292,9 @@
                                     <div v-else-if="status.status == 'Picked Up'" class="stats-icon delivered">
                                         <img :src="$baseUrl + '/assets/images/dashboard/Delivered.svg'" />
                                     </div>
+                                    <div v-else-if="status.status == 'Rescheduled'" class="stats-icon purple">
+                                        <i class="fa fa-history"></i>
+                                    </div>
                                     <div v-else class="stats-icon purple">
                                         <i class="iconly-boldBag"></i>
                                     </div>

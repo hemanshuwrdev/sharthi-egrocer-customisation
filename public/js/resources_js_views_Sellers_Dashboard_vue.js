@@ -461,6 +461,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
 
 
 
@@ -2236,6 +2239,10 @@ var render = function () {
                                   }),
                                 ]
                               )
+                            : status.status == "Rescheduled"
+                            ? _c("div", { staticClass: "stats-icon purple" }, [
+                                _c("i", { staticClass: "fa fa-history" }),
+                              ])
                             : _c("div", { staticClass: "stats-icon purple" }, [
                                 _c("i", { staticClass: "iconly-boldBag" }),
                               ]),
