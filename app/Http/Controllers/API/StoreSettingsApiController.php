@@ -430,6 +430,7 @@ class StoreSettingsApiController extends Controller
             'delivery_boy_bonus_percentage',
             'delivery_boy_bonus_min_amount',
             'delivery_boy_bonus_max_amount',
+            'generate_otp',
         ];
 
         foreach ($request->all() as $key => $value) {
