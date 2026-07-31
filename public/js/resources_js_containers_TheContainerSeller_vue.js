@@ -1024,7 +1024,7 @@ __webpack_require__.r(__webpack_exports__);
   computed: {
     isSellerRoute: function isSellerRoute() {
       // Use this.$route to access the current route
-      return this.$route.path.startsWith('/seller/');
+      return this.$route.path === '/seller' || this.$route.path.startsWith('/seller/');
     }
   },
   beforeDestroy: function beforeDestroy() {
