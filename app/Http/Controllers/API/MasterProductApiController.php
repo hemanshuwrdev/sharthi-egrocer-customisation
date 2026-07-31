@@ -80,7 +80,7 @@ class MasterProductApiController extends Controller
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             'tax_id' => 'nullable|exists:taxes,id',
-            'image' => 'nullable|image',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
             'type' => 'nullable|in:single,variable',
             'variants' => 'required|array|min:1',
             'variants.*.sku' => 'nullable|string|max:255',
@@ -88,6 +88,7 @@ class MasterProductApiController extends Controller
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.weight' => 'nullable|numeric|min:0',
+            'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -179,7 +180,7 @@ class MasterProductApiController extends Controller
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             'tax_id' => 'nullable|exists:taxes,id',
-            'image' => 'nullable|image',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
             'type' => 'nullable|in:single,variable',
             'variants' => 'required|array|min:1',
             'variants.*.sku' => 'nullable|string|max:255',
@@ -187,6 +188,7 @@ class MasterProductApiController extends Controller
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.weight' => 'nullable|numeric|min:0',
+            'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());

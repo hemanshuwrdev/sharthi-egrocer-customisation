@@ -307,6 +307,7 @@
                                     <td>
                                         <input type="file" class="form-control form-control-sm" accept="image/*"
                                             @change="onVariantImage($event, v)" />
+                                        <div v-if="v._imageError" class="text-danger small mt-1">{{ v._imageError }}</div>
                                         <div v-if="v._preview || v.image" class="mt-1">
                                             <img :src="v._preview || ($storageUrl + v.image)" height="40" />
                                         </div>
@@ -612,6 +613,7 @@ export default {
                         _file: null,
                         _preview: null,
                         _delete: false,
+                        _imageError: null,
                     }));
                 }
 
@@ -732,11 +734,25 @@ export default {
                 _file: null,
                 _preview: null,
                 _delete: false,
+                _imageError: null,
             };
         },
         onVariantImage(e, v) {
             const file = e.target.files[0];
+            v._imageError = null;
             if (!file) return;
+
+            const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
+            if (!validTypes.includes(file.type)) {
+                v._imageError = "Invalid file type. Please upload a JPEG, PNG, JPG, GIF or WEBP image.";
+                e.target.value = '';
+                return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+                v._imageError = "File size exceeds the maximum allowed limit (2MB).";
+                e.target.value = '';
+                return;
+            }
             v._file = file;
             v._preview = URL.createObjectURL(file);
         },
