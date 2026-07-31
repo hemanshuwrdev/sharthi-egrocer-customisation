@@ -230,6 +230,12 @@ class SellerProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        foreach ($request->slabs as $s) {
+            if (!empty($s['max_qty']) && $s['max_qty'] <= $s['min_qty']) {
+                return CommonHelper::responseError(__('slab_max_qty_must_be_greater_than_min_qty'));
+            }
+        }
+
         $seller = $this->seller();
         if (!$seller) {
             return CommonHelper::responseError('seller_not_found');

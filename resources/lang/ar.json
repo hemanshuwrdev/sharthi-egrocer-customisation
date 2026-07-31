@@ -1766,6 +1766,7 @@
     "add_slab": "إضافة شريحة",
     "save_price_first_before_slabs": "احفظ السعر أولاً — يمكن تعيين تسعير الشرائح بعد أن يكون للمنتج سعر بيع.",
     "slab_min_qty_and_price_required": "الحد الأدنى للكمية والسعر مطلوبان لكل شريحة",
+    "slab_max_qty_must_be_greater_than_min_qty": "يجب أن يكون الحد الأقصى للكمية أكبر من الحد الأدنى للكمية",
     "slab_prices_saved_successfully": "تم حفظ أسعار الشرائح بنجاح",
     "brand_not_assigned_to_you": "هذه العلامة التجارية غير مسندة إلى حساب الموزع الخاص بك.",
     "seller_product_not_found": "لم يتم العثور على إدخال منتج الموزع",

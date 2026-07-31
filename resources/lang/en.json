@@ -1766,6 +1766,7 @@
     "add_slab": "Add Slab",
     "save_price_first_before_slabs": "Save the price first — slab pricing can be set after the product has a selling price.",
     "slab_min_qty_and_price_required": "Min qty and price are required for each slab",
+    "slab_max_qty_must_be_greater_than_min_qty": "Max qty must be greater than min qty",
     "slab_prices_saved_successfully": "Slab prices saved successfully",
     "brand_not_assigned_to_you": "This brand is not assigned to your distributor account.",
     "seller_product_not_found": "Distributor product entry not found",

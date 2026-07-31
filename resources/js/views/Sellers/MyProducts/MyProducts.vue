@@ -392,6 +392,10 @@ export default {
                     this.showError(__('slab_min_qty_and_price_required'));
                     return;
                 }
+                if (s.max_qty && s.max_qty <= s.min_qty) {
+                    this.showError(__('slab_max_qty_must_be_greater_than_min_qty'));
+                    return;
+                }
             }
             this.slabSaving = true;
             axios.post(this.$sellerApiUrl + '/products/save_slabs', {
