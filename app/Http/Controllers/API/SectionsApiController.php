@@ -81,8 +81,8 @@ class SectionsApiController extends Controller
                 // Section config
                 'product_type' => $section->product_type,
                 'position' => $section->position,
-                'category_ids' => json_decode($section->category_ids, true) ?? [],
-                'product_ids'  => json_decode($section->product_ids, true) ?? [],
+                'category_ids' => $section->category_ids ?? [],
+                'product_ids'  => $section->product_ids ?? [],
 
                 'style_app' => $section->style_app,
                 'style_web' => $section->style_web,
@@ -170,8 +170,8 @@ class SectionsApiController extends Controller
                     'short_description' => $request->short_description,
                     'product_type' => $request->product_type,
                     'position' => $request->position,
-                    'category_ids' => json_encode($request->category_ids ?? []),
-                    'product_ids' => json_encode($request->product_ids ?? []),
+                    'category_ids' => $request->category_ids ?? [],
+                    'product_ids' => $request->product_ids ?? [],
                     'style_app' => $request->style_app ?? 'style_1',
                     'style_web' => $request->style_web ?? 'style_1',
                     'banner_app' => $bannerAppPath,
@@ -185,8 +185,8 @@ class SectionsApiController extends Controller
 
                     $section->product_type = $request->product_type;
                     $section->position = $request->position;
-                    $section->category_ids = json_encode($request->category_ids ?? []);
-                    $section->product_ids = json_encode($request->product_ids ?? []);
+                    $section->category_ids = $request->category_ids ?? [];
+                    $section->product_ids = $request->product_ids ?? [];
                     $section->style_app = $request->style_app ?? 'style_1';
                     $section->style_web = $request->style_web ?? 'style_1';
                     $section->background_color_for_light_theme = $request->background_color_for_light_theme;
@@ -267,8 +267,8 @@ class SectionsApiController extends Controller
                 'short_description' => $request->short_description,
                 'product_type' => $request->product_type,
                 'position'     => $request->position,
-                'category_ids' => json_encode($request->category_ids ?? []),
-                'product_ids'  => json_encode($request->product_ids ?? []),
+                'category_ids' => $request->category_ids ?? [],
+                'product_ids'  => $request->product_ids ?? [],
                 'style_app'    => $request->style_app ?? 'style_1',
                 'style_web'    => $request->style_web ?? 'style_1',
                 'background_color_for_light_theme' =>
