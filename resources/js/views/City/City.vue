@@ -116,7 +116,7 @@
                                 </b-col>
 
                                 <b-col md="4" class="my-1" offset-md="6">
-                                    <label>{{__('total_records')}}:- {{ totalRows }}</label>,
+                                    <label>{{__('total_records')}}:- {{ totalRows }}</label>
 
                                     <b-pagination
                                         v-model="currentPage"

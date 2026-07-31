@@ -779,7 +779,7 @@ var render = function () {
                               _vm._s(_vm.totalRows)
                           ),
                         ]),
-                        _vm._v(",\n\n                                "),
+                        _vm._v(" "),
                         _c("b-pagination", {
                           staticClass: "my-0",
                           attrs: {
