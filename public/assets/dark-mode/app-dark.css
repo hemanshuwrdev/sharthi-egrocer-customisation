@@ -8577,3 +8577,15 @@ body.theme-dark .stats-icon {
   }  
   
   
+body.theme-dark code {
+    color: #c2c2d9;
+    background: #2a2a3d;
+}
+
+body.theme-dark .charge-card {
+    background: #1e1e2d;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+body.theme-dark .charge-card:hover {
+    background: #262638;
+}

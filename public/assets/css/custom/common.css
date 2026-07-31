@@ -2291,3 +2291,10 @@ body.theme-dark.rtl .navbar .theme-toggle .form-check {
         text-align: left !important;
     }
 }
+
+code {
+    background: #f1f3f5;
+    color: #495057;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
