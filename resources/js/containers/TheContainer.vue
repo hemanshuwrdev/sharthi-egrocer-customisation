@@ -217,18 +217,22 @@ export default {
                     url: '/dashboard',
                     permission: 'manage_dashboard'
                 },
+                /*
                 {
                     name: __('orders'),
                     icon: 'shopping-cart',
                     url: '/orders',
                     permission: 'order_list'
                 },
+                */
+                /*
                 {
                     name: __('self_pickup_orders'),
                     icon: 'box-open',
                     url: '/self_pickup_orders',
                     permission: 'self_pickup_order_list'
                 },
+                */
                 {
                     name: __('categories'),
                     icon: 'bullseye',
@@ -446,6 +450,7 @@ export default {
                     ]
                 },
 
+                /*
                 {
                     name: __('promo_code'),
                     icon: 'gift',
@@ -466,6 +471,7 @@ export default {
                     ]
 
                 },
+                */
 
                 {
                     name: __('featured_sections'),
@@ -488,18 +494,23 @@ export default {
 
                 },
 
+                /*
                 {
                     name: __('return_requests'),
                     icon: 'retweet',
                     url: '/return_requests',
                     permission: 'return_request_list',
                 },
+                */
+                /*
                 {
                     name: __('withdrawal_requests'),
                     icon: 'credit-card',
                     url: '/withdrawal_requests',
                     permission: 'withdrawal_request_list',
                 },
+                */
+                /*
                 {
                     name: __('delivery_boys'),
                     icon: 'male',
@@ -537,6 +548,7 @@ export default {
                         }
                     ]
                 },
+                */
 
 
                 // {
@@ -658,18 +670,22 @@ export default {
                             url: '/store_settings',
                             permission: 'manage_store_settings',
                         },
+                        /*
                         {
                             name: __('delivery_settings'),
                             icon: 'grid-fill',
                             url: '/delivery_settings',
                             permission: 'manage_time_slots',
                         },
+                        */
+                        /*
                         {
                             name: __('payment_methods'),
                             icon: 'grid-fill',
                             url: '/payment_methods',
                             permission: 'manage_payment_methods',
                         },
+                        */
                         {
                             name: __('additional_charge'),
                             icon: 'grid-fill',
@@ -735,6 +751,7 @@ export default {
                     ],
                 },
 
+                /*
                 {
                     name: __('web_settings'),
                     icon: 'gear',
@@ -755,6 +772,7 @@ export default {
 
                     ]
                 },
+                */
 
                 {
                     name: __('blogs'),
@@ -776,6 +794,7 @@ export default {
                     ]
                 },
 
+                /*
                 {
                     name: __('subscriptions'),
                     icon: 'credit-card',
@@ -795,6 +814,7 @@ export default {
                         }
                     ]
                 },
+                */
 
                 {
                     name: __('languages'),
@@ -882,18 +902,18 @@ export default {
                             url: '/product_requests',
                             permission: 'product_request_list',
                         },
-                        {
-                            name: __('wallet_transactions'),
-                            icon: 'grid-fill',
-                            url: '/wallet_transactions',
-                            permission: 'manage_customer_wallet',
-                        },
-                        {
-                            name: __('transactions'),
-                            icon: 'grid-fill',
-                            url: '/transactions',
-                            permission: 'transaction_list',
-                        },
+                        // {
+                        //     name: __('wallet_transactions'),
+                        //     icon: 'grid-fill',
+                        //     url: '/wallet_transactions',
+                        //     permission: 'manage_customer_wallet',
+                        // },
+                        // {
+                        //     name: __('transactions'),
+                        //     icon: 'grid-fill',
+                        //     url: '/transactions',
+                        //     permission: 'transaction_list',
+                        // },
                         {
                             name: __('customer_policies'),
                             icon: 'grid-fill',
@@ -935,12 +955,14 @@ export default {
                         }
                     ]
                 },
+                /*
                 {
                     name: __('system_users'),
                     icon: 'users',
                     url: '/system_users',
                     role: true
                 },
+                */
                 {
                     name: __('role'),
                     icon: 'user-secret',

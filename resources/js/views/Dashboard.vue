@@ -8,6 +8,7 @@
                 <div class="row">
                     <div class="col-12 col-xxl-6">
                         <div class="row">
+                            <!-- Sarthi: Orders card hidden on admin dashboard, orders are distributor-managed
                             <div class="col-6 col-lg-3 col-md-3 col-sm-6">
                                 <div class="card">
                                     <router-link to="/orders">
@@ -29,9 +30,10 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-3 col-md-3 col-sm-6">
+                            -->
+                            <div class="col-6 col-lg-4 col-md-4 col-sm-6">
                                 <div class="card">
-                                    <router-link to="/manage_products">
+                                    <router-link :to="{ name: 'MasterProducts' }">
                                         <div class="card-body px-3 py-4-5">
                                             <div class="row">
                                                 <div class="col-md-12 d-flex justify-content-center align-items-center">
@@ -49,7 +51,7 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-3 col-md-3">
+                            <div class="col-6 col-lg-4 col-md-4">
                                 <div class="card">
                                     <router-link to="/users">
                                         <div class="card-body px-3 py-4-5">
@@ -70,7 +72,7 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-3 col-md-3">
+                            <div class="col-6 col-lg-4 col-md-4">
                                 <div class="card">
                                     <router-link to="/sellers">
                                         <div class="card-body px-3 py-4-5">
@@ -91,7 +93,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-6 col-lg-3 col-md-3">
+                            <div class="col-6 col-lg-4 col-md-4">
                                 <div class="card">
                                     <router-link to="/manage_categories">
                                         <div class="card-body px-3 py-4-5">
@@ -111,7 +113,7 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-3 col-md-3">
+                            <div class="col-6 col-lg-4 col-md-4">
                                 <div class="card">
                                     <router-link to="/brands">
                                         <div class="card-body px-3 py-4-5">
@@ -131,6 +133,7 @@
                                     </router-link>
                                 </div>
                             </div>
+                            <!-- Sarthi: Sections card hidden on admin dashboard
                             <div class="col-6 col-lg-3 col-md-3">
                                 <div class="card">
                                     <router-link to="/sections">
@@ -151,7 +154,8 @@
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-3 col-md-3">
+                            -->
+                            <div class="col-6 col-lg-4 col-md-4">
                                 <div class="card">
                                     <router-link to="/cities">
                                         <div class="card-body px-3 py-4-5">
@@ -195,6 +199,7 @@
 
                 <div class="row">
 
+                    <!-- Sarthi: Weekly Sales chart hidden on admin dashboard, order-derived
                     <div class="col-12 col-lg-7 col-md-12">
                         <div class="card h-90">
                             <div class="card-header">
@@ -209,8 +214,10 @@
                             </div>
                         </div>
                     </div>
+                    -->
 
                     <div class="col-12 col-lg-5 col-md-12 products_sold">
+                        <!-- Sarthi: Packet/Loose Products cards hidden on admin dashboard, no equivalent concept in master catalog schema
                         <div class="row">
                             <div class="col-12 col-lg-6 col-md-6">
                                 <div class="card">
@@ -243,6 +250,8 @@
                                 </div>
                             </div>
                         </div>
+                        -->
+                        <!-- Sarthi: Sold Out / Low Stock cards hidden on admin dashboard
                         <div class="row">
                             <div class="col-12 col-lg-6 col-md-6">
                                 <div class="card">
@@ -275,12 +284,14 @@
                                 </div>
                             </div>
                         </div>
+                        -->
 
                     </div>
 
                 </div>
 
 
+                <!-- Sarthi: Order Out Lines status breakdown hidden on admin dashboard
                 <div class="row">
                     <h5 class="mb-3"> {{ __('order_out_lines') }} </h5>
                     <div class="col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2 col-xxl-2 mb-2 mb-md-3"
@@ -288,7 +299,6 @@
                         <div class="card h-100">
                             <div class="card-body p-2 p-sm-3 h-100 d-flex flex-column justify-content-center align-items-center text-center">
                                 <div class="d-flex flex-column justify-content-center align-items-center text-center">
-                                    <!-- Icon -->
                                     <div class="mb-2 d-flex justify-content-center">
                                         <div v-if="status.status == $pending" class="stats-icon payment_pending">
                                             <img :src="$baseUrl + '/assets/images/dashboard/Payment_Pending.svg'"
@@ -341,7 +351,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Text -->
                                     <div>
                                         <h6 v-if="status.status == $pending" class="text-muted font-semibold">{{
                                             __('payment_pending') }}</h6>
@@ -372,8 +381,10 @@
                         </div>
                     </div>
                 </div>
+                -->
 
                 <div class="row">
+                    <!-- Sarthi: Latest Orders table hidden on admin dashboard, orders are distributor-managed
                     <div class="col-12" v-if="$can('order_list')">
                         <div class="card">
                             <div class="card-header">
@@ -560,6 +571,7 @@
                             </div>
                         </div>
                     </div>
+                    -->
 
                     <div class="col-lg-6 col-md-12 col-sm-12">
                         <div class="card h-95">

@@ -1399,13 +1399,14 @@ class ProductsApiController extends Controller
 
         try {
             $query = RecentlyVisitedProduct::where('user_id', $user->id)
+                ->whereNotNull('master_product_id')
                 ->orderBy('visited_at', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->limit(10);
             if (!empty($excludeId)) {
-                $query->where('product_id', '!=', $excludeId);
+                $query->where('master_product_id', '!=', $excludeId);
             }
-            $masterIds = $query->pluck('product_id')->toArray();
+            $masterIds = $query->pluck('master_product_id')->toArray();
             if (empty($masterIds)) {
                 return CommonHelper::responseWithData([], 0);
             }
@@ -1417,14 +1418,13 @@ class ProductsApiController extends Controller
                 ->keyBy('id');
 
             // Resolve allowed seller_ids for the user's area (if lat/long sent).
+            $hasLocation = $request->filled('latitude') && $request->filled('longitude');
             $sellerIds = collect();
-            if ($request->filled('latitude') && $request->filled('longitude')) {
+            if ($hasLocation) {
                 $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
-                if (!empty($cityIds)) {
-                    $sellerIds = BrandDistributorMapping::whereIn('city_id', $cityIds)
-                        ->pluck('seller_id')
-                        ->unique();
-                }
+                $sellerIds = !empty($cityIds)
+                    ? BrandDistributorMapping::whereIn('city_id', $cityIds)->pluck('seller_id')->unique()
+                    : collect();
             }
 
             $variants = MasterProductVariant::with('unit', 'secondaryUnit')
@@ -1437,8 +1437,10 @@ class ProductsApiController extends Controller
             $offersQuery = SellerProduct::whereIn('master_product_variant_id', $variantIds)
                 ->where('status', 1)
                 ->where('selling_price', '>', 0);
-            if ($sellerIds->isNotEmpty()) {
-                $offersQuery->whereIn('seller_id', $sellerIds);
+            if ($hasLocation) {
+                // Location given but no deliverable seller found: force an empty offer set
+                // instead of silently falling back to pricing from sellers outside this area.
+                $offersQuery->whereIn('seller_id', $sellerIds->isNotEmpty() ? $sellerIds->all() : [0]);
             }
             $bestOffer = $offersQuery->get()
                 ->groupBy('master_product_variant_id')

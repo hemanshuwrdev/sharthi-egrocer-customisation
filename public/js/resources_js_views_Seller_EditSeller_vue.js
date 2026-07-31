@@ -1079,7 +1079,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       street: "",
       pincode_id: "",
       city_id: [],
-      categories_ids: [],
+      brand_ids: [],
       state: "",
       remark: "",
       bank_name: "",
@@ -1130,9 +1130,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       store_description: "",
       require_products_approval: 0,
       // customer_privacy: 0,
-      view_order_otp: 0,
-      assign_delivery_boy: 0,
-      change_order_status_delivered: 0,
+      // Sarthi: view_order_otp/assign_delivery_boy/change_order_status_delivered removed, no UI here, owned by seller's own self-service settings
       status: 0,
       store_logo: "",
       store_logo_url: "",
@@ -1142,7 +1140,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       address_proof: "",
       address_proof_url: "",
       address_proof_name: "",
-      categories: [],
+      brands: [],
       id: null,
       admin_id: null,
       record: null,
@@ -1256,7 +1254,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       },
       deep: true
     },
-    categories_ids: {
+    brand_ids: {
       handler: function handler() {
         if (!this.id) this.debouncedSave();
       },
@@ -1335,7 +1333,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   }), _watch),
   created: function created() {
     var _this = this;
-    this.getCategories();
+    this.getBrands();
     this.getZones();
     this.getCities();
     this.getSellerCommission();
@@ -1358,17 +1356,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     if (this.cacheTimer) clearTimeout(this.cacheTimer);
   },
   computed: {
-    categories_options: function categories_options() {
+    brands_options: function brands_options() {
       var temp = [];
-      if (this.categories.length !== 0) {
-        this.categories.forEach(function (category) {
-          //Only Main Categories
-          if (category.parent_id == 0) {
-            temp.push({
-              id: category.id,
-              text: category.name
-            });
-          }
+      if (this.brands.length !== 0) {
+        this.brands.forEach(function (brand) {
+          temp.push({
+            id: brand.id,
+            text: brand.name
+          });
         });
       }
       return temp;
@@ -1763,13 +1758,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       };
       this.clearCityDrawing();
     },
-    getCategories: function getCategories() {
+    getBrands: function getBrands() {
       var _this9 = this;
       this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/categories/main').then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/products/brands/get').then(function (response) {
         _this9.isLoading = false;
         var data = response.data;
-        _this9.categories = data.data;
+        _this9.brands = data.data;
       })["catch"](function (error) {
         var _error$request2;
         _this9.isLoading = false;
@@ -2058,7 +2053,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         street: "",
         pincode_id: "",
         city_id: [],
-        categories_ids: [],
+        brand_ids: [],
         state: "",
         remark: "",
         bank_name: "",
@@ -2077,9 +2072,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         longitude: "",
         store_description: "",
         require_products_approval: 0,
-        view_order_otp: 0,
-        assign_delivery_boy: 0,
-        change_order_status_delivered: 0,
         status: 0,
         store_logo: "",
         store_logo_url: "",
@@ -2127,7 +2119,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           street: this.street,
           pincode_id: this.pincode_id,
           city_id: this.city_id,
-          categories_ids: this.categories_ids,
+          brand_ids: this.brand_ids,
           state: this.state,
           remark: this.remark,
           bank_name: this.bank_name,
@@ -2148,9 +2140,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           formatted_address: this.formatted_address,
           store_description: defaultTranslation ? defaultTranslation.store_description : this.store_description,
           require_products_approval: this.require_products_approval,
-          view_order_otp: this.view_order_otp,
-          assign_delivery_boy: this.assign_delivery_boy,
-          change_order_status_delivered: this.change_order_status_delivered,
           status: this.status,
           self_pickup_mode: this.self_pickup_mode,
           door_step_mode: this.door_step_mode,
@@ -2323,7 +2312,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           _this16.street = emptyIfNull(_this16.record.street);
           _this16.pincode_id = "";
           _this16.city_id = emptyIfNull(_this16.record.city_id) ? _this16.record.city_id.split(",") : [];
-          _this16.categories_ids = emptyIfNull(_this16.record.categories) ? _this16.record.categories.split(",") : [];
+          _this16.brand_ids = Array.isArray(_this16.record.brand_ids) ? _this16.record.brand_ids.map(String) : [];
           _this16.state = emptyIfNull(_this16.record.state);
           _this16.remark = emptyIfNull(_this16.record.remark);
           _this16.bank_name = emptyIfNull(_this16.record.bank_name);
@@ -2347,9 +2336,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           _this16.formatted_address = emptyIfNull(_this16.record.formatted_address);
           _this16.require_products_approval = _this16.record.require_products_approval;
           // this.customer_privacy = this.record.customer_privacy;
-          _this16.view_order_otp = _this16.record.view_order_otp;
-          _this16.assign_delivery_boy = _this16.record.assign_delivery_boy;
-          _this16.change_order_status_delivered = _this16.record.change_order_status_delivered;
+          // Sarthi: view_order_otp/assign_delivery_boy/change_order_status_delivered removed, no UI here
 
           // Self Pickup fields
           _this16.self_pickup_mode = _this16.record.self_pickup_mode === null || _this16.record.self_pickup_mode === undefined ? 0 : _this16.record.self_pickup_mode;
@@ -2540,7 +2527,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   formData.append('street', _this18.street);
                   formData.append('pincode_id', _this18.pincode_id);
                   formData.append('city_id', _this18.city_id);
-                  formData.append('categories_ids', _this18.categories_ids);
+                  formData.append('brand_ids', _this18.brand_ids);
                   formData.append('state', _this18.state);
                   formData.append('remark', _this18.remark);
                   formData.append('bank_name', _this18.bank_name || '');
@@ -2560,9 +2547,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   formData.append('place_name', _this18.place_name);
                   formData.append('formatted_address', _this18.formatted_address);
                   formData.append('require_products_approval', _this18.require_products_approval);
-                  formData.append('view_order_otp', _this18.view_order_otp);
-                  formData.append('assign_delivery_boy', _this18.assign_delivery_boy);
-                  formData.append('change_order_status_delivered', _this18.change_order_status_delivered);
                   formData.append('self_pickup_mode', _this18.self_pickup_mode);
                   formData.append('door_step_mode', _this18.door_step_mode);
                   formData.append('pickup_store_address', _this18.pickup_store_address);
@@ -2584,34 +2568,34 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   if (_this18.address_proof) {
                     formData.append('address_proof', _this18.address_proof);
                   }
-                  _context2.prev = 50;
-                  _context2.next = 53;
+                  _context2.prev = 47;
+                  _context2.next = 50;
                   return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, formData, {
                     headers: {
                       'Content-Type': 'multipart/form-data'
                     }
                   });
-                case 53:
+                case 50:
                   response = _context2.sent;
                   apiStatus = response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.status;
                   if (!(apiStatus !== 1)) {
-                    _context2.next = 58;
+                    _context2.next = 55;
                     break;
                   }
                   apiMessage = (response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.message) || __('something_went_wrong');
                   throw new Error(apiMessage);
-                case 58:
+                case 55:
                   return _context2.abrupt("return", response);
-                case 61:
-                  _context2.prev = 61;
-                  _context2.t0 = _context2["catch"](50);
+                case 58:
+                  _context2.prev = 58;
+                  _context2.t0 = _context2["catch"](47);
                   throw _context2.t0;
-                case 64:
+                case 61:
                 case "end":
                   return _context2.stop();
               }
             }
-          }, _callee2, null, [[50, 61]]);
+          }, _callee2, null, [[47, 58]]);
         }));
         return function saveAll() {
           return _ref.apply(this, arguments);
@@ -4433,7 +4417,7 @@ var render = function () {
                                                             _vm._v(
                                                               _vm._s(
                                                                 _vm.__(
-                                                                  "category_ids"
+                                                                  "brand_ids"
                                                                 )
                                                               )
                                                             ),
@@ -4453,10 +4437,10 @@ var render = function () {
                                                             attrs: {
                                                               placeholder:
                                                                 _vm.__(
-                                                                  "select_categories"
+                                                                  "select_brands"
                                                                 ),
                                                               options:
-                                                                _vm.categories_options,
+                                                                _vm.brands_options,
                                                               settings: {
                                                                 multiple:
                                                                   "multiple",
@@ -4464,14 +4448,14 @@ var render = function () {
                                                             },
                                                             model: {
                                                               value:
-                                                                _vm.categories_ids,
+                                                                _vm.brand_ids,
                                                               callback:
                                                                 function ($$v) {
-                                                                  _vm.categories_ids =
+                                                                  _vm.brand_ids =
                                                                     $$v
                                                                 },
                                                               expression:
-                                                                "categories_ids",
+                                                                "brand_ids",
                                                             },
                                                           }),
                                                         ],

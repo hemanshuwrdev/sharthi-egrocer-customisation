@@ -83,7 +83,7 @@ class SectionsApiController extends Controller
     public function addRecentlyVisitedProduct(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
+            'product_id' => 'required|exists:master_products,id',
         ], [
             'product_id.required' => 'The product_id field is required.',
             'product_id.exists' => 'The selected product does not exist.',
@@ -99,13 +99,13 @@ class SectionsApiController extends Controller
         }
 
         $user_id = $user->id;
-        $product_id = $request->product_id;
+        $master_product_id = $request->product_id;
 
         try {
             RecentlyVisitedProduct::updateOrCreate(
                 [
                     'user_id' => $user_id,
-                    'product_id' => $product_id
+                    'master_product_id' => $master_product_id
                 ],
                 [
                     'visited_at' => now()

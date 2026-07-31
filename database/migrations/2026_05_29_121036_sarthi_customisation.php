@@ -840,6 +840,21 @@ class SarthiCustomisation extends Migration
                     ->update(['active_status' => \App\Models\OrderStatusList::$rescheduled]);
             }
         }
+
+        // Sarthi: recently_visited_products was built against legacy products.id (FK + validation),
+        // but the read side already treats product_id as master_products.id. Add a proper master
+        // catalog column instead of repurposing the legacy one, and free the legacy column up.
+        if (Schema::hasTable('recently_visited_products')) {
+            Schema::table('recently_visited_products', function (Blueprint $table) {
+                if (!Schema::hasColumn('recently_visited_products', 'master_product_id')) {
+                    $table->unsignedBigInteger('master_product_id')->nullable()->after('product_id');
+                    $table->index('master_product_id', 'idx_rvp_master_product');
+                }
+            });
+            Schema::table('recently_visited_products', function (Blueprint $table) {
+                $table->unsignedBigInteger('product_id')->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -849,6 +864,16 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        // recently_visited_products master catalog column (reverse)
+        if (Schema::hasTable('recently_visited_products')) {
+            Schema::table('recently_visited_products', function (Blueprint $table) {
+                if (Schema::hasColumn('recently_visited_products', 'master_product_id')) {
+                    $table->dropIndex('idx_rvp_master_product');
+                    $table->dropColumn('master_product_id');
+                }
+            });
+        }
+
         // POS mainline order_type shrink back + user_id not-nullable
         DB::statement("ALTER TABLE orders MODIFY COLUMN order_type ENUM('doorstep','selfpickup') NOT NULL DEFAULT 'doorstep'");
         Schema::table('orders', function (Blueprint $table) {

@@ -270,17 +270,24 @@ __webpack_require__.r(__webpack_exports__);
         icon: 'tachometer-alt',
         url: '/dashboard',
         permission: 'manage_dashboard'
-      }, {
-        name: __('orders'),
-        icon: 'shopping-cart',
-        url: '/orders',
-        permission: 'order_list'
-      }, {
-        name: __('self_pickup_orders'),
-        icon: 'box-open',
-        url: '/self_pickup_orders',
-        permission: 'self_pickup_order_list'
-      }, {
+      },
+      /*
+      {
+          name: __('orders'),
+          icon: 'shopping-cart',
+          url: '/orders',
+          permission: 'order_list'
+      },
+      */
+      /*
+      {
+          name: __('self_pickup_orders'),
+          icon: 'box-open',
+          url: '/self_pickup_orders',
+          permission: 'self_pickup_order_list'
+      },
+      */
+      {
         name: __('categories'),
         icon: 'bullseye',
         permission: null,
@@ -468,22 +475,30 @@ __webpack_require__.r(__webpack_exports__);
           url: '/popup',
           permission: 'new_offer_image_list'
         }]
-      }, {
-        name: __('promo_code'),
-        icon: 'gift',
-        permission: 'promo_code_list',
-        submenu: [{
-          name: __('add_promo_code'),
-          icon: 'grid-fill',
-          url: '/promo_code/create',
-          permission: 'promo_code_create'
-        }, {
-          name: __('manage_promo_code'),
-          icon: 'grid-fill',
-          url: '/promo_code',
-          permission: 'promo_code_list'
-        }]
-      }, {
+      },
+      /*
+      {
+          name: __('promo_code'),
+          icon: 'gift',
+          permission: 'promo_code_list',
+          submenu: [
+              {
+                  name: __('add_promo_code'),
+                  icon: 'grid-fill',
+                  url: '/promo_code/create',
+                  permission: 'promo_code_create',
+              },
+              {
+                  name: __('manage_promo_code'),
+                  icon: 'grid-fill',
+                  url: '/promo_code',
+                  permission: 'promo_code_list',
+              }
+          ]
+       },
+      */
+
+      {
         name: __('featured_sections'),
         icon: 'puzzle-piece',
         permission: 'featured_section_list',
@@ -498,47 +513,63 @@ __webpack_require__.r(__webpack_exports__);
           url: '/sections',
           permission: 'featured_section_list'
         }]
-      }, {
-        name: __('return_requests'),
-        icon: 'retweet',
-        url: '/return_requests',
-        permission: 'return_request_list'
-      }, {
-        name: __('withdrawal_requests'),
-        icon: 'credit-card',
-        url: '/withdrawal_requests',
-        permission: 'withdrawal_request_list'
-      }, {
-        name: __('delivery_boys'),
-        icon: 'male',
-        permission: null,
-        submenu: [{
-          name: __('manage_delivery_boys'),
-          icon: 'grid-fill',
-          url: '/delivery_boys',
-          permission: 'delivery_boy_list'
-        }, {
-          name: __('fund_transfers'),
-          icon: 'grid-fill',
-          url: '/fund_transfers',
-          permission: 'fund_transfers_list'
-        }, {
-          name: __('delivery_boy_cash'),
-          icon: 'grid-fill',
-          url: '/cash_collection',
-          permission: 'cash_collection_list'
-        }, {
-          name: __('delivery_boy_policies'),
-          icon: 'grid-fill',
-          url: '/privacy_policy_delivery_boy',
-          permission: 'manage_privacy_policy_delivery_boy'
-        }, {
-          name: __('Salary'),
-          icon: 'grid-fill',
-          url: '/salary',
-          permission: 'salary_list'
-        }]
       },
+      /*
+      {
+          name: __('return_requests'),
+          icon: 'retweet',
+          url: '/return_requests',
+          permission: 'return_request_list',
+      },
+      */
+      /*
+      {
+          name: __('withdrawal_requests'),
+          icon: 'credit-card',
+          url: '/withdrawal_requests',
+          permission: 'withdrawal_request_list',
+      },
+      */
+      /*
+      {
+          name: __('delivery_boys'),
+          icon: 'male',
+          permission: null,
+          submenu: [
+              {
+                  name: __('manage_delivery_boys'),
+                  icon: 'grid-fill',
+                  url: '/delivery_boys',
+                  permission: 'delivery_boy_list',
+              },
+              {
+                  name: __('fund_transfers'),
+                  icon: 'grid-fill',
+                  url: '/fund_transfers',
+                  permission: 'fund_transfers_list',
+              },
+              {
+                  name: __('delivery_boy_cash'),
+                  icon: 'grid-fill',
+                  url: '/cash_collection',
+                  permission: 'cash_collection_list',
+              },
+              {
+                  name: __('delivery_boy_policies'),
+                  icon: 'grid-fill',
+                  url: '/privacy_policy_delivery_boy',
+                  permission: 'manage_privacy_policy_delivery_boy',
+              },
+              {
+                  name: __('Salary'),
+                  icon: 'grid-fill',
+                  url: '/salary',
+                  permission: 'salary_list',
+              }
+          ]
+      },
+      */
+
       // {
       //     name: 'Logistics',
       //     icon: 'truck',
@@ -648,17 +679,24 @@ __webpack_require__.r(__webpack_exports__);
           icon: 'grid-fill',
           url: '/store_settings',
           permission: 'manage_store_settings'
-        }, {
-          name: __('delivery_settings'),
-          icon: 'grid-fill',
-          url: '/delivery_settings',
-          permission: 'manage_time_slots'
-        }, {
-          name: __('payment_methods'),
-          icon: 'grid-fill',
-          url: '/payment_methods',
-          permission: 'manage_payment_methods'
-        }, {
+        },
+        /*
+        {
+            name: __('delivery_settings'),
+            icon: 'grid-fill',
+            url: '/delivery_settings',
+            permission: 'manage_time_slots',
+        },
+        */
+        /*
+        {
+            name: __('payment_methods'),
+            icon: 'grid-fill',
+            url: '/payment_methods',
+            permission: 'manage_payment_methods',
+        },
+        */
+        {
           name: __('additional_charge'),
           icon: 'grid-fill',
           url: '/additional_charges',
@@ -709,22 +747,30 @@ __webpack_require__.r(__webpack_exports__);
           url: '/system_updater',
           permission: 'manage_store_settings'
         }]
-      }, {
-        name: __('web_settings'),
-        icon: 'gear',
-        permission: null,
-        submenu: [{
-          name: __('general_web_settings'),
-          icon: 'grid-fill',
-          url: '/general_settings',
-          permission: 'general_settings'
-        }, {
-          name: __('social_media'),
-          icon: 'grid-fill',
-          url: '/social_media',
-          permission: 'manage_social_media_list'
-        }]
-      }, {
+      },
+      /*
+      {
+          name: __('web_settings'),
+          icon: 'gear',
+          permission: null,
+          submenu: [
+              {
+                  name: __('general_web_settings'),
+                  icon: 'grid-fill',
+                  url: '/general_settings',
+                  permission: 'general_settings',
+              },
+              {
+                  name: __('social_media'),
+                  icon: 'grid-fill',
+                  url: '/social_media',
+                  permission: 'manage_social_media_list',
+              },
+           ]
+      },
+      */
+
+      {
         name: __('blogs'),
         icon: 'pen',
         permission: null,
@@ -739,22 +785,30 @@ __webpack_require__.r(__webpack_exports__);
           url: '/blogs',
           permission: 'blog_list'
         }]
-      }, {
-        name: __('subscriptions'),
-        icon: 'credit-card',
-        permission: null,
-        submenu: [{
-          name: __('subscription_plans'),
-          icon: 'grid-fill',
-          url: '/subscriptions',
-          permission: 'subscription_list'
-        }, {
-          name: __('subscriptions_faqs'),
-          icon: 'grid-fill',
-          url: '/subscriptions_faqs',
-          permission: 'subscription_faq_list'
-        }]
-      }, {
+      },
+      /*
+      {
+          name: __('subscriptions'),
+          icon: 'credit-card',
+          permission: null,
+          submenu: [
+              {
+                  name: __('subscription_plans'),
+                  icon: 'grid-fill',
+                  url: '/subscriptions',
+                  permission: 'subscription_list',
+              },
+              {
+                  name: __('subscriptions_faqs'),
+                  icon: 'grid-fill',
+                  url: '/subscriptions_faqs',
+                  permission: 'subscription_faq_list',
+              }
+          ]
+      },
+      */
+
+      {
         name: __('languages'),
         icon: 'language',
         permission: null,
@@ -821,17 +875,20 @@ __webpack_require__.r(__webpack_exports__);
           icon: 'grid-fill',
           url: '/product_requests',
           permission: 'product_request_list'
-        }, {
-          name: __('wallet_transactions'),
-          icon: 'grid-fill',
-          url: '/wallet_transactions',
-          permission: 'manage_customer_wallet'
-        }, {
-          name: __('transactions'),
-          icon: 'grid-fill',
-          url: '/transactions',
-          permission: 'transaction_list'
-        }, {
+        },
+        // {
+        //     name: __('wallet_transactions'),
+        //     icon: 'grid-fill',
+        //     url: '/wallet_transactions',
+        //     permission: 'manage_customer_wallet',
+        // },
+        // {
+        //     name: __('transactions'),
+        //     icon: 'grid-fill',
+        //     url: '/transactions',
+        //     permission: 'transaction_list',
+        // },
+        {
           name: __('customer_policies'),
           icon: 'grid-fill',
           url: '/privacy_policy',
@@ -862,12 +919,16 @@ __webpack_require__.r(__webpack_exports__);
           url: '/commission_billing',
           permission: 'commission_reports'
         }]
-      }, {
-        name: __('system_users'),
-        icon: 'users',
-        url: '/system_users',
-        role: true
-      }, {
+      },
+      /*
+      {
+          name: __('system_users'),
+          icon: 'users',
+          url: '/system_users',
+          role: true
+      },
+      */
+      {
         name: __('role'),
         icon: 'user-secret',
         url: '/role',

@@ -1984,7 +1984,7 @@ class OrderApiController extends Controller
             $items = OrderItem::with('images')->select(
                 'oi.*',
                 'v.id as variant_id',
-                'p.id as product_id',
+                DB::raw('COALESCE(mp.id, p.id) as product_id'),
                 'p.name',
                 'p.image',
                 'p.manufacturer',

@@ -174,12 +174,12 @@
                                                         <template v-if="language.is_default">
                                                             <div class="form-group col-md-5">
                                                                 <div class="form-group">
-                                                                    <label>{{ __('category_ids') }}<i
+                                                                    <label>{{ __('brand_ids') }}<i
                                                                             class="text-danger">*</i> <small>
                                                                         </small></label>
-                                                                    <Select2 v-model="categories_ids"
-                                                                        :placeholder="__('select_categories')"
-                                                                        :options="categories_options"
+                                                                    <Select2 v-model="brand_ids"
+                                                                        :placeholder="__('select_brands')"
+                                                                        :options="brands_options"
                                                                         :settings="{ multiple: 'multiple' }" />
                                                                 </div>
                                                             </div>
@@ -1041,7 +1041,7 @@ export default {
             street: "",
             pincode_id: "",
             city_id: [],
-            categories_ids: [],
+            brand_ids: [],
             state: "",
             remark: "",
             bank_name: "",
@@ -1075,9 +1075,7 @@ export default {
             store_description: "",
             require_products_approval: 0,
             // customer_privacy: 0,
-            view_order_otp: 0,
-            assign_delivery_boy: 0,
-            change_order_status_delivered: 0,
+            // Sarthi: view_order_otp/assign_delivery_boy/change_order_status_delivered removed, no UI here, owned by seller's own self-service settings
             status: 0,
             store_logo: "",
             store_logo_url: "",
@@ -1089,7 +1087,7 @@ export default {
             address_proof_url: "",
             address_proof_name: "",
 
-            categories: [],
+            brands: [],
             id: null,
             admin_id: null,
             record: null,
@@ -1188,7 +1186,7 @@ export default {
         store_name: function () { if (!this.id) this.debouncedSave(); },
         street: function () { if (!this.id) this.debouncedSave(); },
         city_id: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
-        categories_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
+        brand_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         state: function () { if (!this.id) this.debouncedSave(); },
         upi_id: function () { if (!this.id) this.debouncedSave(); },
         upi_mobile: function () { if (!this.id) this.debouncedSave(); },
@@ -1220,7 +1218,7 @@ export default {
         translations: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true }
     },
     created: function () {
-        this.getCategories();
+        this.getBrands();
         this.getZones();
         this.getCities();
         this.getSellerCommission();
@@ -1245,14 +1243,11 @@ export default {
         if (this.cacheTimer) clearTimeout(this.cacheTimer);
     },
     computed: {
-        categories_options: function () {
+        brands_options: function () {
             var temp = [];
-            if (this.categories.length !== 0) {
-                this.categories.forEach(category => {
-                    //Only Main Categories
-                    if (category.parent_id == 0) {
-                        temp.push({ id: category.id, text: category.name })
-                    }
+            if (this.brands.length !== 0) {
+                this.brands.forEach(brand => {
+                    temp.push({ id: brand.id, text: brand.name })
                 });
             }
             return temp;
@@ -1578,14 +1573,14 @@ export default {
             this.clearCityDrawing();
         },
 
-        getCategories() {
+        getBrands() {
 
             this.isLoading = true
-            axios.get(this.$apiUrl + '/categories/main')
+            axios.get(this.$apiUrl + '/products/brands/get')
                 .then((response) => {
                     this.isLoading = false
                     let data = response.data;
-                    this.categories = data.data;
+                    this.brands = data.data;
                 }).catch(error => {
                     this.isLoading = false;
                     if (error?.request?.statusText) {
@@ -1846,11 +1841,10 @@ export default {
             if (this.$refs['my-form']) this.$refs['my-form'].reset();
             Object.assign(this, {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
-                store_name: "", street: "", pincode_id: "", city_id: [], categories_ids: [],
+                store_name: "", street: "", pincode_id: "", city_id: [], brand_ids: [],
                 state: "", remark: "", bank_name: "", account_number: "", bank_ifsc_code: "", account_name: "", upi_id: "", upi_mobile: "", upi_name: "",
                 selected_zone: "", commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
-                view_order_otp: 0, assign_delivery_boy: 0, change_order_status_delivered: 0,
                 status: 0, store_logo: "", store_logo_url: "", national_id_card: "",
                 national_id_card_url: "", national_id_card_name: "", address_proof: "",
                 address_proof_url: "", address_proof_name: "", place_name: "", formatted_address: "",
@@ -1876,15 +1870,14 @@ export default {
                     email: this.email, mobile: this.mobile, store_url: this.store_url,
                     store_name: defaultTranslation ? defaultTranslation.store_name : this.store_name,
                     street: this.street, pincode_id: this.pincode_id,
-                    city_id: this.city_id, categories_ids: this.categories_ids, state: this.state,
+                    city_id: this.city_id, brand_ids: this.brand_ids, state: this.state,
                     remark: this.remark, bank_name: this.bank_name, account_number: this.account_number, bank_ifsc_code: this.bank_ifsc_code, account_name: this.account_name, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
                     upi_name: this.upi_name, selected_zone: this.selected_zone, commission: this.commission,
                     tax_name: this.tax_name, tax_number: this.tax_number, pan_number: this.pan_number,
                     latitude: this.latitude, longitude: this.longitude, place_name: this.place_name,
                     formatted_address: this.formatted_address,
                     store_description: defaultTranslation ? defaultTranslation.store_description : this.store_description,
-                    require_products_approval: this.require_products_approval, view_order_otp: this.view_order_otp,
-                    assign_delivery_boy: this.assign_delivery_boy, change_order_status_delivered: this.change_order_status_delivered,
+                    require_products_approval: this.require_products_approval,
                     status: this.status, self_pickup_mode: this.self_pickup_mode, door_step_mode: this.door_step_mode,
                     pickup_store_address: this.pickup_store_address, pickup_latitude: this.pickup_latitude,
                     pickup_longitude: this.pickup_longitude, storeTimings: JSON.parse(JSON.stringify(this.storeTimings)),
@@ -2038,7 +2031,7 @@ export default {
                         this.street = emptyIfNull(this.record.street);
                         this.pincode_id = "";
                         this.city_id = emptyIfNull(this.record.city_id) ? this.record.city_id.split(",") : [];
-                        this.categories_ids = emptyIfNull(this.record.categories) ? this.record.categories.split(",") : [];
+                        this.brand_ids = Array.isArray(this.record.brand_ids) ? this.record.brand_ids.map(String) : [];
                         this.state = emptyIfNull(this.record.state);
                         this.remark = emptyIfNull(this.record.remark);
                         this.bank_name = emptyIfNull(this.record.bank_name);
@@ -2063,9 +2056,7 @@ export default {
                         this.formatted_address = emptyIfNull(this.record.formatted_address);
                         this.require_products_approval = this.record.require_products_approval;
                         // this.customer_privacy = this.record.customer_privacy;
-                        this.view_order_otp = this.record.view_order_otp;
-                        this.assign_delivery_boy = this.record.assign_delivery_boy;
-                        this.change_order_status_delivered = this.record.change_order_status_delivered;
+                        // Sarthi: view_order_otp/assign_delivery_boy/change_order_status_delivered removed, no UI here
 
                         // Self Pickup fields
                         this.self_pickup_mode = (this.record.self_pickup_mode === null || this.record.self_pickup_mode === undefined) ? 0 : this.record.self_pickup_mode;
@@ -2253,7 +2244,7 @@ export default {
                 formData.append('street', this.street);
                 formData.append('pincode_id', this.pincode_id);
                 formData.append('city_id', this.city_id);
-                formData.append('categories_ids', this.categories_ids);
+                formData.append('brand_ids', this.brand_ids);
                 formData.append('state', this.state);
                 formData.append('remark', this.remark);
                 formData.append('bank_name', this.bank_name || '');
@@ -2273,9 +2264,6 @@ export default {
                 formData.append('place_name', this.place_name);
                 formData.append('formatted_address', this.formatted_address);
                 formData.append('require_products_approval', this.require_products_approval);
-                formData.append('view_order_otp', this.view_order_otp);
-                formData.append('assign_delivery_boy', this.assign_delivery_boy);
-                formData.append('change_order_status_delivered', this.change_order_status_delivered);
                 formData.append('self_pickup_mode', this.self_pickup_mode);
                 formData.append('door_step_mode', this.door_step_mode);
                 formData.append('pickup_store_address', this.pickup_store_address);

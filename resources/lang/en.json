@@ -381,6 +381,8 @@
     "store_information": "Store Information",
     "category_ids": "Category IDs",
     "select_categories": "Select Categories",
+    "brand_ids": "Brands",
+    "select_brands": "Select Brands",
     "tax_name": "Tax Name",
     "tax_number": "Tax Number",
     "pan_number": "PAN Number",

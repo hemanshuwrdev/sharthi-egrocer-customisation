@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\Brand;
+use App\Models\BrandDistributorMapping;
 use App\Models\City;
 use App\Models\OrderItem;
 use App\Models\Role;
@@ -109,7 +111,7 @@ class SellerApiController extends Controller
             'mobile' => 'required|numeric',
             'password' => 'min:6|required_with:confirm_password|same:confirm_password',
             'store_name' => 'required',
-            'categories_ids' => 'required',
+            'brand_ids' => 'required',
             'commission' => 'required',
             'national_id_card' => 'required|mimes:jpeg,jpg,png,gif,pdf',
             'address_proof' => 'required|mimes:jpeg,jpg,png,gif,pdf',
@@ -128,6 +130,14 @@ class SellerApiController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
+
+        $brandIds = $this->parseIdList($request->brand_ids);
+        $cityIds = $this->parseIdList($request->city_id);
+        $conflict = $this->getBrandCityConflict($brandIds, $cityIds, null);
+        if ($conflict) {
+            return CommonHelper::responseError($conflict);
+        }
+
         DB::beginTransaction();
         try {
             $data = array();
@@ -148,7 +158,6 @@ class SellerApiController extends Controller
             $record->street = $request->street;
             $record->pincode_id = ($request->pincode_id) ?? 0;
             $record->city_id = $request->city_id;
-            $record->categories = $request->categories_ids;
             $record->state = $request->state;
             $record->bank_name = $request->bank_name;
             $record->account_number = $request->account_number;
@@ -190,9 +199,6 @@ class SellerApiController extends Controller
 
             $record->require_products_approval = $request->require_products_approval;
             $record->customer_privacy = $request->customer_privacy;
-            $record->view_order_otp = $request->view_order_otp;
-            $record->assign_delivery_boy = $request->assign_delivery_boy;
-            $record->change_order_status_delivered = $request->change_order_status_delivered;
             $record->self_pickup_mode = $request->self_pickup_mode ?? 0;
             $record->pickup_store_address = $request->pickup_store_address;
             $record->pickup_latitude = $request->pickup_latitude;
@@ -227,6 +233,8 @@ class SellerApiController extends Controller
                 $record->address_proof = $image;
             }
             $record->save();
+
+            $this->syncBrandDistributorMappings($record, $brandIds, $cityIds);
 
             // Save translations - can accept single language_id or multiple translations array (JSON string)
             if ($request->has('translations')) {
@@ -289,6 +297,7 @@ class SellerApiController extends Controller
         $cityIds = $seller->city_id ? array_filter(array_map('intval', explode(',', $seller->city_id))) : [];
         $cities = $cityIds ? City::whereIn('id', $cityIds)->get(['id', 'name', 'zone']) : collect();
         $seller->cities = $cities;
+        $seller->brand_ids = BrandDistributorMapping::where('seller_id', $seller->id)->distinct()->pluck('brand_id');
 
         Seller::setOptimizedResponse(false);
 
@@ -303,7 +312,7 @@ class SellerApiController extends Controller
             'mobile' => 'required|numeric',
             'confirm_password' => 'same:password',
             'store_name' => 'required',
-            'categories_ids' => 'required',
+            'brand_ids' => 'required',
             'commission' => 'required',
             'city_id' => 'nullable',
             'latitude' => 'required',
@@ -327,6 +336,13 @@ class SellerApiController extends Controller
             $record = Seller::find($request->id);
 
             if ($record) {
+
+                $brandIds = $this->parseIdList($request->brand_ids);
+                $cityIds = $this->parseIdList($request->filled('city_id') ? $request->city_id : $record->city_id);
+                $conflict = $this->getBrandCityConflict($brandIds, $cityIds, $record->id);
+                if ($conflict) {
+                    return CommonHelper::responseError($conflict);
+                }
 
                 $oldStatus = $record->status;
                 DB::beginTransaction();
@@ -363,7 +379,6 @@ class SellerApiController extends Controller
                 if ($request->filled('city_id')) {
                     $record->city_id = $request->city_id;
                 }
-                $record->categories = $request->categories_ids;
                 $record->state = $request->state;
                 $record->bank_name = $request->bank_name;
                 $record->account_number = $request->account_number;
@@ -382,9 +397,6 @@ class SellerApiController extends Controller
                 $record->formatted_address = $request->formatted_address;
                 $record->require_products_approval = $request->require_products_approval;
                 $record->customer_privacy = $request->customer_privacy;
-                $record->view_order_otp = $request->view_order_otp;
-                $record->assign_delivery_boy = $request->assign_delivery_boy;
-                $record->change_order_status_delivered = $request->change_order_status_delivered;
                 $record->self_pickup_mode = $request->self_pickup_mode ?? 0;
                 $record->pickup_store_address = $request->pickup_store_address;
                 $record->pickup_latitude = $request->pickup_latitude;
@@ -420,6 +432,8 @@ class SellerApiController extends Controller
                     $record->address_proof = $image;
                 }
                 $record->save();
+
+                $this->syncBrandDistributorMappings($record, $brandIds, $cityIds);
 
                 // Save/update translations - can accept single language_id or multiple translations array (JSON string)
                 if ($request->has('translations')) {
@@ -552,6 +566,86 @@ class SellerApiController extends Controller
             return CommonHelper::responseWithData($settings);
         } else {
             return CommonHelper::responseError('seller_s_commission_not_available');
+        }
+    }
+
+    /**
+     * Parse a comma-separated / array id list (as sent via FormData) into a clean array of ints.
+     */
+    private function parseIdList($value)
+    {
+        if (is_array($value)) {
+            $ids = $value;
+        } else {
+            $ids = explode(',', (string) $value);
+        }
+
+        return collect($ids)
+            ->map(fn($id) => (int) trim($id))
+            ->filter(fn($id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Check whether any of $brandIds is already mapped to a DIFFERENT seller in any of $cityIds,
+     * for a brand that does not allow overlap. Mirrors the check in SuperAdminCustomApiController::saveBrandMappings.
+     */
+    private function getBrandCityConflict(array $brandIds, array $cityIds, $excludeSellerId)
+    {
+        if (empty($brandIds) || empty($cityIds)) {
+            return null;
+        }
+
+        $brands = Brand::whereIn('id', $brandIds)->get()->keyBy('id');
+
+        foreach ($brandIds as $brandId) {
+            $brand = $brands->get($brandId);
+            if (!$brand || $brand->is_overlap_allowed) {
+                continue;
+            }
+
+            $conflict = BrandDistributorMapping::where('brand_id', $brandId)
+                ->whereIn('city_id', $cityIds)
+                ->when($excludeSellerId, fn($q) => $q->where('seller_id', '!=', $excludeSellerId))
+                ->with('city')
+                ->first();
+
+            if ($conflict) {
+                $cityName = $conflict->city->name ?? $conflict->city_id;
+                return "{$brand->name} is already assigned to another distributor in {$cityName}";
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Sync brand_distributor_mappings rows for this seller to exactly match the submitted
+     * brand_ids x the seller's city_ids. Assumes conflicts were already checked before saving the seller.
+     */
+    private function syncBrandDistributorMappings(Seller $seller, array $brandIds, array $cityIds)
+    {
+        // Drop mappings for brands no longer selected
+        BrandDistributorMapping::where('seller_id', $seller->id)
+            ->whereNotIn('brand_id', $brandIds ?: [0])
+            ->delete();
+
+        foreach ($brandIds as $brandId) {
+            // Drop mappings for cities no longer assigned to this seller
+            BrandDistributorMapping::where('seller_id', $seller->id)
+                ->where('brand_id', $brandId)
+                ->whereNotIn('city_id', $cityIds ?: [0])
+                ->delete();
+
+            foreach ($cityIds as $cityId) {
+                BrandDistributorMapping::firstOrCreate([
+                    'brand_id' => $brandId,
+                    'seller_id' => $seller->id,
+                    'city_id' => $cityId,
+                ]);
+            }
         }
     }
 }

@@ -16,6 +16,7 @@ class RecentlyVisitedProduct extends Model
     protected $fillable = [
         'user_id',
         'product_id',
+        'master_product_id',
         'visited_at'
     ];
 
@@ -30,9 +31,15 @@ class RecentlyVisitedProduct extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Relationship with Product model
+    // Relationship with legacy Product model (kept for old rows, no longer written)
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    // Relationship with MasterProduct model (current catalog)
+    public function masterProduct()
+    {
+        return $this->belongsTo(MasterProduct::class, 'master_product_id');
     }
 }

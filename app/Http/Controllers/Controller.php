@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Seller;
 use App\Models\Product;
+use App\Models\MasterProduct;
 use App\Models\Setting;
 use App\Models\Category;
 use App\Models\Brand;
@@ -32,12 +33,7 @@ class Controller extends BaseController
     {
         $data = array();
         $data['order_count'] = Order::get()->count();
-        $data['product_count'] = DB::table('products as p')
-            ->join('sellers as s', 'p.seller_id', '=', 's.id')
-            ->join('product_variants as pv', 'p.id', '=', 'pv.product_id')
-            ->join('units as u', 'pv.stock_unit_id', '=', 'u.id')
-            ->where('s.status', 1)
-            ->count();
+        $data['product_count'] = MasterProduct::where('status', 1)->count();
         $data['customer_count'] = User::where('status', '!=', 2)->get()->count();
         $data['seller_count'] = Seller::where('status', 1)->get()->count();
         $data['category_count'] = Category::where('status', 1)->get()->count();
@@ -126,29 +122,27 @@ class Controller extends BaseController
 
         $parents = Category::get()->pluck('parent_id')->toArray();
         $data['top_categories'] = OrderItem::select(
-            'product_variants.product_id',
-            'product_variants.id',
-            'products.name as product_name',
-            'products.category_id',
-            'products.seller_id',
+            'master_product_variants.master_product_id as product_id',
+            'master_products.name as product_name',
+            'master_products.category_id',
+            'order_items.seller_id',
             'categories.name as category_name',
-            'product_variants.measurement',
             'order_items.product_name',
             'order_items.variant_name',
             DB::raw("ROUND(SUM(order_items.sub_total),2) as total_revenue")
         )
             ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
-            ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
-            ->leftJoin('units', 'product_variants.stock_unit_id', '=', 'units.id')
-            ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
-            ->leftJoin('sellers', 'products.seller_id', '=', 'sellers.id')
-            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('master_product_variants', 'order_items.master_product_variant_id', '=', 'master_product_variants.id')
+            ->leftJoin('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
+            ->leftJoin('categories', 'master_products.category_id', '=', 'categories.id')
             ->where('sellers.status', 1)
-            ->where(DB::raw('DATE_FORMAT(order_items.created_at, "%Y-%m-%d")'), '<', 'DATE_SUB(NOW(), INTERVAL 1 MONTH)')
+            ->whereMonth('order_items.created_at', now()->month)
+            ->whereYear('order_items.created_at', now()->year)
             ->where('orders.active_status', '=', OrderStatusList::$delivered)
             ->where('categories.status', 1)
-            ->whereNotIn('products.category_id', $parents)
-            ->groupBy('products.category_id')
+            ->whereNotIn('master_products.category_id', $parents)
+            ->groupBy('master_products.category_id')
             ->orderBy('total_revenue', 'DESC')
             ->get();
 
@@ -162,7 +156,7 @@ class Controller extends BaseController
             $categoryIds = $data['top_categories']->pluck('category_id')->unique()->filter()->values();
             $productIds = $data['top_categories']->pluck('product_id')->unique()->filter()->values();
             $categories = Category::whereIn('id', $categoryIds)->with('translations')->get()->keyBy('id');
-            $products = Product::whereIn('id', $productIds)->with('translations')->get()->keyBy('id');
+            $products = MasterProduct::whereIn('id', $productIds)->with('translations')->get()->keyBy('id');
             foreach ($data['top_categories'] as $row) {
                 $origCategoryName = $row->category_name ?? '';
                 $origProductName = $row->product_name ?? '';

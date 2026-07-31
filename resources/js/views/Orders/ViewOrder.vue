@@ -23,7 +23,7 @@
                             <li class="breadcrumb-item" v-else-if="isDeliveryBoyRoute">
                                 <router-link to="/delivery_boy/orders">{{ __('view_order') }}</router-link>
                             </li>
-                            <li class="breadcrumb-item" v-else>
+        <li class="breadcrumb-item" v-else>
                                 <router-link to="/orders">{{ __('view_order') }}</router-link>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">
