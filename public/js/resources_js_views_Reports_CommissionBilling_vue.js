@@ -289,6 +289,36 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -321,6 +351,9 @@ __webpack_require__.r(__webpack_exports__);
       summaryLoading: false,
       summaryData: [],
       summaryFilter: null,
+      summaryCurrentPage: 1,
+      summaryPerPage: this.$perPage || 10,
+      summaryPageOptions: this.$pageOptions || [10, 25, 50, 100],
       summaryFields: [{
         key: 'name',
         label: __('distributor'),
@@ -1180,6 +1213,8 @@ var render = function () {
                                   items: _vm.summaryData,
                                   fields: _vm.summaryFields,
                                   filter: _vm.summaryFilter,
+                                  "current-page": _vm.summaryCurrentPage,
+                                  "per-page": _vm.summaryPerPage,
                                   busy: _vm.summaryLoading,
                                   bordered: true,
                                   "show-empty": "",
@@ -1340,6 +1375,77 @@ var render = function () {
                                   ),
                                 ]),
                               ]),
+                            ],
+                            1
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.summaryData.length
+                        ? _c(
+                            "b-row",
+                            { staticClass: "mt-2" },
+                            [
+                              _c(
+                                "b-col",
+                                { attrs: { md: "2" } },
+                                [
+                                  _c(
+                                    "b-form-group",
+                                    {
+                                      staticClass: "mb-0",
+                                      attrs: {
+                                        label: _vm.__("per_page"),
+                                        "label-for": "summary-per-page-select",
+                                        "label-align-sm": "right",
+                                        "label-size": "sm",
+                                      },
+                                    },
+                                    [
+                                      _c("b-form-select", {
+                                        staticClass: "form-control form-select",
+                                        attrs: {
+                                          id: "summary-per-page-select",
+                                          options: _vm.summaryPageOptions,
+                                          size: "sm",
+                                        },
+                                        model: {
+                                          value: _vm.summaryPerPage,
+                                          callback: function ($$v) {
+                                            _vm.summaryPerPage = $$v
+                                          },
+                                          expression: "summaryPerPage",
+                                        },
+                                      }),
+                                    ],
+                                    1
+                                  ),
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "b-col",
+                                { attrs: { md: "4", "offset-md": "6" } },
+                                [
+                                  _c("b-pagination", {
+                                    staticClass: "my-0",
+                                    attrs: {
+                                      "total-rows": _vm.summaryData.length,
+                                      "per-page": _vm.summaryPerPage,
+                                      align: "fill",
+                                      size: "sm",
+                                    },
+                                    model: {
+                                      value: _vm.summaryCurrentPage,
+                                      callback: function ($$v) {
+                                        _vm.summaryCurrentPage = $$v
+                                      },
+                                      expression: "summaryCurrentPage",
+                                    },
+                                  }),
+                                ],
+                                1
+                              ),
                             ],
                             1
                           )

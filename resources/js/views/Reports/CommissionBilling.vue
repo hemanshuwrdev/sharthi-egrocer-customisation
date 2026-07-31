@@ -144,6 +144,8 @@
                                     :items="summaryData"
                                     :fields="summaryFields"
                                     :filter="summaryFilter"
+                                    :current-page="summaryCurrentPage"
+                                    :per-page="summaryPerPage"
                                     :busy="summaryLoading"
                                     :bordered="true"
                                     show-empty
@@ -183,6 +185,34 @@
                                     <div class="text-primary h6">
                                         {{ __('total_commission_month') }}: {{ $currency }} {{ totalCommMonth.toFixed(2) }}
                                     </div>
+                                </b-col>
+                            </b-row>
+                            <b-row class="mt-2" v-if="summaryData.length">
+                                <b-col md="2">
+                                    <b-form-group
+                                        :label="__('per_page')"
+                                        label-for="summary-per-page-select"
+                                        label-align-sm="right"
+                                        label-size="sm"
+                                        class="mb-0">
+                                        <b-form-select
+                                            id="summary-per-page-select"
+                                            v-model="summaryPerPage"
+                                            :options="summaryPageOptions"
+                                            size="sm"
+                                            class="form-control form-select"
+                                        ></b-form-select>
+                                    </b-form-group>
+                                </b-col>
+                                <b-col md="4" offset-md="6">
+                                    <b-pagination
+                                        v-model="summaryCurrentPage"
+                                        :total-rows="summaryData.length"
+                                        :per-page="summaryPerPage"
+                                        align="fill"
+                                        size="sm"
+                                        class="my-0"
+                                    ></b-pagination>
                                 </b-col>
                             </b-row>
                         </div>
@@ -299,6 +329,9 @@ export default {
             summaryLoading: false,
             summaryData: [],
             summaryFilter: null,
+            summaryCurrentPage: 1,
+            summaryPerPage: this.$perPage || 10,
+            summaryPageOptions: this.$pageOptions || [10, 25, 50, 100],
             summaryFields: [
                 { key: 'name',                  label: __('distributor'),           sortable: true },
                 { key: 'mobile',                label: __('mobile'),                sortable: false },
