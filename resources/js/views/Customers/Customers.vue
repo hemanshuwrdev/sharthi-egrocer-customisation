@@ -60,11 +60,13 @@
 
                                 <template #cell(type)="row">
                                     <img :src="$baseUrl + '/images/phone.svg'" height="40" alt="phone"
-                                        v-if="row.item.type == 'phone'" />
+                                        v-if="row.item.type == 'phone' || (!row.item.type && row.item.mobile && !row.item.email)" />
                                     <img :src="$baseUrl + '/images/google.svg'" height="40" alt="google"
                                         v-if="row.item.type == 'google'" />
                                     <img :src="$baseUrl + '/images/apple.svg'" height="40" alt="apple"
                                         v-if="row.item.type == 'apple'" />
+                                    <img :src="$baseUrl + '/images/email.svg'" height="40" alt="email"
+                                        v-if="row.item.type == 'email' || (!row.item.type && row.item.email)" />
                                 </template>
 
                                 <template #cell(status)="row">

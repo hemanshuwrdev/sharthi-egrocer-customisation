@@ -125,6 +125,8 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -570,7 +572,10 @@ var render = function () {
                           key: "cell(type)",
                           fn: function (row) {
                             return [
-                              row.item.type == "phone"
+                              row.item.type == "phone" ||
+                              (!row.item.type &&
+                                row.item.mobile &&
+                                !row.item.email)
                                 ? _c("img", {
                                     attrs: {
                                       src: _vm.$baseUrl + "/images/phone.svg",
@@ -596,6 +601,17 @@ var render = function () {
                                       src: _vm.$baseUrl + "/images/apple.svg",
                                       height: "40",
                                       alt: "apple",
+                                    },
+                                  })
+                                : _vm._e(),
+                              _vm._v(" "),
+                              row.item.type == "email" ||
+                              (!row.item.type && row.item.email)
+                                ? _c("img", {
+                                    attrs: {
+                                      src: _vm.$baseUrl + "/images/email.svg",
+                                      height: "40",
+                                      alt: "email",
                                     },
                                   })
                                 : _vm._e(),

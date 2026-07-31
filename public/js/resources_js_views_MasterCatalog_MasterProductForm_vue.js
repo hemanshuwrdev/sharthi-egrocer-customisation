@@ -415,6 +415,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -634,7 +635,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               status: v.status,
               _file: null,
               _preview: null,
-              _delete: false
+              _delete: false,
+              _imageError: null
             };
           });
         }
@@ -742,12 +744,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         status: 1,
         _file: null,
         _preview: null,
-        _delete: false
+        _delete: false,
+        _imageError: null
       };
     },
     onVariantImage: function onVariantImage(e, v) {
       var file = e.target.files[0];
+      v._imageError = null;
       if (!file) return;
+      var validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        v._imageError = "Invalid file type. Please upload a JPEG, PNG, JPG, GIF or WEBP image.";
+        e.target.value = '';
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        v._imageError = "File size exceeds the maximum allowed limit (2MB).";
+        e.target.value = '';
+        return;
+      }
       v._file = file;
       v._preview = URL.createObjectURL(file);
     },
@@ -2674,6 +2689,14 @@ var render = function () {
                               },
                             },
                           }),
+                          _vm._v(" "),
+                          v._imageError
+                            ? _c(
+                                "div",
+                                { staticClass: "text-danger small mt-1" },
+                                [_vm._v(_vm._s(v._imageError))]
+                              )
+                            : _vm._e(),
                           _vm._v(" "),
                           v._preview || v.image
                             ? _c("div", { staticClass: "mt-1" }, [
