@@ -150,14 +150,6 @@
                                                     <label class="form-check-label" :for="'type_order_' + index">{{
                                                         __('order') }}</label>
                                                 </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        :id="'type_self_pickup_' + index" value="self_pickup"
-                                                        v-model="charge.applicable_on">
-                                                    <label class="form-check-label"
-                                                        :for="'type_self_pickup_' + index">{{ __('self_pickup')
-                                                        }}</label>
-                                                </div>
 
                                             </div>
                                         </div>
@@ -249,7 +241,7 @@ export default {
                             charge_type: charge.charge_type || 'amount',
                             is_refundable: charge.is_refundable === true || charge.is_refundable === 1,
                             is_active: charge.is_active !== false && charge.is_active !== 0,
-                            applicable_on: Array.isArray(charge.applicable_on) ? charge.applicable_on.filter(v => v !== 'pos') : ['order', 'self_pickup'],
+                            applicable_on: Array.isArray(charge.applicable_on) ? charge.applicable_on.filter(v => v !== 'pos') : ['order'],
                         };
                     });
                 })
@@ -266,7 +258,7 @@ export default {
                 charge_type: 'amount',
                 is_refundable: false,
                 is_active: true,
-                applicable_on: ['order', 'self_pickup'],
+                applicable_on: ['order'],
             };
             this.languages.forEach(lang => {
                 newCharge.title[lang.code] = '';
@@ -326,7 +318,7 @@ export default {
                     charge_type: charge.charge_type || 'amount',
                     is_refundable: charge.is_refundable ? true : false,
                     is_active: charge.is_active ? true : false,
-                    applicable_on: charge.applicable_on || ['order', 'self_pickup'],
+                    applicable_on: charge.applicable_on || ['order'],
                 };
             });
             axios.post(this.$apiUrl + '/additional_charges/save', {

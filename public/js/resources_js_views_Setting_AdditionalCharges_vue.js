@@ -200,14 +200,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -275,7 +267,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             is_active: charge.is_active !== false && charge.is_active !== 0,
             applicable_on: Array.isArray(charge.applicable_on) ? charge.applicable_on.filter(function (v) {
               return v !== 'pos';
-            }) : ['order', 'self_pickup']
+            }) : ['order']
           };
         });
       })["catch"](function () {
@@ -290,7 +282,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         charge_type: 'amount',
         is_refundable: false,
         is_active: true,
-        applicable_on: ['order', 'self_pickup']
+        applicable_on: ['order']
       };
       this.languages.forEach(function (lang) {
         newCharge.title[lang.code] = '';
@@ -347,7 +339,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           charge_type: charge.charge_type || 'amount',
           is_refundable: charge.is_refundable ? true : false,
           is_active: charge.is_active ? true : false,
-          applicable_on: charge.applicable_on || ['order', 'self_pickup']
+          applicable_on: charge.applicable_on || ['order']
         };
       });
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(this.$apiUrl + '/additional_charges/save', {
@@ -1472,97 +1464,6 @@ var render = function () {
                                               },
                                             },
                                             [_vm._v(_vm._s(_vm.__("order")))]
-                                          ),
-                                        ]
-                                      ),
-                                      _vm._v(" "),
-                                      _c(
-                                        "div",
-                                        {
-                                          staticClass:
-                                            "form-check form-check-inline",
-                                        },
-                                        [
-                                          _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value: charge.applicable_on,
-                                                expression:
-                                                  "charge.applicable_on",
-                                              },
-                                            ],
-                                            staticClass: "form-check-input",
-                                            attrs: {
-                                              type: "checkbox",
-                                              id: "type_self_pickup_" + index,
-                                              value: "self_pickup",
-                                            },
-                                            domProps: {
-                                              checked: Array.isArray(
-                                                charge.applicable_on
-                                              )
-                                                ? _vm._i(
-                                                    charge.applicable_on,
-                                                    "self_pickup"
-                                                  ) > -1
-                                                : charge.applicable_on,
-                                            },
-                                            on: {
-                                              change: function ($event) {
-                                                var $$a = charge.applicable_on,
-                                                  $$el = $event.target,
-                                                  $$c = $$el.checked
-                                                    ? true
-                                                    : false
-                                                if (Array.isArray($$a)) {
-                                                  var $$v = "self_pickup",
-                                                    $$i = _vm._i($$a, $$v)
-                                                  if ($$el.checked) {
-                                                    $$i < 0 &&
-                                                      _vm.$set(
-                                                        charge,
-                                                        "applicable_on",
-                                                        $$a.concat([$$v])
-                                                      )
-                                                  } else {
-                                                    $$i > -1 &&
-                                                      _vm.$set(
-                                                        charge,
-                                                        "applicable_on",
-                                                        $$a
-                                                          .slice(0, $$i)
-                                                          .concat(
-                                                            $$a.slice($$i + 1)
-                                                          )
-                                                      )
-                                                  }
-                                                } else {
-                                                  _vm.$set(
-                                                    charge,
-                                                    "applicable_on",
-                                                    $$c
-                                                  )
-                                                }
-                                              },
-                                            },
-                                          }),
-                                          _vm._v(" "),
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass: "form-check-label",
-                                              attrs: {
-                                                for:
-                                                  "type_self_pickup_" + index,
-                                              },
-                                            },
-                                            [
-                                              _vm._v(
-                                                _vm._s(_vm.__("self_pickup"))
-                                              ),
-                                            ]
                                           ),
                                         ]
                                       ),
