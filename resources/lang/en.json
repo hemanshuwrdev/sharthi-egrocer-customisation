@@ -1879,6 +1879,7 @@
     "order_settlement_details": "Order Settlement Details",
     "total_expected": "Total Expected",
     "digital_verified": "UPI/System Verified",
+    "digital_payment_pending_verify": "digital payment(s) pending verification",
     "current_shortfall": "Current Shortfall",
     "cash_collected_from_driver": "Cash Collected from Driver",
     "update_reconciliation": "Update Reconciliation",

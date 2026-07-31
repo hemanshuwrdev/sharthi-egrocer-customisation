@@ -1879,6 +1879,7 @@
     "order_settlement_details": "تفاصيل تسوية الطلب",
     "total_expected": "الإجمالي المتوقع",
     "digital_verified": "تم التحقق عبر UPI/النظام",
+    "digital_payment_pending_verify": "دفعة (دفعات) رقمية بانتظار التحقق",
     "current_shortfall": "العجز الحالي",
     "cash_collected_from_driver": "النقد المحصّل من السائق",
     "update_reconciliation": "تحديث المطابقة",
