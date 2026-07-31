@@ -66,7 +66,14 @@
                                     {{ new Date(row.item.created_at).toLocaleString()  }}
                                 </template>
                                 <template #cell(actions)="row">
-                                    <router-link :to="'manage_products/view/' + row.item.product_id"  class="btn btn-sm btn-primary" v-b-tooltip.hover :title="__('view')">
+                                    <router-link v-if="row.item.master_product_id"
+                                        :to="{ name: 'EditMasterProduct', params: { id: row.item.master_product_id } }"
+                                        class="btn btn-sm btn-primary" v-b-tooltip.hover :title="__('view')">
+                                        <i class="fa fa-eye"></i> {{ __('view') }}
+                                    </router-link>
+                                    <router-link v-else-if="row.item.product_id"
+                                        :to="'manage_products/view/' + row.item.product_id"
+                                        class="btn btn-sm btn-primary" v-b-tooltip.hover :title="__('view')">
                                         <i class="fa fa-eye"></i> {{ __('view') }}
                                     </router-link>
                                 </template>

@@ -121,6 +121,13 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -481,33 +488,66 @@ var render = function () {
                         key: "cell(actions)",
                         fn: function (row) {
                           return [
-                            _c(
-                              "router-link",
-                              {
-                                directives: [
+                            row.item.master_product_id
+                              ? _c(
+                                  "router-link",
                                   {
-                                    name: "b-tooltip",
-                                    rawName: "v-b-tooltip.hover",
-                                    modifiers: { hover: true },
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "btn btn-sm btn-primary",
+                                    attrs: {
+                                      to: {
+                                        name: "EditMasterProduct",
+                                        params: {
+                                          id: row.item.master_product_id,
+                                        },
+                                      },
+                                      title: _vm.__("view"),
+                                    },
                                   },
-                                ],
-                                staticClass: "btn btn-sm btn-primary",
-                                attrs: {
-                                  to:
-                                    "manage_products/view/" +
-                                    row.item.product_id,
-                                  title: _vm.__("view"),
-                                },
-                              },
-                              [
-                                _c("i", { staticClass: "fa fa-eye" }),
-                                _vm._v(
-                                  " " +
-                                    _vm._s(_vm.__("view")) +
-                                    "\n                                "
-                                ),
-                              ]
-                            ),
+                                  [
+                                    _c("i", { staticClass: "fa fa-eye" }),
+                                    _vm._v(
+                                      " " +
+                                        _vm._s(_vm.__("view")) +
+                                        "\n                                "
+                                    ),
+                                  ]
+                                )
+                              : row.item.product_id
+                              ? _c(
+                                  "router-link",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "btn btn-sm btn-primary",
+                                    attrs: {
+                                      to:
+                                        "manage_products/view/" +
+                                        row.item.product_id,
+                                      title: _vm.__("view"),
+                                    },
+                                  },
+                                  [
+                                    _c("i", { staticClass: "fa fa-eye" }),
+                                    _vm._v(
+                                      " " +
+                                        _vm._s(_vm.__("view")) +
+                                        "\n                                "
+                                    ),
+                                  ]
+                                )
+                              : _vm._e(),
                           ]
                         },
                       },
