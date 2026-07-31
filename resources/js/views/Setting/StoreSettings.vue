@@ -523,14 +523,11 @@
                                                         <!-- Country code setting -->
                                                         <div class="form-group col-md-6">
                                                             <label for="country_code">{{ __('country_code') }}</label>
-                                                            <select name="country_code" id="country_code"
-                                                                v-model="store_settings.country_code"
-                                                                @change="onCountryCodeChange"
-                                                                class="form-control form-select">
-                                                                <option value="">{{ __('select') }}</option>
-                                                                <option v-for="opt in countryCodeOptions" :key="opt.value"
-                                                                    :value="opt.value">{{ opt.label }}</option>
-                                                            </select>
+                                                            <multiselect v-model="selectedCountryCode"
+                                                                :options="countryCodeOptions"
+                                                                :open-direction="'below'" :max-height="200"
+                                                                placeholder="Select" label="label" track-by="value"
+                                                                id="country_code"></multiselect>
                                                             <span class="text text-primary font-size-13"> ({{
                                                                 __('it_will_used_as_default_country_code_for_phone_numbers') }})</span>
                                                         </div>
@@ -1732,6 +1729,15 @@ export default {
         shouldHideThirdPartyValues() {
             return this.$isDemo == 1 && (!this.login_user || this.login_user.id !== 1);
         },
+        selectedCountryCode: {
+            get() {
+                return this.countryCodeOptions.find(opt => opt.value === this.store_settings.country_code) || null;
+            },
+            set(opt) {
+                this.store_settings.country_code = opt ? opt.value : '';
+                this.store_settings.nation_code = opt ? opt.code : '';
+            }
+        },
         // Date format options with current date preview
         dateFormatOptions() {
             const now = new Date();
@@ -1821,10 +1827,6 @@ export default {
     },
 
     methods: {
-        onCountryCodeChange() {
-            const selected = this.countryCodeOptions.find(opt => opt.value === this.store_settings.country_code);
-            this.store_settings.nation_code = selected ? selected.code : '';
-        },
         onLogoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;

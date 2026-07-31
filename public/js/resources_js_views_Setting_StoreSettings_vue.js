@@ -1654,9 +1654,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
 
 
 
@@ -1775,6 +1772,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     shouldHideThirdPartyValues: function shouldHideThirdPartyValues() {
       return this.$isDemo == 1 && (!this.login_user || this.login_user.id !== 1);
     },
+    selectedCountryCode: {
+      get: function get() {
+        var _this = this;
+        return this.countryCodeOptions.find(function (opt) {
+          return opt.value === _this.store_settings.country_code;
+        }) || null;
+      },
+      set: function set(opt) {
+        this.store_settings.country_code = opt ? opt.value : '';
+        this.store_settings.nation_code = opt ? opt.code : '';
+      }
+    },
     // Date format options with current date preview
     dateFormatOptions: function dateFormatOptions() {
       var now = new Date();
@@ -1870,13 +1879,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     this.bootstrap();
   },
   methods: {
-    onCountryCodeChange: function onCountryCodeChange() {
-      var _this = this;
-      var selected = this.countryCodeOptions.find(function (opt) {
-        return opt.value === _this.store_settings.country_code;
-      });
-      this.store_settings.nation_code = selected ? selected.code : '';
-    },
     onLogoUpload: function onLogoUpload(event) {
       var file = event.target.files[0];
       if (!file) return;
@@ -6100,80 +6102,24 @@ var render = function () {
                                         [_vm._v(_vm._s(_vm.__("country_code")))]
                                       ),
                                       _vm._v(" "),
-                                      _c(
-                                        "select",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value:
-                                                _vm.store_settings.country_code,
-                                              expression:
-                                                "store_settings.country_code",
-                                            },
-                                          ],
-                                          staticClass:
-                                            "form-control form-select",
-                                          attrs: {
-                                            name: "country_code",
-                                            id: "country_code",
-                                          },
-                                          on: {
-                                            change: [
-                                              function ($event) {
-                                                var $$selectedVal =
-                                                  Array.prototype.filter
-                                                    .call(
-                                                      $event.target.options,
-                                                      function (o) {
-                                                        return o.selected
-                                                      }
-                                                    )
-                                                    .map(function (o) {
-                                                      var val =
-                                                        "_value" in o
-                                                          ? o._value
-                                                          : o.value
-                                                      return val
-                                                    })
-                                                _vm.$set(
-                                                  _vm.store_settings,
-                                                  "country_code",
-                                                  $event.target.multiple
-                                                    ? $$selectedVal
-                                                    : $$selectedVal[0]
-                                                )
-                                              },
-                                              _vm.onCountryCodeChange,
-                                            ],
-                                          },
+                                      _c("multiselect", {
+                                        attrs: {
+                                          options: _vm.countryCodeOptions,
+                                          "open-direction": "below",
+                                          "max-height": 200,
+                                          placeholder: "Select",
+                                          label: "label",
+                                          "track-by": "value",
+                                          id: "country_code",
                                         },
-                                        [
-                                          _c(
-                                            "option",
-                                            { attrs: { value: "" } },
-                                            [_vm._v(_vm._s(_vm.__("select")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _vm._l(
-                                            _vm.countryCodeOptions,
-                                            function (opt) {
-                                              return _c(
-                                                "option",
-                                                {
-                                                  key: opt.value,
-                                                  domProps: {
-                                                    value: opt.value,
-                                                  },
-                                                },
-                                                [_vm._v(_vm._s(opt.label))]
-                                              )
-                                            }
-                                          ),
-                                        ],
-                                        2
-                                      ),
+                                        model: {
+                                          value: _vm.selectedCountryCode,
+                                          callback: function ($$v) {
+                                            _vm.selectedCountryCode = $$v
+                                          },
+                                          expression: "selectedCountryCode",
+                                        },
+                                      }),
                                       _vm._v(" "),
                                       _c(
                                         "span",
@@ -6193,7 +6139,8 @@ var render = function () {
                                           ),
                                         ]
                                       ),
-                                    ]
+                                    ],
+                                    1
                                   ),
                                 ]),
                                 _vm._v(" "),
