@@ -12,6 +12,7 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusList;
 use App\Models\PanelNotification;
 use App\Models\SellerProduct;
+use App\Models\MasterProductVariant;
 use App\Models\ReturnRequest;
 use App\Models\Role;
 use App\Models\Seller;
@@ -231,44 +232,56 @@ class SellerController extends BaseController
         $offset = $request->offset;
         $seller_id = auth()->user()->seller->id;
 
-        $join = "LEFT JOIN `categories` c ON c.id = p.category_id
-        LEFT JOIN `product_variants` pv ON pv.product_id = p.id
-            LEFT JOIN `units` u ON u.id = pv.stock_unit_id
-            LEFT JOIN `sellers` s ON s.id = p.seller_id
-            LEFT JOIN `order_status_lists` osl ON osl.id = p.till_status
-            ";
-        $where = " WHERE p.seller_id=" . $seller_id;
+        // Packet/loose classification does not exist for master-catalog products.
+        if (isset($request->type) && in_array($request->type, ['packet_products', 'loose_products'])) {
+            return CommonHelper::responseWithData(["products" => []], 0);
+        }
 
-        //here Sold Out as 0
+        $query = SellerProduct::where('seller_products.seller_id', $seller_id)
+            ->where('seller_products.status', 1)
+            ->join('master_product_variants as mpv', 'mpv.id', '=', 'seller_products.master_product_variant_id')
+            ->join('master_products as mp', 'mp.id', '=', 'mpv.master_product_id')
+            ->leftJoin('sellers as s', 's.id', '=', 'seller_products.seller_id');
+
+        // Matches SellerController::index()'s sold_out_count query.
         if (isset($request->type) && $request->type === 'sold_out') {
-            $where .= empty($where) ? " WHERE pv.stock <=0 AND pv.status = '0' AND p.is_unlimited_stock = '0' " : " AND pv.stock <=0 AND pv.status = '0' AND p.is_unlimited_stock = '0'";
+            $query->where('seller_products.stock', '<=', 0);
         }
-        //here Available as 1, low_stock_limit
+        // Matches SellerController::index()'s low_stock_count query.
         if (isset($request->type) && $request->type === 'low_stock') {
+            $query->where('seller_products.stock', '>', 0);
             $low_stock_limit = Setting::where('variable', 'low_stock_limit')->first();
-            $where .= empty($where) ? " WHERE pv.stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock = '0'" : " AND pv.stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock = '0'";
-        }
-        //here packet paroducts
-        if (isset($request->type) && $request->type === 'packet_products') {
-            $where .= empty($where) ? " WHERE p.type = 'packet'" : " AND p.type ='packet'";
-        }
-        //here loose paroducts
-        if (isset($request->type) && $request->type === 'loose_products') {
-            $where .= empty($where) ? " WHERE p.type = 'loose'" : " AND p.type ='loose'";
+            $low_stock_limit = $low_stock_limit ? (int) $low_stock_limit->value : 0;
+            if ($low_stock_limit > 0) {
+                $query->where('seller_products.stock', '<=', $low_stock_limit);
+            }
         }
 
-        $products = DB::select("SELECT p.id AS product_id, p.*, p.name, p.seller_id, p.status, p.tax_id, p.image,
-            CONCAT('" . asset('storage/') . "/', p.image) as image_url,
-            s.name as seller_name, p.indicator, p.manufacturer, p.made_in, p.return_status,
-            p.cancelable_status, p.till_status, osl.status as till_status_name, p.description,
-            pv.id as product_variant_id, pv.price, pv.discounted_price, pv.measurement,
-            pv.status as pv_status, pv.stock, pv.stock_unit_id,
-            (select short_code from units where units.id = pv.stock_unit_id) as stock_unit
-            FROM `products` p $join $where
-            ORDER BY p.id DESC, pv.id ASC");
-        $total = count($products);
+        $query->select(
+            'mpv.id as product_variant_id',
+            'mp.id as product_id',
+            'mp.name',
+            'mp.image',
+            's.name as seller_name',
+            'seller_products.id as seller_product_id',
+            'seller_products.mrp as price',
+            'seller_products.discounted_price',
+            'seller_products.stock',
+            'seller_products.status as pv_status'
+        );
+
+        $total = (clone $query)->count();
+
+        $products = $query->orderBy('mp.id', 'DESC')
+            ->orderBy('mpv.id', 'ASC')
+            ->get()
+            ->map(function ($row) {
+                $row->image_url = $row->image ? asset('storage/' . $row->image) : null;
+                return $row;
+            });
+
         if (isset($request->limit)) {
-            $products = array_slice($products, $offset, $limit);
+            $products = $products->slice($offset, $limit)->values();
         }
         $data = array(
             "products" => $products
