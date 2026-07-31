@@ -490,6 +490,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     viewProductRoute: function viewProductRoute() {
       // Define route configurations based on user roles
+      if (this.item.master_product_id) {
+        if (this.login_user.role.name === 'Seller') {
+          return {
+            name: 'SellerMyProducts',
+            query: {
+              master_product_id: this.item.master_product_id
+            }
+          };
+        }
+        return {
+          name: 'EditMasterProduct',
+          params: {
+            id: this.item.master_product_id
+          }
+        };
+      }
       var routeConfig = null;
       switch (this.login_user.role.name) {
         case 'Seller':
@@ -1749,9 +1765,10 @@ var render = function () {
                                             "btn btn-block btn-light-primary",
                                           attrs: {
                                             to: {
-                                              name: "EditMasterProduct",
-                                              params: {
-                                                id: item.master_product_id,
+                                              name: "SellerMyProducts",
+                                              query: {
+                                                master_product_id:
+                                                  item.master_product_id,
                                               },
                                             },
                                             title: "View Product",

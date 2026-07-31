@@ -83,6 +83,9 @@ class SellerProductApiController extends Controller
         if ($request->filled('active_only')) {
             $query->where('seller_products.status', 1);
         }
+        if ($request->filled('master_product_id')) {
+            $query->where('master_products.id', $request->master_product_id);
+        }
 
         $total = (clone $query)->count();
 

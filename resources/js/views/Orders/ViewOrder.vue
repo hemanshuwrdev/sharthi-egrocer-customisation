@@ -292,7 +292,7 @@
                                         </div>
                                         <div class="col-6" v-if="isSellerRoute && item.master_product_id">
                                             <router-link
-                                                :to="{ name: 'EditMasterProduct', params: { id: item.master_product_id } }"
+                                                :to="{ name: 'SellerMyProducts', query: { master_product_id: item.master_product_id } }"
                                                 v-b-tooltip.hover title="View Product"
                                                 class="btn btn-block btn-light-primary">{{
                                                     __('view_product') }}</router-link>
@@ -469,6 +469,19 @@ export default {
         },
         viewProductRoute() {
             // Define route configurations based on user roles
+            if (this.item.master_product_id) {
+                if (this.login_user.role.name === 'Seller') {
+                    return {
+                        name: 'SellerMyProducts',
+                        query: { master_product_id: this.item.master_product_id },
+                    };
+                }
+                return {
+                    name: 'EditMasterProduct',
+                    params: { id: this.item.master_product_id },
+                };
+            }
+
             let routeConfig = null;
             switch (this.login_user.role.name) {
                 case 'Seller':

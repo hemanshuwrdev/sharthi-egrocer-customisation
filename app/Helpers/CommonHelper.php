@@ -2554,6 +2554,7 @@ class CommonHelper
                 'products.id as product_id',
                 'products.return_status',
                 'products.return_days',
+                'master_product_variants.master_product_id',
                 DB::raw('CONCAT("' . asset('storage/') . '", "/", products.image) as image'),
                 'os.id as active_status',
                 'os.status as status_name'
@@ -2562,6 +2563,7 @@ class CommonHelper
                 ->leftJoin('users', 'orders.user_id', '=', 'users.id')
                 ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
                 ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
+                ->leftJoin('master_product_variants', 'order_items.master_product_variant_id', '=', 'master_product_variants.id')
                 ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
                 ->leftJoin('order_status_lists as os', 'order_items.active_status', '=', 'os.id')
                 ->where('orders.id', $order_id)

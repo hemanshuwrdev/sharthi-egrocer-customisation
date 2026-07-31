@@ -344,6 +344,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       filterDebounce: null,
       brandFilter: null,
       activeFilter: null,
+      masterProductIdFilter: this.$route.query.master_product_id || null,
       availableBrands: [],
       isLoading: false,
       toggler: false,
@@ -389,7 +390,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           per_page: this.perPage,
           filter: this.filter,
           brand_id: this.brandFilter,
-          active_only: this.activeFilter
+          active_only: this.activeFilter,
+          master_product_id: this.masterProductIdFilter
         }
       }).then(function (res) {
         _this2.isLoading = false;

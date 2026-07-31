@@ -269,6 +269,7 @@ export default {
             filterDebounce: null,
             brandFilter: null,
             activeFilter: null,
+            masterProductIdFilter: this.$route.query.master_product_id || null,
             availableBrands: [],
             isLoading: false,
 
@@ -307,6 +308,7 @@ export default {
                     filter: this.filter,
                     brand_id: this.brandFilter,
                     active_only: this.activeFilter,
+                    master_product_id: this.masterProductIdFilter,
                 },
             }).then(res => {
                 this.isLoading = false;
