@@ -1940,5 +1940,6 @@
     "total_orders": "Total Orders",
     "close_and_reconcile": "Close and Reconcile",
     "hsn_code": "HSN Code",
-    "status_updated_successfully" : "Status updated successfully"
+    "status_updated_successfully" : "Status updated successfully",
+    "no_tags_available" : "No tags available"
 }
