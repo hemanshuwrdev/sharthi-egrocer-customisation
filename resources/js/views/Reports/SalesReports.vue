@@ -46,7 +46,7 @@
                             </b-col>
                             <b-col md="4">
                                 <h6 class="box-title" for="seller">{{ __('seller') }}</h6>
-                                <select name="seller" id="seller" v-model="seller" @change="getSalesReports()"
+                                <select name="seller" id="seller" v-model="seller" @change="onSellerChange()"
                                         class="form-control form-select">
                                     <option value="">{{ __('select_seller') }}</option>
                                     <option v-for="seller in sellers" :value="seller.id">{{ seller.name }}</option>
@@ -226,6 +226,11 @@ export default {
         this.getSalesReports();
     },
     methods: {
+        onSellerChange() {
+            this.category = "";
+            this.deliveryBoy = "";
+            this.getSalesReports();
+        },
         getSalesReports() {
             this.isLoading = true;
             let param = {

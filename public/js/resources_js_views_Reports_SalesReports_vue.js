@@ -273,6 +273,11 @@ __webpack_require__.r(__webpack_exports__);
     this.getSalesReports();
   },
   methods: {
+    onSellerChange: function onSellerChange() {
+      this.category = "";
+      this.deliveryBoy = "";
+      this.getSalesReports();
+    },
     getSalesReports: function getSalesReports() {
       var _this = this;
       this.isLoading = true;
@@ -720,7 +725,7 @@ var render = function () {
                                 : $$selectedVal[0]
                             },
                             function ($event) {
-                              return _vm.getSalesReports()
+                              return _vm.onSellerChange()
                             },
                           ],
                         },

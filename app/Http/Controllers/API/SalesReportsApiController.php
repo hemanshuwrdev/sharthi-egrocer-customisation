@@ -21,13 +21,27 @@ class SalesReportsApiController extends Controller
         $endDate = $request->filled('endDate') ? Carbon::parse($request->input('endDate'))->endOfDay() : null;
 
         $sellers = Seller::orderBy('id','DESC')->get()->makeHidden(['translations'])->toArray();
-        
-        $categories = Category::orderBy('id','DESC')
+
+        $categoriesQuery = Category::orderBy('id','DESC');
+        $deliveryBoysQuery = DeliveryBoy::orderBy('id','DESC');
+
+        if ($request->filled('seller')) {
+            $categoryIds = DB::table('products')
+                ->where('seller_id', $request->seller)
+                ->whereNotNull('category_id')
+                ->distinct()
+                ->pluck('category_id');
+            $categoriesQuery->whereIn('id', $categoryIds);
+
+            $deliveryBoysQuery->where('seller_id', $request->seller);
+        }
+
+        $categories = $categoriesQuery
             ->get()
             ->makeHidden(['has_child', 'has_active_child', 'translations'])
             ->toArray();
-        
-        $deliveryBoys = DeliveryBoy::orderBy('id','DESC')->get()->makeHidden(['translations'])->toArray();
+
+        $deliveryBoys = $deliveryBoysQuery->get()->makeHidden(['translations'])->toArray();
 
         $SalesReports = OrderItem::select('order_items.id','orders.total',
             'order_items.seller_id','order_items.sub_total','orders.user_id','orders.mobile',
