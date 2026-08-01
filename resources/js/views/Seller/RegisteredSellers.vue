@@ -118,6 +118,11 @@
                                     </b-popover>
                                     {{ row.item.store_name }}
                                 </template>
+                                <template #cell(cities)="row">
+                                    <span v-if="row.item.cities && row.item.cities.length">
+                                        {{ row.item.cities.map(c => c.zone).filter(Boolean).join(', ') }}
+                                    </span>
+                                </template>
                                 <template #cell(other_info)="row">
                                     <small :id="'other'+row.item.id" class="d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2">
                                         <i class="fa fa-info-circle"></i>
@@ -240,7 +245,7 @@ export default {
                 { key: 'seller_info', label: __('seller_info'), class: 'text-legt', sortable: true, sortDirection: 'desc' },
                 { key: 'store_info', label: __('seller_info'), class: 'text-left', sortable: true, sortDirection: 'desc' },
                 { key: 'categories_array', label: __('category'), class: 'text-center', sortable: true, sortDirection: 'desc' },
-                { key: 'city.formatted_address', label: __('city'), class: 'text-center', sortable: true, sortDirection: 'desc' },
+                { key: 'cities', label: __('city'), class: 'text-center' },
                 { key: 'logo', label: __('logo'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'other_info', label: __('other_info'), class: 'text-left', sortable: true, sortDirection: 'desc' },
                 { key: 'commission', label: __('commission'), class: 'text-center', sortable: true, sortDirection: 'desc' },

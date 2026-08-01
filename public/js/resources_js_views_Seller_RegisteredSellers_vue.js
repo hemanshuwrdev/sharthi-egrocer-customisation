@@ -252,6 +252,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -280,11 +285,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sortable: true,
         sortDirection: 'desc'
       }, {
-        key: 'city.formatted_address',
+        key: 'cities',
         label: __('city'),
-        "class": 'text-center',
-        sortable: true,
-        sortDirection: 'desc'
+        "class": 'text-center'
       }, {
         key: 'logo',
         label: __('logo'),
@@ -1036,6 +1039,29 @@ var render = function () {
                                   _vm._s(row.item.store_name) +
                                   "\n                            "
                               ),
+                            ]
+                          },
+                        },
+                        {
+                          key: "cell(cities)",
+                          fn: function (row) {
+                            return [
+                              row.item.cities && row.item.cities.length
+                                ? _c("span", [
+                                    _vm._v(
+                                      "\n                                    " +
+                                        _vm._s(
+                                          row.item.cities
+                                            .map(function (c) {
+                                              return c.zone
+                                            })
+                                            .filter(Boolean)
+                                            .join(", ")
+                                        ) +
+                                        "\n                                "
+                                    ),
+                                  ])
+                                : _vm._e(),
                             ]
                           },
                         },
