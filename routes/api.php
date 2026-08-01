@@ -575,7 +575,7 @@ Route::middleware('auth:api')->group(function () {
         // Point of Sale Routes
         Route::group(['prefix' => 'pos'], function () {
             Route::get('users', [\App\Http\Controllers\API\SellerPosController::class, 'getUsersList']);
-            Route::post('register_user', [\App\Http\Controllers\API\SellerPosController::class, 'registerUser']);
+         Route::post('register_user', [\App\Http\Controllers\API\SellerPosController::class, 'registerUser']);
             Route::post('place_order', [\App\Http\Controllers\API\SellerPosController::class, 'placeOrder']);
             Route::post('update_order', [\App\Http\Controllers\API\SellerPosController::class, 'updateOrder']);
             Route::get('products', [\App\Http\Controllers\API\SellerPosController::class, 'getProducts']);

@@ -927,7 +927,10 @@ var render = function () {
         [
           _c("div", { staticClass: "row" }, [
             _c("div", { staticClass: "form-group" }, [
-              _c("label", [_vm._v(_vm._s(_vm.__("type")))]),
+              _c("label", [
+                _vm._v(_vm._s(_vm.__("type")) + " "),
+                _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+              ]),
               _vm._v(" "),
               _c(
                 "select",
@@ -979,7 +982,10 @@ var render = function () {
             _vm._v(" "),
             _vm.type == "category"
               ? _c("div", { staticClass: "form-group" }, [
-                  _c("label", [_vm._v(_vm._s(_vm.__("category")))]),
+                  _c("label", [
+                    _vm._v(_vm._s(_vm.__("category")) + " "),
+                    _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+                  ]),
                   _vm._v(" "),
                   _c(
                     "select",
@@ -1030,7 +1036,10 @@ var render = function () {
             _vm._v(" "),
             _vm.type == "product"
               ? _c("div", { staticClass: "form-group" }, [
-                  _c("label", [_vm._v(" " + _vm._s(_vm.__("products")))]),
+                  _c("label", [
+                    _vm._v(" " + _vm._s(_vm.__("products")) + " "),
+                    _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+                  ]),
                   _vm._v(" "),
                   _c(
                     "select",
@@ -1081,7 +1090,10 @@ var render = function () {
             _vm._v(" "),
             _vm.type == "slider_url"
               ? _c("div", { staticClass: "form-group" }, [
-                  _c("label", [_vm._v(" " + _vm._s(_vm.__("link")))]),
+                  _c("label", [
+                    _vm._v(" " + _vm._s(_vm.__("link")) + " "),
+                    _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+                  ]),
                   _vm._v(" "),
                   _c("input", {
                     directives: [
@@ -1112,7 +1124,10 @@ var render = function () {
               : _vm._e(),
             _vm._v(" "),
             _c("div", { staticClass: "form-group" }, [
-              _c("label", [_vm._v(" " + _vm._s(_vm.__("image")))]),
+              _c("label", [
+                _vm._v(" " + _vm._s(_vm.__("image")) + " "),
+                _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+              ]),
               _vm._v(" "),
               _c("p", { staticClass: "text-muted" }, [
                 _vm._v(

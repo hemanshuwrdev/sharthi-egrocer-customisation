@@ -9,7 +9,7 @@
         <form ref="my-form" @submit.prevent="saveRecord">
             <div class="row"> 
                 <div class="form-group">
-                    <label>{{ __('type') }}</label>
+                    <label>{{ __('type') }} <span class="text-danger">*</span></label>
                     <select class="form-control form-select" v-model="type">
                         <option value="default"> {{ __('default') }}</option>
                         <option value="category"> {{ __('category') }}</option>
@@ -18,25 +18,25 @@
                     </select>
                 </div>
                 <div class="form-group" v-if="type=='category'">
-                    <label>{{ __('category') }}</label>
+                    <label>{{ __('category') }} <span class="text-danger">*</span></label>
                     <select class="form-control form-select" v-model="type_id" required >
                         <option value="">{{ __('select_category') }}</option>
                         <option v-for="category in categories" :value="category.id">{{ category.name }}</option>
                     </select>
                 </div>
                 <div class="form-group" v-if="type=='product'">
-                    <label> {{ __('products') }}</label>
+                    <label> {{ __('products') }} <span class="text-danger">*</span></label>
                     <select class="form-control form-select" v-model="type_id" required>
                         <option value="">{{ __('select_product') }}</option>
                         <option v-for="product in products" :value="product.id">{{ product.name }}</option>
                     </select>
                 </div>
                 <div class="form-group" v-if="type=='slider_url'">
-                    <label> {{ __('link') }}</label>
+                    <label> {{ __('link') }} <span class="text-danger">*</span></label>
                     <input type="url" class="form-control" v-model="slider_url" placeholder="Enter Link" required>
                 </div>
                 <div class="form-group">
-                    <label> {{ __('image') }}</label>
+                    <label> {{ __('image') }} <span class="text-danger">*</span></label>
                     <p class="text-muted"> {{ __('please_choose_square_image_of_larger_than_smaller_than') }}</p>
                     <input type="file" name="slider_image" accept="image/*" v-on:change="handleFileUpload" ref="file_image" class="file-input">
                     <div class="file-input-div bg-gray-100" @click="$refs.file_image.click()" @drop="dropFile" @dragover="$dragoverFile" @dragleave="$dragleaveFile">
