@@ -167,9 +167,15 @@ class SellerPosController extends Controller
                 'order_number' => $ordersId,
                 'status'       => 'completed',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('POS placeOrder: ' . $e->getMessage());
+            Log::error('POS placeOrder failed', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace'   => $e->getTraceAsString(),
+                'payload' => $request->all(),
+            ]);
             return CommonHelper::responseError('Something went wrong. Please try again.');
         }
     }
@@ -524,8 +530,8 @@ class SellerPosController extends Controller
 
             $additional_charges = collect();
 
-            return view('pos_invoice', compact('order', 'order_items', 'additional_charges'));
-        } catch (\Exception $e) {
+            return view('pos_invoice', compact('order', 'order_items', 'additional_charges'))->render();
+        } catch (\Throwable $e) {
             Log::error('POS showInvoice: ' . $e->getMessage());
             return response()->view('errors.500', ['message' => 'Error generating invoice: ' . $e->getMessage()], 500);
         }

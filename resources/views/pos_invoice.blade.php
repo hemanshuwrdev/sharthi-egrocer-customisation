@@ -201,17 +201,13 @@
                                     <td>{{ $total_sub_total }}</td>
                                 </tr>
                                 
-                                @if($order->discount_amount > 0 || $order->discount_percentage > 0)
+                                @if(($order->discount ?? 0) > 0)
                                 <tr>
-                                    <th>Discount ({{ $currency }}) 
-                                    @if($order->discount_percentage > 0)
-                                        ({{ $order->discount_percentage }}%)
-                                    @endif
-                                    </th>
-                                    <td>{{ '- '. $order->discount_amount }}</td>
+                                    <th>Discount ({{ $currency }})</th>
+                                    <td>{{ '- '. $order->discount }}</td>
                                 </tr>
                                 @endif
-                                
+
                                 @if(isset($additional_charges) && count($additional_charges) > 0)
                                     @foreach($additional_charges as $charge)
                                     <tr>
@@ -220,10 +216,10 @@
                                     </tr>
                                     @endforeach
                                 @endif
-                                
+
                                 <tr>
                                     <th>Final Total ({{ $currency }})</th>
-                                    <td>{{ $order->total_amount }}</td>
+                                    <td>{{ $order->final_total }}</td>
                                 </tr>
                             </tbody>
                         </table>

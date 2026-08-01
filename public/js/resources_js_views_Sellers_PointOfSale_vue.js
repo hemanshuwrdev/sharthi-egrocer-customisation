@@ -1769,7 +1769,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           // Send order to API
           axios.post(apiEndpoint, orderData).then(function (response) {
             if (response.data.status) {
-              var orderId = response.data.data.pos_order_id;
+              var orderId = response.data.data.order_id;
 
               // Only show print dialog if print parameter is true
               if (print) {

@@ -822,6 +822,13 @@ class SarthiCustomisation extends Migration
             }
         });
 
+        // POS walk-in customers: order_items.user_id must also allow null
+        Schema::table('order_items', function (Blueprint $table) {
+            if (Schema::hasColumn('order_items', 'user_id')) {
+                $table->integer('user_id')->nullable()->change();
+            }
+        });
+
         $orders = DB::table('orders')->get();
         foreach ($orders as $order) {
             $latestStatus = DB::table('order_statuses')
@@ -878,6 +885,11 @@ class SarthiCustomisation extends Migration
         DB::statement("ALTER TABLE orders MODIFY COLUMN order_type ENUM('doorstep','selfpickup') NOT NULL DEFAULT 'doorstep'");
         Schema::table('orders', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id')->nullable(false)->change();
+        });
+        Schema::table('order_items', function (Blueprint $table) {
+            if (Schema::hasColumn('order_items', 'user_id')) {
+                $table->integer('user_id')->nullable(false)->change();
+            }
         });
 
         // OTP role locking (reverse)

@@ -1814,7 +1814,7 @@ export default {
                     axios.post(apiEndpoint, orderData)
                         .then(response => {
                             if (response.data.status) {
-                                const orderId = response.data.data.pos_order_id;
+                                const orderId = response.data.data.order_id;
 
                                 // Only show print dialog if print parameter is true
                                 if (print) {
