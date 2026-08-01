@@ -274,7 +274,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sortDirection: 'desc'
       }, {
         key: 'store_info',
-        label: __('seller_info'),
+        label: __('store_details'),
         "class": 'text-left',
         sortable: true,
         sortDirection: 'desc'
