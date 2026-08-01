@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\MasterProduct;
 use App\Models\OrderStatusList;
 use App\Models\SellerProduct;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -48,6 +49,46 @@ class SellerPosController extends Controller
         } catch (\Exception $e) {
             Log::error('POS getUsersList: ' . $e->getMessage());
             return CommonHelper::responseError($e->getMessage());
+        }
+    }
+
+    public function registerUser(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'   => 'required|string|max:255',
+            'mobile' => 'nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        try {
+            if (!empty($request->mobile)) {
+                $existing = DB::table('users')->where('mobile', $request->mobile)->whereNull('deleted_at')->first();
+                if ($existing) {
+                    return CommonHelper::responseError('user_already_exist');
+                }
+            }
+
+            $user = new User();
+            $user->name          = $request->name;
+            $user->mobile        = $request->mobile;
+            $user->type          = 'phone';
+            $user->status        = 1;
+            $user->referral_code = strtoupper(substr(sha1(microtime()), 0, 6));
+            $user->save();
+
+            return CommonHelper::responseWithData([
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'mobile'     => $user->mobile,
+                'email'      => $user->email,
+                'shop_name'  => null,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('POS registerUser: ' . $e->getMessage());
+            return CommonHelper::responseError('Something went wrong. Please try again.');
         }
     }
 
