@@ -641,6 +641,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
   },
   methods: {
+    getPositionLabel: function getPositionLabel(position) {
+      var labels = {
+        below_slider: __('below_slider'),
+        below_category: __('below_category'),
+        below_section: __('below_section'),
+        top: __('top')
+      };
+      return labels[position] || position;
+    },
     // Fetch active languages and set current language ID
     fetchActiveLanguages: function fetchActiveLanguages() {
       var _this5 = this;
@@ -2018,7 +2027,13 @@ var render = function () {
                                     ),
                                     _vm._v(" "),
                                     _c("span", { staticClass: "fs-6" }, [
-                                      _vm._v(_vm._s(row.item.position)),
+                                      _vm._v(
+                                        _vm._s(
+                                          _vm.getPositionLabel(
+                                            row.item.position
+                                          )
+                                        )
+                                      ),
                                     ]),
                                   ]),
                                   _vm._v(" "),

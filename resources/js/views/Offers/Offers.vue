@@ -141,7 +141,7 @@
                                         <div class="col-md-4">
                                             <div class="mb-3">
                                                 <label class="text-muted small text-uppercase fw-bold d-block">{{ __('position') }}</label>
-                                                <span class="fs-6">{{ row.item.position }}</span>
+                                                <span class="fs-6">{{ getPositionLabel(row.item.position) }}</span>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="text-muted small text-uppercase fw-bold d-block">{{ __('section_position') }}</label>
@@ -381,6 +381,15 @@ export default {
         });
     },
     methods: {
+        getPositionLabel(position) {
+            const labels = {
+                below_slider: __('below_slider'),
+                below_category: __('below_category'),
+                below_section: __('below_section'),
+                top: __('top'),
+            };
+            return labels[position] || position;
+        },
         // Fetch active languages and set current language ID
         fetchActiveLanguages() {
             return axios.get(this.$apiUrl + '/active_languages')
