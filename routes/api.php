@@ -689,7 +689,7 @@ Route::middleware('auth:api')->group(function () {
             Route::get('edit/{id}', [\App\Http\Controllers\API\ProductApisController::class, 'edit']);
             Route::post('delete', [\App\Http\Controllers\API\ProductApisController::class, 'delete'])->name('products.delete');
             Route::post('multiple_delete', [\App\Http\Controllers\API\ProductApisController::class, 'multipleDelete'])->name('products.multiple_delete');
-            Route::get('/brands', [\App\Http\Controllers\API\BrandsApiController::class, 'index']);
+            Route::get('/brands', [\App\Http\Controllers\API\BrandsApiController::class, 'sellerBrands']);
             Route::get('/taxes', [\App\Http\Controllers\API\TaxesApiController::class, 'index']);
             Route::get('ratings_list', [\App\Http\Controllers\API\Customer\ProductsApiController::class, 'productRatingsList']);
             Route::get('/tags', [\App\Http\Controllers\API\TagsApiController::class, 'search']);

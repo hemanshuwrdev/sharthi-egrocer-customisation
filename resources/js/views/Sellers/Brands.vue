@@ -180,7 +180,7 @@ export default {
         getRecords(){
             this.isLoading = true;
             // Pass page, per_page, and filter so the API handles server-side pagination
-            axios.get(this.$apiUrl + '/products/brands', {
+            axios.get(this.$apiUrl + '/seller/products/brands', {
                 params: {
                     page: this.currentPage,
                     per_page: this.perPage,

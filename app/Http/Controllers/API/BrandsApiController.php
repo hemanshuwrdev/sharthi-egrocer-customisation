@@ -162,6 +162,31 @@ class BrandsApiController extends Controller
         return CommonHelper::responseSuccess('brand_deleted_successfully');
     }
 
+    public function sellerBrands(Request $request)
+    {
+        $sellerId = auth()->user()->seller->id;
+        $brandIds = \App\Models\BrandDistributorMapping::where('seller_id', $sellerId)->distinct()->pluck('brand_id');
+
+        $limit  = $request->input('per_page', 10);
+        $page   = max((int) $request->input('page', 1), 1);
+        $offset = ($page - 1) * $limit;
+        $filter = $request->input('filter', '');
+
+        $query = Brand::withAllTranslations()->whereIn('id', $brandIds)->orderBy('id', 'DESC');
+
+        if ($filter) {
+            $query->where(function ($q) use ($filter) {
+                $q->where('id', 'like', "%{$filter}%")
+                  ->orWhere('name', 'like', "%{$filter}%");
+            });
+        }
+
+        $total  = $query->count();
+        $brands = $query->skip($offset)->take($limit)->get();
+
+        return CommonHelper::responseWithData($brands, $total);
+    }
+
     public function getBrands(Request $request)
     {
         $limit = $request->get('limit');
