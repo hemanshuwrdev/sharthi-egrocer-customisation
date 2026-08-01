@@ -10,10 +10,19 @@ use Illuminate\Support\Facades\Validator;
 
 class VehiclesApiController extends Controller
 {
+    private function scopeToSeller($query)
+    {
+        if (auth()->user()->role_id === \App\Models\Role::$roleSeller) {
+            $query->where('seller_id', auth()->user()->seller->id);
+        }
+
+        return $query;
+    }
+
     public function list(Request $request)
     {
         if ($request->filled('id')) {
-            $vehicle = Vehicle::find($request->id);
+            $vehicle = $this->scopeToSeller(Vehicle::where('id', $request->id))->first();
             if (!$vehicle) {
                 return CommonHelper::responseError('vehicle_not_found');
             }
@@ -25,7 +34,7 @@ class VehiclesApiController extends Controller
         $offset = ($page - 1) * $limit;
         $filter = $request->input('filter', '');
 
-        $query = Vehicle::orderBy('id', 'DESC');
+        $query = $this->scopeToSeller(Vehicle::orderBy('id', 'DESC'));
 
         if ($filter) {
             $query->where(function ($q) use ($filter) {
@@ -59,6 +68,7 @@ class VehiclesApiController extends Controller
         }
 
         $vehicle = Vehicle::create([
+            'seller_id' => auth()->user()->seller->id,
             'name' => $request->name,
             'vehicle_number' => $request->vehicle_number,
             'capacity' => $request->capacity,
@@ -89,7 +99,11 @@ class VehiclesApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $vehicle = Vehicle::find($request->id);
+        $vehicle = Vehicle::where('id', $request->id)->where('seller_id', auth()->user()->seller->id)->first();
+        if (!$vehicle) {
+            return CommonHelper::responseError('vehicle_not_found');
+        }
+
         $vehicle->update([
             'name' => $request->name,
             'vehicle_number' => $request->vehicle_number,
@@ -114,7 +128,10 @@ class VehiclesApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $vehicle = Vehicle::find($request->id);
+        $vehicle = Vehicle::where('id', $request->id)->where('seller_id', auth()->user()->seller->id)->first();
+        if (!$vehicle) {
+            return CommonHelper::responseError('vehicle_not_found');
+        }
 
         // Check if vehicle has any loading slips
         if ($vehicle->loadingSlips()->count() > 0) {
@@ -128,7 +145,7 @@ class VehiclesApiController extends Controller
 
     public function getActiveVehicles()
     {
-        $vehicles = Vehicle::where('status', 1)->get();
+        $vehicles = $this->scopeToSeller(Vehicle::where('status', 1))->get();
         return CommonHelper::responseWithData($vehicles);
     }
 }

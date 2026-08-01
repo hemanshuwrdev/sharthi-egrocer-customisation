@@ -10,6 +10,7 @@ class Vehicle extends Model
     use HasFactory;
 
     protected $fillable = [
+        'seller_id',
         'name',
         'vehicle_number',
         'capacity',
@@ -19,5 +20,10 @@ class Vehicle extends Model
     public function loadingSlips()
     {
         return $this->hasMany(LoadingSlip::class);
+    }
+
+    public function seller()
+    {
+        return $this->belongsTo(Seller::class);
     }
 }

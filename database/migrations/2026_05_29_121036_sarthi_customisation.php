@@ -51,11 +51,21 @@ class SarthiCustomisation extends Migration
         if (!Schema::hasTable('vehicles')) {
             Schema::create('vehicles', function (Blueprint $table) {
                 $table->id();
+                $table->unsignedBigInteger('seller_id')->nullable();
                 $table->string('name');
                 $table->string('vehicle_number')->unique();
                 $table->double('capacity', 8, 2);
                 $table->tinyInteger('status')->default(1);
                 $table->timestamps();
+
+                $table->foreign('seller_id')->references('id')->on('sellers')->onDelete('cascade');
+            });
+        } else {
+            Schema::table('vehicles', function (Blueprint $table) {
+                if (!Schema::hasColumn('vehicles', 'seller_id')) {
+                    $table->unsignedBigInteger('seller_id')->nullable()->after('id');
+                    $table->foreign('seller_id')->references('id')->on('sellers')->onDelete('cascade');
+                }
             });
         }
 
