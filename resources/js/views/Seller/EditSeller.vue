@@ -110,10 +110,22 @@
 
                                                     <div class="form-group col-md-4">
                                                         <label>{{ __('mobile') }} <i class="text-danger">*</i></label>
-                                                        <input type="text" class="form-control" v-model="mobile"
-                                                            :placeholder="__('enter_mobile_number')" inputmode="numeric"
-                                                            required @input="validateMobileNumber"
-                                                            @focus="onInputFocus" @blur="onInputBlur">
+                                                        <div class="input-group">
+                                                            <div class="country-code-dropdown" ref="countryDropdown">
+                                                                <button type="button" class="form-control country-code-toggle" @click="countryDropdownOpen = !countryDropdownOpen">
+                                                                    {{ country_code }}
+                                                                </button>
+                                                                <ul v-if="countryDropdownOpen" class="country-code-menu">
+                                                                    <li v-for="c in countries" :key="c.id" @click="country_code = c.dial_code; countryDropdownOpen = false">
+                                                                        {{ c.dial_code }}
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                            <input type="text" class="form-control" v-model="mobile"
+                                                                :placeholder="__('enter_mobile_number')" inputmode="numeric"
+                                                                required @input="validateMobileNumber"
+                                                                @focus="onInputFocus" @blur="onInputBlur">
+                                                        </div>
                                                         <span v-if="mobilevalidationError" class="error">{{ mobilevalidationError }}</span>
                                                     </div>
 
@@ -1022,6 +1034,9 @@ export default {
             name: "",
             email: "",
             mobile: "",
+            country_code: "+91",
+            countries: [],
+            countryDropdownOpen: false,
             store_url: "",
 
             password: "",
@@ -1204,6 +1219,7 @@ export default {
         this.getBrands();
         this.getZones();
         this.getCities();
+        this.getCountries();
         this.getSellerCommission();
         this.getStoreSettings();
         const languagesPromise = this.fetchActiveLanguages();
@@ -1224,6 +1240,7 @@ export default {
     beforeDestroy: function () {
         if (!this.id && !this.skipCache) this.saveCache();
         if (this.cacheTimer) clearTimeout(this.cacheTimer);
+        document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
     },
     computed: {
         brands_options: function () {
@@ -1386,6 +1403,24 @@ export default {
                     } else {
                         this.showError(__('something_went_wrong'));
                     }
+                });
+        },
+        handleCountryDropdownOutsideClick(event) {
+            if (this.countryDropdownOpen && this.$refs.countryDropdown && !this.$refs.countryDropdown.contains(event.target)) {
+                this.countryDropdownOpen = false;
+            }
+        },
+        getCountries() {
+            axios.get(this.$apiUrl + '/countries', { params: { limit: 250 } })
+                .then((response) => {
+                    this.countries = response.data.data || [];
+                    if (!this.countries.some(c => c.dial_code === this.country_code)) {
+                        const india = this.countries.find(c => c.dial_code === '+91');
+                        if (india) this.country_code = india.dial_code;
+                    }
+                })
+                .catch(() => {
+                    this.countries = [];
                 });
         },
         getZones() {
@@ -1955,6 +1990,7 @@ export default {
                         this.email = this.record.admin.email ?? this.record.email;
 
                         this.mobile = this.record.mobile;
+                        this.country_code = this.record.country_code || "+91";
                         this.store_url = this.record.store_url;
 
                         this.password = "";
@@ -2201,6 +2237,7 @@ export default {
                 // All required fields
                 formData.append('email', this.email);
                 formData.append('mobile', this.mobile);
+                formData.append('country_code', this.country_code);
                 formData.append('store_url', this.store_url);
 
                 // Password only for new sellers or when changing
@@ -2395,11 +2432,47 @@ export default {
         }
     },
     mounted() {
+        document.addEventListener('click', this.handleCountryDropdownOutsideClick);
     }
 };
 </script>
 <style scoped>
 @import "../../../../node_modules/vue-multiselect/dist/vue-multiselect.min.css";
+
+.country-code-dropdown {
+    position: relative;
+    flex: 0 0 auto;
+    width: 110px;
+}
+.country-code-toggle {
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    cursor: pointer;
+}
+.country-code-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1050;
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.country-code-menu li {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.country-code-menu li:hover {
+    background: #f1f3f5;
+}
 
 /* Compact thumb for logo/identity/address previews - keeps layout aligned when multiple are shown */
 .file-preview-thumb {

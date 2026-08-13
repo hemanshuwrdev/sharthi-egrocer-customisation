@@ -154,6 +154,7 @@ class SellerApiController extends Controller
             $record->name = $request->name;
             $record->email = $request->email;
             $record->mobile = $request->mobile;
+            $record->country_code = $request->country_code ?? '+91';
             $record->store_url = $request->store_url;
             $record->store_name = $request->store_name;
             $record->street = $request->street;
@@ -365,6 +366,7 @@ class SellerApiController extends Controller
                 $record->email = $request->email;
 
                 $record->mobile = $request->mobile;
+                $record->country_code = $request->country_code ?? $record->country_code;
 
                 // Get default language to check if this is default language update
                 $defaultLanguage = $this->languageService->getDefaultLanguage();

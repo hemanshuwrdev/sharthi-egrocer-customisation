@@ -25,6 +25,9 @@ class SarthiCustomisation extends Migration
             if (!Schema::hasColumn('sellers', 'upi_name')) {
                 $table->string('upi_name')->nullable()->after('upi_mobile');
             }
+            if (!Schema::hasColumn('sellers', 'country_code')) {
+                $table->string('country_code', 6)->default('+91')->after('mobile');
+            }
         });
 
         // 1. Master Product System (Product Variants)

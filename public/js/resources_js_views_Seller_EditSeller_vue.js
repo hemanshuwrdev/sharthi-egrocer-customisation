@@ -1015,6 +1015,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1062,6 +1074,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       name: "",
       email: "",
       mobile: "",
+      country_code: "+91",
+      countries: [],
+      countryDropdownOpen: false,
       store_url: "",
       password: "",
       showPassword: false,
@@ -1319,6 +1334,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     this.getBrands();
     this.getZones();
     this.getCities();
+    this.getCountries();
     this.getSellerCommission();
     this.getStoreSettings();
     var languagesPromise = this.fetchActiveLanguages();
@@ -1337,6 +1353,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   beforeDestroy: function beforeDestroy() {
     if (!this.id && !this.skipCache) this.saveCache();
     if (this.cacheTimer) clearTimeout(this.cacheTimer);
+    document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
   },
   computed: {
     brands_options: function brands_options() {
@@ -1494,29 +1511,54 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       });
     },
-    getZones: function getZones() {
+    handleCountryDropdownOutsideClick: function handleCountryDropdownOutsideClick(event) {
+      if (this.countryDropdownOpen && this.$refs.countryDropdown && !this.$refs.countryDropdown.contains(event.target)) {
+        this.countryDropdownOpen = false;
+      }
+    },
+    getCountries: function getCountries() {
       var _this5 = this;
+      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/countries', {
+        params: {
+          limit: 250
+        }
+      }).then(function (response) {
+        _this5.countries = response.data.data || [];
+        if (!_this5.countries.some(function (c) {
+          return c.dial_code === _this5.country_code;
+        })) {
+          var india = _this5.countries.find(function (c) {
+            return c.dial_code === '+91';
+          });
+          if (india) _this5.country_code = india.dial_code;
+        }
+      })["catch"](function () {
+        _this5.countries = [];
+      });
+    },
+    getZones: function getZones() {
+      var _this6 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/loading_slips/zones').then(function (response) {
         var data = response.data;
-        _this5.zones = data.data && Array.isArray(data.data) ? data.data : [];
+        _this6.zones = data.data && Array.isArray(data.data) ? data.data : [];
       })["catch"](function () {
-        _this5.zones = [];
+        _this6.zones = [];
       });
     },
     toggleAddCityForm: function toggleAddCityForm() {
-      var _this6 = this;
+      var _this7 = this;
       this.showAddCityForm = !this.showAddCityForm;
       if (this.showAddCityForm) {
         this.newCity.zone = '';
         this.$nextTick(function () {
-          _this6.initCityMap();
+          _this7.initCityMap();
         });
       } else {
         this.resetNewCityForm();
       }
     },
     initCityMap: function initCityMap() {
-      var _this7 = this;
+      var _this8 = this;
       // cityMapRef is inside v-for (language tabs), so Vue gives us an array
       var mapRef = this.$refs.cityMapRef;
       if (!mapRef) return;
@@ -1546,22 +1588,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
         });
         drawingManager.setMap(map);
-        _this7.cityDrawingManager = drawingManager;
+        _this8.cityDrawingManager = drawingManager;
         google.maps.event.addListener(drawingManager, 'overlaycomplete', function (event) {
-          if (_this7.cityCurrentOverlay) {
-            _this7.cityCurrentOverlay.setMap(null);
+          if (_this8.cityCurrentOverlay) {
+            _this8.cityCurrentOverlay.setMap(null);
           }
-          _this7.cityCurrentOverlay = event.overlay;
+          _this8.cityCurrentOverlay = event.overlay;
           if (event.type === 'circle') {
-            _this7.cityGeolocationType = 'circle';
-            _this7.cityRadius = event.overlay.getRadius();
-            _this7.cityVertices = JSON.stringify([{
+            _this8.cityGeolocationType = 'circle';
+            _this8.cityRadius = event.overlay.getRadius();
+            _this8.cityVertices = JSON.stringify([{
               lat: event.overlay.getCenter().lat(),
               lng: event.overlay.getCenter().lng()
             }]);
           } else {
-            _this7.cityGeolocationType = 'polygon';
-            _this7.cityVertices = event.overlay.getPath().getArray();
+            _this8.cityGeolocationType = 'polygon';
+            _this8.cityVertices = event.overlay.getPath().getArray();
           }
         });
       });
@@ -1605,90 +1647,90 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       };
     },
     saveNewCity: function saveNewCity() {
-      var _this8 = this;
+      var _this9 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-        var _response$data, _response$data$data, formData, key, _this8$newCity$key, response, newId, zone, zoneExists, _error$response, _error$response$data, msg;
+        var _response$data, _response$data$data, formData, key, _this9$newCity$key, response, newId, zone, zoneExists, _error$response, _error$response$data, msg;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (_this8.newCity.name) {
+                if (_this9.newCity.name) {
                   _context.next = 2;
                   break;
                 }
-                return _context.abrupt("return", _this8.showError(__('city_name') + ' ' + __('is_required')));
+                return _context.abrupt("return", _this9.showError(__('city_name') + ' ' + __('is_required')));
               case 2:
-                if (_this8.newCity.zone) {
+                if (_this9.newCity.zone) {
                   _context.next = 4;
                   break;
                 }
-                return _context.abrupt("return", _this8.showError(__('zone_name') + ' ' + __('is_required')));
+                return _context.abrupt("return", _this9.showError(__('zone_name') + ' ' + __('is_required')));
               case 4:
-                if (!(!_this8.newCity.latitude || !_this8.newCity.longitude)) {
+                if (!(!_this9.newCity.latitude || !_this9.newCity.longitude)) {
                   _context.next = 6;
                   break;
                 }
-                return _context.abrupt("return", _this8.showError(__('please_search_and_select_city_on_map')));
+                return _context.abrupt("return", _this9.showError(__('please_search_and_select_city_on_map')));
               case 6:
-                if (_this8.cityVertices) {
+                if (_this9.cityVertices) {
                   _context.next = 8;
                   break;
                 }
-                return _context.abrupt("return", _this8.showError(__('draw_city_boundary_on_map_required')));
+                return _context.abrupt("return", _this9.showError(__('draw_city_boundary_on_map_required')));
               case 8:
-                _this8.isSavingCity = true;
+                _this9.isSavingCity = true;
                 _context.prev = 9;
                 formData = new FormData();
-                for (key in _this8.newCity) {
-                  formData.append(key, (_this8$newCity$key = _this8.newCity[key]) !== null && _this8$newCity$key !== void 0 ? _this8$newCity$key : '');
+                for (key in _this9.newCity) {
+                  formData.append(key, (_this9$newCity$key = _this9.newCity[key]) !== null && _this9$newCity$key !== void 0 ? _this9$newCity$key : '');
                 }
-                formData.append('language_id', _this8.defaultLanguageId || 1);
-                formData.append('zone', _this8.newCity.zone);
+                formData.append('language_id', _this9.defaultLanguageId || 1);
+                formData.append('zone', _this9.newCity.zone);
                 formData.append('time_to_travel', 0);
                 formData.append('min_amount_for_free_delivery', 0);
                 formData.append('delivery_charge_method', 'fixed_charge');
                 formData.append('fixed_charge', 0);
-                formData.append('geolocation_type', _this8.cityGeolocationType);
-                formData.append('radius', _this8.cityRadius || '');
-                if (_this8.cityGeolocationType === 'circle') {
-                  formData.append('boundary_points', _this8.cityVertices);
+                formData.append('geolocation_type', _this9.cityGeolocationType);
+                formData.append('radius', _this9.cityRadius || '');
+                if (_this9.cityGeolocationType === 'circle') {
+                  formData.append('boundary_points', _this9.cityVertices);
                 } else {
-                  formData.append('boundary_points', JSON.stringify(_this8.cityVertices));
+                  formData.append('boundary_points', JSON.stringify(_this9.cityVertices));
                 }
                 _context.next = 23;
-                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this8.$apiUrl + '/cities/save', formData);
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this9.$apiUrl + '/cities/save', formData);
               case 23:
                 response = _context.sent;
                 newId = (_response$data = response.data) === null || _response$data === void 0 ? void 0 : (_response$data$data = _response$data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 if (newId) {
                   // Add to cities list and auto-select
-                  _this8.cities.push({
+                  _this9.cities.push({
                     id: newId,
-                    name: _this8.newCity.name,
-                    zone: _this8.newCity.zone
+                    name: _this9.newCity.name,
+                    zone: _this9.newCity.zone
                   });
-                  if (!Array.isArray(_this8.city_id)) _this8.city_id = [];
-                  _this8.city_id = [].concat(_toConsumableArray(_this8.city_id), [String(newId)]);
+                  if (!Array.isArray(_this9.city_id)) _this9.city_id = [];
+                  _this9.city_id = [].concat(_toConsumableArray(_this9.city_id), [String(newId)]);
 
                   // If zone is new, add it to zones list
-                  zone = _this8.newCity.zone;
-                  zoneExists = _this8.zones.find(function (z) {
+                  zone = _this9.newCity.zone;
+                  zoneExists = _this9.zones.find(function (z) {
                     return z.zone === zone;
                   });
                   if (!zoneExists) {
-                    _this8.zones.push({
+                    _this9.zones.push({
                       zone: zone,
                       city_count: 1
                     });
                   } else {
                     zoneExists.city_count = (zoneExists.city_count || 0) + 1;
                   }
-                  _this8.showMessage('success', __('city_saved_successfully'));
-                  _this8.resetNewCityForm();
-                  _this8.showAddCityForm = false;
-                  _this8.getCities();
+                  _this9.showMessage('success', __('city_saved_successfully'));
+                  _this9.resetNewCityForm();
+                  _this9.showAddCityForm = false;
+                  _this9.getCities();
                 } else {
-                  _this8.showError(__('something_went_wrong'));
+                  _this9.showError(__('something_went_wrong'));
                 }
                 _context.next = 32;
                 break;
@@ -1696,10 +1738,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                 _context.prev = 28;
                 _context.t0 = _context["catch"](9);
                 msg = ((_error$response = _context.t0.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || _context.t0.message || __('something_went_wrong');
-                _this8.showError(msg);
+                _this9.showError(msg);
               case 32:
                 _context.prev = 32;
-                _this8.isSavingCity = false;
+                _this9.isSavingCity = false;
                 return _context.finish(32);
               case 35:
               case "end":
@@ -1737,44 +1779,44 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.clearCityDrawing();
     },
     getBrands: function getBrands() {
-      var _this9 = this;
+      var _this10 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/products/brands/get').then(function (response) {
-        _this9.isLoading = false;
+        _this10.isLoading = false;
         var data = response.data;
-        _this9.brands = data.data;
+        _this10.brands = data.data;
       })["catch"](function (error) {
         var _error$request2;
-        _this9.isLoading = false;
+        _this10.isLoading = false;
         if (error !== null && error !== void 0 && (_error$request2 = error.request) !== null && _error$request2 !== void 0 && _error$request2.statusText) {
-          _this9.showError(error.request.statusText);
+          _this10.showError(error.request.statusText);
         } else if (error.message) {
-          _this9.showError(error.message);
+          _this10.showError(error.message);
         } else {
-          _this9.showError(__('something_went_wrong'));
+          _this10.showError(__('something_went_wrong'));
         }
       });
     },
     getSellerCommission: function getSellerCommission() {
-      var _this10 = this;
+      var _this11 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$sellerApiUrl + '/seller_commission').then(function (response) {
         var data = response.data;
-        _this10.commission = data.data.value;
+        _this11.commission = data.data.value;
       });
     },
     getStoreSettings: function getStoreSettings() {
-      var _this11 = this;
+      var _this12 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/store_settings').then(function (response) {
         var data = response.data.data;
-        _this11.store_settings = data.store_settingsObject;
+        _this12.store_settings = data.store_settingsObject;
 
         // Load store settings values
         data.store_settings.forEach(function (item) {
           if (item.variable === 'one_seller_cart') {
-            _this11.store_settings.one_seller_cart = item.value === '1' ? 1 : 0;
+            _this12.store_settings.one_seller_cart = item.value === '1' ? 1 : 0;
           }
           if (item.variable === 'self_pickup_mode') {
-            _this11.store_settings.self_pickup_mode = item.value === '1' ? 1 : 0;
+            _this12.store_settings.self_pickup_mode = item.value === '1' ? 1 : 0;
           }
         });
       });
@@ -1840,13 +1882,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     getCurrentLocation: function getCurrentLocation() {
-      var _this12 = this;
+      var _this13 = this;
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
-          _this12.latitude = position.coords.latitude;
-          _this12.longitude = position.coords.longitude;
-          var latlng = new google.maps.LatLng(_this12.latitude, _this12.longitude);
-          _this12.mapConfig(latlng);
+          _this13.latitude = position.coords.latitude;
+          _this13.longitude = position.coords.longitude;
+          var latlng = new google.maps.LatLng(_this13.latitude, _this13.longitude);
+          _this13.mapConfig(latlng);
         });
       } else {
         this.showError("Geolocation is not supported by this browser.");
@@ -2131,7 +2173,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       } catch (e) {}
     },
     restoreCache: function restoreCache() {
-      var _this13 = this;
+      var _this14 = this;
       try {
         var cached = localStorage.getItem('seller_form_cache');
         if (!cached) return;
@@ -2144,16 +2186,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         Object.keys(data).forEach(function (key) {
           if (key === 'timestamp' || key === 'translations') return;
           if (key === 'storeTimings' && data.storeTimings) {
-            _this13.storeTimings = data.storeTimings;
-          } else if (_this13.hasOwnProperty(key)) {
-            _this13[key] = data[key] !== undefined ? data[key] : _this13[key];
+            _this14.storeTimings = data.storeTimings;
+          } else if (_this14.hasOwnProperty(key)) {
+            _this14[key] = data[key] !== undefined ? data[key] : _this14[key];
           }
         });
         // Restore translations after languages have been initialized.
         if (data.translations && this.languages && this.languages.length > 0) {
           this.languages.forEach(function (language) {
             if (data.translations[language.id]) {
-              _this13.$set(_this13.translations, language.id, _objectSpread(_objectSpread({}, _this13.translations[language.id]), data.translations[language.id]));
+              _this14.$set(_this14.translations, language.id, _objectSpread(_objectSpread({}, _this14.translations[language.id]), data.translations[language.id]));
             }
           });
           var defaultLang = this.languages.find(function (lang) {
@@ -2198,10 +2240,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     debouncedSave: function debouncedSave() {
-      var _this14 = this;
+      var _this15 = this;
       if (this.cacheTimer) clearTimeout(this.cacheTimer);
       this.cacheTimer = setTimeout(function () {
-        return _this14.saveCache();
+        return _this15.saveCache();
       }, 500);
     },
     onInputFocus: function onInputFocus() {
@@ -2209,43 +2251,44 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.isUserTyping = true;
     },
     onInputBlur: function onInputBlur() {
-      var _this15 = this;
+      var _this16 = this;
       // Reset flag when user stops typing (with a small delay)
       setTimeout(function () {
-        _this15.isUserTyping = false;
+        _this16.isUserTyping = false;
       }, 1000);
     },
     getSeller: function getSeller() {
-      var _this16 = this;
+      var _this17 = this;
       // Prevent multiple calls and form refilling
       if (this.isFormLoaded || this.isUserTyping) {
         return;
       }
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/sellers/edit/' + this.id).then(function (response) {
-        _this16.isLoading = false;
+        _this17.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
-          var _this16$record$admin$, _this16$record$admin$2;
+          var _this17$record$admin$, _this17$record$admin$2;
           // Set flag to prevent refilling
-          _this16.isFormLoaded = true;
-          _this16.record = data.data;
+          _this17.isFormLoaded = true;
+          _this17.record = data.data;
 
           // Helper: show empty string when value is null, undefined, or string "null"
           var emptyIfNull = function emptyIfNull(val) {
             return val != null && val !== "null" ? val : "";
           };
-          _this16.admin_id = (_this16$record$admin$ = _this16.record.admin.id) !== null && _this16$record$admin$ !== void 0 ? _this16$record$admin$ : _this16.record.admin_id;
-          _this16.email = (_this16$record$admin$2 = _this16.record.admin.email) !== null && _this16$record$admin$2 !== void 0 ? _this16$record$admin$2 : _this16.record.email;
-          _this16.mobile = _this16.record.mobile;
-          _this16.store_url = _this16.record.store_url;
-          _this16.password = "";
-          _this16.confirm_password = "";
+          _this17.admin_id = (_this17$record$admin$ = _this17.record.admin.id) !== null && _this17$record$admin$ !== void 0 ? _this17$record$admin$ : _this17.record.admin_id;
+          _this17.email = (_this17$record$admin$2 = _this17.record.admin.email) !== null && _this17$record$admin$2 !== void 0 ? _this17$record$admin$2 : _this17.record.email;
+          _this17.mobile = _this17.record.mobile;
+          _this17.country_code = _this17.record.country_code || "+91";
+          _this17.store_url = _this17.record.store_url;
+          _this17.password = "";
+          _this17.confirm_password = "";
 
           // Load translations from the seller object
-          var updatedTranslations = _objectSpread({}, _this16.translations);
-          if (_this16.record.translations && Array.isArray(_this16.record.translations)) {
+          var updatedTranslations = _objectSpread({}, _this17.translations);
+          if (_this17.record.translations && Array.isArray(_this17.record.translations)) {
             // Convert array of translation objects to object keyed by language_id
-            _this16.record.translations.forEach(function (trans) {
+            _this17.record.translations.forEach(function (trans) {
               var langId = trans.language_id;
               updatedTranslations[langId] = {
                 name: emptyIfNull(trans.name),
@@ -2256,71 +2299,71 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
 
           // For languages without translations, use base table data for default language
-          _this16.languages.forEach(function (language) {
+          _this17.languages.forEach(function (language) {
             if (!updatedTranslations[language.id] || !updatedTranslations[language.id].name && !updatedTranslations[language.id].store_name) {
               if (language.is_default) {
                 // Default language: use base table data as fallback
                 updatedTranslations[language.id] = {
-                  name: emptyIfNull(_this16.record.name),
-                  store_name: emptyIfNull(_this16.record.store_name),
-                  store_description: emptyIfNull(_this16.record.store_description)
+                  name: emptyIfNull(_this17.record.name),
+                  store_name: emptyIfNull(_this17.record.store_name),
+                  store_description: emptyIfNull(_this17.record.store_description)
                 };
               }
             }
           });
 
           // Set default language values for backward compatibility
-          var defaultLang = _this16.languages.find(function (lang) {
+          var defaultLang = _this17.languages.find(function (lang) {
             return lang.is_default === 1;
           });
           if (defaultLang && updatedTranslations[defaultLang.id]) {
-            _this16.name = emptyIfNull(updatedTranslations[defaultLang.id].name) || emptyIfNull(_this16.record.name);
-            _this16.store_name = emptyIfNull(updatedTranslations[defaultLang.id].store_name) || emptyIfNull(_this16.record.store_name);
-            _this16.store_description = emptyIfNull(updatedTranslations[defaultLang.id].store_description) || emptyIfNull(_this16.record.store_description);
+            _this17.name = emptyIfNull(updatedTranslations[defaultLang.id].name) || emptyIfNull(_this17.record.name);
+            _this17.store_name = emptyIfNull(updatedTranslations[defaultLang.id].store_name) || emptyIfNull(_this17.record.store_name);
+            _this17.store_description = emptyIfNull(updatedTranslations[defaultLang.id].store_description) || emptyIfNull(_this17.record.store_description);
           } else {
-            _this16.name = emptyIfNull(_this16.record.name);
-            _this16.store_name = emptyIfNull(_this16.record.store_name);
-            _this16.store_description = emptyIfNull(_this16.record.store_description);
+            _this17.name = emptyIfNull(_this17.record.name);
+            _this17.store_name = emptyIfNull(_this17.record.store_name);
+            _this17.store_description = emptyIfNull(_this17.record.store_description);
           }
 
           // Single assignment for reactivity
-          _this16.translations = updatedTranslations;
-          _this16.street = emptyIfNull(_this16.record.street);
-          _this16.pincode_id = "";
-          _this16.city_id = emptyIfNull(_this16.record.city_id) ? _this16.record.city_id.split(",") : [];
-          _this16.brand_ids = Array.isArray(_this16.record.brand_ids) ? _this16.record.brand_ids.map(String) : [];
-          _this16.state = emptyIfNull(_this16.record.state);
-          _this16.remark = emptyIfNull(_this16.record.remark);
-          _this16.bank_name = emptyIfNull(_this16.record.bank_name);
-          _this16.account_number = emptyIfNull(_this16.record.account_number);
-          _this16.bank_ifsc_code = emptyIfNull(_this16.record.bank_ifsc_code || _this16.record.ifsc_code);
-          _this16.account_name = emptyIfNull(_this16.record.account_name);
-          _this16.upi_id = emptyIfNull(_this16.record.upi_id);
-          _this16.upi_mobile = emptyIfNull(_this16.record.upi_mobile);
-          _this16.upi_name = emptyIfNull(_this16.record.upi_name);
-          _this16.commission = _this16.record.commission;
-          _this16.tax_name = emptyIfNull(_this16.record.tax_name);
-          _this16.tax_number = emptyIfNull(_this16.record.tax_number);
-          _this16.pan_number = emptyIfNull(_this16.record.pan_number);
-          _this16.latitude = _this16.record.latitude;
-          _this16.longitude = _this16.record.longitude;
-          _this16.place_name = emptyIfNull(_this16.record.place_name);
-          _this16.formatted_address = emptyIfNull(_this16.record.formatted_address);
-          _this16.require_products_approval = _this16.record.require_products_approval;
+          _this17.translations = updatedTranslations;
+          _this17.street = emptyIfNull(_this17.record.street);
+          _this17.pincode_id = "";
+          _this17.city_id = emptyIfNull(_this17.record.city_id) ? _this17.record.city_id.split(",") : [];
+          _this17.brand_ids = Array.isArray(_this17.record.brand_ids) ? _this17.record.brand_ids.map(String) : [];
+          _this17.state = emptyIfNull(_this17.record.state);
+          _this17.remark = emptyIfNull(_this17.record.remark);
+          _this17.bank_name = emptyIfNull(_this17.record.bank_name);
+          _this17.account_number = emptyIfNull(_this17.record.account_number);
+          _this17.bank_ifsc_code = emptyIfNull(_this17.record.bank_ifsc_code || _this17.record.ifsc_code);
+          _this17.account_name = emptyIfNull(_this17.record.account_name);
+          _this17.upi_id = emptyIfNull(_this17.record.upi_id);
+          _this17.upi_mobile = emptyIfNull(_this17.record.upi_mobile);
+          _this17.upi_name = emptyIfNull(_this17.record.upi_name);
+          _this17.commission = _this17.record.commission;
+          _this17.tax_name = emptyIfNull(_this17.record.tax_name);
+          _this17.tax_number = emptyIfNull(_this17.record.tax_number);
+          _this17.pan_number = emptyIfNull(_this17.record.pan_number);
+          _this17.latitude = _this17.record.latitude;
+          _this17.longitude = _this17.record.longitude;
+          _this17.place_name = emptyIfNull(_this17.record.place_name);
+          _this17.formatted_address = emptyIfNull(_this17.record.formatted_address);
+          _this17.require_products_approval = _this17.record.require_products_approval;
           // this.customer_privacy = this.record.customer_privacy;
           // Sarthi: view_order_otp/assign_delivery_boy/change_order_status_delivered removed, no UI here
 
           // Self Pickup fields
-          _this16.self_pickup_mode = _this16.record.self_pickup_mode === null || _this16.record.self_pickup_mode === undefined ? 0 : _this16.record.self_pickup_mode;
-          _this16.door_step_mode = _this16.record.door_step_mode === null || _this16.record.door_step_mode === undefined ? 1 : _this16.record.door_step_mode;
-          _this16.pickup_store_address = emptyIfNull(_this16.record.pickup_store_address);
-          _this16.pickup_latitude = _this16.record.pickup_latitude || "";
-          _this16.pickup_longitude = _this16.record.pickup_longitude || "";
+          _this17.self_pickup_mode = _this17.record.self_pickup_mode === null || _this17.record.self_pickup_mode === undefined ? 0 : _this17.record.self_pickup_mode;
+          _this17.door_step_mode = _this17.record.door_step_mode === null || _this17.record.door_step_mode === undefined ? 1 : _this17.record.door_step_mode;
+          _this17.pickup_store_address = emptyIfNull(_this17.record.pickup_store_address);
+          _this17.pickup_latitude = _this17.record.pickup_latitude || "";
+          _this17.pickup_longitude = _this17.record.pickup_longitude || "";
 
           // Load store timings
-          if (_this16.record.pickup_store_timings) {
+          if (_this17.record.pickup_store_timings) {
             try {
-              var parsedTimings = JSON.parse(_this16.record.pickup_store_timings);
+              var parsedTimings = JSON.parse(_this17.record.pickup_store_timings);
               // Handle both old array format and new object format
               if (Array.isArray(parsedTimings)) {
                 // Convert old format to new format (use first day's timings)
@@ -2328,13 +2371,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   return day.is_open;
                 });
                 if (firstDay) {
-                  _this16.storeTimings = {
+                  _this17.storeTimings = {
                     opening_time: firstDay.opening_time || '09:00',
                     closing_time: firstDay.closing_time || '18:00'
                   };
                 }
               } else {
-                _this16.storeTimings = parsedTimings;
+                _this17.storeTimings = parsedTimings;
               }
             } catch (e) {
               console.log('Error parsing store timings:', e);
@@ -2342,70 +2385,70 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
 
           // Set pickup map marker if coordinates exist
-          if (_this16.pickup_latitude && _this16.pickup_longitude) {
-            _this16.pickupCenter = {
-              lat: parseFloat(_this16.pickup_latitude),
-              lng: parseFloat(_this16.pickup_longitude)
+          if (_this17.pickup_latitude && _this17.pickup_longitude) {
+            _this17.pickupCenter = {
+              lat: parseFloat(_this17.pickup_latitude),
+              lng: parseFloat(_this17.pickup_longitude)
             };
-            _this16.pickupMarkers = [{
+            _this17.pickupMarkers = [{
               position: {
-                lat: parseFloat(_this16.pickup_latitude),
-                lng: parseFloat(_this16.pickup_longitude)
+                lat: parseFloat(_this17.pickup_latitude),
+                lng: parseFloat(_this17.pickup_longitude)
               }
             }];
-            _this16.pickupInfoWindow.position = {
-              lat: parseFloat(_this16.pickup_latitude),
-              lng: parseFloat(_this16.pickup_longitude)
+            _this17.pickupInfoWindow.position = {
+              lat: parseFloat(_this17.pickup_latitude),
+              lng: parseFloat(_this17.pickup_longitude)
             };
-            _this16.pickupInfoWindow.template = "<b>Pickup Location</b><br>".concat(_this16.pickup_store_address);
+            _this17.pickupInfoWindow.template = "<b>Pickup Location</b><br>".concat(_this17.pickup_store_address);
           }
-          _this16.status = _this16.record.status;
-          _this16.store_logo = _this16.record.store_logo;
-          _this16.store_logo_url = _this16.$storageUrl + _this16.record.logo;
-          _this16.national_id_card_url = _this16.$storageUrl + _this16.record.national_identity_card;
-          _this16.address_proof_url = _this16.$storageUrl + _this16.record.address_proof;
+          _this17.status = _this17.record.status;
+          _this17.store_logo = _this17.record.store_logo;
+          _this17.store_logo_url = _this17.$storageUrl + _this17.record.logo;
+          _this17.national_id_card_url = _this17.$storageUrl + _this17.record.national_identity_card;
+          _this17.address_proof_url = _this17.$storageUrl + _this17.record.address_proof;
           var marker = {
-            lat: parseFloat(_this16.latitude),
-            lng: parseFloat(_this16.longitude),
+            lat: parseFloat(_this17.latitude),
+            lng: parseFloat(_this17.longitude),
             draggable: true
           };
-          _this16.markers.push({
+          _this17.markers.push({
             position: marker
           });
-          _this16.center = marker;
-          _this16.infoWindow.position = {
-            lat: parseFloat(_this16.latitude),
-            lng: parseFloat(_this16.longitude)
+          _this17.center = marker;
+          _this17.infoWindow.position = {
+            lat: parseFloat(_this17.latitude),
+            lng: parseFloat(_this17.longitude)
           };
-          _this16.infoWindow.template = "<b>".concat(_this16.place_name, "</b><br>").concat(_this16.formatted_address);
-          _this16.infoWindow.open = true;
+          _this17.infoWindow.template = "<b>".concat(_this17.place_name, "</b><br>").concat(_this17.formatted_address);
+          _this17.infoWindow.open = true;
         } else {
-          _this16.showError(data.message);
+          _this17.showError(data.message);
           setTimeout(function () {
-            _this16.$router.back();
+            _this17.$router.back();
           }, 1000);
         }
       })["catch"](function (error) {
         var _error$request3;
-        _this16.isLoading = false;
+        _this17.isLoading = false;
         if (error !== null && error !== void 0 && (_error$request3 = error.request) !== null && _error$request3 !== void 0 && _error$request3.statusText) {
-          _this16.showError(error.request.statusText);
+          _this17.showError(error.request.statusText);
         } else if (error.message) {
-          _this16.showError(error.message);
+          _this17.showError(error.message);
         } else {
-          _this16.showError(__('something_went_wrong'));
+          _this17.showError(__('something_went_wrong'));
         }
       });
     },
     validateDefaultLanguageForTranslation: function validateDefaultLanguageForTranslation() {
-      var _this17 = this;
+      var _this18 = this;
       var form = this.$refs['my-form'];
 
       // Trigger native browser validation UI
       if (form && !form.reportValidity()) {
         // Switch to default language tab so error field is visible
         this.$nextTick(function () {
-          _this17.switchToDefaultLanguageTab();
+          _this18.switchToDefaultLanguageTab();
         });
         return false;
       }
@@ -2414,7 +2457,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return this.validateDefaultLanguage();
     },
     saveRecord: function saveRecord() {
-      var _this18 = this;
+      var _this19 = this;
       // Validate default language fields
       if (!this.validateDefaultLanguage()) {
         return;
@@ -2443,7 +2486,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.languages.forEach(function (language) {
         if (language.is_default) return; // Skip default, already added
 
-        var translation = _this18.translations[language.id];
+        var translation = _this19.translations[language.id];
         var hasData = translation.name && translation.name.trim() !== '' || translation.store_name && translation.store_name.trim() !== '' || translation.store_description && translation.store_description.trim() !== '';
         if (hasData) {
           allTranslations.push({
@@ -2463,14 +2506,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             while (1) {
               switch (_context2.prev = _context2.next) {
                 case 0:
-                  sellerId = _this18.id; // For edit mode
-                  defaultTranslation = _this18.translations[defaultLang.id];
+                  sellerId = _this19.id; // For edit mode
+                  defaultTranslation = _this19.translations[defaultLang.id];
                   formData = new FormData(); // Determine URL
-                  url = _this18.$apiUrl + '/sellers/save';
+                  url = _this19.$apiUrl + '/sellers/save';
                   if (sellerId) {
-                    url = _this18.$apiUrl + '/sellers/update';
+                    url = _this19.$apiUrl + '/sellers/update';
                     formData.append('id', sellerId);
-                    formData.append('admin_id', _this18.admin_id);
+                    formData.append('admin_id', _this19.admin_id);
                   }
 
                   // Send default language_id for backward compatibility
@@ -2482,92 +2525,93 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   formData.append('store_description', defaultTranslation.store_description || '');
 
                   // All required fields
-                  formData.append('email', _this18.email);
-                  formData.append('mobile', _this18.mobile);
-                  formData.append('store_url', _this18.store_url);
+                  formData.append('email', _this19.email);
+                  formData.append('mobile', _this19.mobile);
+                  formData.append('country_code', _this19.country_code);
+                  formData.append('store_url', _this19.store_url);
 
                   // Password only for new sellers or when changing
                   if (!sellerId) {
-                    formData.append('password', _this18.password);
-                    formData.append('confirm_password', _this18.confirm_password);
-                  } else if (_this18.password) {
-                    formData.append('password', _this18.password);
-                    formData.append('confirm_password', _this18.confirm_password);
+                    formData.append('password', _this19.password);
+                    formData.append('confirm_password', _this19.confirm_password);
+                  } else if (_this19.password) {
+                    formData.append('password', _this19.password);
+                    formData.append('confirm_password', _this19.confirm_password);
                   }
 
                   // Non-translatable fields
-                  formData.append('street', _this18.street);
-                  formData.append('pincode_id', _this18.pincode_id);
-                  formData.append('city_id', _this18.city_id);
-                  formData.append('brand_ids', _this18.brand_ids);
-                  formData.append('state', _this18.state);
-                  formData.append('remark', _this18.remark);
-                  formData.append('bank_name', _this18.bank_name || '');
-                  formData.append('account_number', _this18.account_number || '');
-                  formData.append('bank_ifsc_code', _this18.bank_ifsc_code || '');
-                  formData.append('ifsc_code', _this18.bank_ifsc_code || '');
-                  formData.append('account_name', _this18.account_name || '');
-                  formData.append('upi_id', _this18.upi_id || '');
-                  formData.append('upi_mobile', _this18.upi_mobile || '');
-                  formData.append('upi_name', _this18.upi_name || '');
-                  formData.append('commission', _this18.commission);
-                  formData.append('tax_name', _this18.tax_name);
-                  formData.append('tax_number', _this18.tax_number);
-                  formData.append('pan_number', _this18.pan_number);
-                  formData.append('latitude', _this18.latitude);
-                  formData.append('longitude', _this18.longitude);
-                  formData.append('place_name', _this18.place_name);
-                  formData.append('formatted_address', _this18.formatted_address);
-                  formData.append('require_products_approval', _this18.require_products_approval);
-                  formData.append('self_pickup_mode', _this18.self_pickup_mode);
-                  formData.append('door_step_mode', _this18.door_step_mode);
-                  formData.append('pickup_store_address', _this18.pickup_store_address);
-                  formData.append('pickup_latitude', _this18.pickup_latitude);
-                  formData.append('pickup_longitude', _this18.pickup_longitude);
-                  formData.append('pickup_store_timings', JSON.stringify(_this18.storeTimings));
-                  formData.append('status', _this18.status);
+                  formData.append('street', _this19.street);
+                  formData.append('pincode_id', _this19.pincode_id);
+                  formData.append('city_id', _this19.city_id);
+                  formData.append('brand_ids', _this19.brand_ids);
+                  formData.append('state', _this19.state);
+                  formData.append('remark', _this19.remark);
+                  formData.append('bank_name', _this19.bank_name || '');
+                  formData.append('account_number', _this19.account_number || '');
+                  formData.append('bank_ifsc_code', _this19.bank_ifsc_code || '');
+                  formData.append('ifsc_code', _this19.bank_ifsc_code || '');
+                  formData.append('account_name', _this19.account_name || '');
+                  formData.append('upi_id', _this19.upi_id || '');
+                  formData.append('upi_mobile', _this19.upi_mobile || '');
+                  formData.append('upi_name', _this19.upi_name || '');
+                  formData.append('commission', _this19.commission);
+                  formData.append('tax_name', _this19.tax_name);
+                  formData.append('tax_number', _this19.tax_number);
+                  formData.append('pan_number', _this19.pan_number);
+                  formData.append('latitude', _this19.latitude);
+                  formData.append('longitude', _this19.longitude);
+                  formData.append('place_name', _this19.place_name);
+                  formData.append('formatted_address', _this19.formatted_address);
+                  formData.append('require_products_approval', _this19.require_products_approval);
+                  formData.append('self_pickup_mode', _this19.self_pickup_mode);
+                  formData.append('door_step_mode', _this19.door_step_mode);
+                  formData.append('pickup_store_address', _this19.pickup_store_address);
+                  formData.append('pickup_latitude', _this19.pickup_latitude);
+                  formData.append('pickup_longitude', _this19.pickup_longitude);
+                  formData.append('pickup_store_timings', JSON.stringify(_this19.storeTimings));
+                  formData.append('status', _this19.status);
 
                   // Send all translations as JSON array
                   formData.append('translations', JSON.stringify(allTranslations));
 
                   // Files (only for new sellers or when updating)
-                  if (_this18.store_logo) {
-                    formData.append('store_logo', _this18.store_logo);
+                  if (_this19.store_logo) {
+                    formData.append('store_logo', _this19.store_logo);
                   }
-                  if (_this18.national_id_card) {
-                    formData.append('national_id_card', _this18.national_id_card);
+                  if (_this19.national_id_card) {
+                    formData.append('national_id_card', _this19.national_id_card);
                   }
-                  if (_this18.address_proof) {
-                    formData.append('address_proof', _this18.address_proof);
+                  if (_this19.address_proof) {
+                    formData.append('address_proof', _this19.address_proof);
                   }
-                  _context2.prev = 47;
-                  _context2.next = 50;
+                  _context2.prev = 48;
+                  _context2.next = 51;
                   return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, formData, {
                     headers: {
                       'Content-Type': 'multipart/form-data'
                     }
                   });
-                case 50:
+                case 51:
                   response = _context2.sent;
                   apiStatus = response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.status;
                   if (!(apiStatus !== 1)) {
-                    _context2.next = 55;
+                    _context2.next = 56;
                     break;
                   }
                   apiMessage = (response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.message) || __('something_went_wrong');
                   throw new Error(apiMessage);
-                case 55:
+                case 56:
                   return _context2.abrupt("return", response);
-                case 58:
-                  _context2.prev = 58;
-                  _context2.t0 = _context2["catch"](47);
+                case 59:
+                  _context2.prev = 59;
+                  _context2.t0 = _context2["catch"](48);
                   throw _context2.t0;
-                case 61:
+                case 62:
                 case "end":
                   return _context2.stop();
               }
             }
-          }, _callee2, null, [[47, 58]]);
+          }, _callee2, null, [[48, 59]]);
         }));
         return function saveAll() {
           return _ref.apply(this, arguments);
@@ -2637,9 +2681,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return true;
     },
     switchToDefaultLanguageTab: function switchToDefaultLanguageTab() {
-      var _this19 = this;
+      var _this20 = this;
       var defaultLangIndex = this.languages.findIndex(function (lang) {
-        return lang.id === _this19.defaultLanguageId;
+        return lang.id === _this20.defaultLanguageId;
       });
       if (defaultLangIndex !== -1) {
         this.activeLanguageTab = defaultLangIndex;
@@ -2697,7 +2741,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.pickupInfoWindow.open = true;
     }
   },
-  mounted: function mounted() {}
+  mounted: function mounted() {
+    document.addEventListener('click', this.handleCountryDropdownOutsideClick);
+  }
 });
 
 /***/ }),
@@ -3022,7 +3068,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_multiselect_dist_vue_multiselect_min_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n/* Compact thumb for logo/identity/address previews - keeps layout aligned when multiple are shown */\n.file-preview-thumb[data-v-0c56d16c] {\n    max-height: 80px;\n    max-width: 80px;\n    width: auto;\n    height: auto;\n    -o-object-fit: contain;\n       object-fit: contain;\n    border: 1px solid #ddd;\n    border-radius: 8px;\n    padding: 4px;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.country-code-dropdown[data-v-0c56d16c] {\n    position: relative;\n    flex: 0 0 auto;\n    width: 110px;\n}\n.country-code-toggle[data-v-0c56d16c] {\n    width: 100%;\n    text-align: left;\n    background: #fff;\n    cursor: pointer;\n}\n.country-code-menu[data-v-0c56d16c] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    z-index: 1050;\n    width: 100%;\n    max-height: 220px;\n    overflow-y: auto;\n    margin: 2px 0 0;\n    padding: 4px 0;\n    list-style: none;\n    background: #fff;\n    border: 1px solid #ced4da;\n    border-radius: 4px;\n    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n}\n.country-code-menu li[data-v-0c56d16c] {\n    padding: 6px 12px;\n    cursor: pointer;\n}\n.country-code-menu li[data-v-0c56d16c]:hover {\n    background: #f1f3f5;\n}\n\n/* Compact thumb for logo/identity/address previews - keeps layout aligned when multiple are shown */\n.file-preview-thumb[data-v-0c56d16c] {\n    max-height: 80px;\n    max-width: 80px;\n    width: auto;\n    height: auto;\n    -o-object-fit: contain;\n       object-fit: contain;\n    border: 1px solid #ddd;\n    border-radius: 8px;\n    padding: 4px;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -3679,45 +3725,138 @@ var render = function () {
                                                     ),
                                                   ]),
                                                   _vm._v(" "),
-                                                  _c("input", {
-                                                    directives: [
-                                                      {
-                                                        name: "model",
-                                                        rawName: "v-model",
-                                                        value: _vm.mobile,
-                                                        expression: "mobile",
-                                                      },
-                                                    ],
-                                                    staticClass: "form-control",
-                                                    attrs: {
-                                                      type: "text",
-                                                      placeholder: _vm.__(
-                                                        "enter_mobile_number"
-                                                      ),
-                                                      inputmode: "numeric",
-                                                      required: "",
+                                                  _c(
+                                                    "div",
+                                                    {
+                                                      staticClass:
+                                                        "input-group",
                                                     },
-                                                    domProps: {
-                                                      value: _vm.mobile,
-                                                    },
-                                                    on: {
-                                                      input: [
-                                                        function ($event) {
-                                                          if (
-                                                            $event.target
-                                                              .composing
-                                                          ) {
-                                                            return
-                                                          }
-                                                          _vm.mobile =
-                                                            $event.target.value
+                                                    [
+                                                      _c(
+                                                        "div",
+                                                        {
+                                                          ref: "countryDropdown",
+                                                          refInFor: true,
+                                                          staticClass:
+                                                            "country-code-dropdown",
                                                         },
-                                                        _vm.validateMobileNumber,
-                                                      ],
-                                                      focus: _vm.onInputFocus,
-                                                      blur: _vm.onInputBlur,
-                                                    },
-                                                  }),
+                                                        [
+                                                          _c(
+                                                            "button",
+                                                            {
+                                                              staticClass:
+                                                                "form-control country-code-toggle",
+                                                              attrs: {
+                                                                type: "button",
+                                                              },
+                                                              on: {
+                                                                click:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    _vm.countryDropdownOpen =
+                                                                      !_vm.countryDropdownOpen
+                                                                  },
+                                                              },
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                "\n                                                                " +
+                                                                  _vm._s(
+                                                                    _vm.country_code
+                                                                  ) +
+                                                                  "\n                                                            "
+                                                              ),
+                                                            ]
+                                                          ),
+                                                          _vm._v(" "),
+                                                          _vm.countryDropdownOpen
+                                                            ? _c(
+                                                                "ul",
+                                                                {
+                                                                  staticClass:
+                                                                    "country-code-menu",
+                                                                },
+                                                                _vm._l(
+                                                                  _vm.countries,
+                                                                  function (c) {
+                                                                    return _c(
+                                                                      "li",
+                                                                      {
+                                                                        key: c.id,
+                                                                        on: {
+                                                                          click:
+                                                                            function (
+                                                                              $event
+                                                                            ) {
+                                                                              _vm.country_code =
+                                                                                c.dial_code
+                                                                              _vm.countryDropdownOpen = false
+                                                                            },
+                                                                        },
+                                                                      },
+                                                                      [
+                                                                        _vm._v(
+                                                                          "\n                                                                    " +
+                                                                            _vm._s(
+                                                                              c.dial_code
+                                                                            ) +
+                                                                            "\n                                                                "
+                                                                        ),
+                                                                      ]
+                                                                    )
+                                                                  }
+                                                                ),
+                                                                0
+                                                              )
+                                                            : _vm._e(),
+                                                        ]
+                                                      ),
+                                                      _vm._v(" "),
+                                                      _c("input", {
+                                                        directives: [
+                                                          {
+                                                            name: "model",
+                                                            rawName: "v-model",
+                                                            value: _vm.mobile,
+                                                            expression:
+                                                              "mobile",
+                                                          },
+                                                        ],
+                                                        staticClass:
+                                                          "form-control",
+                                                        attrs: {
+                                                          type: "text",
+                                                          placeholder: _vm.__(
+                                                            "enter_mobile_number"
+                                                          ),
+                                                          inputmode: "numeric",
+                                                          required: "",
+                                                        },
+                                                        domProps: {
+                                                          value: _vm.mobile,
+                                                        },
+                                                        on: {
+                                                          input: [
+                                                            function ($event) {
+                                                              if (
+                                                                $event.target
+                                                                  .composing
+                                                              ) {
+                                                                return
+                                                              }
+                                                              _vm.mobile =
+                                                                $event.target.value
+                                                            },
+                                                            _vm.validateMobileNumber,
+                                                          ],
+                                                          focus:
+                                                            _vm.onInputFocus,
+                                                          blur: _vm.onInputBlur,
+                                                        },
+                                                      }),
+                                                    ]
+                                                  ),
                                                   _vm._v(" "),
                                                   _vm.mobilevalidationError
                                                     ? _c(
