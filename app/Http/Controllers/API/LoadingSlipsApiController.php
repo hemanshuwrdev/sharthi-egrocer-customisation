@@ -608,7 +608,22 @@ class LoadingSlipsApiController extends Controller
                 // Master catalog system
                 $variant = \App\Models\MasterProductVariant::find($item->master_product_variant_id);
                 if ($variant) {
-                    $weightInKg = (float)($variant->weight ?? 0.1);
+                    $weight = (float)($variant->weight ?? 0);
+                    $unit = Unit::find($variant->unit_id);
+
+                    if ($unit) {
+                        $code = strtolower(trim($unit->short_code));
+                        if (in_array($code, ['kg', 'kilogram', 'kilograms', 'l', 'ltr', 'litre', 'litres'])) {
+                            $weightInKg = $weight;
+                        } elseif (in_array($code, ['g', 'gm', 'gram', 'grams', 'ml', 'milliliter', 'milliliters'])) {
+                            $weightInKg = $weight / 1000;
+                        } else {
+                            // For pieces/packets treat as 0.1 kg standard
+                            $weightInKg = 0.1;
+                        }
+                    } else {
+                        $weightInKg = 0.1;
+                    }
                 } else {
                     $weightInKg = 0.1;
                 }

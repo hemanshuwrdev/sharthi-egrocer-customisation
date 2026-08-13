@@ -39,12 +39,17 @@ class ShopApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $seller_ids = CommonHelper::getSellerIds($request->latitude, $request->longitude);
         $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+
+        // Sarthi: sections must only show products from brand+seller pairs actually
+        // mapped to this city — same source of truth as RetailerCatalogApiController::listProducts.
+        $mappings   = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->get(['brand_id', 'seller_id']);
+        $seller_ids = $mappings->pluck('seller_id')->unique()->values();
+        $brand_ids  = $mappings->pluck('brand_id')->unique()->values();
 
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : 0;
 
-        $sections = CommonHelper::getSectionWithProduct($seller_ids, $user_id, $cityIds);
+        $sections = CommonHelper::getSectionWithProduct($seller_ids, $user_id, $cityIds, $brand_ids);
 
         $sliders = Slider::where('status', 1)->orderBy('id', 'DESC')->get();
         $sliders = $sliders->makeHidden(['image', 'product', 'category', 'created_at', 'updated_at', 'status']);

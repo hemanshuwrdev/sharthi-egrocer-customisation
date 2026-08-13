@@ -194,6 +194,10 @@
                     <strong>{{ slabTarget.master_product_name }}</strong>
                     <span class="text-muted">— {{ __('sku') }}: {{ slabTarget.sku || '—' }}</span>
                 </p>
+                <div v-if="slabTarget.secondary_unit_value" class="alert alert-info py-2 px-3 mb-3">
+                    <i class="fa fa-info-circle"></i>
+                    {{ __('slab_moq_hint').replace(':moq', slabTarget.secondary_unit_value) }}
+                </div>
                 <table class="table table-bordered">
                     <thead class="table-light">
                         <tr>
@@ -379,7 +383,9 @@ export default {
             this.slabModalOpen = true;
         },
         addSlab() {
-            this.slabDraft.push({ min_qty: null, max_qty: null, price: null });
+            const step = parseFloat(this.slabTarget && this.slabTarget.secondary_unit_value) || 0;
+            const defaultMinQty = (!this.slabDraft.length && step > 0) ? step : null;
+            this.slabDraft.push({ min_qty: defaultMinQty, max_qty: null, price: null });
         },
         removeSlab(idx) {
             this.slabDraft.splice(idx, 1);
@@ -397,6 +403,34 @@ export default {
                 if (s.max_qty && s.max_qty <= s.min_qty) {
                     this.showError(__('slab_max_qty_must_be_greater_than_min_qty'));
                     return;
+                }
+            }
+            const step = parseFloat(this.slabTarget.secondary_unit_value) || 0;
+            if (step > 0) {
+                const sorted = this.slabDraft.slice().sort((a, b) => a.min_qty - b.min_qty);
+                if (sorted[0].min_qty !== step) {
+                    this.showError(__('slab_must_start_at_moq').replace(':moq', step));
+                    return;
+                }
+                for (let i = 0; i < sorted.length; i++) {
+                    const s = sorted[i];
+                    if (s.min_qty % step !== 0) {
+                        this.showError(__('slab_min_qty_must_be_multiple_of_moq').replace(':moq', step));
+                        return;
+                    }
+                    const isLast = i === sorted.length - 1;
+                    if (!s.max_qty && !isLast) {
+                        this.showError(__('only_last_slab_can_be_open_ended'));
+                        return;
+                    }
+                    if (s.max_qty && (s.max_qty + 1) % step !== 0) {
+                        this.showError(__('slab_max_qty_must_align_with_moq').replace(':moq', step));
+                        return;
+                    }
+                    if (i > 0 && sorted[i - 1].max_qty + 1 !== s.min_qty) {
+                        this.showError(__('slab_ranges_must_be_contiguous'));
+                        return;
+                    }
                 }
             }
             this.slabSaving = true;

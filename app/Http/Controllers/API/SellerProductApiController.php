@@ -233,12 +233,6 @@ class SellerProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        foreach ($request->slabs as $s) {
-            if (!empty($s['max_qty']) && $s['max_qty'] <= $s['min_qty']) {
-                return CommonHelper::responseError(__('slab_max_qty_must_be_greater_than_min_qty'));
-            }
-        }
-
         $seller = $this->seller();
         if (!$seller) {
             return CommonHelper::responseError('seller_not_found');
@@ -251,14 +245,20 @@ class SellerProductApiController extends Controller
             return CommonHelper::responseError('seller_product_not_found');
         }
 
+        $step = (float) ($sp->masterProductVariant?->secondary_unit_value ?? 0);
+        $clean = CommonHelper::validateSlabRanges($request->slabs, $step);
+        if (is_string($clean)) {
+            return CommonHelper::responseError($clean);
+        }
+
         try {
-            DB::transaction(function () use ($sp, $request) {
+            DB::transaction(function () use ($sp, $clean) {
                 SellerProductSlabPrice::where('seller_product_id', $sp->id)->delete();
-                foreach ($request->slabs as $s) {
+                foreach ($clean as $s) {
                     SellerProductSlabPrice::create([
                         'seller_product_id' => $sp->id,
                         'min_qty' => $s['min_qty'],
-                        'max_qty' => $s['max_qty'] ?? null,
+                        'max_qty' => $s['max_qty'],
                         'price' => $s['price'],
                     ]);
                 }

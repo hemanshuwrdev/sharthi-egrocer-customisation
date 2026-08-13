@@ -557,6 +557,10 @@
                                                     <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
                                                         title="Qty-based tier pricing. Empty Max Qty = open-ended (e.g. 50+). Slabs override discounted_price when matched."></i>
                                                 </label>
+                                                <div v-if="input.packet_secondary_unit_value" class="alert alert-info py-2 px-3 mb-2">
+                                                    <i class="fa fa-info-circle"></i>
+                                                    {{ __('slab_moq_hint').replace(':moq', input.packet_secondary_unit_value) }}
+                                                </div>
                                                 <table class="table table-sm table-bordered mb-2"
                                                     v-if="input.packet_slab_prices && input.packet_slab_prices.length">
                                                     <thead>
@@ -741,6 +745,10 @@
                                                         <i class="fa fa-info-circle text-muted" v-b-tooltip.hover
                                                             title="Qty-based tier pricing. Empty Max Qty = open-ended."></i>
                                                     </label>
+                                                    <div v-if="input.loose_secondary_unit_value" class="alert alert-info py-2 px-3 mb-2">
+                                                        <i class="fa fa-info-circle"></i>
+                                                        {{ __('slab_moq_hint').replace(':moq', input.loose_secondary_unit_value) }}
+                                                    </div>
                                                     <table class="table table-sm table-bordered mb-2"
                                                         v-if="input.loose_slab_prices && input.loose_slab_prices.length">
                                                         <thead>
@@ -1799,8 +1807,11 @@ export default {
         },
         addSlabRow(input, type) {
             const key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+            const moqKey = type === 'packet' ? 'packet_secondary_unit_value' : 'loose_secondary_unit_value';
             if (!input[key]) this.$set(input, key, []);
-            input[key].push({ min_qty: null, max_qty: null, price: null });
+            const step = parseFloat(input[moqKey]) || 0;
+            const defaultMinQty = (!input[key].length && step > 0) ? step : null;
+            input[key].push({ min_qty: defaultMinQty, max_qty: null, price: null });
         },
         removeSlabRow(input, index, type) {
             const key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
@@ -1814,6 +1825,7 @@ export default {
         },
         validateSlabs(input, type) {
             const key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+            const moqKey = type === 'packet' ? 'packet_secondary_unit_value' : 'loose_secondary_unit_value';
             const rows = (input[key] || []).filter(s => s.min_qty || s.max_qty || (s.price !== null && s.price !== ''));
             if (!rows.length) {
                 this.$set(input, 'validationErrorSlab', '');
@@ -1834,10 +1846,34 @@ export default {
                 }
             }
             const sorted = rows.slice().sort((a, b) => a.min_qty - b.min_qty);
+            const step = parseFloat(input[moqKey]) || 0;
+            if (step > 0) {
+                if (sorted[0].min_qty !== step) {
+                    this.$set(input, 'validationErrorSlab', __('slab_must_start_at_moq').replace(':moq', step));
+                    return false;
+                }
+                for (let i = 0; i < sorted.length; i++) {
+                    const r = sorted[i];
+                    if (r.min_qty % step !== 0) {
+                        this.$set(input, 'validationErrorSlab', __('slab_min_qty_must_be_multiple_of_moq').replace(':moq', step));
+                        return false;
+                    }
+                    const isLast = i === sorted.length - 1;
+                    const hasMax = r.max_qty !== null && r.max_qty !== '';
+                    if (!hasMax && !isLast) {
+                        this.$set(input, 'validationErrorSlab', __('only_last_slab_can_be_open_ended'));
+                        return false;
+                    }
+                    if (hasMax && (r.max_qty + 1) % step !== 0) {
+                        this.$set(input, 'validationErrorSlab', __('slab_max_qty_must_align_with_moq').replace(':moq', step));
+                        return false;
+                    }
+                }
+            }
             for (let i = 1; i < sorted.length; i++) {
                 const prevMax = sorted[i - 1].max_qty;
-                if (prevMax === null || prevMax === '' || prevMax >= sorted[i].min_qty) {
-                    this.$set(input, 'validationErrorSlab', 'Slab ranges overlap');
+                if (prevMax === null || prevMax === '' || (step > 0 ? prevMax + 1 !== sorted[i].min_qty : prevMax >= sorted[i].min_qty)) {
+                    this.$set(input, 'validationErrorSlab', __('slab_ranges_must_be_contiguous'));
                     return false;
                 }
             }
@@ -2458,6 +2494,14 @@ export default {
             // Validate stock vs measurement
             if (!this.validateStockWithMeasurement()) {
                 return;
+            }
+
+            // Validate slab pricing (MOQ alignment, contiguity)
+            for (const input of this.inputs) {
+                if (!this.validateSlabs(input, this.type)) {
+                    this.showError(input.validationErrorSlab);
+                    return;
+                }
             }
 
             this.isLoading = true;

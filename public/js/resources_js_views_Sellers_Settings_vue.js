@@ -234,7 +234,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     // ================= ORDER SETTINGS =================
     getOrderSettings: function getOrderSettings() {
       var _this3 = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/seller/order-settings').then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/order-settings').then(function (res) {
         if (res.data.status && res.data.data) {
           _this3.order_cutoff_time = res.data.data.order_cutoff_time || "";
         }
@@ -279,7 +279,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.isOrderLoading = true;
       var formData = new FormData();
       formData.append('order_cutoff_time', this.order_cutoff_time || '');
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/seller/order-settings/save', formData).then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/order-settings/save', formData).then(function (res) {
         if (res.data.status) {
           _this6.showMessage('success', __(res.data.message));
         } else {

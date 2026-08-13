@@ -222,7 +222,7 @@ export default {
 
         // ================= ORDER SETTINGS =================
         getOrderSettings() {
-            axios.get(this.$sellerApiUrl + '/seller/order-settings')
+            axios.get(this.$sellerApiUrl + '/order-settings')
                 .then(res => {
                     if (res.data.status && res.data.data) {
                         this.order_cutoff_time = res.data.data.order_cutoff_time || "";
@@ -274,7 +274,7 @@ export default {
             let formData = new FormData();
             formData.append('order_cutoff_time', this.order_cutoff_time || '');
 
-            axios.post(this.$sellerApiUrl + '/seller/order-settings/save', formData)
+            axios.post(this.$sellerApiUrl + '/order-settings/save', formData)
                 .then(res => {
                     if (res.data.status) {
                         this.showMessage('success', __(res.data.message));

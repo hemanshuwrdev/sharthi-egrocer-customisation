@@ -43,21 +43,27 @@ class OrderApiController extends Controller
     public function placeOrder(Request $request)
     {
         try {
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — order_type is
+            // no longer accepted from the client, so delivery_charge/delivery_time/address_id are always
+            // required (previously exempted when the client claimed order_type=selfpickup).
             $validator = Validator::make($request->all(), [
                 'total' => 'required',
-                'delivery_charge' => 'required_if:order_type,doorstep',
-                'delivery_time' => 'required_if:order_type,doorstep',
+                // 'delivery_charge' => 'required_if:order_type,doorstep',
+                // 'delivery_time' => 'required_if:order_type,doorstep',
+                'delivery_charge' => 'required',
+                'delivery_time' => 'required',
                 'final_total' => 'required',
                 'payment_method' => 'required',
-                'address_id' => 'required_if:order_type,doorstep',
+                // 'address_id' => 'required_if:order_type,doorstep',
+                'address_id' => 'required',
                 'quantity' => 'required',
                 'order_note' => 'nullable|string|max:256',
-                'order_type' => 'required|in:doorstep,selfpickup'
+                // 'order_type' => 'required|in:doorstep,selfpickup'
             ], [
                 'required' => 'The :attribute field is required.',
                 'order_note.max' => 'Order note cannot exceed 256 characters.',
-                'address_id.required_if' => 'Address is required for doorstep delivery.',
-                'order_type.in' => 'Order type must be either doorstep or selfpickup.',
+                // 'address_id.required_if' => 'Address is required for doorstep delivery.',
+                // 'order_type.in' => 'Order type must be either doorstep or selfpickup.',
             ]);
 
             if ($validator->fails()) {
@@ -70,13 +76,17 @@ class OrderApiController extends Controller
                 return CommonHelper::responseError(__('not_allowed_to_place_order_as_your_account_is_de_activated'));
             }
 
-            $order_type = $request->order_type ?? 'doorstep';
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — order_type is
+            // forced to 'doorstep' so every '$order_type == selfpickup' branch below is dead but left in
+            // place for reference; uncomment the line below to restore self-pickup ordering.
+            // $order_type = $request->order_type ?? 'doorstep';
+            $order_type = 'doorstep';
             $one_seller_cart = Setting::where('variable', 'one_seller_cart')->exists() ? (int) Setting::where('variable', 'one_seller_cart')->value('value') : 0;
 
             // For self pickup orders, one seller cart must be enabled
-            if ($order_type == 'selfpickup' && $one_seller_cart != 1) {
-                return CommonHelper::responseError(__('self_pickup_orders_require_one_seller_cart_to_be_enabled'));
-            }
+            // if ($order_type == 'selfpickup' && $one_seller_cart != 1) {
+            //     return CommonHelper::responseError(__('self_pickup_orders_require_one_seller_cart_to_be_enabled'));
+            // }
 
             $cartItems = Cart::select('carts.*', 'products.seller_id', 'products.name as product_name', 'sellers.name as seller_name', 'sellers.status as seller_status', 'sellers.self_pickup_mode', 'sellers.pickup_store_address', 'sellers.pickup_latitude', 'sellers.pickup_longitude', 'sellers.pickup_store_timings', 'sellers.mobile')
                 ->join('products', 'carts.product_id', '=', 'products.id')
@@ -1936,9 +1946,11 @@ class OrderApiController extends Controller
 
             $res[$i]['date'] = CommonHelper::formatDateTime($row->created_at);
             $res[$i]['created_at'] = $row->created_at;
-            $res[$i]['estimate_date'] = CommonHelper::formatDate(
-                Carbon::parse($row->created_at)->addDays($deliveryEstimateDays)
-            );
+            // Sarthi: delivery_date (per-distributor cutoff-aware, computed at order placement) is the
+            // real estimate — mirror it here instead of the legacy created_at + delivery_estimate_days calc.
+            $res[$i]['estimate_date'] = !empty($row->delivery_date)
+                ? CommonHelper::formatDate($row->delivery_date)
+                : CommonHelper::formatDate(Carbon::parse($row->created_at)->addDays($deliveryEstimateDays));
 
             $res[$i]['bank_transfer_message'] = !empty($res[$i]['bank_transfer_message']) ? $res[$i]['bank_transfer_message'] : "";
             $res[$i]['bank_transfer_status'] = !empty($res[$i]['bank_transfer_status']) ? $res[$i]['bank_transfer_status'] : 0;
@@ -2054,7 +2066,7 @@ class OrderApiController extends Controller
                 } else {
                     $items[$subkey]->return_status = 0;
                 }
-                $items[$subkey]->item_rating = CommonHelper::productRatingOfUser($item->product_id, $item->user_id);
+                $items[$subkey]->item_rating = CommonHelper::productRatingOfUser($item->product_id, $item->user_id, $item->seller_id);
             }
             foreach ($items as $item) {
                 if (empty($item->image)) {

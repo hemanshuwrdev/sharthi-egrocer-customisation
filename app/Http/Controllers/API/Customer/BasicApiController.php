@@ -224,9 +224,15 @@ class BasicApiController extends Controller
             ->orderBy('created_at', 'DESC')
             ->get(['master_product_variant_id', 'seller_id']);
 
-        $variantIds = $favorites->pluck('master_product_variant_id');
-        // Map variant_id → seller_id so we can highlight the favorited seller in the response
-        $favSellerByVariant = $favorites->pluck('seller_id', 'master_product_variant_id');
+        $variantIds = $favorites->pluck('master_product_variant_id')->unique()->values();
+
+        // Sellers explicitly favorited for each variant — only these sellers' offers should be returned.
+        $favoritedSellersByVariant = $favorites->groupBy('master_product_variant_id')
+            ->map(fn($group) => $group->pluck('seller_id')->filter()->unique()->values());
+
+        // Variants favorited with no specific seller (seller_id null) → any seller offering it is acceptable.
+        $anySellerVariants = $favorites->filter(fn($f) => is_null($f->seller_id))
+            ->pluck('master_product_variant_id')->unique()->flip();
 
         if ($variantIds->isEmpty()) {
             return CommonHelper::responseError('no_items_found');
@@ -268,30 +274,40 @@ class BasicApiController extends Controller
                 'seller_products.stock as sp_stock'
             )
             ->get()
-            ->filter(fn($r) => isset($allowedPairs[$r->mp_brand_id . '_' . $r->sp_seller_id]));
+            ->filter(fn($r) => isset($allowedPairs[$r->mp_brand_id . '_' . $r->sp_seller_id]))
+            ->filter(function ($r) use ($favoritedSellersByVariant, $anySellerVariants) {
+                if (isset($anySellerVariants[$r->id])) {
+                    return true;
+                }
+                return ($favoritedSellersByVariant[$r->id] ?? collect())->contains($r->sp_seller_id);
+            });
 
         $slabsBySp = \App\Models\SellerProductSlabPrice::whereIn('seller_product_id', $rows->pluck('sp_id')->unique())
             ->orderBy('min_qty')
             ->get()
             ->groupBy('seller_product_id');
 
-        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $favSellerByVariant) {
+        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $favoritedSellersByVariant, $anySellerVariants) {
             $first = $group->first();
             $mp    = $first->masterProduct;
             $overlapAllowed = (int) ($brandOverlap[$first->mp_brand_id] ?? 0) === 1;
 
-            $offers = $group->map(function ($r) use ($slabsBySp, $sellerNames, $sellers) {
+            $isAnySeller = isset($anySellerVariants[$first->id]);
+            $favoritedSellerIds = $favoritedSellersByVariant[$first->id] ?? collect();
+
+            $offers = $group->map(function ($r) use ($slabsBySp, $sellerNames, $sellers, $isAnySeller, $favoritedSellerIds) {
                 $sellerLogo = $sellers[$r->sp_seller_id]->logo ?? null;
                 return [
-                    'seller_id'         => $r->sp_seller_id,
-                    'seller_name'       => $sellerNames[$r->sp_seller_id] ?? null,
-                    'seller_image_url'  => $sellerLogo ? asset('storage/' . $sellerLogo) : null,
-                    'seller_product_id' => $r->sp_id,
-                    'mrp'               => (float) $r->sp_mrp,
-                    'selling_price'     => (float) $r->sp_selling_price,
-                    'discounted_price'  => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
-                    'stock'             => (float) $r->sp_stock,
-                    'slab_prices'       => isset($slabsBySp[$r->sp_id])
+                    'seller_id'          => $r->sp_seller_id,
+                    'seller_name'        => $sellerNames[$r->sp_seller_id] ?? null,
+                    'seller_image_url'   => $sellerLogo ? asset('storage/' . $sellerLogo) : null,
+                    'seller_product_id'  => $r->sp_id,
+                    'mrp'                => (float) $r->sp_mrp,
+                    'selling_price'      => (float) $r->sp_selling_price,
+                    'discounted_price'   => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
+                    'stock'              => (float) $r->sp_stock,
+                    'is_favorited_seller' => $isAnySeller ? true : $favoritedSellerIds->contains($r->sp_seller_id),
+                    'slab_prices'        => isset($slabsBySp[$r->sp_id])
                         ? $slabsBySp[$r->sp_id]->map(fn($s) => [
                             'id'      => $s->id,
                             'min_qty' => $s->min_qty,
@@ -320,9 +336,9 @@ class BasicApiController extends Controller
                 'weight'               => $first->weight,
                 'image'                => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed'      => $overlapAllowed,
-                'favorited_seller_id'  => $favSellerByVariant[$first->id] ?? null,
                 'offers'               => $offers,
                 'best_offer'           => $offers->first(),
+                'favorited_seller_ids' => $isAnySeller ? [] : $favoritedSellerIds->values(),
                 'is_favorite'          => true,
             ];
         })->values();

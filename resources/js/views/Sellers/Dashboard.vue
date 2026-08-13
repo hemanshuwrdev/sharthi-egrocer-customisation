@@ -163,7 +163,7 @@
 
                 <div class="row">
                     <!-- Chart Section -->
-                    <div class="col-12 col-lg-7 mb-3">
+                    <div class="col-12 mb-3">
                         <div class="card h-100">
                             <div class="card-header">
                                 <h4 class="card-title">{{ __('weekly_sales') }}</h4>
@@ -179,44 +179,10 @@
                         </div>
                     </div>
 
-                    <!-- Products Section -->
+                    <!-- Products Section (commented out: Sold Out / Low Stock cards)
                     <div class="col-12 col-lg-5">
                         <div class="row row-cols-1 row-cols-md-2 g-3">
-                            <!-- Packet Products -->
-                            <div class="col">
-                                <div class="card h-100">
-                                    <div class="card-header text-center">
-                                        <h6>{{ __('packet_products') }}</h6>
-                                    </div>
-                                    <div class="card-body d-flex flex-column justify-content-center">
-                                        <h1 class="text-center">{{ record.packet_products }}</h1>
-                                        <router-link
-                                            :to="{ name: 'SellerProductInfo', params: { type: 'packet_products' } }"
-                                            class="btn btn-light-primary btn-lg mt-3 w-100">
-                                            {{ __('more_info') }}
-                                        </router-link>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Loose Products -->
-                            <div class="col">
-                                <div class="card h-100">
-                                    <div class="card-header text-center">
-                                        <h6>{{ __('loose_products') }}</h6>
-                                    </div>
-                                    <div class="card-body d-flex flex-column justify-content-center">
-                                        <h1 class="text-center">{{ record.loose_products }}</h1>
-                                        <router-link
-                                            :to="{ name: 'SellerProductInfo', params: { type: 'loose_products' } }"
-                                            class="btn btn-light-primary btn-lg mt-3 w-100">
-                                            {{ __('more_info') }}
-                                        </router-link>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sold Out -->
+                            Sold Out
                             <div class="col">
                                 <div class="card h-100">
                                     <div class="card-header text-center">
@@ -232,7 +198,7 @@
                                 </div>
                             </div>
 
-                            <!-- Low Stock -->
+                            Low Stock
                             <div class="col">
                                 <div class="card h-100">
                                     <div class="card-header text-center">
@@ -249,6 +215,7 @@
                             </div>
                         </div>
                     </div>
+                    -->
                 </div>
 
                 <div class="row g-3 mb-3">

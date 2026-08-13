@@ -83,9 +83,6 @@ class SellerController extends BaseController
         } else {
             $data['category_count'] = 0;
         }
-        $data['packet_products'] = 0;
-        $data['loose_products']  = 0;
-
         $data['sold_out_count'] = SellerProduct::where('seller_id', $seller_id)
             ->where('status', 1)
             ->where('stock', '<=', 0)
@@ -113,56 +110,54 @@ class SellerController extends BaseController
 
         $data['balance'] = number_format($balance - $pendingWithdrawals, 2);
 
-        if ($categoryIds != "") {
-            $categoryIdsArray = array_filter(array_map('intval', explode(',', $categoryIds)));
-            $childCategoryIds = CommonHelper::getChildCategoryIds($categoryIdsArray);
-            $finalCategoryIds = array_values(array_unique(array_merge($categoryIdsArray, $childCategoryIds)));
+        // Sarthi: distributors no longer self-select categories (that's a legacy B2C field, unset/stale
+        // for Sarthi sellers — they're scoped by brand_distributor_mappings instead). So this chart is
+        // built directly from whatever categories the seller's own master-catalog products actually fall
+        // into, rather than filtering by the legacy Seller.categories field.
+        $countRows = DB::table('categories')
+            ->join('master_products', 'master_products.category_id', '=', 'categories.id')
+            ->join('master_product_variants', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->join('seller_products', 'seller_products.master_product_variant_id', '=', 'master_product_variants.id')
+            ->where('seller_products.seller_id', $seller_id)
+            ->where('seller_products.status', 1)
+            ->select('categories.id', DB::raw('COUNT(DISTINCT master_products.id) AS product_count'))
+            ->groupBy('categories.id')
+            ->orderBy('categories.id')
+            ->get();
 
-            $countRows = DB::table('categories')
-                ->join('products', 'products.category_id', '=', 'categories.id')
-                ->whereIn('categories.id', $finalCategoryIds)
-                ->where('products.seller_id', $seller_id)
-                ->select('categories.id', DB::raw('COUNT(products.id) AS product_count'))
-                ->groupBy('categories.id')
-                ->orderBy('categories.id')
-                ->get();
+        $categoryIdsFromRows = $countRows->pluck('id')->toArray();
+        $categoriesWithName = Category::whereIn('id', $categoryIdsFromRows)->with('translations')->get()->keyBy('id');
 
-            $categoryIdsFromRows = $countRows->pluck('id')->toArray();
-            $categoriesWithName = Category::whereIn('id', $categoryIdsFromRows)->with('translations')->get()->keyBy('id');
-
-            if ($useContentLanguage) {
-                // App: single language name (locale already set above)
-                $category_product_count = $countRows->map(function ($row) use ($categoriesWithName) {
-                    $cat = $categoriesWithName->get($row->id);
-                    return [
-                        'id' => $row->id,
-                        'name' => $cat ? $cat->name : '',
-                        'product_count' => (int) $row->product_count,
-                    ];
-                })->values();
-            } else {
-                // Panel: all translations for category name (keyed by language code)
-                $category_product_count = $countRows->map(function ($row) use ($categoriesWithName) {
-                    $cat = $categoriesWithName->get($row->id);
-                    $names = (object) [];
-                    if ($cat) {
-                        $allTranslations = $cat->getAllActiveLanguageTranslations();
-                        foreach ($allTranslations as $trans) {
-                            $code = $trans['language_code'] ?? '';
-                            if ($code !== '') {
-                                $names->{$code} = $trans['name'] ?? '';
-                            }
+        if ($useContentLanguage) {
+            // App: single language name (locale already set above)
+            $category_product_count = $countRows->map(function ($row) use ($categoriesWithName) {
+                $cat = $categoriesWithName->get($row->id);
+                return [
+                    'id' => $row->id,
+                    'name' => $cat ? $cat->name : '',
+                    'product_count' => (int) $row->product_count,
+                ];
+            })->values();
+        } else {
+            // Panel: all translations for category name (keyed by language code)
+            $category_product_count = $countRows->map(function ($row) use ($categoriesWithName) {
+                $cat = $categoriesWithName->get($row->id);
+                $names = (object) [];
+                if ($cat) {
+                    $allTranslations = $cat->getAllActiveLanguageTranslations();
+                    foreach ($allTranslations as $trans) {
+                        $code = $trans['language_code'] ?? '';
+                        if ($code !== '') {
+                            $names->{$code} = $trans['name'] ?? '';
                         }
                     }
-                    return [
-                        'id' => $row->id,
-                        'name' => $names,
-                        'product_count' => (int) $row->product_count,
-                    ];
-                })->values();
-            }
-        } else {
-            $category_product_count = collect([]);
+                }
+                return [
+                    'id' => $row->id,
+                    'name' => $names,
+                    'product_count' => (int) $row->product_count,
+                ];
+            })->values();
         }
 
         $data['category_product_count'] = $category_product_count;

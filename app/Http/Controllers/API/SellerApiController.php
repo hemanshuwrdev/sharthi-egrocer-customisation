@@ -119,10 +119,11 @@ class SellerApiController extends Controller
             'city_id' => 'required',
             'latitude' => 'required',
             'longitude' => 'required',
-            'pickup_store_address' => 'required_if:self_pickup_mode,1',
-            'pickup_latitude' => 'required_if:self_pickup_mode,1',
-            'pickup_longitude' => 'required_if:self_pickup_mode,1',
-            'pickup_store_timings' => 'required_if:self_pickup_mode,1',
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+            // 'pickup_store_address' => 'required_if:self_pickup_mode,1',
+            // 'pickup_latitude' => 'required_if:self_pickup_mode,1',
+            // 'pickup_longitude' => 'required_if:self_pickup_mode,1',
+            // 'pickup_store_timings' => 'required_if:self_pickup_mode,1',
             'upi_id'     => ['nullable', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/'],
             'upi_mobile' => 'nullable|digits:10',
             'upi_name'   => 'nullable|string|max:100',
@@ -199,12 +200,13 @@ class SellerApiController extends Controller
 
             $record->require_products_approval = $request->require_products_approval;
             $record->customer_privacy = $request->customer_privacy;
-            $record->self_pickup_mode = $request->self_pickup_mode ?? 0;
-            $record->pickup_store_address = $request->pickup_store_address;
-            $record->pickup_latitude = $request->pickup_latitude;
-            $record->pickup_longitude = $request->pickup_longitude;
-            $record->pickup_store_timings = $request->pickup_store_timings;
-            $record->door_step_mode = $request->door_step_mode ?? 1;
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+            // $record->self_pickup_mode = $request->self_pickup_mode ?? 0;
+            // $record->pickup_store_address = $request->pickup_store_address;
+            // $record->pickup_latitude = $request->pickup_latitude;
+            // $record->pickup_longitude = $request->pickup_longitude;
+            // $record->pickup_store_timings = $request->pickup_store_timings;
+            // $record->door_step_mode = $request->door_step_mode ?? 1;
 
             $record->status = Seller::$statusActive;
             if ($record->status == Seller::$statusActive || $record->status == Seller::$statusRegistered) {
@@ -317,10 +319,11 @@ class SellerApiController extends Controller
             'city_id' => 'nullable',
             'latitude' => 'required',
             'longitude' => 'required',
-            'pickup_store_address' => 'required_if:self_pickup_mode,1',
-            'pickup_latitude' => 'required_if:self_pickup_mode,1',
-            'pickup_longitude' => 'required_if:self_pickup_mode,1',
-            'pickup_store_timings' => 'required_if:self_pickup_mode,1',
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+            // 'pickup_store_address' => 'required_if:self_pickup_mode,1',
+            // 'pickup_latitude' => 'required_if:self_pickup_mode,1',
+            // 'pickup_longitude' => 'required_if:self_pickup_mode,1',
+            // 'pickup_store_timings' => 'required_if:self_pickup_mode,1',
             'upi_id'     => ['nullable', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/'],
             'upi_mobile' => 'nullable|digits:10',
             'upi_name'   => 'nullable|string|max:100',
@@ -329,9 +332,10 @@ class SellerApiController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
-        if ($request->self_pickup_mode == 0 && $request->door_step_mode == 0) {
-            return CommonHelper::responseError('at_least_one_delivery_mode_must_be_enabled');
-        }
+        // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+        // if ($request->self_pickup_mode == 0 && $request->door_step_mode == 0) {
+        //     return CommonHelper::responseError('at_least_one_delivery_mode_must_be_enabled');
+        // }
         if (isset($request->id)) {
             $record = Seller::find($request->id);
 
@@ -397,12 +401,13 @@ class SellerApiController extends Controller
                 $record->formatted_address = $request->formatted_address;
                 $record->require_products_approval = $request->require_products_approval;
                 $record->customer_privacy = $request->customer_privacy;
-                $record->self_pickup_mode = $request->self_pickup_mode ?? 0;
-                $record->pickup_store_address = $request->pickup_store_address;
-                $record->pickup_latitude = $request->pickup_latitude;
-                $record->pickup_longitude = $request->pickup_longitude;
-                $record->pickup_store_timings = $request->pickup_store_timings;
-                $record->door_step_mode = $request->door_step_mode ?? 1;
+                // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+                // $record->self_pickup_mode = $request->self_pickup_mode ?? 0;
+                // $record->pickup_store_address = $request->pickup_store_address;
+                // $record->pickup_latitude = $request->pickup_latitude;
+                // $record->pickup_longitude = $request->pickup_longitude;
+                // $record->pickup_store_timings = $request->pickup_store_timings;
+                // $record->door_step_mode = $request->door_step_mode ?? 1;
 
                 $record->status = $request->status;
                 if ($request->status == Seller::$statusActive || $request->status == Seller::$statusRegistered) {

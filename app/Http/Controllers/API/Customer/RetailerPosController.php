@@ -157,10 +157,10 @@ class RetailerPosController extends Controller
      *   items            required  array of {product_variant_id, qty}
      *   mobile           required  string
      *   payment_method   required  string
-     *   address          required unless order_type=selfpickup
-     *   latitude         required unless order_type=selfpickup
-     *   longitude        required unless order_type=selfpickup
-     *   order_type       optional  doorstep|selfpickup  (default doorstep)
+     *   address          required
+     *   latitude         required
+     *   longitude        required
+     *   order_type       n/a — self-pickup removed for Sarthi, always stored as doorstep
      *   address_id       optional  int
      *   order_note       optional  string
      */
@@ -173,10 +173,14 @@ class RetailerPosController extends Controller
             'items.*.qty'          => 'required|numeric|min:1',
             'mobile'               => 'required|string',
             'payment_method'       => 'required|string',
-            'order_type'           => 'nullable|in:doorstep,selfpickup',
-            'address'              => 'required_unless:order_type,selfpickup',
-            'latitude'             => 'required_unless:order_type,selfpickup',
-            'longitude'            => 'required_unless:order_type,selfpickup',
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+            // 'order_type'           => 'nullable|in:doorstep,selfpickup',
+            // 'address'              => 'required_unless:order_type,selfpickup',
+            // 'latitude'             => 'required_unless:order_type,selfpickup',
+            // 'longitude'            => 'required_unless:order_type,selfpickup',
+            'address'              => 'required',
+            'latitude'             => 'required',
+            'longitude'            => 'required',
             'address_id'           => 'nullable|integer',
             'order_note'           => 'nullable|string',
         ]);
@@ -259,7 +263,9 @@ class RetailerPosController extends Controller
                     'delivery_date'   => $deliveryDate,
                     'status'          => json_encode([['received', date('Y-m-d H:i:s')]]),
                     'active_status'   => (string) OrderStatusList::$received,
-                    'order_type'      => $request->order_type ?? 'doorstep',
+                    // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+                    // 'order_type'      => $request->order_type ?? 'doorstep',
+                    'order_type'      => 'doorstep',
                     'address_id'      => $request->address_id ?? 0,
                     'created_at'      => now(),
                     'updated_at'      => now(),

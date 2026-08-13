@@ -865,9 +865,10 @@ class SalesmanAppApiController extends Controller
             ];
         }
 
-        $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
+        // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+        // $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
         $sellers = \App\Models\Seller::whereIn('id', array_keys($groups))
-            ->get(['id', 'name', 'self_pickup_mode', 'door_step_mode'])
+            ->get(['id', 'name'])
             ->keyBy('id');
 
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
@@ -882,11 +883,14 @@ class SalesmanAppApiController extends Controller
             $group['nearest_scheme']  = $nearest;
 
             $seller = $sellers[$sellerId] ?? null;
-            $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
-            $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
             $group['seller_name']           = $seller->name ?? null;
-            $group['self_pickup_mode']       = ($globalSelfPickup === 1 && $sellerSelfPickup === 1) ? 1 : 0;
-            $group['doorstep_delivery_mode'] = ($globalSelfPickup === 0 || $sellerDoorstep === 1) ? 1 : 0;
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+            // $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
+            // $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
+            // $group['self_pickup_mode']       = ($globalSelfPickup === 1 && $sellerSelfPickup === 1) ? 1 : 0;
+            // $group['doorstep_delivery_mode'] = ($globalSelfPickup === 0 || $sellerDoorstep === 1) ? 1 : 0;
+            $group['self_pickup_mode']       = 0;
+            $group['doorstep_delivery_mode'] = 1;
         }
         unset($group);
 

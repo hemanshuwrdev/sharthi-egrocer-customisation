@@ -30,7 +30,6 @@ use App\Models\ProductRating;
 use App\Models\RatingImages;
 use App\Models\RecentlyVisitedProduct;
 use App\Traits\HasTranslations;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Response;
 
 class ProductsApiController extends Controller
@@ -73,31 +72,10 @@ class ProductsApiController extends Controller
             $total_max_price = 0;
 
             // Get seller IDs deliverable to this lat/long and fetch min/max price range first (before any early returns)
+            // No sellers mapped (via BrandDistributorMapping) to this location means nothing is deliverable here —
+            // do NOT fall back to a distance-only lookup, that leaks other cities' sellers/catalogs into this response.
             $seller_ids = CommonHelper::getSellerIds($request->latitude, $request->longitude);
-            if (empty($seller_ids)) {
-                $lat = (float) $request->latitude;
-                $lng = (float) $request->longitude;
-                $seller_ids = Seller::query()
-                    ->select('sellers.id')
-                    ->leftJoin('cities', 'sellers.city_id', '=', 'cities.id')
-                    ->where('sellers.status', 1)
-                    ->whereExists(function ($q) {
-                        $q->select(DB::raw(1))
-                            ->from('products')
-                            ->whereColumn('products.seller_id', 'sellers.id');
-                    })
-                    ->whereNotNull('sellers.latitude')
-                    ->whereNotNull('sellers.longitude')
-                    ->whereRaw('cities.max_deliverable_distance > 0')
-                    ->whereRaw(
-                        '(6371 * acos(cos(radians(?)) * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(?)) + sin(radians(?)) * sin(radians(sellers.latitude)))) <= cities.max_deliverable_distance',
-                        [$lat, $lng, $lat]
-                    )
-                    ->pluck('id')
-                    ->toArray();
-            } else {
-                $seller_ids = is_array($seller_ids) ? $seller_ids : $seller_ids->toArray();
-            }
+            $seller_ids = is_array($seller_ids) ? $seller_ids : $seller_ids->toArray();
             $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
             if (!empty($seller_ids)) {
                 $productResultQuery = DB::table('products as p')
@@ -1214,16 +1192,13 @@ class ProductsApiController extends Controller
     }
     public function productRatingSave(Request $request)
     {
+        try{
         $validator = Validator::make($request->all(), [
-            // Sarthi: product_id now refers to master_products.id
+            // Sarthi: product_id now refers to master_products.id; seller_id scopes the
+            // review to the specific seller the item was bought from and delivered by.
             'rate' => 'required',
-            'product_id' => [
-                'required',
-                'exists:master_products,id',
-                Rule::unique('product_ratings')->where(function ($query) use ($request) {
-                    return $query->where('user_id', auth()->user()->id);
-                }),
-            ],
+            'seller_id' => 'required|exists:sellers,id',
+            'product_id' => 'required|exists:master_products,id',
             'image.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
@@ -1231,8 +1206,14 @@ class ProductsApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $product_rating = new ProductRating();
+        // Sarthi: one rating per user per product+seller — a repeat "add" updates the
+        // existing rating's rate/review instead of creating a duplicate row.
+        $product_rating = ProductRating::where('product_id', $request->product_id)
+            ->where('seller_id', $request->seller_id)
+            ->where('user_id', auth()->user()->id)
+            ->first() ?? new ProductRating();
         $product_rating->product_id = $request->product_id;
+        $product_rating->seller_id = $request->seller_id;
         $product_rating->user_id = auth()->user()->id;
         $product_rating->rate = $request->rate;
         $product_rating->review = $request->review ?? '';
@@ -1243,6 +1224,10 @@ class ProductsApiController extends Controller
         }
         $data = ProductRating::with('user', 'images')->where('id', $product_rating->id)->get();
         return CommonHelper::responseSuccessWithData("Product Rating Saved Successfully!", $data);
+        
+        } catch (\Exception $e) {
+            return CommonHelper::responseError($e->getMessage());
+        }
     }
 
     public function productRatingEdit(Request $request)
@@ -1300,15 +1285,22 @@ class ProductsApiController extends Controller
         $order = $request->get('order', 'DESC');
 
         $product_id = $request->master_product_id ?? $request->product_id;
+        // Sarthi: seller_id (optional) scopes reviews to the specific seller's offer so a
+        // review left for one seller doesn't show up on another seller's listing of the same product.
+        $seller_id = $request->seller_id;
         if ($product_id != null) {
             $productRatings = ProductRating::with('user', 'images')->where('product_id', $product_id);
+            if (!empty($seller_id)) {
+                $productRatings->where('seller_id', $seller_id);
+            }
             $total = $productRatings->count();
-            $productRatingsData['average_rating'] = CommonHelper::productAverageRating($product_id)['average_rating'];
-            $productRatingsData['one_star_rating'] = CommonHelper::productAverageRating($product_id)['one_star_rating'];
-            $productRatingsData['two_star_rating'] = CommonHelper::productAverageRating($product_id)['two_star_rating'];
-            $productRatingsData['three_star_rating'] = CommonHelper::productAverageRating($product_id)['three_star_rating'];
-            $productRatingsData['four_star_rating'] = CommonHelper::productAverageRating($product_id)['four_star_rating'];
-            $productRatingsData['five_star_rating'] = CommonHelper::productAverageRating($product_id)['five_star_rating'];
+            $ratingData = CommonHelper::productAverageRating($product_id, $seller_id);
+            $productRatingsData['average_rating'] = $ratingData['average_rating'];
+            $productRatingsData['one_star_rating'] = $ratingData['one_star_rating'];
+            $productRatingsData['two_star_rating'] = $ratingData['two_star_rating'];
+            $productRatingsData['three_star_rating'] = $ratingData['three_star_rating'];
+            $productRatingsData['four_star_rating'] = $ratingData['four_star_rating'];
+            $productRatingsData['five_star_rating'] = $ratingData['five_star_rating'];
             $ratings = $productRatings
                 ->orderBy($sort, $order)
                 ->skip($offset)

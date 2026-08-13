@@ -427,26 +427,13 @@
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="row" v-if="!showAddCityForm">
-                                                            <!-- Zone selector -->
-                                                            <div class="form-group col-md-5 mt-0">
-                                                                <div class="form-group">
-                                                                    <label>{{ __('zone') }}<i class="text-danger">*</i></label>
-                                                                    <select class="form-control" v-model="selected_zone">
-                                                                        <option value="">{{ __('select_zone') }}</option>
-                                                                        <option v-for="z in zones" :key="z.zone" :value="z.zone">
-                                                                            {{ z.zone }} ({{ z.city_count }} {{ __('cities') }})
-                                                                        </option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                            <!-- City multi-select -->
-                                                            <div class="form-group col-md-7">
+                                                            <!-- City multi-select (zone shown inline per city) -->
+                                                            <div class="form-group col-md-12">
                                                                 <div class="form-group">
                                                                     <label for="city_name">{{ __('select_cities') }}<i class="text-danger">*</i></label>
                                                                     <Select2 v-model="city_id" :placeholder="__('select_cities')"
                                                                         :options="cities_options"
                                                                         :settings="{ multiple: 'multiple' }" />
-                                                                    <small v-if="!selected_zone && zones.length" class="text-muted">{{ __('select_zone_to_filter_cities') }}</small>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -757,6 +744,9 @@
                                                                 </div>
                                                             </div>
 
+                                                            <!-- Door Step Mode / Self Pickup Mode removed for Sarthi
+                                                                 (all orders go out via driver/vehicle dispatch).
+                                                                 Kept commented for reference / easy restore.
                                                             <div class="form-group col-md-3"
                                                                 v-if="store_settings.self_pickup_mode == 1">
                                                                 <div class="form-group">
@@ -784,10 +774,11 @@
                                                                         required></b-form-radio-group>
                                                                 </div>
                                                             </div>
+                                                            -->
 
                                                         </div>
 
-                                                        <!-- Self Pickup Configuration Section -->
+                                                        <!-- Self Pickup Configuration Section removed for Sarthi — kept commented for reference.
                                                         <div v-if="store_settings.self_pickup_mode == 1 && self_pickup_mode == 1"
                                                             class="row mt-4">
                                                             <div class="col-12">
@@ -795,12 +786,12 @@
                                                                     __('self_pickup_configuration') }}</h5>
                                                             </div>
 
-                                                            <!-- Map Section for Pickup Location -->
+                                                            Map Section for Pickup Location
                                                             <div class="form-group col-md-12">
                                                                 <div class="row">
-                                                                    <!-- Left Side - Map Only (50%) -->
+                                                                    Left Side - Map Only (50%)
                                                                     <div class="col-md-6">
-                                                                        <!-- Map View -->
+                                                                        Map View
                                                                         <div class="form-group">
                                                                             <div id="pickup_map"
                                                                                 style="position: relative; overflow: hidden;">
@@ -831,9 +822,9 @@
                                                                         </div>
                                                                     </div>
 
-                                                                    <!-- Right Side - All Details (50%) -->
+                                                                    Right Side - All Details (50%)
                                                                     <div class="col-md-6">
-                                                                        <!-- Search Input -->
+                                                                        Search Input
                                                                         <div class="form-group">
                                                                             <label for="pickup_city_name">{{
                                                                                 __('search_location') }}</label>
@@ -849,7 +840,7 @@
                                                                                 }}</span>
                                                                         </div>
 
-                                                                        <!-- Pickup Store Address -->
+                                                                        Pickup Store Address
                                                                         <div class="form-group">
                                                                             <label>{{ __('pickup_store_address') }} <i
                                                                                     class="text-danger">*</i></label>
@@ -858,7 +849,7 @@
                                                                                 :placeholder="__('pickup_store_address')"></textarea>
                                                                         </div>
 
-                                                                        <!-- Coordinates -->
+                                                                        Coordinates
                                                                         <div class="form-group">
                                                                             <label for="pickup_latitude">{{
                                                                                 __('latitude') }} <span
@@ -883,7 +874,7 @@
                                                                                 readonly>
                                                                         </div>
 
-                                                                        <!-- Store Timings -->
+                                                                        Store Timings
                                                                         <div class="form-group">
                                                                             <label>{{ __('store_timings') }} <i
                                                                                     class="text-danger">*</i></label>
@@ -910,6 +901,7 @@
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        -->
                                                     </div>
                                                 </div>
                                             </template>
@@ -1052,7 +1044,6 @@ export default {
             upi_mobile: "",
             upi_name: "",
             zones: [],
-            selected_zone: "",
             showAddCityForm: false,
             newCity: {
                 name: '', latitude: '', longitude: '', state: '', zone: '',
@@ -1191,14 +1182,6 @@ export default {
         upi_id: function () { if (!this.id) this.debouncedSave(); },
         upi_mobile: function () { if (!this.id) this.debouncedSave(); },
         upi_name: function () { if (!this.id) this.debouncedSave(); },
-        selected_zone: function (val) {
-            if (val) {
-                this.city_id = [];
-                this.getCities();
-            } else {
-                this.getCities();
-            }
-        },
         commission: function () { if (!this.id) this.debouncedSave(); },
         tax_name: function () { if (!this.id) this.debouncedSave(); },
         tax_number: function () { if (!this.id) this.debouncedSave(); },
@@ -1387,11 +1370,7 @@ export default {
 
         getCities() {
             this.isLoading = true;
-            const zone = this.selected_zone || null;
-            const url = zone
-                ? this.$apiUrl + '/cities?zone=' + encodeURIComponent(zone)
-                : this.$apiUrl + '/cities';
-            axios.get(url)
+            axios.get(this.$apiUrl + '/cities')
                 .then((response) => {
                     this.isLoading = false
                     let data = response.data;
@@ -1535,16 +1514,13 @@ export default {
                     if (!Array.isArray(this.city_id)) this.city_id = [];
                     this.city_id = [...this.city_id, String(newId)];
 
-                    // If zone is new, add it to zones list and select it
+                    // If zone is new, add it to zones list
                     const zone = this.newCity.zone;
                     const zoneExists = this.zones.find(z => z.zone === zone);
                     if (!zoneExists) {
                         this.zones.push({ zone, city_count: 1 });
                     } else {
                         zoneExists.city_count = (zoneExists.city_count || 0) + 1;
-                    }
-                    if (this.selected_zone !== zone) {
-                        this.selected_zone = zone;
                     }
 
                     this.showMessage('success', __('city_saved_successfully'));
@@ -1843,7 +1819,7 @@ export default {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
                 store_name: "", street: "", pincode_id: "", city_id: [], brand_ids: [],
                 state: "", remark: "", bank_name: "", account_number: "", bank_ifsc_code: "", account_name: "", upi_id: "", upi_mobile: "", upi_name: "",
-                selected_zone: "", commission: "", tax_name: "", tax_number: "", pan_number: "",
+                commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
                 status: 0, store_logo: "", store_logo_url: "", national_id_card: "",
                 national_id_card_url: "", national_id_card_name: "", address_proof: "",
@@ -1872,7 +1848,7 @@ export default {
                     street: this.street, pincode_id: this.pincode_id,
                     city_id: this.city_id, brand_ids: this.brand_ids, state: this.state,
                     remark: this.remark, bank_name: this.bank_name, account_number: this.account_number, bank_ifsc_code: this.bank_ifsc_code, account_name: this.account_name, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
-                    upi_name: this.upi_name, selected_zone: this.selected_zone, commission: this.commission,
+                    upi_name: this.upi_name, commission: this.commission,
                     tax_name: this.tax_name, tax_number: this.tax_number, pan_number: this.pan_number,
                     latitude: this.latitude, longitude: this.longitude, place_name: this.place_name,
                     formatted_address: this.formatted_address,
@@ -2041,10 +2017,6 @@ export default {
                         this.upi_id = emptyIfNull(this.record.upi_id);
                         this.upi_mobile = emptyIfNull(this.record.upi_mobile);
                         this.upi_name = emptyIfNull(this.record.upi_name);
-                        // Pre-select the zone from the first assigned city
-                        if (this.record.cities && this.record.cities.length > 0 && this.record.cities[0].zone) {
-                            this.selected_zone = this.record.cities[0].zone;
-                        }
                         this.commission = this.record.commission;
                         this.tax_name = emptyIfNull(this.record.tax_name);
                         this.tax_number = emptyIfNull(this.record.tax_number);

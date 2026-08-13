@@ -1186,7 +1186,7 @@ class CommonHelper
         return $product_ids;
     }
 
-    public static function getMasterProductIdsSection($section, $seller_ids, $user_id = null)
+    public static function getMasterProductIdsSection($section, $seller_ids, $user_id = null, $brand_ids = [])
     {
         if (empty($section)) return "";
 
@@ -1209,6 +1209,9 @@ class CommonHelper
             if (!empty($cate_ids)) {
                 $sql->whereIn('mp.category_id', $cate_ids);
             }
+            if (!empty($brand_ids)) {
+                $sql->whereIn('mp.brand_id', $brand_ids);
+            }
             $sql->orderBy('mp.id', 'DESC');
 
         } elseif ($section->product_type == 'products_on_sale') {
@@ -1227,6 +1230,9 @@ class CommonHelper
                 ->whereExists($hasSaleProduct);
             if (!empty($cate_ids)) {
                 $sql->whereIn('mp.category_id', $cate_ids);
+            }
+            if (!empty($brand_ids)) {
+                $sql->whereIn('mp.brand_id', $brand_ids);
             }
             $sql->orderBy('mp.id', 'DESC');
 
@@ -1253,7 +1259,7 @@ class CommonHelper
         return $product_ids;
     }
 
-    public static function getSectionWithProduct($seller_ids, $user_id = 0, $cityIds = [])
+    public static function getSectionWithProduct($seller_ids, $user_id = 0, $cityIds = [], $brand_ids = [])
     {
         $limit = 8;
         $sections = Section::orderBy('created_at', 'ASC')->get();
@@ -1263,8 +1269,17 @@ class CommonHelper
         $isProductRatingEnabled = $productRatingSetting === 1;
         $fewQuantityAlertThreshold = (int) (Setting::get_value('few_quantity_left_alert') ?? 0);
 
+        // Sarthi: favorites are keyed by (master_product_variant_id, seller_id) — same rule as customer/favorites.
+        $userFavorites = $user_id
+            ? Favorite::where('user_id', $user_id)->whereNotNull('master_product_variant_id')->get(['master_product_variant_id', 'seller_id'])
+            : collect();
+        $favSellersByVariant = $userFavorites->groupBy('master_product_variant_id')
+            ->map(fn($g) => $g->pluck('seller_id')->filter()->unique()->values());
+        $favAnySellerVariants = $userFavorites->filter(fn($f) => is_null($f->seller_id))
+            ->pluck('master_product_variant_id')->unique()->flip();
+
         foreach ($sections as $key => $section) {
-            $product_ids = self::getMasterProductIdsSection($section, $seller_ids, $user_id) ?? "";
+            $product_ids = self::getMasterProductIdsSection($section, $seller_ids, $user_id, $brand_ids) ?? "";
             $product_ids_array = array_values(array_unique(array_filter(
                 array_map('intval', explode(",", $product_ids)),
                 function ($id) { return $id > 0; }
@@ -1285,23 +1300,15 @@ class CommonHelper
                             ->whereIn('sp.seller_id', $seller_ids)
                             ->where('sp.status', 1);
 
-                        if (!empty($cityIds)) {
-                            $q->where(function ($sub) use ($cityIds) {
-                                $sub->whereNotExists(function ($subquery) use ($cityIds) {
-                                    $subquery->select(DB::raw(1))
-                                        ->from('brand_distributor_mappings as bdm')
-                                        ->whereColumn('bdm.brand_id', 'mp.brand_id')
-                                        ->whereIn('bdm.city_id', $cityIds);
-                                })
-                                ->orWhereExists(function ($subquery) use ($cityIds) {
-                                    $subquery->select(DB::raw(1))
-                                        ->from('brand_distributor_mappings as bdm')
-                                        ->whereColumn('bdm.brand_id', 'mp.brand_id')
-                                        ->whereIn('bdm.city_id', $cityIds)
-                                        ->whereColumn('bdm.seller_id', 'sp.seller_id');
-                                });
-                            });
-                        }
+                        // Sarthi: only show this product if the exact (brand, seller, city) combo
+                        // is a real distributor mapping — same fail-closed rule as listProducts.
+                        $q->whereExists(function ($subquery) use ($cityIds) {
+                            $subquery->select(DB::raw(1))
+                                ->from('brand_distributor_mappings as bdm')
+                                ->whereColumn('bdm.brand_id', 'mp.brand_id')
+                                ->whereIn('bdm.city_id', $cityIds)
+                                ->whereColumn('bdm.seller_id', 'sp.seller_id');
+                        });
                     });
 
                 $masterProducts = $productsQuery
@@ -1350,12 +1357,6 @@ class CommonHelper
 
                 if ($sellerVariants->isEmpty()) continue;
 
-                // Build product data
-                $isFavourite = false;
-                if ($user_id) {
-                    $isFavourite = Favorite::where('product_id', $row->id)->where('user_id', $user_id)->exists();
-                }
-
                 $productData = [
                     'id'               => $row->id,
                     'name'             => $row->name,
@@ -1368,7 +1369,6 @@ class CommonHelper
                     'image_url'        => $row->image ? asset('storage/' . $row->image) : null,
                     'other_images_urls'=> collect($row->other_images ?? [])->map(fn($img) => asset('storage/' . $img))->toArray(),
                     'translations'     => $row->translations ?? [],
-                    'is_favorite'      => $isFavourite,
                 ];
 
                 // Build variants from seller_products
@@ -1376,6 +1376,11 @@ class CommonHelper
                 $isFewQuantityLeft = false;
 
                 foreach ($sellerVariants as $sp) {
+                    $isFavVariant = isset($favAnySellerVariants[$sp->master_product_variant_id])
+                        || ($favSellersByVariant[$sp->master_product_variant_id] ?? collect())->contains($sp->seller_id);
+
+                    $variantRating = self::productAverageRating($row->id, $sp->seller_id);
+
                     $sellingPrice    = (float) ($sp->selling_price ?? 0);
                     $discountedPrice = (float) ($sp->discounted_price ?? 0);
                     $tax             = $taxPercentage;
@@ -1437,17 +1442,16 @@ class CommonHelper
                         'cart_count'               => $cartCount,
                         'few_quantity_left'        => $hasFewQuantity,
                         'slab_prices'              => $slabPrices,
+                        'is_favorite'              => $isFavVariant,
+                        'rating_count'             => $variantRating['rating_count'],
+                        'average_rating'           => $variantRating['average_rating'],
                     ];
                 }
 
                 if (empty($variantArray)) continue;
 
-                $ratingData = self::productAverageRating($row->id);
-
                 $productData['few_quantity_left'] = $isFewQuantityLeft;
                 $productData['variants']          = $variantArray;
-                $productData['rating_count']      = $ratingData['rating_count'];
-                $productData['average_rating']    = $ratingData['average_rating'];
                 $productData['product_rating']    = $isProductRatingEnabled;
 
                 $productsList[] = $productData;
@@ -1731,11 +1735,20 @@ class CommonHelper
     }
 
     /**
-     * Persist slab pricing rows for a variant. Accepts a JSON-encoded string
-     * or an array of {min_qty, max_qty, price} objects. Empty input deletes
-     * existing slabs. Returns null on success, error message string otherwise.
+     * Validate and normalize a raw slab list against a product/variant's MOQ
+     * (secondary_unit_value, i.e. the order-quantity step). Returns the
+     * cleaned, sorted array of {min_qty, max_qty, price} on success, or an
+     * error message string on failure.
+     *
+     * When $step > 0 (MOQ configured), slabs must additionally:
+     * - start at exactly the MOQ (lowest min_qty === $step)
+     * - have min_qty/max_qty aligned to multiples of the step, so every
+     *   slab actually contains an orderable quantity (order qty must be a
+     *   multiple of the step — see MasterCatalogOrderHelper::validateSecondaryQty)
+     * - be contiguous with no gaps/overlaps (next.min_qty === prev.max_qty + 1)
+     * - only allow an open-ended (null) max_qty on the last slab
      */
-    public static function saveSlabPricesForVariant($variant_id, $slabs)
+    public static function validateSlabRanges($slabs, $step = 0)
     {
         if (is_string($slabs)) {
             $decoded = json_decode($slabs, true);
@@ -1743,6 +1756,7 @@ class CommonHelper
         } elseif (!is_array($slabs)) {
             $slabs = [];
         }
+        $step = (float) $step;
 
         $clean = [];
         foreach ($slabs as $row) {
@@ -1765,11 +1779,48 @@ class CommonHelper
         usort($clean, function ($a, $b) {
             return $a['min_qty'] <=> $b['min_qty'];
         });
+
+        $epsilon = 0.0001;
+        if ($step > 0 && !empty($clean)) {
+            if ($clean[0]['min_qty'] != $step) {
+                return 'The first slab must start at the minimum order quantity (' . (int) $step . ')';
+            }
+            foreach ($clean as $idx => $row) {
+                if (fmod($row['min_qty'], $step) > $epsilon) {
+                    return 'Slab min_qty must be a multiple of the minimum order quantity (' . (int) $step . ')';
+                }
+                $isLast = $idx === count($clean) - 1;
+                if ($row['max_qty'] === null && !$isLast) {
+                    return 'Only the last slab can have an open-ended max_qty';
+                }
+                if ($row['max_qty'] !== null && fmod($row['max_qty'] + 1, $step) > $epsilon) {
+                    return 'Slab max_qty must align with the minimum order quantity step (' . (int) $step . ')';
+                }
+            }
+        }
+
         for ($i = 1; $i < count($clean); $i++) {
             $prevMax = $clean[$i - 1]['max_qty'];
-            if ($prevMax === null || $prevMax >= $clean[$i]['min_qty']) {
-                return 'Slab ranges overlap';
+            if ($prevMax === null || $prevMax + 1 !== $clean[$i]['min_qty']) {
+                return 'Slab ranges must be contiguous with no gaps or overlaps';
             }
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Persist slab pricing rows for a variant. Accepts a JSON-encoded string
+     * or an array of {min_qty, max_qty, price} objects. Empty input deletes
+     * existing slabs. Returns null on success, error message string otherwise.
+     */
+    public static function saveSlabPricesForVariant($variant_id, $slabs)
+    {
+        $step = (float) (ProductVariant::where('id', $variant_id)->value('secondary_unit_value') ?? 0);
+
+        $clean = self::validateSlabRanges($slabs, $step);
+        if (is_string($clean)) {
+            return $clean;
         }
 
         ProductSlabPrice::where('product_variant_id', $variant_id)->delete();
@@ -4136,11 +4187,15 @@ class CommonHelper
         }
     }
 
-    public static function productAverageRating($product_id)
+    public static function productAverageRating($product_id, $seller_id = null)
     {
-        // Sarthi: product_id now refers to master_products.id; count straight off product_ratings
-        // without joining Product so it works regardless of catalog backing table.
-        $ratings = ProductRating::where('product_id', $product_id)->get(['rate']);
+        // Sarthi: product_id refers to master_products.id; seller_id (when given) scopes
+        // the rating to that specific seller's offer so ratings don't leak across sellers.
+        $query = ProductRating::where('product_id', $product_id);
+        if ($seller_id !== null) {
+            $query->where('seller_id', $seller_id);
+        }
+        $ratings = $query->get(['rate']);
         $total = $ratings->count();
 
         $data = [];
@@ -4153,10 +4208,13 @@ class CommonHelper
         return $data;
     }
 
-    public static function productRatingOfUser($product_id, $user_id)
+    public static function productRatingOfUser($product_id, $user_id, $seller_id = null)
     {
-        $product_ratings = ProductRating::with('user', 'images')->where('product_id', $product_id)->where('user_id', $user_id)->get();
-        return $product_ratings;
+        $query = ProductRating::with('user', 'images')->where('product_id', $product_id)->where('user_id', $user_id);
+        if ($seller_id !== null) {
+            $query->where('seller_id', $seller_id);
+        }
+        return $query->get();
     }
 
     public static function getCategoryChildIds($categories)

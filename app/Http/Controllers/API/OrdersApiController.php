@@ -399,6 +399,11 @@ class OrdersApiController extends Controller
         if (empty($order)) {
             return CommonHelper::responseError("Order Not found!");
         }
+
+        if ($order->loading_slip_id && optional($order->loadingSlip)->status != 1) {
+            return CommonHelper::responseError("Loading slip must be dispatched first.");
+        }
+
         $selectedStatus = OrderStatusList::where('id', $request->status_id)->value('status');
 
         if ($order->active_status == $request->status_id) {
@@ -847,6 +852,10 @@ class OrdersApiController extends Controller
         $ids = explode(",", $request->ids);
         foreach ($ids as $key => $id) {
             $orderItem = OrderItem::find($id);
+            $order = Order::find($orderItem->order_id);
+            if ($order && $order->loading_slip_id && optional($order->loadingSlip)->status != 1) {
+                return CommonHelper::responseError("Loading slip must be dispatched first.");
+            }
             $orderItem->active_status = $request->status_id;
             $orderItem->save();
 

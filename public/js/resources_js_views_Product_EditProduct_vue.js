@@ -1117,6 +1117,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 // import InputTag from 'vue-input-tag';
@@ -1854,9 +1862,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     addSlabRow: function addSlabRow(input, type) {
       var key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+      var moqKey = type === 'packet' ? 'packet_secondary_unit_value' : 'loose_secondary_unit_value';
       if (!input[key]) this.$set(input, key, []);
+      var step = parseFloat(input[moqKey]) || 0;
+      var defaultMinQty = !input[key].length && step > 0 ? step : null;
       input[key].push({
-        min_qty: null,
+        min_qty: defaultMinQty,
         max_qty: null,
         price: null
       });
@@ -1878,6 +1889,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     validateSlabs: function validateSlabs(input, type) {
       var key = type === 'packet' ? 'packet_slab_prices' : 'loose_slab_prices';
+      var moqKey = type === 'packet' ? 'packet_secondary_unit_value' : 'loose_secondary_unit_value';
       var rows = (input[key] || []).filter(function (s) {
         return s.min_qty || s.max_qty || s.price !== null && s.price !== '';
       });
@@ -1889,16 +1901,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _step;
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var r = _step.value;
-          if (!r.min_qty || r.min_qty < 1) {
+          var _r = _step.value;
+          if (!_r.min_qty || _r.min_qty < 1) {
             this.$set(input, 'validationErrorSlab', 'Min Qty must be at least 1');
             return false;
           }
-          if (r.max_qty !== null && r.max_qty !== '' && r.max_qty < r.min_qty) {
+          if (_r.max_qty !== null && _r.max_qty !== '' && _r.max_qty < _r.min_qty) {
             this.$set(input, 'validationErrorSlab', 'Max Qty must be greater than or equal to Min Qty');
             return false;
           }
-          if (r.price === null || r.price === '' || r.price < 0) {
+          if (_r.price === null || _r.price === '' || _r.price < 0) {
             this.$set(input, 'validationErrorSlab', 'Price must be a non-negative number');
             return false;
           }
@@ -1911,10 +1923,34 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var sorted = rows.slice().sort(function (a, b) {
         return a.min_qty - b.min_qty;
       });
-      for (var i = 1; i < sorted.length; i++) {
-        var prevMax = sorted[i - 1].max_qty;
-        if (prevMax === null || prevMax === '' || prevMax >= sorted[i].min_qty) {
-          this.$set(input, 'validationErrorSlab', 'Slab ranges overlap');
+      var step = parseFloat(input[moqKey]) || 0;
+      if (step > 0) {
+        if (sorted[0].min_qty !== step) {
+          this.$set(input, 'validationErrorSlab', __('slab_must_start_at_moq').replace(':moq', step));
+          return false;
+        }
+        for (var i = 0; i < sorted.length; i++) {
+          var r = sorted[i];
+          if (r.min_qty % step !== 0) {
+            this.$set(input, 'validationErrorSlab', __('slab_min_qty_must_be_multiple_of_moq').replace(':moq', step));
+            return false;
+          }
+          var isLast = i === sorted.length - 1;
+          var hasMax = r.max_qty !== null && r.max_qty !== '';
+          if (!hasMax && !isLast) {
+            this.$set(input, 'validationErrorSlab', __('only_last_slab_can_be_open_ended'));
+            return false;
+          }
+          if (hasMax && (r.max_qty + 1) % step !== 0) {
+            this.$set(input, 'validationErrorSlab', __('slab_max_qty_must_align_with_moq').replace(':moq', step));
+            return false;
+          }
+        }
+      }
+      for (var _i = 1; _i < sorted.length; _i++) {
+        var prevMax = sorted[_i - 1].max_qty;
+        if (prevMax === null || prevMax === '' || (step > 0 ? prevMax + 1 !== sorted[_i].min_qty : prevMax >= sorted[_i].min_qty)) {
+          this.$set(input, 'validationErrorSlab', __('slab_ranges_must_be_contiguous'));
           return false;
         }
       }
@@ -2519,6 +2555,23 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (!this.validateStockWithMeasurement()) {
         return;
       }
+
+      // Validate slab pricing (MOQ alignment, contiguity)
+      var _iterator2 = _createForOfIteratorHelper(this.inputs),
+        _step2;
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var input = _step2.value;
+          if (!this.validateSlabs(input, this.type)) {
+            this.showError(input.validationErrorSlab);
+            return;
+          }
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
       this.isLoading = true;
       var vm = this;
 
@@ -2590,27 +2643,27 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       /*packet*/
       if (this.type === 'packet') {
-        for (var _i = 0; _i < this.inputs.length; _i++) {
-          formData.append('variant_id[]', this.inputs[_i].id ? this.inputs[_i].id : "");
-          formData.append('packet_measurement[]', this.inputs[_i].packet_measurement);
-          formData.append('packet_price[]', this.inputs[_i].packet_price != undefined ? this.inputs[_i].packet_price : 0);
-          formData.append('packet_purchase_price[]', this.inputs[_i].packet_purchase_price != undefined ? this.inputs[_i].packet_purchase_price : 0);
-          formData.append('discounted_price[]', this.inputs[_i].discounted_price != undefined ? this.inputs[_i].discounted_price : 0);
-          formData.append('packet_stock[]', this.inputs[_i].packet_stock != undefined ? this.inputs[_i].packet_stock : 0);
-          formData.append('packet_stock_unit_id[]', this.inputs[_i].packet_stock_unit_id != undefined ? this.inputs[_i].packet_stock_unit_id : 0);
-          formData.append('packet_status[]', this.inputs[_i].packet_status != undefined ? this.inputs[_i].packet_status : 0);
-          formData.append('packet_sku[]', this.inputs[_i].packet_sku != undefined ? this.inputs[_i].packet_sku : "");
-          formData.append('packet_secondary_unit_id[]', this.inputs[_i].packet_secondary_unit_id != undefined ? this.inputs[_i].packet_secondary_unit_id : "");
-          formData.append('packet_secondary_unit_value[]', this.inputs[_i].packet_secondary_unit_value != undefined ? this.inputs[_i].packet_secondary_unit_value : "");
-          formData.append('packet_slab_prices[' + _i + ']', JSON.stringify(this.inputs[_i].packet_slab_prices || []));
+        for (var _i2 = 0; _i2 < this.inputs.length; _i2++) {
+          formData.append('variant_id[]', this.inputs[_i2].id ? this.inputs[_i2].id : "");
+          formData.append('packet_measurement[]', this.inputs[_i2].packet_measurement);
+          formData.append('packet_price[]', this.inputs[_i2].packet_price != undefined ? this.inputs[_i2].packet_price : 0);
+          formData.append('packet_purchase_price[]', this.inputs[_i2].packet_purchase_price != undefined ? this.inputs[_i2].packet_purchase_price : 0);
+          formData.append('discounted_price[]', this.inputs[_i2].discounted_price != undefined ? this.inputs[_i2].discounted_price : 0);
+          formData.append('packet_stock[]', this.inputs[_i2].packet_stock != undefined ? this.inputs[_i2].packet_stock : 0);
+          formData.append('packet_stock_unit_id[]', this.inputs[_i2].packet_stock_unit_id != undefined ? this.inputs[_i2].packet_stock_unit_id : 0);
+          formData.append('packet_status[]', this.inputs[_i2].packet_status != undefined ? this.inputs[_i2].packet_status : 0);
+          formData.append('packet_sku[]', this.inputs[_i2].packet_sku != undefined ? this.inputs[_i2].packet_sku : "");
+          formData.append('packet_secondary_unit_id[]', this.inputs[_i2].packet_secondary_unit_id != undefined ? this.inputs[_i2].packet_secondary_unit_id : "");
+          formData.append('packet_secondary_unit_value[]', this.inputs[_i2].packet_secondary_unit_value != undefined ? this.inputs[_i2].packet_secondary_unit_value : "");
+          formData.append('packet_slab_prices[' + _i2 + ']', JSON.stringify(this.inputs[_i2].packet_slab_prices || []));
 
           // Safely handle packet variant images refs (can be undefined when card is hidden in non-default language tab)
-          var packetRef = this.$refs['packet_variant_images_' + _i];
+          var packetRef = this.$refs['packet_variant_images_' + _i2];
           var packetInput = Array.isArray(packetRef) ? packetRef && packetRef[0] : packetRef;
           if (packetInput && packetInput.files) {
             for (var j = 0; j < packetInput.files.length; j++) {
               var file = packetInput.files[j];
-              formData.append('packet_variant_images_' + _i + '[]', file);
+              formData.append('packet_variant_images_' + _i2 + '[]', file);
             }
           }
         }
@@ -2618,26 +2671,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       /*loose*/
       if (this.type === 'loose') {
-        for (var _i2 = 0; _i2 < this.inputs.length; _i2++) {
-          formData.append('variant_id[]', this.inputs[_i2].id ? this.inputs[_i2].id : "");
-          formData.append('loose_measurement[]', this.inputs[_i2].loose_measurement);
-          formData.append('loose_custom_title[]', this.inputs[_i2].loose_custom_title);
-          formData.append('loose_price[]', this.inputs[_i2].loose_price != undefined ? this.inputs[_i2].loose_price : 0);
-          formData.append('loose_purchase_price[]', this.inputs[_i2].loose_purchase_price != undefined ? this.inputs[_i2].loose_purchase_price : 0);
-          formData.append('loose_discounted_price[]', this.inputs[_i2].loose_discounted_price != undefined ? this.inputs[_i2].loose_discounted_price : 0);
-          formData.append('packet_stock[]', this.inputs[_i2].packet_stock != undefined ? this.inputs[_i2].packet_stock : 0);
-          formData.append('loose_sku[]', this.inputs[_i2].loose_sku != undefined ? this.inputs[_i2].loose_sku : "");
-          formData.append('loose_secondary_unit_id[]', this.inputs[_i2].loose_secondary_unit_id != undefined ? this.inputs[_i2].loose_secondary_unit_id : "");
-          formData.append('loose_secondary_unit_value[]', this.inputs[_i2].loose_secondary_unit_value != undefined ? this.inputs[_i2].loose_secondary_unit_value : "");
-          formData.append('loose_slab_prices[' + _i2 + ']', JSON.stringify(this.inputs[_i2].loose_slab_prices || []));
+        for (var _i3 = 0; _i3 < this.inputs.length; _i3++) {
+          formData.append('variant_id[]', this.inputs[_i3].id ? this.inputs[_i3].id : "");
+          formData.append('loose_measurement[]', this.inputs[_i3].loose_measurement);
+          formData.append('loose_custom_title[]', this.inputs[_i3].loose_custom_title);
+          formData.append('loose_price[]', this.inputs[_i3].loose_price != undefined ? this.inputs[_i3].loose_price : 0);
+          formData.append('loose_purchase_price[]', this.inputs[_i3].loose_purchase_price != undefined ? this.inputs[_i3].loose_purchase_price : 0);
+          formData.append('loose_discounted_price[]', this.inputs[_i3].loose_discounted_price != undefined ? this.inputs[_i3].loose_discounted_price : 0);
+          formData.append('packet_stock[]', this.inputs[_i3].packet_stock != undefined ? this.inputs[_i3].packet_stock : 0);
+          formData.append('loose_sku[]', this.inputs[_i3].loose_sku != undefined ? this.inputs[_i3].loose_sku : "");
+          formData.append('loose_secondary_unit_id[]', this.inputs[_i3].loose_secondary_unit_id != undefined ? this.inputs[_i3].loose_secondary_unit_id : "");
+          formData.append('loose_secondary_unit_value[]', this.inputs[_i3].loose_secondary_unit_value != undefined ? this.inputs[_i3].loose_secondary_unit_value : "");
+          formData.append('loose_slab_prices[' + _i3 + ']', JSON.stringify(this.inputs[_i3].loose_slab_prices || []));
 
           // Safely handle loose variant images refs (can be undefined when card is hidden in non-default language tab)
-          var looseRef = this.$refs['loose_variant_images_' + _i2];
+          var looseRef = this.$refs['loose_variant_images_' + _i3];
           var looseInput = Array.isArray(looseRef) ? looseRef && looseRef[0] : looseRef;
           if (looseInput && looseInput.files) {
             for (var _j = 0; _j < looseInput.files.length; _j++) {
               var _file2 = looseInput.files[_j];
-              formData.append('loose_variant_images_' + _i2 + '[]', _file2);
+              formData.append('loose_variant_images_' + _i3 + '[]', _file2);
             }
           }
         }
@@ -6892,6 +6945,36 @@ var render = function () {
                                                     }),
                                                   ]),
                                                   _vm._v(" "),
+                                                  input.packet_secondary_unit_value
+                                                    ? _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "alert alert-info py-2 px-3 mb-2",
+                                                        },
+                                                        [
+                                                          _c("i", {
+                                                            staticClass:
+                                                              "fa fa-info-circle",
+                                                          }),
+                                                          _vm._v(
+                                                            "\n                                                " +
+                                                              _vm._s(
+                                                                _vm
+                                                                  .__(
+                                                                    "slab_moq_hint"
+                                                                  )
+                                                                  .replace(
+                                                                    ":moq",
+                                                                    input.packet_secondary_unit_value
+                                                                  )
+                                                              ) +
+                                                              "\n                                            "
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                  _vm._v(" "),
                                                   input.packet_slab_prices &&
                                                   input.packet_slab_prices
                                                     .length
@@ -8373,6 +8456,36 @@ var render = function () {
                                                         },
                                                       }),
                                                     ]),
+                                                    _vm._v(" "),
+                                                    input.loose_secondary_unit_value
+                                                      ? _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "alert alert-info py-2 px-3 mb-2",
+                                                          },
+                                                          [
+                                                            _c("i", {
+                                                              staticClass:
+                                                                "fa fa-info-circle",
+                                                            }),
+                                                            _vm._v(
+                                                              "\n                                                    " +
+                                                                _vm._s(
+                                                                  _vm
+                                                                    .__(
+                                                                      "slab_moq_hint"
+                                                                    )
+                                                                    .replace(
+                                                                      ":moq",
+                                                                      input.loose_secondary_unit_value
+                                                                    )
+                                                                ) +
+                                                                "\n                                                "
+                                                            ),
+                                                          ]
+                                                        )
+                                                      : _vm._e(),
                                                     _vm._v(" "),
                                                     input.loose_slab_prices &&
                                                     input.loose_slab_prices

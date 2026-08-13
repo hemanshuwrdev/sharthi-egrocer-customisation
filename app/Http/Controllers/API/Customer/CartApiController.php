@@ -22,7 +22,10 @@ class CartApiController extends Controller
 {
     public function getUserCart(Request $request)
     {
-        $is_self_pickup = (isset($request->is_self_pickup) && $request->is_self_pickup == 1) ? true : false;
+        // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — forced false so
+        // every '$is_self_pickup' branch below is dead but left in place for reference; uncomment to restore.
+        // $is_self_pickup = (isset($request->is_self_pickup) && $request->is_self_pickup == 1) ? true : false;
+        $is_self_pickup = false;
 
         $validationRules = [];
         if (!$is_self_pickup) {
@@ -255,7 +258,9 @@ class CartApiController extends Controller
                     $response['product_variant_id'] = $total->product_variant_id;
                     $response['quantity'] = $total->quantity;
 
-                    $is_self_pickup_enabled = (isset($request->is_self_pickup) && $request->is_self_pickup == 1) ? true : false;
+                    // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+                    // $is_self_pickup_enabled = (isset($request->is_self_pickup) && $request->is_self_pickup == 1) ? true : false;
+                    $is_self_pickup_enabled = false;
 
                     if ($is_self_pickup_enabled) {
                         $data = [
@@ -303,30 +308,31 @@ class CartApiController extends Controller
                                 return CommonHelper::responseErrorWithData('all_cart_products_have_not_same_seller', $data);
                             }
 
-                            $seller = $cartItems->first();
-                            if ($seller && $seller->seller_id) {
-                                $sellerData = Seller::select('id', 'name', 'self_pickup_mode', 'door_step_mode', 'pickup_store_address', 'pickup_latitude', 'pickup_longitude', 'pickup_store_timings', 'mobile')
-                                    ->where('id', $seller->seller_id)
-                                    ->first();
-
-                                if ($sellerData) {
-                                    // Parse pickup store timings JSON
-                                    $pickup_timings = json_decode($sellerData->pickup_store_timings, true);
-                                    $opening_time = $pickup_timings['opening_time'] ?? '';
-                                    $closing_time = $pickup_timings['closing_time'] ?? '';
-
-                                    $response['seller_self_pickup'] = [
-                                        'seller_id' => $sellerData->id,
-                                        'seller_name' => $sellerData->name,
-                                        'seller_mobile' => $sellerData->mobile,
-                                        'pickup_store_address' => $sellerData->pickup_store_address,
-                                        'pickup_latitude' => $sellerData->pickup_latitude,
-                                        'pickup_longitude' => $sellerData->pickup_longitude,
-                                        'opening_time' => $opening_time,
-                                        'closing_time' => $closing_time,
-                                    ];
-                                }
-                            }
+                            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+                            // $seller = $cartItems->first();
+                            // if ($seller && $seller->seller_id) {
+                            //     $sellerData = Seller::select('id', 'name', 'self_pickup_mode', 'door_step_mode', 'pickup_store_address', 'pickup_latitude', 'pickup_longitude', 'pickup_store_timings', 'mobile')
+                            //         ->where('id', $seller->seller_id)
+                            //         ->first();
+                            //
+                            //     if ($sellerData) {
+                            //         // Parse pickup store timings JSON
+                            //         $pickup_timings = json_decode($sellerData->pickup_store_timings, true);
+                            //         $opening_time = $pickup_timings['opening_time'] ?? '';
+                            //         $closing_time = $pickup_timings['closing_time'] ?? '';
+                            //
+                            //         $response['seller_self_pickup'] = [
+                            //             'seller_id' => $sellerData->id,
+                            //             'seller_name' => $sellerData->name,
+                            //             'seller_mobile' => $sellerData->mobile,
+                            //             'pickup_store_address' => $sellerData->pickup_store_address,
+                            //             'pickup_latitude' => $sellerData->pickup_latitude,
+                            //             'pickup_longitude' => $sellerData->pickup_longitude,
+                            //             'opening_time' => $opening_time,
+                            //             'closing_time' => $closing_time,
+                            //         ];
+                            //     }
+                            // }
                         }
                         $deactivatedSellers = $cartItems->filter(function ($item) {
                             return $item->seller_status != 1;
@@ -365,31 +371,34 @@ class CartApiController extends Controller
                             }
                         }
 
-                        $global_self_pickup_mode = Setting::where('variable', 'self_pickup_mode')->value('value') ?? 0;
-
-                        $seller_self_pickup_mode = 0;
-                        $seller_door_step_mode = 1;
-                        if (!empty($cartItems)) {
-                            $firstCartItem = $cartItems->first();
-                            if ($firstCartItem) {
-                                $seller_self_pickup_mode = $firstCartItem->self_pickup_mode ?? 0;
-                                $seller_door_step_mode = $firstCartItem->door_step_mode ?? 1;
-                            }
-                        }
-
-                        $response['self_pickup_mode'] = ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1) ? 1 : 0;
-                        $response['doorstep_delivery_mode'] = 0;
-
-                        if ($global_self_pickup_mode == 0) {
-                            // When global self pickup is OFF, doorstep delivery becomes compulsory
-                            $response['doorstep_delivery_mode'] = 1;
-                        } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 0 && $seller_door_step_mode == 1) {
-                            // Case 3: Global ON, Seller OFF, Doorstep ON
-                            $response['doorstep_delivery_mode'] = 1;
-                        } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1 && $seller_door_step_mode == 1) {
-                            // Case 5: Global ON, Seller ON, Doorstep ON
-                            $response['doorstep_delivery_mode'] = 1;
-                        }
+                        // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+                        // $global_self_pickup_mode = Setting::where('variable', 'self_pickup_mode')->value('value') ?? 0;
+                        //
+                        // $seller_self_pickup_mode = 0;
+                        // $seller_door_step_mode = 1;
+                        // if (!empty($cartItems)) {
+                        //     $firstCartItem = $cartItems->first();
+                        //     if ($firstCartItem) {
+                        //         $seller_self_pickup_mode = $firstCartItem->self_pickup_mode ?? 0;
+                        //         $seller_door_step_mode = $firstCartItem->door_step_mode ?? 1;
+                        //     }
+                        // }
+                        //
+                        // $response['self_pickup_mode'] = ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1) ? 1 : 0;
+                        // $response['doorstep_delivery_mode'] = 0;
+                        //
+                        // if ($global_self_pickup_mode == 0) {
+                        //     // When global self pickup is OFF, doorstep delivery becomes compulsory
+                        //     $response['doorstep_delivery_mode'] = 1;
+                        // } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 0 && $seller_door_step_mode == 1) {
+                        //     // Case 3: Global ON, Seller OFF, Doorstep ON
+                        //     $response['doorstep_delivery_mode'] = 1;
+                        // } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1 && $seller_door_step_mode == 1) {
+                        //     // Case 5: Global ON, Seller ON, Doorstep ON
+                        //     $response['doorstep_delivery_mode'] = 1;
+                        // }
+                        $response['self_pickup_mode'] = 0;
+                        $response['doorstep_delivery_mode'] = 1;
 
                         if (isset($request->promocode_id) && $request->promocode_id && $request->promocode_id != "") {
 
@@ -412,35 +421,38 @@ class CartApiController extends Controller
                     $response['cart'] = $res;
                     $response['save_for_later'] = $result;
 
-                    $global_self_pickup_mode = Setting::where('variable', 'self_pickup_mode')->value('value') ?? 0;
-
-                    $seller_self_pickup_mode = 0;
-                    $seller_door_step_mode = 1;
-                    if (!empty($res)) {
-                        $cartItems = Cart::select('carts.*', 'products.seller_id', 'sellers.self_pickup_mode', 'sellers.door_step_mode')
-                            ->join('products', 'carts.product_id', '=', 'products.id')
-                            ->leftJoin('sellers', 'products.seller_id', '=', 'sellers.id')
-                            ->where('carts.save_for_later', '=', 0)
-                            ->where('user_id', '=', $user_id)
-                            ->first();
-
-                        if ($cartItems) {
-                            $seller_self_pickup_mode = $cartItems->self_pickup_mode ?? 0;
-                            $seller_door_step_mode = $cartItems->door_step_mode ?? 1;
-                        }
-                    }
-
-                    $response['self_pickup_mode'] = ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1) ? 1 : 0;
-
-                    $response['doorstep_delivery_mode'] = 0;
-
-                    if ($global_self_pickup_mode == 0) {
-                        $response['doorstep_delivery_mode'] = 1;
-                    } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 0 && $seller_door_step_mode == 1) {
-                        $response['doorstep_delivery_mode'] = 1;
-                    } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1 && $seller_door_step_mode == 1) {
-                        $response['doorstep_delivery_mode'] = 1;
-                    }
+                    // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+                    // $global_self_pickup_mode = Setting::where('variable', 'self_pickup_mode')->value('value') ?? 0;
+                    //
+                    // $seller_self_pickup_mode = 0;
+                    // $seller_door_step_mode = 1;
+                    // if (!empty($res)) {
+                    //     $cartItems = Cart::select('carts.*', 'products.seller_id', 'sellers.self_pickup_mode', 'sellers.door_step_mode')
+                    //         ->join('products', 'carts.product_id', '=', 'products.id')
+                    //         ->leftJoin('sellers', 'products.seller_id', '=', 'sellers.id')
+                    //         ->where('carts.save_for_later', '=', 0)
+                    //         ->where('user_id', '=', $user_id)
+                    //         ->first();
+                    //
+                    //     if ($cartItems) {
+                    //         $seller_self_pickup_mode = $cartItems->self_pickup_mode ?? 0;
+                    //         $seller_door_step_mode = $cartItems->door_step_mode ?? 1;
+                    //     }
+                    // }
+                    //
+                    // $response['self_pickup_mode'] = ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1) ? 1 : 0;
+                    //
+                    // $response['doorstep_delivery_mode'] = 0;
+                    //
+                    // if ($global_self_pickup_mode == 0) {
+                    //     $response['doorstep_delivery_mode'] = 1;
+                    // } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 0 && $seller_door_step_mode == 1) {
+                    //     $response['doorstep_delivery_mode'] = 1;
+                    // } elseif ($global_self_pickup_mode == 1 && $seller_self_pickup_mode == 1 && $seller_door_step_mode == 1) {
+                    //     $response['doorstep_delivery_mode'] = 1;
+                    // }
+                    $response['self_pickup_mode'] = 0;
+                    $response['doorstep_delivery_mode'] = 1;
                 }
 
                 if (isset($request->is_checkout) && $request->is_checkout == 1) {

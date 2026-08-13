@@ -188,9 +188,10 @@ class RetailerCartOrderApiController extends Controller
             ];
         }
 
-        $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
+        // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+        // $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
         $sellers = \App\Models\Seller::whereIn('id', array_keys($groups))
-            ->get(['id', 'name', 'self_pickup_mode', 'door_step_mode'])
+            ->get(['id', 'name'])
             ->keyBy('id');
 
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
@@ -206,11 +207,14 @@ class RetailerCartOrderApiController extends Controller
             $group['nearest_scheme']  = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $appliedId);
 
             $seller = $sellers[$sellerId] ?? null;
-            $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
-            $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
             $group['seller_name']           = $seller->name ?? null;
-            $group['self_pickup_mode']       = ($globalSelfPickup === 1 && $sellerSelfPickup === 1) ? 1 : 0;
-            $group['doorstep_delivery_mode'] = ($globalSelfPickup === 0 || $sellerDoorstep === 1) ? 1 : 0;
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+            // $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
+            // $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
+            // $group['self_pickup_mode']       = ($globalSelfPickup === 1 && $sellerSelfPickup === 1) ? 1 : 0;
+            // $group['doorstep_delivery_mode'] = ($globalSelfPickup === 0 || $sellerDoorstep === 1) ? 1 : 0;
+            $group['self_pickup_mode']       = 0;
+            $group['doorstep_delivery_mode'] = 1;
         }
         unset($group);
 
@@ -462,10 +466,14 @@ class RetailerCartOrderApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'mobile' => 'required',
-            'order_type' => 'nullable|in:doorstep,selfpickup',
-            'address' => 'required_unless:order_type,selfpickup',
-            'latitude' => 'required_unless:order_type,selfpickup',
-            'longitude' => 'required_unless:order_type,selfpickup',
+            // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+            // 'order_type' => 'nullable|in:doorstep,selfpickup',
+            // 'address' => 'required_unless:order_type,selfpickup',
+            // 'latitude' => 'required_unless:order_type,selfpickup',
+            // 'longitude' => 'required_unless:order_type,selfpickup',
+            'address' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
             'payment_method' => 'nullable|string',
             'delivery_time' => 'nullable|string',
             'address_id' => 'nullable|integer',
@@ -564,7 +572,9 @@ class RetailerCartOrderApiController extends Controller
                         // 'status' => json_encode([[OrderStatusList::$received, date('Y-m-d H:i:s')]]),
                         // 'active_status' => OrderStatusList::$received,
 
-                        'order_type' => $request->order_type ?? 'doorstep',
+                        // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
+                        // 'order_type' => $request->order_type ?? 'doorstep',
+                        'order_type' => 'doorstep',
                         'address_id' => $request->address_id ?? 0,
                         'created_at' => now(),
                         'updated_at' => now(),

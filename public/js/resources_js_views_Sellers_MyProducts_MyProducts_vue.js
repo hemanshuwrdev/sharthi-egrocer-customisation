@@ -260,6 +260,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -474,8 +478,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.slabModalOpen = true;
     },
     addSlab: function addSlab() {
+      var step = parseFloat(this.slabTarget && this.slabTarget.secondary_unit_value) || 0;
+      var defaultMinQty = !this.slabDraft.length && step > 0 ? step : null;
       this.slabDraft.push({
-        min_qty: null,
+        min_qty: defaultMinQty,
         max_qty: null,
         price: null
       });
@@ -493,12 +499,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _step;
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var s = _step.value;
-          if (!s.min_qty || !s.price) {
+          var _s = _step.value;
+          if (!_s.min_qty || !_s.price) {
             this.showError(__('slab_min_qty_and_price_required'));
             return;
           }
-          if (s.max_qty && s.max_qty <= s.min_qty) {
+          if (_s.max_qty && _s.max_qty <= _s.min_qty) {
             this.showError(__('slab_max_qty_must_be_greater_than_min_qty'));
             return;
           }
@@ -507,6 +513,36 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _iterator.e(err);
       } finally {
         _iterator.f();
+      }
+      var step = parseFloat(this.slabTarget.secondary_unit_value) || 0;
+      if (step > 0) {
+        var sorted = this.slabDraft.slice().sort(function (a, b) {
+          return a.min_qty - b.min_qty;
+        });
+        if (sorted[0].min_qty !== step) {
+          this.showError(__('slab_must_start_at_moq').replace(':moq', step));
+          return;
+        }
+        for (var i = 0; i < sorted.length; i++) {
+          var s = sorted[i];
+          if (s.min_qty % step !== 0) {
+            this.showError(__('slab_min_qty_must_be_multiple_of_moq').replace(':moq', step));
+            return;
+          }
+          var isLast = i === sorted.length - 1;
+          if (!s.max_qty && !isLast) {
+            this.showError(__('only_last_slab_can_be_open_ended'));
+            return;
+          }
+          if (s.max_qty && (s.max_qty + 1) % step !== 0) {
+            this.showError(__('slab_max_qty_must_align_with_moq').replace(':moq', step));
+            return;
+          }
+          if (i > 0 && sorted[i - 1].max_qty + 1 !== s.min_qty) {
+            this.showError(__('slab_ranges_must_be_contiguous'));
+            return;
+          }
+        }
       }
       this.slabSaving = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/products/save_slabs', {
@@ -1516,6 +1552,28 @@ var render = function () {
                     ),
                   ]),
                 ]),
+                _vm._v(" "),
+                _vm.slabTarget.secondary_unit_value
+                  ? _c(
+                      "div",
+                      { staticClass: "alert alert-info py-2 px-3 mb-3" },
+                      [
+                        _c("i", { staticClass: "fa fa-info-circle" }),
+                        _vm._v(
+                          "\n                " +
+                            _vm._s(
+                              _vm
+                                .__("slab_moq_hint")
+                                .replace(
+                                  ":moq",
+                                  _vm.slabTarget.secondary_unit_value
+                                )
+                            ) +
+                            "\n            "
+                        ),
+                      ]
+                    )
+                  : _vm._e(),
                 _vm._v(" "),
                 _c("table", { staticClass: "table table-bordered" }, [
                   _c("thead", { staticClass: "table-light" }, [

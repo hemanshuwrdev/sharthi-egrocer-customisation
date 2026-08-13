@@ -258,7 +258,7 @@ class CategoryApiController extends Controller
         if (!$category) {
             $category = new Category();
             $category->slug = $slug;
-            $category->status = 1;
+            $category->status = $request->status ?? 1;
             $category->parent_id = $request->parent_id ?? 0;
             $category->web_image = '';
 
