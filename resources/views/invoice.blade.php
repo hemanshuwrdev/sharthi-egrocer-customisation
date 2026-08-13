@@ -341,7 +341,7 @@
                     @endif
                     <tr class="grand-total">
                         <td align="left" style="padding: 6px 10px; font-weight: bold; background-color: #343a40; color: #fff;">Grand Total</td>
-                        <td align="right" style="padding: 6px 10px; font-weight: bold; background-color: #343a40; color: #fff;">{{ $currency }}{{ number_format($order->remaining_final, 2) }}</td>
+                        <td align="right" style="padding: 6px 10px; font-weight: bold; background-color: #343a40; color: #fff;">{{ $currency }}{{ number_format($order->final_total, 2) }}</td>
                     </tr>
                 </table>
             </td>
