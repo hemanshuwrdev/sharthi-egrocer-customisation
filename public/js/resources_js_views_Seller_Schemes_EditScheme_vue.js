@@ -166,6 +166,11 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
 
 
 
@@ -289,6 +294,15 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       if (this.isGroupType() && this.record.products.length === 0) {
         this.showError("Please select at least one product.");
         return;
+      }
+      if (this.isGroupType()) {
+        var invalidSlab = this.record.slabs.find(function (s) {
+          return s.discount_type === 'percentage' && Number(s.discount_value) > 100;
+        });
+        if (invalidSlab) {
+          this.showError(__('percentage_discount_cannot_exceed_100'));
+          return;
+        }
       }
       this.isLoading = true;
       var url = this.$sellerApiUrl + '/schemes/' + (this.id ? 'update' : 'save');
@@ -1029,6 +1043,11 @@ var render = function () {
                                               type: "number",
                                               step: "0.01",
                                               min: "0.01",
+                                              max:
+                                                slab.discount_type ===
+                                                "percentage"
+                                                  ? 100
+                                                  : null,
                                               required: "",
                                             },
                                             domProps: {
@@ -1047,6 +1066,25 @@ var render = function () {
                                               },
                                             },
                                           }),
+                                          _vm._v(" "),
+                                          slab.discount_type === "percentage" &&
+                                          slab.discount_value > 100
+                                            ? _c(
+                                                "small",
+                                                { staticClass: "text-danger" },
+                                                [
+                                                  _vm._v(
+                                                    "\n                                                    " +
+                                                      _vm._s(
+                                                        _vm.__(
+                                                          "percentage_discount_cannot_exceed_100"
+                                                        )
+                                                      ) +
+                                                      "\n                                                "
+                                                  ),
+                                                ]
+                                              )
+                                            : _vm._e(),
                                         ]),
                                         _vm._v(" "),
                                         _c("div", { staticClass: "col-md-2" }, [

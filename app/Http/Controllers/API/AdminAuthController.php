@@ -428,7 +428,13 @@ class AdminAuthController extends Controller
                 $seller->address_proof = $image;
             }
             $seller->save();
-           
+
+            $conflict = CommonHelper::claimMobile($seller->mobile, \App\Models\MobileRegistry::ROLE_SELLER, $seller->id);
+            if ($conflict) {
+                DB::rollBack();
+                return CommonHelper::responseError($conflict);
+            }
+
             try {
                 CommonHelper::sendMailAdminStatus("seller", $seller, $seller->status, $request->email);
             } catch (\Exception $e) {
@@ -542,6 +548,11 @@ class AdminAuthController extends Controller
         }
         $record->save();
 
+        $conflict = CommonHelper::claimMobile($record->mobile, \App\Models\MobileRegistry::ROLE_SELLER, $record->id);
+        if ($conflict) {
+            return CommonHelper::responseError($conflict);
+        }
+
         if ($record->status == Seller::$statusRegistered) {
             return CommonHelper::responseSuccess('your_request_send_to_admin_and_will_approve_soon_thank_you');
         } else {
@@ -616,6 +627,12 @@ class AdminAuthController extends Controller
             $deliveryBoy->national_identity_card = $national_identity_card;
             $deliveryBoy->save();
 
+            $conflict = CommonHelper::claimMobile($deliveryBoy->mobile, \App\Models\MobileRegistry::ROLE_DELIVERY_BOY, $deliveryBoy->id);
+            if ($conflict) {
+                DB::rollBack();
+                return CommonHelper::responseError($conflict);
+            }
+
             if (!empty($request->email)) {
                 try {
                     CommonHelper::sendMailAdminStatus("delivery_boy", $deliveryBoy, $deliveryBoy->status, $request->email);
@@ -685,6 +702,11 @@ class AdminAuthController extends Controller
         $deliveryBoy->address = $request->address;
         $deliveryBoy->other_payment_information = $request->other_payment_information;
         $deliveryBoy->save();
+
+        $conflict = CommonHelper::claimMobile($deliveryBoy->mobile, \App\Models\MobileRegistry::ROLE_DELIVERY_BOY, $deliveryBoy->id);
+        if ($conflict) {
+            return CommonHelper::responseError($conflict);
+        }
 
         if ($deliveryBoy->status == DeliveryBoy::$statusRegistered) {
             return CommonHelper::responseSuccess('your_request_send_to_admin_and_will_approve_soon_thank_you');

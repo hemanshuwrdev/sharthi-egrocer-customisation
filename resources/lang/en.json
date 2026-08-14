@@ -1587,6 +1587,14 @@
     "Select Secondary Unit": "Select Secondary Unit",
     "Secondary Unit Value (Items Per Case/Bag)": "Secondary Unit Value (Items Per Case/Bag)",
     "salesman": "Salesman",
+    "no_brands_assigned": "No brands assigned yet",
+    "brand_assignment_is_managed_by_admin": "Brand assignment is managed by the admin",
+    "no_zones_assigned": "No zones assigned yet",
+    "zone_assignment_is_managed_by_admin": "Zone assignment is managed by the admin",
+    "manage_salesman": "Manage Salesman",
+    "salesman_policies": "Salesman Policies",
+    "salesman_privacy_policy_and_term_conditions": "Salesman Privacy Policy & Terms Conditions",
+    "salesman_privacy_policy_and_terms_conditions_saved_successfully": "Salesman Privacy Policy and Terms Conditions saved successfully",
     "retailer": "Retailer",
     "collections": "Collections",
     "add_salesman": "Add Salesman",
@@ -1815,6 +1823,7 @@
     "you_want_to_delete_this_scheme": "You want to delete this scheme!",
     "scheme_saved_successfully": "Scheme saved successfully",
     "scheme_deleted_successfully": "Scheme deleted successfully",
+    "percentage_discount_cannot_exceed_100": "Percentage discount cannot exceed 100%",
     "scheme_not_found": "Scheme not found",
     "product_not_owned_by_seller": "One or more selected products do not belong to your store",
     "commission_billing": "Commission Billing",
@@ -1949,5 +1958,7 @@
     "close_and_reconcile": "Close and Reconcile",
     "hsn_code": "HSN Code",
     "status_updated_successfully" : "Status updated successfully",
-    "no_tags_available" : "No tags available"
+    "no_tags_available" : "No tags available",
+    "cash_expected" : "Cash Expected",
+    "add_new_category" : "Add New Category"
 }

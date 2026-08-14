@@ -18,6 +18,11 @@ class SchemeSlab extends Model
         'discount_value',
     ];
 
+    protected $casts = [
+        'min_value' => 'float',
+        'discount_value' => 'float',
+    ];
+
     public function scheme()
     {
         return $this->belongsTo(Scheme::class);

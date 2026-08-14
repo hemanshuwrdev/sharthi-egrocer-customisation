@@ -598,11 +598,6 @@
                                         <template #cell(store_name)="row">
                                             {{ getDisplayName(row.item.store_name) || '' }}
                                         </template>
-                                        <template #cell(actions)="row">
-                                            <router-link to="/sellers" v-b-tooltip.hover :title="__('view')"
-                                                class="btn btn-primary btn-sm"><i class="fa fa-eye"></i>
-                                            </router-link>
-                                        </template>
                                     </b-table>
                                 </div>
                                 <b-row>
@@ -644,11 +639,6 @@
                                         </template>
                                         <template #cell(product_name)="row">
                                             {{ getDisplayName(row.item.product_name) || '' }}
-                                        </template>
-                                        <template #cell(actions)="row">
-                                            <router-link to="/manage_categories" v-b-tooltip.hover :title="__('view')"
-                                                class="btn btn-primary btn-sm"><i class="fa fa-eye"></i>
-                                            </router-link>
                                         </template>
                                     </b-table>
                                 </div>
@@ -708,7 +698,6 @@ export default {
                 { key: 'seller_name', label: __('sellers'), sortable: false, class: 'text-center' },
                 { key: 'store_name', label: __('store_name'), sortable: false, class: 'text-center' },
                 { key: 'total_revenue', label: __('total_revenue'), sortable: false, class: 'text-center' },
-                { key: "actions", label: __('actions') }
             ],
 
             categoryFields: [
@@ -716,7 +705,6 @@ export default {
                 { key: 'category_name', label: __('category'), sortable: false, class: 'text-center' },
                 { key: 'product_name', label: __('product'), sortable: false, class: 'text-center' },
                 { key: 'total_revenue', label: __('total_revenue'), sortable: false, class: 'text-center' },
-                { key: "actions", label: __('actions') }
             ],
 
             orderFields: [
@@ -1134,7 +1122,7 @@ export default {
             return 'bg-secondary';
         },
         getStatusTranslationKey(id) {
-            const map = { 1: 'payment_pending', 2: 'received', 3: 'processed', 4: 'shipped', 5: 'outForDelivery', 6: 'delivered', 7: 'cancelled', 8: 'returned', 9: 'pending', 10: 'ready_for_pickup', 11: 'picked_up' };
+            const map = { 1: 'payment_pending', 2: 'received', 3: 'processed', 4: 'shipped', 5: 'outForDelivery', 6: 'delivered', 7: 'cancelled', 8: 'returned', 9: 'pending', 10: 'ready_for_pickup', 11: 'picked_up', 12: 'rescheduled', 13: 'partial_delivery', 14: 'not_delivered' };
             return map[Number(id)] || '';
         },
         getStatusLabelById(val) {

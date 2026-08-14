@@ -294,11 +294,13 @@ export default {
                             icon: 'grid-fill',
                             url: '/seller/delivery_boys/create'
                         },
+                        /*
                         {
                             name: __('dlivery_boy_requests'),
                             icon: 'grid-fill',
                             url: '/seller/registered_delivery_boys'
                         },
+                        */
                         {
                             name: __('manage_delivery_boys'),
                             icon: 'grid-fill',
@@ -309,11 +311,11 @@ export default {
                             icon: 'grid-fill',
                             url: '/seller/fund_transfers'
                         },
-                        {
-                            name: __('delivery_boy_cash'),
-                            icon: 'grid-fill',
-                            url: '/seller/cash_collection'
-                        },
+                        // {
+                        //     name: __('delivery_boy_cash'),
+                        //     icon: 'grid-fill',
+                        //     url: '/seller/cash_collection'
+                        // },
                         {
                             name: __('delivery_boy_policies'),
                             icon: 'grid-fill',
@@ -329,8 +331,19 @@ export default {
                 {
                     name: __('salesman'),
                     icon: 'users',
-                    url: '/seller/salesman',
                     permission: 'order_list',
+                    submenu: [
+                        {
+                            name: __('manage_salesman'),
+                            icon: 'grid-fill',
+                            url: '/seller/salesman'
+                        },
+                        {
+                            name: __('salesman_policies'),
+                            icon: 'grid-fill',
+                            url: '/seller/privacy_policy_salesman'
+                        },
+                    ]
                 },
                 {
                     name: __('schemes'),

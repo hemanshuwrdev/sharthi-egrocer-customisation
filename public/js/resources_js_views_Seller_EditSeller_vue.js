@@ -1027,6 +1027,37 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1367,6 +1398,24 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         });
       }
       return temp;
+    },
+    assignedBrands: function assignedBrands() {
+      if (!Array.isArray(this.brand_ids) || this.brand_ids.length === 0) {
+        return [];
+      }
+      var selected = this.brand_ids.map(String);
+      return this.brands.filter(function (brand) {
+        return selected.includes(String(brand.id));
+      });
+    },
+    assignedCities: function assignedCities() {
+      if (!Array.isArray(this.city_id) || this.city_id.length === 0) {
+        return [];
+      }
+      var selected = this.city_id.map(String);
+      return this.cities.filter(function (city) {
+        return selected.includes(String(city.id));
+      });
     },
     cities_options: function cities_options() {
       if (!Array.isArray(this.cities) || this.cities.length === 0) {
@@ -4510,70 +4559,164 @@ var render = function () {
                                             _vm._v(" "),
                                             language.is_default
                                               ? [
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass:
-                                                        "form-group col-md-5",
-                                                    },
-                                                    [
-                                                      _c(
+                                                  !_vm.isSellerRole
+                                                    ? _c(
                                                         "div",
                                                         {
                                                           staticClass:
-                                                            "form-group",
+                                                            "form-group col-md-5",
                                                         },
                                                         [
-                                                          _c("label", [
-                                                            _vm._v(
-                                                              _vm._s(
-                                                                _vm.__(
-                                                                  "brand_ids"
-                                                                )
-                                                              )
-                                                            ),
-                                                            _c(
-                                                              "i",
-                                                              {
-                                                                staticClass:
-                                                                  "text-danger",
-                                                              },
-                                                              [_vm._v("*")]
-                                                            ),
-                                                            _vm._v(" "),
-                                                            _c("small"),
-                                                          ]),
-                                                          _vm._v(" "),
-                                                          _c("Select2", {
-                                                            attrs: {
-                                                              placeholder:
-                                                                _vm.__(
-                                                                  "select_brands"
+                                                          _c(
+                                                            "div",
+                                                            {
+                                                              staticClass:
+                                                                "form-group",
+                                                            },
+                                                            [
+                                                              _c("label", [
+                                                                _vm._v(
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "brand_ids"
+                                                                    )
+                                                                  )
                                                                 ),
-                                                              options:
-                                                                _vm.brands_options,
-                                                              settings: {
-                                                                multiple:
-                                                                  "multiple",
-                                                              },
-                                                            },
-                                                            model: {
-                                                              value:
-                                                                _vm.brand_ids,
-                                                              callback:
-                                                                function ($$v) {
-                                                                  _vm.brand_ids =
-                                                                    $$v
+                                                                _c(
+                                                                  "i",
+                                                                  {
+                                                                    staticClass:
+                                                                      "text-danger",
+                                                                  },
+                                                                  [_vm._v("*")]
+                                                                ),
+                                                                _vm._v(" "),
+                                                                _c("small"),
+                                                              ]),
+                                                              _vm._v(" "),
+                                                              _c("Select2", {
+                                                                attrs: {
+                                                                  placeholder:
+                                                                    _vm.__(
+                                                                      "select_brands"
+                                                                    ),
+                                                                  options:
+                                                                    _vm.brands_options,
+                                                                  settings: {
+                                                                    multiple:
+                                                                      "multiple",
+                                                                  },
                                                                 },
-                                                              expression:
-                                                                "brand_ids",
+                                                                model: {
+                                                                  value:
+                                                                    _vm.brand_ids,
+                                                                  callback:
+                                                                    function (
+                                                                      $$v
+                                                                    ) {
+                                                                      _vm.brand_ids =
+                                                                        $$v
+                                                                    },
+                                                                  expression:
+                                                                    "brand_ids",
+                                                                },
+                                                              }),
+                                                            ],
+                                                            1
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "form-group col-md-5",
+                                                        },
+                                                        [
+                                                          _c(
+                                                            "div",
+                                                            {
+                                                              staticClass:
+                                                                "form-group",
                                                             },
-                                                          }),
-                                                        ],
-                                                        1
+                                                            [
+                                                              _c("label", [
+                                                                _vm._v(
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "brand_ids"
+                                                                    )
+                                                                  )
+                                                                ),
+                                                              ]),
+                                                              _vm._v(" "),
+                                                              _vm.assignedBrands
+                                                                .length
+                                                                ? _c(
+                                                                    "div",
+                                                                    _vm._l(
+                                                                      _vm.assignedBrands,
+                                                                      function (
+                                                                        brand
+                                                                      ) {
+                                                                        return _c(
+                                                                          "span",
+                                                                          {
+                                                                            key: brand.id,
+                                                                            staticClass:
+                                                                              "badge bg-secondary me-1 mb-1 p-2",
+                                                                          },
+                                                                          [
+                                                                            _vm._v(
+                                                                              "\n                                                                        " +
+                                                                                _vm._s(
+                                                                                  brand.name
+                                                                                ) +
+                                                                                "\n                                                                    "
+                                                                            ),
+                                                                          ]
+                                                                        )
+                                                                      }
+                                                                    ),
+                                                                    0
+                                                                  )
+                                                                : _c(
+                                                                    "p",
+                                                                    {
+                                                                      staticClass:
+                                                                        "form-control-static",
+                                                                    },
+                                                                    [
+                                                                      _vm._v(
+                                                                        _vm._s(
+                                                                          _vm.__(
+                                                                            "no_brands_assigned"
+                                                                          )
+                                                                        )
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "small",
+                                                                {
+                                                                  staticClass:
+                                                                    "text-muted d-block mt-1",
+                                                                },
+                                                                [
+                                                                  _vm._v(
+                                                                    _vm._s(
+                                                                      _vm.__(
+                                                                        "brand_assignment_is_managed_by_admin"
+                                                                      )
+                                                                    )
+                                                                  ),
+                                                                ]
+                                                              ),
+                                                            ]
+                                                          ),
+                                                        ]
                                                       ),
-                                                    ]
-                                                  ),
                                                   _vm._v(" "),
                                                   _c(
                                                     "div",
@@ -6905,7 +7048,113 @@ var render = function () {
                                                   ),
                                                 ]
                                               )
-                                            : _vm._e(),
+                                            : _c(
+                                                "div",
+                                                { staticClass: "card" },
+                                                [
+                                                  _c(
+                                                    "div",
+                                                    {
+                                                      staticClass:
+                                                        "card-header",
+                                                    },
+                                                    [
+                                                      _c(
+                                                        "h4",
+                                                        { staticClass: "mb-0" },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "service_zones_and_cities"
+                                                              )
+                                                            )
+                                                          ),
+                                                        ]
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "div",
+                                                    {
+                                                      staticClass: "card-body",
+                                                    },
+                                                    [
+                                                      _vm.assignedCities.length
+                                                        ? _c(
+                                                            "div",
+                                                            _vm._l(
+                                                              _vm.assignedCities,
+                                                              function (city) {
+                                                                return _c(
+                                                                  "span",
+                                                                  {
+                                                                    key: city.id,
+                                                                    staticClass:
+                                                                      "badge bg-secondary me-1 mb-1 p-2",
+                                                                  },
+                                                                  [
+                                                                    _vm._v(
+                                                                      "\n                                                            " +
+                                                                        _vm._s(
+                                                                          city.name
+                                                                        )
+                                                                    ),
+                                                                    city.zone
+                                                                      ? [
+                                                                          _vm._v(
+                                                                            " - " +
+                                                                              _vm._s(
+                                                                                city.zone
+                                                                              )
+                                                                          ),
+                                                                        ]
+                                                                      : _vm._e(),
+                                                                  ],
+                                                                  2
+                                                                )
+                                                              }
+                                                            ),
+                                                            0
+                                                          )
+                                                        : _c(
+                                                            "p",
+                                                            {
+                                                              staticClass:
+                                                                "form-control-static",
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "no_zones_assigned"
+                                                                  )
+                                                                )
+                                                              ),
+                                                            ]
+                                                          ),
+                                                      _vm._v(" "),
+                                                      _c(
+                                                        "small",
+                                                        {
+                                                          staticClass:
+                                                            "text-muted d-block mt-1",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "zone_assignment_is_managed_by_admin"
+                                                              )
+                                                            )
+                                                          ),
+                                                        ]
+                                                      ),
+                                                    ]
+                                                  ),
+                                                ]
+                                              ),
                                           _vm._v(" "),
                                           _c("div", { staticClass: "card" }, [
                                             _c(

@@ -1869,6 +1869,59 @@ class ProductApisController extends Controller
         return CommonHelper::responseWithData($paged, $totalCount);
     }
 
+    /**
+     * Sarthi: master-catalog product search for admin screens that need to pick a
+     * product but aren't tied to any single distributor (e.g. matching a customer's
+     * Product Request to an existing catalog product). Not seller-scoped — separate
+     * from getProductVariants() above, which is the distributor's own stock view and
+     * hard-requires a seller. Shows every distributor that lists each variant.
+     */
+    public function searchCatalogVariants(Request $request)
+    {
+        $limit = (int) $request->input('per_page', 10);
+        $page = (int) $request->input('page', 1) ?: 1;
+        $offset = ($page - 1) * $limit;
+        if ($request->has('limit')) {
+            $limit = (int) $request->limit;
+            $offset = (int) $request->offset;
+        }
+
+        $query = DB::table('master_product_variants as mpv')
+            ->select(
+                'mp.id as product_id',
+                'mp.name',
+                'mp.image',
+                'mpv.id as product_variant_id',
+                'mpv.sku',
+                'sp.id as seller_product_id',
+                'sp.seller_id',
+                's.name as seller_name'
+            )
+            ->join('master_products as mp', 'mp.id', '=', 'mpv.master_product_id')
+            ->join('seller_products as sp', 'sp.master_product_variant_id', '=', 'mpv.id')
+            ->leftJoin('sellers as s', 's.id', '=', 'sp.seller_id')
+            ->where('mp.status', 1)
+            ->where('mpv.status', 1)
+            ->where('sp.status', 1);
+
+        $searchTerm = trim((string) ($request->input('search') ?? $request->input('filter') ?? ''));
+        if ($searchTerm !== '') {
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('mp.name', 'LIKE', "%$searchTerm%")
+                    ->orWhere('mp.hsn', 'LIKE', "%$searchTerm%")
+                    ->orWhere('mpv.sku', 'LIKE', "%$searchTerm%");
+            });
+        }
+
+        $rawProducts = $query->orderBy('mp.id', 'DESC')
+            ->orderBy('mpv.id', 'DESC')
+            ->get();
+
+        $totalCount = $rawProducts->count();
+        $paged = $rawProducts->slice($offset, $limit)->values();
+        return CommonHelper::responseWithData($paged, $totalCount);
+    }
+
     public function updateVariantStock(Request $request)
     {
         $user = auth()->user();

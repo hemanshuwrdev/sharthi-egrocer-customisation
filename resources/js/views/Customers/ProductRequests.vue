@@ -368,7 +368,7 @@ export default {
                 per_page: this.productsPerPage
             };
 
-            axios.get(this.$apiUrl + '/products/get_product_variants', { params })
+            axios.get(this.$apiUrl + '/products/search_catalog_variants', { params })
                 .then((response) => {
                     this.isLoadingProducts = false;
                     if (response.data.status === 1) {

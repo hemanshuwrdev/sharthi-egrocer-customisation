@@ -480,7 +480,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         8: 'returned',
         9: 'pending',
         10: 'ready_for_pickup',
-        11: 'picked_up'
+        11: 'picked_up',
+        12: 'rescheduled',
+        13: 'partial_delivery',
+        14: 'not_delivered'
       };
       return map[Number(id)] || '';
     },

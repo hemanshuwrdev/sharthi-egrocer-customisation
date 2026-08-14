@@ -85,17 +85,17 @@
 
                             <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
                                 <div class="card">
-                                    <router-link to="/seller/cash_collection">
+                                    <router-link to="/seller/delivery_boys">
                                         <div class="card-body px-3 py-4-5">
                                             <div class="row">
                                                 <div class="col-md-12 d-flex justify-content-center align-items-center">
                                                     <div class="stats-icon-big lightgreen">
-                                                        <i class="fa fa-money"></i>
+                                                        <i class="fa fa-male"></i>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold text-center">{{ __('collections') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ $currency }} {{ record.collections || 0 }}</h3>
+                                                    <h5 class="text-muted font-semibold text-center">{{ __('delivery_boys') }}</h5>
+                                                    <h3 class="font-extrabold mb-0">{{ record.driver_count || 0 }}</h3>
                                                 </div>
                                             </div>
                                         </div>
@@ -618,7 +618,7 @@ export default {
          * Translation key for order status id (matches OrderStatusList keys in lang files).
          */
         getStatusTranslationKey(id) {
-            const map = { 1: 'payment_pending', 2: 'received', 3: 'processed', 4: 'shipped', 5: 'outForDelivery', 6: 'delivered', 7: 'cancelled', 8: 'returned', 9: 'pending', 10: 'ready_for_pickup', 11: 'picked_up' };
+            const map = { 1: 'payment_pending', 2: 'received', 3: 'processed', 4: 'shipped', 5: 'outForDelivery', 6: 'delivered', 7: 'cancelled', 8: 'returned', 9: 'pending', 10: 'ready_for_pickup', 11: 'picked_up', 12: 'rescheduled', 13: 'partial_delivery', 14: 'not_delivered' };
             return map[Number(id)] || '';
         },
         /**

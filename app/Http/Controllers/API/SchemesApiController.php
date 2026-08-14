@@ -162,6 +162,16 @@ class SchemesApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        // A percentage discount can't exceed 100% — the DB column has no such
+        // constraint (it's shared with 'flat', which has no natural upper bound).
+        if ($request->type !== 'buy_x_get_y' && is_array($request->slabs)) {
+            foreach ($request->slabs as $slab) {
+                if (($slab['discount_type'] ?? null) === 'percentage' && (float) ($slab['discount_value'] ?? 0) > 100) {
+                    return CommonHelper::responseError('percentage_discount_cannot_exceed_100');
+                }
+            }
+        }
+
         // Every referenced product must belong to this distributor.
         $isBxgy = $request->type === 'buy_x_get_y';
         $referenced = $isBxgy

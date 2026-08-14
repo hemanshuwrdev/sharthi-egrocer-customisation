@@ -67,6 +67,7 @@ class SalesmanAppApiController extends Controller
             'app_name', 'support_number', 'support_email',
             'google_place_api_key', 'apiKey',
             'phone_auth_otp', 'firebase_authentication', 'custom_sms_gateway_otp_based',
+            'privacy_policy_salesman', 'terms_conditions_salesman',
         ];
 
         $data = CommonHelper::getSettings($keys);
@@ -93,6 +94,26 @@ class SalesmanAppApiController extends Controller
         }
 
         return CommonHelper::responseWithData($data);
+    }
+
+    /**
+     * GET /api/salesman/privacy_policy  (public — no auth)
+     * Privacy Policy + Terms & Conditions for the salesman mobile app.
+     */
+    public function getPrivacyPolicy()
+    {
+        $variables = array(
+            "privacy_policy_salesman",
+            "terms_conditions_salesman",
+        );
+        $settings = CommonHelper::getSettings($variables);
+        $settings = CommonHelper::resolveTranslatedSettings($settings);
+
+        if (!empty($settings)) {
+            return CommonHelper::responseWithData($settings);
+        } else {
+            return CommonHelper::responseError('No settings found!');
+        }
     }
 
     /**

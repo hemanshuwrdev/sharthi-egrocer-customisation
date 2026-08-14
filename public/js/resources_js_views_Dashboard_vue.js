@@ -700,16 +700,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -762,9 +752,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         label: __('total_revenue'),
         sortable: false,
         "class": 'text-center'
-      }, {
-        key: "actions",
-        label: __('actions')
       }],
       categoryFields: [{
         key: 'category_id',
@@ -786,9 +773,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         label: __('total_revenue'),
         sortable: false,
         "class": 'text-center'
-      }, {
-        key: "actions",
-        label: __('actions')
       }],
       orderFields: [{
         key: 'id',
@@ -1249,7 +1233,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         8: 'returned',
         9: 'pending',
         10: 'ready_for_pickup',
-        11: 'picked_up'
+        11: 'picked_up',
+        12: 'rescheduled',
+        13: 'partial_delivery',
+        14: 'not_delivered'
       };
       return map[Number(id)] || '';
     },
@@ -2283,31 +2270,6 @@ var render = function () {
                               ]
                             },
                           },
-                          {
-                            key: "cell(actions)",
-                            fn: function (row) {
-                              return [
-                                _c(
-                                  "router-link",
-                                  {
-                                    directives: [
-                                      {
-                                        name: "b-tooltip",
-                                        rawName: "v-b-tooltip.hover",
-                                        modifiers: { hover: true },
-                                      },
-                                    ],
-                                    staticClass: "btn btn-primary btn-sm",
-                                    attrs: {
-                                      to: "/sellers",
-                                      title: _vm.__("view"),
-                                    },
-                                  },
-                                  [_c("i", { staticClass: "fa fa-eye" })]
-                                ),
-                              ]
-                            },
-                          },
                         ]),
                       }),
                     ],
@@ -2492,31 +2454,6 @@ var render = function () {
                                       ) || ""
                                     ) +
                                     "\n                                    "
-                                ),
-                              ]
-                            },
-                          },
-                          {
-                            key: "cell(actions)",
-                            fn: function (row) {
-                              return [
-                                _c(
-                                  "router-link",
-                                  {
-                                    directives: [
-                                      {
-                                        name: "b-tooltip",
-                                        rawName: "v-b-tooltip.hover",
-                                        modifiers: { hover: true },
-                                      },
-                                    ],
-                                    staticClass: "btn btn-primary btn-sm",
-                                    attrs: {
-                                      to: "/manage_categories",
-                                      title: _vm.__("view"),
-                                    },
-                                  },
-                                  [_c("i", { staticClass: "fa fa-eye" })]
                                 ),
                               ]
                             },

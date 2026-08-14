@@ -168,7 +168,9 @@ class SellerApiController extends Controller
             $record->upi_id     = $request->upi_id;
             $record->upi_mobile = $request->upi_mobile;
             $record->upi_name   = $request->upi_name;
-            $record->commission = $request->commission;
+            // Some app clients send the literal string "null" instead of omitting the
+            // field or sending an empty value, which MySQL's int column rejects outright.
+            $record->commission = is_numeric($request->commission) ? $request->commission : null;
             $record->tax_name = $request->tax_name;
             $record->tax_number = $request->tax_number;
             $record->pan_number = $request->pan_number;
@@ -271,6 +273,12 @@ class SellerApiController extends Controller
                 $record->saveTranslation($request->language_id, $translationData);
             }
 
+            $conflict = CommonHelper::claimMobile($record->mobile, \App\Models\MobileRegistry::ROLE_SELLER, $record->id);
+            if ($conflict) {
+                DB::rollBack();
+                return CommonHelper::responseError($conflict);
+            }
+
             DB::commit();
         } catch (\Exception $e) {
             Log::info("Error : " . $e->getMessage());
@@ -301,6 +309,9 @@ class SellerApiController extends Controller
         $cities = $cityIds ? City::whereIn('id', $cityIds)->get(['id', 'name', 'zone']) : collect();
         $seller->cities = $cities;
         $seller->brand_ids = BrandDistributorMapping::where('seller_id', $seller->id)->distinct()->pluck('brand_id');
+        // Full brand objects (not just IDs) so API consumers (mobile app) can render
+        // brand tags directly without a second lookup.
+        $seller->brands = Brand::whereIn('id', $seller->brand_ids)->get(['id', 'name', 'image']);
 
         Seller::setOptimizedResponse(false);
 
@@ -309,13 +320,29 @@ class SellerApiController extends Controller
 
     public function update(Request $request)
     {
+        try{
+        $record = isset($request->id) ? Seller::find($request->id) : null;
+
+        // Distributors manage their own profile via this same endpoint, but brand
+        // mapping and service zones/cities are an admin-controlled assignment —
+        // a distributor must not be able to reassign themselves to other brands
+        // or expand/change their own coverage area. Ignore those fields from a
+        // seller-authenticated request and keep whatever is already on file.
+        $isSellerCaller = (int) (auth()->user()->role_id ?? 0) === (int) Role::$roleSeller;
+
+        // Ignore the record's own admin row when checking email uniqueness — derive it
+        // from the fetched record itself (not $request->admin_id, which the caller can
+        // omit, silently breaking the "exclude myself" exception and causing a false
+        // "email already taken" on an unchanged email).
+        $adminIdForUniqueCheck = $record->admin_id ?? $request->admin_id;
+
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'email' => 'email|required|unique:admins,email,' . $request->admin_id,
+            'email' => 'email|required|unique:admins,email,' . $adminIdForUniqueCheck,
             'mobile' => 'required|numeric',
             'confirm_password' => 'same:password',
             'store_name' => 'required',
-            'brand_ids' => 'required',
+            'brand_ids' => $isSellerCaller ? 'nullable' : 'required',
             'commission' => 'required',
             'city_id' => 'nullable',
             'latitude' => 'required',
@@ -338,12 +365,15 @@ class SellerApiController extends Controller
         //     return CommonHelper::responseError('at_least_one_delivery_mode_must_be_enabled');
         // }
         if (isset($request->id)) {
-            $record = Seller::find($request->id);
-
             if ($record) {
 
-                $brandIds = $this->parseIdList($request->brand_ids);
-                $cityIds = $this->parseIdList($request->filled('city_id') ? $request->city_id : $record->city_id);
+                if ($isSellerCaller) {
+                    $brandIds = BrandDistributorMapping::where('seller_id', $record->id)->pluck('brand_id')->unique()->values()->all();
+                    $cityIds = $this->parseIdList($record->city_id);
+                } else {
+                    $brandIds = $this->parseIdList($request->brand_ids);
+                    $cityIds = $this->parseIdList($request->filled('city_id') ? $request->city_id : $record->city_id);
+                }
                 $conflict = $this->getBrandCityConflict($brandIds, $cityIds, $record->id);
                 if ($conflict) {
                     return CommonHelper::responseError($conflict);
@@ -360,7 +390,10 @@ class SellerApiController extends Controller
 
                     $data['password'] = bcrypt($request->password);
                 }
-                Admin::where('id', $request->admin_id)->update($data);
+                // Use the record's own admin_id, not $request->admin_id — the app doesn't
+                // always send it, which would silently match zero rows here and leave the
+                // admins.email/username login credentials out of sync with sellers.email.
+                Admin::where('id', $record->admin_id)->update($data);
 
                 $record->name = $request->name;
                 $record->email = $request->email;
@@ -382,7 +415,7 @@ class SellerApiController extends Controller
                 $record->store_url = $request->store_url;
                 $record->street = $request->street;
                 $record->pincode_id = ($request->pincode_id) ?? 0;
-                if ($request->filled('city_id')) {
+                if (!$isSellerCaller && $request->filled('city_id')) {
                     $record->city_id = $request->city_id;
                 }
                 $record->state = $request->state;
@@ -393,7 +426,9 @@ class SellerApiController extends Controller
                 $record->upi_id     = $request->upi_id;
                 $record->upi_mobile = $request->upi_mobile;
                 $record->upi_name   = $request->upi_name;
-                $record->commission = $request->commission;
+                // Some app clients send the literal string "null" instead of omitting the
+            // field or sending an empty value, which MySQL's int column rejects outright.
+            $record->commission = is_numeric($request->commission) ? $request->commission : null;
                 $record->tax_name = $request->tax_name;
                 $record->tax_number = $request->tax_number;
                 $record->pan_number = $request->pan_number;
@@ -401,7 +436,12 @@ class SellerApiController extends Controller
                 $record->longitude = $request->longitude;
                 $record->place_name = $request->place_name;
                 $record->formatted_address = $request->formatted_address;
-                $record->require_products_approval = $request->require_products_approval;
+                // require_products_approval is NOT NULL in the DB — only overwrite it when
+                // the request actually sends a value, so a partial self-profile save from
+                // an app that doesn't touch this field doesn't null it out.
+                if ($request->filled('require_products_approval')) {
+                    $record->require_products_approval = $request->require_products_approval;
+                }
                 $record->customer_privacy = $request->customer_privacy;
                 // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
                 // $record->self_pickup_mode = $request->self_pickup_mode ?? 0;
@@ -411,11 +451,16 @@ class SellerApiController extends Controller
                 // $record->pickup_store_timings = $request->pickup_store_timings;
                 // $record->door_step_mode = $request->door_step_mode ?? 1;
 
-                $record->status = $request->status;
-                if ($request->status == Seller::$statusActive || $request->status == Seller::$statusRegistered) {
-                    $record->remark = null;
-                } else {
-                    $record->remark = $request->remark;
+                // status is an admin-controlled approval state — a distributor's own
+                // self-profile save doesn't (and shouldn't) send it. Only apply it when
+                // actually provided, so a self-save doesn't null out the existing status.
+                if ($request->filled('status')) {
+                    $record->status = $request->status;
+                    if ($request->status == Seller::$statusActive || $request->status == Seller::$statusRegistered) {
+                        $record->remark = null;
+                    } else {
+                        $record->remark = $request->remark;
+                    }
                 }
                 $record->slug = Str::slug($request->name);
 
@@ -474,6 +519,12 @@ class SellerApiController extends Controller
                     $record->saveTranslation($request->language_id, $translationData);
                 }
 
+                $conflict = CommonHelper::claimMobile($record->mobile, \App\Models\MobileRegistry::ROLE_SELLER, $record->id);
+                if ($conflict) {
+                    DB::rollBack();
+                    return CommonHelper::responseError($conflict);
+                }
+
                 DB::commit();
 
                 if ($oldStatus !== $record->status) {
@@ -488,6 +539,9 @@ class SellerApiController extends Controller
             }
         }
         return CommonHelper::responseSuccess('seller_updated_successfully');
+        } catch (\Exception $e) {
+            return CommonHelper::responseError($e->getMessage());
+        }
     }
 
     public function delete(Request $request)
@@ -499,6 +553,7 @@ class SellerApiController extends Controller
                 @Storage::disk('public')->delete($seller->national_identity_card);
                 @Storage::disk('public')->delete($seller->address_proof);
                 $seller->delete();
+                CommonHelper::releaseMobile(\App\Models\MobileRegistry::ROLE_SELLER, $seller->id);
                 return CommonHelper::responseSuccess('seller_deleted_successfully');
             } else {
                 return CommonHelper::responseSuccess("Seller Already Deleted!");

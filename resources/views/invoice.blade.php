@@ -254,7 +254,7 @@
                     $cgstAmt = $itemTax / 2;
                     $sgstAmt = $itemTax / 2;
 
-                    $rate = ($item->discounted_price != 0 && $item->discounted_price != "") ? $item->discounted_price : $item->price;
+                    $rate = ($item->price != 0 && $item->price != "") ? $item->price : $item->discounted_price;
                     $discountRate = 0.0;
 
                     $totalBillQty += $item->quantity;

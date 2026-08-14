@@ -681,7 +681,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         8: 'returned',
         9: 'pending',
         10: 'ready_for_pickup',
-        11: 'picked_up'
+        11: 'picked_up',
+        12: 'rescheduled',
+        13: 'partial_delivery',
+        14: 'not_delivered'
       };
       return map[Number(id)] || '';
     },
@@ -1639,7 +1642,7 @@ var render = function () {
                     [
                       _c(
                         "router-link",
-                        { attrs: { to: "/seller/cash_collection" } },
+                        { attrs: { to: "/seller/delivery_boys" } },
                         [
                           _c("div", { staticClass: "card-body px-3 py-4-5" }, [
                             _c("div", { staticClass: "row" }, [
@@ -1655,7 +1658,7 @@ var render = function () {
                                     {
                                       staticClass: "stats-icon-big lightgreen",
                                     },
-                                    [_c("i", { staticClass: "fa fa-money" })]
+                                    [_c("i", { staticClass: "fa fa-male" })]
                                   ),
                                 ]
                               ),
@@ -1673,7 +1676,7 @@ var render = function () {
                                       staticClass:
                                         "text-muted font-semibold text-center",
                                     },
-                                    [_vm._v(_vm._s(_vm.__("collections")))]
+                                    [_vm._v(_vm._s(_vm.__("delivery_boys")))]
                                   ),
                                   _vm._v(" "),
                                   _c(
@@ -1681,9 +1684,7 @@ var render = function () {
                                     { staticClass: "font-extrabold mb-0" },
                                     [
                                       _vm._v(
-                                        _vm._s(_vm.$currency) +
-                                          " " +
-                                          _vm._s(_vm.record.collections || 0)
+                                        _vm._s(_vm.record.driver_count || 0)
                                       ),
                                     ]
                                   ),

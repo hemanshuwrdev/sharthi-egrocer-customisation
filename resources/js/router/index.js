@@ -93,6 +93,9 @@ const PrivacyPolicyDeliveryBoy = () => import("../views/Setting/PrivacyPolicyDel
 //Setting - Seller
 const PrivacyPolicySeller = () => import("../views/Setting/PrivacyPolicySeller");
 
+//Setting - Salesman
+const PrivacyPolicySalesman = () => import("../views/Setting/PrivacyPolicySalesman");
+
 const FirebaseSettings = () => import("../views/Setting/FirebaseSettings");
 const NotificationTemplates = () => import("../views/Setting/NotificationTemplates/NotificationTemplates");
 const SmsSettings = () => import("../views/Setting/SmsSettings");
@@ -1716,6 +1719,16 @@ function configRoutes() {
                         permission: 'order_list',
                         role: sellerRoles,
                         title: 'Privacy Policy Driver'
+                    },
+                },
+                {
+                    path: "privacy_policy_salesman",
+                    name: "SellerPrivacyPolicySalesman",
+                    component: PrivacyPolicySalesman,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Privacy Policy Salesman'
                     },
                 },
                 {

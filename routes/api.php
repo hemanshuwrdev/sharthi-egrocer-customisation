@@ -46,6 +46,10 @@ Route::post('delivery_boy_salary/delete', [\App\Http\Controllers\API\DeliveryBoy
 Route::get('seller-privacy-policy', [\App\Http\Controllers\API\PrivacyPolicyDeliveryBoyApiController::class, 'printPrivacyPolicy']);
 Route::get('seller-terms-conditions', [\App\Http\Controllers\API\PrivacyPolicyDeliveryBoyApiController::class, 'printTermsConditions']);
 
+Route::get('salesman-privacy-policy', [\App\Http\Controllers\API\SalesmanApiController::class, 'printPrivacyPolicy']);
+Route::get('salesman-terms-conditions', [\App\Http\Controllers\API\SalesmanApiController::class, 'printTermsConditions']);
+Route::get('salesman/privacy_policy', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'getPrivacyPolicy']);
+
 Route::get('seller/categories', [\App\Http\Controllers\API\CategoryApiController::class, 'getMainCategories']);
 Route::get('seller/seller_commission', [\App\Http\Controllers\API\SellerApiController::class, 'getSellerCommission']);
 
@@ -170,6 +174,7 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/', [\App\Http\Controllers\API\TagsApiController::class, 'search']);
         });
         Route::get('get_product_variants', [\App\Http\Controllers\API\ProductApisController::class, 'getProductVariants']);
+        Route::get('search_catalog_variants', [\App\Http\Controllers\API\ProductApisController::class, 'searchCatalogVariants']);
         Route::post('update_variant_stock', [\App\Http\Controllers\API\ProductApisController::class, 'updateVariantStock']);
     });
 
@@ -324,6 +329,11 @@ Route::middleware('auth:api')->group(function () {
     Route::group(['prefix' => 'privacy_policy_seller'], function () {
         Route::get('/', [\App\Http\Controllers\API\PrivacyPolicySellerApiController::class, 'index']);
         Route::post('save', [\App\Http\Controllers\API\PrivacyPolicySellerApiController::class, 'save'])->name('privacy_policy_seller.save');
+    });
+
+    Route::group(['prefix' => 'privacy_policy_salesman'], function () {
+        Route::get('/', [\App\Http\Controllers\API\SalesmanApiController::class, 'getPrivacyPolicy']);
+        Route::post('save', [\App\Http\Controllers\API\SalesmanApiController::class, 'savePrivacyPolicy'])->name('privacy_policy_salesman.save');
     });
     Route::group(['prefix' => 'notifications'], function () {
         Route::get('/', [\App\Http\Controllers\API\NotificationsApiController::class, 'index']);

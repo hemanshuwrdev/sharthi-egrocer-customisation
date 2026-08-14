@@ -154,6 +154,9 @@ Route::get('delivery-boy-terms-conditions', [\App\Http\Controllers\API\PrivacyPo
 Route::get('seller-privacy-policy', [\App\Http\Controllers\API\PrivacyPolicySellerApiController::class, 'printPrivacyPolicy']);
 Route::get('seller-terms-conditions', [\App\Http\Controllers\API\PrivacyPolicySellerApiController::class, 'printTermsConditions']);
 
+Route::get('salesman-privacy-policy', [\App\Http\Controllers\API\SalesmanApiController::class, 'printPrivacyPolicy']);
+Route::get('salesman-terms-conditions', [\App\Http\Controllers\API\SalesmanApiController::class, 'printTermsConditions']);
+
 //Webhook
 Route::post('midtrans/callback', [\App\Http\Controllers\MidtransController::class, 'midtransWebhook']);
 Route::post('webhook/stripe', [\App\Http\Controllers\StripeController::class, 'stripeWebhook']);

@@ -27,6 +27,20 @@ class DeliveryBoysApiController extends Controller
     {
         $this->languageService = $languageService;
     }
+
+    /**
+     * A seller-authenticated caller may only act on their own drivers. Admins
+     * (not tied to a seller) can access any driver.
+     */
+    private function canAccessDeliveryBoy(DeliveryBoy $deliveryBoy): bool
+    {
+        $seller = \App\Models\Seller::where('admin_id', auth()->id())->first();
+        if (!$seller) {
+            return true;
+        }
+        return (int) $deliveryBoy->seller_id === (int) $seller->id;
+    }
+
     public function getDeliveryBoyBonusSettings()
     {
         $bonus = CommonHelper::getDeliveryBoyBonusSettings();
@@ -41,6 +55,13 @@ class DeliveryBoysApiController extends Controller
         $query = DeliveryBoy::withAllTranslations()
             ->with(['admin', 'city'])
             ->orderBy('id', 'DESC');
+
+        // Distributors must only see their own drivers, not every driver on the
+        // platform. Admins (not tied to a seller) still see the full list.
+        $seller = \App\Models\Seller::where('admin_id', auth()->id())->first();
+        if ($seller) {
+            $query->where('seller_id', $seller->id);
+        }
 
         if ($request->filled('filterStatus')) {
             $query->where('status', $request->filterStatus);
@@ -77,7 +98,7 @@ class DeliveryBoysApiController extends Controller
         $deliveryBoy = DeliveryBoy::withAllTranslations()
             ->with(['admin.deliveryBoy', 'city:id,name', 'translations'])
             ->where('id', $id)->first();
-        if (!$deliveryBoy) {
+        if (!$deliveryBoy || !$this->canAccessDeliveryBoy($deliveryBoy)) {
             return CommonHelper::responseError('delivery_boy_not_found');
         }
 
@@ -182,6 +203,12 @@ class DeliveryBoysApiController extends Controller
                 'other_payment_information' => $request->other_payment_information ?? '',
             ]);
 
+            $conflict = CommonHelper::claimMobile($deliveryBoy->mobile, \App\Models\MobileRegistry::ROLE_DELIVERY_BOY, $deliveryBoy->id);
+            if ($conflict) {
+                DB::rollBack();
+                return CommonHelper::responseError($conflict);
+            }
+
             DB::commit();
 
             return CommonHelper::responseWithData([
@@ -224,7 +251,7 @@ class DeliveryBoysApiController extends Controller
         }
 
         $deliveryBoy = DeliveryBoy::find($request->id);
-        if (!$deliveryBoy) {
+        if (!$deliveryBoy || !$this->canAccessDeliveryBoy($deliveryBoy)) {
             return CommonHelper::responseError('delivery_boy_not_found');
         }
 
@@ -267,6 +294,11 @@ class DeliveryBoysApiController extends Controller
                     Storage::disk('public')->putFile('delivery_boy/national_identity_card', $request->file('national_identity_card'));
             }
 
+            $conflict = CommonHelper::claimMobile($deliveryBoy->mobile, \App\Models\MobileRegistry::ROLE_DELIVERY_BOY, $deliveryBoy->id);
+            if ($conflict) {
+                return CommonHelper::responseError($conflict);
+            }
+
             $deliveryBoy->save();
 
             // Update Admin password when password is provided
@@ -303,7 +335,7 @@ class DeliveryBoysApiController extends Controller
         if (isset($request->id)) {
             $deliveryBoy = DeliveryBoy::find($request->id);
 
-            if ($deliveryBoy) {
+            if ($deliveryBoy && $this->canAccessDeliveryBoy($deliveryBoy)) {
                 $deliveryBoy->status = $request->status;
                 $deliveryBoy->remark = $request->remark ?? "";
                 $deliveryBoy->save();
@@ -333,8 +365,9 @@ class DeliveryBoysApiController extends Controller
     {
         $deliveryBoy = DeliveryBoy::find($request->id);
 
-        if ($deliveryBoy) {
+        if ($deliveryBoy && $this->canAccessDeliveryBoy($deliveryBoy)) {
             $deliveryBoy->delete();
+            CommonHelper::releaseMobile(\App\Models\MobileRegistry::ROLE_DELIVERY_BOY, $deliveryBoy->id);
         }
 
         return CommonHelper::responseSuccess('delivery_boy_deleted_successfully');
@@ -371,6 +404,8 @@ class DeliveryBoysApiController extends Controller
     public function getSalary(Request $request)
     {
         try {
+            $seller = \App\Models\Seller::where('admin_id', auth()->id())->first();
+
             $query = DB::table('delivery_boy_salary as s')
                 ->leftJoin('delivery_boys as d', 'd.id', '=', 's.delivery_boy_id')
                 ->select(
@@ -378,6 +413,10 @@ class DeliveryBoysApiController extends Controller
                     'd.name as delivery_boy_name'
                 )
                 ->orderBy('s.id', 'DESC');
+
+            if ($seller) {
+                $query->where('d.seller_id', $seller->id);
+            }
 
             if ($request->filled('startDate')) {
                 $query->whereDate('s.paid_on', '>=', $request->startDate);
@@ -393,7 +432,11 @@ class DeliveryBoysApiController extends Controller
 
             $salaries = $query->get();
 
-            $deliveryBoys = DeliveryBoy::select('id', 'name', 'mobile')->get();
+            $deliveryBoysQuery = DeliveryBoy::select('id', 'name', 'mobile');
+            if ($seller) {
+                $deliveryBoysQuery->where('seller_id', $seller->id);
+            }
+            $deliveryBoys = $deliveryBoysQuery->get();
 
             return CommonHelper::responseWithData([
                 'salaries' => $salaries,
@@ -417,6 +460,11 @@ class DeliveryBoysApiController extends Controller
 
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $deliveryBoy = DeliveryBoy::find($request->delivery_boy_id);
+        if (!$deliveryBoy || !$this->canAccessDeliveryBoy($deliveryBoy)) {
+            return CommonHelper::responseError('delivery_boy_not_found');
         }
 
         try {
@@ -448,6 +496,17 @@ class DeliveryBoysApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        // Both the salary row's current driver and the (possibly changed) target driver
+        // must belong to the caller's own seller.
+        $existingSalaryDeliveryBoyId = DB::table('delivery_boy_salary')->where('id', $request->id)->value('delivery_boy_id');
+        $existingDeliveryBoy = $existingSalaryDeliveryBoyId ? DeliveryBoy::find($existingSalaryDeliveryBoyId) : null;
+        $targetDeliveryBoy = DeliveryBoy::find($request->delivery_boy_id);
+        if (!$existingDeliveryBoy || !$targetDeliveryBoy
+            || !$this->canAccessDeliveryBoy($existingDeliveryBoy)
+            || !$this->canAccessDeliveryBoy($targetDeliveryBoy)) {
+            return CommonHelper::responseError('delivery_boy_not_found');
+        }
+
         try {
             DB::table('delivery_boy_salary')
                 ->where('id', $request->id)
@@ -469,6 +528,12 @@ class DeliveryBoysApiController extends Controller
     {
         if (!$request->id) {
             return CommonHelper::responseError('id_required');
+        }
+
+        $salaryDeliveryBoyId = DB::table('delivery_boy_salary')->where('id', $request->id)->value('delivery_boy_id');
+        $deliveryBoy = $salaryDeliveryBoyId ? DeliveryBoy::find($salaryDeliveryBoyId) : null;
+        if ($deliveryBoy && !$this->canAccessDeliveryBoy($deliveryBoy)) {
+            return CommonHelper::responseError('delivery_boy_not_found');
         }
 
         try {

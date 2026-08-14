@@ -417,6 +417,15 @@ class CustomerAuthController extends Controller
 
                 // Save user first to get ID (needed for profile filename)
                 $user->save();
+
+                if ($request->type == 'phone' && $user->mobile) {
+                    $conflict = CommonHelper::claimMobile($user->mobile, \App\Models\MobileRegistry::ROLE_RETAILER, $user->id);
+                    if ($conflict) {
+                        $user->delete();
+                        return CommonHelper::responseError($conflict);
+                    }
+                }
+
                 CommonHelper::setDefaultMailSetting($user->id, 0);
 
                 // Email Verification Process - defer return so profile can be processed first
@@ -544,6 +553,12 @@ class CustomerAuthController extends Controller
             $profile->gps_lat    = $request->gps_lat;
             $profile->gps_lng    = $request->gps_lng;
             $profile->save();
+
+            $conflict = CommonHelper::claimMobile($user->mobile, \App\Models\MobileRegistry::ROLE_RETAILER, $user->id);
+            if ($conflict) {
+                DB::rollBack();
+                return CommonHelper::responseError($conflict);
+            }
 
             DB::commit();
         } catch (\Throwable $e) {
@@ -720,6 +735,7 @@ class CustomerAuthController extends Controller
             UserToken::where('user_id', $user_id)->delete();
 
             $user->delete();
+            CommonHelper::releaseMobile(\App\Models\MobileRegistry::ROLE_RETAILER, $user->id);
             return CommonHelper::responseSuccess("your_account_deleted_successfully");
         } catch (\Exception $e) {
             Log::error('Login : ' . $e->getMessage());
@@ -795,6 +811,13 @@ class CustomerAuthController extends Controller
         }
 
         DB::table('users')->where('id', $userId)->update($updates);
+
+        if (isset($updates['mobile'])) {
+            $conflict = CommonHelper::claimMobile($updates['mobile'], \App\Models\MobileRegistry::ROLE_RETAILER, $userId);
+            if ($conflict) {
+                return CommonHelper::responseError($conflict);
+            }
+        }
 
         // Update retailer profile fields sent by the app
         $retailerUpdates = [];

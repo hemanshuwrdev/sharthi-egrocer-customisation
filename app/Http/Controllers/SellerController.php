@@ -59,6 +59,8 @@ class SellerController extends BaseController
 
         $data['salesman_count'] = \App\Models\Salesman::where('seller_id', $seller_id)->count() ?? 0;
 
+        $data['driver_count'] = DeliveryBoy::where('seller_id', $seller_id)->count() ?? 0;
+
         // Retailer count is unique users ordering from this seller
         $data['retailer_count'] = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')

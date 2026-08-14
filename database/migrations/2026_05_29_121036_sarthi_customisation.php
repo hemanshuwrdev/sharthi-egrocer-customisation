@@ -875,6 +875,50 @@ class SarthiCustomisation extends Migration
                 $table->unsignedBigInteger('product_id')->nullable()->change();
             });
         }
+
+        // Mobile number must be fully exclusive across Salesman/Seller/DeliveryBoy/Retailer.
+        // A single central table with a real UNIQUE constraint on `mobile` so the DB itself
+        // rejects a duplicate claim regardless of which role's flow tries to create it.
+        if (!Schema::hasTable('mobile_registry')) {
+            Schema::create('mobile_registry', function (Blueprint $table) {
+                $table->id();
+                $table->string('mobile')->unique();
+                $table->string('role', 20);
+                $table->unsignedBigInteger('role_id');
+                $table->timestamps();
+
+                $table->index(['role', 'role_id'], 'idx_mobile_registry_role');
+            });
+
+            // Backfill existing numbers. Where the same number already exists across more than
+            // one role table (the bug being fixed), the first table processed below keeps the
+            // claim - insertOrIgnore silently skips the rest instead of failing the migration.
+            $seed = function (string $table, string $role) {
+                DB::table($table)
+                    ->whereNotNull('mobile')
+                    ->where('mobile', '!=', '')
+                    ->orderBy('id')
+                    ->select('id', 'mobile')
+                    ->chunkById(500, function ($rows) use ($role) {
+                        $insertRows = $rows->map(function ($row) use ($role) {
+                            return [
+                                'mobile' => $row->mobile,
+                                'role' => $role,
+                                'role_id' => $row->id,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        })->toArray();
+                        if (!empty($insertRows)) {
+                            DB::table('mobile_registry')->insertOrIgnore($insertRows);
+                        }
+                    });
+            };
+            $seed('salesmen', 'salesman');
+            $seed('sellers', 'seller');
+            $seed('delivery_boys', 'delivery_boy');
+            $seed('users', 'retailer');
+        }
     }
 
     /**
@@ -884,6 +928,10 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('mobile_registry')) {
+            Schema::dropIfExists('mobile_registry');
+        }
+
         // recently_visited_products master catalog column (reverse)
         if (Schema::hasTable('recently_visited_products')) {
             Schema::table('recently_visited_products', function (Blueprint $table) {

@@ -4756,4 +4756,51 @@ JSON:
         }
         return $data;
     }
+
+    /**
+     * Claim a mobile number for a role (Salesman/Seller/DeliveryBoy/Retailer) in the
+     * central mobile_registry table, which carries a real DB UNIQUE constraint on
+     * `mobile`. Call this inside the same DB transaction as the create/update of the
+     * role record itself, right before commit.
+     *
+     * Returns null on success, or a human-readable conflict message on failure
+     * (either a friendly pre-check hit, or the DB unique constraint itself firing
+     * under a race - both are normalized to the same message).
+     */
+    public static function claimMobile(string $mobile, string $role, $roleId): ?string
+    {
+        $mobile = trim($mobile);
+        if ($mobile === '') {
+            return null;
+        }
+
+        $conflict = \App\Models\MobileRegistry::where('mobile', $mobile)
+            ->where(function ($q) use ($role, $roleId) {
+                $q->where('role', '!=', $role)->orWhere('role_id', '!=', $roleId);
+            })
+            ->first();
+        if ($conflict) {
+            $label = \App\Models\MobileRegistry::$roleLabels[$conflict->role] ?? $conflict->role;
+            return "This mobile number is already registered with an existing {$label}.";
+        }
+
+        try {
+            \App\Models\MobileRegistry::updateOrCreate(
+                ['role' => $role, 'role_id' => $roleId],
+                ['mobile' => $mobile]
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            return "This mobile number is already registered with an existing account.";
+        }
+
+        return null;
+    }
+
+    /**
+     * Release the mobile_registry claim for a role record, e.g. on delete.
+     */
+    public static function releaseMobile(string $role, $roleId): void
+    {
+        \App\Models\MobileRegistry::where('role', $role)->where('role_id', $roleId)->delete();
+    }
 }

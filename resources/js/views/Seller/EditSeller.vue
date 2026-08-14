@@ -184,7 +184,7 @@
 
                                                         <!-- Non-translatable Fields (only shown in default language tab) -->
                                                         <template v-if="language.is_default">
-                                                            <div class="form-group col-md-5">
+                                                            <div class="form-group col-md-5" v-if="!isSellerRole">
                                                                 <div class="form-group">
                                                                     <label>{{ __('brand_ids') }}<i
                                                                             class="text-danger">*</i> <small>
@@ -193,6 +193,19 @@
                                                                         :placeholder="__('select_brands')"
                                                                         :options="brands_options"
                                                                         :settings="{ multiple: 'multiple' }" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-5" v-else>
+                                                                <div class="form-group">
+                                                                    <label>{{ __('brand_ids') }}</label>
+                                                                    <div v-if="assignedBrands.length">
+                                                                        <span v-for="brand in assignedBrands" :key="brand.id"
+                                                                            class="badge bg-secondary me-1 mb-1 p-2">
+                                                                            {{ brand.name }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p v-else class="form-control-static">{{ __('no_brands_assigned') }}</p>
+                                                                    <small class="text-muted d-block mt-1">{{ __('brand_assignment_is_managed_by_admin') }}</small>
                                                                 </div>
                                                             </div>
                                                             <div class="form-group col-md-3">
@@ -539,6 +552,24 @@
                                                     </div>
                                                 </div>
                                                 <!-- ── END Service Zones & Cities Card ── -->
+
+                                                <!-- ── Service Zones & Cities Card (read-only, distributor's own profile) ── -->
+                                                <div class="card" v-else>
+                                                    <div class="card-header">
+                                                        <h4 class="mb-0">{{ __('service_zones_and_cities') }}</h4>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div v-if="assignedCities.length">
+                                                            <span v-for="city in assignedCities" :key="city.id"
+                                                                class="badge bg-secondary me-1 mb-1 p-2">
+                                                                {{ city.name }}<template v-if="city.zone"> - {{ city.zone }}</template>
+                                                            </span>
+                                                        </div>
+                                                        <p v-else class="form-control-static">{{ __('no_zones_assigned') }}</p>
+                                                        <small class="text-muted d-block mt-1">{{ __('zone_assignment_is_managed_by_admin') }}</small>
+                                                    </div>
+                                                </div>
+                                                <!-- ── END Service Zones & Cities Card (read-only) ── -->
 
                                                 <!-- ── Store Location Card ── -->
                                                 <div class="card">
@@ -1251,6 +1282,20 @@ export default {
                 });
             }
             return temp;
+        },
+        assignedBrands: function () {
+            if (!Array.isArray(this.brand_ids) || this.brand_ids.length === 0) {
+                return [];
+            }
+            const selected = this.brand_ids.map(String);
+            return this.brands.filter(brand => selected.includes(String(brand.id)));
+        },
+        assignedCities: function () {
+            if (!Array.isArray(this.city_id) || this.city_id.length === 0) {
+                return [];
+            }
+            const selected = this.city_id.map(String);
+            return this.cities.filter(city => selected.includes(String(city.id)));
         },
         cities_options: function () {
             if (!Array.isArray(this.cities) || this.cities.length === 0) {

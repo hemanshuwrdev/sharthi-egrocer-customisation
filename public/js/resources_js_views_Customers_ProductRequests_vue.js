@@ -410,7 +410,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         page: this.productsPage,
         per_page: this.productsPerPage
       };
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/products/get_product_variants', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/products/search_catalog_variants', {
         params: params
       }).then(function (response) {
         _this3.isLoadingProducts = false;

@@ -98,7 +98,12 @@
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="small">{{ __('discount_value') }}</label>
-                                                    <input type="number" step="0.01" min="0.01" v-model="slab.discount_value" class="form-control" required>
+                                                    <input type="number" step="0.01" min="0.01"
+                                                        :max="slab.discount_type === 'percentage' ? 100 : null"
+                                                        v-model="slab.discount_value" class="form-control" required>
+                                                    <small v-if="slab.discount_type === 'percentage' && slab.discount_value > 100" class="text-danger">
+                                                        {{ __('percentage_discount_cannot_exceed_100') }}
+                                                    </small>
                                                 </div>
                                                 <div class="col-md-2">
                                                     <button type="button" class="btn btn-danger btn-sm" @click="removeSlab(index)" :disabled="record.slabs.length === 1">
@@ -231,6 +236,13 @@ export default {
             if (this.isGroupType() && this.record.products.length === 0) {
                 this.showError("Please select at least one product.");
                 return;
+            }
+            if (this.isGroupType()) {
+                const invalidSlab = this.record.slabs.find(s => s.discount_type === 'percentage' && Number(s.discount_value) > 100);
+                if (invalidSlab) {
+                    this.showError(__('percentage_discount_cannot_exceed_100'));
+                    return;
+                }
             }
             this.isLoading = true;
             let url = this.$sellerApiUrl + '/schemes/' + (this.id ? 'update' : 'save');
