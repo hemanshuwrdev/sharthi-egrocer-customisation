@@ -52,6 +52,8 @@ Route::get('salesman/privacy_policy', [\App\Http\Controllers\API\SalesmanAppApiC
 
 Route::get('seller/categories', [\App\Http\Controllers\API\CategoryApiController::class, 'getMainCategories']);
 Route::get('seller/seller_commission', [\App\Http\Controllers\API\SellerApiController::class, 'getSellerCommission']);
+// Sarthi: app calls this on the registration screen (brand picker), before login exists.
+Route::get('brands', [\App\Http\Controllers\API\BrandsApiController::class, 'getBrands']);
 
 Route::get('role', [\App\Http\Controllers\API\RoleApiController::class, 'index']);
 
