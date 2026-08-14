@@ -1348,6 +1348,7 @@ class SalesmanAppApiController extends Controller
                 'users.id as retailer_id',
                 'users.name as retailer_name',
                 'users.mobile as retailer_mobile',
+                'users.country_code as retailer_country_code',
                 'retailer_profiles.shop_name',
                 'retailer_profiles.party_name',
                 'retailer_profiles.address as shop_address',
