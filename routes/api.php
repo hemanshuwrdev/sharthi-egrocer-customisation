@@ -23,7 +23,7 @@ Route::get('active_languages', [\App\Http\Controllers\API\LanguageApiController:
 Route::post('seller/register', [\App\Http\Controllers\API\AdminAuthController::class, 'sellerRegister']);
 Route::get('seller/privacy_policy', [\App\Http\Controllers\SellerController::class, 'getPrivacyPolicy']);
 Route::get('seller/cities', [\App\Http\Controllers\API\CityApiController::class, 'getCities']);
-Route::get('seller/register/countries', [\App\Http\Controllers\API\CountryApiController::class, 'getCountries']);
+Route::get('countries', [\App\Http\Controllers\API\CountryApiController::class, 'getCountries']);
 Route::match(['get', 'post'], 'seller/send_sms',       [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
 Route::match(['get', 'post'], 'delivery_boy/send_sms', [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
 Route::match(['get', 'post'], 'salesman/send_sms',     [\App\Http\Controllers\API\Customer\SmsApiController::class, 'store']);
@@ -33,7 +33,6 @@ Route::post('delivery_boy/register', [\App\Http\Controllers\API\AdminAuthControl
 
 Route::post('delivery_boy/privacy_policy', [\App\Http\Controllers\DeliveryBoyController::class, 'getPrivacyPolicy']);
 Route::get('delivery_boy/cities', [\App\Http\Controllers\API\CityApiController::class, 'getCities']);
-Route::get('delivery_boy/register/countries', [\App\Http\Controllers\API\CountryApiController::class, 'getCountries']);
 
 Route::get('validate', [\App\Http\Controllers\API\AdminAuthController::class, 'validateLogin']);
 
@@ -559,7 +558,6 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::group(['prefix' => 'countries'], function () {
-        Route::get('/', [\App\Http\Controllers\API\CountryApiController::class, 'index']);
         Route::get('/active', [\App\Http\Controllers\API\CountryApiController::class, 'active']);
         Route::post('save', [\App\Http\Controllers\API\CountryApiController::class, 'save'])->name('countries.save');
         Route::post('update', [\App\Http\Controllers\API\CountryApiController::class, 'update'])->name('countries.update');
@@ -655,8 +653,6 @@ Route::middleware('auth:api')->group(function () {
         Route::get('seller_categories', [\App\Http\Controllers\API\CategoryApiController::class, 'getSellerCategories']);
 
         Route::get('city', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getCity']);
-
-        Route::get('countries', [\App\Http\Controllers\API\CountryApiController::class, 'getCountries']);
 
         Route::group(['prefix' => 'brands'], function () {
             Route::get('/', [\App\Http\Controllers\API\BrandsApiController::class, 'getBrands']);

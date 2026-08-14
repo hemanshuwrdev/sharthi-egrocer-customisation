@@ -157,7 +157,7 @@ export default {
             }
         },
         getCountries() {
-            axios.get(this.$sellerApiUrl + '/countries')
+            axios.get(this.$apiUrl + '/countries')
                 .then((response) => {
                     this.countries = response.data.data || [];
                     if (!this.countries.some(c => c.dial_code === this.record.country_code)) {

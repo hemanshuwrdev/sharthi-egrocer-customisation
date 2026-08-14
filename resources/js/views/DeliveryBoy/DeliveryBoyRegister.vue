@@ -263,7 +263,7 @@ export default {
             }
         },
         getCountries() {
-            axios.get(this.$deliveryBoyApiUrl + '/register/countries', { params: { limit: 250 } })
+            axios.get(this.$apiUrl + '/countries', { params: { limit: 250 } })
                 .then((response) => {
                     this.countries = response.data.data || [];
                     if (!this.countries.some(c => c.dial_code === this.deliveryBoys.country_code)) {

@@ -570,7 +570,7 @@ export default {
             }
         },
         getCountries() {
-            axios.get(this.$sellerApiUrl + '/register/countries', { params: { limit: 250 } })
+            axios.get(this.$apiUrl + '/countries', { params: { limit: 250 } })
                 .then((response) => {
                     this.countries = response.data.data || [];
                     if (!this.countries.some(c => c.dial_code === this.country_code)) {

@@ -281,7 +281,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     getCountries: function getCountries() {
       var _this = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$deliveryBoyApiUrl + '/register/countries', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/countries', {
         params: {
           limit: 250
         }

@@ -199,7 +199,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     },
     getCountries: function getCountries() {
       var _this = this;
-      axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$sellerApiUrl + '/countries').then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/countries').then(function (response) {
         _this.countries = response.data.data || [];
         if (!_this.countries.some(function (c) {
           return c.dial_code === _this.record.country_code;
