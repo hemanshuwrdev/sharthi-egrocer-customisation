@@ -397,6 +397,12 @@ export default {
                             permission: 'product_sales_reports',
                         },
                         {
+                            name: __('orders_export'),
+                            icon: 'grid-fill',
+                            url: '/seller/orders_export',
+                            permission: 'order_list',
+                        },
+                        {
                             name: __('billing_overview'),
                             icon: 'credit-card',
                             url: '/seller/commission_billing',

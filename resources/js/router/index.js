@@ -212,6 +212,7 @@ const SellerReturnRequests = () => import("../views/ReturnRequests/ReturnRequest
 const SellerWithdrawalRequests = () => import("../views/Sellers/WithdrawalRequests/WithdrawalRequests");
 const SellerProductSalesReports = () => import("../views/Sellers/ProductSalesReports");
 const SellerSalesReports = () => import("../views/Sellers/SalesReports");
+const SellerOrdersExport = () => import("../views/Sellers/OrdersExport");
 const SellerCommissionBilling = () => import("../views/Sellers/CommissionBilling");
 const SellerTripsList = () => import("../views/Sellers/TripsList");
 const SellerTripReconciliation = () => import("../views/Sellers/TripReconciliation");
@@ -2024,6 +2025,16 @@ function configRoutes() {
                         permission: 'order_list',
                         role: sellerRoles,
                         title: 'Sales Reports'
+                    }
+                },
+                {
+                    path: "orders_export",
+                    name: "SellerOrdersExport",
+                    component: SellerOrdersExport,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Orders Export'
                     }
                 },
                 {

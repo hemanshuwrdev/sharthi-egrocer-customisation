@@ -133,6 +133,8 @@
     "reports": "Reports",
     "product_sales_report": "Product Sales Report",
     "sales_reports": "Sales Reports",
+    "orders_export": "Orders Export",
+    "download_csv": "Download CSV",
     "commission_reports": "Commission Reports",
     "commission_amount": "Commission Amount",
     "order_item_amount": "Order Item Amount",

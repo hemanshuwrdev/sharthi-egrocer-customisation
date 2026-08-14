@@ -26,6 +26,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class SellerController extends BaseController
 {
@@ -896,6 +897,113 @@ class SellerController extends BaseController
         ];
 
         return CommonHelper::responseWithData($data);
+    }
+
+    public function exportOrdersCsv(Request $request)
+    {
+        $seller_id = auth()->user()->seller->id;
+
+        $startDate = $request->filled('startDate')
+            ? Carbon::parse($request->input('startDate'))->startOfDay()
+            : null;
+        $endDate = $request->filled('endDate')
+            ? Carbon::parse($request->input('endDate'))->endOfDay()
+            : null;
+
+        $rows = OrderItem::select(
+            'order_items.id as order_item_id',
+            'order_items.order_id',
+            'order_items.quantity',
+            'order_items.price',
+            'order_items.sub_total',
+            'order_items.tax_amount',
+            'order_items.tax_percentage',
+            'order_items.created_at as item_created_at',
+            'products.name as product_name',
+            'orders.delivery_charge',
+            'retailer_profiles.party_name',
+            'retailer_profiles.shop_name',
+            'retailer_profiles.gst_no',
+            'cities.state as city_state',
+            'users.name as user_name'
+        )
+            ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
+            ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('cities', 'retailer_profiles.city_id', '=', 'cities.id')
+            ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
+            ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
+            ->where('order_items.seller_id', $seller_id)
+            ->where(function ($query) {
+                $query->where('orders.active_status', OrderStatusList::$delivered)
+                    ->orWhere('orders.active_status', OrderStatusList::$selfPickupPicked);
+            });
+
+        if ($startDate && $endDate) {
+            $rows = $rows->whereBetween('order_items.created_at', [$startDate, $endDate]);
+        }
+
+        $rows = $rows->orderBy('order_items.order_id', 'DESC')->get();
+
+        $csvData = [];
+        $csvData[] = [
+            'Invoice No', 'Invoice date', 'Party Name', 'Item', 'HSN Code', 'Quantity',
+            'Unit Price', 'Taxable Value', 'Transportation Charges', 'Postage Charges', 'Loading Charges',
+            'CGST', 'SGST', 'IGST', 'Invoice Total', 'GST Rate %', 'Sales Account',
+            'CGST Ledger', 'SGST Ledger', 'IGST Ledger', 'Country', 'State', 'Voucher Type', 'Units',
+            'GSTIN', 'Reg Type',
+        ];
+
+        foreach ($rows as $row) {
+            $taxAmount = (float) $row->tax_amount;
+            $cgst = round($taxAmount / 2, 2);
+            $sgst = round($taxAmount / 2, 2);
+            $taxableValue = (float) $row->sub_total;
+            $invoiceTotal = round($taxableValue + $taxAmount, 2);
+            $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
+
+            $csvData[] = [
+                'INV' . $row->order_id,
+                Carbon::parse($row->item_created_at)->format('j/M/Y'),
+                $partyName,
+                $row->product_name,
+                '',
+                $row->quantity,
+                $row->price,
+                $taxableValue,
+                '',
+                '',
+                '',
+                $cgst,
+                $sgst,
+                '',
+                $invoiceTotal,
+                $row->tax_percentage,
+                'Sales',
+                'CGST',
+                'SGST',
+                'IGST',
+                'India',
+                $row->city_state ?: 'Maharashtra',
+                'Sales',
+                'Nos',
+                $row->gst_no,
+                $row->gst_no ? 'Regular' : 'Unregistered',
+            ];
+        }
+
+        $csvFileName = 'distributor_orders_' . Str::random(10) . '.csv';
+        $csvFile = fopen('php://temp', 'w');
+        foreach ($csvData as $csvRow) {
+            fputcsv($csvFile, $csvRow);
+        }
+        rewind($csvFile);
+        $csvContent = stream_get_contents($csvFile);
+        fclose($csvFile);
+
+        return response()->streamDownload(function () use ($csvContent) {
+            echo $csvContent;
+        }, $csvFileName);
     }
 
     public function getReports(Request $request)
