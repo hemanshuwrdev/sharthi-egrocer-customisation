@@ -36,11 +36,7 @@ class SarthiCustomisation extends Migration
             }
         });
 
-        Schema::table('salesmen', function (Blueprint $table) {
-            if (!Schema::hasColumn('salesmen', 'country_code')) {
-                $table->string('country_code', 6)->default('+91')->after('mobile');
-            }
-        });
+
 
         // 1. Master Product System (Product Variants)
         Schema::table('product_variants', function (Blueprint $table) {
@@ -417,6 +413,12 @@ class SarthiCustomisation extends Migration
             });
         }
 
+        Schema::table('salesmen', function (Blueprint $table) {
+            if (!Schema::hasColumn('salesmen', 'country_code')) {
+                $table->string('country_code', 6)->default('+91')->after('mobile');
+            }
+        });
+
 
         // Delivery Boys Table Additions
         Schema::table('delivery_boys', function (Blueprint $table) {
@@ -432,14 +434,16 @@ class SarthiCustomisation extends Migration
 
 
         // 8.b Salesman login wiring: link to admins (email/password) for app/panel login (mirrors seller/delivery_boy)
-        Schema::table('salesmen', function (Blueprint $table) {
-            if (!Schema::hasColumn('salesmen', 'admin_id')) {
-                $table->unsignedBigInteger('admin_id')->nullable()->after('id')->comment('FK to admins.id for login credentials');
-            }
-            if (!Schema::hasColumn('salesmen', 'email')) {
-                $table->string('email')->nullable()->after('mobile');
-            }
-        });
+        if (Schema::hasTable('salesmen')) {
+            Schema::table('salesmen', function (Blueprint $table) {
+                if (!Schema::hasColumn('salesmen', 'admin_id')) {
+                    $table->unsignedBigInteger('admin_id')->nullable()->after('id')->comment('FK to admins.id for login credentials');
+                }
+                if (!Schema::hasColumn('salesmen', 'email')) {
+                    $table->string('email')->nullable()->after('mobile');
+                }
+            });
+        }
 
         // 9. Retailer verification (Sarthi onboarding flow): hot-path columns on users + profile/audit table
         //    Status flow per spec: pending -> salesman_verified -> approved -> active

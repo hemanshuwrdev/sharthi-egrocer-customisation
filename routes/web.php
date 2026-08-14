@@ -35,31 +35,84 @@ Route::get('/clear', function () {
 //Auto update , than migration check
 Route::get('/migration', function () {
 
-      Artisan::call('db:seed', [
+    Artisan::call('migrate', [
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    Artisan::call('db:seed', [
+        '--class' => 'RoleSeeder',
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    Artisan::call('db:seed', [
+        '--class' => 'PermissionCategoriesSeeder',
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    Artisan::call('db:seed', [
         '--class' => 'PermissionSeeder',
         '--force' => true,
         '--no-interaction' => true,
-        ]);
+    ]);
 
-    Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
     Artisan::call('db:seed', [
-            '--class' => 'LanguageSeeder',
-            '--force' => true,
+        '--class' => 'AdminSeeder',
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    Artisan::call('db:seed', [
+        '--class' => 'LanguageSeeder',
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    Artisan::call('db:seed', [
+        '--class' => 'NotificationTemplatesSeeder',
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    if (\Schema::hasTable('oauth_clients') && !\DB::table('oauth_clients')->where('personal_access_client', 1)->exists()) {
+        Artisan::call('passport:client', [
+            '--personal' => true,
+            '--name' => 'Laravel Personal Access Client',
             '--no-interaction' => true,
         ]);
-    Artisan::call('db:seed', [
-            '--class' => 'NotificationTemplatesSeeder',
-            '--force' => true,
-            '--no-interaction' => true,
-        ]);
-    // Artisan::call('db:seed', [
-    //     '--class' => 'PermissionCategoriesSeeder',
-    //     '--force' => true,
-    //     '--no-interaction' => true,
-    // ]);
+    }
 
     return redirect('/system_updater');
 });
+// Route::get('/migration', function () {
+
+//       Artisan::call('db:seed', [
+//         '--class' => 'PermissionSeeder',
+//         '--force' => true,
+//         '--no-interaction' => true,
+//         ]);
+
+//     Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
+//     Artisan::call('db:seed', [
+//             '--class' => 'LanguageSeeder',
+//             '--force' => true,
+//             '--no-interaction' => true,
+//         ]);
+//     Artisan::call('db:seed', [
+//             '--class' => 'NotificationTemplatesSeeder',
+//             '--force' => true,
+//             '--no-interaction' => true,
+//         ]);
+//     // Artisan::call('db:seed', [
+//     //     '--class' => 'PermissionCategoriesSeeder',
+//     //     '--force' => true,
+//     //     '--no-interaction' => true,
+//     // ]);
+
+//     return redirect('/system_updater');
+// });
 // Route::get('/specific-migration', function () {
 //         Artisan::call('migrate', [
 //             '--path' => 'database/migrations/2025_08_13_000000_create_api_call_tracking_table.php',

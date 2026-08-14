@@ -260,17 +260,27 @@ class PermissionSeeder extends Seeder
         ];
         foreach ($permissionsToSeed as $record) {
 
+            $category = PermissionCategory::firstOrCreate(
+                ['name' => $record['category_name']],
+                ['guard_name' => 'web']
+            );
+
             foreach ($record['name'] as $permissionName) {
 
-                Permission::create([
+                Permission::firstOrCreate([
                     'name' => $permissionName,
-                    'category_id' => PermissionCategory::where('name', $record['category_name'])->first()->id,
+                    'category_id' => $category->id,
                 ]);
             }
 
             foreach ($record['default_roles'] as $roleName) {
-                $adminRole = \Spatie\Permission\Models\Role::where('name', $roleName)->first();
-                $adminRole->givePermissionTo($record['name']);
+                $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(
+                    ['name' => $roleName],
+                    ['guard_name' => 'web']
+                );
+                if ($adminRole) {
+                    $adminRole->givePermissionTo($record['name']);
+                }
             }
         }
 
@@ -336,8 +346,13 @@ class PermissionSeeder extends Seeder
         foreach ($permissionsToSeed as $record) {
 
             foreach ($record['default_roles'] as $roleName) {
-                $adminRole = \Spatie\Permission\Models\Role::where('name', $roleName)->first();
-                $adminRole->givePermissionTo($record['name']);
+                $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(
+                    ['name' => $roleName],
+                    ['guard_name' => 'web']
+                );
+                if ($adminRole) {
+                    $adminRole->givePermissionTo($record['name']);
+                }
             }
         }
 
@@ -374,8 +389,13 @@ class PermissionSeeder extends Seeder
         ];
         foreach ($permissionsToSeed as $record) {
             foreach ($record['default_roles'] as $roleName) {
-                $adminRole = \Spatie\Permission\Models\Role::where('name', $roleName)->first();
-                $adminRole->givePermissionTo($record['name']);
+                $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(
+                    ['name' => $roleName],
+                    ['guard_name' => 'web']
+                );
+                if ($adminRole) {
+                    $adminRole->givePermissionTo($record['name']);
+                }
             }
         }
     }
