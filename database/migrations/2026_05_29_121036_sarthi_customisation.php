@@ -30,6 +30,18 @@ class SarthiCustomisation extends Migration
             }
         });
 
+        Schema::table('delivery_boys', function (Blueprint $table) {
+            if (!Schema::hasColumn('delivery_boys', 'country_code')) {
+                $table->string('country_code', 6)->default('+91')->after('mobile');
+            }
+        });
+
+        Schema::table('salesmen', function (Blueprint $table) {
+            if (!Schema::hasColumn('salesmen', 'country_code')) {
+                $table->string('country_code', 6)->default('+91')->after('mobile');
+            }
+        });
+
         // 1. Master Product System (Product Variants)
         Schema::table('product_variants', function (Blueprint $table) {
             if (!Schema::hasColumn('product_variants', 'sku')) {

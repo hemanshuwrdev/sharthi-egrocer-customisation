@@ -168,6 +168,7 @@ class DeliveryBoysApiController extends Controller
                 'address'   => $request->address,
                 'other_payment_information' => $request->other_payment_information,
                 'mobile'    => $request->mobile,
+                'country_code' => $request->country_code ?? '+91',
                 'license_no' => $request->license_no,
                 'dob'       => $request->dob,
                 'city_id'   => $request->city_id,
@@ -264,6 +265,7 @@ class DeliveryBoysApiController extends Controller
             $deliveryBoy->address = $request->address;
             $deliveryBoy->other_payment_information = $request->other_payment_information ?? '';
             $deliveryBoy->mobile = $request->mobile ?? $deliveryBoy->mobile;
+            $deliveryBoy->country_code = $request->country_code ?? $deliveryBoy->country_code;
             $deliveryBoy->license_no = $request->license_no ?? $deliveryBoy->license_no;
             $deliveryBoy->dob    = $request->dob ?? $deliveryBoy->dob;
             $deliveryBoy->city_id = $request->city_id ?? $deliveryBoy->city_id;

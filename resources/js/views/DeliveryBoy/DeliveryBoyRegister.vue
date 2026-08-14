@@ -34,7 +34,20 @@
                 <div class="col-md-4">
                     <div class="form-group mobile">
                         <label for="mobile">Mobile No. <span class="text-danger text-xs">*</span></label>
-                        <input type="number" name="mobile" id="mobile" v-model="deliveryBoys.mobile" class="form-control" placeholder="Enter mobile no." @input="validateMobileNumber">
+                        <div class="input-group mobile-input-group">
+                            <div class="country-code-dropdown" ref="countryDropdown">
+                                <button type="button" class="country-code-toggle" @click="countryDropdownOpen = !countryDropdownOpen">
+                                    <span>{{ deliveryBoys.country_code }}</span>
+                                    <span class="country-code-caret"></span>
+                                </button>
+                                <ul v-if="countryDropdownOpen" class="country-code-menu">
+                                    <li v-for="c in countries" :key="c.id" @click="deliveryBoys.country_code = c.dial_code; countryDropdownOpen = false">
+                                        {{ c.dial_code }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <input type="number" name="mobile" id="mobile" v-model="deliveryBoys.mobile" class="form-control" placeholder="Enter mobile no." @input="validateMobileNumber">
+                        </div>
                         <span v-if="mobilevalidationError" class="error">{{ mobilevalidationError }}</span>
                     </div>
                 </div>
@@ -206,8 +219,9 @@ export default {
             city:"",
             cities:[],
             deliveryBoys:{
-               
+
                 mobile: "" ,
+                country_code: "+91",
                 dob: "" ,
 
                 driving_license: "" ,
@@ -226,17 +240,41 @@ export default {
             nationalIdentityCardvalidationerror: null,
             showPassword: false,
             showConfirmPassword:false,
-            bonusValidationMessage: null, 
+            bonusValidationMessage: null,
+            countries: [],
+            countryDropdownOpen: false,
 
         };
     },
     created: function () {
         this.getCities();
+        this.getCountries();
     },
     mounted() {
-
+        document.addEventListener('click', this.handleCountryDropdownOutsideClick);
+    },
+    beforeDestroy() {
+        document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
     },
     methods: {
+        handleCountryDropdownOutsideClick(event) {
+            if (this.countryDropdownOpen && this.$refs.countryDropdown && !this.$refs.countryDropdown.contains(event.target)) {
+                this.countryDropdownOpen = false;
+            }
+        },
+        getCountries() {
+            axios.get(this.$deliveryBoyApiUrl + '/register/countries', { params: { limit: 250 } })
+                .then((response) => {
+                    this.countries = response.data.data || [];
+                    if (!this.countries.some(c => c.dial_code === this.deliveryBoys.country_code)) {
+                        const india = this.countries.find(c => c.dial_code === '+91');
+                        if (india) this.deliveryBoys.country_code = india.dial_code;
+                    }
+                })
+                .catch(() => {
+                    this.countries = [];
+                });
+        },
 
         handleFileUploadLicense() {
             this.deliveryBoys.driving_license = this.$refs.file_license.files[0];
@@ -373,6 +411,80 @@ export default {
 
 .auth {
     overflow-x: hidden!important;
+}
+
+.input-group.mobile-input-group {
+    flex-wrap: nowrap;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    background: #fff;
+}
+.mobile-input-group .country-code-toggle {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+.mobile-input-group input.form-control {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+.mobile-input-group .country-code-dropdown {
+    position: relative;
+    flex: 0 0 auto;
+    width: 72px;
+    border-right: 1px solid #ced4da;
+}
+.mobile-input-group .country-code-toggle {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+.mobile-input-group input.form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    box-shadow: none;
+}
+.mobile-input-group input.form-control:focus {
+    box-shadow: none;
+}
+.country-code-caret {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #6c757d;
+}
+.country-code-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1050;
+    width: 130px;
+    max-height: 220px;
+    overflow-y: auto;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.country-code-menu li {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.country-code-menu li:hover {
+    background: #f1f3f5;
 }
 .auth-logo {
     padding-bottom: 10px;

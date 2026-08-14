@@ -34,7 +34,20 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="mobile">{{ __('mobile') }}</label>
-                                        <input type="number" v-model="record.mobile" class="form-control" id="mobile" :placeholder="__('enter_mobile')" required>
+                                        <div class="input-group mobile-input-group">
+                                            <div class="country-code-dropdown" ref="countryDropdown">
+                                                <button type="button" class="country-code-toggle" @click="countryDropdownOpen = !countryDropdownOpen">
+                                                    <span>{{ record.country_code }}</span>
+                                                    <span class="country-code-caret"></span>
+                                                </button>
+                                                <ul v-if="countryDropdownOpen" class="country-code-menu">
+                                                    <li v-for="c in countries" :key="c.id" @click="record.country_code = c.dial_code; countryDropdownOpen = false">
+                                                        {{ c.dial_code }}
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <input type="number" v-model="record.mobile" class="form-control" id="mobile" :placeholder="__('enter_mobile')" required>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -110,6 +123,7 @@ export default {
             record: {
                 name: '',
                 mobile: '',
+                country_code: '+91',
                 email: '',
                 password: '',
                 brands: [],
@@ -119,15 +133,42 @@ export default {
             },
             availableBrands: [],
             isLoading: false,
+            countries: [],
+            countryDropdownOpen: false,
         }
     },
     created: async function () {
         await this.getBrands();
+        this.getCountries();
         if (this.id) {
             this.getRecord();
         }
     },
+    mounted() {
+        document.addEventListener('click', this.handleCountryDropdownOutsideClick);
+    },
+    beforeDestroy() {
+        document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
+    },
     methods: {
+        handleCountryDropdownOutsideClick(event) {
+            if (this.countryDropdownOpen && this.$refs.countryDropdown && !this.$refs.countryDropdown.contains(event.target)) {
+                this.countryDropdownOpen = false;
+            }
+        },
+        getCountries() {
+            axios.get(this.$sellerApiUrl + '/countries')
+                .then((response) => {
+                    this.countries = response.data.data || [];
+                    if (!this.countries.some(c => c.dial_code === this.record.country_code)) {
+                        const india = this.countries.find(c => c.dial_code === '+91');
+                        if (india) this.record.country_code = india.dial_code;
+                    }
+                })
+                .catch(() => {
+                    this.countries = [];
+                });
+        },
         getBrands() {
             return axios.get(this.$sellerApiUrl + '/brands')
                 .then(response => {
@@ -175,6 +216,7 @@ export default {
             }
             formData.append('name', this.record.name);
             formData.append('mobile', this.record.mobile);
+            formData.append('country_code', this.record.country_code);
             formData.append('email', this.record.email);
             if (this.record.password) {
                 formData.append('password', this.record.password);
@@ -216,3 +258,74 @@ export default {
 }
 </script>
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style scoped>
+.input-group.mobile-input-group {
+    flex-wrap: nowrap;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    background: #fff;
+}
+.mobile-input-group .country-code-dropdown {
+    position: relative;
+    flex: 0 0 auto;
+    width: 72px;
+    border-right: 1px solid #ced4da;
+}
+.mobile-input-group .country-code-toggle {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+.mobile-input-group input.form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+    box-shadow: none;
+}
+.mobile-input-group input.form-control:focus {
+    box-shadow: none;
+}
+.country-code-caret {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #6c757d;
+}
+.country-code-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1050;
+    width: 130px;
+    max-height: 220px;
+    overflow-y: auto;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.country-code-menu li {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.country-code-menu li:hover {
+    background: #f1f3f5;
+}
+</style>

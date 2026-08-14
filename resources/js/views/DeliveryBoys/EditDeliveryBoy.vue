@@ -150,9 +150,22 @@
                                             <div class="form-group">
                                                 <label for="mobile">{{ __('mobile') }}<span
                                                         class="text-danger text-xs">*</span></label>
-                                                <input type="number" name="mobile" id="mobile"
-                                                    v-model="deliveryBoys.mobile" class="form-control"
-                                                    :placeholder="__('mobile_no')" @input="validateMobileNumber">
+                                                <div class="input-group mobile-input-group">
+                                                    <div class="country-code-dropdown" ref="countryDropdown">
+                                                        <button type="button" class="country-code-toggle" @click="countryDropdownOpen = !countryDropdownOpen">
+                                                            <span>{{ deliveryBoys.country_code }}</span>
+                                                            <span class="country-code-caret"></span>
+                                                        </button>
+                                                        <ul v-if="countryDropdownOpen" class="country-code-menu">
+                                                            <li v-for="c in countries" :key="c.id" @click="deliveryBoys.country_code = c.dial_code; countryDropdownOpen = false">
+                                                                {{ c.dial_code }}
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                    <input type="number" name="mobile" id="mobile"
+                                                        v-model="deliveryBoys.mobile" class="form-control"
+                                                        :placeholder="__('mobile_no')" @input="validateMobileNumber">
+                                                </div>
                                                 <span v-if="mobilevalidationError" class="error">{{
                                                     mobilevalidationError }}</span>
                                             </div>
@@ -477,6 +490,7 @@ export default {
                 name: "",
                 dob: "",
                 mobile: "",
+                country_code: "+91",
                 license_no: "",
                 email: "",
                 password: "",
@@ -517,6 +531,8 @@ export default {
             translateSuccessMessage: '',
             loadingEmpty: false,
             loadingOverwrite: false,
+            countries: [],
+            countryDropdownOpen: false,
         };
     },
     created: function () {
@@ -534,8 +550,33 @@ export default {
         });
 
         this.getCities();
+        this.getCountries();
+    },
+    mounted() {
+        document.addEventListener('click', this.handleCountryDropdownOutsideClick);
+    },
+    beforeDestroy() {
+        document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
     },
     methods: {
+        handleCountryDropdownOutsideClick(event) {
+            if (this.countryDropdownOpen && this.$refs.countryDropdown && !this.$refs.countryDropdown.contains(event.target)) {
+                this.countryDropdownOpen = false;
+            }
+        },
+        getCountries() {
+            axios.get(this.$apiUrl + '/countries')
+                .then((response) => {
+                    this.countries = response.data.data || [];
+                    if (!this.countries.some(c => c.dial_code === this.deliveryBoys.country_code)) {
+                        const india = this.countries.find(c => c.dial_code === '+91');
+                        if (india) this.deliveryBoys.country_code = india.dial_code;
+                    }
+                })
+                .catch(() => {
+                    this.countries = [];
+                });
+        },
         // Get the currently active language based on activeLanguageTab
         getCurrentLanguage() {
             if (!this.languages.length || this.activeLanguageTab === null || this.activeLanguageTab === undefined) {
@@ -799,6 +840,7 @@ export default {
                         this.deliveryBoys.name = emptyIfNull(this.record?.name);
                         this.deliveryBoys.dob = emptyIfNull(this.record?.dob);
                         this.deliveryBoys.mobile = emptyIfNull(this.record?.mobile);
+                        this.deliveryBoys.country_code = this.record?.country_code || "+91";
                         this.deliveryBoys.license_no = emptyIfNull(this.record?.license_no);
                         this.deliveryBoys.email = (this.record?.admin) ? (this.record.admin.email || '') : '';
                         this.deliveryBoys.password = "";
@@ -901,6 +943,7 @@ export default {
                 // main fields
                 fd.append('dob', this.deliveryBoys.dob ?? '');
                 fd.append('mobile', this.deliveryBoys.mobile);
+                fd.append('country_code', this.deliveryBoys.country_code);
                 fd.append('license_no', this.deliveryBoys.license_no);
                 fd.append('email', this.deliveryBoys.email);
                 fd.append('ifsc_code', this.deliveryBoys.ifsc_code);
@@ -1004,4 +1047,74 @@ export default {
 </script>
 <style scoped>
 @import "../../../../node_modules/vue-multiselect/dist/vue-multiselect.min.css";
+
+.input-group.mobile-input-group {
+    flex-wrap: nowrap;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    background: #fff;
+}
+.mobile-input-group .country-code-dropdown {
+    position: relative;
+    flex: 0 0 auto;
+    width: 72px;
+    border-right: 1px solid #ced4da;
+}
+.mobile-input-group .country-code-toggle {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+.mobile-input-group input.form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+    box-shadow: none;
+}
+.mobile-input-group input.form-control:focus {
+    box-shadow: none;
+}
+.country-code-caret {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #6c757d;
+}
+.country-code-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1050;
+    width: 130px;
+    max-height: 220px;
+    overflow-y: auto;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.country-code-menu li {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.country-code-menu li:hover {
+    background: #f1f3f5;
+}
 </style>

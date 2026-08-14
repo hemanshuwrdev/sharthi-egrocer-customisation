@@ -206,6 +206,19 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -227,6 +240,7 @@ __webpack_require__.r(__webpack_exports__);
       cities: [],
       deliveryBoys: {
         mobile: "",
+        country_code: "+91",
         dob: "",
         driving_license: "",
         driving_license_url: "",
@@ -244,14 +258,47 @@ __webpack_require__.r(__webpack_exports__);
       nationalIdentityCardvalidationerror: null,
       showPassword: false,
       showConfirmPassword: false,
-      bonusValidationMessage: null
+      bonusValidationMessage: null,
+      countries: [],
+      countryDropdownOpen: false
     };
   },
   created: function created() {
     this.getCities();
+    this.getCountries();
   },
-  mounted: function mounted() {},
+  mounted: function mounted() {
+    document.addEventListener('click', this.handleCountryDropdownOutsideClick);
+  },
+  beforeDestroy: function beforeDestroy() {
+    document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
+  },
   methods: {
+    handleCountryDropdownOutsideClick: function handleCountryDropdownOutsideClick(event) {
+      if (this.countryDropdownOpen && this.$refs.countryDropdown && !this.$refs.countryDropdown.contains(event.target)) {
+        this.countryDropdownOpen = false;
+      }
+    },
+    getCountries: function getCountries() {
+      var _this = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$deliveryBoyApiUrl + '/register/countries', {
+        params: {
+          limit: 250
+        }
+      }).then(function (response) {
+        _this.countries = response.data.data || [];
+        if (!_this.countries.some(function (c) {
+          return c.dial_code === _this.deliveryBoys.country_code;
+        })) {
+          var india = _this.countries.find(function (c) {
+            return c.dial_code === '+91';
+          });
+          if (india) _this.deliveryBoys.country_code = india.dial_code;
+        }
+      })["catch"](function () {
+        _this.countries = [];
+      });
+    },
     handleFileUploadLicense: function handleFileUploadLicense() {
       this.deliveryBoys.driving_license = this.$refs.file_license.files[0];
       this.deliveryBoys.driving_license_url = URL.createObjectURL(this.deliveryBoys.driving_license);
@@ -326,22 +373,22 @@ __webpack_require__.r(__webpack_exports__);
       }
     },
     getCities: function getCities() {
-      var _this = this;
+      var _this2 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/cities').then(function (response) {
-        _this.isLoading = false;
+        _this2.isLoading = false;
         var data = response.data;
         var raw = data.data;
-        _this.cities = raw && raw.cities ? raw.cities : Array.isArray(raw) ? raw : [];
+        _this2.cities = raw && raw.cities ? raw.cities : Array.isArray(raw) ? raw : [];
       })["catch"](function () {
-        _this.isLoading = false;
-        _this.cities = [];
+        _this2.isLoading = false;
+        _this2.cities = [];
       });
     },
     setCityId: function setCityId() {
       this.deliveryBoys.city_id = this.city.id;
     },
     saveRecord: function saveRecord() {
-      var _this2 = this;
+      var _this3 = this;
       var vm = this;
       this.isLoading = true;
       var formObject = this.deliveryBoys;
@@ -355,10 +402,10 @@ __webpack_require__.r(__webpack_exports__);
           'Content-Type': 'multipart/form-data'
         }
       }).then(function (res) {
-        _this2.isLoading = false;
+        _this3.isLoading = false;
         var data = res.data;
         if (data.status === 1) {
-          _this2.showMessage("success", data.message);
+          _this3.showMessage("success", data.message);
           setTimeout(function () {
             vm.$swal.close();
             //Auth.logout();
@@ -373,11 +420,11 @@ __webpack_require__.r(__webpack_exports__);
       })["catch"](function (error) {
         vm.isLoading = false;
         if (error.request.statusText) {
-          _this2.showError(error.request.statusText);
+          _this3.showError(error.request.statusText);
         } else if (error.message) {
-          _this2.showError(error.message);
+          _this3.showError(error.message);
         } else {
-          _this2.showError("Something went wrong!");
+          _this3.showError("Something went wrong!");
         }
       });
     }
@@ -406,7 +453,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_multiselect_dist_vue_multiselect_min_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.auth[data-v-7e2c5896] {\n    overflow-x: hidden!important;\n}\n.auth-logo[data-v-7e2c5896] {\n    padding-bottom: 10px;\n}\n.auth .login-wrapper[data-v-7e2c5896] {\n    justify-content: center;\n    align-items: center;\n    padding: 30px 20px;\n}\n.auth .detail-card[data-v-7e2c5896] {\n    max-width: 95%;\n    width: 100%;\n    max-width: 1100px;\n    margin: 0 auto;\n}\n.auth .content[data-v-7e2c5896] {\n    max-height: 70vh;\n    overflow-y: auto;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.auth[data-v-7e2c5896] {\n    overflow-x: hidden!important;\n}\n.input-group.mobile-input-group[data-v-7e2c5896] {\n    flex-wrap: nowrap;\n    border: 1px solid #ced4da;\n    border-radius: 0.375rem;\n    background: #fff;\n}\n.mobile-input-group .country-code-toggle[data-v-7e2c5896] {\n    border-top-left-radius: 0.375rem;\n    border-bottom-left-radius: 0.375rem;\n}\n.mobile-input-group input.form-control[data-v-7e2c5896] {\n    border-top-right-radius: 0.375rem;\n    border-bottom-right-radius: 0.375rem;\n}\n.mobile-input-group .country-code-dropdown[data-v-7e2c5896] {\n    position: relative;\n    flex: 0 0 auto;\n    width: 72px;\n    border-right: 1px solid #ced4da;\n}\n.mobile-input-group .country-code-toggle[data-v-7e2c5896] {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 2px;\n    padding: 0.375rem 0.5rem;\n    border: none;\n    background: transparent;\n    cursor: pointer;\n}\n.mobile-input-group input.form-control[data-v-7e2c5896] {\n    flex: 1 1 auto;\n    min-width: 0;\n    border: none;\n    border-top-left-radius: 0;\n    border-bottom-left-radius: 0;\n    box-shadow: none;\n}\n.mobile-input-group input.form-control[data-v-7e2c5896]:focus {\n    box-shadow: none;\n}\n.country-code-caret[data-v-7e2c5896] {\n    width: 0;\n    height: 0;\n    border-left: 4px solid transparent;\n    border-right: 4px solid transparent;\n    border-top: 5px solid #6c757d;\n}\n.country-code-menu[data-v-7e2c5896] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    z-index: 1050;\n    width: 130px;\n    max-height: 220px;\n    overflow-y: auto;\n    margin: 2px 0 0;\n    padding: 4px 0;\n    list-style: none;\n    background: #fff;\n    border: 1px solid #ced4da;\n    border-radius: 4px;\n    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n}\n.country-code-menu li[data-v-7e2c5896] {\n    padding: 6px 12px;\n    cursor: pointer;\n}\n.country-code-menu li[data-v-7e2c5896]:hover {\n    background: #f1f3f5;\n}\n.auth-logo[data-v-7e2c5896] {\n    padding-bottom: 10px;\n}\n.auth .login-wrapper[data-v-7e2c5896] {\n    justify-content: center;\n    align-items: center;\n    padding: 30px 20px;\n}\n.auth .detail-card[data-v-7e2c5896] {\n    max-width: 95%;\n    width: 100%;\n    max-width: 1100px;\n    margin: 0 auto;\n}\n.auth .content[data-v-7e2c5896] {\n    max-height: 70vh;\n    overflow-y: auto;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -725,39 +772,109 @@ var render = function () {
                     _c("div", { staticClass: "form-group mobile" }, [
                       _vm._m(2),
                       _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.deliveryBoys.mobile,
-                            expression: "deliveryBoys.mobile",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "number",
-                          name: "mobile",
-                          id: "mobile",
-                          placeholder: "Enter mobile no.",
-                        },
-                        domProps: { value: _vm.deliveryBoys.mobile },
-                        on: {
-                          input: [
-                            function ($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(
-                                _vm.deliveryBoys,
-                                "mobile",
-                                $event.target.value
-                              )
+                      _c(
+                        "div",
+                        { staticClass: "input-group mobile-input-group" },
+                        [
+                          _c(
+                            "div",
+                            {
+                              ref: "countryDropdown",
+                              staticClass: "country-code-dropdown",
                             },
-                            _vm.validateMobileNumber,
-                          ],
-                        },
-                      }),
+                            [
+                              _c(
+                                "button",
+                                {
+                                  staticClass: "country-code-toggle",
+                                  attrs: { type: "button" },
+                                  on: {
+                                    click: function ($event) {
+                                      _vm.countryDropdownOpen =
+                                        !_vm.countryDropdownOpen
+                                    },
+                                  },
+                                },
+                                [
+                                  _c("span", [
+                                    _vm._v(
+                                      _vm._s(_vm.deliveryBoys.country_code)
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("span", {
+                                    staticClass: "country-code-caret",
+                                  }),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _vm.countryDropdownOpen
+                                ? _c(
+                                    "ul",
+                                    { staticClass: "country-code-menu" },
+                                    _vm._l(_vm.countries, function (c) {
+                                      return _c(
+                                        "li",
+                                        {
+                                          key: c.id,
+                                          on: {
+                                            click: function ($event) {
+                                              _vm.deliveryBoys.country_code =
+                                                c.dial_code
+                                              _vm.countryDropdownOpen = false
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _vm._v(
+                                            "\n                                    " +
+                                              _vm._s(c.dial_code) +
+                                              "\n                                "
+                                          ),
+                                        ]
+                                      )
+                                    }),
+                                    0
+                                  )
+                                : _vm._e(),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.deliveryBoys.mobile,
+                                expression: "deliveryBoys.mobile",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: {
+                              type: "number",
+                              name: "mobile",
+                              id: "mobile",
+                              placeholder: "Enter mobile no.",
+                            },
+                            domProps: { value: _vm.deliveryBoys.mobile },
+                            on: {
+                              input: [
+                                function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.$set(
+                                    _vm.deliveryBoys,
+                                    "mobile",
+                                    $event.target.value
+                                  )
+                                },
+                                _vm.validateMobileNumber,
+                              ],
+                            },
+                          }),
+                        ]
+                      ),
                       _vm._v(" "),
                       _vm.mobilevalidationError
                         ? _c("span", { staticClass: "error" }, [

@@ -469,6 +469,19 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -507,6 +520,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         name: "",
         dob: "",
         mobile: "",
+        country_code: "+91",
         license_no: "",
         email: "",
         password: "",
@@ -541,7 +555,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       translatableFields: ['name', 'address', 'other_payment_information'],
       translateSuccessMessage: '',
       loadingEmpty: false,
-      loadingOverwrite: false
+      loadingOverwrite: false,
+      countries: [],
+      countryDropdownOpen: false
     };
   },
   created: function created() {
@@ -557,8 +573,36 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     });
     this.getCities();
+    this.getCountries();
+  },
+  mounted: function mounted() {
+    document.addEventListener('click', this.handleCountryDropdownOutsideClick);
+  },
+  beforeDestroy: function beforeDestroy() {
+    document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
   },
   methods: {
+    handleCountryDropdownOutsideClick: function handleCountryDropdownOutsideClick(event) {
+      if (this.countryDropdownOpen && this.$refs.countryDropdown && !this.$refs.countryDropdown.contains(event.target)) {
+        this.countryDropdownOpen = false;
+      }
+    },
+    getCountries: function getCountries() {
+      var _this2 = this;
+      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/countries').then(function (response) {
+        _this2.countries = response.data.data || [];
+        if (!_this2.countries.some(function (c) {
+          return c.dial_code === _this2.deliveryBoys.country_code;
+        })) {
+          var india = _this2.countries.find(function (c) {
+            return c.dial_code === '+91';
+          });
+          if (india) _this2.deliveryBoys.country_code = india.dial_code;
+        }
+      })["catch"](function () {
+        _this2.countries = [];
+      });
+    },
     // Get the currently active language based on activeLanguageTab
     getCurrentLanguage: function getCurrentLanguage() {
       if (!this.languages.length || this.activeLanguageTab === null || this.activeLanguageTab === undefined) {
@@ -573,30 +617,30 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       return orderedLangs[this.activeLanguageTab] || null;
     },
     fetchLanguages: function fetchLanguages() {
-      var _this2 = this;
+      var _this3 = this;
       return axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/active_languages').then(function (res) {
         var langs = res.data.data;
-        _this2.languages = [];
-        _this2.translations = {};
-        _this2.languages = langs;
-        _this2.languagesKey++;
+        _this3.languages = [];
+        _this3.translations = {};
+        _this3.languages = langs;
+        _this3.languagesKey++;
         var defaultLang = langs.find(function (l) {
           return l.is_default == 1;
         });
         if (!defaultLang) {
-          _this2.showError('No default language configured.');
+          _this3.showError('No default language configured.');
           return;
         }
-        _this2.defaultLanguage = defaultLang;
-        _this2.defaultLanguageId = defaultLang ? defaultLang.id : null;
-        _this2.currentLanguage = defaultLang.id;
+        _this3.defaultLanguage = defaultLang;
+        _this3.defaultLanguageId = defaultLang ? defaultLang.id : null;
+        _this3.currentLanguage = defaultLang.id;
         // Set activeLanguageTab to default language index
-        _this2.activeLanguageTab = langs.findIndex(function (l) {
+        _this3.activeLanguageTab = langs.findIndex(function (l) {
           return l.id === defaultLang.id;
         });
-        _this2.deliveryBoys.language_id = defaultLang.id;
+        _this3.deliveryBoys.language_id = defaultLang.id;
         langs.forEach(function (lang) {
-          _this2.$set(_this2.translations, lang.id, {
+          _this3.$set(_this3.translations, lang.id, {
             name: '',
             address: '',
             other_payment_information: ''
@@ -706,15 +750,15 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     getBonusSettings: function getBonusSettings() {
-      var _this3 = this;
+      var _this4 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/delivery_boys/bonus_settings').then(function (response) {
         var data = response.data;
-        _this3.bonusSettings = data.data;
-        if (_this3.bonusSettings.delivery_boy_bonus_settings == 1) {
-          _this3.deliveryBoys.bonus_type = _this3.bonusSettings.delivery_boy_bonus_type;
-          _this3.deliveryBoys.bonus_percentage = _this3.bonusSettings.delivery_boy_bonus_percentage;
-          _this3.deliveryBoys.bonus_min_amount = _this3.bonusSettings.delivery_boy_bonus_min_amount;
-          _this3.deliveryBoys.bonus_max_amount = _this3.bonusSettings.delivery_boy_bonus_max_amount;
+        _this4.bonusSettings = data.data;
+        if (_this4.bonusSettings.delivery_boy_bonus_settings == 1) {
+          _this4.deliveryBoys.bonus_type = _this4.bonusSettings.delivery_boy_bonus_type;
+          _this4.deliveryBoys.bonus_percentage = _this4.bonusSettings.delivery_boy_bonus_percentage;
+          _this4.deliveryBoys.bonus_min_amount = _this4.bonusSettings.delivery_boy_bonus_min_amount;
+          _this4.deliveryBoys.bonus_max_amount = _this4.bonusSettings.delivery_boy_bonus_max_amount;
         }
       });
     },
@@ -741,21 +785,21 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     getCities: function getCities() {
-      var _this4 = this;
+      var _this5 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/cities').then(function (response) {
-        var _this4$record;
-        _this4.isLoading = false;
+        var _this5$record;
+        _this5.isLoading = false;
         var data = response.data;
         // API returns data.data = { total, cities }; ensure we always set an array for multiselect
         var raw = data.data;
         var list = raw && raw.cities ? raw.cities : raw;
-        _this4.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
-        if (_this4.deliveryBoys.id && (_this4$record = _this4.record) !== null && _this4$record !== void 0 && _this4$record.city_id && Array.isArray(_this4.cities)) {
-          var matched = _this4.cities.filter(function (item) {
-            return item.id === _this4.record.city_id;
+        _this5.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
+        if (_this5.deliveryBoys.id && (_this5$record = _this5.record) !== null && _this5$record !== void 0 && _this5$record.city_id && Array.isArray(_this5.cities)) {
+          var matched = _this5.cities.filter(function (item) {
+            return item.id === _this5.record.city_id;
           });
-          _this4.city = matched.length ? matched[0] : null;
+          _this5.city = matched.length ? matched[0] : null;
         }
       });
     },
@@ -763,110 +807,111 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       this.deliveryBoys.city_id = this.city && this.city.id != null ? this.city.id : '';
     },
     getDeliveryBoy: function getDeliveryBoy() {
-      var _this5 = this;
+      var _this6 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/delivery_boys/edit/' + this.id).then(function (response) {
-        _this5.isLoading = false;
+        _this6.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
-          var _this5$record, _this5$record2, _this5$record3, _this5$record4, _this5$record5, _this5$record6, _this5$record7, _this5$record8, _this5$record9, _this5$record10, _this5$record11, _this5$record12, _this5$record13;
-          _this5.record = data.data;
-          _this5.translations = {};
-          if (!_this5.languages.length) return;
+          var _this6$record, _this6$record2, _this6$record3, _this6$record4, _this6$record5, _this6$record6, _this6$record7, _this6$record8, _this6$record9, _this6$record10, _this6$record11, _this6$record12, _this6$record13, _this6$record14;
+          _this6.record = data.data;
+          _this6.translations = {};
+          if (!_this6.languages.length) return;
 
           // Helper: show empty string when value is null, undefined, or string "null"
           var emptyIfNull = function emptyIfNull(val) {
             return val != null && val !== "null" ? val : "";
           };
-          _this5.translations = {};
-          _this5.languages.forEach(function (lang) {
-            var _this5$record$transla;
-            var t = (_this5$record$transla = _this5.record.translations) === null || _this5$record$transla === void 0 ? void 0 : _this5$record$transla.find(function (tr) {
+          _this6.translations = {};
+          _this6.languages.forEach(function (lang) {
+            var _this6$record$transla;
+            var t = (_this6$record$transla = _this6.record.translations) === null || _this6$record$transla === void 0 ? void 0 : _this6$record$transla.find(function (tr) {
               return tr.language_id === lang.id;
             });
             if (lang.is_default) {
-              _this5.$set(_this5.translations, lang.id, {
-                name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name) || emptyIfNull(_this5.record.name),
-                address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address) || emptyIfNull(_this5.record.address),
-                other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information) || emptyIfNull(_this5.record.other_payment_information)
+              _this6.$set(_this6.translations, lang.id, {
+                name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name) || emptyIfNull(_this6.record.name),
+                address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address) || emptyIfNull(_this6.record.address),
+                other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information) || emptyIfNull(_this6.record.other_payment_information)
               });
             } else {
-              _this5.$set(_this5.translations, lang.id, {
+              _this6.$set(_this6.translations, lang.id, {
                 name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name),
                 address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address),
                 other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information)
               });
             }
           });
-          _this5.deliveryBoys.id = _this5.record ? _this5.record.id : null;
-          _this5.deliveryBoys.admin_id = emptyIfNull((_this5$record = _this5.record) === null || _this5$record === void 0 ? void 0 : _this5$record.admin_id);
-          _this5.deliveryBoys.name = emptyIfNull((_this5$record2 = _this5.record) === null || _this5$record2 === void 0 ? void 0 : _this5$record2.name);
-          _this5.deliveryBoys.dob = emptyIfNull((_this5$record3 = _this5.record) === null || _this5$record3 === void 0 ? void 0 : _this5$record3.dob);
-          _this5.deliveryBoys.mobile = emptyIfNull((_this5$record4 = _this5.record) === null || _this5$record4 === void 0 ? void 0 : _this5$record4.mobile);
-          _this5.deliveryBoys.license_no = emptyIfNull((_this5$record5 = _this5.record) === null || _this5$record5 === void 0 ? void 0 : _this5$record5.license_no);
-          _this5.deliveryBoys.email = (_this5$record6 = _this5.record) !== null && _this5$record6 !== void 0 && _this5$record6.admin ? _this5.record.admin.email || '' : '';
-          _this5.deliveryBoys.password = "";
-          _this5.deliveryBoys.confirm_password = "";
-          _this5.deliveryBoys.ifsc_code = emptyIfNull((_this5$record7 = _this5.record) === null || _this5$record7 === void 0 ? void 0 : _this5$record7.ifsc_code);
-          _this5.deliveryBoys.bank_name = emptyIfNull((_this5$record8 = _this5.record) === null || _this5$record8 === void 0 ? void 0 : _this5$record8.bank_name);
-          _this5.deliveryBoys.bank_account_number = emptyIfNull((_this5$record9 = _this5.record) === null || _this5$record9 === void 0 ? void 0 : _this5$record9.bank_account_number);
-          _this5.deliveryBoys.account_name = emptyIfNull((_this5$record10 = _this5.record) === null || _this5$record10 === void 0 ? void 0 : _this5$record10.account_name);
-          if (Array.isArray(_this5.cities)) {
-            var matched = _this5.cities.find(function (item) {
-              return item.id === _this5.record.city_id;
+          _this6.deliveryBoys.id = _this6.record ? _this6.record.id : null;
+          _this6.deliveryBoys.admin_id = emptyIfNull((_this6$record = _this6.record) === null || _this6$record === void 0 ? void 0 : _this6$record.admin_id);
+          _this6.deliveryBoys.name = emptyIfNull((_this6$record2 = _this6.record) === null || _this6$record2 === void 0 ? void 0 : _this6$record2.name);
+          _this6.deliveryBoys.dob = emptyIfNull((_this6$record3 = _this6.record) === null || _this6$record3 === void 0 ? void 0 : _this6$record3.dob);
+          _this6.deliveryBoys.mobile = emptyIfNull((_this6$record4 = _this6.record) === null || _this6$record4 === void 0 ? void 0 : _this6$record4.mobile);
+          _this6.deliveryBoys.country_code = ((_this6$record5 = _this6.record) === null || _this6$record5 === void 0 ? void 0 : _this6$record5.country_code) || "+91";
+          _this6.deliveryBoys.license_no = emptyIfNull((_this6$record6 = _this6.record) === null || _this6$record6 === void 0 ? void 0 : _this6$record6.license_no);
+          _this6.deliveryBoys.email = (_this6$record7 = _this6.record) !== null && _this6$record7 !== void 0 && _this6$record7.admin ? _this6.record.admin.email || '' : '';
+          _this6.deliveryBoys.password = "";
+          _this6.deliveryBoys.confirm_password = "";
+          _this6.deliveryBoys.ifsc_code = emptyIfNull((_this6$record8 = _this6.record) === null || _this6$record8 === void 0 ? void 0 : _this6$record8.ifsc_code);
+          _this6.deliveryBoys.bank_name = emptyIfNull((_this6$record9 = _this6.record) === null || _this6$record9 === void 0 ? void 0 : _this6$record9.bank_name);
+          _this6.deliveryBoys.bank_account_number = emptyIfNull((_this6$record10 = _this6.record) === null || _this6$record10 === void 0 ? void 0 : _this6$record10.bank_account_number);
+          _this6.deliveryBoys.account_name = emptyIfNull((_this6$record11 = _this6.record) === null || _this6$record11 === void 0 ? void 0 : _this6$record11.account_name);
+          if (Array.isArray(_this6.cities)) {
+            var matched = _this6.cities.find(function (item) {
+              return item.id === _this6.record.city_id;
             });
-            _this5.city = matched || null;
+            _this6.city = matched || null;
           }
-          _this5.deliveryBoys.city_id = emptyIfNull((_this5$record11 = _this5.record) === null || _this5$record11 === void 0 ? void 0 : _this5$record11.city_id);
-          _this5.deliveryBoys.address = emptyIfNull((_this5$record12 = _this5.record) === null || _this5$record12 === void 0 ? void 0 : _this5$record12.address);
-          _this5.deliveryBoys.other_payment_information = emptyIfNull((_this5$record13 = _this5.record) === null || _this5$record13 === void 0 ? void 0 : _this5$record13.other_payment_information);
-          _this5.deliveryBoys.driving_license = "";
-          _this5.deliveryBoys.driving_license_url = _this5.record ? _this5.$storageUrl + _this5.record.driving_license : "";
-          _this5.deliveryBoys.national_identity_card = "";
-          _this5.deliveryBoys.national_identity_card_url = _this5.record ? _this5.$storageUrl + _this5.record.national_identity_card : "";
-          _this5.deliveryBoys.status = _this5.record ? _this5.record.status : 0;
-          _this5.deliveryBoys.remark = _this5.record ? _this5.record.remark : "";
-          _this5.deliveryBoys.bonus_type = _this5.record ? _this5.record.bonus_type : 0;
-          _this5.deliveryBoys.bonus_percentage = _this5.record ? _this5.record.bonus_percentage : 0;
-          _this5.deliveryBoys.bonus_min_amount = _this5.record ? _this5.record.bonus_min_amount : 0;
-          _this5.deliveryBoys.bonus_max_amount = _this5.record ? _this5.record.bonus_max_amount : 0;
+          _this6.deliveryBoys.city_id = emptyIfNull((_this6$record12 = _this6.record) === null || _this6$record12 === void 0 ? void 0 : _this6$record12.city_id);
+          _this6.deliveryBoys.address = emptyIfNull((_this6$record13 = _this6.record) === null || _this6$record13 === void 0 ? void 0 : _this6$record13.address);
+          _this6.deliveryBoys.other_payment_information = emptyIfNull((_this6$record14 = _this6.record) === null || _this6$record14 === void 0 ? void 0 : _this6$record14.other_payment_information);
+          _this6.deliveryBoys.driving_license = "";
+          _this6.deliveryBoys.driving_license_url = _this6.record ? _this6.$storageUrl + _this6.record.driving_license : "";
+          _this6.deliveryBoys.national_identity_card = "";
+          _this6.deliveryBoys.national_identity_card_url = _this6.record ? _this6.$storageUrl + _this6.record.national_identity_card : "";
+          _this6.deliveryBoys.status = _this6.record ? _this6.record.status : 0;
+          _this6.deliveryBoys.remark = _this6.record ? _this6.record.remark : "";
+          _this6.deliveryBoys.bonus_type = _this6.record ? _this6.record.bonus_type : 0;
+          _this6.deliveryBoys.bonus_percentage = _this6.record ? _this6.record.bonus_percentage : 0;
+          _this6.deliveryBoys.bonus_min_amount = _this6.record ? _this6.record.bonus_min_amount : 0;
+          _this6.deliveryBoys.bonus_max_amount = _this6.record ? _this6.record.bonus_max_amount : 0;
         } else {
-          _this5.showError(data.message);
+          _this6.showError(data.message);
           setTimeout(function () {
-            _this5.$router.back();
+            _this6.$router.back();
           }, 1000);
         }
       })["catch"](function (error) {
         var _error$request;
-        _this5.isLoading = false;
+        _this6.isLoading = false;
         if ((_error$request = error.request) !== null && _error$request !== void 0 && _error$request.statusText) {
-          _this5.showError(error.request.statusText);
+          _this6.showError(error.request.statusText);
         } else if (error.message) {
-          _this5.showError(error.message);
+          _this6.showError(error.message);
         } else {
-          _this5.showError("Something went wrong!");
+          _this6.showError("Something went wrong!");
         }
       });
     },
     saveRecord: function saveRecord() {
-      var _this6 = this;
+      var _this7 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
         var _defaultTrans$name;
-        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this6$deliveryBoys$d, _this6$deliveryBoys$r, _this6$deliveryBoys$b, _this6$deliveryBoys$b2, _this6$deliveryBoys$b3, isEdit, fd, _this6$deliveryBoys$p, _this6$deliveryBoys$c, _this6$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response, _error$response$data;
+        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this7$deliveryBoys$d, _this7$deliveryBoys$r, _this7$deliveryBoys$b, _this7$deliveryBoys$b2, _this7$deliveryBoys$b3, isEdit, fd, _this7$deliveryBoys$p, _this7$deliveryBoys$c, _this7$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response, _error$response$data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (_this6.defaultLanguage) {
+                if (_this7.defaultLanguage) {
                   _context.next = 3;
                   break;
                 }
-                _this6.showError(__('default_language_not_found') || 'Default language not loaded.');
+                _this7.showError(__('default_language_not_found') || 'Default language not loaded.');
                 return _context.abrupt("return");
               case 3:
-                defaultLang = _this6.defaultLanguage;
-                defaultTrans = _this6.translations[defaultLang.id];
+                defaultLang = _this7.defaultLanguage;
+                defaultTrans = _this7.translations[defaultLang.id];
                 switchToDefault = function switchToDefault() {
-                  _this6.activeLanguageTab = _this6.languages.findIndex(function (l) {
+                  _this7.activeLanguageTab = _this7.languages.findIndex(function (l) {
                     return l.id === defaultLang.id;
                   });
                 };
@@ -874,33 +919,33 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                   _context.next = 10;
                   break;
                 }
-                _this6.showError(__('please_fill_name_in_default_language') || 'Please fill the name in the default language.');
+                _this7.showError(__('please_fill_name_in_default_language') || 'Please fill the name in the default language.');
                 switchToDefault();
                 return _context.abrupt("return");
               case 10:
-                if (_this6.deliveryBoys.mobile) {
+                if (_this7.deliveryBoys.mobile) {
                   _context.next = 14;
                   break;
                 }
-                _this6.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
+                _this7.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
                 switchToDefault();
                 return _context.abrupt("return");
               case 14:
-                if (_this6.deliveryBoys.city_id) {
+                if (_this7.deliveryBoys.city_id) {
                   _context.next = 18;
                   break;
                 }
-                _this6.showError(__('please_select_city') || 'Please select a city.');
+                _this7.showError(__('please_select_city') || 'Please select a city.');
                 switchToDefault();
                 return _context.abrupt("return");
               case 18:
                 // All client-side checks passed — start loading
-                _this6.isLoading = true;
+                _this7.isLoading = true;
                 _context.prev = 19;
-                isEdit = !!_this6.deliveryBoys.id;
+                isEdit = !!_this7.deliveryBoys.id;
                 fd = new FormData();
                 if (isEdit) {
-                  fd.append('id', _this6.deliveryBoys.id);
+                  fd.append('id', _this7.deliveryBoys.id);
                 }
 
                 // default language
@@ -910,134 +955,135 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 fd.append('other_payment_information', (_defaultTrans$other_p = defaultTrans.other_payment_information) !== null && _defaultTrans$other_p !== void 0 ? _defaultTrans$other_p : '');
 
                 // main fields
-                fd.append('dob', (_this6$deliveryBoys$d = _this6.deliveryBoys.dob) !== null && _this6$deliveryBoys$d !== void 0 ? _this6$deliveryBoys$d : '');
-                fd.append('mobile', _this6.deliveryBoys.mobile);
-                fd.append('license_no', _this6.deliveryBoys.license_no);
-                fd.append('email', _this6.deliveryBoys.email);
-                fd.append('ifsc_code', _this6.deliveryBoys.ifsc_code);
-                fd.append('bank_name', _this6.deliveryBoys.bank_name);
-                fd.append('bank_account_number', _this6.deliveryBoys.bank_account_number);
-                fd.append('account_name', _this6.deliveryBoys.account_name);
-                fd.append('city_id', _this6.deliveryBoys.city_id);
-                fd.append('status', _this6.deliveryBoys.status);
-                fd.append('remark', (_this6$deliveryBoys$r = _this6.deliveryBoys.remark) !== null && _this6$deliveryBoys$r !== void 0 ? _this6$deliveryBoys$r : '');
-                fd.append('bonus_type', _this6.deliveryBoys.bonus_type);
-                fd.append('bonus_percentage', (_this6$deliveryBoys$b = _this6.deliveryBoys.bonus_percentage) !== null && _this6$deliveryBoys$b !== void 0 ? _this6$deliveryBoys$b : 0);
-                fd.append('bonus_min_amount', (_this6$deliveryBoys$b2 = _this6.deliveryBoys.bonus_min_amount) !== null && _this6$deliveryBoys$b2 !== void 0 ? _this6$deliveryBoys$b2 : 0);
-                fd.append('bonus_max_amount', (_this6$deliveryBoys$b3 = _this6.deliveryBoys.bonus_max_amount) !== null && _this6$deliveryBoys$b3 !== void 0 ? _this6$deliveryBoys$b3 : 0);
+                fd.append('dob', (_this7$deliveryBoys$d = _this7.deliveryBoys.dob) !== null && _this7$deliveryBoys$d !== void 0 ? _this7$deliveryBoys$d : '');
+                fd.append('mobile', _this7.deliveryBoys.mobile);
+                fd.append('country_code', _this7.deliveryBoys.country_code);
+                fd.append('license_no', _this7.deliveryBoys.license_no);
+                fd.append('email', _this7.deliveryBoys.email);
+                fd.append('ifsc_code', _this7.deliveryBoys.ifsc_code);
+                fd.append('bank_name', _this7.deliveryBoys.bank_name);
+                fd.append('bank_account_number', _this7.deliveryBoys.bank_account_number);
+                fd.append('account_name', _this7.deliveryBoys.account_name);
+                fd.append('city_id', _this7.deliveryBoys.city_id);
+                fd.append('status', _this7.deliveryBoys.status);
+                fd.append('remark', (_this7$deliveryBoys$r = _this7.deliveryBoys.remark) !== null && _this7$deliveryBoys$r !== void 0 ? _this7$deliveryBoys$r : '');
+                fd.append('bonus_type', _this7.deliveryBoys.bonus_type);
+                fd.append('bonus_percentage', (_this7$deliveryBoys$b = _this7.deliveryBoys.bonus_percentage) !== null && _this7$deliveryBoys$b !== void 0 ? _this7$deliveryBoys$b : 0);
+                fd.append('bonus_min_amount', (_this7$deliveryBoys$b2 = _this7.deliveryBoys.bonus_min_amount) !== null && _this7$deliveryBoys$b2 !== void 0 ? _this7$deliveryBoys$b2 : 0);
+                fd.append('bonus_max_amount', (_this7$deliveryBoys$b3 = _this7.deliveryBoys.bonus_max_amount) !== null && _this7$deliveryBoys$b3 !== void 0 ? _this7$deliveryBoys$b3 : 0);
 
                 // password: required on CREATE; on EDIT send only when filled
                 if (!isEdit) {
-                  fd.append('password', (_this6$deliveryBoys$p = _this6.deliveryBoys.password) !== null && _this6$deliveryBoys$p !== void 0 ? _this6$deliveryBoys$p : '');
-                  fd.append('confirm_password', (_this6$deliveryBoys$c = _this6.deliveryBoys.confirm_password) !== null && _this6$deliveryBoys$c !== void 0 ? _this6$deliveryBoys$c : '');
-                } else if (_this6.deliveryBoys.password) {
-                  fd.append('password', _this6.deliveryBoys.password);
-                  fd.append('confirm_password', (_this6$deliveryBoys$c2 = _this6.deliveryBoys.confirm_password) !== null && _this6$deliveryBoys$c2 !== void 0 ? _this6$deliveryBoys$c2 : '');
+                  fd.append('password', (_this7$deliveryBoys$p = _this7.deliveryBoys.password) !== null && _this7$deliveryBoys$p !== void 0 ? _this7$deliveryBoys$p : '');
+                  fd.append('confirm_password', (_this7$deliveryBoys$c = _this7.deliveryBoys.confirm_password) !== null && _this7$deliveryBoys$c !== void 0 ? _this7$deliveryBoys$c : '');
+                } else if (_this7.deliveryBoys.password) {
+                  fd.append('password', _this7.deliveryBoys.password);
+                  fd.append('confirm_password', (_this7$deliveryBoys$c2 = _this7.deliveryBoys.confirm_password) !== null && _this7$deliveryBoys$c2 !== void 0 ? _this7$deliveryBoys$c2 : '');
                 }
 
                 // files
-                if (_this6.deliveryBoys.driving_license instanceof File) {
-                  fd.append('driving_license', _this6.deliveryBoys.driving_license);
+                if (_this7.deliveryBoys.driving_license instanceof File) {
+                  fd.append('driving_license', _this7.deliveryBoys.driving_license);
                 }
-                if (_this6.deliveryBoys.national_identity_card instanceof File) {
-                  fd.append('national_identity_card', _this6.deliveryBoys.national_identity_card);
+                if (_this7.deliveryBoys.national_identity_card instanceof File) {
+                  fd.append('national_identity_card', _this7.deliveryBoys.national_identity_card);
                 }
-                url = isEdit ? _this6.$apiUrl + '/delivery_boys/update' : _this6.$apiUrl + '/delivery_boys/save';
-                _context.next = 48;
+                url = isEdit ? _this7.$apiUrl + '/delivery_boys/update' : _this7.$apiUrl + '/delivery_boys/save';
+                _context.next = 49;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, fd);
-              case 48:
+              case 49:
                 response = _context.sent;
                 if (!(!response.data || response.data.status !== 1)) {
-                  _context.next = 51;
+                  _context.next = 52;
                   break;
                 }
                 throw new Error(((_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || __('something_went_wrong'));
-              case 51:
+              case 52:
                 if (!isEdit) {
-                  _this6.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
+                  _this7.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 }
 
                 // Save non-default language translations
-                _iterator = _createForOfIteratorHelper(_this6.languages);
-                _context.prev = 53;
+                _iterator = _createForOfIteratorHelper(_this7.languages);
+                _context.prev = 54;
                 _iterator.s();
-              case 55:
+              case 56:
                 if ((_step = _iterator.n()).done) {
-                  _context.next = 75;
+                  _context.next = 76;
                   break;
                 }
                 lang = _step.value;
                 if (!lang.is_default) {
-                  _context.next = 59;
+                  _context.next = 60;
                   break;
                 }
-                return _context.abrupt("continue", 73);
-              case 59:
-                t = _this6.translations[lang.id];
+                return _context.abrupt("continue", 74);
+              case 60:
+                t = _this7.translations[lang.id];
                 if (!(!t || !t.name && !t.address && !t.other_payment_information)) {
-                  _context.next = 62;
+                  _context.next = 63;
                   break;
                 }
-                return _context.abrupt("continue", 73);
-              case 62:
+                return _context.abrupt("continue", 74);
+              case 63:
                 tfd = new FormData();
-                tfd.append('id', _this6.deliveryBoys.id);
+                tfd.append('id', _this7.deliveryBoys.id);
                 tfd.append('language_id', lang.id);
                 tfd.append('name', (_t$name = t.name) !== null && _t$name !== void 0 ? _t$name : '');
                 tfd.append('address', (_t$address = t.address) !== null && _t$address !== void 0 ? _t$address : '');
                 tfd.append('other_payment_information', (_t$other_payment_info = t.other_payment_information) !== null && _t$other_payment_info !== void 0 ? _t$other_payment_info : '');
-                _context.next = 70;
-                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this6.$apiUrl + '/delivery_boys/update', tfd);
-              case 70:
+                _context.next = 71;
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this7.$apiUrl + '/delivery_boys/update', tfd);
+              case 71:
                 tRes = _context.sent;
                 if (!(!tRes.data || tRes.data.status !== 1)) {
-                  _context.next = 73;
+                  _context.next = 74;
                   break;
                 }
                 throw new Error(((_tRes$data = tRes.data) === null || _tRes$data === void 0 ? void 0 : _tRes$data.message) || __('something_went_wrong'));
-              case 73:
-                _context.next = 55;
+              case 74:
+                _context.next = 56;
                 break;
-              case 75:
-                _context.next = 80;
+              case 76:
+                _context.next = 81;
                 break;
-              case 77:
-                _context.prev = 77;
-                _context.t0 = _context["catch"](53);
+              case 78:
+                _context.prev = 78;
+                _context.t0 = _context["catch"](54);
                 _iterator.e(_context.t0);
-              case 80:
-                _context.prev = 80;
+              case 81:
+                _context.prev = 81;
                 _iterator.f();
-                return _context.finish(80);
-              case 83:
-                _this6.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
-                if (!_this6.login_user || _this6.login_user.role_id !== 4) {
-                  if (_this6.$route.path.includes('/seller')) {
-                    _this6.$router.push({
+                return _context.finish(81);
+              case 84:
+                _this7.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
+                if (!_this7.login_user || _this7.login_user.role_id !== 4) {
+                  if (_this7.$route.path.includes('/seller')) {
+                    _this7.$router.push({
                       path: '/seller/delivery_boys'
                     });
                   } else {
-                    _this6.$router.push({
+                    _this7.$router.push({
                       path: '/delivery_boys'
                     });
                   }
                 }
-                _context.next = 90;
+                _context.next = 91;
                 break;
-              case 87:
-                _context.prev = 87;
+              case 88:
+                _context.prev = 88;
                 _context.t1 = _context["catch"](19);
-                _this6.showError(_context.t1.message || (_context.t1 === null || _context.t1 === void 0 ? void 0 : (_error$response = _context.t1.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong') || 'Something went wrong.');
-              case 90:
-                _context.prev = 90;
-                _this6.isLoading = false;
-                return _context.finish(90);
-              case 93:
+                _this7.showError(_context.t1.message || (_context.t1 === null || _context.t1 === void 0 ? void 0 : (_error$response = _context.t1.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong') || 'Something went wrong.');
+              case 91:
+                _context.prev = 91;
+                _this7.isLoading = false;
+                return _context.finish(91);
+              case 94:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[19, 87, 90, 93], [53, 77, 80, 83]]);
+        }, _callee, null, [[19, 88, 91, 94], [54, 78, 81, 84]]);
       }))();
     }
   }
@@ -1365,7 +1411,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_multiselect_dist_vue_multiselect_min_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.input-group.mobile-input-group[data-v-77323279] {\n    flex-wrap: nowrap;\n    border: 1px solid #ced4da;\n    border-radius: 0.375rem;\n    background: #fff;\n}\n.mobile-input-group .country-code-dropdown[data-v-77323279] {\n    position: relative;\n    flex: 0 0 auto;\n    width: 72px;\n    border-right: 1px solid #ced4da;\n}\n.mobile-input-group .country-code-toggle[data-v-77323279] {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 2px;\n    padding: 0.375rem 0.5rem;\n    border: none;\n    background: transparent;\n    cursor: pointer;\n    border-top-left-radius: 0.375rem;\n    border-bottom-left-radius: 0.375rem;\n}\n.mobile-input-group input.form-control[data-v-77323279] {\n    flex: 1 1 auto;\n    min-width: 0;\n    border: none;\n    border-top-left-radius: 0;\n    border-bottom-left-radius: 0;\n    border-top-right-radius: 0.375rem;\n    border-bottom-right-radius: 0.375rem;\n    box-shadow: none;\n}\n.mobile-input-group input.form-control[data-v-77323279]:focus {\n    box-shadow: none;\n}\n.country-code-caret[data-v-77323279] {\n    width: 0;\n    height: 0;\n    border-left: 4px solid transparent;\n    border-right: 4px solid transparent;\n    border-top: 5px solid #6c757d;\n}\n.country-code-menu[data-v-77323279] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    z-index: 1050;\n    width: 130px;\n    max-height: 220px;\n    overflow-y: auto;\n    margin: 2px 0 0;\n    padding: 4px 0;\n    list-style: none;\n    background: #fff;\n    border: 1px solid #ced4da;\n    border-radius: 4px;\n    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n}\n.country-code-menu li[data-v-77323279] {\n    padding: 6px 12px;\n    cursor: pointer;\n}\n.country-code-menu li[data-v-77323279]:hover {\n    background: #f1f3f5;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2133,39 +2179,124 @@ var render = function () {
                                   ),
                                 ]),
                                 _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.deliveryBoys.mobile,
-                                      expression: "deliveryBoys.mobile",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "number",
-                                    name: "mobile",
-                                    id: "mobile",
-                                    placeholder: _vm.__("mobile_no"),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "input-group mobile-input-group",
                                   },
-                                  domProps: { value: _vm.deliveryBoys.mobile },
-                                  on: {
-                                    input: [
-                                      function ($event) {
-                                        if ($event.target.composing) {
-                                          return
-                                        }
-                                        _vm.$set(
-                                          _vm.deliveryBoys,
-                                          "mobile",
-                                          $event.target.value
-                                        )
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        ref: "countryDropdown",
+                                        staticClass: "country-code-dropdown",
                                       },
-                                      _vm.validateMobileNumber,
-                                    ],
-                                  },
-                                }),
+                                      [
+                                        _c(
+                                          "button",
+                                          {
+                                            staticClass: "country-code-toggle",
+                                            attrs: { type: "button" },
+                                            on: {
+                                              click: function ($event) {
+                                                _vm.countryDropdownOpen =
+                                                  !_vm.countryDropdownOpen
+                                              },
+                                            },
+                                          },
+                                          [
+                                            _c("span", [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.deliveryBoys.country_code
+                                                )
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("span", {
+                                              staticClass: "country-code-caret",
+                                            }),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _vm.countryDropdownOpen
+                                          ? _c(
+                                              "ul",
+                                              {
+                                                staticClass:
+                                                  "country-code-menu",
+                                              },
+                                              _vm._l(
+                                                _vm.countries,
+                                                function (c) {
+                                                  return _c(
+                                                    "li",
+                                                    {
+                                                      key: c.id,
+                                                      on: {
+                                                        click: function (
+                                                          $event
+                                                        ) {
+                                                          _vm.deliveryBoys.country_code =
+                                                            c.dial_code
+                                                          _vm.countryDropdownOpen = false
+                                                        },
+                                                      },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        "\n                                                            " +
+                                                          _vm._s(c.dial_code) +
+                                                          "\n                                                        "
+                                                      ),
+                                                    ]
+                                                  )
+                                                }
+                                              ),
+                                              0
+                                            )
+                                          : _vm._e(),
+                                      ]
+                                    ),
+                                    _vm._v(" "),
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.deliveryBoys.mobile,
+                                          expression: "deliveryBoys.mobile",
+                                        },
+                                      ],
+                                      staticClass: "form-control",
+                                      attrs: {
+                                        type: "number",
+                                        name: "mobile",
+                                        id: "mobile",
+                                        placeholder: _vm.__("mobile_no"),
+                                      },
+                                      domProps: {
+                                        value: _vm.deliveryBoys.mobile,
+                                      },
+                                      on: {
+                                        input: [
+                                          function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              _vm.deliveryBoys,
+                                              "mobile",
+                                              $event.target.value
+                                            )
+                                          },
+                                          _vm.validateMobileNumber,
+                                        ],
+                                      },
+                                    }),
+                                  ]
+                                ),
                                 _vm._v(" "),
                                 _vm.mobilevalidationError
                                   ? _c("span", { staticClass: "error" }, [

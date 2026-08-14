@@ -299,7 +299,7 @@ class AdminAuthController extends Controller
         $validator = Validator::make($requestData, [
             'name'             => 'required',
             'email'            => 'email|required|unique:admins',
-            'mobile'           => 'required',
+            'mobile'           => 'required|unique:sellers,mobile',
             'otp'              => 'required',
             'password'         => 'min:6|required_with:confirm_password|same:confirm_password',
             'categories_ids'   => 'required',
@@ -602,6 +602,7 @@ class AdminAuthController extends Controller
             $deliveryBoy->admin_id = $admin->id;
             $deliveryBoy->name = $request->name;
             $deliveryBoy->mobile = $request->mobile;
+            $deliveryBoy->country_code = $request->country_code ?? '+91';
             $deliveryBoy->address = '';
             $deliveryBoy->dob = $request->dob;
             $deliveryBoy->bonus_type = $request->bonus_type;
@@ -655,7 +656,7 @@ class AdminAuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'mobile' => 'required',
+            'mobile' => 'required|unique:delivery_boys,mobile',
             'dob' => 'required',
             'driving_license' => 'required|mimes:jpeg,jpg,png,gif,pdf',
             'national_identity_card' => 'required|mimes:jpeg,jpg,png,gif,pdf',
@@ -677,6 +678,7 @@ class AdminAuthController extends Controller
         $deliveryBoy->status = DeliveryBoy::$statusRegistered;
         $deliveryBoy->name = $request->name;
         $deliveryBoy->mobile = $request->mobile;
+        $deliveryBoy->country_code = $request->country_code ?? '+91';
         $deliveryBoy->dob = $request->dob;
         $deliveryBoy->city_id = $request->city_id;
         $driving_license = '';

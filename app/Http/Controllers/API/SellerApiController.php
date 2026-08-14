@@ -108,7 +108,7 @@ class SellerApiController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'email|required|unique:admins',
-            'mobile' => 'required|numeric',
+            'mobile' => 'required|numeric|unique:sellers,mobile',
             'password' => 'min:6|required_with:confirm_password|same:confirm_password',
             'store_name' => 'required',
             'brand_ids' => 'required',
@@ -339,7 +339,7 @@ class SellerApiController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'email|required|unique:admins,email,' . $adminIdForUniqueCheck,
-            'mobile' => 'required|numeric',
+            'mobile' => 'required|numeric|unique:sellers,mobile,' . $request->id,
             'confirm_password' => 'same:password',
             'store_name' => 'required',
             'brand_ids' => $isSellerCaller ? 'nullable' : 'required',

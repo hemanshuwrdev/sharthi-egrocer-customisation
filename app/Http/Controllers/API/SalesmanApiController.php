@@ -76,6 +76,7 @@ class SalesmanApiController extends Controller
             $salesman->admin_id = $admin->id;
             $salesman->name = $request->name;
             $salesman->mobile = $request->mobile;
+            $salesman->country_code = $request->country_code ?? '+91';
             $salesman->email = $request->email;
             $salesman->seller_id = $seller_id;
             $salesman->brands = $request->brands;
@@ -181,6 +182,7 @@ class SalesmanApiController extends Controller
             $salesman->admin_id = $admin->id;
             $salesman->name = $request->name;
             $salesman->mobile = $request->mobile;
+            $salesman->country_code = $request->country_code ?? $salesman->country_code;
             $salesman->email = $request->email;
             $salesman->brands = $request->brands;
             $salesman->allow_payment_collection = $request->allow_payment_collection ? 1 : 0;

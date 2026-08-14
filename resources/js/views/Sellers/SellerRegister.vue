@@ -570,7 +570,7 @@ export default {
             }
         },
         getCountries() {
-            axios.get(this.$sellerApiUrl + '/countries', { params: { limit: 250 } })
+            axios.get(this.$sellerApiUrl + '/register/countries', { params: { limit: 250 } })
                 .then((response) => {
                     this.countries = response.data.data || [];
                     if (!this.countries.some(c => c.dial_code === this.country_code)) {
@@ -681,8 +681,15 @@ export default {
     flex-wrap: nowrap;
     border: 1px solid #ced4da;
     border-radius: 0.375rem;
-    overflow: hidden;
     background: #fff;
+}
+.mobile-input-group .country-code-toggle {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+.mobile-input-group > *:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
 }
 .mobile-input-group .country-code-dropdown {
     position: relative;
