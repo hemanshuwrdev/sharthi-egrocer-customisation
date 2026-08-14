@@ -919,7 +919,7 @@ class SellerController extends BaseController
             'order_items.tax_amount',
             'order_items.tax_percentage',
             'order_items.created_at as item_created_at',
-            'products.name as product_name',
+            'order_items.product_name',
             'orders.delivery_charge',
             'retailer_profiles.party_name',
             'retailer_profiles.shop_name',
@@ -931,8 +931,6 @@ class SellerController extends BaseController
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
             ->leftJoin('cities', 'retailer_profiles.city_id', '=', 'cities.id')
-            ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
-            ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
             ->where('order_items.seller_id', $seller_id)
             ->where(function ($query) {
                 $query->where('orders.active_status', OrderStatusList::$delivered)
