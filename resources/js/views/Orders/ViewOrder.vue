@@ -195,6 +195,10 @@
                                             <td>{{ order.delivery_time }}</td>
                                         </tr>
                                         <tr>
+                                            <th class="th-width">{{ __('delivery_date') }}</th>
+                                            <td>{{ order.delivery_date }}</td>
+                                        </tr>
+                                        <tr>
                                             <th class="th-width">{{ __('total') }} ({{ $currency }})</th>
                                             <td>{{ order.total }}</td>
                                         </tr>

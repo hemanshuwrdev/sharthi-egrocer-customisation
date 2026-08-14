@@ -469,6 +469,7 @@ class SellerController extends BaseController
             'orders.payment_method',
             'orders.address',
             'orders.delivery_time',
+            'orders.delivery_date',
             'users.name as user_name',
             'order_items.status as order_status',
             'sellers.name as seller_name'

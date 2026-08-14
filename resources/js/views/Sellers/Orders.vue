@@ -358,6 +358,7 @@ export default {
                 { key: 'remaining_final', label: __('ftotal') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
                 { key: 'payment_method', label: __('p_method'), sortable: true, class: 'text-center' },
                 { key: 'delivery_time', label: __('d_time'), sortable: true, class: 'text-center' },
+                { key: 'delivery_date', label: __('delivery_date'), sortable: true, class: 'text-center' },
                 { key: 'active_status', label: __('status'), sortable: true, class: 'text-center' },
                 { key: "actions", label: __('actions') }
             ],
@@ -372,6 +373,7 @@ export default {
                 { key: 'total', label: __('total') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
                 { key: 'payment_method', label: __('p_method'), sortable: true, class: 'text-center' },
                 { key: 'delivery_time', label: __('d_time'), sortable: true, class: 'text-center' },
+                { key: 'delivery_date', label: __('delivery_date'), sortable: true, class: 'text-center' },
                 { key: 'active_status', label: __('status'), sortable: true, class: 'text-center' },
                 { key: "actions", label: __('actions') }
             ],

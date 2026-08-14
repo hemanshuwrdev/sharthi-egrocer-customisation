@@ -113,9 +113,9 @@
 
                                     <div class="form-group col-md-4 categories-field">
                                         <div class="form-group">
-                                            <label>Categories <i class="text-danger">*</i></label>
-                                            <Select2 v-model="categories_ids" placeholder="Select Categories"
-                                                :options="categories_options" :settings="{ multiple: 'multiple', width: '100%' }" />
+                                            <label>Brand <i class="text-danger">*</i></label>
+                                            <Select2 v-model="brand_ids" placeholder="Select Brands"
+                                                :options="brands_options" :settings="{ multiple: 'multiple', width: '100%' }" />
                                         </div>
                                     </div>
                                 </div>
@@ -172,11 +172,42 @@
                                         </div>
                                     </div>
 
+                                    <!-- Bank Details -->
+                                    <div class="col-md-12 mt-3 mb-1">
+                                        <h6 class="text-muted font-weight-bold">Bank Details <small class="text-secondary">(optional)</small></h6>
+                                        <hr class="mt-1 mb-2">
+                                    </div>
+
                                     <div class="form-group col-md-4">
-                                        <label>Commission (%)</label>
-                                        <input type="number" class="form-control" v-model="commission"
-                                            placeholder="Enter commission (%)" readonly>
-                                        <p v-if="commissionvalidationError" class="error">{{ commissionvalidationError }}</p>
+                                        <div class="form-group">
+                                            <label>Bank Name</label>
+                                            <input type="text" class="form-control" v-model="bank_name"
+                                                placeholder="Bank name">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <div class="form-group">
+                                            <label>Account Number</label>
+                                            <input type="text" class="form-control" v-model="account_number"
+                                                placeholder="Account number">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <div class="form-group">
+                                            <label>Bank IFSC Code</label>
+                                            <input type="text" class="form-control" v-model="bank_ifsc_code"
+                                                placeholder="Bank IFSC code">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <div class="form-group">
+                                            <label>Bank Account Name</label>
+                                            <input type="text" class="form-control" v-model="account_name"
+                                                placeholder="Account holder name">
+                                        </div>
                                     </div>
 
                                     <!-- UPI Details -->
@@ -352,13 +383,20 @@ export default {
             showConfirmPassword: false,
             store_name: "",
 
-            categories_ids: [],
+            brand_ids: [],
+            brands: [],
 
             tax_name: "",
             tax_number: "",
             pan_number: "",
 
             store_description: "",
+
+            // Bank
+            bank_name: "",
+            account_number: "",
+            bank_ifsc_code: "",
+            account_name: "",
 
             // UPI
             upi_id: "",
@@ -382,7 +420,6 @@ export default {
             address_proof: "",
             address_proof_url: "",
             address_proof_name: "",
-            categories: [],
 
             id: null,
             record: null,
@@ -393,16 +430,12 @@ export default {
             city: "",
             cities: [],
             city_id: "",
-
-            commission: "",
-            commissionvalidationError: null,
         };
     },
     created: function () {
-        this.getCategories();
+        this.getBrands();
         this.getCities();
         this.getCountries();
-        this.getSellerCommission();
     },
     mounted() {
         document.addEventListener('click', this.handleCountryDropdownOutsideClick);
@@ -412,22 +445,16 @@ export default {
         document.removeEventListener('click', this.handleCountryDropdownOutsideClick);
     },
     computed: {
-        categories_options: function () {
-            var temp = [];
-            this.categories.forEach(category => {
-                if (category.parent_id == 0) {
-                    temp.push({ id: category.id, text: category.name });
-                }
-            });
-            return temp;
+        brands_options: function () {
+            return this.brands.map(brand => ({ id: brand.id, text: brand.name }));
         },
     },
     methods: {
-        getCategories() {
-            axios.get(this.$sellerApiUrl + '/categories')
+        getBrands() {
+            axios.get(this.$apiUrl + '/brands')
                 .then((response) => {
                     let data = response.data;
-                    this.categories = data.data;
+                    this.brands = data.data || [];
                 });
         },
         getEditorConfig() {
@@ -446,13 +473,6 @@ export default {
                 font_size_formats: fontSizes,
                 ...this.$tinymceImageUploadOptions()
             };
-        },
-        getSellerCommission() {
-            axios.get(this.$sellerApiUrl + '/seller_commission')
-                .then((response) => {
-                    let data = response.data;
-                    this.commission = data.data.value;
-                });
         },
         validateMobileNumber() {
             const mobileNumber = this.mobile;
@@ -627,13 +647,16 @@ export default {
             formData.append('password', this.password);
             formData.append('confirm_password', this.confirm_password);
             formData.append('store_name', this.store_name);
-            formData.append('categories_ids', this.categories_ids);
+            formData.append('brand_ids', this.brand_ids);
             formData.append('tax_name', this.tax_name);
             formData.append('tax_number', this.tax_number);
             formData.append('pan_number', this.pan_number);
             formData.append('store_description', this.store_description);
             formData.append('city_id', this.city_id);
-            formData.append('commission', this.commission);
+            formData.append('bank_name', this.bank_name);
+            formData.append('account_number', this.account_number);
+            formData.append('bank_ifsc_code', this.bank_ifsc_code);
+            formData.append('account_name', this.account_name);
             formData.append('upi_id', this.upi_id);
             formData.append('upi_mobile', this.upi_mobile);
             formData.append('upi_name', this.upi_name);

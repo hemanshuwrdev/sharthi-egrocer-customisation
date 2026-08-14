@@ -426,6 +426,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         sortable: true,
         "class": 'text-center'
       }, {
+        key: 'delivery_date',
+        label: __('delivery_date'),
+        sortable: true,
+        "class": 'text-center'
+      }, {
         key: 'active_status',
         label: __('status'),
         sortable: true,
@@ -478,6 +483,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }, {
         key: 'delivery_time',
         label: __('d_time'),
+        sortable: true,
+        "class": 'text-center'
+      }, {
+        key: 'delivery_date',
+        label: __('delivery_date'),
         sortable: true,
         "class": 'text-center'
       }, {

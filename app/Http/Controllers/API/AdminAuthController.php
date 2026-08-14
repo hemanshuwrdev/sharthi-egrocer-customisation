@@ -302,11 +302,10 @@ class AdminAuthController extends Controller
             'mobile'           => 'required|unique:sellers,mobile',
             'otp'              => 'required',
             'password'         => 'min:6|required_with:confirm_password|same:confirm_password',
-            'categories_ids'   => 'required',
+            'brand_ids'        => 'required',
             'store_name'       => 'required',
             'store_description'=> 'required',
             'city_id'          => 'required',
-            'commission'       => 'nullable',
             'national_id_card' => 'required|mimes:jpeg,jpg,png,gif,pdf',
             'address_proof'    => 'required|mimes:jpeg,jpg,png,gif,pdf',
             'store_logo'       => 'required|mimes:jpeg,jpg,png,gif,pdf',
@@ -319,6 +318,25 @@ class AdminAuthController extends Controller
 
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        // Commission is set by admin only, after approval — never accepted at self-registration.
+        $brandIds = collect(is_array($request->brand_ids) ? $request->brand_ids : explode(',', (string) $request->brand_ids))
+            ->map(fn($id) => (int) trim($id))->filter(fn($id) => $id > 0)->unique()->values()->all();
+        $cityIds = [(int) $request->city_id];
+
+        $brands = \App\Models\Brand::whereIn('id', $brandIds)->get()->keyBy('id');
+        foreach ($brandIds as $brandId) {
+            $brand = $brands->get($brandId);
+            if (!$brand || $brand->is_overlap_allowed) {
+                continue;
+            }
+            $conflict = \App\Models\BrandDistributorMapping::where('brand_id', $brandId)
+                ->whereIn('city_id', $cityIds)->with('city')->first();
+            if ($conflict) {
+                $cityName = $conflict->city->name ?? $conflict->city_id;
+                return CommonHelper::responseError("{$brand->name} is already assigned to another distributor in {$cityName}");
+            }
         }
 
         $firebaseEnabled = (int) \App\Models\Setting::where('variable', 'firebase_authentication')->value('value');
@@ -380,7 +398,6 @@ class AdminAuthController extends Controller
             $seller->mobile = $request->mobile;
             $seller->status = Seller::$statusRegistered;
             $seller->store_url         = $request->store_url;
-            $seller->categories        = $request->categories_ids;
             $seller->tax_name          = $request->tax_name;
             $seller->tax_number        = $request->tax_number;
             $seller->pan_number        = $request->pan_number;
@@ -388,7 +405,7 @@ class AdminAuthController extends Controller
             $seller->state             = $request->state;
             $seller->pincode_id        = $request->pincode_id ?? 0;
             $seller->store_description = $request->store_description;
-            $seller->commission        = $request->commission;
+            // Commission is set by admin only, after approval — never accepted here.
             $seller->bank_name         = $request->bank_name;
             $seller->account_number    = $request->account_number;
             $seller->bank_ifsc_code    = $request->ifsc_code ?? $request->bank_ifsc_code;
@@ -428,6 +445,16 @@ class AdminAuthController extends Controller
                 $seller->address_proof = $image;
             }
             $seller->save();
+
+            foreach ($brandIds as $brandId) {
+                foreach ($cityIds as $cityId) {
+                    \App\Models\BrandDistributorMapping::firstOrCreate([
+                        'brand_id' => $brandId,
+                        'seller_id' => $seller->id,
+                        'city_id' => $cityId,
+                    ]);
+                }
+            }
 
             $conflict = CommonHelper::claimMobile($seller->mobile, \App\Models\MobileRegistry::ROLE_SELLER, $seller->id);
             if ($conflict) {
@@ -479,7 +506,7 @@ class AdminAuthController extends Controller
             'street' => 'required',
             'city_id' => 'required',
             'state' => 'required',
-            'categories_ids' => 'required',
+            'categories_ids' => 'nullable',
             'latitude' => 'required',
             'longitude' => 'required',
             'place_name' => 'required',

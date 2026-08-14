@@ -175,12 +175,15 @@ class RetailerCartOrderApiController extends Controller
                 'base_price'       => $line['base_price'],
                 'slab'             => $line['slab'],
                 'sub_total'        => $subtotal,
+                'tax_percentage'   => $line['tax_percentage'],
+                'tax_amount'       => round($line['tax_amount_per_unit'] * (float) $row->qty, 2),
                 // Stepper metadata — app configures qty widget per item
                 'step'             => $line['step'],           // e.g. 20
                 'secondary_unit'   => $line['secondary_unit'], // e.g. "Box"
                 'min_qty'          => $line['min_qty'],         // e.g. 20
             ];
             $groups[$row->seller_id]['sub_total'] = ($groups[$row->seller_id]['sub_total'] ?? 0) + $subtotal;
+            $groups[$row->seller_id]['tax_amount'] = ($groups[$row->seller_id]['tax_amount'] ?? 0) + ($line['tax_amount_per_unit'] * (float) $row->qty);
             $groups[$row->seller_id]['scheme_lines'][] = [
                 'seller_product_id' => $line['seller_product']->id,
                 'qty' => (float) $row->qty,
@@ -203,7 +206,8 @@ class RetailerCartOrderApiController extends Controller
             unset($group['scheme_lines']);
             $group['applied_scheme']  = $scheme;
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
-            $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
+            $group['tax_amount']      = round($group['tax_amount'] ?? 0, 2);
+            $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'] + $group['tax_amount'];
             $group['nearest_scheme']  = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $appliedId);
 
             $seller = $sellers[$sellerId] ?? null;
@@ -518,17 +522,21 @@ class RetailerCartOrderApiController extends Controller
             DB::transaction(function () use ($items, $resolved, $bySeller, $request, $user, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerTotal = 0;
+                    $sellerTaxTotal = 0;
                     $schemeLines = [];
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];
                         $lineTotal = $r['unit_price'] * (float) $row->qty;
                         $sellerTotal += $lineTotal;
+                        $sellerTaxTotal += $r['tax_amount_per_unit'] * (float) $row->qty;
                         $schemeLines[] = [
                             'seller_product_id' => $r['seller_product']->id,
                             'qty' => (float) $row->qty,
                             'line_total' => $lineTotal,
                         ];
                     }
+                    $sellerTaxTotal = round($sellerTaxTotal, 2);
+                    $sellerTaxPercentage = $sellerTotal > 0 ? round($sellerTaxTotal / $sellerTotal * 100, 2) : 0;
 
                     // Auto-apply the best scheme — always re-evaluated here, never trusted from the app.
                     $scheme = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
@@ -547,15 +555,15 @@ class RetailerCartOrderApiController extends Controller
                         'total' => $sellerTotal,
                         'remaining_total' => $sellerTotal,
                         'delivery_charge' => 0,
-                        'tax_amount' => 0,
-                        'tax_percentage' => 0,
+                        'tax_amount' => $sellerTaxTotal,
+                        'tax_percentage' => $sellerTaxPercentage,
                         'wallet_balance' => 0,
                         'discount' => 0,
                         'promo_discount' => 0,
                         'scheme_id' => $scheme['scheme_id'] ?? null,
                         'scheme_discount' => $schemeDiscount,
-                        'final_total' => $sellerTotal - $schemeDiscount,
-                        'remaining_final' => $sellerTotal - $schemeDiscount,
+                        'final_total' => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
+                        'remaining_final' => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
                         'payment_method' => $request->payment_method ?? 'COD',
                         'address' => $request->address,
                         'latitude' => $request->latitude,
@@ -606,8 +614,8 @@ class RetailerCartOrderApiController extends Controller
                             'quantity' => $row->qty,
                             'price' => $unitPrice,
                             'discounted_price' => $r['base_price'],
-                            'tax_amount' => 0,
-                            'tax_percentage' => 0,
+                            'tax_amount' => $r['tax_amount_per_unit'],
+                            'tax_percentage' => $r['tax_percentage'],
                             'discount' => 0,
                             'sub_total' => $subTotal,
                             'status' => json_encode([['received', date('Y-m-d H:i:s')]]),

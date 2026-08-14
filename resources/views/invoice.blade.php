@@ -248,9 +248,11 @@
                     $cgstPct = $taxPct / 2;
                     $sgstPct = $taxPct / 2;
 
-                    $itemTotal = $item->sub_total;
-                    $netTaxable = $itemTotal / (1 + $taxPct / 100);
-                    $itemTax = $itemTotal - $netTaxable;
+                    // sub_total is tax-exclusive; tax_amount is the per-unit tax that gets
+                    // added on top (same convention as customer/orders' getOrders()).
+                    $netTaxable = $item->sub_total;
+                    $itemTax = (float) $item->tax_amount * $item->quantity;
+                    $itemTotal = $netTaxable + $itemTax;
                     $cgstAmt = $itemTax / 2;
                     $sgstAmt = $itemTax / 2;
 

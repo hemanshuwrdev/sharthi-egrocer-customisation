@@ -407,6 +407,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -1386,6 +1390,14 @@ var render = function () {
                             ]),
                             _vm._v(" "),
                             _c("td", [_vm._v(_vm._s(_vm.order.delivery_time))]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", { staticClass: "th-width" }, [
+                              _vm._v(_vm._s(_vm.__("delivery_date"))),
+                            ]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(_vm.order.delivery_date))]),
                           ]),
                           _vm._v(" "),
                           _c("tr", [

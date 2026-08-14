@@ -129,12 +129,12 @@
                                                         <span v-if="mobilevalidationError" class="error">{{ mobilevalidationError }}</span>
                                                     </div>
 
-                                                    <div class="form-group col-md-4" v-if="!isSellerRole">
+                                                    <div class="form-group col-md-4">
                                                         <label>{{ __('password') }} <i v-if="!id" class="text-danger">*</i></label>
                                                         <div class="input-group">
                                                             <input :type="showPassword ? 'text' : 'password'"
                                                                 class="form-control" v-model="password"
-                                                                :placeholder="__('enter_password')" >
+                                                                :placeholder="__('leave_blank_to_keep_current_password')" >
                                                             <button type="button"
                                                                 v-on:click="showPassword = !showPassword"
                                                                 class="btn btn-primary font-bold">
@@ -145,7 +145,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="form-group col-md-4" v-if="!isSellerRole">
+                                                    <div class="form-group col-md-4">
                                                         <label>{{ __('confirm_password') }} <i v-if="!id" class="text-danger">*</i></label>
                                                         <div class="input-group">
                                                             <input :type="showConfirmPassword ? 'text' : 'password'"
@@ -395,6 +395,11 @@
                                                                         @click="commissionRule = true"
                                                                         title="How it works">{{ __('how_seller_commission_works') }}</a>
                                                                 </span>
+                                                            </div>
+                                                            <div class="form-group col-md-4" v-else>
+                                                                <label>{{ __('commission') }}</label>
+                                                                <input type="number" class="form-control" :value="commission" disabled>
+                                                                <small class="text-muted d-block mt-1">{{ __('commission_is_managed_by_admin') }}</small>
                                                             </div>
 
                                                             <div class="col-md-12" v-if="id && !isSellerRole">

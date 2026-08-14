@@ -31,7 +31,7 @@ class MasterCatalogOrderHelper
      */
     public static function resolveLine(int $sellerId, int $masterProductVariantId, float $qty): array
     {
-        $variant = MasterProductVariant::with(['masterProduct', 'secondaryUnit'])->find($masterProductVariantId);
+        $variant = MasterProductVariant::with(['masterProduct.tax', 'secondaryUnit'])->find($masterProductVariantId);
         if (!$variant || !$variant->masterProduct) {
             return self::fail('master_variant_not_found');
         }
@@ -77,6 +77,14 @@ class MasterCatalogOrderHelper
 
         $unitPrice = $matched ? (float) $matched->price : $base;
 
+        // Matches the legacy checkout convention (ProductHelper::getTaxableAmount,
+        // OrderApiController::placeOrder): unit_price is tax-EXCLUSIVE; tax is added on
+        // top. customer/orders' getOrders() reads order_items.tax_amount as a PER-UNIT
+        // value and adds it straight to the per-unit price/discounted_price it returns —
+        // so tax_amount_per_unit here must stay per-unit, never multiplied by qty.
+        $taxPercentage = (float) ($variant->masterProduct->tax->percentage ?? 0);
+        $taxAmountPerUnit = $taxPercentage > 0 ? round($unitPrice * $taxPercentage / 100, 2) : 0;
+
         // Stepper metadata (used by mobile app to render the quantity stepper widget)
         $step          = (float) ($variant->secondary_unit_value ?? 1);
         $step          = $step > 0 ? $step : 1;
@@ -90,6 +98,8 @@ class MasterCatalogOrderHelper
             'master_variant' => $variant,
             'unit_price'     => $unitPrice,
             'base_price'     => $base,
+            'tax_percentage' => $taxPercentage,
+            'tax_amount_per_unit' => $taxAmountPerUnit,
             'slab'           => $matched ? [
                 'min_qty' => (int) $matched->min_qty,
                 'max_qty' => $matched->max_qty !== null ? (int) $matched->max_qty : null,
@@ -211,6 +221,8 @@ class MasterCatalogOrderHelper
             'master_variant'    => null,
             'unit_price'        => 0,
             'base_price'        => 0,
+            'tax_percentage'    => 0,
+            'tax_amount_per_unit' => 0,
             'slab'              => null,
             'step'              => 1,
             'secondary_unit'    => null,

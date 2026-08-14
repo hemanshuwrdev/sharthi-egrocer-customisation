@@ -214,16 +214,20 @@ class RetailerPosController extends Controller
         }
 
         $sellerTotal = 0;
+        $sellerTaxTotal = 0;
         $schemeLines = [];
         foreach ($resolved as $r) {
             $lineTotal    = $r['line']['unit_price'] * (float) $r['item']['qty'];
             $sellerTotal += $lineTotal;
+            $sellerTaxTotal += $r['line']['tax_amount_per_unit'] * (float) $r['item']['qty'];
             $schemeLines[] = [
                 'seller_product_id' => $r['line']['seller_product']->id,
                 'qty'               => (float) $r['item']['qty'],
                 'line_total'        => $lineTotal,
             ];
         }
+        $sellerTaxTotal = round($sellerTaxTotal, 2);
+        $sellerTaxPercentage = $sellerTotal > 0 ? round($sellerTaxTotal / $sellerTotal * 100, 2) : 0;
 
         $scheme         = SchemeEngine::evaluate($sellerId, $schemeLines);
         $schemeDiscount = $scheme['scheme_discount'] ?? 0;
@@ -234,7 +238,7 @@ class RetailerPosController extends Controller
         try {
             DB::transaction(function () use (
                 $resolved, $request, $user, $sellerId,
-                $sellerTotal, $schemeDiscount, $scheme, $ordersId, &$orderId
+                $sellerTotal, $sellerTaxTotal, $sellerTaxPercentage, $schemeDiscount, $scheme, $ordersId, &$orderId
             ) {
                 $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
                     ? CommonHelper::computeDeliveryDate(now(), $sellerId)
@@ -248,15 +252,15 @@ class RetailerPosController extends Controller
                     'total'           => $sellerTotal,
                     'remaining_total' => $sellerTotal,
                     'delivery_charge' => 0,
-                    'tax_amount'      => 0,
-                    'tax_percentage'  => 0,
+                    'tax_amount'      => $sellerTaxTotal,
+                    'tax_percentage'  => $sellerTaxPercentage,
                     'wallet_balance'  => 0,
                     'discount'        => 0,
                     'promo_discount'  => 0,
                     'scheme_id'       => $scheme['scheme_id'] ?? null,
                     'scheme_discount' => $schemeDiscount,
-                    'final_total'     => $sellerTotal - $schemeDiscount,
-                    'remaining_final' => $sellerTotal - $schemeDiscount,
+                    'final_total'     => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
+                    'remaining_final' => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
                     'payment_method'  => $request->payment_method,
                     'address'         => $request->address,
                     'latitude'        => $request->latitude,
@@ -292,8 +296,8 @@ class RetailerPosController extends Controller
                         'quantity'                  => $qty,
                         'price'                     => $unitPrice,
                         'discounted_price'          => $r['line']['base_price'],
-                        'tax_amount'                => 0,
-                        'tax_percentage'            => 0,
+                        'tax_amount'                => $r['line']['tax_amount_per_unit'],
+                        'tax_percentage'            => $r['line']['tax_percentage'],
                         'discount'                  => 0,
                         'sub_total'                 => $subTotal,
                         'status'                    => json_encode([['received', date('Y-m-d H:i:s')]]),

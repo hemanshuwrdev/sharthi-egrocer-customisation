@@ -1058,6 +1058,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
 
 
 
@@ -3925,525 +3930,501 @@ var render = function () {
                                                 ]
                                               ),
                                               _vm._v(" "),
-                                              !_vm.isSellerRole
-                                                ? _c(
+                                              _c(
+                                                "div",
+                                                {
+                                                  staticClass:
+                                                    "form-group col-md-4",
+                                                },
+                                                [
+                                                  _c("label", [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__("password")
+                                                      ) + " "
+                                                    ),
+                                                    !_vm.id
+                                                      ? _c(
+                                                          "i",
+                                                          {
+                                                            staticClass:
+                                                              "text-danger",
+                                                          },
+                                                          [_vm._v("*")]
+                                                        )
+                                                      : _vm._e(),
+                                                  ]),
+                                                  _vm._v(" "),
+                                                  _c(
                                                     "div",
                                                     {
                                                       staticClass:
-                                                        "form-group col-md-4",
+                                                        "input-group",
                                                     },
                                                     [
-                                                      _c("label", [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.__("password")
-                                                          ) + " "
-                                                        ),
-                                                        !_vm.id
-                                                          ? _c(
-                                                              "i",
+                                                      (_vm.showPassword
+                                                        ? "text"
+                                                        : "password") ===
+                                                      "checkbox"
+                                                        ? _c("input", {
+                                                            directives: [
                                                               {
-                                                                staticClass:
-                                                                  "text-danger",
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  _vm.password,
+                                                                expression:
+                                                                  "password",
                                                               },
-                                                              [_vm._v("*")]
-                                                            )
-                                                          : _vm._e(),
-                                                      ]),
-                                                      _vm._v(" "),
-                                                      _c(
-                                                        "div",
-                                                        {
-                                                          staticClass:
-                                                            "input-group",
-                                                        },
-                                                        [
-                                                          (_vm.showPassword
-                                                            ? "text"
-                                                            : "password") ===
-                                                          "checkbox"
-                                                            ? _c("input", {
-                                                                directives: [
-                                                                  {
-                                                                    name: "model",
-                                                                    rawName:
-                                                                      "v-model",
-                                                                    value:
-                                                                      _vm.password,
-                                                                    expression:
-                                                                      "password",
-                                                                  },
-                                                                ],
-                                                                staticClass:
-                                                                  "form-control",
-                                                                attrs: {
-                                                                  placeholder:
-                                                                    _vm.__(
-                                                                      "enter_password"
-                                                                    ),
-                                                                  type: "checkbox",
-                                                                },
-                                                                domProps: {
-                                                                  checked:
-                                                                    Array.isArray(
-                                                                      _vm.password
-                                                                    )
-                                                                      ? _vm._i(
-                                                                          _vm.password,
-                                                                          null
-                                                                        ) > -1
-                                                                      : _vm.password,
-                                                                },
-                                                                on: {
-                                                                  change:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      var $$a =
-                                                                          _vm.password,
-                                                                        $$el =
-                                                                          $event.target,
-                                                                        $$c =
-                                                                          $$el.checked
-                                                                            ? true
-                                                                            : false
-                                                                      if (
-                                                                        Array.isArray(
-                                                                          $$a
-                                                                        )
-                                                                      ) {
-                                                                        var $$v =
-                                                                            null,
-                                                                          $$i =
-                                                                            _vm._i(
-                                                                              $$a,
-                                                                              $$v
-                                                                            )
-                                                                        if (
-                                                                          $$el.checked
-                                                                        ) {
-                                                                          $$i <
-                                                                            0 &&
-                                                                            (_vm.password =
-                                                                              $$a.concat(
-                                                                                [
-                                                                                  $$v,
-                                                                                ]
-                                                                              ))
-                                                                        } else {
-                                                                          $$i >
-                                                                            -1 &&
-                                                                            (_vm.password =
-                                                                              $$a
-                                                                                .slice(
-                                                                                  0,
-                                                                                  $$i
-                                                                                )
-                                                                                .concat(
-                                                                                  $$a.slice(
-                                                                                    $$i +
-                                                                                      1
-                                                                                  )
-                                                                                ))
-                                                                        }
-                                                                      } else {
-                                                                        _vm.password =
-                                                                          $$c
-                                                                      }
-                                                                    },
-                                                                },
-                                                              })
-                                                            : (_vm.showPassword
-                                                                ? "text"
-                                                                : "password") ===
-                                                              "radio"
-                                                            ? _c("input", {
-                                                                directives: [
-                                                                  {
-                                                                    name: "model",
-                                                                    rawName:
-                                                                      "v-model",
-                                                                    value:
-                                                                      _vm.password,
-                                                                    expression:
-                                                                      "password",
-                                                                  },
-                                                                ],
-                                                                staticClass:
-                                                                  "form-control",
-                                                                attrs: {
-                                                                  placeholder:
-                                                                    _vm.__(
-                                                                      "enter_password"
-                                                                    ),
-                                                                  type: "radio",
-                                                                },
-                                                                domProps: {
-                                                                  checked:
-                                                                    _vm._q(
+                                                            ],
+                                                            staticClass:
+                                                              "form-control",
+                                                            attrs: {
+                                                              placeholder:
+                                                                _vm.__(
+                                                                  "leave_blank_to_keep_current_password"
+                                                                ),
+                                                              type: "checkbox",
+                                                            },
+                                                            domProps: {
+                                                              checked:
+                                                                Array.isArray(
+                                                                  _vm.password
+                                                                )
+                                                                  ? _vm._i(
                                                                       _vm.password,
                                                                       null
-                                                                    ),
-                                                                },
-                                                                on: {
-                                                                  change:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      _vm.password =
-                                                                        null
-                                                                    },
-                                                                },
-                                                              })
-                                                            : _c("input", {
-                                                                directives: [
-                                                                  {
-                                                                    name: "model",
-                                                                    rawName:
-                                                                      "v-model",
-                                                                    value:
-                                                                      _vm.password,
-                                                                    expression:
-                                                                      "password",
-                                                                  },
-                                                                ],
-                                                                staticClass:
-                                                                  "form-control",
-                                                                attrs: {
-                                                                  placeholder:
-                                                                    _vm.__(
-                                                                      "enter_password"
-                                                                    ),
-                                                                  type: _vm.showPassword
-                                                                    ? "text"
-                                                                    : "password",
-                                                                },
-                                                                domProps: {
-                                                                  value:
+                                                                    ) > -1
+                                                                  : _vm.password,
+                                                            },
+                                                            on: {
+                                                              change: function (
+                                                                $event
+                                                              ) {
+                                                                var $$a =
                                                                     _vm.password,
-                                                                },
-                                                                on: {
-                                                                  input:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      if (
-                                                                        $event
-                                                                          .target
-                                                                          .composing
-                                                                      ) {
-                                                                        return
-                                                                      }
-                                                                      _vm.password =
-                                                                        $event.target.value
-                                                                    },
-                                                                },
-                                                              }),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "button",
-                                                            {
-                                                              staticClass:
-                                                                "btn btn-primary font-bold",
-                                                              attrs: {
-                                                                type: "button",
-                                                              },
-                                                              on: {
-                                                                click:
-                                                                  function (
-                                                                    $event
+                                                                  $$el =
+                                                                    $event.target,
+                                                                  $$c =
+                                                                    $$el.checked
+                                                                      ? true
+                                                                      : false
+                                                                if (
+                                                                  Array.isArray(
+                                                                    $$a
+                                                                  )
+                                                                ) {
+                                                                  var $$v =
+                                                                      null,
+                                                                    $$i =
+                                                                      _vm._i(
+                                                                        $$a,
+                                                                        $$v
+                                                                      )
+                                                                  if (
+                                                                    $$el.checked
                                                                   ) {
-                                                                    _vm.showPassword =
-                                                                      !_vm.showPassword
-                                                                  },
+                                                                    $$i < 0 &&
+                                                                      (_vm.password =
+                                                                        $$a.concat(
+                                                                          [$$v]
+                                                                        ))
+                                                                  } else {
+                                                                    $$i > -1 &&
+                                                                      (_vm.password =
+                                                                        $$a
+                                                                          .slice(
+                                                                            0,
+                                                                            $$i
+                                                                          )
+                                                                          .concat(
+                                                                            $$a.slice(
+                                                                              $$i +
+                                                                                1
+                                                                            )
+                                                                          ))
+                                                                  }
+                                                                } else {
+                                                                  _vm.password =
+                                                                    $$c
+                                                                }
                                                               },
                                                             },
-                                                            [
-                                                              _vm.showPassword
-                                                                ? _c("i", {
-                                                                    staticClass:
-                                                                      "fa fa-eye",
-                                                                    attrs: {
-                                                                      "aria-hidden":
-                                                                        "true",
-                                                                    },
-                                                                  })
-                                                                : _c("i", {
-                                                                    staticClass:
-                                                                      "fa fa-eye-slash",
-                                                                    attrs: {
-                                                                      "aria-hidden":
-                                                                        "true",
-                                                                    },
-                                                                  }),
-                                                            ]
-                                                          ),
+                                                          })
+                                                        : (_vm.showPassword
+                                                            ? "text"
+                                                            : "password") ===
+                                                          "radio"
+                                                        ? _c("input", {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  _vm.password,
+                                                                expression:
+                                                                  "password",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control",
+                                                            attrs: {
+                                                              placeholder:
+                                                                _vm.__(
+                                                                  "leave_blank_to_keep_current_password"
+                                                                ),
+                                                              type: "radio",
+                                                            },
+                                                            domProps: {
+                                                              checked: _vm._q(
+                                                                _vm.password,
+                                                                null
+                                                              ),
+                                                            },
+                                                            on: {
+                                                              change: function (
+                                                                $event
+                                                              ) {
+                                                                _vm.password =
+                                                                  null
+                                                              },
+                                                            },
+                                                          })
+                                                        : _c("input", {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  _vm.password,
+                                                                expression:
+                                                                  "password",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control",
+                                                            attrs: {
+                                                              placeholder:
+                                                                _vm.__(
+                                                                  "leave_blank_to_keep_current_password"
+                                                                ),
+                                                              type: _vm.showPassword
+                                                                ? "text"
+                                                                : "password",
+                                                            },
+                                                            domProps: {
+                                                              value:
+                                                                _vm.password,
+                                                            },
+                                                            on: {
+                                                              input: function (
+                                                                $event
+                                                              ) {
+                                                                if (
+                                                                  $event.target
+                                                                    .composing
+                                                                ) {
+                                                                  return
+                                                                }
+                                                                _vm.password =
+                                                                  $event.target.value
+                                                              },
+                                                            },
+                                                          }),
+                                                      _vm._v(" "),
+                                                      _c(
+                                                        "button",
+                                                        {
+                                                          staticClass:
+                                                            "btn btn-primary font-bold",
+                                                          attrs: {
+                                                            type: "button",
+                                                          },
+                                                          on: {
+                                                            click: function (
+                                                              $event
+                                                            ) {
+                                                              _vm.showPassword =
+                                                                !_vm.showPassword
+                                                            },
+                                                          },
+                                                        },
+                                                        [
+                                                          _vm.showPassword
+                                                            ? _c("i", {
+                                                                staticClass:
+                                                                  "fa fa-eye",
+                                                                attrs: {
+                                                                  "aria-hidden":
+                                                                    "true",
+                                                                },
+                                                              })
+                                                            : _c("i", {
+                                                                staticClass:
+                                                                  "fa fa-eye-slash",
+                                                                attrs: {
+                                                                  "aria-hidden":
+                                                                    "true",
+                                                                },
+                                                              }),
                                                         ]
                                                       ),
                                                     ]
-                                                  )
-                                                : _vm._e(),
+                                                  ),
+                                                ]
+                                              ),
                                               _vm._v(" "),
-                                              !_vm.isSellerRole
-                                                ? _c(
+                                              _c(
+                                                "div",
+                                                {
+                                                  staticClass:
+                                                    "form-group col-md-4",
+                                                },
+                                                [
+                                                  _c("label", [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__(
+                                                          "confirm_password"
+                                                        )
+                                                      ) + " "
+                                                    ),
+                                                    !_vm.id
+                                                      ? _c(
+                                                          "i",
+                                                          {
+                                                            staticClass:
+                                                              "text-danger",
+                                                          },
+                                                          [_vm._v("*")]
+                                                        )
+                                                      : _vm._e(),
+                                                  ]),
+                                                  _vm._v(" "),
+                                                  _c(
                                                     "div",
                                                     {
                                                       staticClass:
-                                                        "form-group col-md-4",
+                                                        "input-group",
                                                     },
                                                     [
-                                                      _c("label", [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "confirm_password"
-                                                            )
-                                                          ) + " "
-                                                        ),
-                                                        !_vm.id
-                                                          ? _c(
-                                                              "i",
+                                                      (_vm.showConfirmPassword
+                                                        ? "text"
+                                                        : "password") ===
+                                                      "checkbox"
+                                                        ? _c("input", {
+                                                            directives: [
                                                               {
-                                                                staticClass:
-                                                                  "text-danger",
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  _vm.confirm_password,
+                                                                expression:
+                                                                  "confirm_password",
                                                               },
-                                                              [_vm._v("*")]
-                                                            )
-                                                          : _vm._e(),
-                                                      ]),
-                                                      _vm._v(" "),
-                                                      _c(
-                                                        "div",
-                                                        {
-                                                          staticClass:
-                                                            "input-group",
-                                                        },
-                                                        [
-                                                          (_vm.showConfirmPassword
-                                                            ? "text"
-                                                            : "password") ===
-                                                          "checkbox"
-                                                            ? _c("input", {
-                                                                directives: [
-                                                                  {
-                                                                    name: "model",
-                                                                    rawName:
-                                                                      "v-model",
-                                                                    value:
-                                                                      _vm.confirm_password,
-                                                                    expression:
-                                                                      "confirm_password",
-                                                                  },
-                                                                ],
-                                                                staticClass:
-                                                                  "form-control",
-                                                                attrs: {
-                                                                  placeholder:
-                                                                    _vm.__(
-                                                                      "enter_confirm_password"
-                                                                    ),
-                                                                  type: "checkbox",
-                                                                },
-                                                                domProps: {
-                                                                  checked:
-                                                                    Array.isArray(
-                                                                      _vm.confirm_password
-                                                                    )
-                                                                      ? _vm._i(
-                                                                          _vm.confirm_password,
-                                                                          null
-                                                                        ) > -1
-                                                                      : _vm.confirm_password,
-                                                                },
-                                                                on: {
-                                                                  change:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      var $$a =
-                                                                          _vm.confirm_password,
-                                                                        $$el =
-                                                                          $event.target,
-                                                                        $$c =
-                                                                          $$el.checked
-                                                                            ? true
-                                                                            : false
-                                                                      if (
-                                                                        Array.isArray(
-                                                                          $$a
-                                                                        )
-                                                                      ) {
-                                                                        var $$v =
-                                                                            null,
-                                                                          $$i =
-                                                                            _vm._i(
-                                                                              $$a,
-                                                                              $$v
-                                                                            )
-                                                                        if (
-                                                                          $$el.checked
-                                                                        ) {
-                                                                          $$i <
-                                                                            0 &&
-                                                                            (_vm.confirm_password =
-                                                                              $$a.concat(
-                                                                                [
-                                                                                  $$v,
-                                                                                ]
-                                                                              ))
-                                                                        } else {
-                                                                          $$i >
-                                                                            -1 &&
-                                                                            (_vm.confirm_password =
-                                                                              $$a
-                                                                                .slice(
-                                                                                  0,
-                                                                                  $$i
-                                                                                )
-                                                                                .concat(
-                                                                                  $$a.slice(
-                                                                                    $$i +
-                                                                                      1
-                                                                                  )
-                                                                                ))
-                                                                        }
-                                                                      } else {
-                                                                        _vm.confirm_password =
-                                                                          $$c
-                                                                      }
-                                                                    },
-                                                                },
-                                                              })
-                                                            : (_vm.showConfirmPassword
-                                                                ? "text"
-                                                                : "password") ===
-                                                              "radio"
-                                                            ? _c("input", {
-                                                                directives: [
-                                                                  {
-                                                                    name: "model",
-                                                                    rawName:
-                                                                      "v-model",
-                                                                    value:
-                                                                      _vm.confirm_password,
-                                                                    expression:
-                                                                      "confirm_password",
-                                                                  },
-                                                                ],
-                                                                staticClass:
-                                                                  "form-control",
-                                                                attrs: {
-                                                                  placeholder:
-                                                                    _vm.__(
-                                                                      "enter_confirm_password"
-                                                                    ),
-                                                                  type: "radio",
-                                                                },
-                                                                domProps: {
-                                                                  checked:
-                                                                    _vm._q(
+                                                            ],
+                                                            staticClass:
+                                                              "form-control",
+                                                            attrs: {
+                                                              placeholder:
+                                                                _vm.__(
+                                                                  "enter_confirm_password"
+                                                                ),
+                                                              type: "checkbox",
+                                                            },
+                                                            domProps: {
+                                                              checked:
+                                                                Array.isArray(
+                                                                  _vm.confirm_password
+                                                                )
+                                                                  ? _vm._i(
                                                                       _vm.confirm_password,
                                                                       null
-                                                                    ),
-                                                                },
-                                                                on: {
-                                                                  change:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      _vm.confirm_password =
-                                                                        null
-                                                                    },
-                                                                },
-                                                              })
-                                                            : _c("input", {
-                                                                directives: [
-                                                                  {
-                                                                    name: "model",
-                                                                    rawName:
-                                                                      "v-model",
-                                                                    value:
-                                                                      _vm.confirm_password,
-                                                                    expression:
-                                                                      "confirm_password",
-                                                                  },
-                                                                ],
-                                                                staticClass:
-                                                                  "form-control",
-                                                                attrs: {
-                                                                  placeholder:
-                                                                    _vm.__(
-                                                                      "enter_confirm_password"
-                                                                    ),
-                                                                  type: _vm.showConfirmPassword
-                                                                    ? "text"
-                                                                    : "password",
-                                                                },
-                                                                domProps: {
-                                                                  value:
+                                                                    ) > -1
+                                                                  : _vm.confirm_password,
+                                                            },
+                                                            on: {
+                                                              change: function (
+                                                                $event
+                                                              ) {
+                                                                var $$a =
                                                                     _vm.confirm_password,
-                                                                },
-                                                                on: {
-                                                                  input:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      if (
-                                                                        $event
-                                                                          .target
-                                                                          .composing
-                                                                      ) {
-                                                                        return
-                                                                      }
-                                                                      _vm.confirm_password =
-                                                                        $event.target.value
-                                                                    },
-                                                                },
-                                                              }),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "button",
-                                                            {
-                                                              staticClass:
-                                                                "btn btn-primary font-bold",
-                                                              attrs: {
-                                                                type: "button",
-                                                              },
-                                                              on: {
-                                                                click:
-                                                                  function (
-                                                                    $event
+                                                                  $$el =
+                                                                    $event.target,
+                                                                  $$c =
+                                                                    $$el.checked
+                                                                      ? true
+                                                                      : false
+                                                                if (
+                                                                  Array.isArray(
+                                                                    $$a
+                                                                  )
+                                                                ) {
+                                                                  var $$v =
+                                                                      null,
+                                                                    $$i =
+                                                                      _vm._i(
+                                                                        $$a,
+                                                                        $$v
+                                                                      )
+                                                                  if (
+                                                                    $$el.checked
                                                                   ) {
-                                                                    _vm.showConfirmPassword =
-                                                                      !_vm.showConfirmPassword
-                                                                  },
+                                                                    $$i < 0 &&
+                                                                      (_vm.confirm_password =
+                                                                        $$a.concat(
+                                                                          [$$v]
+                                                                        ))
+                                                                  } else {
+                                                                    $$i > -1 &&
+                                                                      (_vm.confirm_password =
+                                                                        $$a
+                                                                          .slice(
+                                                                            0,
+                                                                            $$i
+                                                                          )
+                                                                          .concat(
+                                                                            $$a.slice(
+                                                                              $$i +
+                                                                                1
+                                                                            )
+                                                                          ))
+                                                                  }
+                                                                } else {
+                                                                  _vm.confirm_password =
+                                                                    $$c
+                                                                }
                                                               },
                                                             },
-                                                            [
-                                                              _vm.showConfirmPassword
-                                                                ? _c("i", {
-                                                                    staticClass:
-                                                                      "fa fa-eye",
-                                                                    attrs: {
-                                                                      "aria-hidden":
-                                                                        "true",
-                                                                    },
-                                                                  })
-                                                                : _c("i", {
-                                                                    staticClass:
-                                                                      "fa fa-eye-slash",
-                                                                    attrs: {
-                                                                      "aria-hidden":
-                                                                        "true",
-                                                                    },
-                                                                  }),
-                                                            ]
-                                                          ),
+                                                          })
+                                                        : (_vm.showConfirmPassword
+                                                            ? "text"
+                                                            : "password") ===
+                                                          "radio"
+                                                        ? _c("input", {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  _vm.confirm_password,
+                                                                expression:
+                                                                  "confirm_password",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control",
+                                                            attrs: {
+                                                              placeholder:
+                                                                _vm.__(
+                                                                  "enter_confirm_password"
+                                                                ),
+                                                              type: "radio",
+                                                            },
+                                                            domProps: {
+                                                              checked: _vm._q(
+                                                                _vm.confirm_password,
+                                                                null
+                                                              ),
+                                                            },
+                                                            on: {
+                                                              change: function (
+                                                                $event
+                                                              ) {
+                                                                _vm.confirm_password =
+                                                                  null
+                                                              },
+                                                            },
+                                                          })
+                                                        : _c("input", {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  _vm.confirm_password,
+                                                                expression:
+                                                                  "confirm_password",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control",
+                                                            attrs: {
+                                                              placeholder:
+                                                                _vm.__(
+                                                                  "enter_confirm_password"
+                                                                ),
+                                                              type: _vm.showConfirmPassword
+                                                                ? "text"
+                                                                : "password",
+                                                            },
+                                                            domProps: {
+                                                              value:
+                                                                _vm.confirm_password,
+                                                            },
+                                                            on: {
+                                                              input: function (
+                                                                $event
+                                                              ) {
+                                                                if (
+                                                                  $event.target
+                                                                    .composing
+                                                                ) {
+                                                                  return
+                                                                }
+                                                                _vm.confirm_password =
+                                                                  $event.target.value
+                                                              },
+                                                            },
+                                                          }),
+                                                      _vm._v(" "),
+                                                      _c(
+                                                        "button",
+                                                        {
+                                                          staticClass:
+                                                            "btn btn-primary font-bold",
+                                                          attrs: {
+                                                            type: "button",
+                                                          },
+                                                          on: {
+                                                            click: function (
+                                                              $event
+                                                            ) {
+                                                              _vm.showConfirmPassword =
+                                                                !_vm.showConfirmPassword
+                                                            },
+                                                          },
+                                                        },
+                                                        [
+                                                          _vm.showConfirmPassword
+                                                            ? _c("i", {
+                                                                staticClass:
+                                                                  "fa fa-eye",
+                                                                attrs: {
+                                                                  "aria-hidden":
+                                                                    "true",
+                                                                },
+                                                              })
+                                                            : _c("i", {
+                                                                staticClass:
+                                                                  "fa fa-eye-slash",
+                                                                attrs: {
+                                                                  "aria-hidden":
+                                                                    "true",
+                                                                },
+                                                              }),
                                                         ]
                                                       ),
                                                     ]
-                                                  )
-                                                : _vm._e(),
+                                                  ),
+                                                ]
+                                              ),
                                             ]
                                           : _vm._e(),
                                       ],
@@ -5837,7 +5818,54 @@ var render = function () {
                                                           ),
                                                         ]
                                                       )
-                                                    : _vm._e(),
+                                                    : _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "form-group col-md-4",
+                                                        },
+                                                        [
+                                                          _c("label", [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "commission"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]),
+                                                          _vm._v(" "),
+                                                          _c("input", {
+                                                            staticClass:
+                                                              "form-control",
+                                                            attrs: {
+                                                              type: "number",
+                                                              disabled: "",
+                                                            },
+                                                            domProps: {
+                                                              value:
+                                                                _vm.commission,
+                                                            },
+                                                          }),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "small",
+                                                            {
+                                                              staticClass:
+                                                                "text-muted d-block mt-1",
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "commission_is_managed_by_admin"
+                                                                  )
+                                                                )
+                                                              ),
+                                                            ]
+                                                          ),
+                                                        ]
+                                                      ),
                                                   _vm._v(" "),
                                                   _vm.id && !_vm.isSellerRole
                                                     ? _c(

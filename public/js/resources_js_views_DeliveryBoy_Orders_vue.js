@@ -272,6 +272,11 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         sortable: true,
         "class": 'text-center'
       }, {
+        key: 'delivery_date',
+        label: __('delivery_date'),
+        sortable: true,
+        "class": 'text-center'
+      }, {
         key: 'active_status',
         label: __('status'),
         sortable: true,
@@ -324,6 +329,11 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       }, {
         key: 'delivery_time',
         label: 'D.Time',
+        sortable: true,
+        "class": 'text-center'
+      }, {
+        key: 'delivery_date',
+        label: __('delivery_date'),
         sortable: true,
         "class": 'text-center'
       }, {
