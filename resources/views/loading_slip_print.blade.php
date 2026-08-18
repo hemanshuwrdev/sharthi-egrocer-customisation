@@ -157,7 +157,7 @@
 
         .sig-line {
             border-top: 1px solid #333;
-            margin-top: 40px;
+            margin-top: 70px;
             padding-top: 5px;
             font-weight: bold;
             color: #555;
@@ -545,10 +545,10 @@
             <div class="sig-line">Warehouse In-charge</div>
         </div>
         <div class="sig-box">
+            <div class="sig-line">Sign</div>
+        </div>
+        <div class="sig-box">
             <div class="sig-line">Driver / Delivery Boy</div>
-            @if (isset($slip->driver->name))
-                <div style="font-size: 11px; font-weight: bold; margin-top: 5px; color: #555;">({{ strtoupper($slip->driver->name) }})</div>
-            @endif
         </div>
     </div>
 
