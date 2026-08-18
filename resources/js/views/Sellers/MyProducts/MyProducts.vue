@@ -383,7 +383,8 @@ export default {
             this.slabModalOpen = true;
         },
         addSlab() {
-            const step = parseFloat(this.slabTarget && this.slabTarget.secondary_unit_value) || 0;
+            const isLoose = !!(this.slabTarget && this.slabTarget.allow_loose_qty);
+            const step = isLoose ? 0 : (parseFloat(this.slabTarget && this.slabTarget.secondary_unit_value) || 0);
             const defaultMinQty = (!this.slabDraft.length && step > 0) ? step : null;
             this.slabDraft.push({ min_qty: defaultMinQty, max_qty: null, price: null });
         },
@@ -405,7 +406,7 @@ export default {
                     return;
                 }
             }
-            const step = parseFloat(this.slabTarget.secondary_unit_value) || 0;
+            const step = this.slabTarget.allow_loose_qty ? 0 : (parseFloat(this.slabTarget.secondary_unit_value) || 0);
             if (step > 0) {
                 const sorted = this.slabDraft.slice().sort((a, b) => a.min_qty - b.min_qty);
                 if (sorted[0].min_qty !== step) {

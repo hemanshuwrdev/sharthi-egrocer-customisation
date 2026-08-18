@@ -85,10 +85,17 @@ class MasterCatalogOrderHelper
         $taxPercentage = (float) ($variant->masterProduct->tax->percentage ?? 0);
         $taxAmountPerUnit = $taxPercentage > 0 ? round($unitPrice * $taxPercentage / 100, 2) : 0;
 
-        // Stepper metadata (used by mobile app to render the quantity stepper widget)
+        // Stepper metadata (used by mobile app to render the quantity stepper widget).
+        // Loose-enabled products: any qty is orderable, so the app should render a plain
+        // 1-at-a-time stepper (step=1, min_qty=1) rather than a box-multiple stepper.
+        $allowLooseQty = (int) $variant->allow_loose_qty === 1;
         $step          = (float) ($variant->secondary_unit_value ?? 1);
         $step          = $step > 0 ? $step : 1;
         $minQty        = $step;
+        if ($allowLooseQty) {
+            $step   = 1;
+            $minQty = 1;
+        }
         $secondaryUnit = $variant->secondaryUnit ? $variant->secondaryUnit->name : null;
 
         return [
@@ -106,9 +113,10 @@ class MasterCatalogOrderHelper
                 'price'   => (float) $matched->price,
             ] : null,
             // Stepper metadata — passed directly to app/frontend
-            'step'           => $step,          // e.g. 20 (packets per box)
+            'step'           => $step,          // e.g. 20 (packets per box), or 1 if loose
             'secondary_unit' => $secondaryUnit, // e.g. "Box"
-            'min_qty'        => $minQty,        // e.g. 20 (= 1 box × 20 packets)
+            'min_qty'        => $minQty,        // e.g. 20 (= 1 box × 20 packets), or 1 if loose
+            'allow_loose_qty' => $allowLooseQty,
         ];
     }
 
@@ -118,6 +126,10 @@ class MasterCatalogOrderHelper
      * Wholesaler rule:
      *   - 1 box = secondary_unit_value packets (e.g. 20 packets per box)
      *   - Retailer orders in full boxes only: 20, 40, 60 ...
+     *
+     * Exception: if the variant has allow_loose_qty=1, the retailer can order any qty
+     * (≥ 1 primary unit) — the box-multiple rule is only a display "step" hint for that
+     * product, not an enforced restriction.
      *
      * Returns an error string key on failure, null on success.
      * Products with no secondary unit configured (NULL / 0) → no restriction applied.
@@ -132,6 +144,11 @@ class MasterCatalogOrderHelper
         // No secondary unit configured → no box restriction, any qty ≥ 1 is fine
         if ($step <= 0) {
             return null;
+        }
+
+        // Loose selling allowed → skip the box-multiple restriction, just require ≥ 1.
+        if ((int) $variant->allow_loose_qty === 1) {
+            return $qty < 1 ? 'minimum_qty_is_1' : null;
         }
 
         $minQty = $step; // e.g. step=20 → minQty=20
@@ -231,6 +248,7 @@ class MasterCatalogOrderHelper
             'secondary_unit'    => null,
             'min_secondary_qty' => 1,
             'min_qty'           => 1,
+            'allow_loose_qty'   => false,
         ];
     }
 }

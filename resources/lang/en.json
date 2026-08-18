@@ -1350,6 +1350,8 @@
     "select_zones": "Select Zones",
     "define_new_zone": "Define New Zone",
     "please_assign_at_least_one_brand_zone": "Please assign at least one brand to a zone",
+    "allow_loose_qty": "Allow Loose Selling",
+    "allow_loose_qty_hint": "Retailer can order any quantity, not just multiples of the secondary unit",
     "promo_discount": "Promo Discount",
     "delivery_charge": "Delivery Charge",
     "additional_charges": "Additional Charges",

@@ -115,6 +115,7 @@ class SellerProductApiController extends Controller
                 'unit_id' => $v->unit_id,
                 'secondary_unit' => $v->secondaryUnit ? $v->secondaryUnit->name : null,
                 'secondary_unit_value' => $v->secondary_unit_value,
+                'allow_loose_qty' => (bool) $v->allow_loose_qty,
                 'weight' => $v->weight,
                 'image' => $v->image ?: ($mp ? $mp->image : null),
 
@@ -245,7 +246,10 @@ class SellerProductApiController extends Controller
             return CommonHelper::responseError('seller_product_not_found');
         }
 
-        $step = (float) ($sp->masterProductVariant?->secondary_unit_value ?? 0);
+        $variant = $sp->masterProductVariant;
+        $step = ($variant && (int) $variant->allow_loose_qty === 1)
+            ? 0
+            : (float) ($variant?->secondary_unit_value ?? 0);
         $clean = CommonHelper::validateSlabRanges($request->slabs, $step);
         if (is_string($clean)) {
             return CommonHelper::responseError($clean);

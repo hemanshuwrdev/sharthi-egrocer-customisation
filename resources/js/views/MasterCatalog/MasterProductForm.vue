@@ -273,6 +273,7 @@
                                     <th>{{ __('unit') }}</th>
                                     <th>{{ __('secondary_unit') }}</th>
                                     <th>{{ __('secondary_value') }}</th>
+                                    <th>{{ __('allow_loose_qty') }}</th>
                                     <th>{{ __('weight') }}</th>
                                     <th>{{ __('image') }}</th>
                                     <th>{{ __('status') }}</th>
@@ -299,6 +300,10 @@
                                     <td>
                                         <input type="number" class="form-control form-control-sm" step="0.01"
                                             v-model.number="v.secondary_unit_value" />
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="checkbox" v-model="v.allow_loose_qty"
+                                            :title="__('allow_loose_qty_hint')" />
                                     </td>
                                     <td>
                                         <input type="number" class="form-control form-control-sm" step="0.001"
@@ -607,6 +612,7 @@ export default {
                         unit_id: v.unit_id,
                         secondary_unit_id: v.secondary_unit_id,
                         secondary_unit_value: v.secondary_unit_value,
+                        allow_loose_qty: !!v.allow_loose_qty,
                         weight: v.weight,
                         image: v.image,
                         status: v.status,
@@ -728,6 +734,7 @@ export default {
                 unit_id: null,
                 secondary_unit_id: null,
                 secondary_unit_value: null,
+                allow_loose_qty: false,
                 weight: null,
                 image: null,
                 status: 1,
@@ -895,6 +902,7 @@ export default {
                 if (v.unit_id) fd.append(`variants[${idx}][unit_id]`, v.unit_id);
                 if (v.secondary_unit_id) fd.append(`variants[${idx}][secondary_unit_id]`, v.secondary_unit_id);
                 if (v.secondary_unit_value != null) fd.append(`variants[${idx}][secondary_unit_value]`, v.secondary_unit_value);
+                fd.append(`variants[${idx}][allow_loose_qty]`, v.allow_loose_qty ? 1 : 0);
                 if (v.weight != null) fd.append(`variants[${idx}][weight]`, v.weight);
                 fd.append(`variants[${idx}][status]`, v.status);
                 if (v._file) fd.append(`variants[${idx}][image]`, v._file);

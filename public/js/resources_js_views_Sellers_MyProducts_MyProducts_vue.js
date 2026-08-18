@@ -478,7 +478,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.slabModalOpen = true;
     },
     addSlab: function addSlab() {
-      var step = parseFloat(this.slabTarget && this.slabTarget.secondary_unit_value) || 0;
+      var isLoose = !!(this.slabTarget && this.slabTarget.allow_loose_qty);
+      var step = isLoose ? 0 : parseFloat(this.slabTarget && this.slabTarget.secondary_unit_value) || 0;
       var defaultMinQty = !this.slabDraft.length && step > 0 ? step : null;
       this.slabDraft.push({
         min_qty: defaultMinQty,
@@ -514,7 +515,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       } finally {
         _iterator.f();
       }
-      var step = parseFloat(this.slabTarget.secondary_unit_value) || 0;
+      var step = this.slabTarget.allow_loose_qty ? 0 : parseFloat(this.slabTarget.secondary_unit_value) || 0;
       if (step > 0) {
         var sorted = this.slabDraft.slice().sort(function (a, b) {
           return a.min_qty - b.min_qty;

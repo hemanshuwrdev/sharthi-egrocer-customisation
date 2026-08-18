@@ -17,6 +17,7 @@ class MasterProductVariant extends Model
         'unit_id',
         'secondary_unit_id',
         'secondary_unit_value',
+        'allow_loose_qty',
         'weight',
         'image',
         'status',

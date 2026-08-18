@@ -321,6 +321,15 @@ class SarthiCustomisation extends Migration
             });
         }
 
+        // Master Catalog Variants: allow loose (piece-level) selling, bypassing the
+        // secondary-unit (box) multiple requirement for specific products.
+        Schema::table('master_product_variants', function (Blueprint $table) {
+            if (!Schema::hasColumn('master_product_variants', 'allow_loose_qty')) {
+                $table->boolean('allow_loose_qty')->default(0)->after('secondary_unit_value')
+                    ->comment('1 = retailer can order any qty, not just multiples of secondary_unit_value');
+            }
+        });
+
         // 11a. Master Catalog: SEO columns on master_products (default-language fallback)
         Schema::table('master_products', function (Blueprint $table) {
             if (!Schema::hasColumn('master_products', 'meta_title')) {
