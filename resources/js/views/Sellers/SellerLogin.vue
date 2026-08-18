@@ -44,9 +44,6 @@
                     </form>
 
 
-                        <router-link to="/seller/register" class="btn btn-primary btn-block btn-lg shadow-lg mt-2 auth-btn">
-                            Register
-                        </router-link>
                         <router-link to="/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn">
                             Admin Panel
                         </router-link>

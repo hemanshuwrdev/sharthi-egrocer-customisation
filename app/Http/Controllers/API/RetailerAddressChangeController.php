@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AdminToken;
 use App\Models\BrandDistributorMapping;
+use App\Models\City;
 use App\Models\RetailerAddressChangeRequest;
 use App\Models\RetailerProfile;
 use App\Models\Salesman;
@@ -37,13 +38,18 @@ class RetailerAddressChangeController extends Controller
 
         $validator = Validator::make($request->all(), [
             'new_address' => 'required|string|max:500',
-            'new_city_id' => 'required|integer|exists:cities,id',
             'new_gps_lat' => 'required|numeric|between:-90,90',
             'new_gps_lng' => 'required|numeric|between:-180,180',
             'reason'      => 'nullable|string|max:500',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        // city_id is derived from GPS, never taken directly from the request.
+        $newCityId = CommonHelper::getDeliverableCityIds($request->new_gps_lat, $request->new_gps_lng)[0] ?? null;
+        if (!$newCityId) {
+            return CommonHelper::responseError('location_outside_serviceable_area');
         }
 
         // Block if a pending/assigned request already exists for this retailer
@@ -65,14 +71,14 @@ class RetailerAddressChangeController extends Controller
             'old_gps_lat' => $profile?->gps_lat ?? null,
             'old_gps_lng' => $profile?->gps_lng ?? null,
             'new_address' => $request->new_address,
-            'new_city_id' => (int) $request->new_city_id,
+            'new_city_id' => $newCityId,
             'new_gps_lat' => (float) $request->new_gps_lat,
             'new_gps_lng' => (float) $request->new_gps_lng,
             'status'      => 'pending',
         ]);
 
-        // Broadcast to salesmen in the new city
-        $this->notifySalesmenInCity((int) $request->new_city_id, $retailer, $changeRequest->id);
+        // Broadcast to salesmen across the whole new zone, not just the matched city
+        $this->notifySalesmenInZone((float) $request->new_gps_lat, (float) $request->new_gps_lng, $retailer, $changeRequest->id);
 
         return CommonHelper::responseWithData([
             'request_id' => $changeRequest->id,
@@ -277,21 +283,46 @@ class RetailerAddressChangeController extends Controller
         return Salesman::where('admin_id', $admin->id)->first();
     }
 
+    /**
+     * The distributor's directly-mapped cities, expanded to every sibling city sharing
+     * the same zone label — so a request whose GPS point matched a different city
+     * polygon within the same zone still shows up for this distributor's salesmen.
+     */
     private function territoryCityIds(int $sellerId): array
     {
-        return BrandDistributorMapping::where('seller_id', $sellerId)
-            ->pluck('city_id')->unique()->values()->all();
+        $mappedCityIds = BrandDistributorMapping::where('seller_id', $sellerId)
+            ->pluck('city_id')->unique()->values();
+
+        if ($mappedCityIds->isEmpty()) {
+            return [];
+        }
+
+        $zones = City::whereIn('id', $mappedCityIds)
+            ->whereNotNull('zone')->where('zone', '!=', '')
+            ->pluck('zone')->unique()->values();
+
+        if ($zones->isEmpty()) {
+            return $mappedCityIds->all();
+        }
+
+        $zoneCityIds = City::whereIn('zone', $zones)->pluck('id');
+
+        return $mappedCityIds->merge($zoneCityIds)->unique()->values()->all();
     }
 
     /**
-     * Find all salesmen whose distributor serves the given city,
-     * insert salesman_notifications rows, and send FCM push to each.
+     * Find all salesmen whose distributor serves the retailer's whole zone (every city
+     * sharing the matched city's zone label, not just the one polygon the point lands
+     * in), insert salesman_notifications rows, and send FCM push to each.
      */
-    private function notifySalesmenInCity(int $cityId, User $retailer, int $requestId): void
+    private function notifySalesmenInZone(float $latitude, float $longitude, User $retailer, int $requestId): void
     {
         try {
-            // Distributors serving this city
-            $sellerIds = BrandDistributorMapping::where('city_id', $cityId)
+            $zoneCityIds = CommonHelper::getDeliverableZoneCityIds($latitude, $longitude);
+            if (empty($zoneCityIds)) return;
+
+            // Distributors serving any city in this zone
+            $sellerIds = BrandDistributorMapping::whereIn('city_id', $zoneCityIds)
                 ->pluck('seller_id')->unique()->values();
 
             if ($sellerIds->isEmpty()) return;

@@ -39,7 +39,7 @@ class ShopApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
 
         // Sarthi: sections must only show products from brand+seller pairs actually
         // mapped to this city — same source of truth as RetailerCatalogApiController::listProducts.

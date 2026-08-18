@@ -43,7 +43,7 @@ class RetailerCatalogApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
         if (empty($cityIds)) {
             return CommonHelper::responseWithData([], 0);
         }
@@ -330,7 +330,7 @@ class RetailerCatalogApiController extends Controller
         }
 
         $brandId = $variant->masterProduct->brand_id;
-        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
         if (empty($cityIds)) {
             return CommonHelper::responseError('product_not_available_in_your_area');
         }

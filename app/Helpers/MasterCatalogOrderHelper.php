@@ -168,11 +168,14 @@ class MasterCatalogOrderHelper
 
     /**
      * For the retailer flow: resolve which seller_id should serve a given master variant
-     * to a retailer in the given city. Honors the brand's overlap flag.
+     * to a retailer whose zone covers the given city ids (pass the FULL zone-expanded set
+     * from CommonHelper::getDeliverableZoneCityIds(), not just the single matched city, so
+     * a distributor mapped to a sibling city in the same zone is still found). Honors the
+     * brand's overlap flag.
      *
      * Returns ['ok' => bool, 'error' => string|null, 'seller_id' => int|null, 'overlap_allowed' => bool]
      */
-    public static function resolveSellerForRetailer(int $masterProductVariantId, int $cityId, ?int $preferredSellerId = null): array
+    public static function resolveSellerForRetailer(int $masterProductVariantId, array $cityIds, ?int $preferredSellerId = null): array
     {
         $variant = MasterProductVariant::with('masterProduct.brand')->find($masterProductVariantId);
         if (!$variant || !$variant->masterProduct) {
@@ -182,7 +185,7 @@ class MasterCatalogOrderHelper
         $overlapAllowed = $variant->masterProduct->brand && (int) $variant->masterProduct->brand->is_overlap_allowed === 1;
 
         $sellerIds = BrandDistributorMapping::where('brand_id', $brandId)
-            ->where('city_id', $cityId)
+            ->whereIn('city_id', $cityIds)
             ->pluck('seller_id');
 
         if ($sellerIds->isEmpty()) {

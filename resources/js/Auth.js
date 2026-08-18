@@ -55,7 +55,7 @@ class Auth {
         if(currentRoute) {
             currentPathName = currentRoute;
         }
-        var ignoreRoutes = ["/purchase_code","/login","/seller/login","/delivery_boy/login","/seller/register","/delivery_boy/register","/forgot-password"];
+        var ignoreRoutes = ["/purchase_code","/login","/seller/login","/delivery_boy/login","/delivery_boy/register","/forgot-password"];
         
         if(!purchase_code && !ignoreRoutes.includes(currentPathName)){
             window.location.href = '/purchase_code';

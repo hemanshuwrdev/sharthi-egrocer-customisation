@@ -419,12 +419,16 @@ __webpack_require__.r(__webpack_exports__);
           icon: 'grid-fill',
           url: '/sellers/create',
           permission: 'seller_create'
-        }, {
-          name: __('seller_requests'),
-          icon: 'grid-fill',
-          url: '/registered_sellers',
-          permission: 'seller_requests'
-        }, {
+        },
+        /*
+        {
+            name: __('seller_requests'),
+            icon: 'grid-fill',
+            url: '/registered_sellers',
+            permission: 'seller_requests',
+        },
+        */
+        {
           name: __('manage_sellers'),
           icon: 'grid-fill',
           url: '/sellers',

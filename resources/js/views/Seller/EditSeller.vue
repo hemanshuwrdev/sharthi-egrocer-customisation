@@ -184,18 +184,7 @@
 
                                                         <!-- Non-translatable Fields (only shown in default language tab) -->
                                                         <template v-if="language.is_default">
-                                                            <div class="form-group col-md-5" v-if="!isSellerRole">
-                                                                <div class="form-group">
-                                                                    <label>{{ __('brand_ids') }}<i
-                                                                            class="text-danger">*</i> <small>
-                                                                        </small></label>
-                                                                    <Select2 v-model="brand_ids"
-                                                                        :placeholder="__('select_brands')"
-                                                                        :options="brands_options"
-                                                                        :settings="{ multiple: 'multiple' }" />
-                                                                </div>
-                                                            </div>
-                                                            <div class="form-group col-md-5" v-else>
+                                                            <div class="form-group col-md-5" v-if="isSellerRole">
                                                                 <div class="form-group">
                                                                     <label>{{ __('brand_ids') }}</label>
                                                                     <div v-if="assignedBrands.length">
@@ -445,26 +434,78 @@
                                             <!-- Non-translatable Cards (only shown in default language tab) -->
                                             <template v-if="language.is_default">
 
-                                                <!-- ── Service Zones & Cities Card ── -->
+                                                <!-- ── Brand → Zone Assignments Card ── -->
                                                 <div class="card" v-if="!isSellerRole">
                                                     <div class="card-header d-flex align-items-center justify-content-between">
-                                                        <h4 class="mb-0">{{ __('service_zones_and_cities') }}</h4>
+                                                        <h4 class="mb-0">{{ __('brand_zone_assignments') }}</h4>
                                                         <button type="button" class="btn btn-sm btn-outline-primary"
-                                                            @click="toggleAddCityForm">
-                                                            <i :class="showAddCityForm ? 'fa fa-times' : 'fa fa-plus'"></i>
-                                                            {{ showAddCityForm ? __('cancel') : __('add_zone') }}
+                                                            @click="openAddBrandZone" :disabled="showAddCityForm">
+                                                            <i class="fa fa-plus"></i>
+                                                            {{ __('add_brand_zone') }}
                                                         </button>
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="row" v-if="!showAddCityForm">
-                                                            <!-- City multi-select (zone shown inline per city) -->
-                                                            <div class="form-group col-md-12">
-                                                                <div class="form-group">
-                                                                    <label for="city_name">{{ __('select_cities') }}<i class="text-danger">*</i></label>
-                                                                    <Select2 v-model="city_id" :placeholder="__('select_cities')"
-                                                                        :options="cities_options"
-                                                                        :settings="{ multiple: 'multiple' }" />
+                                                            <div class="col-md-12">
+                                                                <p class="text-muted mb-3" v-if="!brandZoneRows.length && !showBrandZoneForm">
+                                                                    {{ __('no_brand_zone_assignments_yet') }}
+                                                                </p>
+                                                                <div v-for="(row, index) in brandZoneRows" :key="row.brand_id"
+                                                                    class="d-flex align-items-start justify-content-between border rounded p-2 mb-2">
+                                                                    <div>
+                                                                        <strong>{{ row.brand_name }}</strong>
+                                                                        <div class="mt-1">
+                                                                            <span v-for="c in row.cities" :key="c.id" class="badge bg-secondary me-1 mb-1">
+                                                                                {{ c.name }}<template v-if="c.zone"> - {{ c.zone }}</template>
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="text-nowrap">
+                                                                        <button type="button" class="btn btn-sm btn-primary me-1"
+                                                                            @click="editBrandZoneRow(index)" v-b-tooltip.hover :title="__('edit')">
+                                                                            <i class="fa fa-pencil-alt"></i>
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-sm btn-danger"
+                                                                            @click="removeBrandZoneRow(index)" v-b-tooltip.hover :title="__('delete')">
+                                                                            <i class="fa fa-trash"></i>
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
+
+                                                                <!-- Add/Edit Brand Zone Row Form -->
+                                                                <div v-if="showBrandZoneForm" class="border rounded p-3 mb-2 bg-light">
+                                                                    <div class="row">
+                                                                        <div class="form-group col-md-5">
+                                                                            <label>{{ __('brand') }}<i class="text-danger">*</i></label>
+                                                                            <select class="form-control" v-model="brandZoneForm.brand_id"
+                                                                                :disabled="editingBrandZoneIndex !== null">
+                                                                                <option :value="null">-- {{ __('select') }} --</option>
+                                                                                <option v-for="b in availableBrandsForZoneForm" :key="b.id" :value="b.id">
+                                                                                    {{ b.name }}
+                                                                                </option>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="form-group col-md-7">
+                                                                            <label>{{ __('select_zones') }}<i class="text-danger">*</i></label>
+                                                                            <Select2 v-model="brandZoneForm.city_ids" :placeholder="__('select_cities')"
+                                                                                :options="cities_options"
+                                                                                :settings="{ multiple: 'multiple' }" />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="d-flex gap-2">
+                                                                        <button type="button" class="btn btn-success btn-sm" @click="saveBrandZoneRow">
+                                                                            {{ __('save') }}
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-secondary btn-sm ml-2" @click="showBrandZoneForm = false">
+                                                                            {{ __('cancel') }}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                                                                    @click="toggleAddCityForm" v-if="!showBrandZoneForm">
+                                                                    <i class="fa fa-map-marker-alt"></i> {{ __('define_new_zone') }}
+                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -1085,6 +1126,10 @@ export default {
             pincode_id: "",
             city_id: [],
             brand_ids: [],
+            brandZoneRows: [],
+            showBrandZoneForm: false,
+            editingBrandZoneIndex: null,
+            brandZoneForm: { brand_id: null, city_ids: [] },
             state: "",
             remark: "",
             bank_name: "",
@@ -1287,6 +1332,12 @@ export default {
                 });
             }
             return temp;
+        },
+        availableBrandsForZoneForm: function () {
+            const usedIds = this.brandZoneRows
+                .filter((r, idx) => idx !== this.editingBrandZoneIndex)
+                .map(r => String(r.brand_id));
+            return this.brands.filter(b => !usedIds.includes(String(b.id)));
         },
         assignedBrands: function () {
             if (!Array.isArray(this.brand_ids) || this.brand_ids.length === 0) {
@@ -1594,10 +1645,8 @@ export default {
                 const response = await axios.post(this.$apiUrl + '/cities/save', formData);
                 const newId = response.data?.data?.id;
                 if (newId) {
-                    // Add to cities list and auto-select
+                    // Add to cities list so it's selectable in brand-zone assignment
                     this.cities.push({ id: newId, name: this.newCity.name, zone: this.newCity.zone });
-                    if (!Array.isArray(this.city_id)) this.city_id = [];
-                    this.city_id = [...this.city_id, String(newId)];
 
                     // If zone is new, add it to zones list
                     const zone = this.newCity.zone;
@@ -1634,6 +1683,67 @@ export default {
             this.clearCityDrawing();
         },
 
+        loadBrandZoneMappings() {
+            if (!this.id) return;
+            axios.get(this.$apiUrl + '/admin/brand-mappings', { params: { seller_id: this.id, per_page: 500 } })
+                .then((response) => {
+                    const rows = (response.data && response.data.data) ? response.data.data : [];
+                    this.brandZoneRows = rows.map(r => ({
+                        brand_id: r.brand_id,
+                        brand_name: r.brand ? r.brand.name : '',
+                        city_ids: (r.city_ids || []).map(String),
+                        cities: r.cities || [],
+                    }));
+                    this.syncDerivedFromBrandZoneRows();
+                })
+                .catch(() => { this.brandZoneRows = []; });
+        },
+        syncDerivedFromBrandZoneRows() {
+            this.brand_ids = this.brandZoneRows.map(r => String(r.brand_id));
+            const cityIds = new Set();
+            this.brandZoneRows.forEach(r => r.city_ids.forEach(id => cityIds.add(String(id))));
+            this.city_id = [...cityIds];
+        },
+        openAddBrandZone() {
+            this.editingBrandZoneIndex = null;
+            this.brandZoneForm = { brand_id: null, city_ids: [] };
+            this.showBrandZoneForm = true;
+        },
+        editBrandZoneRow(index) {
+            this.editingBrandZoneIndex = index;
+            const row = this.brandZoneRows[index];
+            this.brandZoneForm = { brand_id: row.brand_id, city_ids: [...row.city_ids] };
+            this.showBrandZoneForm = true;
+        },
+        saveBrandZoneRow() {
+            if (!this.brandZoneForm.brand_id) {
+                return this.showError(__('brand') + ' ' + __('is_required'));
+            }
+            if (!Array.isArray(this.brandZoneForm.city_ids) || !this.brandZoneForm.city_ids.length) {
+                return this.showError(__('select_zones') + ' ' + __('is_required'));
+            }
+            const brand = this.brands.find(b => String(b.id) === String(this.brandZoneForm.brand_id));
+            const cityIds = this.brandZoneForm.city_ids.map(String);
+            const cities = this.cities.filter(c => cityIds.includes(String(c.id)));
+            const row = {
+                brand_id: this.brandZoneForm.brand_id,
+                brand_name: brand ? brand.name : '',
+                city_ids: cityIds,
+                cities,
+            };
+            if (this.editingBrandZoneIndex !== null) {
+                this.brandZoneRows.splice(this.editingBrandZoneIndex, 1, row);
+            } else {
+                this.brandZoneRows.push(row);
+            }
+            this.syncDerivedFromBrandZoneRows();
+            this.showBrandZoneForm = false;
+            this.editingBrandZoneIndex = null;
+        },
+        removeBrandZoneRow(index) {
+            this.brandZoneRows.splice(index, 1);
+            this.syncDerivedFromBrandZoneRows();
+        },
         getBrands() {
 
             this.isLoading = true
@@ -1902,7 +2012,7 @@ export default {
             if (this.$refs['my-form']) this.$refs['my-form'].reset();
             Object.assign(this, {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
-                store_name: "", street: "", pincode_id: "", city_id: [], brand_ids: [],
+                store_name: "", street: "", pincode_id: "", city_id: [], brand_ids: [], brandZoneRows: [],
                 state: "", remark: "", bank_name: "", account_number: "", bank_ifsc_code: "", account_name: "", upi_id: "", upi_mobile: "", upi_name: "",
                 commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
@@ -2094,6 +2204,7 @@ export default {
                         this.pincode_id = "";
                         this.city_id = emptyIfNull(this.record.city_id) ? this.record.city_id.split(",") : [];
                         this.brand_ids = Array.isArray(this.record.brand_ids) ? this.record.brand_ids.map(String) : [];
+                        this.loadBrandZoneMappings();
                         this.state = emptyIfNull(this.record.state);
                         this.remark = emptyIfNull(this.record.remark);
                         this.bank_name = emptyIfNull(this.record.bank_name);
@@ -2224,6 +2335,11 @@ export default {
                 return;
             }
 
+            if (!this.isSellerRole && !this.brandZoneRows.length) {
+                this.showError(__('please_assign_at_least_one_brand_zone'));
+                return;
+            }
+
             this.isLoading = true;
             let vm = this;
 
@@ -2302,8 +2418,11 @@ export default {
                 // Non-translatable fields
                 formData.append('street', this.street);
                 formData.append('pincode_id', this.pincode_id);
-                formData.append('city_id', this.city_id);
-                formData.append('brand_ids', this.brand_ids);
+                if (!this.isSellerRole) {
+                    formData.append('brand_zone_mappings', JSON.stringify(
+                        this.brandZoneRows.map(r => ({ brand_id: r.brand_id, city_ids: r.city_ids }))
+                    ));
+                }
                 formData.append('state', this.state);
                 formData.append('remark', this.remark);
                 formData.append('bank_name', this.bank_name || '');

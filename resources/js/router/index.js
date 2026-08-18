@@ -197,7 +197,6 @@ const Countries = () => import("../views/Countries/Countries")
 
 /***********************************************************/
 /*Seller*/
-const SellerRegister = () => import("../views/Sellers/SellerRegister");
 const SellerDetails = () => import("../views/Sellers/SellerDetails");
 const SellerLogin = () => import("../views/Sellers/SellerLogin");
 
@@ -1591,14 +1590,6 @@ function configRoutes() {
             component: SellerLogin,
             meta: {
                 title: 'Seller Login'
-            },
-        },
-        {
-            path: "/seller/register",
-            name: "seller_register",
-            component: SellerRegister,
-            meta: {
-                title: 'Seller Register'
             },
         },
         {

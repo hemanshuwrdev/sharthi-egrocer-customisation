@@ -238,7 +238,7 @@ class BasicApiController extends Controller
             return CommonHelper::responseError('no_items_found');
         }
 
-        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
         if (empty($cityIds)) {
             return CommonHelper::responseWithData([], 0);
         }
@@ -728,7 +728,7 @@ class BasicApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
         $sellerIds = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->pluck('seller_id')->unique();
 
         $sellers = Seller::select(
@@ -822,7 +822,7 @@ class BasicApiController extends Controller
 
         // Get seller IDs based on location
         $seller_ids = CommonHelper::getSellerIds($latitude, $longitude);
-        $cityIds = CommonHelper::getDeliverableCityIds($latitude, $longitude);
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($latitude, $longitude);
 
         // If no sellers found in the area, return error
         if (empty($seller_ids)) {
@@ -882,7 +882,7 @@ class BasicApiController extends Controller
         $longitude = $request->get('longitude');
 
         $seller_ids = CommonHelper::getSellerIds($latitude, $longitude);
-        $cityIds = CommonHelper::getDeliverableCityIds($latitude, $longitude);
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($latitude, $longitude);
 
         // If no sellers found in the area, return error
         if (empty($seller_ids)) {

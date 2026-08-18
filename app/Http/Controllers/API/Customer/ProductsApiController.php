@@ -76,7 +76,7 @@ class ProductsApiController extends Controller
             // do NOT fall back to a distance-only lookup, that leaks other cities' sellers/catalogs into this response.
             $seller_ids = CommonHelper::getSellerIds($request->latitude, $request->longitude);
             $seller_ids = is_array($seller_ids) ? $seller_ids : $seller_ids->toArray();
-            $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+            $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
             if (!empty($seller_ids)) {
                 $productResultQuery = DB::table('products as p')
                     ->leftJoin('product_variants as pv', 'pv.product_id', '=', 'p.id')
@@ -811,7 +811,7 @@ class ProductsApiController extends Controller
             }
 
             if ($product->is_deliverable) {
-                $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+                $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
                 if (!empty($cityIds) && $product->brand_id) {
                     $mappingExists = DB::table('brand_distributor_mappings')
                         ->where('brand_id', $product->brand_id)
@@ -977,7 +977,7 @@ class ProductsApiController extends Controller
         // Optional area scope
         $sellerIds = collect();
         if ($request->filled('latitude') && $request->filled('longitude')) {
-            $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+            $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
             if (!empty($cityIds)) {
                 $sellerIds = BrandDistributorMapping::whereIn('city_id', $cityIds)
                     ->pluck('seller_id')
@@ -1413,7 +1413,7 @@ class ProductsApiController extends Controller
             $hasLocation = $request->filled('latitude') && $request->filled('longitude');
             $sellerIds = collect();
             if ($hasLocation) {
-                $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+                $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
                 $sellerIds = !empty($cityIds)
                     ? BrandDistributorMapping::whereIn('city_id', $cityIds)->pluck('seller_id')->unique()
                     : collect();

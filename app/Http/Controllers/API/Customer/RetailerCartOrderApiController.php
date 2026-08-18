@@ -62,7 +62,7 @@ class RetailerCartOrderApiController extends Controller
 
         $sellerId = (int) $request->seller_id ?: null;
         if (!$sellerId) {
-            $cityIds = CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude);
+            $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
             if (empty($cityIds)) {
                 return CommonHelper::responseError('product_not_available_in_your_area');
             }
@@ -400,7 +400,7 @@ class RetailerCartOrderApiController extends Controller
         $user = auth()->user();
         $explicitSellerId = (int) $request->seller_id ?: null;
         $cityIds = !$explicitSellerId
-            ? CommonHelper::getDeliverableCityIds($request->latitude, $request->longitude)
+            ? CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude)
             : [];
 
         $results = [];

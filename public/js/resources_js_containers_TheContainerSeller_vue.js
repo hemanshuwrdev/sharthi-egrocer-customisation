@@ -311,17 +311,22 @@ __webpack_require__.r(__webpack_exports__);
         icon: 'calculator',
         url: '/seller/point_of_sale',
         permission: 'product_list'
-      }, {
-        name: __('withdrawal_requests'),
-        icon: 'credit-card',
-        url: '/seller/withdrawal_requests',
-        permission: 'product_sales_reports'
-      }, {
-        name: __('wallet_transactions'),
-        icon: 'credit-card',
-        url: '/seller/seller_wallet_transactions',
-        permission: 'product_sales_reports'
-      }, {
+      },
+      /*
+      {
+          name: __('withdrawal_requests'),
+          icon: 'credit-card',
+          url: '/seller/withdrawal_requests',
+          permission: 'product_sales_reports',
+      },
+      {
+          name: __('wallet_transactions'),
+          icon: 'credit-card',
+          url: '/seller/seller_wallet_transactions',
+          permission: 'product_sales_reports',
+      },
+      */
+      {
         name: __('delivery_boys'),
         icon: 'male',
         permission: 'order_list',
@@ -394,6 +399,11 @@ __webpack_require__.r(__webpack_exports__);
           name: 'Manage Loading Slips',
           icon: 'grid-fill',
           url: '/seller/loading_slips'
+        }, {
+          name: __('trip_reconciliation'),
+          icon: 'clipboard-check',
+          url: '/seller/trips',
+          permission: 'order_list'
         }]
       }, {
         name: __('reports'),
@@ -425,11 +435,6 @@ __webpack_require__.r(__webpack_exports__);
           url: '/seller/commission_billing',
           permission: 'order_list'
         }]
-      }, {
-        name: __('trip_reconciliation'),
-        icon: 'clipboard-check',
-        url: '/seller/trips',
-        permission: 'order_list'
       }, {
         name: __('settings'),
         icon: 'cog',

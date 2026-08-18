@@ -492,12 +492,13 @@ class CustomerAuthController extends Controller
     /**
      * Sarthi: B2B retailer registration.
      *  - Creates User with verification_status='pending'
-     *  - Creates RetailerProfile with shop/billing/address/GPS
+     *  - Creates RetailerProfile with shop/billing/address/GPS (city_id is derived from
+     *    gps_lat/gps_lng server-side, never taken directly from the request)
      *  - Fans out 'new_retailer_pending' push to ALL salesmen of every distributor
-     *    that maps to the retailer's city via brand_distributor_mappings
+     *    mapped anywhere in the retailer's whole zone via brand_distributor_mappings
      *  - First salesman to verify claims the retailer (atomic, separate endpoint)
      *
-     * Body (required): name, country_code, mobile, shop_name, party_name, city_id, address
+     * Body (required): name, country_code, mobile, shop_name, party_name, gps_lat, gps_lng, address
      * Body (optional): gst_no, gps_lat, gps_lng, fcm_token, platform, language_id
      */
     public function registerRetailer(Request $request)
@@ -515,11 +516,10 @@ class CustomerAuthController extends Controller
             ],
             'shop_name'    => 'required|string|max:160',
             'party_name'   => 'required|string|max:160',
-            'city_id'      => 'required|integer|exists:cities,id',
             'address'      => 'required|string|min:5',
             'gst_no'       => 'nullable|string|max:32',
-            'gps_lat'      => 'nullable|numeric|between:-90,90',
-            'gps_lng'      => 'nullable|numeric|between:-180,180',
+            'gps_lat'      => 'required|numeric|between:-90,90',
+            'gps_lng'      => 'required|numeric|between:-180,180',
         ], [
             'mobile.unique' => 'mobile_number_already_taken',
         ]);
@@ -527,6 +527,14 @@ class CustomerAuthController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
+
+        // The retailer no longer picks a city/zone manually — it's derived from their GPS
+        // location, so they always land in whichever zone their shop actually falls inside.
+        $zoneCityIds = CommonHelper::getDeliverableZoneCityIds($request->gps_lat, $request->gps_lng);
+        if (empty($zoneCityIds)) {
+            return CommonHelper::responseError('location_outside_serviceable_area');
+        }
+        $matchedCityId = CommonHelper::getDeliverableCityIds($request->gps_lat, $request->gps_lng)[0] ?? $zoneCityIds[0];
 
         DB::beginTransaction();
         try {
@@ -548,7 +556,7 @@ class CustomerAuthController extends Controller
             $profile->shop_name  = $request->shop_name;
             $profile->party_name = $request->party_name;
             $profile->gst_no     = $request->gst_no;
-            $profile->city_id    = $request->city_id;
+            $profile->city_id    = $matchedCityId;
             $profile->address    = $request->address;
             $profile->gps_lat    = $request->gps_lat;
             $profile->gps_lng    = $request->gps_lng;
@@ -645,11 +653,18 @@ class CustomerAuthController extends Controller
      */
     private function fanOutNewRetailerToSalesmen(User $retailer, RetailerProfile $profile): void
     {
-        if (!$profile->city_id) {
+        if (!$profile->gps_lat || !$profile->gps_lng) {
             return;
         }
 
-        $distributorIds = BrandDistributorMapping::where('city_id', $profile->city_id)
+        // Fan out to every distributor mapped anywhere in the retailer's whole zone, not
+        // just the single city polygon their GPS point happens to land inside.
+        $zoneCityIds = CommonHelper::getDeliverableZoneCityIds($profile->gps_lat, $profile->gps_lng);
+        if (empty($zoneCityIds)) {
+            return;
+        }
+
+        $distributorIds = BrandDistributorMapping::whereIn('city_id', $zoneCityIds)
             ->pluck('seller_id')->unique()->values();
 
         if ($distributorIds->isEmpty()) {
@@ -819,12 +834,21 @@ class CustomerAuthController extends Controller
             }
         }
 
-        // Update retailer profile fields sent by the app
+        // Update retailer profile fields sent by the app. city_id is never taken directly
+        // from the request — it's always re-derived from gps_lat/gps_lng, same as at
+        // registration, so a retailer can't manually reassign their own zone.
         $retailerUpdates = [];
-        foreach (['shop_name', 'party_name', 'gst_no', 'address', 'city_id', 'gps_lat', 'gps_lng'] as $field) {
+        foreach (['shop_name', 'party_name', 'gst_no', 'address', 'gps_lat', 'gps_lng'] as $field) {
             if ($request->filled($field)) {
                 $retailerUpdates[$field] = $request->input($field);
             }
+        }
+        if ($request->filled('gps_lat') && $request->filled('gps_lng')) {
+            $matchedCityId = CommonHelper::getDeliverableCityIds($request->gps_lat, $request->gps_lng)[0] ?? null;
+            if (!$matchedCityId) {
+                return CommonHelper::responseError('location_outside_serviceable_area');
+            }
+            $retailerUpdates['city_id'] = $matchedCityId;
         }
         if (!empty($retailerUpdates)) {
             $retailerUpdates['updated_at'] = now();

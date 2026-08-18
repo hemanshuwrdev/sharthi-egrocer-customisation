@@ -72,9 +72,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
 
 
 
@@ -494,20 +491,6 @@ var render = function () {
                         : _c("span", { staticClass: "bi bi-arrow-right" }),
                     ],
                     1
-                  ),
-                ]
-              ),
-              _vm._v(" "),
-              _c(
-                "router-link",
-                {
-                  staticClass:
-                    "btn btn-primary btn-block btn-lg shadow-lg mt-2 auth-btn",
-                  attrs: { to: "/seller/register" },
-                },
-                [
-                  _vm._v(
-                    "\n                        Register\n                    "
                   ),
                 ]
               ),

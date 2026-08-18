@@ -741,9 +741,40 @@ class CommonHelper
         return $cityIds;
     }
 
+    /**
+     * Resolve a lat/long to the FULL set of city ids covering the retailer's whole zone,
+     * not just the single city polygon the point happens to land inside. A "zone" is a
+     * text label (cities.zone) shared by several city polygons — a distributor mapped to
+     * any sibling city in the same zone should still be visible to a retailer standing in
+     * a different city polygon within that zone.
+     */
+    public static function getDeliverableZoneCityIds($latitude, $longitude)
+    {
+        $matchedCityIds = self::getDeliverableCityIds($latitude, $longitude);
+        if (empty($matchedCityIds)) {
+            return [];
+        }
+
+        $zones = City::whereIn('id', $matchedCityIds)
+            ->whereNotNull('zone')
+            ->where('zone', '!=', '')
+            ->pluck('zone')
+            ->unique()
+            ->values();
+
+        if ($zones->isEmpty()) {
+            // Matched cities have no zone label — fall back to just the matched cities.
+            return $matchedCityIds;
+        }
+
+        $zoneCityIds = City::whereIn('zone', $zones)->pluck('id')->all();
+
+        return collect($matchedCityIds)->merge($zoneCityIds)->unique()->values()->all();
+    }
+
     public static function getSellerIds($latitude, $longitude)
     {
-        $cityIds = self::getDeliverableCityIds($latitude, $longitude);
+        $cityIds = self::getDeliverableZoneCityIds($latitude, $longitude);
         return self::getSellerIdsfromCityIds($cityIds);
     }
     public static function isPointInPolygon($point, $polygon)

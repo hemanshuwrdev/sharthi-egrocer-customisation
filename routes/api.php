@@ -20,7 +20,6 @@ Route::post('reset-password', [\App\Http\Controllers\API\AdminAuthController::cl
 Route::get('system_languages', [\App\Http\Controllers\API\LanguageApiController::class, 'getSystemLanguages']);
 Route::get('active_languages', [\App\Http\Controllers\API\LanguageApiController::class, 'getActiveLanguages']);
 
-Route::post('seller/register', [\App\Http\Controllers\API\AdminAuthController::class, 'sellerRegister']);
 Route::get('seller/privacy_policy', [\App\Http\Controllers\SellerController::class, 'getPrivacyPolicy']);
 Route::get('seller/cities', [\App\Http\Controllers\API\CityApiController::class, 'getCities']);
 Route::get('countries', [\App\Http\Controllers\API\CountryApiController::class, 'getCountries']);

@@ -272,6 +272,7 @@ export default {
                     url: '/seller/point_of_sale',
                     permission: 'product_list',
                 },
+                /*
                 {
                     name: __('withdrawal_requests'),
                     icon: 'credit-card',
@@ -284,6 +285,7 @@ export default {
                     url: '/seller/seller_wallet_transactions',
                     permission: 'product_sales_reports',
                 },
+                */
                 {
                     name: __('delivery_boys'),
                     icon: 'male',
@@ -370,6 +372,12 @@ export default {
                             name: 'Manage Loading Slips',
                             icon: 'grid-fill',
                             url: '/seller/loading_slips'
+                        },
+                        {
+                            name: __('trip_reconciliation'),
+                            icon: 'clipboard-check',
+                            url: '/seller/trips',
+                            permission: 'order_list',
                         }
                     ]
                 },
@@ -409,12 +417,6 @@ export default {
                             permission: 'order_list',
                         }
                     ]
-                },
-                {
-                    name: __('trip_reconciliation'),
-                    icon: 'clipboard-check',
-                    url: '/seller/trips',
-                    permission: 'order_list',
                 },
                 {
                     name: __('settings'),
