@@ -12,8 +12,8 @@
                     <a href="javascript:void(0)" class="navbar-toggler list-icon-btn" data-bs-toggle="collapse"
                         data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation" @click="isToggle = !isToggle;">
-                        <i v-if="isToggle === true" class="fa fa-times" aria-hidden="true"></i>
-                        <i v-else class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                        <span v-if="isToggle === true" v-html="navIcon('times')"></span>
+                        <span v-else v-html="navIcon('ellipsis-h')"></span>
                     </a>
                 </div>
 
@@ -29,8 +29,8 @@
                             <li class="nav-item dropdown me-2">
                                 <button type="button" class="list-icon-btn" @click="toggleTheme($event)"
                                     :title="userTheme === 'theme-dark' ? 'Switch to light' : 'Switch to dark'">
-                                    <i v-if="userTheme === 'theme-dark'" class="bi bi-sun"></i>
-                                    <i v-else class="bi bi-moon-stars"></i>
+                                    <span v-if="userTheme === 'theme-dark'" v-html="navIcon('sun')"></span>
+                                    <span v-else v-html="navIcon('moon-stars')"></span>
                                 </button>
                             </li>
 
@@ -40,7 +40,7 @@
                                     <button type="button" class="list-icon-btn" @click="popoverShow = true"
                                         id="confirmButton" ref="confirmButton" title="Clear">
                                         <b-spinner v-if="isSystemRefreshing" small label="Spinning"></b-spinner>
-                                        <i v-else class="fa fa-refresh" :class="{ 'fa-spin': isSystemRefreshing }"></i>
+                                        <span v-else v-html="navIcon('refresh')"></span>
                                     </button>
 
                                     <b-modal id="cache-confirm-modal" v-model="popoverShow" :title="__('are_you_sure')"
@@ -69,14 +69,14 @@
 
                             <li v-if="this.$websiteUrl" class="nav-item dropdown me-2">
                                 <a class="list-icon-btn" :href="this.$websiteUrl" target="__blank">
-                                    <i class="fa fa-solid fa-globe" aria-hidden="true"></i>
+                                    <span v-html="navIcon('globe-asia')"></span>
                                 </a>
                             </li>
 
                             <li class="nav-item dropdown me-1">
                                 <a class="list-icon-btn position-relative dropdown-toggle" href="#"
                                     data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-bell" aria-hidden="true"></i>
+                                    <span v-html="navIcon('bell')"></span>
                                     <span v-if="notifications_unread_count > 0" class="hdr-dot">{{
                                         notifications_unread_count > 9 ? '9+' : notifications_unread_count
                                         }}</span>
@@ -93,7 +93,7 @@
                                         <button v-for="notification of notifications.slice(0, 4)" type="button"
                                             class="notif-item" :class="{ 'is-unread': !notification.read_at }"
                                             @click="markAsReadNotification(notification); handleNotificationClick(notification)">
-                                            <span class="notif-icon"><i class="bi bi-bell" aria-hidden="true"></i></span>
+                                            <span class="notif-icon" v-html="navIcon('bell')"></span>
                                             <span class="notif-body">
                                                 <span class="notif-text">{{ notification.data.text }}</span>
                                                 <span class="notif-time">{{ changeDateTime(notification.created_at)
@@ -101,7 +101,7 @@
                                             </span>
                                         </button>
                                         <div v-if="notifications.length == 0" class="notif-empty">
-                                            <i class="bi bi-bell-slash" style="font-size:1.5rem;"></i>
+                                            <span v-html="navIcon('bell-slash')" style="font-size:1.5rem;"></span>
                                             <span>{{ __('no_new_notification') }}</span>
                                         </div>
                                     </li>
@@ -121,21 +121,35 @@
                                     </li>
                                 </ul>
                             </li>
-                            <li class="nav-item dropdown me-3">
-                                <div class="lang_div">
-                                    <select class="form-control form-select" @change="changeLanguage($event)"
-                                        v-model="lang">
-                                        <!-- If languages array is empty, display default option -->
-                                        <template v-if="languages.length === 0">
-                                            <option value="en">English</option>
-                                        </template>
-                                        <!-- Otherwise, display options from the languages array -->
-                                        <template v-else>
-                                            <option v-for="language in languages" :key="language.code"
-                                                :value="language.code">{{ language.name }}</option>
-                                        </template>
-                                    </select>
-                                </div>
+                            <li class="nav-item dropdown me-2">
+                                <a class="list-icon-btn dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                                    aria-expanded="false" :title="__('select_language')">
+                                    <span v-html="navIcon('language')"></span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end language-dropdown">
+                                    <li>
+                                        <h6 class="dropdown-header">{{ __('select_language') }}</h6>
+                                    </li>
+                                    <template v-if="languages.length === 0">
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center justify-content-between active"
+                                                href="#" @click.prevent="changeLanguage({ target: { value: 'en' } })">
+                                                English
+                                                <span v-html="navIcon('check')"></span>
+                                            </a>
+                                        </li>
+                                    </template>
+                                    <template v-else>
+                                        <li v-for="language in languages" :key="language.code">
+                                            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                                                :class="{ active: lang === language.code }" href="#"
+                                                @click.prevent="changeLanguage({ target: { value: language.code } })">
+                                                {{ language.name }}
+                                                <span v-if="lang === language.code" v-html="navIcon('check')"></span>
+                                            </a>
+                                        </li>
+                                    </template>
+                                </ul>
                             </li>
                         </ul>
                         <div class="dropdown">
@@ -146,7 +160,7 @@
                                     <span class="user-chip-name">{{ user.username }}</span>
                                     <span class="user-chip-role">{{ role === 'Seller' ? __('seller') : role }}</span>
                                 </span>
-                                <i class="bi bi-chevron-down hdr-caret d-none d-lg-block"></i>
+                                <span class="hdr-caret d-none d-lg-block" v-html="navIcon('chevron-down')"></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu"
                                 aria-labelledby="dropdownMenuButton">
@@ -157,25 +171,25 @@
                                 <li>
                                     <router-link class="dropdown-item" to="/seller/profile"
                                         v-if="role == this.$roleSeller">
-                                        <i class="icon-mid bi bi-person me-2"></i> {{ __('my_profile') }}
+                                        <span class="icon-mid me-2" v-html="navIcon('person')"></span> {{ __('my_profile') }}
                                     </router-link>
                                     <router-link class="dropdown-item" to="/delivery_boy/profile"
                                         v-if="role == this.$roleDeliveryBoy">
-                                        <i class="icon-mid bi bi-person me-2"></i> {{ __('my_profile') }}
+                                        <span class="icon-mid me-2" v-html="navIcon('person')"></span> {{ __('my_profile') }}
                                     </router-link>
                                 </li>
                                 <li>
                                     <router-link class="dropdown-item" to="/settings"
                                         v-if="role == this.$roleSuperAdmin">
-                                        <i class="icon-mid bi bi-gear me-2"></i> {{ __('settings') }}
+                                        <span class="icon-mid me-2" v-html="navIcon('gear')"></span> {{ __('settings') }}
                                     </router-link>
                                     <router-link class="dropdown-item" to="/seller/settings"
                                         v-if="role == this.$roleSeller">
-                                        <i class="icon-mid bi bi-gear me-2"></i> {{ __('settings') }}
+                                        <span class="icon-mid me-2" v-html="navIcon('gear')"></span> {{ __('settings') }}
                                     </router-link>
                                     <router-link class="dropdown-item" to="/delivery_boy/settings"
                                         v-if="role == this.$roleDeliveryBoy">
-                                        <i class="icon-mid bi bi-gear me-2"></i> {{ __('settings') }}
+                                        <span class="icon-mid me-2" v-html="navIcon('gear')"></span> {{ __('settings') }}
                                     </router-link>
                                 </li>
                                 <!-- Seller Status Toggle -->
@@ -219,8 +233,8 @@
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" @click="logout()"><i
-                                            class="icon-mid bi bi-box-arrow-left me-2"></i>{{ __('logout')
+                                    <a class="dropdown-item" @click="logout()"><span
+                                            class="icon-mid me-2" v-html="navIcon('box-arrow-left')"></span>{{ __('logout')
                                             }}</a>
                                 </li>
                             </ul>
@@ -235,6 +249,7 @@
 <script>
 import Auth from '../Auth.js';
 import axios from "axios";
+import { lucideIcon } from '../utils/lucideIcons';
 export default {
 
     data: function () {
@@ -324,6 +339,9 @@ export default {
 
 
     methods: {
+        navIcon(name) {
+            return lucideIcon(name);
+        },
         toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;

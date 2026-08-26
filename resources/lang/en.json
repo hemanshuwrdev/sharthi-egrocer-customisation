@@ -1973,5 +1973,6 @@
     "status_updated_successfully" : "Status updated successfully",
     "no_tags_available" : "No tags available",
     "cash_expected" : "Cash Expected",
-    "add_new_category" : "Add New Category"
+    "add_new_category" : "Add New Category",
+    "select_language" : "Select Language"
 }

@@ -27,7 +27,7 @@
 
                                 <template v-if="isHasSub(item)">
                                     <a class="sidebar-link">
-                                        <i :class="`fa fa-${item.icon}`"></i>
+                                        <span class="sidebar-icon" v-html="navIcon(item.icon)"></span>
                                         <span>{{ item.name }}</span>
                                     </a>
                                     <ul class="submenu" :class="{ 'active': subIsActive(item) }">
@@ -43,7 +43,7 @@
                                 </template>
                                 <template v-else>
                                     <router-link class="sidebar-link" :to="item.url">
-                                        <i :class="`fa fa-${item.icon}`"></i>
+                                        <span class="sidebar-icon" v-html="navIcon(item.icon)"></span>
                                         <span>{{ item.name }}</span>
                                     </router-link>
                                 </template>
@@ -87,6 +87,7 @@ import TheSidebar from './TheSidebar'
 
 import TheFooter from './TheFooter'
 import VerticalHeader from './VerticalHeader'
+import { lucideIcon } from '../utils/lucideIcons';
 import Auth from "../Auth";
 import axios from "axios";
 
@@ -254,6 +255,9 @@ export default {
         }
     },
     methods: {
+        navIcon(name) {
+            return lucideIcon(name);
+        },
         subIsActive(item) {
             const paths = Array.isArray(item.submenu) ? item.submenu : [];
             return paths.some(path => {

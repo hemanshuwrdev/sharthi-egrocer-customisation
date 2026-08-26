@@ -5,30 +5,28 @@
         </div>
 
         <div class="list-surface">
-            <b-row>
-                <div class="col-md-12">
-                    <form method="POST" enctype="multipart/form-data">
-                        <vue-dropzone
-                            ref="myVueDropzone"
-                            id="dropzone"
-                            :options="dropzoneOptions"
-                            :useCustomSlot="true"
-                            v-on:vdropzone-success="uploadSuccess"
-                        >
-                            <div class="dropzone-custom-content">
-                                <h3 class="dropzone-custom-title"><i class="fa fa-upload"></i> {{ __('drag_and_drop_to_upload_image') }}</h3>
-                                <div class="subtitle">{{__('or_click_to_select_a_image_from_your_device')}}</div>
-                            </div>
-                        </vue-dropzone>
-                        <button type="button" :disabled="submitBtn === true" @click="uploadImage()" class="btn btn-primary mt-2">
-                            <i class="fa fa-upload" v-if="!isLoading"></i> {{ __('upload') }}
-                            <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
-                        </button>
-                    </form>
-                </div>
-            </b-row>
+            <div class="media-upload-section">
+                <form method="POST" enctype="multipart/form-data">
+                    <vue-dropzone
+                        ref="myVueDropzone"
+                        id="dropzone"
+                        :options="dropzoneOptions"
+                        :useCustomSlot="true"
+                        v-on:vdropzone-success="uploadSuccess"
+                    >
+                        <div class="dropzone-custom-content">
+                            <h3 class="dropzone-custom-title"><i class="fa fa-upload"></i> {{ __('drag_and_drop_to_upload_image') }}</h3>
+                            <div class="subtitle">{{__('or_click_to_select_a_image_from_your_device')}}</div>
+                        </div>
+                    </vue-dropzone>
+                    <button type="button" :disabled="submitBtn === true" @click="uploadImage()" class="btn btn-primary mt-2">
+                        <i class="fa fa-upload" v-if="!isLoading"></i> {{ __('upload') }}
+                        <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
+                    </button>
+                </form>
+            </div>
 
-            <h4 class="card-title mt-3">{{ __('media_list')}}</h4>
+            <h4 class="card-title media-list-title">{{ __('media_list')}}</h4>
 
             <div class="list-toolbar">
                 <div class="list-search">

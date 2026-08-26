@@ -30,7 +30,7 @@
 
                                 <template v-if="isHasSub(item)">
                                     <a class="sidebar-link">
-                                        <i :class="`fa fa-${item.icon}`"></i>
+                                        <span class="sidebar-icon" v-html="navIcon(item.icon)"></span>
                                         <span>{{ item.name }}</span>
                                     </a>
                                     <ul class="submenu" :class="{ 'active': subIsActive(item) }">
@@ -48,7 +48,7 @@
 
                                 <template v-else>
                                     <router-link class="sidebar-link" :to="item.url" @click="closeSideBarMenu()">
-                                        <i :class="`fa fa-${item.icon}`"></i>
+                                        <span class="sidebar-icon" v-html="navIcon(item.icon)"></span>
                                         <span>{{ item.name }}</span>
                                     </router-link>
                                 </template>
@@ -82,6 +82,7 @@ import TheFooter from './TheFooter'
 import VerticalHeader from './VerticalHeader'
 import Auth from "../Auth";
 import axios from "axios";
+import { lucideIcon } from '../utils/lucideIcons';
 
 export default {
     name: 'TheContainer',
@@ -273,7 +274,7 @@ export default {
                    'master_catalog' below since MasterProductForm.vue still depends on them.
                 {
                     name: __('products'),
-                    icon: 'cubes',
+                    icon: 'package',
                     permission: null,
                     submenu: [
                         {
@@ -634,7 +635,7 @@ export default {
 
                 {
                     name: __('notifications'),
-                    icon: 'share-square',
+                    icon: 'bell',
                     url: '/notifications',
                     permission: null,
                     submenu: [
@@ -653,7 +654,7 @@ export default {
                 },
                 {
                     name: __('email'),
-                    icon: 'share-square',
+                    icon: 'mail',
                     url: '/emails',
                     permission: null,
                     submenu: [
@@ -1008,6 +1009,10 @@ export default {
         }
     },
     methods: {
+
+        navIcon(name) {
+            return lucideIcon(name);
+        },
 
         filterItem() {
 

@@ -1,3 +1,87 @@
+.sidebar-wrapper .menu {
+    padding: 0 1rem;
+}
+
+.sidebar-wrapper .menu .sidebar-link span {
+    margin-left: 0.6rem;
+}
+
+.media-upload-section {
+    padding: 16px 16px 20px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.media-list-title {
+    padding: 16px 16px 0;
+    margin-bottom: 0;
+}
+
+.language-dropdown {
+    position: absolute !important;
+    inset: auto 0 auto auto !important;
+    width: auto !important;
+    min-width: 190px;
+    max-height: 320px;
+    overflow-y: auto;
+    float: none !important;
+}
+
+.language-dropdown .dropdown-header {
+    color: #37a279;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.language-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-radius: 0.4rem;
+    margin: 2px 6px;
+    width: auto;
+}
+
+.language-dropdown .dropdown-item.active {
+    background: rgba(55, 162, 121, 0.12) !important;
+    color: #37a279 !important;
+}
+
+.language-dropdown .dropdown-item.active svg {
+    color: #37a279;
+}
+
+/* Lucide inline-SVG icon sizing (sidebar menu icons + header icons swapped
+   from font-awesome/bootstrap-icons to raw lucide SVGs via v-html). */
+.sidebar-icon,
+.icon-mid,
+.hdr-caret,
+.notif-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-icon svg,
+.icon-mid svg,
+.hdr-caret svg,
+.notif-icon svg,
+.burger-btn svg,
+.navbar-toggler svg,
+.list-icon-btn svg,
+.list-action-btn svg {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+}
+
+.notif-empty svg {
+    width: 26px;
+    height: 26px;
+}
+
 /*Scrollbar style start*/
 ::-webkit-scrollbar {
     width: 8px;
@@ -731,10 +815,13 @@ input[type="radio"]:checked {
     -webkit-appearance: none;
     margin: 0;
 }
-.card,
-header,
 .sidebar-wrapper {
     box-shadow: 0 0 20px rgb(0 0 0 / 13%), 0px 0px 20px rgb(0 0 0 / 0%);
+}
+
+.card {
+    box-shadow: none;
+    border: 1px solid var(--app-card-border);
 }
 .align-items-center {
     text-align: center;
@@ -3158,7 +3245,7 @@ body.theme-dark .sidebar-hide:hover {
 
     /* Menu container padding in collapsed mode */
     #sidebar:not(.active) .sidebar-wrapper .menu {
-        padding: 0 0.5rem !important;
+        padding: 0 !important;
     }
 
     /* Center-align sidebar items & links in collapsed mode */
@@ -3193,8 +3280,8 @@ body.theme-dark .sidebar-hide:hover {
         height: 1.25rem !important;
     }
 
-    /* Hide item text span in collapsed mode */
-    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-link span {
+    /* Hide item text span in collapsed mode (not the icon wrapper span) */
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-link span:not(.sidebar-icon) {
         display: none !important;
     }
 
