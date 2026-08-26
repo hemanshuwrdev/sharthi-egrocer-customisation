@@ -1,115 +1,87 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('delivery_boy_salary') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item">
-                                    <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('delivery_boy_salary') }}
-                                </li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">{{ __('delivery_boy_salary') }}</h4>
-                        <span class="pull-right">
-                            <button class="btn btn-primary" v-if="$route.path.includes('/seller')" @click="create_new = true">{{
-                                __('add_salary') }}</button>
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <b-row class="mb-3 align-items-end">
-
-                            <!-- Date Range -->
-                            <b-col md="4">
-                                <h6 class="box-title">{{ __('from_to_date') }}</h6>
-                                <div class="d-flex align-items-center">
-                                    <date-range-picker :single-date-picker="'range'" :autoApply="false"
-                                        :showDropdowns="true" v-model="dateRange" :maxDate="maxDate"
-                                        @update="getSalaries" opens="right" append-to-body></date-range-picker>
-
-                                    <button class="btn btn-sm btn-danger ml-1"
-                                        @click="dateRange.startDate = null; dateRange.endDate = null; getSalaries()">
-                                        {{ __('clear') }}
-                                    </button>
-                                </div>
-                            </b-col>
-
-                            <!-- Search -->
-                            <b-col md="3" offset-md="4">
-                                <h6>{{ __('search') }}</h6>
-                                <b-form-input v-model="filter" type="search" :placeholder="__('search')"></b-form-input>
-                            </b-col>
-
-                            <!-- Refresh -->
-                            <b-col md="1" class="text-center">
-
-                                <button class="btn btn-primary ml-2" v-b-tooltip.hover :title="__('refresh')"
-                                    @click="getSalaries()">
-                                    <i class="fa fa-refresh"></i>
-                                </button>
-                            </b-col>
-
-                        </b-row>
-
-                        <div class="table-responsive">
-                            <b-table :items="salaries" :fields="fields" :current-page="currentPage" :per-page="perPage"
-                                :filter="filter" :filter-included-fields="filterOn" :sort-by.sync="sortBy"
-                                :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
-                                :busy="isLoading" stacked="md" show-empty small>
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
-                                <template #head(amount)="data">
-                                    {{ __('salary') }}{{ ' (' + $currency + ')' }}
-                                </template>
-                                <template #cell(paid_on)="row">
-                                    {{ formatDate(row.item.paid_on) }}
-                                </template>
-                                <template #cell(actions)="row">
-                                    <b-button v-if="$route.path.includes('/seller')" size="sm" variant="primary"
-                                        @click="editRecord(row.item)" class="mr-1">
-                                        <i class="fa fa-pencil-alt"></i>
-                                    </b-button>
-                                    <b-button v-if="$route.path.includes('/seller')" size="sm" variant="danger"
-                                        @click="deleteRecord(row.item.id)">
-                                        <i class="fa fa-trash"></i>
-                                    </b-button>
-                                </template>
-                            </b-table>
-                        </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
-                                    label-size="sm" class="mb-0">
-                                    <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                        size="sm" class="form-control form-select"></b-form-select>
-                                </b-form-group>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                    align="fill" size="sm" class="my-0"></b-pagination>
-                            </b-col>
-                        </b-row>
-                    </div>
-                </div>
-            </section>
-
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('delivery_boy_salary') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                v-if="$route.path.includes('/seller')" @click="create_new = true">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_salary') }}</span>
+            </button>
         </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <!-- Date Range -->
+                <b-col md="4">
+                    <h6 class="box-title">{{ __('from_to_date') }}</h6>
+                    <div class="d-flex align-items-center">
+                        <date-range-picker :single-date-picker="'range'" :autoApply="false"
+                            :showDropdowns="true" v-model="dateRange" :maxDate="maxDate"
+                            @update="getSalaries" opens="right" append-to-body></date-range-picker>
+
+                        <button class="btn btn-sm btn-danger ml-1"
+                            @click="dateRange.startDate = null; dateRange.endDate = null; getSalaries()">
+                            {{ __('clear') }}
+                        </button>
+                    </div>
+                </b-col>
+
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input v-model="filter" type="search" :placeholder="__('search')"></b-form-input>
+                </div>
+
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
+                    @click="getSalaries()">
+                    <i class="fa fa-refresh"></i>
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <b-table :items="salaries" :fields="fields" :current-page="currentPage" :per-page="perPage"
+                    :filter="filter" :filter-included-fields="filterOn" :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
+                    :busy="isLoading" stacked="md" show-empty small>
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
+                        </div>
+                    </template>
+                    <template #head(amount)="data">
+                        {{ __('salary') }}{{ ' (' + $currency + ')' }}
+                    </template>
+                    <template #cell(paid_on)="row">
+                        {{ formatDate(row.item.paid_on) }}
+                    </template>
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <button class="list-action-btn is-edit" v-if="$route.path.includes('/seller')"
+                                @click="editRecord(row.item)" v-b-tooltip.hover :title="__('edit')">
+                                <i class="fa fa-pencil-alt"></i>
+                            </button>
+                            <button class="list-action-btn is-delete" v-if="$route.path.includes('/seller')"
+                                @click="deleteRecord(row.item.id)" v-b-tooltip.hover :title="__('delete')">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </template>
+                </b-table>
+            </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
+                        label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
+                </div>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
+                    align="fill" size="sm" class="list-pagination"></b-pagination>
+            </div>
+        </div>
+
         <!-- Add / Edit -->
         <edit-salary v-if="create_new || edit_record" :record="edit_record" :deliveryBoys="deliveryBoys"
             @modalClose="hideModal()"></edit-salary>

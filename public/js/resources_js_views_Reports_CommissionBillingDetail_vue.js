@@ -173,29 +173,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -573,72 +550,16 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "page-title" }, [
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-            _c("h3", [
-              _vm._v(
-                _vm._s(
-                  _vm.seller ? _vm.seller.name : _vm.__("commission_billing")
-                )
-              ),
-            ]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-            _c(
-              "nav",
-              {
-                staticClass: "breadcrumb-header float-start float-lg-end",
-                attrs: { "aria-label": "breadcrumb" },
-              },
-              [
-                _c("ol", { staticClass: "breadcrumb" }, [
-                  _c(
-                    "li",
-                    { staticClass: "breadcrumb-item" },
-                    [
-                      _c("router-link", { attrs: { to: "/dashboard" } }, [
-                        _vm._v(_vm._s(_vm.__("dashboard"))),
-                      ]),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "li",
-                    { staticClass: "breadcrumb-item" },
-                    [
-                      _c(
-                        "router-link",
-                        { attrs: { to: "/commission_billing" } },
-                        [_vm._v(_vm._s(_vm.__("commission_billing")))]
-                      ),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "li",
-                    {
-                      staticClass: "breadcrumb-item active",
-                      attrs: { "aria-current": "page" },
-                    },
-                    [
-                      _vm._v(
-                        _vm._s(_vm.seller ? _vm.seller.name : _vm.__("detail"))
-                      ),
-                    ]
-                  ),
-                ]),
-              ]
-            ),
-          ]),
-        ]),
+  return _c("div", { staticClass: "list-page" }, [
+    _c("div", { staticClass: "page-head" }, [
+      _c("h3", { staticClass: "page-head-title" }, [
+        _vm._v(
+          _vm._s(_vm.seller ? _vm.seller.name : _vm.__("commission_billing"))
+        ),
       ]),
-      _vm._v(" "),
+    ]),
+    _vm._v(" "),
+    _c("div", [
       _c(
         "section",
         { staticClass: "section" },
@@ -836,260 +757,237 @@ var render = function () {
                   1
                 ),
                 _vm._v(" "),
-                _c("div", { staticClass: "card" }, [
-                  _c(
-                    "div",
-                    {
-                      staticClass:
-                        "card-header d-flex justify-content-between align-items-center",
-                    },
-                    [
+                _c(
+                  "div",
+                  { staticClass: "list-surface" },
+                  [
+                    _c("div", { staticClass: "list-toolbar" }, [
                       _c("h4", { staticClass: "card-title mb-0" }, [
                         _vm._v(
                           _vm._s(_vm.__("commission_transaction_history"))
                         ),
                       ]),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "div",
-                    { staticClass: "card-body" },
-                    [
-                      _c(
-                        "b-row",
-                        { staticClass: "mb-3" },
-                        [
-                          _c("b-col", { attrs: { md: "5" } }, [
-                            _c("h6", { staticClass: "box-title" }, [
-                              _vm._v(_vm._s(_vm.__("from_to_date"))),
-                            ]),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              { staticClass: "d-flex align-items-center" },
-                              [
-                                _c("date-range-picker", {
-                                  attrs: {
-                                    "append-to-body": true,
-                                    "single-date-picker": "range",
-                                    autoApply: false,
-                                    showDropdowns: true,
-                                    maxDate: _vm.maxDate,
-                                    "locale-data": _vm.dateRangePickerLocale,
-                                    ranges: _vm.dateRangePickerRanges,
-                                  },
-                                  on: {
-                                    update: function ($event) {
-                                      return _vm.load(1)
-                                    },
-                                  },
-                                  model: {
-                                    value: _vm.dateRange,
-                                    callback: function ($$v) {
-                                      _vm.dateRange = $$v
-                                    },
-                                    expression: "dateRange",
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _c(
-                                  "button",
-                                  {
-                                    staticClass: "btn btn-sm btn-danger ms-1",
-                                    on: {
-                                      click: function ($event) {
-                                        _vm.dateRange = {
-                                          startDate: null,
-                                          endDate: null,
-                                        }
-                                        _vm.load(1)
-                                      },
-                                    },
-                                  },
-                                  [
-                                    _vm._v(
-                                      "\n                                        " +
-                                        _vm._s(_vm.__("clear")) +
-                                        "\n                                    "
-                                    ),
-                                  ]
-                                ),
-                              ],
-                              1
-                            ),
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "b-row",
+                      { staticClass: "mb-3" },
+                      [
+                        _c("b-col", { attrs: { md: "5" } }, [
+                          _c("h6", { staticClass: "box-title" }, [
+                            _vm._v(_vm._s(_vm.__("from_to_date"))),
                           ]),
                           _vm._v(" "),
                           _c(
-                            "b-col",
-                            {
-                              staticClass: "d-flex align-items-end",
-                              attrs: { md: "1" },
-                            },
+                            "div",
+                            { staticClass: "d-flex align-items-center" },
                             [
+                              _c("date-range-picker", {
+                                attrs: {
+                                  "append-to-body": true,
+                                  "single-date-picker": "range",
+                                  autoApply: false,
+                                  showDropdowns: true,
+                                  maxDate: _vm.maxDate,
+                                  "locale-data": _vm.dateRangePickerLocale,
+                                  ranges: _vm.dateRangePickerRanges,
+                                },
+                                on: {
+                                  update: function ($event) {
+                                    return _vm.load(1)
+                                  },
+                                },
+                                model: {
+                                  value: _vm.dateRange,
+                                  callback: function ($$v) {
+                                    _vm.dateRange = $$v
+                                  },
+                                  expression: "dateRange",
+                                },
+                              }),
+                              _vm._v(" "),
                               _c(
                                 "button",
                                 {
-                                  staticClass: "btn btn-primary btn_refresh",
+                                  staticClass: "btn btn-sm btn-danger ms-1",
                                   on: {
                                     click: function ($event) {
-                                      return _vm.load(1)
+                                      _vm.dateRange = {
+                                        startDate: null,
+                                        endDate: null,
+                                      }
+                                      _vm.load(1)
                                     },
                                   },
                                 },
-                                [_c("i", { staticClass: "fa fa-refresh" })]
-                              ),
-                            ]
-                          ),
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _vm.loading
-                        ? _c(
-                            "div",
-                            { staticClass: "text-center py-3" },
-                            [_c("b-spinner")],
-                            1
-                          )
-                        : _c(
-                            "div",
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "table-responsive" },
                                 [
-                                  _c("b-table", {
-                                    attrs: {
-                                      items: _vm.data.transactions.data,
-                                      fields: _vm.txFields,
-                                      bordered: true,
-                                      "show-empty": "",
-                                      small: "",
-                                      stacked: "md",
-                                    },
-                                    scopedSlots: _vm._u([
-                                      {
-                                        key: "cell(order_item_amount)",
-                                        fn: function (row) {
-                                          return [
-                                            _vm._v(
-                                              "\n                                        " +
-                                                _vm._s(_vm.$currency) +
-                                                " " +
-                                                _vm._s(
-                                                  parseFloat(
-                                                    row.item.order_item_amount
-                                                  ).toFixed(2)
-                                                ) +
-                                                "\n                                    "
-                                            ),
-                                          ]
-                                        },
-                                      },
-                                      {
-                                        key: "cell(commission_amount)",
-                                        fn: function (row) {
-                                          return [
-                                            _vm._v(
-                                              "\n                                        " +
-                                                _vm._s(_vm.$currency) +
-                                                " " +
-                                                _vm._s(
-                                                  parseFloat(
-                                                    row.item.commission_amount
-                                                  ).toFixed(2)
-                                                ) +
-                                                "\n                                    "
-                                            ),
-                                          ]
-                                        },
-                                      },
-                                      {
-                                        key: "cell(seller_commission_percentage)",
-                                        fn: function (row) {
-                                          return [
-                                            _vm._v(
-                                              "\n                                        " +
-                                                _vm._s(
-                                                  row.item
-                                                    .seller_commission_percentage
-                                                ) +
-                                                "%\n                                    "
-                                            ),
-                                          ]
-                                        },
-                                      },
-                                    ]),
-                                  }),
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-row",
-                                { staticClass: "mt-2" },
-                                [
-                                  _c("b-col", { attrs: { md: "4" } }, [
-                                    _c(
-                                      "div",
-                                      { staticClass: "text-primary h6" },
-                                      [
-                                        _vm._v(
-                                          "\n                                        " +
-                                            _vm._s(_vm.__("total_commission")) +
-                                            ": " +
-                                            _vm._s(_vm.$currency) +
-                                            " " +
-                                            _vm._s(
-                                              _vm.data.commission_earned.all_time.toFixed(
-                                                2
-                                              )
-                                            ) +
-                                            "\n                                    "
-                                        ),
-                                      ]
-                                    ),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c(
-                                    "b-col",
-                                    {
-                                      staticClass:
-                                        "pr-0 d-flex justify-content-end",
-                                      attrs: { md: "4", "offset-md": "4" },
-                                    },
-                                    [
-                                      _c("b-pagination", {
-                                        staticClass: "mb-0",
-                                        attrs: {
-                                          "total-rows":
-                                            _vm.data.transactions.total,
-                                          "per-page": _vm.perPage,
-                                          size: "sm",
-                                        },
-                                        on: { change: _vm.load },
-                                        model: {
-                                          value: _vm.page,
-                                          callback: function ($$v) {
-                                            _vm.page = $$v
-                                          },
-                                          expression: "page",
-                                        },
-                                      }),
-                                    ],
-                                    1
+                                  _vm._v(
+                                    "\n                                    " +
+                                      _vm._s(_vm.__("clear")) +
+                                      "\n                                "
                                   ),
-                                ],
-                                1
+                                ]
                               ),
                             ],
                             1
                           ),
-                    ],
-                    1
-                  ),
-                ]),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "b-col",
+                          {
+                            staticClass: "d-flex align-items-end",
+                            attrs: { md: "1" },
+                          },
+                          [
+                            _c(
+                              "button",
+                              {
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.hover",
+                                    modifiers: { hover: true },
+                                  },
+                                ],
+                                staticClass: "list-icon-btn",
+                                attrs: { title: _vm.__("refresh") },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.load(1)
+                                  },
+                                },
+                              },
+                              [_c("i", { staticClass: "fa fa-refresh" })]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _vm.loading
+                      ? _c(
+                          "div",
+                          { staticClass: "text-center py-3" },
+                          [_c("b-spinner")],
+                          1
+                        )
+                      : _c("div", [
+                          _c(
+                            "div",
+                            { staticClass: "table-responsive" },
+                            [
+                              _c("b-table", {
+                                attrs: {
+                                  items: _vm.data.transactions.data,
+                                  fields: _vm.txFields,
+                                  bordered: true,
+                                  "show-empty": "",
+                                  small: "",
+                                  stacked: "md",
+                                },
+                                scopedSlots: _vm._u([
+                                  {
+                                    key: "cell(order_item_amount)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                    " +
+                                            _vm._s(_vm.$currency) +
+                                            " " +
+                                            _vm._s(
+                                              parseFloat(
+                                                row.item.order_item_amount
+                                              ).toFixed(2)
+                                            ) +
+                                            "\n                                "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                  {
+                                    key: "cell(commission_amount)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                    " +
+                                            _vm._s(_vm.$currency) +
+                                            " " +
+                                            _vm._s(
+                                              parseFloat(
+                                                row.item.commission_amount
+                                              ).toFixed(2)
+                                            ) +
+                                            "\n                                "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                  {
+                                    key: "cell(seller_commission_percentage)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                    " +
+                                            _vm._s(
+                                              row.item
+                                                .seller_commission_percentage
+                                            ) +
+                                            "%\n                                "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                ]),
+                              }),
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "list-footer" },
+                            [
+                              _c("div", { staticClass: "text-primary h6" }, [
+                                _vm._v(
+                                  "\n                                " +
+                                    _vm._s(_vm.__("total_commission")) +
+                                    ": " +
+                                    _vm._s(_vm.$currency) +
+                                    " " +
+                                    _vm._s(
+                                      _vm.data.commission_earned.all_time.toFixed(
+                                        2
+                                      )
+                                    ) +
+                                    "\n                            "
+                                ),
+                              ]),
+                              _vm._v(" "),
+                              _c("b-pagination", {
+                                staticClass: "list-pagination",
+                                attrs: {
+                                  "total-rows": _vm.data.transactions.total,
+                                  "per-page": _vm.perPage,
+                                  size: "sm",
+                                },
+                                on: { change: _vm.load },
+                                model: {
+                                  value: _vm.page,
+                                  callback: function ($$v) {
+                                    _vm.page = $$v
+                                  },
+                                  expression: "page",
+                                },
+                              }),
+                            ],
+                            1
+                          ),
+                        ]),
+                  ],
+                  1
+                ),
               ]
             : _vm._e(),
         ],

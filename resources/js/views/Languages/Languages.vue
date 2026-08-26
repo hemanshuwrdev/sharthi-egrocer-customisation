@@ -1,162 +1,135 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{ __('manage_languages') }}</h3>
-                </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{ __('manage_languages') }}</li>
-                        </ol>
-                    </nav>
-                </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('languages') }}</h3>
+            <div class="page-head-actions">
+                <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                    @click="showSupportedLanguages = true">
+                    <span>{{ __('supported_languages_list') }}</span>
+                </button>
+
+                <b-modal v-model="showSupportedLanguages" size="lg"
+                    :title="__('supported_languages_list')" scrollable no-close-on-backdrop no-fade
+                    static>
+                    <b-container fluid>
+                        <b-row class="mb-2">
+                            <b-col cols="12" lg="4" offset-lg="8">
+                                <h6 class="box-title">{{ __('search') }}</h6>
+                                <b-form-input id="filter-input" v-model="filterSL" type="search"
+                                    :placeholder="__('search')"></b-form-input>
+                            </b-col>
+                        </b-row>
+
+                        <b-table sticky-header hover stacked="md" show-empty small :bordered="true"
+                            :items="supported_languages" :fields="supported_languages_fields"
+                            :filter="filterSL" :sort-by.sync="sortBySL" :sort-desc.sync="sortDescSL"
+                            :sort-direction="sortDirectionSL">
+                        </b-table>
+
+                    </b-container>
+                    <template #modal-footer>
+                        <b-button variant="danger" size="sm" class="float-right"
+                            @click="showSupportedLanguages = false">
+                            {{ __('close') }}
+                        </b-button>
+                    </template>
+                </b-modal>
+
+                <router-link to="/languages/create" class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                    v-if="$can('language_create')">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                    <span>{{ __('add') }}</span>
+                </router-link>
             </div>
+        </div>
 
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
-
-                        <div class="card-header">
-                            <h4>{{ __('languages') }}</h4>
-                            <span class="pull-right">
-
-                                <button class="btn btn-primary" @click="showSupportedLanguages = true">{{
-                                    __('supported_languages_list') }}</button>
-
-                                <b-modal v-model="showSupportedLanguages" size="lg"
-                                    :title="__('supported_languages_list')" scrollable no-close-on-backdrop no-fade
-                                    static>
-                                    <b-container fluid>
-                                        <b-row class="mb-2">
-                                            <b-col cols="12" lg="4" offset-lg="8">
-                                                <h6 class="box-title">{{ __('search') }}</h6>
-                                                <b-form-input id="filter-input" v-model="filterSL" type="search"
-                                                    :placeholder="__('search')"></b-form-input>
-                                            </b-col>
-                                        </b-row>
-
-                                        <b-table sticky-header hover stacked="md" show-empty small :bordered="true"
-                                            :items="supported_languages" :fields="supported_languages_fields"
-                                            :filter="filterSL" :sort-by.sync="sortBySL" :sort-desc.sync="sortDescSL"
-                                            :sort-direction="sortDirectionSL">
-                                        </b-table>
-
-                                    </b-container>
-                                    <template #modal-footer>
-                                        <b-button variant="danger" size="sm" class="float-right"
-                                            @click="showSupportedLanguages = false">
-                                            {{ __('close') }}
-                                        </b-button>
-                                    </template>
-                                </b-modal>
-
-                                <router-link to="/languages/create" class="btn btn-primary"
-                                    v-if="$can('language_create')" v-b-tooltip.hover :title="__('add_language')">{{
-                                        __('add_language') }}</router-link>
-                            </span>
-                        </div>
-
-                        <div class="card-body">
-                            <b-row class="mb-2 align-items-end">
-                                <!-- Download Sample Files Section -->
-                                <b-col md="6">
-                                    <h6 class="box-title mb-2">{{ __('download_sample_files') }}</h6>
-                                    <div class="d-flex flex-wrap" style="gap: 8px;">
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            @click="downloadSampleFile('customer.json', getSystemTypeName(1))">
-                                            <i class="fa fa-download"></i> {{ __('customer_app') }}
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            @click="downloadSampleFile('partner.json', getSystemTypeName(2))">
-                                            <i class="fa fa-download"></i> {{ __('partner_app') }}
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            @click="downloadSampleFile('web.json', getSystemTypeName(3))">
-                                            <i class="fa fa-download"></i> {{ __('website') }}
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            @click="downloadSampleFile('panel.json', getSystemTypeName(4))">
-                                            <i class="fa fa-download"></i> {{ __('admin_panel') }}
-                                        </button>
-                                    </div>
-                                </b-col>
-                                <!-- Search Section -->
-                                <b-col md="3" offset-md="2">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input id="filter-input" v-model="filter" type="search"
-                                        :placeholder="__('search')"></b-form-input>
-                                </b-col>
-                                <b-col md="1" class="text-center">
-                                    <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                        @click="getRecords()">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </button>
-                                </b-col>
-                            </b-row>
-                            <!-- Simple table showing languages -->
-                            <div class="table-responsive">
-                                <b-table :items="groupedLanguages" :fields="languageFields" :current-page="currentPage"
-                                    :per-page="perPage" :filter="filter" :filter-included-fields="filterOn"
-                                    :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection"
-                                    :bordered="true" :busy="isLoading" stacked="md" show-empty small>
-                                    <template #table-busy>
-                                        <div class="text-center text-black my-2">
-                                            <b-spinner class="align-middle"></b-spinner>
-                                            <strong>{{ __('loading') }}...</strong>
-                                        </div>
-                                    </template>
-
-                                    <template #cell(name)="row">
-                                        <span>{{ row.item.name }}</span>
-                                    </template>
-
-                                    <template #cell(is_default)="row">
-                                        <span v-if="row.item.has_default" class="badge bg-success">{{ __('yes')
-                                            }}</span>
-                                        <span v-else class="badge bg-danger">{{ __('no') }}</span>
-                                    </template>
-
-                                    <template #cell(status)="row">
-                                        <span v-if="row.item.status == 1" class="badge bg-success">{{ __('active')
-                                            }}</span>
-                                        <span v-else class="badge bg-danger">{{ __('inactive') }}</span>
-                                    </template>
-
-                                    <template #cell(actions)="row">
-                                        <button v-if="$can('language_update')" class="btn btn-sm btn-primary"
-                                            @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')">
-                                            <i class="fa fa-pencil-alt"></i> {{ __('edit') }}
-                                        </button>
-                                        <button v-if="$can('language_delete')" class="btn btn-sm btn-danger"
-                                            @click="deleteLanguageGroup(row.item)" v-b-tooltip.hover
-                                            :title="__('delete')">
-                                            <i class="fa fa-trash"></i> {{ __('delete') }}
-                                        </button>
-                                    </template>
-                                </b-table>
-                            </div>
-                            <b-row>
-                                <b-col md="2" class="my-1">
-                                    <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                        label-align-sm="right" label-size="sm" class="mb-0">
-                                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                            size="sm" class="form-control form-select"></b-form-select>
-                                    </b-form-group>
-                                </b-col>
-                                <b-col md="4" class="my-1" offset-md="6">
-                                    <label>{{ __('total_records') }} :- {{ totalRows }} </label>
-                                    <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                        align="fill" size="sm" class="my-0"></b-pagination>
-                                </b-col>
-                            </b-row>
-
-                        </div>
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <!-- Download Sample Files Section -->
+                <div>
+                    <h6 class="box-title mb-2">{{ __('download_sample_files') }}</h6>
+                    <div class="d-flex flex-wrap" style="gap: 8px;">
+                        <button class="btn btn-sm btn-outline-primary"
+                            @click="downloadSampleFile('customer.json', getSystemTypeName(1))">
+                            <i class="fa fa-download"></i> {{ __('customer_app') }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary"
+                            @click="downloadSampleFile('partner.json', getSystemTypeName(2))">
+                            <i class="fa fa-download"></i> {{ __('partner_app') }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary"
+                            @click="downloadSampleFile('web.json', getSystemTypeName(3))">
+                            <i class="fa fa-download"></i> {{ __('website') }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary"
+                            @click="downloadSampleFile('panel.json', getSystemTypeName(4))">
+                            <i class="fa fa-download"></i> {{ __('admin_panel') }}
+                        </button>
                     </div>
                 </div>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search"
+                        :placeholder="__('search')"></b-form-input>
+                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+            </div>
+            <!-- Simple table showing languages -->
+            <div class="table-responsive">
+                <b-table :items="groupedLanguages" :fields="languageFields" :current-page="currentPage"
+                    :per-page="perPage" :filter="filter" :filter-included-fields="filterOn"
+                    :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection"
+                    :bordered="true" :busy="isLoading" stacked="md" show-empty small>
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
+                        </div>
+                    </template>
+
+                    <template #cell(name)="row">
+                        <span>{{ row.item.name }}</span>
+                    </template>
+
+                    <template #cell(is_default)="row">
+                        <span v-if="row.item.has_default" class="badge bg-success">{{ __('yes')
+                            }}</span>
+                        <span v-else class="badge bg-danger">{{ __('no') }}</span>
+                    </template>
+
+                    <template #cell(status)="row">
+                        <span v-if="row.item.status == 1" class="badge bg-success">{{ __('active')
+                            }}</span>
+                        <span v-else class="badge bg-danger">{{ __('inactive') }}</span>
+                    </template>
+
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <button v-if="$can('language_update')" class="list-action-btn is-edit"
+                                @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')">
+                                <i class="fa fa-pencil-alt"></i>
+                            </button>
+                            <button v-if="$can('language_delete')" class="list-action-btn is-delete"
+                                @click="deleteLanguageGroup(row.item)" v-b-tooltip.hover
+                                :title="__('delete')">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </template>
+                </b-table>
+            </div>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select"
+                        label-align-sm="right" label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
+                </div>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
+                    align="fill" size="sm" class="list-pagination"></b-pagination>
             </div>
         </div>
 

@@ -1,190 +1,163 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('subscription_faqs') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard')
-                                }}</router-link></li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('subscription_faqs') }}
-                                </li>
-                            </ol>
-                        </nav>
-                    </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('subscription_faqs_list') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                @click="openAddModal" v-b-tooltip.hover :title="__('add')"
+                v-if="$can('subscription_faq_create')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add') }} {{ __('subscription_faqs') }}</span>
+            </button>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="form-check form-switch">
+                    <label class="text-nowrap">
+                        <input type="checkbox" v-model="enableDragDrop" class="form-check-input mr-2">
+                        {{ __('enable_drag_and_drop') }}
+                    </label>
                 </div>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search"
+                        :placeholder="__('search')" @input="getFaqs()"></b-form-input>
+                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
+                    @click="getFaqs()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">{{ __('subscription_faqs_list') }}</h4>
-                        <span class="pull-right">
-                            <button class="btn btn-primary" @click="openAddModal" v-b-tooltip.hover :title="__('add')"
-                                v-if="$can('subscription_faq_create')">{{ __('add') }} {{ __('subscription_faqs')
-                                }}</button>
-                        </span>
-                    </div>
-                    <div class="card-body">
 
-                        <b-row class="mb-3">
-                            <b-col md="3">
-                                <div class="form-check form-switch">
-                                    <label class="text-nowrap">
-                                        <input type="checkbox" v-model="enableDragDrop" class="form-check-input mr-2">
-                                        {{ __('enable_drag_and_drop') }}
-                                    </label>
+            <!-- Table with drag and drop -->
+            <div v-if="enableDragDrop" class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 50px;">{{ __('drag') }}</th>
+                            <th class="text-center" style="width: 80px;">{{ __('id') }}</th>
+                            <th>{{ __('frequently_asked_questions') }}</th>
+                            <th class="text-center" style="width: 100px;">{{ __('sort_order') }}</th>
+                            <th class="text-center" style="width: 100px;">{{ __('status') }}</th>
+                            <th class="text-center" style="width: 120px;">{{ __('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <draggable v-model="faqs" tag="tbody" :disabled="!enableDragDrop" v-bind="dragOptions"
+                        @start="isDragging = true" @end="isDragging = false" @change="updateFaqsOrder"
+                        handle=".drag-handle">
+                        <tr v-for="faq in translatedFaqs" :key="faq.id" :class="{ 'dragging': isDragging }">
+                            <td class="text-center drag-handle" style="cursor: move;">
+                                <i class="fas fa-arrows-alt"></i>
+                            </td>
+                            <td class="text-center">{{ faq.id }}</td>
+                            <td>
+                                <a href="javascript:void(0)" style="color:#435ebe;">{{ faq.question }}</a>
+                                <div class="faq-answer">
+                                    <p class="mb-0"
+                                        v-if="!shouldTruncate(faq.answer) || expandedFaqs[faq.id]">
+                                        {{ faq.answer }}
+                                    </p>
+                                    <p class="mb-0" v-else>
+                                        {{ getTruncatedText(faq.answer) }}
+                                    </p>
+                                    <a v-if="shouldTruncate(faq.answer)" @click="toggleFaqExpansion(faq.id)"
+                                        href="javascript:void(0)"
+                                        style="color: #007bff; font-size: 12px; cursor: pointer;">
+                                        {{ expandedFaqs[faq.id] ? __('view_less') : __('view_more') }}
+                                    </a>
                                 </div>
-                            </b-col>
-                            <b-col md="3" offset-md="5">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input id="filter-input" v-model="filter" type="search"
-                                    :placeholder="__('search')" @input="getFaqs()"></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                    @click="getFaqs()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </b-row>
-
-                        <!-- Table with drag and drop -->
-                        <div v-if="enableDragDrop" class="table-responsive">
-                            <table class="table table-bordered table-sm">
-                                <thead>
-                                    <tr>
-                                        <th class="text-center" style="width: 50px;">{{ __('drag') }}</th>
-                                        <th class="text-center" style="width: 80px;">{{ __('id') }}</th>
-                                        <th>{{ __('frequently_asked_questions') }}</th>
-                                        <th class="text-center" style="width: 100px;">{{ __('sort_order') }}</th>
-                                        <th class="text-center" style="width: 100px;">{{ __('status') }}</th>
-                                        <th class="text-center" style="width: 120px;">{{ __('actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <draggable v-model="faqs" tag="tbody" :disabled="!enableDragDrop" v-bind="dragOptions"
-                                    @start="isDragging = true" @end="isDragging = false" @change="updateFaqsOrder"
-                                    handle=".drag-handle">
-                                    <tr v-for="faq in translatedFaqs" :key="faq.id" :class="{ 'dragging': isDragging }">
-                                        <td class="text-center drag-handle" style="cursor: move;">
-                                            <i class="fas fa-arrows-alt"></i>
-                                        </td>
-                                        <td class="text-center">{{ faq.id }}</td>
-                                        <td>
-                                            <a href="javascript:void(0)" style="color:#435ebe;">{{ faq.question }}</a>
-                                            <div class="faq-answer">
-                                                <p class="mb-0"
-                                                    v-if="!shouldTruncate(faq.answer) || expandedFaqs[faq.id]">
-                                                    {{ faq.answer }}
-                                                </p>
-                                                <p class="mb-0" v-else>
-                                                    {{ getTruncatedText(faq.answer) }}
-                                                </p>
-                                                <a v-if="shouldTruncate(faq.answer)" @click="toggleFaqExpansion(faq.id)"
-                                                    href="javascript:void(0)"
-                                                    style="color: #007bff; font-size: 12px; cursor: pointer;">
-                                                    {{ expandedFaqs[faq.id] ? __('view_less') : __('view_more') }}
-                                                </a>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">{{ faq.sort_order }}</td>
-                                        <td class="text-center">
-                                            <span class='badge bg-success' v-if="faq.status == 1">{{ __('active')
-                                            }}</span>
-                                            <span class='badge bg-danger' v-if="faq.status == 0">{{ __('deactive')
-                                            }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <button class="btn btn-sm btn-primary" @click="editFaq(faq)"
-                                                v-b-tooltip.hover :title="__('edit')"
-                                                v-if="$can('subscription_faq_update')"><i
-                                                    class="fa fa-pencil-alt"></i></button>
-                                            <button class="btn btn-sm btn-danger"
-                                                @click="deleteFaq(getFaqIndex(faq.id), faq.id)" v-b-tooltip.hover
-                                                :title="__('delete')" v-if="$can('subscription_faq_delete')"><i
-                                                    class="fa fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                </draggable>
-                            </table>
-                        </div>
-
-                        <!-- Regular table when drag and drop is disabled -->
-                        <div v-else class="table-responsive">
-                            <b-table :items="translatedFaqs" :fields="fields" :current-page="currentPage"
-                                :per-page="perPage" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc"
-                                :sort-direction="sortDirection" :bordered="true" :busy="isLoading" stacked="md"
-                                show-empty small @filtered="onFiltered">
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
-                                <template #cell(faqs)="row">
-                                    <a href="javascript:void(0)" style="color:#435ebe;">{{ row.item.question }}</a>
-                                    <div class="faq-answer">
-                                        <p class="mb-0"
-                                            v-if="!shouldTruncate(row.item.answer) || expandedFaqs[row.item.id]">
-                                            {{ row.item.answer }}
-                                        </p>
-                                        <p class="mb-0" v-else>
-                                            {{ getTruncatedText(row.item.answer) }}
-                                        </p>
-                                        <!-- View More/Less Link -->
-                                        <a v-if="shouldTruncate(row.item.answer)"
-                                            @click="toggleFaqExpansion(row.item.id)" href="javascript:void(0)"
-                                            style="color: #007bff; font-size: 12px; cursor: pointer;">
-                                            {{ expandedFaqs[row.item.id] ? __('view_less') : __('view_more') }}
-                                        </a>
-                                    </div>
-                                </template>
-                                <template #cell(sort_order)="row">
-                                    <span>{{ row.item.sort_order }}</span>
-                                </template>
-                                <template #cell(status)="row">
-                                    <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active') }}</span>
-                                    <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
-                                    }}</span>
-                                </template>
-                                <template #cell(actions)="row">
-                                    <button class="btn btn-sm btn-primary" @click="editFaq(row.item)" v-b-tooltip.hover
-                                        :title="__('edit')" v-if="$can('subscription_faq_update')"><i
+                            </td>
+                            <td class="text-center">{{ faq.sort_order }}</td>
+                            <td class="text-center">
+                                <span class='badge bg-success' v-if="faq.status == 1">{{ __('active')
+                                }}</span>
+                                <span class='badge bg-danger' v-if="faq.status == 0">{{ __('deactive')
+                                }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="list-actions">
+                                    <button class="list-action-btn is-edit" @click="editFaq(faq)"
+                                        v-b-tooltip.hover :title="__('edit')"
+                                        v-if="$can('subscription_faq_update')"><i
                                             class="fa fa-pencil-alt"></i></button>
-                                    <button class="btn btn-sm btn-danger" @click="deleteFaq(row.index, row.item.id)"
-                                        v-b-tooltip.hover :title="__('delete')"
-                                        v-if="$can('subscription_faq_delete')"><i class="fa fa-trash"></i></button>
-                                </template>
-                            </b-table>
+                                    <button class="list-action-btn is-delete"
+                                        @click="deleteFaq(getFaqIndex(faq.id), faq.id)" v-b-tooltip.hover
+                                        :title="__('delete')" v-if="$can('subscription_faq_delete')"><i
+                                            class="fa fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </draggable>
+                </table>
+            </div>
+
+            <!-- Regular table when drag and drop is disabled -->
+            <div v-else class="table-responsive">
+                <b-table :items="translatedFaqs" :fields="fields" :current-page="currentPage"
+                    :per-page="perPage" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc"
+                    :sort-direction="sortDirection" :bordered="true" :busy="isLoading" stacked="md"
+                    show-empty small @filtered="onFiltered">
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
-                        <!-- Pagination controls (only show when drag-and-drop is disabled) -->
-                        <b-row v-if="!enableDragDrop">
-                            <b-col md="2" class="my-1">
-                                <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
-                                    label-size="sm" class="mb-0">
-                                    <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                        size="sm" class="form-control form-select"></b-form-select>
-                                </b-form-group>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                    align="fill" size="sm" class="my-0"></b-pagination>
-                            </b-col>
-                        </b-row>
-                        <!-- Show total count when drag-and-drop is enabled -->
-                        <b-row v-else class="mt-2">
-                            <b-col>
-                                <p class="text-muted mb-0">{{ __('total') }}: {{ totalRows }} {{ __('items') }}</p>
-                            </b-col>
-                        </b-row>
-
-                    </div>
-
+                    </template>
+                    <template #cell(faqs)="row">
+                        <a href="javascript:void(0)" style="color:#435ebe;">{{ row.item.question }}</a>
+                        <div class="faq-answer">
+                            <p class="mb-0"
+                                v-if="!shouldTruncate(row.item.answer) || expandedFaqs[row.item.id]">
+                                {{ row.item.answer }}
+                            </p>
+                            <p class="mb-0" v-else>
+                                {{ getTruncatedText(row.item.answer) }}
+                            </p>
+                            <!-- View More/Less Link -->
+                            <a v-if="shouldTruncate(row.item.answer)"
+                                @click="toggleFaqExpansion(row.item.id)" href="javascript:void(0)"
+                                style="color: #007bff; font-size: 12px; cursor: pointer;">
+                                {{ expandedFaqs[row.item.id] ? __('view_less') : __('view_more') }}
+                            </a>
+                        </div>
+                    </template>
+                    <template #cell(sort_order)="row">
+                        <span>{{ row.item.sort_order }}</span>
+                    </template>
+                    <template #cell(status)="row">
+                        <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active') }}</span>
+                        <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
+                        }}</span>
+                    </template>
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <button class="list-action-btn is-edit" @click="editFaq(row.item)" v-b-tooltip.hover
+                                :title="__('edit')" v-if="$can('subscription_faq_update')"><i
+                                    class="fa fa-pencil-alt"></i></button>
+                            <button class="list-action-btn is-delete" @click="deleteFaq(row.index, row.item.id)"
+                                v-b-tooltip.hover :title="__('delete')"
+                                v-if="$can('subscription_faq_delete')"><i class="fa fa-trash"></i></button>
+                        </div>
+                    </template>
+                </b-table>
+            </div>
+            <!-- Pagination controls (only show when drag-and-drop is disabled) -->
+            <div class="list-footer" v-if="!enableDragDrop">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
+                        label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
                 </div>
-            </section>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
+                    align="fill" size="sm" class="list-pagination"></b-pagination>
+            </div>
+            <!-- Show total count when drag-and-drop is enabled -->
+            <div class="list-footer mt-2" v-else>
+                <p class="text-muted mb-0">{{ __('total') }}: {{ totalRows }} {{ __('items') }}</p>
+            </div>
+
         </div>
 
         <!-- Add / Edit Modal -->

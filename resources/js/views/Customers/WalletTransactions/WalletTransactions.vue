@@ -1,124 +1,100 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('manage_customer_wallet') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item">
-                                    <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('manage_customer_wallet') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">{{ __('wallet_transactions') }}</h4>
-                        <span class="pull-right">
-                            <button class="btn btn-primary" @click="create_new=true">{{ __('add_transactions') }}</button>
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <b-row class="mb-2">
-                            <b-col md="3" offset-md="8">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input
-                                    id="filter-input"
-                                    v-model="filter"
-                                    type="search"
-                                    :placeholder="__('search')"
-                                ></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getWalletTransactions()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </b-row>
-                        <div class="table-responsive">
-                            <b-table
-                                :items="walletTransactions"
-                                :fields="fields"
-                                :current-page="currentPage"
-                                :per-page="perPage"
-                                :filter="filter"
-                                :filter-included-fields="filterOn"
-                                :sort-by.sync="sortBy"
-                                :sort-desc.sync="sortDesc"
-                                :sort-direction="sortDirection"
-                                :bordered="true"
-                                :busy="isLoading"
-                                stacked="md"
-                                show-empty
-                                small>
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
-
-                                <template #head(amount)="row">
-                                    {{__('amount') }} ({{$currency}})
-                                </template>
-
-                                <template #cell(type)="row">
-                                    <span v-if="row.item.type === 'credit'" class="badge bg-success">{{ __('credit') }}</span>
-                                    <span v-else class="badge bg-danger">{{ __('debit') }}</span>
-                                </template>
-
-                                <template #cell(transaction_date)="row">
-                                    {{ row.item.transaction_date }}
-                                </template>
-                                <template #cell(updated_at)="row">
-                                    {{ row.item.updated_at }}
-                                </template>
-
-                            </b-table>
-                        </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <label>
-                                    <b-form-group
-                                        :label="__('per_page')"
-                                        label-for="per-page-select"
-                                        label-align-sm="right"
-                                        label-size="sm"
-                                        class="mb-0">
-                                        <b-form-select
-                                            id="per-page-select"
-                                            v-model="perPage"
-                                            :options="pageOptions"
-                                            size="sm"
-                                            class="form-control form-select"
-                                        ></b-form-select>
-                                    </b-form-group>
-                                </label>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <label>{{__('total_records')}}:- {{ totalRows }}</label>
-                                <b-pagination
-                                    v-model="currentPage"
-                                    :total-rows="totalRows"
-                                    :per-page="perPage"
-                                    align="fill"
-                                    size="sm"
-                                    class="my-0"
-                                ></b-pagination>
-                            </b-col>
-                        </b-row>
-                    </div>
-                </div>
-            </section>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('wallet_transactions') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                @click="create_new=true">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_transactions') }}</span>
+            </button>
         </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input
+                        id="filter-input"
+                        v-model="filter"
+                        type="search"
+                        :placeholder="__('search')"
+                    ></b-form-input>
+                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getWalletTransactions()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <b-table
+                    :items="walletTransactions"
+                    :fields="fields"
+                    :current-page="currentPage"
+                    :per-page="perPage"
+                    :filter="filter"
+                    :filter-included-fields="filterOn"
+                    :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc"
+                    :sort-direction="sortDirection"
+                    :bordered="true"
+                    :busy="isLoading"
+                    stacked="md"
+                    show-empty
+                    small>
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
+                        </div>
+                    </template>
+
+                    <template #head(amount)="row">
+                        {{__('amount') }} ({{$currency}})
+                    </template>
+
+                    <template #cell(type)="row">
+                        <span v-if="row.item.type === 'credit'" class="badge bg-success">{{ __('credit') }}</span>
+                        <span v-else class="badge bg-danger">{{ __('debit') }}</span>
+                    </template>
+
+                    <template #cell(transaction_date)="row">
+                        {{ row.item.transaction_date }}
+                    </template>
+                    <template #cell(updated_at)="row">
+                        {{ row.item.updated_at }}
+                    </template>
+
+                </b-table>
+            </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                        ></b-form-select>
+                    </b-form-group>
+                </div>
+                <b-pagination
+                    v-model="currentPage"
+                    :total-rows="totalRows"
+                    :per-page="perPage"
+                    align="fill"
+                    size="sm"
+                    class="list-pagination"
+                ></b-pagination>
+            </div>
+        </div>
+
         <!-- Add / Edit -->
         <app-edit-record
             v-if="create_new || edit_record"

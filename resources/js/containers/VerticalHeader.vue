@@ -1,16 +1,15 @@
 <template>
-    <header class="mb-3">
+    <header class="app-header mb-3">
 
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
-                <a href="javascript:void(0)" class="burger-btn d-block">
-
-                    <i class="fa fa-bars" aria-hidden="true"></i>
+                <a href="javascript:void(0)" class="burger-btn list-icon-btn d-block" @click="toggleSidebar" title="Toggle Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left-icon lucide-panel-left"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
                 </a>
                 <div class="d-flex justify-content-start align-items-center">
                     <div class="me-2" v-if="$isDemo == 1 && windowWidth < this.$mobileWidth"><span
-                            class="badge bg-danger">{{ __('demo_mode') }}</span></div>
-                    <a href="javascript:void(0)" class="navbar-toggler navbar-toggler" data-bs-toggle="collapse"
+                            class="hdr-demo-badge"><span class="hdr-demo-dot"></span>{{ __('demo_mode') }}</span></div>
+                    <a href="javascript:void(0)" class="navbar-toggler list-icon-btn" data-bs-toggle="collapse"
                         data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation" @click="isToggle = !isToggle;">
                         <i v-if="isToggle === true" class="fa fa-times" aria-hidden="true"></i>
@@ -23,57 +22,22 @@
                         class="d-flex flex-column flex-lg-row align-items-center justify-content-lg-end w-100 mt-1 mt-lg-0">
                         <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row flex-wrap align-items-center gap-1">
                             <li class="nav-item dropdown me-2" v-if="$isDemo == 1 && windowWidth > this.$mobileWidth">
-                                <div class="d-flex gap-2 align-items-center"><span class="badge bg-danger">{{
-                                    __('demo_mode') }}</span></div>
+                                <div class="d-flex gap-2 align-items-center"><span class="hdr-demo-badge"><span
+                                            class="hdr-demo-dot"></span>{{ __('demo_mode') }}</span></div>
                             </li>
 
                             <li class="nav-item dropdown me-2">
-                                <div class="theme-toggle d-flex gap-1 align-items-center">
-                                    <label for="userTheme" style="cursor: pointer">
-                                        <template v-if="userTheme === 'theme-dark'">
-                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img"
-                                                class="iconify iconify--mdi" width="20" height="20"
-                                                preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
-                                                <path fill="currentColor"
-                                                    d="m17.75 4.09l-2.53 1.94l.91 3.06l-2.63-1.81l-2.63 1.81l.91-3.06l-2.53-1.94L12.44 4l1.06-3l1.06 3l3.19.09m3.5 6.91l-1.64 1.25l.59 1.98l-1.7-1.17l-1.7 1.17l.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95l2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85c-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14c.4-.4.82-.76 1.27-1.08c.75-.53 1.93.36 1.85 1.19c-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82c-2.81 3.14-2.7 7.96.31 10.98c3.02 3.01 7.84 3.12 10.98.31Z">
-                                                </path>
-                                            </svg>
-                                        </template>
-                                        <template v-else>
-                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img"
-                                                class="iconify iconify--system-uicons" width="20" height="20"
-                                                preserveAspectRatio="xMidYMid meet" viewBox="0 0 21 21">
-                                                <g fill="none" fill-rule="evenodd" stroke="currentColor"
-                                                    stroke-linecap="round" stroke-linejoin="round">
-                                                    <path
-                                                        d="M10.5 14.5c2.219 0 4-1.763 4-3.982a4.003 4.003 0 0 0-4-4.018c-2.219 0-4 1.781-4 4c0 2.219 1.781 4 4 4zM4.136 4.136L5.55 5.55m9.9 9.9l1.414 1.414M1.5 10.5h2m14 0h2M4.135 16.863L5.55 15.45m9.899-9.9l1.414-1.415M10.5 19.5v-2m0-14v-2"
-                                                        opacity=".3"></path>
-                                                    <g transform="translate(-210 -1)">
-                                                        <path d="M220.5 2.5v2m6.5.5l-1.5 1.5"></path>
-                                                        <circle cx="220.5" cy="11.5" r="4"></circle>
-                                                        <path
-                                                            d="m214 5l1.5 1.5m5 14v-2m6.5-.5l-1.5-1.5M214 18l1.5-1.5m-4-5h2m14 0h2">
-                                                        </path>
-                                                    </g>
-                                                </g>
-                                            </svg>
-                                        </template>
-                                    </label>
-                                    <div class="form-check form-switch fs-6">
-                                        <input class="form-check-input me-0" type="checkbox" id="userTheme"
-                                            style="cursor: pointer" true-value="theme-dark" false-value="theme-light"
-                                            v-model="userTheme" @change="toggleTheme">
-                                        <label class="form-check-label"></label>
-                                    </div>
-                                </div>
+                                <button type="button" class="list-icon-btn" @click="toggleTheme($event)"
+                                    :title="userTheme === 'theme-dark' ? 'Switch to light' : 'Switch to dark'">
+                                    <i v-if="userTheme === 'theme-dark'" class="bi bi-sun"></i>
+                                    <i v-else class="bi bi-moon-stars"></i>
+                                </button>
                             </li>
 
                             <li class="nav-item dropdown me-2">
                                 <div class="d-flex gap-2 align-items-center">
 
-                                    <button type="button" class="badge bg-success" @click="popoverShow = true"
+                                    <button type="button" class="list-icon-btn" @click="popoverShow = true"
                                         id="confirmButton" ref="confirmButton" title="Clear">
                                         <b-spinner v-if="isSystemRefreshing" small label="Spinning"></b-spinner>
                                         <i v-else class="fa fa-refresh" :class="{ 'fa-spin': isSystemRefreshing }"></i>
@@ -104,66 +68,57 @@
                             </li>
 
                             <li v-if="this.$websiteUrl" class="nav-item dropdown me-2">
-                                <a class="nav-link" :href="this.$websiteUrl" target="__blank">
-                                    <i class="fa fa-solid fa-globe fs-4 text-gray-600"></i>
+                                <a class="list-icon-btn" :href="this.$websiteUrl" target="__blank">
+                                    <i class="fa fa-solid fa-globe" aria-hidden="true"></i>
                                 </a>
                             </li>
 
-                            <li class="nav-item dropdown me-1 pt-2">
-                                <a class="nav-link active dropdown-toggle" href="#" data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    <i class="bi bi-bell fs-4 text-gray-600"></i><span
-                                        class="badge bg-success rounded-circle position-absolute translate-middle p-2"
-                                        style="bottom: 20px; left: 30px;">{{ notifications_unread_count }}</span>
-                                    <!-- Notification bubble -->
+                            <li class="nav-item dropdown me-1">
+                                <a class="list-icon-btn position-relative dropdown-toggle" href="#"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-bell" aria-hidden="true"></i>
+                                    <span v-if="notifications_unread_count > 0" class="hdr-dot">{{
+                                        notifications_unread_count > 9 ? '9+' : notifications_unread_count
+                                        }}</span>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end notification-dropdown"
+                                <ul class="dropdown-menu dropdown-menu-end notification-dropdown p-0"
                                     aria-labelledby="dropdownMenuButton">
-                                    <li>
-                                        <h6 class="dropdown-header">{{ __('notifications') }}</h6>
+                                    <li class="notif-head">
+                                        <span class="notif-head-title">{{ __('notifications') }}</span>
+                                        <span v-if="notifications_unread_count > 0" class="notif-count">{{
+                                            notifications_unread_count }}</span>
                                     </li>
 
-                                    <li class="dropdown-item notification-item"
-                                        v-for="notification of notifications.slice(0, 4)">
-                                        <a class="d-flex align-items-start"
-                                            @click="markAsReadNotification(notification)">
-
-                                            <div class="notification-text w-100">
-                                                <p class="notification-title font-bold mb-1">
-                                                    <a @click="handleNotificationClick(notification)"
-                                                        style="cursor: pointer;">
-                                                        {{ notification.data.text }}</a>
-                                                </p>
-                                                <p class="notification-subtitle font-thin text-sm mb-0">{{
-                                                    changeDateTime(notification.created_at)
-                                                }}</p>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li v-if="notifications.length > 0">
-                                        <hr class="dropdown-divider">
-                                        <div class="d-flex flex-column gap-1 px-3 py-2">
-                                            <!-- Read all notifications button - only show if there are unread notifications -->
-                                            <button v-if="notifications_unread_count > 0"
-                                                class="btn btn-sm btn-primary w-100" @click="confirmMarkAllAsRead">
-                                                <i class="bi bi-check-all me-1"></i>
-                                                {{ __('read_all_notifications') }}
-                                            </button>
-                                            <!-- See all notifications button -->
-                                            <button class="btn btn-sm btn-outline-secondary w-100" v-if="isSellerRoute"
-                                                @click="$router.push('/seller/notification_panel')">
-                                                <i class="bi bi-bell me-1"></i>
-                                                {{ __('see_all_notifications') }}
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary w-100" v-else
-                                                @click="$router.push('/notification_panel')">
-                                                <i class="bi bi-bell me-1"></i>
-                                                {{ __('see_all_notifications') }}
-                                            </button>
+                                    <li class="notif-scroll">
+                                        <button v-for="notification of notifications.slice(0, 4)" type="button"
+                                            class="notif-item" :class="{ 'is-unread': !notification.read_at }"
+                                            @click="markAsReadNotification(notification); handleNotificationClick(notification)">
+                                            <span class="notif-icon"><i class="bi bi-bell" aria-hidden="true"></i></span>
+                                            <span class="notif-body">
+                                                <span class="notif-text">{{ notification.data.text }}</span>
+                                                <span class="notif-time">{{ changeDateTime(notification.created_at)
+                                                    }}</span>
+                                            </span>
+                                        </button>
+                                        <div v-if="notifications.length == 0" class="notif-empty">
+                                            <i class="bi bi-bell-slash" style="font-size:1.5rem;"></i>
+                                            <span>{{ __('no_new_notification') }}</span>
                                         </div>
                                     </li>
-                                    <li><a class="dropdown-item" v-if="notifications.length == 0">{{
-                                        __('no_new_notification') }}</a></li>
+                                    <li v-if="notifications.length > 0" class="notif-foot">
+                                        <button class="notif-see-all" v-if="isSellerRoute"
+                                            @click="$router.push('/seller/notification_panel')">
+                                            {{ __('see_all_notifications') }}
+                                        </button>
+                                        <button class="notif-see-all" v-else
+                                            @click="$router.push('/notification_panel')">
+                                            {{ __('see_all_notifications') }}
+                                        </button>
+                                        <button v-if="notifications_unread_count > 0" class="notif-mark-all"
+                                            @click="confirmMarkAllAsRead">
+                                            {{ __('read_all_notifications') }}
+                                        </button>
+                                    </li>
                                 </ul>
                             </li>
                             <li class="nav-item dropdown me-3">
@@ -184,18 +139,14 @@
                             </li>
                         </ul>
                         <div class="dropdown">
-                            <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="user-menu d-flex">
-                                    <div class="user-name text-end me-3">
-                                        <h6 class="mb-0 text-gray-600">{{ user.username }}</h6>
-                                        <p class="mb-0 text-sm text-gray-600">{{ role === 'Seller' ? __('seller') : role }}</p>
-                                    </div>
-                                    <div class="user-img d-flex align-items-center">
-                                        <div class="avatar avatar-md22">
-                                            <img :src="profile_url">
-                                        </div>
-                                    </div>
-                                </div>
+                            <a href="#" class="user-chip text-decoration-none" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <img :src="profile_url" alt="profile">
+                                <span class="d-none d-lg-flex flex-column text-start">
+                                    <span class="user-chip-name">{{ user.username }}</span>
+                                    <span class="user-chip-role">{{ role === 'Seller' ? __('seller') : role }}</span>
+                                </span>
+                                <i class="bi bi-chevron-down hdr-caret d-none d-lg-block"></i>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu"
                                 aria-labelledby="dropdownMenuButton">
@@ -373,6 +324,24 @@ export default {
 
 
     methods: {
+        toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+            sidebar.classList.toggle('active');
+            const isSmallScreen = window.innerWidth < 1200;
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            if (backdrop) backdrop.remove();
+            if (isSmallScreen && sidebar.classList.contains('active')) {
+                const b = document.createElement('div');
+                b.className = 'sidebar-backdrop';
+                b.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    const bd = document.querySelector('.sidebar-backdrop');
+                    if (bd) bd.remove();
+                });
+                document.body.appendChild(b);
+            }
+        },
         //seller status toggle
         getSellerStatus() {
             axios.post(this.$apiUrl + '/seller/get_seller_status', {
@@ -648,12 +617,60 @@ export default {
             this.userTheme = user_theme;
             return user_theme;
         },
-        toggleTheme() {
+        toggleTheme(e) {
+            const x = e ? e.clientX : window.innerWidth / 2;
+            const y = e ? e.clientY : window.innerHeight / 2;
+
+            const endRadius = Math.hypot(
+                Math.max(x, window.innerWidth - x),
+                Math.max(y, window.innerHeight - y)
+            );
+
             const activeTheme = sessionStorage.getItem("user-theme");
-            if (activeTheme === "theme-light" || activeTheme == "" || activeTheme == "undefined" || activeTheme == "null") {
-                this.setTheme("theme-dark");
+            const nextTheme = (activeTheme === "theme-light" || !activeTheme || activeTheme === "undefined" || activeTheme === "null")
+                ? "theme-dark"
+                : "theme-light";
+
+            if (document.startViewTransition) {
+                const transition = document.startViewTransition(() => {
+                    this.setTheme(nextTheme);
+                });
+                transition.ready.then(() => {
+                    const clipPath = [
+                        `circle(0px at ${x}px ${y}px)`,
+                        `circle(${endRadius}px at ${x}px ${y}px)`
+                    ];
+                    document.documentElement.animate(
+                        {
+                            clipPath: clipPath
+                        },
+                        {
+                            duration: 500,
+                            easing: 'ease-in-out',
+                            pseudoElement: '::view-transition-new(root)'
+                        }
+                    );
+                });
             } else {
-                this.setTheme("theme-light");
+                const circle = document.createElement('div');
+                circle.className = 'theme-circle-transition';
+                const diameter = endRadius * 2;
+                circle.style.width = `${diameter}px`;
+                circle.style.height = `${diameter}px`;
+                circle.style.left = `${x - endRadius}px`;
+                circle.style.top = `${y - endRadius}px`;
+                circle.style.backgroundColor = nextTheme === 'theme-dark' ? '#151521' : '#f2f7ff';
+                document.body.appendChild(circle);
+
+                requestAnimationFrame(() => {
+                    circle.classList.add('active');
+                    setTimeout(() => {
+                        this.setTheme(nextTheme);
+                        setTimeout(() => {
+                            circle.remove();
+                        }, 300);
+                    }, 300);
+                });
             }
         },
         onResize() {

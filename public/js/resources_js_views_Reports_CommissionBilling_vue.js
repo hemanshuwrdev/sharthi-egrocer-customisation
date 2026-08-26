@@ -299,26 +299,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -786,49 +766,14 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "page-title" }, [
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-            _c("h3", [_vm._v(_vm._s(_vm.__("commission_billing")))]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-            _c(
-              "nav",
-              {
-                staticClass: "breadcrumb-header float-start float-lg-end",
-                attrs: { "aria-label": "breadcrumb" },
-              },
-              [
-                _c("ol", { staticClass: "breadcrumb" }, [
-                  _c(
-                    "li",
-                    { staticClass: "breadcrumb-item" },
-                    [
-                      _c("router-link", { attrs: { to: "/dashboard" } }, [
-                        _vm._v(_vm._s(_vm.__("dashboard"))),
-                      ]),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "li",
-                    {
-                      staticClass: "breadcrumb-item active",
-                      attrs: { "aria-current": "page" },
-                    },
-                    [_vm._v(_vm._s(_vm.__("commission_billing")))]
-                  ),
-                ]),
-              ]
-            ),
-          ]),
-        ]),
+  return _c("div", { staticClass: "list-page" }, [
+    _c("div", { staticClass: "page-head" }, [
+      _c("h3", { staticClass: "page-head-title" }, [
+        _vm._v(_vm._s(_vm.__("commission_billing"))),
       ]),
-      _vm._v(" "),
+    ]),
+    _vm._v(" "),
+    _c("div", [
       _c(
         "section",
         { staticClass: "section" },
@@ -1168,14 +1113,11 @@ var render = function () {
           _vm._v(" "),
           _vm.activeTab === "summary"
             ? _c("div", [
-                _c("div", { staticClass: "card" }, [
-                  _c(
-                    "div",
-                    {
-                      staticClass:
-                        "card-header d-flex justify-content-between align-items-center",
-                    },
-                    [
+                _c(
+                  "div",
+                  { staticClass: "list-surface" },
+                  [
+                    _c("div", { staticClass: "list-toolbar" }, [
                       _c("h4", { staticClass: "card-title mb-0" }, [
                         _vm._v(
                           _vm._s(_vm.__("distributor_gmv_commission_summary"))
@@ -1185,37 +1127,470 @@ var render = function () {
                       _c(
                         "button",
                         {
-                          staticClass: "btn btn-sm btn-primary",
+                          directives: [
+                            {
+                              name: "b-tooltip",
+                              rawName: "v-b-tooltip.hover",
+                              modifiers: { hover: true },
+                            },
+                          ],
+                          staticClass: "list-icon-btn",
+                          attrs: { title: _vm.__("refresh") },
                           on: { click: _vm.loadSummary },
                         },
                         [_c("i", { staticClass: "fa fa-refresh" })]
                       ),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "div",
-                    { staticClass: "card-body" },
-                    [
-                      _vm.summaryLoading
-                        ? _c(
+                    ]),
+                    _vm._v(" "),
+                    _vm.summaryLoading
+                      ? _c(
+                          "div",
+                          { staticClass: "text-center py-4" },
+                          [_c("b-spinner")],
+                          1
+                        )
+                      : _c(
+                          "div",
+                          { staticClass: "table-responsive" },
+                          [
+                            _c("b-table", {
+                              attrs: {
+                                items: _vm.summaryData,
+                                fields: _vm.summaryFields,
+                                filter: _vm.summaryFilter,
+                                "current-page": _vm.summaryCurrentPage,
+                                "per-page": _vm.summaryPerPage,
+                                busy: _vm.summaryLoading,
+                                bordered: true,
+                                "show-empty": "",
+                                small: "",
+                                stacked: "md",
+                              },
+                              scopedSlots: _vm._u(
+                                [
+                                  {
+                                    key: "cell(commission_rate)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(row.item.commission_rate) +
+                                            "%\n                            "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                  {
+                                    key: "cell(gmv_this_month)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(_vm.$currency) +
+                                            " " +
+                                            _vm._s(
+                                              row.item.gmv_this_month.toFixed(2)
+                                            ) +
+                                            "\n                            "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                  {
+                                    key: "cell(commission_this_month)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(_vm.$currency) +
+                                            " " +
+                                            _vm._s(
+                                              row.item.commission_this_month.toFixed(
+                                                2
+                                              )
+                                            ) +
+                                            "\n                            "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                  {
+                                    key: "cell(gmv_all_time)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(_vm.$currency) +
+                                            " " +
+                                            _vm._s(
+                                              row.item.gmv_all_time.toFixed(2)
+                                            ) +
+                                            "\n                            "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                  {
+                                    key: "cell(commission_all_time)",
+                                    fn: function (row) {
+                                      return [
+                                        _vm._v(
+                                          "\n                                " +
+                                            _vm._s(_vm.$currency) +
+                                            " " +
+                                            _vm._s(
+                                              row.item.commission_all_time.toFixed(
+                                                2
+                                              )
+                                            ) +
+                                            "\n                            "
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                  {
+                                    key: "cell(actions)",
+                                    fn: function (row) {
+                                      return [
+                                        _c(
+                                          "div",
+                                          { staticClass: "list-actions" },
+                                          [
+                                            _c(
+                                              "router-link",
+                                              {
+                                                directives: [
+                                                  {
+                                                    name: "b-tooltip",
+                                                    rawName:
+                                                      "v-b-tooltip.hover",
+                                                    modifiers: { hover: true },
+                                                  },
+                                                ],
+                                                staticClass:
+                                                  "list-action-btn is-view",
+                                                attrs: {
+                                                  to:
+                                                    "/commission_billing/" +
+                                                    row.item.seller_id,
+                                                  title: _vm.__("view_detail"),
+                                                },
+                                              },
+                                              [
+                                                _c("i", {
+                                                  staticClass: "fa fa-eye",
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]
+                                    },
+                                  },
+                                ],
+                                null,
+                                false,
+                                2962658637
+                              ),
+                            }),
+                          ],
+                          1
+                        ),
+                    _vm._v(" "),
+                    _vm.summaryData.length
+                      ? _c(
+                          "b-row",
+                          { staticClass: "mt-2" },
+                          [
+                            _c("b-col", { attrs: { md: "3" } }, [
+                              _c("div", { staticClass: "text-success h6" }, [
+                                _vm._v(
+                                  "\n                                " +
+                                    _vm._s(_vm.__("total_gmv_month")) +
+                                    ": " +
+                                    _vm._s(_vm.$currency) +
+                                    " " +
+                                    _vm._s(_vm.totalGmvMonth.toFixed(2)) +
+                                    "\n                            "
+                                ),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("b-col", { attrs: { md: "3" } }, [
+                              _c("div", { staticClass: "text-primary h6" }, [
+                                _vm._v(
+                                  "\n                                " +
+                                    _vm._s(_vm.__("total_commission_month")) +
+                                    ": " +
+                                    _vm._s(_vm.$currency) +
+                                    " " +
+                                    _vm._s(_vm.totalCommMonth.toFixed(2)) +
+                                    "\n                            "
+                                ),
+                              ]),
+                            ]),
+                          ],
+                          1
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.summaryData.length
+                      ? _c(
+                          "div",
+                          { staticClass: "list-footer" },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "list-perpage" },
+                              [
+                                _c(
+                                  "b-form-group",
+                                  {
+                                    staticClass: "mb-0",
+                                    attrs: {
+                                      label: _vm.__("per_page"),
+                                      "label-for": "summary-per-page-select",
+                                      "label-align-sm": "right",
+                                      "label-size": "sm",
+                                    },
+                                  },
+                                  [
+                                    _c("b-form-select", {
+                                      staticClass: "form-control form-select",
+                                      attrs: {
+                                        id: "summary-per-page-select",
+                                        options: _vm.summaryPageOptions,
+                                        size: "sm",
+                                      },
+                                      model: {
+                                        value: _vm.summaryPerPage,
+                                        callback: function ($$v) {
+                                          _vm.summaryPerPage = $$v
+                                        },
+                                        expression: "summaryPerPage",
+                                      },
+                                    }),
+                                  ],
+                                  1
+                                ),
+                              ],
+                              1
+                            ),
+                            _vm._v(" "),
+                            _c("b-pagination", {
+                              staticClass: "list-pagination",
+                              attrs: {
+                                "total-rows": _vm.summaryData.length,
+                                "per-page": _vm.summaryPerPage,
+                                align: "fill",
+                                size: "sm",
+                              },
+                              model: {
+                                value: _vm.summaryCurrentPage,
+                                callback: function ($$v) {
+                                  _vm.summaryCurrentPage = $$v
+                                },
+                                expression: "summaryCurrentPage",
+                              },
+                            }),
+                          ],
+                          1
+                        )
+                      : _vm._e(),
+                  ],
+                  1
+                ),
+              ])
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.activeTab === "transactions"
+            ? _c("div", [
+                _c(
+                  "div",
+                  { staticClass: "list-surface" },
+                  [
+                    _c("div", { staticClass: "list-toolbar" }, [
+                      _c("h4", { staticClass: "card-title" }, [
+                        _vm._v(_vm._s(_vm.__("all_commission_transactions"))),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "b-row",
+                      { staticClass: "mb-3" },
+                      [
+                        _c("b-col", { attrs: { md: "4" } }, [
+                          _c("h6", { staticClass: "box-title" }, [
+                            _vm._v(_vm._s(_vm.__("from_to_date"))),
+                          ]),
+                          _vm._v(" "),
+                          _c(
                             "div",
-                            { staticClass: "text-center py-4" },
-                            [_c("b-spinner")],
+                            { staticClass: "d-flex align-items-center" },
+                            [
+                              _c("date-range-picker", {
+                                attrs: {
+                                  "append-to-body": true,
+                                  "single-date-picker": "range",
+                                  autoApply: false,
+                                  showDropdowns: true,
+                                  maxDate: _vm.maxDate,
+                                  "locale-data": _vm.dateRangePickerLocale,
+                                  ranges: _vm.dateRangePickerRanges,
+                                },
+                                on: {
+                                  update: function ($event) {
+                                    return _vm.loadTransactions(1)
+                                  },
+                                },
+                                model: {
+                                  value: _vm.txDateRange,
+                                  callback: function ($$v) {
+                                    _vm.txDateRange = $$v
+                                  },
+                                  expression: "txDateRange",
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "button",
+                                {
+                                  staticClass: "btn btn-sm btn-danger ms-1",
+                                  on: {
+                                    click: function ($event) {
+                                      _vm.txDateRange = {
+                                        startDate: null,
+                                        endDate: null,
+                                      }
+                                      _vm.loadTransactions(1)
+                                    },
+                                  },
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                    " +
+                                      _vm._s(_vm.__("clear")) +
+                                      "\n                                "
+                                  ),
+                                ]
+                              ),
+                            ],
                             1
-                          )
-                        : _c(
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c("b-col", { attrs: { md: "3" } }, [
+                          _c("h6", { staticClass: "box-title" }, [
+                            _vm._v(_vm._s(_vm.__("seller"))),
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "select",
+                            {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.txSeller,
+                                  expression: "txSeller",
+                                },
+                              ],
+                              staticClass: "form-control form-select",
+                              on: {
+                                change: [
+                                  function ($event) {
+                                    var $$selectedVal = Array.prototype.filter
+                                      .call(
+                                        $event.target.options,
+                                        function (o) {
+                                          return o.selected
+                                        }
+                                      )
+                                      .map(function (o) {
+                                        var val =
+                                          "_value" in o ? o._value : o.value
+                                        return val
+                                      })
+                                    _vm.txSeller = $event.target.multiple
+                                      ? $$selectedVal
+                                      : $$selectedVal[0]
+                                  },
+                                  function ($event) {
+                                    return _vm.loadTransactions(1)
+                                  },
+                                ],
+                              },
+                            },
+                            [
+                              _c("option", { attrs: { value: "" } }, [
+                                _vm._v(_vm._s(_vm.__("all_distributors"))),
+                              ]),
+                              _vm._v(" "),
+                              _vm._l(_vm.sellers, function (s) {
+                                return _c(
+                                  "option",
+                                  {
+                                    key: s.seller_id,
+                                    domProps: { value: s.seller_id },
+                                  },
+                                  [_vm._v(_vm._s(s.name))]
+                                )
+                              }),
+                            ],
+                            2
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "b-col",
+                          {
+                            staticClass: "d-flex align-items-end",
+                            attrs: { md: "1" },
+                          },
+                          [
+                            _c(
+                              "button",
+                              {
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.hover",
+                                    modifiers: { hover: true },
+                                  },
+                                ],
+                                staticClass: "list-icon-btn",
+                                attrs: { title: _vm.__("refresh") },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.loadTransactions(1)
+                                  },
+                                },
+                              },
+                              [_c("i", { staticClass: "fa fa-refresh" })]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _vm.txLoading
+                      ? _c(
+                          "div",
+                          { staticClass: "text-center py-4" },
+                          [_c("b-spinner")],
+                          1
+                        )
+                      : _c("div", [
+                          _c(
                             "div",
                             { staticClass: "table-responsive" },
                             [
                               _c("b-table", {
                                 attrs: {
-                                  items: _vm.summaryData,
-                                  fields: _vm.summaryFields,
-                                  filter: _vm.summaryFilter,
-                                  "current-page": _vm.summaryCurrentPage,
-                                  "per-page": _vm.summaryPerPage,
-                                  busy: _vm.summaryLoading,
+                                  items: _vm.txData,
+                                  fields: _vm.txFields2,
                                   bordered: true,
                                   "show-empty": "",
                                   small: "",
@@ -1224,111 +1599,46 @@ var render = function () {
                                 scopedSlots: _vm._u(
                                   [
                                     {
-                                      key: "cell(commission_rate)",
+                                      key: "cell(order_item_amount)",
                                       fn: function (row) {
                                         return [
                                           _vm._v(
-                                            "\n                                    " +
-                                              _vm._s(row.item.commission_rate) +
-                                              "%\n                                "
-                                          ),
-                                        ]
-                                      },
-                                    },
-                                    {
-                                      key: "cell(gmv_this_month)",
-                                      fn: function (row) {
-                                        return [
-                                          _vm._v(
-                                            "\n                                    " +
-                                              _vm._s(_vm.$currency) +
+                                            _vm._s(_vm.$currency) +
                                               " " +
                                               _vm._s(
-                                                row.item.gmv_this_month.toFixed(
-                                                  2
-                                                )
-                                              ) +
-                                              "\n                                "
+                                                parseFloat(
+                                                  row.item.order_item_amount
+                                                ).toFixed(2)
+                                              )
                                           ),
                                         ]
                                       },
                                     },
                                     {
-                                      key: "cell(commission_this_month)",
+                                      key: "cell(commission_amount)",
                                       fn: function (row) {
                                         return [
                                           _vm._v(
-                                            "\n                                    " +
-                                              _vm._s(_vm.$currency) +
+                                            _vm._s(_vm.$currency) +
                                               " " +
                                               _vm._s(
-                                                row.item.commission_this_month.toFixed(
-                                                  2
-                                                )
-                                              ) +
-                                              "\n                                "
+                                                parseFloat(
+                                                  row.item.commission_amount
+                                                ).toFixed(2)
+                                              )
                                           ),
                                         ]
                                       },
                                     },
                                     {
-                                      key: "cell(gmv_all_time)",
+                                      key: "cell(seller_commission_percentage)",
                                       fn: function (row) {
                                         return [
                                           _vm._v(
-                                            "\n                                    " +
-                                              _vm._s(_vm.$currency) +
-                                              " " +
-                                              _vm._s(
-                                                row.item.gmv_all_time.toFixed(2)
-                                              ) +
-                                              "\n                                "
-                                          ),
-                                        ]
-                                      },
-                                    },
-                                    {
-                                      key: "cell(commission_all_time)",
-                                      fn: function (row) {
-                                        return [
-                                          _vm._v(
-                                            "\n                                    " +
-                                              _vm._s(_vm.$currency) +
-                                              " " +
-                                              _vm._s(
-                                                row.item.commission_all_time.toFixed(
-                                                  2
-                                                )
-                                              ) +
-                                              "\n                                "
-                                          ),
-                                        ]
-                                      },
-                                    },
-                                    {
-                                      key: "cell(actions)",
-                                      fn: function (row) {
-                                        return [
-                                          _c(
-                                            "router-link",
-                                            {
-                                              staticClass:
-                                                "btn btn-sm btn-outline-primary",
-                                              attrs: {
-                                                to:
-                                                  "/commission_billing/" +
-                                                  row.item.seller_id,
-                                              },
-                                            },
-                                            [
-                                              _vm._v(
-                                                "\n                                        " +
-                                                  _vm._s(
-                                                    _vm.__("view_detail")
-                                                  ) +
-                                                  "\n                                    "
-                                              ),
-                                            ]
+                                            _vm._s(
+                                              row.item
+                                                .seller_commission_percentage
+                                            ) + "%"
                                           ),
                                         ]
                                       },
@@ -1336,427 +1646,52 @@ var render = function () {
                                   ],
                                   null,
                                   false,
-                                  745325859
+                                  2296122240
                                 ),
                               }),
                             ],
                             1
                           ),
-                      _vm._v(" "),
-                      _vm.summaryData.length
-                        ? _c(
-                            "b-row",
-                            { staticClass: "mt-2" },
-                            [
-                              _c("b-col", { attrs: { md: "3" } }, [
-                                _c("div", { staticClass: "text-success h6" }, [
-                                  _vm._v(
-                                    "\n                                    " +
-                                      _vm._s(_vm.__("total_gmv_month")) +
-                                      ": " +
-                                      _vm._s(_vm.$currency) +
-                                      " " +
-                                      _vm._s(_vm.totalGmvMonth.toFixed(2)) +
-                                      "\n                                "
-                                  ),
-                                ]),
-                              ]),
-                              _vm._v(" "),
-                              _c("b-col", { attrs: { md: "3" } }, [
-                                _c("div", { staticClass: "text-primary h6" }, [
-                                  _vm._v(
-                                    "\n                                    " +
-                                      _vm._s(_vm.__("total_commission_month")) +
-                                      ": " +
-                                      _vm._s(_vm.$currency) +
-                                      " " +
-                                      _vm._s(_vm.totalCommMonth.toFixed(2)) +
-                                      "\n                                "
-                                  ),
-                                ]),
-                              ]),
-                            ],
-                            1
-                          )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.summaryData.length
-                        ? _c(
-                            "b-row",
-                            { staticClass: "mt-2" },
-                            [
-                              _c(
-                                "b-col",
-                                { attrs: { md: "2" } },
-                                [
-                                  _c(
-                                    "b-form-group",
-                                    {
-                                      staticClass: "mb-0",
-                                      attrs: {
-                                        label: _vm.__("per_page"),
-                                        "label-for": "summary-per-page-select",
-                                        "label-align-sm": "right",
-                                        "label-size": "sm",
-                                      },
-                                    },
-                                    [
-                                      _c("b-form-select", {
-                                        staticClass: "form-control form-select",
-                                        attrs: {
-                                          id: "summary-per-page-select",
-                                          options: _vm.summaryPageOptions,
-                                          size: "sm",
-                                        },
-                                        model: {
-                                          value: _vm.summaryPerPage,
-                                          callback: function ($$v) {
-                                            _vm.summaryPerPage = $$v
-                                          },
-                                          expression: "summaryPerPage",
-                                        },
-                                      }),
-                                    ],
-                                    1
-                                  ),
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-col",
-                                { attrs: { md: "4", "offset-md": "6" } },
-                                [
-                                  _c("b-pagination", {
-                                    staticClass: "my-0",
-                                    attrs: {
-                                      "total-rows": _vm.summaryData.length,
-                                      "per-page": _vm.summaryPerPage,
-                                      align: "fill",
-                                      size: "sm",
-                                    },
-                                    model: {
-                                      value: _vm.summaryCurrentPage,
-                                      callback: function ($$v) {
-                                        _vm.summaryCurrentPage = $$v
-                                      },
-                                      expression: "summaryCurrentPage",
-                                    },
-                                  }),
-                                ],
-                                1
-                              ),
-                            ],
-                            1
-                          )
-                        : _vm._e(),
-                    ],
-                    1
-                  ),
-                ]),
-              ])
-            : _vm._e(),
-          _vm._v(" "),
-          _vm.activeTab === "transactions"
-            ? _c("div", [
-                _c("div", { staticClass: "card" }, [
-                  _c("div", { staticClass: "card-header" }, [
-                    _c("h4", { staticClass: "card-title" }, [
-                      _vm._v(_vm._s(_vm.__("all_commission_transactions"))),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c(
-                    "div",
-                    { staticClass: "card-body" },
-                    [
-                      _c(
-                        "b-row",
-                        { staticClass: "mb-3" },
-                        [
-                          _c("b-col", { attrs: { md: "4" } }, [
-                            _c("h6", { staticClass: "box-title" }, [
-                              _vm._v(_vm._s(_vm.__("from_to_date"))),
-                            ]),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              { staticClass: "d-flex align-items-center" },
-                              [
-                                _c("date-range-picker", {
-                                  attrs: {
-                                    "append-to-body": true,
-                                    "single-date-picker": "range",
-                                    autoApply: false,
-                                    showDropdowns: true,
-                                    maxDate: _vm.maxDate,
-                                    "locale-data": _vm.dateRangePickerLocale,
-                                    ranges: _vm.dateRangePickerRanges,
-                                  },
-                                  on: {
-                                    update: function ($event) {
-                                      return _vm.loadTransactions(1)
-                                    },
-                                  },
-                                  model: {
-                                    value: _vm.txDateRange,
-                                    callback: function ($$v) {
-                                      _vm.txDateRange = $$v
-                                    },
-                                    expression: "txDateRange",
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _c(
-                                  "button",
-                                  {
-                                    staticClass: "btn btn-sm btn-danger ms-1",
-                                    on: {
-                                      click: function ($event) {
-                                        _vm.txDateRange = {
-                                          startDate: null,
-                                          endDate: null,
-                                        }
-                                        _vm.loadTransactions(1)
-                                      },
-                                    },
-                                  },
-                                  [
-                                    _vm._v(
-                                      "\n                                        " +
-                                        _vm._s(_vm.__("clear")) +
-                                        "\n                                    "
-                                    ),
-                                  ]
-                                ),
-                              ],
-                              1
-                            ),
-                          ]),
-                          _vm._v(" "),
-                          _c("b-col", { attrs: { md: "3" } }, [
-                            _c("h6", { staticClass: "box-title" }, [
-                              _vm._v(_vm._s(_vm.__("seller"))),
-                            ]),
-                            _vm._v(" "),
-                            _c(
-                              "select",
-                              {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.txSeller,
-                                    expression: "txSeller",
-                                  },
-                                ],
-                                staticClass: "form-control form-select",
-                                on: {
-                                  change: [
-                                    function ($event) {
-                                      var $$selectedVal = Array.prototype.filter
-                                        .call(
-                                          $event.target.options,
-                                          function (o) {
-                                            return o.selected
-                                          }
-                                        )
-                                        .map(function (o) {
-                                          var val =
-                                            "_value" in o ? o._value : o.value
-                                          return val
-                                        })
-                                      _vm.txSeller = $event.target.multiple
-                                        ? $$selectedVal
-                                        : $$selectedVal[0]
-                                    },
-                                    function ($event) {
-                                      return _vm.loadTransactions(1)
-                                    },
-                                  ],
-                                },
-                              },
-                              [
-                                _c("option", { attrs: { value: "" } }, [
-                                  _vm._v(_vm._s(_vm.__("all_distributors"))),
-                                ]),
-                                _vm._v(" "),
-                                _vm._l(_vm.sellers, function (s) {
-                                  return _c(
-                                    "option",
-                                    {
-                                      key: s.seller_id,
-                                      domProps: { value: s.seller_id },
-                                    },
-                                    [_vm._v(_vm._s(s.name))]
-                                  )
-                                }),
-                              ],
-                              2
-                            ),
-                          ]),
                           _vm._v(" "),
                           _c(
-                            "b-col",
-                            {
-                              staticClass: "d-flex align-items-end",
-                              attrs: { md: "1" },
-                            },
-                            [
-                              _c(
-                                "button",
-                                {
-                                  staticClass: "btn btn-primary btn_refresh",
-                                  on: {
-                                    click: function ($event) {
-                                      return _vm.loadTransactions(1)
-                                    },
-                                  },
-                                },
-                                [_c("i", { staticClass: "fa fa-refresh" })]
-                              ),
-                            ]
-                          ),
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _vm.txLoading
-                        ? _c(
                             "div",
-                            { staticClass: "text-center py-4" },
-                            [_c("b-spinner")],
-                            1
-                          )
-                        : _c(
-                            "div",
+                            { staticClass: "list-footer" },
                             [
-                              _c(
-                                "div",
-                                { staticClass: "table-responsive" },
-                                [
-                                  _c("b-table", {
-                                    attrs: {
-                                      items: _vm.txData,
-                                      fields: _vm.txFields2,
-                                      bordered: true,
-                                      "show-empty": "",
-                                      small: "",
-                                      stacked: "md",
-                                    },
-                                    scopedSlots: _vm._u(
-                                      [
-                                        {
-                                          key: "cell(order_item_amount)",
-                                          fn: function (row) {
-                                            return [
-                                              _vm._v(
-                                                _vm._s(_vm.$currency) +
-                                                  " " +
-                                                  _vm._s(
-                                                    parseFloat(
-                                                      row.item.order_item_amount
-                                                    ).toFixed(2)
-                                                  )
-                                              ),
-                                            ]
-                                          },
-                                        },
-                                        {
-                                          key: "cell(commission_amount)",
-                                          fn: function (row) {
-                                            return [
-                                              _vm._v(
-                                                _vm._s(_vm.$currency) +
-                                                  " " +
-                                                  _vm._s(
-                                                    parseFloat(
-                                                      row.item.commission_amount
-                                                    ).toFixed(2)
-                                                  )
-                                              ),
-                                            ]
-                                          },
-                                        },
-                                        {
-                                          key: "cell(seller_commission_percentage)",
-                                          fn: function (row) {
-                                            return [
-                                              _vm._v(
-                                                _vm._s(
-                                                  row.item
-                                                    .seller_commission_percentage
-                                                ) + "%"
-                                              ),
-                                            ]
-                                          },
-                                        },
-                                      ],
-                                      null,
-                                      false,
-                                      2296122240
-                                    ),
-                                  }),
-                                ],
-                                1
-                              ),
+                              _c("div", { staticClass: "text-success h6" }, [
+                                _vm._v(
+                                  "\n                                " +
+                                    _vm._s(_vm.__("total_commission")) +
+                                    ": " +
+                                    _vm._s(_vm.$currency) +
+                                    " " +
+                                    _vm._s(_vm.totalTxCommission.toFixed(2)) +
+                                    "\n                            "
+                                ),
+                              ]),
                               _vm._v(" "),
-                              _c(
-                                "b-row",
-                                { staticClass: "mt-2" },
-                                [
-                                  _c("b-col", { attrs: { md: "4" } }, [
-                                    _c(
-                                      "div",
-                                      { staticClass: "text-success h6" },
-                                      [
-                                        _vm._v(
-                                          "\n                                        " +
-                                            _vm._s(_vm.__("total_commission")) +
-                                            ": " +
-                                            _vm._s(_vm.$currency) +
-                                            " " +
-                                            _vm._s(
-                                              _vm.totalTxCommission.toFixed(2)
-                                            ) +
-                                            "\n                                    "
-                                        ),
-                                      ]
-                                    ),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c(
-                                    "b-col",
-                                    { attrs: { md: "4", "offset-md": "4" } },
-                                    [
-                                      _c("b-pagination", {
-                                        attrs: {
-                                          "total-rows": _vm.txTotal,
-                                          "per-page": _vm.txPerPage,
-                                          size: "sm",
-                                        },
-                                        on: { change: _vm.loadTransactions },
-                                        model: {
-                                          value: _vm.txPage,
-                                          callback: function ($$v) {
-                                            _vm.txPage = $$v
-                                          },
-                                          expression: "txPage",
-                                        },
-                                      }),
-                                    ],
-                                    1
-                                  ),
-                                ],
-                                1
-                              ),
+                              _c("b-pagination", {
+                                staticClass: "list-pagination",
+                                attrs: {
+                                  "total-rows": _vm.txTotal,
+                                  "per-page": _vm.txPerPage,
+                                  size: "sm",
+                                },
+                                on: { change: _vm.loadTransactions },
+                                model: {
+                                  value: _vm.txPage,
+                                  callback: function ($$v) {
+                                    _vm.txPage = $$v
+                                  },
+                                  expression: "txPage",
+                                },
+                              }),
                             ],
                             1
                           ),
-                    ],
-                    1
-                  ),
-                ]),
+                        ]),
+                  ],
+                  1
+                ),
               ])
             : _vm._e(),
         ],

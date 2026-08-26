@@ -149,7 +149,6 @@
                         </label>
                     </b-col>
                     <b-col md="4" class="my-1" offset-md="6">
-                        <label>{{ __('total_records') }} :- {{ total }} </label>
                         <b-pagination
                             v-model="page"
                             :total-rows="total"

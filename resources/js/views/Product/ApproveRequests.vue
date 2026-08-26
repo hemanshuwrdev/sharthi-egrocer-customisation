@@ -1,125 +1,92 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{ __('approve_requests') }}</h3>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('products') }}</h3>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <b-col md="3">
+                    <h6 class="box-title">{{ __('categories') }}</h6>
+                    <form method="post">
+                        <select @change="getRecords()" v-model="category"
+                                class="form-control form-select">
+                            <option value="">{{__('all_categories')}}</option>
+                            <option v-for="category in translatedCategories" :value="category.id">
+                                {{ category.name }}
+                            </option>
+                        </select>
+                    </form>
+                </b-col>
+
+                <template v-if="$roleSeller == login_user.role.name">
+                    <input type="hidden" v-model="seller = login_user.seller.id">
+                </template>
+                <template v-else>
+                    <b-col md="3">
+                        <h6 class="box-title">{{ __('sellers') }} </h6>
+                        <select @change="getRecords()" v-model="seller" class="form-control form-select">
+                            <option value="">{{ __('all_sellers') }}</option>
+                            <option v-for="seller in translatedSellers" :value="seller.id">{{ seller.name }}</option>
+                        </select>
+                    </b-col>
+                </template>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input
+                        id="filter-input"
+                        v-model="filter"
+                        type="search"
+                        :placeholder="__('search')"
+                    ></b-form-input>
                 </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item" v-if="isSellerRoute">
-                                <router-link to="/seller/dashboard">{{ __('dashboard') }}</router-link>
-                            </li>
-                            <li class="breadcrumb-item" v-else>
-                                <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{ __('approve_requests') }}</li>
-                        </ol>
-                    </nav>
-                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+
+                <b-dropdown dropleft menu-class="w-100 border dropdownOverflow" v-b-tooltip.hover :title="__('columns')">
+                    <template #button-content>
+                        <i class="fa fa-th-list"></i>
+                    </template>
+                    <li class="m-1" v-for="field in fields" :key="field.key" v-if=" field.key !== 'select' " >
+                        <input type="checkbox" :id="field.key"
+                               :disabled="visibleFields.length == 1 && field.visible"
+                               v-model="field.visible"
+                               class="form-check-input">
+                        <label :for="field.key">{{ field.label }}</label>
+                        <b-dropdown-divider></b-dropdown-divider>
+                    </li>
+                </b-dropdown>
+
+                <b-sidebar id="sidebar-right" title="Sidebar" backdrop right shadow>
+                    <div class="px-3 py-2">
+                        <p>
+                            Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
+                            in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
+                        </p>
+                        <b-img src="https://picsum.photos/500/500/?image=54" fluid thumbnail></b-img>
+                    </div>
+                </b-sidebar>
             </div>
+            <div class="table-responsive">
 
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
+                <b-table
+                    :items="translatedProducts"
 
-                        <div class="card-header">
-                            <h4>{{ __('products') }}</h4>
-                           
-                        </div>
+                    :fields="visibleFields"
 
-                        <div class="card-body">
-                           
-                            <b-row class="mb-2">
-                                <b-col md="3">
-                                    <h6 class="box-title">{{ __('categories') }}</h6>
-                                    <form method="post">
-                                        <select @change="getRecords()" v-model="category"
-                                                class="form-control form-select">
-                                            <option value="">{{__('all_categories')}}</option>
-                                            <option v-for="category in translatedCategories" :value="category.id">
-                                                {{ category.name }}
-                                            </option>
-                                        </select>
-                                    </form>
-                                </b-col>
-
-                                <template v-if="$roleSeller == login_user.role.name">
-                                    <input type="hidden" v-model="seller = login_user.seller.id">
-                                </template>
-                                <template v-else>
-                                    <b-col md="3">
-                                        <h6 class="box-title">{{ __('sellers') }} </h6>
-                                        <select @change="getRecords()" v-model="seller" class="form-control form-select">
-                                            <option value="">{{ __('all_sellers') }}</option>
-                                            <option v-for="seller in translatedSellers" :value="seller.id">{{ seller.name }}</option>
-                                        </select>
-                                    </b-col>
-                                </template>
-                                <b-col md="3" v-bind:class = "($roleSeller == login_user.role.name)?'offset-3':''">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input
-                                        id="filter-input"
-                                        v-model="filter"
-                                        type="search"
-                                        :placeholder="__('search')"
-                                    ></b-form-input>
-                                </b-col>
-                                <b-col md="2" class="text-center">
-
-
-                                    <div class="btn-group btn_tool" role="group" aria-label="Basic example">
-                                        <button type="button" class="btn btn-primary" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
-                                            <i class="fa fa-refresh" aria-hidden="true"></i>
-                                        </button>
-
-                                        <b-dropdown dropleft menu-class="w-100 border dropdownOverflow" v-b-tooltip.hover :title="__('columns')">
-                                            <template #button-content>
-                                                <i class="fa fa-th-list"></i>
-                                            </template>
-                                            <li class="m-1" v-for="field in fields" :key="field.key" v-if=" field.key !== 'select' " >
-                                                <input type="checkbox" :id="field.key"
-                                                       :disabled="visibleFields.length == 1 && field.visible"
-                                                       v-model="field.visible"
-                                                       class="form-check-input">
-                                                <label :for="field.key">{{ field.label }}</label>
-                                                <b-dropdown-divider></b-dropdown-divider>
-                                            </li>
-                                        </b-dropdown>
-
-                                    </div>
-
-                                    <b-sidebar id="sidebar-right" title="Sidebar" backdrop right shadow>
-                                        <div class="px-3 py-2">
-                                            <p>
-                                                Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
-                                                in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
-                                            </p>
-                                            <b-img src="https://picsum.photos/500/500/?image=54" fluid thumbnail></b-img>
-                                        </div>
-                                    </b-sidebar>
-                                </b-col>
-                            </b-row>
-                            <div class="table-responsive">
-
-                                <b-table
-                                    :items="translatedProducts"
-
-                                    :fields="visibleFields"
-
-                                    :current-page="currentPage"
-                                    :per-page="perPage"
-                                    :filter="filter"
-                                    :filter-included-fields="filterOn"
-                                    :sort-by.sync="sortBy"
-                                    :sort-desc.sync="sortDesc"
-                                    :sort-direction="sortDirection"
-                                    :bordered="true"
-                                    :busy="isLoading"
-                                    stacked="md"
-                                    show-empty
-                                    small>
+                    :current-page="currentPage"
+                    :per-page="perPage"
+                    :filter="filter"
+                    :filter-included-fields="filterOn"
+                    :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc"
+                    :sort-direction="sortDirection"
+                    :bordered="true"
+                    :busy="isLoading"
+                    stacked="md"
+                    show-empty
+                    small>
 
                                     <template #table-busy>
                                         <div class="text-center text-black my-2">
@@ -198,80 +165,71 @@
                                         <span class='badge bg-success' v-if="row.item.till_status == '6'">{{ row.item.till_status_name }}</span>
                                     </template>
 
-                                    <template #cell(actions)="row">
-                                        <div style="width: 120px">
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <template v-if="$roleSeller == login_user.role.name">
+                                <router-link
+                                    :to="{ name: 'SellerViewProduct',params: { id: row.item.id, record : row.item }}"
+                                     class="list-action-btn is-view" v-b-tooltip.hover :title="__('view')" >
+                                    <i class="fa fa-eye"></i>
+                                </router-link>
+                                <router-link
+                                    :to="{ name: 'SellerEditProduct',params: { id: row.item.id, record : row.item }}"
+                                     class="list-action-btn is-edit"
+                                    v-if="$can('product_update')" v-b-tooltip.hover :title="__('edit')">
+                                    <i class="fa fa-pencil-alt"></i>
+                                </router-link>
+                            </template>
+                            <template v-else>
+                                <router-link
+                                    :to="{ name: 'ViewProduct',params: { id: row.item.id, record : row.item }}"
+                                    class="list-action-btn is-view" v-b-tooltip.hover :title="__('view')" >
+                                    <i class="fa fa-eye"></i>
+                                </router-link>
+                                <router-link
+                                    :to="{ name: 'EditProduct',params: { id: row.item.id, record : row.item }}"
+                                    class="list-action-btn is-edit"
+                                    v-if="$can('product_update')" v-b-tooltip.hover :title="__('edit')">
+                                    <i class="fa fa-pencil-alt"></i>
+                                </router-link>
+                            </template>
 
-                                            <template v-if="$roleSeller == login_user.role.name">
-                                                <router-link
-                                                    :to="{ name: 'SellerViewProduct',params: { id: row.item.id, record : row.item }}"
-                                                     class="btn btn-primary btn-sm" v-b-tooltip.hover :title="__('view')" >
-                                                    <i class="fa fa-eye"></i>
-                                                </router-link>
-                                                <router-link
-                                                    :to="{ name: 'SellerEditProduct',params: { id: row.item.id, record : row.item }}"
-                                                     class="btn btn-success btn-sm"
-                                                    v-if="$can('product_update')" v-b-tooltip.hover :title="__('edit')">
-                                                    <i class="fa fa-pencil-alt"></i>
-                                                </router-link>
-                                            </template>
-                                            <template v-else>
-                                                <router-link
-                                                    :to="{ name: 'ViewProduct',params: { id: row.item.id, record : row.item }}"
-                                                    class="btn btn-primary btn-sm" v-b-tooltip.hover :title="__('view')" >
-                                                    <i class="fa fa-eye"></i>
-                                                </router-link>
-                                                <router-link
-                                                    :to="{ name: 'EditProduct',params: { id: row.item.id, record : row.item }}"
-                                                    class="btn btn-success btn-sm"
-                                                    v-if="$can('product_update')" v-b-tooltip.hover :title="__('edit')">
-                                                    <i class="fa fa-pencil-alt"></i>
-                                                </router-link>
-                                            </template>
-
-                                            <button class="btn btn-danger btn-sm"
-                                                    @click="deleteRecord(row.index,row.item.product_variant_id)"
-                                                    v-if="$can('product_delete')" v-b-tooltip.hover :title="__('delete')">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                </b-table>
-                            </div>
-                            <b-row>
-                                <b-col md="2">
-                                    <label>
-                                    <b-form-group
-                                        :label="__('per_page')"
-                                        label-for="per-page-select"
-                                        label-align-sm="right"
-                                        label-size="sm"
-                                        class="mb-0">
-                                        <b-form-select
-                                            id="per-page-select"
-                                            v-model="perPage"
-                                            :options="pageOptions"
-                                            size="sm"
-                                            class="form-control form-select"
-                                        ></b-form-select>
-                                    </b-form-group>
-                                    </label>
-                                </b-col>
-                                <b-col md="4" offset-md="6">
-                                    <label>{{__('total_records')}} :- {{ totalRows }} </label>
-                                    <b-pagination
-                                        v-model="currentPage"
-                                        :total-rows="totalRows"
-                                        :per-page="perPage"
-                                        align="fill"
-                                        size="sm"
-                                        class="my-0"
-                                    >
-                                    </b-pagination>
-                                </b-col>
-                            </b-row>
+                            <button class="list-action-btn is-delete"
+                                    @click="deleteRecord(row.index,row.item.product_variant_id)"
+                                    v-if="$can('product_delete')" v-b-tooltip.hover :title="__('delete')">
+                                <i class="fa fa-trash"></i>
+                            </button>
                         </div>
-                    </div>
+                    </template>
+                </b-table>
+            </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                        ></b-form-select>
+                    </b-form-group>
                 </div>
+                <b-pagination
+                    v-model="currentPage"
+                    :total-rows="totalRows"
+                    :per-page="perPage"
+                    align="fill"
+                    size="sm"
+                    class="list-pagination"
+                >
+                </b-pagination>
             </div>
         </div>
     </div>

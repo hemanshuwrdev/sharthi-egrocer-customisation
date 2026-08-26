@@ -1,61 +1,39 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('delivery_boys') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard')
-                                        }}</router-link></li>
-                                <li class="breadcrumb-item active" aria-current="page"> {{ __('delivery_boys') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title"> {{ __('delivery_boys') }}</h4>
-                        <span class="pull-right">
-                            <router-link to="/seller/delivery_boys/create" class="btn btn-primary" v-b-tooltip.hover
-                                :title="__('add_delivery_boy')" v-if="$route.path.includes('/seller')">{{
-                                    __('add_delivery_boy') }}</router-link>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('delivery_boys') }}</h3>
+            <router-link to="/seller/delivery_boys/create"
+                class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                v-b-tooltip.hover :title="__('add_delivery_boy')" v-if="$route.path.includes('/seller')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add') }}</span>
+            </router-link>
+        </div>
 
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <b-row class="mb-2">
-                            <b-col md="3">
-                                <div class="form-group">
-                                    <h6 for="filterStatus" class="box-title">{{ __('status') }}</h6>
-                                    <select id="filterStatus" name="filterStatus" v-model="filterStatus"
-                                        @change="getDeliveryBoys()" class="form-control form-select">
-                                        <option value="">{{ __('all') }}</option>
-                                        <option value="1">{{ __('active') }}</option>
-                                        <option value="2">{{ __('not_approved') }}</option>
-                                        <option value="3">{{ __('deactive') }}</option>
-                                        <option value="4">{{ __('blocked') }}</option>
-                                    </select>
-                                </div>
-                            </b-col>
-                            <b-col md="3" offset-md="5">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input id="filter-input" v-model="filter" type="search"
-                                    :placeholder="__('search')" @input="getDeliveryBoys()"></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                    @click="getDeliveryBoys()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </b-row>
-                        <div class="table-responsive">
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="form-group mb-0">
+                    <h6 for="filterStatus" class="box-title">{{ __('status') }}</h6>
+                    <select id="filterStatus" name="filterStatus" v-model="filterStatus"
+                        @change="getDeliveryBoys()" class="form-control form-select">
+                        <option value="">{{ __('all') }}</option>
+                        <option value="1">{{ __('active') }}</option>
+                        <option value="2">{{ __('not_approved') }}</option>
+                        <option value="3">{{ __('deactive') }}</option>
+                        <option value="4">{{ __('blocked') }}</option>
+                    </select>
+                </div>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search"
+                        :placeholder="__('search')" @input="getDeliveryBoys()"></b-form-input>
+                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
+                    @click="getDeliveryBoys()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="table-responsive">
                             <b-table :items="translatedDeliveryBoys" :fields="fields" :current-page="currentPage"
                                 :per-page="perPage" :filter="filter" :filter-included-fields="filterOn"
                                 :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection"
@@ -131,38 +109,34 @@
                                 </template>
 
                                 <template #cell(actions)="row">
-                                    <router-link
-                                        :to="{ name: 'SellerEditDeliveryBoy', params: { id: row.item.id, record: row.item } }"
-                                        v-b-tooltip.hover title="Edit" class="btn btn-primary btn-sm"
-                                        v-if="$route.path.includes('/seller')" v-b-tooltip.hover :title="__('edit')">
-                                        <i class="fa fa-pencil-alt"></i>
-                                    </router-link>
+                                    <div class="list-actions">
+                                        <router-link
+                                            :to="{ name: 'SellerEditDeliveryBoy', params: { id: row.item.id, record: row.item } }"
+                                            class="list-action-btn is-edit"
+                                            v-if="$route.path.includes('/seller')" v-b-tooltip.hover :title="__('edit')">
+                                            <i class="fa fa-pencil-alt"></i>
+                                        </router-link>
 
-                                    <button class="btn btn-sm btn-danger"
-                                        @click="deleteDeliveryBoys(row.index, row.item.id)"
-                                        v-if="$route.path.includes('/seller')" v-b-tooltip.hover :title="__('delete')"><i
-                                            class="fa fa-trash"></i></button>
+                                        <button class="list-action-btn is-delete"
+                                            @click="deleteDeliveryBoys(row.index, row.item.id)"
+                                            v-if="$route.path.includes('/seller')" v-b-tooltip.hover :title="__('delete')"><i
+                                                class="fa fa-trash"></i></button>
+                                    </div>
                                 </template>
 
                             </b-table>
                         </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
-                                    label-size="sm" class="mb-0">
-                                    <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                        size="sm" class="form-control form-select"></b-form-select>
-                                </b-form-group>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                    align="fill" size="sm" class="my-0"></b-pagination>
-                            </b-col>
-                        </b-row>
-
-                    </div>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
+                        label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
                 </div>
-            </section>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
+                    align="fill" size="sm" class="list-pagination"></b-pagination>
+            </div>
         </div>
         <!-- Add / Edit -->
         <app-edit-record v-if="create_new || edit_record" :record="edit_record"

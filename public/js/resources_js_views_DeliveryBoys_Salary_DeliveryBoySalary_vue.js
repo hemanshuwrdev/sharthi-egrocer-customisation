@@ -107,34 +107,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -808,404 +780,344 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c(
     "div",
+    { staticClass: "list-page" },
     [
-      _c("div", { staticClass: "page-heading" }, [
-        _c("div", { staticClass: "page-title" }, [
-          _c("div", { staticClass: "row" }, [
-            _c(
-              "div",
-              { staticClass: "col-12 col-md-6 order-md-1 order-last" },
-              [_c("h3", [_vm._v(_vm._s(_vm.__("delivery_boy_salary")))])]
-            ),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "col-12 col-md-6 order-md-2 order-first" },
-              [
-                _c(
-                  "nav",
-                  {
-                    staticClass: "breadcrumb-header float-start float-lg-end",
-                    attrs: { "aria-label": "breadcrumb" },
-                  },
-                  [
-                    _c("ol", { staticClass: "breadcrumb" }, [
-                      _c(
-                        "li",
-                        { staticClass: "breadcrumb-item" },
-                        [
-                          _c("router-link", { attrs: { to: "/dashboard" } }, [
-                            _vm._v(_vm._s(_vm.__("dashboard"))),
-                          ]),
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "li",
-                        {
-                          staticClass: "breadcrumb-item active",
-                          attrs: { "aria-current": "page" },
-                        },
-                        [
-                          _vm._v(
-                            _vm._s(_vm.__("delivery_boy_salary")) +
-                              "\n                            "
-                          ),
-                        ]
-                      ),
-                    ]),
-                  ]
-                ),
-              ]
-            ),
-          ]),
+      _c("div", { staticClass: "page-head" }, [
+        _c("h3", { staticClass: "page-head-title" }, [
+          _vm._v(_vm._s(_vm.__("delivery_boy_salary"))),
         ]),
         _vm._v(" "),
-        _c("section", { staticClass: "section" }, [
-          _c("div", { staticClass: "card" }, [
-            _c("div", { staticClass: "card-header" }, [
-              _c("h4", { staticClass: "card-title" }, [
-                _vm._v(_vm._s(_vm.__("delivery_boy_salary"))),
+        _vm.$route.path.includes("/seller")
+          ? _c(
+              "button",
+              {
+                staticClass:
+                  "btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap",
+                on: {
+                  click: function ($event) {
+                    _vm.create_new = true
+                  },
+                },
+              },
+              [
+                _c("i", {
+                  staticClass: "fa fa-plus",
+                  attrs: { "aria-hidden": "true" },
+                }),
+                _vm._v(" "),
+                _c("span", [_vm._v(_vm._s(_vm.__("add_salary")))]),
+              ]
+            )
+          : _vm._e(),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "list-surface" }, [
+        _c(
+          "div",
+          { staticClass: "list-toolbar" },
+          [
+            _c("b-col", { attrs: { md: "4" } }, [
+              _c("h6", { staticClass: "box-title" }, [
+                _vm._v(_vm._s(_vm.__("from_to_date"))),
               ]),
               _vm._v(" "),
-              _c("span", { staticClass: "pull-right" }, [
-                _vm.$route.path.includes("/seller")
-                  ? _c(
-                      "button",
-                      {
-                        staticClass: "btn btn-primary",
-                        on: {
-                          click: function ($event) {
-                            _vm.create_new = true
-                          },
+              _c(
+                "div",
+                { staticClass: "d-flex align-items-center" },
+                [
+                  _c("date-range-picker", {
+                    attrs: {
+                      "single-date-picker": "range",
+                      autoApply: false,
+                      showDropdowns: true,
+                      maxDate: _vm.maxDate,
+                      opens: "right",
+                      "append-to-body": "",
+                    },
+                    on: { update: _vm.getSalaries },
+                    model: {
+                      value: _vm.dateRange,
+                      callback: function ($$v) {
+                        _vm.dateRange = $$v
+                      },
+                      expression: "dateRange",
+                    },
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-danger ml-1",
+                      on: {
+                        click: function ($event) {
+                          _vm.dateRange.startDate = null
+                          _vm.dateRange.endDate = null
+                          _vm.getSalaries()
                         },
                       },
-                      [_vm._v(_vm._s(_vm.__("add_salary")))]
-                    )
-                  : _vm._e(),
-              ]),
+                    },
+                    [
+                      _vm._v(
+                        "\n                        " +
+                          _vm._s(_vm.__("clear")) +
+                          "\n                    "
+                      ),
+                    ]
+                  ),
+                ],
+                1
+              ),
             ]),
             _vm._v(" "),
             _c(
               "div",
-              { staticClass: "card-body" },
+              { staticClass: "list-search" },
               [
-                _c(
-                  "b-row",
-                  { staticClass: "mb-3 align-items-end" },
-                  [
-                    _c("b-col", { attrs: { md: "4" } }, [
-                      _c("h6", { staticClass: "box-title" }, [
-                        _vm._v(_vm._s(_vm.__("from_to_date"))),
-                      ]),
-                      _vm._v(" "),
+                _c("i", {
+                  staticClass: "fa fa-search list-search-icon",
+                  attrs: { "aria-hidden": "true" },
+                }),
+                _vm._v(" "),
+                _c("b-form-input", {
+                  attrs: { type: "search", placeholder: _vm.__("search") },
+                  model: {
+                    value: _vm.filter,
+                    callback: function ($$v) {
+                      _vm.filter = $$v
+                    },
+                    expression: "filter",
+                  },
+                }),
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _c(
+              "button",
+              {
+                directives: [
+                  {
+                    name: "b-tooltip",
+                    rawName: "v-b-tooltip.hover",
+                    modifiers: { hover: true },
+                  },
+                ],
+                staticClass: "list-icon-btn",
+                attrs: { title: _vm.__("refresh") },
+                on: {
+                  click: function ($event) {
+                    return _vm.getSalaries()
+                  },
+                },
+              },
+              [_c("i", { staticClass: "fa fa-refresh" })]
+            ),
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "table-responsive" },
+          [
+            _c("b-table", {
+              attrs: {
+                items: _vm.salaries,
+                fields: _vm.fields,
+                "current-page": _vm.currentPage,
+                "per-page": _vm.perPage,
+                filter: _vm.filter,
+                "filter-included-fields": _vm.filterOn,
+                "sort-by": _vm.sortBy,
+                "sort-desc": _vm.sortDesc,
+                "sort-direction": _vm.sortDirection,
+                bordered: true,
+                busy: _vm.isLoading,
+                stacked: "md",
+                "show-empty": "",
+                small: "",
+              },
+              on: {
+                "update:sortBy": function ($event) {
+                  _vm.sortBy = $event
+                },
+                "update:sort-by": function ($event) {
+                  _vm.sortBy = $event
+                },
+                "update:sortDesc": function ($event) {
+                  _vm.sortDesc = $event
+                },
+                "update:sort-desc": function ($event) {
+                  _vm.sortDesc = $event
+                },
+              },
+              scopedSlots: _vm._u([
+                {
+                  key: "table-busy",
+                  fn: function () {
+                    return [
                       _c(
                         "div",
-                        { staticClass: "d-flex align-items-center" },
+                        { staticClass: "text-center text-black my-2" },
                         [
-                          _c("date-range-picker", {
-                            attrs: {
-                              "single-date-picker": "range",
-                              autoApply: false,
-                              showDropdowns: true,
-                              maxDate: _vm.maxDate,
-                              opens: "right",
-                              "append-to-body": "",
-                            },
-                            on: { update: _vm.getSalaries },
-                            model: {
-                              value: _vm.dateRange,
-                              callback: function ($$v) {
-                                _vm.dateRange = $$v
-                              },
-                              expression: "dateRange",
-                            },
-                          }),
+                          _c("b-spinner", { staticClass: "align-middle" }),
                           _vm._v(" "),
-                          _c(
-                            "button",
-                            {
-                              staticClass: "btn btn-sm btn-danger ml-1",
-                              on: {
-                                click: function ($event) {
-                                  _vm.dateRange.startDate = null
-                                  _vm.dateRange.endDate = null
-                                  _vm.getSalaries()
-                                },
-                              },
-                            },
-                            [
-                              _vm._v(
-                                "\n                                    " +
-                                  _vm._s(_vm.__("clear")) +
-                                  "\n                                "
-                              ),
-                            ]
-                          ),
+                          _c("strong", [
+                            _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                          ]),
                         ],
                         1
                       ),
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      { attrs: { md: "3", "offset-md": "4" } },
-                      [
-                        _c("h6", [_vm._v(_vm._s(_vm.__("search")))]),
-                        _vm._v(" "),
-                        _c("b-form-input", {
-                          attrs: {
-                            type: "search",
-                            placeholder: _vm.__("search"),
-                          },
-                          model: {
-                            value: _vm.filter,
-                            callback: function ($$v) {
-                              _vm.filter = $$v
-                            },
-                            expression: "filter",
-                          },
-                        }),
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      { staticClass: "text-center", attrs: { md: "1" } },
-                      [
-                        _c(
-                          "button",
-                          {
-                            directives: [
+                    ]
+                  },
+                  proxy: true,
+                },
+                {
+                  key: "head(amount)",
+                  fn: function (data) {
+                    return [
+                      _vm._v(
+                        "\n                    " +
+                          _vm._s(_vm.__("salary")) +
+                          _vm._s(" (" + _vm.$currency + ")") +
+                          "\n                "
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(paid_on)",
+                  fn: function (row) {
+                    return [
+                      _vm._v(
+                        "\n                    " +
+                          _vm._s(_vm.formatDate(row.item.paid_on)) +
+                          "\n                "
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(actions)",
+                  fn: function (row) {
+                    return [
+                      _c("div", { staticClass: "list-actions" }, [
+                        _vm.$route.path.includes("/seller")
+                          ? _c(
+                              "button",
                               {
-                                name: "b-tooltip",
-                                rawName: "v-b-tooltip.hover",
-                                modifiers: { hover: true },
-                              },
-                            ],
-                            staticClass: "btn btn-primary ml-2",
-                            attrs: { title: _vm.__("refresh") },
-                            on: {
-                              click: function ($event) {
-                                return _vm.getSalaries()
-                              },
-                            },
-                          },
-                          [_c("i", { staticClass: "fa fa-refresh" })]
-                        ),
-                      ]
-                    ),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "div",
-                  { staticClass: "table-responsive" },
-                  [
-                    _c("b-table", {
-                      attrs: {
-                        items: _vm.salaries,
-                        fields: _vm.fields,
-                        "current-page": _vm.currentPage,
-                        "per-page": _vm.perPage,
-                        filter: _vm.filter,
-                        "filter-included-fields": _vm.filterOn,
-                        "sort-by": _vm.sortBy,
-                        "sort-desc": _vm.sortDesc,
-                        "sort-direction": _vm.sortDirection,
-                        bordered: true,
-                        busy: _vm.isLoading,
-                        stacked: "md",
-                        "show-empty": "",
-                        small: "",
-                      },
-                      on: {
-                        "update:sortBy": function ($event) {
-                          _vm.sortBy = $event
-                        },
-                        "update:sort-by": function ($event) {
-                          _vm.sortBy = $event
-                        },
-                        "update:sortDesc": function ($event) {
-                          _vm.sortDesc = $event
-                        },
-                        "update:sort-desc": function ($event) {
-                          _vm.sortDesc = $event
-                        },
-                      },
-                      scopedSlots: _vm._u([
-                        {
-                          key: "table-busy",
-                          fn: function () {
-                            return [
-                              _c(
-                                "div",
-                                { staticClass: "text-center text-black my-2" },
-                                [
-                                  _c("b-spinner", {
-                                    staticClass: "align-middle",
-                                  }),
-                                  _vm._v(" "),
-                                  _c("strong", [
-                                    _vm._v(_vm._s(_vm.__("loading")) + "..."),
-                                  ]),
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.hover",
+                                    modifiers: { hover: true },
+                                  },
                                 ],
-                                1
-                              ),
-                            ]
-                          },
-                          proxy: true,
-                        },
-                        {
-                          key: "head(amount)",
-                          fn: function (data) {
-                            return [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(_vm.__("salary")) +
-                                  _vm._s(" (" + _vm.$currency + ")") +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(paid_on)",
-                          fn: function (row) {
-                            return [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(_vm.formatDate(row.item.paid_on)) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(actions)",
-                          fn: function (row) {
-                            return [
-                              _vm.$route.path.includes("/seller")
-                                ? _c(
-                                    "b-button",
-                                    {
-                                      staticClass: "mr-1",
-                                      attrs: { size: "sm", variant: "primary" },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.editRecord(row.item)
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _c("i", {
-                                        staticClass: "fa fa-pencil-alt",
-                                      }),
-                                    ]
-                                  )
-                                : _vm._e(),
-                              _vm._v(" "),
-                              _vm.$route.path.includes("/seller")
-                                ? _c(
-                                    "b-button",
-                                    {
-                                      attrs: { size: "sm", variant: "danger" },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.deleteRecord(row.item.id)
-                                        },
-                                      },
-                                    },
-                                    [_c("i", { staticClass: "fa fa-trash" })]
-                                  )
-                                : _vm._e(),
-                            ]
-                          },
-                        },
-                      ]),
-                    }),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "b-row",
-                  [
-                    _c(
-                      "b-col",
-                      { staticClass: "my-1", attrs: { md: "2" } },
-                      [
-                        _c(
-                          "b-form-group",
-                          {
-                            staticClass: "mb-0",
-                            attrs: {
-                              label: _vm.__("per_page"),
-                              "label-for": "per-page-select",
-                              "label-align-sm": "right",
-                              "label-size": "sm",
-                            },
-                          },
-                          [
-                            _c("b-form-select", {
-                              staticClass: "form-control form-select",
-                              attrs: {
-                                id: "per-page-select",
-                                options: _vm.pageOptions,
-                                size: "sm",
-                              },
-                              model: {
-                                value: _vm.perPage,
-                                callback: function ($$v) {
-                                  _vm.perPage = $$v
+                                staticClass: "list-action-btn is-edit",
+                                attrs: { title: _vm.__("edit") },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.editRecord(row.item)
+                                  },
                                 },
-                                expression: "perPage",
                               },
-                            }),
-                          ],
-                          1
-                        ),
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      {
-                        staticClass: "my-1",
-                        attrs: { md: "4", "offset-md": "6" },
+                              [_c("i", { staticClass: "fa fa-pencil-alt" })]
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.$route.path.includes("/seller")
+                          ? _c(
+                              "button",
+                              {
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.hover",
+                                    modifiers: { hover: true },
+                                  },
+                                ],
+                                staticClass: "list-action-btn is-delete",
+                                attrs: { title: _vm.__("delete") },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.deleteRecord(row.item.id)
+                                  },
+                                },
+                              },
+                              [_c("i", { staticClass: "fa fa-trash" })]
+                            )
+                          : _vm._e(),
+                      ]),
+                    ]
+                  },
+                },
+              ]),
+            }),
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "list-footer" },
+          [
+            _c(
+              "div",
+              { staticClass: "list-perpage" },
+              [
+                _c(
+                  "b-form-group",
+                  {
+                    staticClass: "mb-0",
+                    attrs: {
+                      label: _vm.__("per_page"),
+                      "label-for": "per-page-select",
+                      "label-align-sm": "right",
+                      "label-size": "sm",
+                    },
+                  },
+                  [
+                    _c("b-form-select", {
+                      staticClass: "form-control form-select",
+                      attrs: {
+                        id: "per-page-select",
+                        options: _vm.pageOptions,
+                        size: "sm",
                       },
-                      [
-                        _c("b-pagination", {
-                          staticClass: "my-0",
-                          attrs: {
-                            "total-rows": _vm.totalRows,
-                            "per-page": _vm.perPage,
-                            align: "fill",
-                            size: "sm",
-                          },
-                          model: {
-                            value: _vm.currentPage,
-                            callback: function ($$v) {
-                              _vm.currentPage = $$v
-                            },
-                            expression: "currentPage",
-                          },
-                        }),
-                      ],
-                      1
-                    ),
+                      model: {
+                        value: _vm.perPage,
+                        callback: function ($$v) {
+                          _vm.perPage = $$v
+                        },
+                        expression: "perPage",
+                      },
+                    }),
                   ],
                   1
                 ),
               ],
               1
             ),
-          ]),
-        ]),
+            _vm._v(" "),
+            _c("b-pagination", {
+              staticClass: "list-pagination",
+              attrs: {
+                "total-rows": _vm.totalRows,
+                "per-page": _vm.perPage,
+                align: "fill",
+                size: "sm",
+              },
+              model: {
+                value: _vm.currentPage,
+                callback: function ($$v) {
+                  _vm.currentPage = $$v
+                },
+                expression: "currentPage",
+              },
+            }),
+          ],
+          1
+        ),
       ]),
       _vm._v(" "),
       _vm.create_new || _vm.edit_record

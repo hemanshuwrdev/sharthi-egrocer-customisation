@@ -491,30 +491,6 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -1370,139 +1346,227 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c(
     "div",
+    { staticClass: "list-page" },
     [
-      _c("div", { staticClass: "page-heading" }, [
-        _c("div", { staticClass: "page-title" }, [
-          _c("div", { staticClass: "row" }, [
-            _c(
-              "div",
-              { staticClass: "col-12 col-md-6 order-md-1 order-last" },
-              [_c("h3", [_vm._v(_vm._s(_vm.__("manage_seller_wallet")))])]
-            ),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "col-12 col-md-6 order-md-2 order-first" },
-              [
-                _c(
-                  "nav",
-                  {
-                    staticClass: "breadcrumb-header float-start float-lg-end",
-                    attrs: { "aria-label": "breadcrumb" },
-                  },
-                  [
-                    _c("ol", { staticClass: "breadcrumb" }, [
-                      _vm.isSellerRoute
-                        ? _c(
-                            "li",
-                            { staticClass: "breadcrumb-item" },
-                            [
-                              _c(
-                                "router-link",
-                                { attrs: { to: "/seller/dashboard" } },
-                                [_vm._v(_vm._s(_vm.__("dashboard")))]
-                              ),
-                            ],
-                            1
-                          )
-                        : _c(
-                            "li",
-                            { staticClass: "breadcrumb-item" },
-                            [
-                              _c(
-                                "router-link",
-                                { attrs: { to: "/dashboard" } },
-                                [_vm._v(_vm._s(_vm.__("dashboard")))]
-                              ),
-                            ],
-                            1
-                          ),
-                      _vm._v(" "),
-                      _c(
-                        "li",
-                        {
-                          staticClass: "breadcrumb-item active",
-                          attrs: { "aria-current": "page" },
-                        },
-                        [_vm._v(_vm._s(_vm.__("manage_seller_wallet")))]
-                      ),
-                    ]),
-                  ]
-                ),
-              ]
-            ),
-          ]),
+      _c("div", { staticClass: "page-head" }, [
+        _c("h3", { staticClass: "page-head-title" }, [
+          _vm._v(_vm._s(_vm.__("wallet_transactions"))),
         ]),
         _vm._v(" "),
-        _c("section", { staticClass: "section" }, [
-          _c("div", { staticClass: "card" }, [
-            _c("div", { staticClass: "card-header" }, [
-              _c("h4", { staticClass: "card-title" }, [
-                _vm._v(_vm._s(_vm.__("wallet_transactions"))),
-              ]),
-              _vm._v(" "),
-              _vm.login_user.role.name === "Super Admin" ||
-              _vm.login_user.role.name === "Admin"
-                ? _c("span", { staticClass: "pull-right" }, [
-                    _c(
-                      "button",
-                      {
-                        staticClass: "btn btn-primary",
-                        on: {
-                          click: function ($event) {
-                            _vm.create_new = true
-                          },
-                        },
-                      },
-                      [_vm._v(" " + _vm._s(_vm.__("add_transactions")))]
-                    ),
-                  ])
-                : _vm._e(),
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "card-body" },
+        _vm.login_user.role.name === "Super Admin" ||
+        _vm.login_user.role.name === "Admin"
+          ? _c(
+              "button",
+              {
+                staticClass:
+                  "btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap",
+                on: {
+                  click: function ($event) {
+                    _vm.create_new = true
+                  },
+                },
+              },
               [
-                _c(
-                  "b-row",
-                  { staticClass: "mb-2" },
-                  [
-                    _c(
-                      "b-col",
-                      { attrs: { md: "3", "offset-md": "8" } },
-                      [
-                        _c("h6", { staticClass: "box-title" }, [
-                          _vm._v(_vm._s(_vm.__("search"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("b-form-input", {
-                          attrs: {
-                            id: "filter-input",
-                            type: "search",
-                            placeholder: _vm.__("search"),
-                          },
-                          on: {
-                            input: function ($event) {
-                              return _vm.getWalletTransactions()
-                            },
-                          },
-                          model: {
-                            value: _vm.filter,
-                            callback: function ($$v) {
-                              _vm.filter = $$v
-                            },
-                            expression: "filter",
-                          },
-                        }),
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      { staticClass: "text-center", attrs: { md: "1" } },
-                      [
+                _c("i", {
+                  staticClass: "fa fa-plus",
+                  attrs: { "aria-hidden": "true" },
+                }),
+                _vm._v(" "),
+                _c("span", [_vm._v(_vm._s(_vm.__("add_transactions")))]),
+              ]
+            )
+          : _vm._e(),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "list-surface" }, [
+        _c("div", { staticClass: "list-toolbar" }, [
+          _c(
+            "div",
+            { staticClass: "list-search" },
+            [
+              _c("i", {
+                staticClass: "fa fa-search list-search-icon",
+                attrs: { "aria-hidden": "true" },
+              }),
+              _vm._v(" "),
+              _c("b-form-input", {
+                attrs: {
+                  id: "filter-input",
+                  type: "search",
+                  placeholder: _vm.__("search"),
+                },
+                on: {
+                  input: function ($event) {
+                    return _vm.getWalletTransactions()
+                  },
+                },
+                model: {
+                  value: _vm.filter,
+                  callback: function ($$v) {
+                    _vm.filter = $$v
+                  },
+                  expression: "filter",
+                },
+              }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "button",
+            {
+              directives: [
+                {
+                  name: "b-tooltip",
+                  rawName: "v-b-tooltip.hover",
+                  modifiers: { hover: true },
+                },
+              ],
+              staticClass: "list-icon-btn",
+              attrs: { title: _vm.__("refresh") },
+              on: {
+                click: function ($event) {
+                  return _vm.getWalletTransactions()
+                },
+              },
+            },
+            [
+              _c("i", {
+                staticClass: "fa fa-refresh",
+                attrs: { "aria-hidden": "true" },
+              }),
+            ]
+          ),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "table-responsive" },
+          [
+            _c("b-table", {
+              attrs: {
+                items: _vm.walletTransactions,
+                fields: _vm.fields,
+                "filter-included-fields": _vm.filterOn,
+                "sort-by": _vm.sortBy,
+                "sort-desc": _vm.sortDesc,
+                "sort-direction": _vm.sortDirection,
+                bordered: true,
+                busy: _vm.isLoading,
+                stacked: "md",
+                "show-empty": "",
+                small: "",
+              },
+              on: {
+                "update:sortBy": function ($event) {
+                  _vm.sortBy = $event
+                },
+                "update:sort-by": function ($event) {
+                  _vm.sortBy = $event
+                },
+                "update:sortDesc": function ($event) {
+                  _vm.sortDesc = $event
+                },
+                "update:sort-desc": function ($event) {
+                  _vm.sortDesc = $event
+                },
+              },
+              scopedSlots: _vm._u([
+                {
+                  key: "table-busy",
+                  fn: function () {
+                    return [
+                      _c(
+                        "div",
+                        { staticClass: "text-center text-black my-2" },
+                        [
+                          _c("b-spinner", { staticClass: "align-middle" }),
+                          _vm._v(" "),
+                          _c("strong", [
+                            _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                          ]),
+                        ],
+                        1
+                      ),
+                    ]
+                  },
+                  proxy: true,
+                },
+                {
+                  key: "cell(type)",
+                  fn: function (row) {
+                    return [
+                      _c(
+                        "span",
+                        {
+                          staticClass: "badge text-capitalize",
+                          class: _vm.getTypeBadgeClass(row.item.type),
+                        },
+                        [
+                          _vm._v(
+                            "\n                                    " +
+                              _vm._s(row.item.type) +
+                              "\n                                "
+                          ),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(status)",
+                  fn: function (row) {
+                    return [
+                      _c(
+                        "span",
+                        {
+                          staticClass: "badge",
+                          class: _vm.getStatusBadgeClass(row.item.status),
+                        },
+                        [
+                          _vm._v(
+                            "\n                                    " +
+                              _vm._s(
+                                row.item.status === 1
+                                  ? _vm.__("active")
+                                  : _vm.__("deactive")
+                              ) +
+                              "\n                                "
+                          ),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(created_at)",
+                  fn: function (row) {
+                    return [
+                      _vm._v(
+                        "\n                                " +
+                          _vm._s(row.item.created_at) +
+                          "\n                            "
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(amount)",
+                  fn: function (row) {
+                    return [
+                      _vm._v(
+                        "\n                                " +
+                          _vm._s(row.item.amount) +
+                          "\n                            "
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(actions)",
+                  fn: function (row) {
+                    return [
+                      _c("div", { staticClass: "list-actions" }, [
                         _c(
                           "button",
                           {
@@ -1513,520 +1577,299 @@ var render = function () {
                                 modifiers: { hover: true },
                               },
                             ],
-                            staticClass: "btn btn-primary btn_refresh",
-                            attrs: { title: _vm.__("refresh") },
-                            on: {
-                              click: function ($event) {
-                                return _vm.getWalletTransactions()
-                              },
-                            },
+                            staticClass: "list-action-btn is-view",
+                            attrs: { title: _vm.__("view") },
+                            on: { click: row.toggleDetails },
                           },
                           [
-                            _c("i", {
-                              staticClass: "fa fa-refresh",
-                              attrs: { "aria-hidden": "true" },
-                            }),
+                            row.detailsShowing
+                              ? _c("i", { staticClass: "fa fa-eye-slash" })
+                              : _c("i", { staticClass: "fa fa-eye" }),
                           ]
                         ),
-                      ]
-                    ),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "div",
-                  { staticClass: "table-responsive" },
-                  [
-                    _c("b-table", {
-                      attrs: {
-                        items: _vm.walletTransactions,
-                        fields: _vm.fields,
-                        "filter-included-fields": _vm.filterOn,
-                        "sort-by": _vm.sortBy,
-                        "sort-desc": _vm.sortDesc,
-                        "sort-direction": _vm.sortDirection,
-                        bordered: true,
-                        busy: _vm.isLoading,
-                        stacked: "md",
-                        "show-empty": "",
-                        small: "",
-                      },
-                      on: {
-                        "update:sortBy": function ($event) {
-                          _vm.sortBy = $event
-                        },
-                        "update:sort-by": function ($event) {
-                          _vm.sortBy = $event
-                        },
-                        "update:sortDesc": function ($event) {
-                          _vm.sortDesc = $event
-                        },
-                        "update:sort-desc": function ($event) {
-                          _vm.sortDesc = $event
-                        },
-                      },
-                      scopedSlots: _vm._u([
-                        {
-                          key: "table-busy",
-                          fn: function () {
-                            return [
-                              _c(
-                                "div",
-                                { staticClass: "text-center text-black my-2" },
-                                [
-                                  _c("b-spinner", {
-                                    staticClass: "align-middle",
-                                  }),
-                                  _vm._v(" "),
-                                  _c("strong", [
-                                    _vm._v(_vm._s(_vm.__("loading")) + "..."),
-                                  ]),
-                                ],
-                                1
-                              ),
-                            ]
-                          },
-                          proxy: true,
-                        },
-                        {
-                          key: "cell(type)",
-                          fn: function (row) {
-                            return [
-                              _c(
-                                "span",
-                                {
-                                  staticClass: "badge text-capitalize",
-                                  class: _vm.getTypeBadgeClass(row.item.type),
-                                },
-                                [
-                                  _vm._v(
-                                    "\n                                    " +
-                                      _vm._s(row.item.type) +
-                                      "\n                                "
-                                  ),
-                                ]
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(status)",
-                          fn: function (row) {
-                            return [
-                              _c(
-                                "span",
-                                {
-                                  staticClass: "badge",
-                                  class: _vm.getStatusBadgeClass(
-                                    row.item.status
-                                  ),
-                                },
-                                [
-                                  _vm._v(
-                                    "\n                                    " +
-                                      _vm._s(
-                                        row.item.status === 1
-                                          ? _vm.__("active")
-                                          : _vm.__("deactive")
-                                      ) +
-                                      "\n                                "
-                                  ),
-                                ]
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(created_at)",
-                          fn: function (row) {
-                            return [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(row.item.created_at) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(amount)",
-                          fn: function (row) {
-                            return [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(row.item.amount) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(actions)",
-                          fn: function (row) {
-                            return [
-                              _c(
-                                "button",
-                                {
-                                  directives: [
-                                    {
-                                      name: "b-tooltip",
-                                      rawName: "v-b-tooltip.hover",
-                                      modifiers: { hover: true },
-                                    },
-                                  ],
-                                  staticClass: "btn btn-sm btn-primary",
-                                  attrs: { title: _vm.__("view") },
-                                  on: { click: row.toggleDetails },
-                                },
-                                [
-                                  row.detailsShowing
-                                    ? _c("i", {
-                                        staticClass: "fa fa-eye-slash",
-                                      })
-                                    : _c("i", { staticClass: "fa fa-eye" }),
-                                ]
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "row-details",
-                          fn: function (row) {
-                            return [
-                              _c(
-                                "b-card",
-                                {
-                                  staticClass: "p-4 bg-white shadow-sm",
-                                  attrs: { "no-body": "" },
-                                },
-                                [
-                                  _c(
-                                    "div",
-                                    {
-                                      staticClass:
-                                        "d-flex align-items-center mb-3",
-                                    },
-                                    [
-                                      _c(
-                                        "h5",
-                                        {
-                                          staticClass: "text-primary mb-0 me-3",
-                                        },
-                                        [
-                                          _c("i", {
-                                            staticClass: "fa fa-receipt me-1",
-                                          }),
-                                          _vm._v(
-                                            " " +
-                                              _vm._s(
-                                                _vm.__("transaction_details")
-                                              )
-                                          ),
-                                        ]
-                                      ),
-                                      _vm._v(" "),
-                                      _c("div", {
-                                        staticClass:
-                                          "h-line flex-grow-1 bg-light",
-                                        staticStyle: { height: "1px" },
-                                      }),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "row g-4 text-break" },
-                                    [
-                                      _c("div", { staticClass: "col-md-3" }, [
-                                        _c("div", { staticClass: "mb-3" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("id")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("span", { staticClass: "fs-6" }, [
-                                            _vm._v("#" + _vm._s(row.item.id)),
-                                          ]),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "mb-3" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("order_id")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("span", { staticClass: "fs-6" }, [
-                                            _vm._v(
-                                              "#" + _vm._s(row.item.order_id)
-                                            ),
-                                          ]),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "mb-0" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [
-                                              _vm._v(
-                                                _vm._s(_vm.__("seller_id"))
-                                              ),
-                                            ]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("span", { staticClass: "fs-6" }, [
-                                            _vm._v(_vm._s(row.item.seller_id)),
-                                          ]),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-5" }, [
-                                        _c("div", { staticClass: "mb-3" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("product")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("span", { staticClass: "fs-6" }, [
-                                            _vm._v(
-                                              _vm._s(row.item.product_name)
-                                            ),
-                                          ]),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "mb-0" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [
-                                              _vm._v(
-                                                _vm._s(_vm.__("measurement"))
-                                              ),
-                                            ]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("span", { staticClass: "fs-6" }, [
-                                            _vm._v(
-                                              _vm._s(row.item.variant_name)
-                                            ),
-                                          ]),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("div", { staticClass: "col-md-4" }, [
-                                        _c("div", { staticClass: "mb-3" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("amount")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "span",
-                                            { staticClass: "fs-6 fw-bold" },
-                                            [
-                                              _vm._v(
-                                                "₹" + _vm._s(row.item.amount)
-                                              ),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "mb-3" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("type")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass:
-                                                "fs-6 text-capitalize",
-                                            },
-                                            [_vm._v(_vm._s(row.item.type))]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "mb-0" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("status")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("span", { staticClass: "fs-6" }, [
-                                            _vm._v(
-                                              _vm._s(
-                                                row.item.status === 1
-                                                  ? _vm.__("active")
-                                                  : _vm.__("deactive")
-                                              )
-                                            ),
-                                          ]),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c(
-                                        "div",
-                                        {
-                                          staticClass:
-                                            "col-12 mt-3 p-3 bg-light rounded shadow-sm border-start border-4 border-primary",
-                                        },
-                                        [
-                                          _c(
-                                            "label",
-                                            {
-                                              staticClass:
-                                                "text-muted small text-uppercase fw-bold d-block mb-1",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("message")))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "p",
-                                            {
-                                              staticClass:
-                                                "mb-0 text-dark fs-6 white-space-pre-wrap",
-                                            },
-                                            [_vm._v(_vm._s(row.item.message))]
-                                          ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                ]
-                              ),
-                            ]
-                          },
-                        },
                       ]),
-                    }),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "b-row",
-                  [
-                    _c(
-                      "b-col",
-                      { staticClass: "my-1", attrs: { md: "2" } },
-                      [
-                        _c(
-                          "b-form-group",
-                          {
-                            staticClass: "mb-0",
-                            attrs: {
-                              label: _vm.__("per_page"),
-                              "label-for": "per-page-select",
-                              "label-align-sm": "right",
-                              "label-size": "sm",
-                            },
-                          },
-                          [
-                            _c("b-form-select", {
-                              staticClass: "form-control form-select",
-                              attrs: {
-                                id: "per-page-select",
-                                options: _vm.pageOptions,
-                                size: "sm",
-                              },
-                              on: {
-                                input: function ($event) {
-                                  return _vm.getWalletTransactions()
-                                },
-                              },
-                              model: {
-                                value: _vm.perPage,
-                                callback: function ($$v) {
-                                  _vm.perPage = $$v
-                                },
-                                expression: "perPage",
-                              },
-                            }),
-                          ],
-                          1
-                        ),
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      {
-                        staticClass: "my-1",
-                        attrs: { md: "4", "offset-md": "6" },
-                      },
-                      [
-                        _c("label", [
-                          _vm._v(
-                            _vm._s(_vm.__("total_records")) +
-                              " :- " +
-                              _vm._s(_vm.totalRows) +
-                              " "
+                    ]
+                  },
+                },
+                {
+                  key: "row-details",
+                  fn: function (row) {
+                    return [
+                      _c(
+                        "b-card",
+                        {
+                          staticClass: "p-4 bg-white shadow-sm",
+                          attrs: { "no-body": "" },
+                        },
+                        [
+                          _c(
+                            "div",
+                            { staticClass: "d-flex align-items-center mb-3" },
+                            [
+                              _c(
+                                "h5",
+                                { staticClass: "text-primary mb-0 me-3" },
+                                [
+                                  _c("i", {
+                                    staticClass: "fa fa-receipt me-1",
+                                  }),
+                                  _vm._v(
+                                    " " + _vm._s(_vm.__("transaction_details"))
+                                  ),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _c("div", {
+                                staticClass: "h-line flex-grow-1 bg-light",
+                                staticStyle: { height: "1px" },
+                              }),
+                            ]
                           ),
-                        ]),
-                        _vm._v(" "),
-                        _c("b-pagination", {
-                          staticClass: "my-0",
-                          attrs: {
-                            "total-rows": _vm.totalRows,
-                            "per-page": _vm.perPage,
-                            align: "fill",
-                            size: "sm",
-                          },
-                          on: {
-                            input: function ($event) {
-                              return _vm.getWalletTransactions()
-                            },
-                          },
-                          model: {
-                            value: _vm.currentPage,
-                            callback: function ($$v) {
-                              _vm.currentPage = $$v
-                            },
-                            expression: "currentPage",
-                          },
-                        }),
-                      ],
-                      1
-                    ),
-                  ],
-                  1
-                ),
-              ],
-              1
-            ),
-          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "row g-4 text-break" }, [
+                            _c("div", { staticClass: "col-md-3" }, [
+                              _c("div", { staticClass: "mb-3" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("id")))]
+                                ),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "fs-6" }, [
+                                  _vm._v("#" + _vm._s(row.item.id)),
+                                ]),
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "mb-3" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("order_id")))]
+                                ),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "fs-6" }, [
+                                  _vm._v("#" + _vm._s(row.item.order_id)),
+                                ]),
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "mb-0" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("seller_id")))]
+                                ),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "fs-6" }, [
+                                  _vm._v(_vm._s(row.item.seller_id)),
+                                ]),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-5" }, [
+                              _c("div", { staticClass: "mb-3" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("product")))]
+                                ),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "fs-6" }, [
+                                  _vm._v(_vm._s(row.item.product_name)),
+                                ]),
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "mb-0" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("measurement")))]
+                                ),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "fs-6" }, [
+                                  _vm._v(_vm._s(row.item.variant_name)),
+                                ]),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-4" }, [
+                              _c("div", { staticClass: "mb-3" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("amount")))]
+                                ),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "fs-6 fw-bold" }, [
+                                  _vm._v("₹" + _vm._s(row.item.amount)),
+                                ]),
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "mb-3" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("type")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "span",
+                                  { staticClass: "fs-6 text-capitalize" },
+                                  [_vm._v(_vm._s(row.item.type))]
+                                ),
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "mb-0" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("status")))]
+                                ),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "fs-6" }, [
+                                  _vm._v(
+                                    _vm._s(
+                                      row.item.status === 1
+                                        ? _vm.__("active")
+                                        : _vm.__("deactive")
+                                    )
+                                  ),
+                                ]),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "col-12 mt-3 p-3 bg-light rounded shadow-sm border-start border-4 border-primary",
+                              },
+                              [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass:
+                                      "text-muted small text-uppercase fw-bold d-block mb-1",
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("message")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "p",
+                                  {
+                                    staticClass:
+                                      "mb-0 text-dark fs-6 white-space-pre-wrap",
+                                  },
+                                  [_vm._v(_vm._s(row.item.message))]
+                                ),
+                              ]
+                            ),
+                          ]),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+              ]),
+            }),
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c("div", { staticClass: "list-footer" }, [
+          _c(
+            "div",
+            { staticClass: "list-perpage" },
+            [
+              _c(
+                "b-form-group",
+                {
+                  staticClass: "mb-0",
+                  attrs: {
+                    label: _vm.__("per_page"),
+                    "label-for": "per-page-select",
+                    "label-align-sm": "right",
+                    "label-size": "sm",
+                  },
+                },
+                [
+                  _c("b-form-select", {
+                    staticClass: "form-control form-select",
+                    attrs: {
+                      id: "per-page-select",
+                      options: _vm.pageOptions,
+                      size: "sm",
+                    },
+                    on: {
+                      input: function ($event) {
+                        return _vm.getWalletTransactions()
+                      },
+                    },
+                    model: {
+                      value: _vm.perPage,
+                      callback: function ($$v) {
+                        _vm.perPage = $$v
+                      },
+                      expression: "perPage",
+                    },
+                  }),
+                ],
+                1
+              ),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "div",
+            [
+              _c("b-pagination", {
+                staticClass: "list-pagination",
+                attrs: {
+                  "total-rows": _vm.totalRows,
+                  "per-page": _vm.perPage,
+                  align: "fill",
+                  size: "sm",
+                },
+                on: {
+                  input: function ($event) {
+                    return _vm.getWalletTransactions()
+                  },
+                },
+                model: {
+                  value: _vm.currentPage,
+                  callback: function ($$v) {
+                    _vm.currentPage = $$v
+                  },
+                  expression: "currentPage",
+                },
+              }),
+            ],
+            1
+          ),
         ]),
       ]),
       _vm._v(" "),

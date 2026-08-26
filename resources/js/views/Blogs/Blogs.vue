@@ -1,108 +1,84 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{ __('blogs') }}</h3>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('blogs') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                @click="openAddModal" v-if="$can('blog_create')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add') }}</span>
+            </button>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <b-form-select v-model="selectedCategory" @change="getBlogs()" class="form-control form-select"
+                    style="max-width: 220px;">
+                    <option value="">{{ __('all_categories') }}</option>
+                    <option v-for="category in translatedCategories" :key="category.id" :value="category.id">{{
+                        category.name }}</option>
+                </b-form-select>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search"
+                        :placeholder="__('search')"></b-form-input>
                 </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{ __('blogs') }}</li>
-                        </ol>
-                    </nav>
-                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getBlogs()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
 
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4>{{ __('blogs') }}</h4>
-                            <span class="pull-right">
-                                <button class="btn btn-primary" @click="openAddModal" v-b-tooltip.hover v-if="$can('blog_create')">{{ __('add_blog') }}</button>
-                            </span>
+            <div class="table-responsive">
+                <b-table :items="translatedBlogs" :fields="fields" :filter="filter"
+                    :filter-included-fields="filterOn" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc"
+                    :sort-direction="sortDirection" :bordered="true" :busy="isLoading" stacked="md"
+                    show-empty small>
+
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
-                        <div class="card-body">
-                            <b-row class="mb-2">
-                                <b-col md="2">
-                                    <h6 class="box-title">{{ __('category') }}</h6>
-                                    <b-form-select v-model="selectedCategory" @change="getBlogs()"
-                                        class="form-control form-select">
-                                        <option value="">{{ __('all_categories') }}</option>
-                                        <option v-for="category in translatedCategories" :key="category.id"
-                                            :value="category.id">{{ category.name }}</option>
-                                    </b-form-select>
-                                </b-col>
-                                <b-col md="3" offset-md="5">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input id="filter-input" v-model="filter" type="search"
-                                        :placeholder="__('search')"></b-form-input>
-                                </b-col>
-                                <b-col md="1" class="text-center">
-                                    <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                        @click="getBlogs()">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </button>
-                                </b-col>
-                            </b-row>
-                            <b-table :items="translatedBlogs" :fields="fields" :filter="filter"
-                                :filter-included-fields="filterOn" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc"
-                                :sort-direction="sortDirection" :bordered="true" :busy="isLoading" stacked="md"
-                                show-empty small>
+                    </template>
 
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
+                    <template #cell(image)="row">
+                        <img v-if="row.item.image_url" :src="row.item.image_url" height="50" />
+                        <span v-else class="text-muted">{{ __('no_image') }}</span>
+                    </template>
 
-                                <template #cell(image)="row">
-                                    <img v-if="row.item.image_url" :src="row.item.image_url" height="50" />
-                                    <span v-else class="text-muted">{{ __('no_image') }}</span>
-                                </template>
+                    <template #cell(category)="row">
+                        <span>{{ row.item.category ? row.item.category.name : '-' }}</span>
+                    </template>
 
-                                <template #cell(category)="row">
-                                    <span>{{ row.item.category ? row.item.category.name : '-' }}</span>
-                                </template>
+                    <template #cell(status)="row">
+                        <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active') }}</span>
+                        <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
+                            }}</span>
+                    </template>
 
-                                <template #cell(status)="row">
-                                    <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active') }}</span>
-                                    <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
-                                        }}</span>
-                                </template>
-
-                                <template #cell(actions)="row">
-                                    <button class="btn btn-sm btn-primary" @click="edit_record = row.item"
-                                        v-if="$can('blog_update')" v-b-tooltip.hover :title="__('edit')"><i
-                                            class="fa fa-pencil-alt"></i></button>
-                                    <button class="btn btn-sm btn-danger" @click="deleteBlog(row.index, row.item.id)"
-                                        v-if="$can('blog_delete')" v-b-tooltip.hover :title="__('delete')"><i
-                                            class="fa fa-trash"></i></button>
-                                </template>
-
-                            </b-table>
-                            <b-row>
-                                <b-col md="2" class="my-1">
-                                    <label>
-                                        <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                            label-align-sm="right" label-size="sm" class="mb-0">
-                                            <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                                size="sm" class="form-control form-select"></b-form-select>
-                                        </b-form-group>
-                                    </label>
-                                </b-col>
-                                <b-col md="2" class="my-1" offset-md="8">
-                                    <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                        align="fill" size="sm" class="my-0"></b-pagination>
-                                </b-col>
-                            </b-row>
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <button class="list-action-btn is-edit" @click="edit_record = row.item"
+                                v-if="$can('blog_update')" v-b-tooltip.hover :title="__('edit')"><i
+                                    class="fa fa-pencil-alt"></i></button>
+                            <button class="list-action-btn is-delete" @click="deleteBlog(row.index, row.item.id)"
+                                v-if="$can('blog_delete')" v-b-tooltip.hover :title="__('delete')"><i
+                                    class="fa fa-trash"></i></button>
                         </div>
-                    </div>
+                    </template>
+
+                </b-table>
+            </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
+                        label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
                 </div>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
+                    align="fill" size="sm" class="list-pagination"></b-pagination>
             </div>
         </div>
 

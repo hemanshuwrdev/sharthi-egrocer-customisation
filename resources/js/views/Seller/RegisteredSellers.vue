@@ -1,45 +1,27 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-            <div class="col-12 col-md-6 order-md-1 order-last">
-                <h3> {{__('seller_requests')}}</h3>
-            </div>
-            <div class="col-12 col-md-6 order-md-2 order-first">
-                <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard') }}</router-link></li>
-                        <li class="breadcrumb-item active" aria-current="page">{{__('seller_requests')}}</li>
-                    </ol>
-                </nav>
-            </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('seller_requests') }}</h3>
         </div>
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4>{{__('seller_requests')}}</h4>
-                        </div>
-                        <div class="card-body">
-                            <b-row class="mb-2">
 
-                                <b-col md="3" offset-md="8">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input
-                                        id="filter-input"
-                                        v-model="filter"
-                                        type="search"
-                                        :placeholder="__('search')"
-                                        @input="getRecords()"
-                                    ></b-form-input>
-                                </b-col>
-                                <b-col md="1" class="text-center">
-                                    <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </button>
-                                </b-col>
-                            </b-row>
-                            <b-row class="table-responsive">
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input
+                        id="filter-input"
+                        v-model="filter"
+                        type="search"
+                        :placeholder="__('search')"
+                        @input="getRecords()"
+                    ></b-form-input>
+                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+            </div>
+
+                            <div class="table-responsive">
                             <b-table
                                 :items="translatedRecords"
                                 :fields="fields"
@@ -182,55 +164,49 @@
                                     <label v-else-if="row.item.require_products_approval == 0" class='badge bg-danger'>{{ __('no') }}</label>
                                 </template>
                                 <template #cell(actions)="row">
-
-                                    <button class="btn btn-sm btn-success"
-                                            type="button"
-                                            @click="updateStatus(row.index,row.item.id, 1)" v-if="$can('seller_delete')" v-b-tooltip.hover title="Change Status">
-                                         {{__('approved')}}
-                                    </button>
-                                    <button class="btn btn-sm btn-danger"
-                                            type="button"
-                                            @click="updateStatus(row.index,row.item.id, 2)" v-if="$can('seller_delete')" v-b-tooltip.hover title="Change Status">
-                                         {{__('reject')}}
-                                    </button>
-
+                                    <div class="list-actions">
+                                        <button class="btn btn-sm btn-success"
+                                                type="button"
+                                                @click="updateStatus(row.index,row.item.id, 1)" v-if="$can('seller_delete')" v-b-tooltip.hover title="Change Status">
+                                             {{__('approved')}}
+                                        </button>
+                                        <button class="btn btn-sm btn-danger"
+                                                type="button"
+                                                @click="updateStatus(row.index,row.item.id, 2)" v-if="$can('seller_delete')" v-b-tooltip.hover title="Change Status">
+                                             {{__('reject')}}
+                                        </button>
+                                    </div>
                                 </template>
 
                             </b-table>
-                            </b-row>
+                            </div>
 
-                            <b-row>
-                                <b-col  md="2" class="my-1">
-                                    <b-form-group
-                                        :label="__('per_page')"
-                                        label-for="per-page-select"
-                                        label-align-sm="right"
-                                        label-size="sm"
-                                        class="mb-0">
-                                        <b-form-select
-                                            id="per-page-select"
-                                            v-model="perPage"
-                                            :options="pageOptions"
-                                            size="sm"
-                                            class="form-control form-select"
-                                        ></b-form-select>
-                                    </b-form-group>
-                                </b-col>
-                                <b-col  md="4" class="my-1" offset-md="6">
-                                    <label>{{__('total_records')}} :- {{ totalRows }} </label>
-                                    <b-pagination
-                                        v-model="currentPage"
-                                        :total-rows="totalRows"
-                                        :per-page="perPage"
-                                        align="fill"
-                                        size="sm"
-                                        class="my-0"
-                                    ></b-pagination>
-                                </b-col>
-                            </b-row>
-
-                        </div>
-                    </div>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                        ></b-form-select>
+                    </b-form-group>
+                </div>
+                <div>
+                    <b-pagination
+                        v-model="currentPage"
+                        :total-rows="totalRows"
+                        :per-page="perPage"
+                        align="fill"
+                        size="sm"
+                        class="list-pagination"
+                    ></b-pagination>
                 </div>
             </div>
         </div>

@@ -1,105 +1,78 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{ __('manage_countries') }}</h3>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('countries') }}</h3>
+            <router-link to="/countries/create" class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                v-if="$can('country_create')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add') }}</span>
+            </router-link>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search"
+                        :placeholder="__('search')"></b-form-input>
                 </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{ __('manage_countries') }}</li>
-                        </ol>
-                    </nav>
-                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
-
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
-
-                        <div class="card-header">
-                            <h4>{{ __('countries') }}</h4>
-                            <span class="pull-right">
-                                <router-link to="/countries/create" class="btn btn-primary"
-                                    v-if="$can('country_create')" v-b-tooltip.hover :title="__('add_country')">{{
-                                    __('add_country') }}</router-link>
-                            </span>
+            <div class="table-responsive">
+                <b-table :items="translatedCountries" :fields="fields" :current-page="currentPage"
+                    :per-page="perPage" :filter="filter" :filter-included-fields="filterOn"
+                    :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection"
+                    :bordered="true" :busy="isLoading" stacked="md" show-empty small>
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
+                    </template>
 
-                        <div class="card-body">
-                            <b-row class="mb-2">
-                                <b-col md="3" offset-md="8">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input id="filter-input" v-model="filter" type="search"
-                                        :placeholder="__('search')"></b-form-input>
-                                </b-col>
-                                <b-col md="1" class="text-center">
-                                    <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                        @click="getRecords()">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </button>
-                                </b-col>
-                            </b-row>
-                            <b-table :items="translatedCountries" :fields="fields" :current-page="currentPage"
-                                :per-page="perPage" :filter="filter" :filter-included-fields="filterOn"
-                                :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection"
-                                :bordered="true" :busy="isLoading" stacked="md" show-empty small>
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
+                    <template #cell(id)="row">
+                        {{ row.item.id }}
+                    </template>
+                    <template #cell(logo)="row">
+                        <p v-if="row.item.logo === ''"> {{ __('no_image') }}</p>
+                        <img :src="$storageUrl + row.item.logo" height="50" v-else />
+                    </template>
+                    <template #cell(is_default)="row">
+                        <span v-if="row.item.is_default == 1" class="badge bg-success">{{ __('yes')
+                            }}</span>
+                        <span v-else class="badge bg-danger">{{ __('no') }}</span>
+                    </template>
 
-                                <template #cell(id)="row">
-                                    {{ row.item.id }}
-                                </template>
-                                <template #cell(logo)="row">
-                                    <p v-if="row.item.logo === ''"> {{ __('no_image') }}</p>
-                                    <img :src="$storageUrl + row.item.logo" height="50" v-else />
-                                </template>
-                                <template #cell(is_default)="row">
-                                    <span v-if="row.item.is_default == 1" class="badge bg-success">{{ __('yes')
-                                        }}</span>
-                                    <span v-else class="badge bg-danger">{{ __('no') }}</span>
-                                </template>
+                    <template #cell(status)="row">
+                        <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active') }}</span>
+                        <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
+                            }}</span>
+                    </template>
 
-                                <template #cell(status)="row">
-                                    <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active') }}</span>
-                                    <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
-                                        }}</span>
-                                </template>
-
-                                <template #cell(actions)="row">
-                                    <button v-if="$can('country_update')" class="btn btn-sm btn-primary"
-                                        @click="edit_record = row.item" v-b-tooltip.hover :title="__('edit')"><i
-                                            class="fa fa-pencil-alt"></i></button>
-                                    <button v-if="$can('country_delete')" class="btn btn-sm btn-danger"
-                                        @click="deleteRecord(row.index, row.item.id)" v-b-tooltip.hover
-                                        :title="__('delete')"><i class="fa fa-trash"></i></button>
-                                </template>
-                            </b-table>
-                            <b-row>
-                                <b-col md="2" class="my-1">
-                                    <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                        label-align-sm="right" label-size="sm" class="mb-0">
-                                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                            size="sm" class="form-control form-select"></b-form-select>
-                                    </b-form-group>
-                                </b-col>
-                                <b-col md="4" class="my-1" offset-md="6">
-                                    <label>{{ __('total_records') }} :- {{ totalRows }} </label>
-                                    <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                        align="fill" size="sm" class="my-0"></b-pagination>
-                                </b-col>
-                            </b-row>
-
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <button v-if="$can('country_update')" class="list-action-btn is-edit"
+                                @click="edit_record = row.item" v-b-tooltip.hover :title="__('edit')"><i
+                                    class="fa fa-pencil-alt"></i></button>
+                            <button v-if="$can('country_delete')" class="list-action-btn is-delete"
+                                @click="deleteRecord(row.index, row.item.id)" v-b-tooltip.hover
+                                :title="__('delete')"><i class="fa fa-trash"></i></button>
                         </div>
-                    </div>
+                    </template>
+                </b-table>
+            </div>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select"
+                        label-align-sm="right" label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
                 </div>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
+                    align="fill" size="sm" class="list-pagination"></b-pagination>
             </div>
         </div>
 

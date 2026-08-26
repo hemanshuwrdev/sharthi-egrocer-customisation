@@ -296,33 +296,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -1361,824 +1334,695 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c(
     "div",
+    { staticClass: "list-page" },
     [
-      _c("div", { staticClass: "page-heading" }, [
-        _c("div", { staticClass: "page-title" }, [
-          _c("div", { staticClass: "row" }, [
-            _c(
-              "div",
-              { staticClass: "col-12 col-md-6 order-md-1 order-last" },
-              [_c("h3", [_vm._v(_vm._s(_vm.__("subscription_faqs")))])]
-            ),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "col-12 col-md-6 order-md-2 order-first" },
-              [
-                _c(
-                  "nav",
+      _c("div", { staticClass: "page-head" }, [
+        _c("h3", { staticClass: "page-head-title" }, [
+          _vm._v(_vm._s(_vm.__("subscription_faqs_list"))),
+        ]),
+        _vm._v(" "),
+        _vm.$can("subscription_faq_create")
+          ? _c(
+              "button",
+              {
+                directives: [
                   {
-                    staticClass: "breadcrumb-header float-start float-lg-end",
-                    attrs: { "aria-label": "breadcrumb" },
+                    name: "b-tooltip",
+                    rawName: "v-b-tooltip.hover",
+                    modifiers: { hover: true },
                   },
-                  [
-                    _c("ol", { staticClass: "breadcrumb" }, [
+                ],
+                staticClass:
+                  "btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap",
+                attrs: { title: _vm.__("add") },
+                on: { click: _vm.openAddModal },
+              },
+              [
+                _c("i", {
+                  staticClass: "fa fa-plus",
+                  attrs: { "aria-hidden": "true" },
+                }),
+                _vm._v(" "),
+                _c("span", [
+                  _vm._v(
+                    _vm._s(_vm.__("add")) +
+                      " " +
+                      _vm._s(_vm.__("subscription_faqs"))
+                  ),
+                ]),
+              ]
+            )
+          : _vm._e(),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "list-surface" }, [
+        _c("div", { staticClass: "list-toolbar" }, [
+          _c("div", { staticClass: "form-check form-switch" }, [
+            _c("label", { staticClass: "text-nowrap" }, [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.enableDragDrop,
+                    expression: "enableDragDrop",
+                  },
+                ],
+                staticClass: "form-check-input mr-2",
+                attrs: { type: "checkbox" },
+                domProps: {
+                  checked: Array.isArray(_vm.enableDragDrop)
+                    ? _vm._i(_vm.enableDragDrop, null) > -1
+                    : _vm.enableDragDrop,
+                },
+                on: {
+                  change: function ($event) {
+                    var $$a = _vm.enableDragDrop,
+                      $$el = $event.target,
+                      $$c = $$el.checked ? true : false
+                    if (Array.isArray($$a)) {
+                      var $$v = null,
+                        $$i = _vm._i($$a, $$v)
+                      if ($$el.checked) {
+                        $$i < 0 && (_vm.enableDragDrop = $$a.concat([$$v]))
+                      } else {
+                        $$i > -1 &&
+                          (_vm.enableDragDrop = $$a
+                            .slice(0, $$i)
+                            .concat($$a.slice($$i + 1)))
+                      }
+                    } else {
+                      _vm.enableDragDrop = $$c
+                    }
+                  },
+                },
+              }),
+              _vm._v(
+                "\n                    " +
+                  _vm._s(_vm.__("enable_drag_and_drop")) +
+                  "\n                "
+              ),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "list-search" },
+            [
+              _c("i", {
+                staticClass: "fa fa-search list-search-icon",
+                attrs: { "aria-hidden": "true" },
+              }),
+              _vm._v(" "),
+              _c("b-form-input", {
+                attrs: {
+                  id: "filter-input",
+                  type: "search",
+                  placeholder: _vm.__("search"),
+                },
+                on: {
+                  input: function ($event) {
+                    return _vm.getFaqs()
+                  },
+                },
+                model: {
+                  value: _vm.filter,
+                  callback: function ($$v) {
+                    _vm.filter = $$v
+                  },
+                  expression: "filter",
+                },
+              }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "button",
+            {
+              directives: [
+                {
+                  name: "b-tooltip",
+                  rawName: "v-b-tooltip.hover",
+                  modifiers: { hover: true },
+                },
+              ],
+              staticClass: "list-icon-btn",
+              attrs: { title: _vm.__("refresh") },
+              on: {
+                click: function ($event) {
+                  return _vm.getFaqs()
+                },
+              },
+            },
+            [
+              _c("i", {
+                staticClass: "fa fa-refresh",
+                attrs: { "aria-hidden": "true" },
+              }),
+            ]
+          ),
+        ]),
+        _vm._v(" "),
+        _vm.enableDragDrop
+          ? _c("div", { staticClass: "table-responsive" }, [
+              _c(
+                "table",
+                { staticClass: "table table-bordered table-sm" },
+                [
+                  _c("thead", [
+                    _c("tr", [
                       _c(
-                        "li",
-                        { staticClass: "breadcrumb-item" },
-                        [
-                          _c("router-link", { attrs: { to: "/dashboard" } }, [
-                            _vm._v(_vm._s(_vm.__("dashboard"))),
-                          ]),
-                        ],
-                        1
+                        "th",
+                        {
+                          staticClass: "text-center",
+                          staticStyle: { width: "50px" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("drag")))]
                       ),
                       _vm._v(" "),
                       _c(
-                        "li",
+                        "th",
                         {
-                          staticClass: "breadcrumb-item active",
-                          attrs: { "aria-current": "page" },
+                          staticClass: "text-center",
+                          staticStyle: { width: "80px" },
                         },
-                        [
-                          _vm._v(
-                            _vm._s(_vm.__("subscription_faqs")) +
-                              "\n                            "
-                          ),
-                        ]
+                        [_vm._v(_vm._s(_vm.__("id")))]
+                      ),
+                      _vm._v(" "),
+                      _c("th", [
+                        _vm._v(_vm._s(_vm.__("frequently_asked_questions"))),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "th",
+                        {
+                          staticClass: "text-center",
+                          staticStyle: { width: "100px" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("sort_order")))]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "th",
+                        {
+                          staticClass: "text-center",
+                          staticStyle: { width: "100px" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("status")))]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "th",
+                        {
+                          staticClass: "text-center",
+                          staticStyle: { width: "120px" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("actions")))]
                       ),
                     ]),
-                  ]
-                ),
-              ]
-            ),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c("section", { staticClass: "section" }, [
-          _c("div", { staticClass: "card" }, [
-            _c("div", { staticClass: "card-header" }, [
-              _c("h4", { staticClass: "card-title" }, [
-                _vm._v(_vm._s(_vm.__("subscription_faqs_list"))),
-              ]),
-              _vm._v(" "),
-              _c("span", { staticClass: "pull-right" }, [
-                _vm.$can("subscription_faq_create")
-                  ? _c(
-                      "button",
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "draggable",
+                    _vm._b(
                       {
-                        directives: [
-                          {
-                            name: "b-tooltip",
-                            rawName: "v-b-tooltip.hover",
-                            modifiers: { hover: true },
+                        attrs: {
+                          tag: "tbody",
+                          disabled: !_vm.enableDragDrop,
+                          handle: ".drag-handle",
+                        },
+                        on: {
+                          start: function ($event) {
+                            _vm.isDragging = true
                           },
-                        ],
-                        staticClass: "btn btn-primary",
-                        attrs: { title: _vm.__("add") },
-                        on: { click: _vm.openAddModal },
+                          end: function ($event) {
+                            _vm.isDragging = false
+                          },
+                          change: _vm.updateFaqsOrder,
+                        },
+                        model: {
+                          value: _vm.faqs,
+                          callback: function ($$v) {
+                            _vm.faqs = $$v
+                          },
+                          expression: "faqs",
+                        },
                       },
-                      [
-                        _vm._v(
-                          _vm._s(_vm.__("add")) +
-                            " " +
-                            _vm._s(_vm.__("subscription_faqs"))
-                        ),
-                      ]
-                    )
-                  : _vm._e(),
-              ]),
-            ]),
-            _vm._v(" "),
-            _c(
+                      "draggable",
+                      _vm.dragOptions,
+                      false
+                    ),
+                    _vm._l(_vm.translatedFaqs, function (faq) {
+                      return _c(
+                        "tr",
+                        { key: faq.id, class: { dragging: _vm.isDragging } },
+                        [
+                          _c(
+                            "td",
+                            {
+                              staticClass: "text-center drag-handle",
+                              staticStyle: { cursor: "move" },
+                            },
+                            [_c("i", { staticClass: "fas fa-arrows-alt" })]
+                          ),
+                          _vm._v(" "),
+                          _c("td", { staticClass: "text-center" }, [
+                            _vm._v(_vm._s(faq.id)),
+                          ]),
+                          _vm._v(" "),
+                          _c("td", [
+                            _c(
+                              "a",
+                              {
+                                staticStyle: { color: "#435ebe" },
+                                attrs: { href: "javascript:void(0)" },
+                              },
+                              [_vm._v(_vm._s(faq.question))]
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "faq-answer" }, [
+                              !_vm.shouldTruncate(faq.answer) ||
+                              _vm.expandedFaqs[faq.id]
+                                ? _c("p", { staticClass: "mb-0" }, [
+                                    _vm._v(
+                                      "\n                                    " +
+                                        _vm._s(faq.answer) +
+                                        "\n                                "
+                                    ),
+                                  ])
+                                : _c("p", { staticClass: "mb-0" }, [
+                                    _vm._v(
+                                      "\n                                    " +
+                                        _vm._s(
+                                          _vm.getTruncatedText(faq.answer)
+                                        ) +
+                                        "\n                                "
+                                    ),
+                                  ]),
+                              _vm._v(" "),
+                              _vm.shouldTruncate(faq.answer)
+                                ? _c(
+                                    "a",
+                                    {
+                                      staticStyle: {
+                                        color: "#007bff",
+                                        "font-size": "12px",
+                                        cursor: "pointer",
+                                      },
+                                      attrs: { href: "javascript:void(0)" },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.toggleFaqExpansion(faq.id)
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _vm._v(
+                                        "\n                                    " +
+                                          _vm._s(
+                                            _vm.expandedFaqs[faq.id]
+                                              ? _vm.__("view_less")
+                                              : _vm.__("view_more")
+                                          ) +
+                                          "\n                                "
+                                      ),
+                                    ]
+                                  )
+                                : _vm._e(),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("td", { staticClass: "text-center" }, [
+                            _vm._v(_vm._s(faq.sort_order)),
+                          ]),
+                          _vm._v(" "),
+                          _c("td", { staticClass: "text-center" }, [
+                            faq.status == 1
+                              ? _c(
+                                  "span",
+                                  { staticClass: "badge bg-success" },
+                                  [_vm._v(_vm._s(_vm.__("active")))]
+                                )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            faq.status == 0
+                              ? _c("span", { staticClass: "badge bg-danger" }, [
+                                  _vm._v(_vm._s(_vm.__("deactive"))),
+                                ])
+                              : _vm._e(),
+                          ]),
+                          _vm._v(" "),
+                          _c("td", { staticClass: "text-center" }, [
+                            _c("div", { staticClass: "list-actions" }, [
+                              _vm.$can("subscription_faq_update")
+                                ? _c(
+                                    "button",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "b-tooltip",
+                                          rawName: "v-b-tooltip.hover",
+                                          modifiers: { hover: true },
+                                        },
+                                      ],
+                                      staticClass: "list-action-btn is-edit",
+                                      attrs: { title: _vm.__("edit") },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.editFaq(faq)
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _c("i", {
+                                        staticClass: "fa fa-pencil-alt",
+                                      }),
+                                    ]
+                                  )
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _vm.$can("subscription_faq_delete")
+                                ? _c(
+                                    "button",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "b-tooltip",
+                                          rawName: "v-b-tooltip.hover",
+                                          modifiers: { hover: true },
+                                        },
+                                      ],
+                                      staticClass: "list-action-btn is-delete",
+                                      attrs: { title: _vm.__("delete") },
+                                      on: {
+                                        click: function ($event) {
+                                          _vm.deleteFaq(
+                                            _vm.getFaqIndex(faq.id),
+                                            faq.id
+                                          )
+                                        },
+                                      },
+                                    },
+                                    [_c("i", { staticClass: "fa fa-trash" })]
+                                  )
+                                : _vm._e(),
+                            ]),
+                          ]),
+                        ]
+                      )
+                    }),
+                    0
+                  ),
+                ],
+                1
+              ),
+            ])
+          : _c(
               "div",
-              { staticClass: "card-body" },
+              { staticClass: "table-responsive" },
+              [
+                _c("b-table", {
+                  attrs: {
+                    items: _vm.translatedFaqs,
+                    fields: _vm.fields,
+                    "current-page": _vm.currentPage,
+                    "per-page": _vm.perPage,
+                    "sort-by": _vm.sortBy,
+                    "sort-desc": _vm.sortDesc,
+                    "sort-direction": _vm.sortDirection,
+                    bordered: true,
+                    busy: _vm.isLoading,
+                    stacked: "md",
+                    "show-empty": "",
+                    small: "",
+                  },
+                  on: {
+                    "update:sortBy": function ($event) {
+                      _vm.sortBy = $event
+                    },
+                    "update:sort-by": function ($event) {
+                      _vm.sortBy = $event
+                    },
+                    "update:sortDesc": function ($event) {
+                      _vm.sortDesc = $event
+                    },
+                    "update:sort-desc": function ($event) {
+                      _vm.sortDesc = $event
+                    },
+                    filtered: _vm.onFiltered,
+                  },
+                  scopedSlots: _vm._u([
+                    {
+                      key: "table-busy",
+                      fn: function () {
+                        return [
+                          _c(
+                            "div",
+                            { staticClass: "text-center text-black my-2" },
+                            [
+                              _c("b-spinner", { staticClass: "align-middle" }),
+                              _vm._v(" "),
+                              _c("strong", [
+                                _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                              ]),
+                            ],
+                            1
+                          ),
+                        ]
+                      },
+                      proxy: true,
+                    },
+                    {
+                      key: "cell(faqs)",
+                      fn: function (row) {
+                        return [
+                          _c(
+                            "a",
+                            {
+                              staticStyle: { color: "#435ebe" },
+                              attrs: { href: "javascript:void(0)" },
+                            },
+                            [_vm._v(_vm._s(row.item.question))]
+                          ),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "faq-answer" }, [
+                            !_vm.shouldTruncate(row.item.answer) ||
+                            _vm.expandedFaqs[row.item.id]
+                              ? _c("p", { staticClass: "mb-0" }, [
+                                  _vm._v(
+                                    "\n                            " +
+                                      _vm._s(row.item.answer) +
+                                      "\n                        "
+                                  ),
+                                ])
+                              : _c("p", { staticClass: "mb-0" }, [
+                                  _vm._v(
+                                    "\n                            " +
+                                      _vm._s(
+                                        _vm.getTruncatedText(row.item.answer)
+                                      ) +
+                                      "\n                        "
+                                  ),
+                                ]),
+                            _vm._v(" "),
+                            _vm.shouldTruncate(row.item.answer)
+                              ? _c(
+                                  "a",
+                                  {
+                                    staticStyle: {
+                                      color: "#007bff",
+                                      "font-size": "12px",
+                                      cursor: "pointer",
+                                    },
+                                    attrs: { href: "javascript:void(0)" },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.toggleFaqExpansion(
+                                          row.item.id
+                                        )
+                                      },
+                                    },
+                                  },
+                                  [
+                                    _vm._v(
+                                      "\n                            " +
+                                        _vm._s(
+                                          _vm.expandedFaqs[row.item.id]
+                                            ? _vm.__("view_less")
+                                            : _vm.__("view_more")
+                                        ) +
+                                        "\n                        "
+                                    ),
+                                  ]
+                                )
+                              : _vm._e(),
+                          ]),
+                        ]
+                      },
+                    },
+                    {
+                      key: "cell(sort_order)",
+                      fn: function (row) {
+                        return [
+                          _c("span", [_vm._v(_vm._s(row.item.sort_order))]),
+                        ]
+                      },
+                    },
+                    {
+                      key: "cell(status)",
+                      fn: function (row) {
+                        return [
+                          row.item.status == 1
+                            ? _c("span", { staticClass: "badge bg-success" }, [
+                                _vm._v(_vm._s(_vm.__("active"))),
+                              ])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          row.item.status == 0
+                            ? _c("span", { staticClass: "badge bg-danger" }, [
+                                _vm._v(_vm._s(_vm.__("deactive"))),
+                              ])
+                            : _vm._e(),
+                        ]
+                      },
+                    },
+                    {
+                      key: "cell(actions)",
+                      fn: function (row) {
+                        return [
+                          _c("div", { staticClass: "list-actions" }, [
+                            _vm.$can("subscription_faq_update")
+                              ? _c(
+                                  "button",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "list-action-btn is-edit",
+                                    attrs: { title: _vm.__("edit") },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.editFaq(row.item)
+                                      },
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-pencil-alt" })]
+                                )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _vm.$can("subscription_faq_delete")
+                              ? _c(
+                                  "button",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "list-action-btn is-delete",
+                                    attrs: { title: _vm.__("delete") },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.deleteFaq(
+                                          row.index,
+                                          row.item.id
+                                        )
+                                      },
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-trash" })]
+                                )
+                              : _vm._e(),
+                          ]),
+                        ]
+                      },
+                    },
+                  ]),
+                }),
+              ],
+              1
+            ),
+        _vm._v(" "),
+        !_vm.enableDragDrop
+          ? _c(
+              "div",
+              { staticClass: "list-footer" },
               [
                 _c(
-                  "b-row",
-                  { staticClass: "mb-3" },
+                  "div",
+                  { staticClass: "list-perpage" },
                   [
-                    _c("b-col", { attrs: { md: "3" } }, [
-                      _c("div", { staticClass: "form-check form-switch" }, [
-                        _c("label", { staticClass: "text-nowrap" }, [
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.enableDragDrop,
-                                expression: "enableDragDrop",
-                              },
-                            ],
-                            staticClass: "form-check-input mr-2",
-                            attrs: { type: "checkbox" },
-                            domProps: {
-                              checked: Array.isArray(_vm.enableDragDrop)
-                                ? _vm._i(_vm.enableDragDrop, null) > -1
-                                : _vm.enableDragDrop,
-                            },
-                            on: {
-                              change: function ($event) {
-                                var $$a = _vm.enableDragDrop,
-                                  $$el = $event.target,
-                                  $$c = $$el.checked ? true : false
-                                if (Array.isArray($$a)) {
-                                  var $$v = null,
-                                    $$i = _vm._i($$a, $$v)
-                                  if ($$el.checked) {
-                                    $$i < 0 &&
-                                      (_vm.enableDragDrop = $$a.concat([$$v]))
-                                  } else {
-                                    $$i > -1 &&
-                                      (_vm.enableDragDrop = $$a
-                                        .slice(0, $$i)
-                                        .concat($$a.slice($$i + 1)))
-                                  }
-                                } else {
-                                  _vm.enableDragDrop = $$c
-                                }
-                              },
-                            },
-                          }),
-                          _vm._v(
-                            "\n                                    " +
-                              _vm._s(_vm.__("enable_drag_and_drop")) +
-                              "\n                                "
-                          ),
-                        ]),
-                      ]),
-                    ]),
-                    _vm._v(" "),
                     _c(
-                      "b-col",
-                      { attrs: { md: "3", "offset-md": "5" } },
+                      "b-form-group",
+                      {
+                        staticClass: "mb-0",
+                        attrs: {
+                          label: _vm.__("per_page"),
+                          "label-for": "per-page-select",
+                          "label-align-sm": "right",
+                          "label-size": "sm",
+                        },
+                      },
                       [
-                        _c("h6", { staticClass: "box-title" }, [
-                          _vm._v(_vm._s(_vm.__("search"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("b-form-input", {
+                        _c("b-form-select", {
+                          staticClass: "form-control form-select",
                           attrs: {
-                            id: "filter-input",
-                            type: "search",
-                            placeholder: _vm.__("search"),
-                          },
-                          on: {
-                            input: function ($event) {
-                              return _vm.getFaqs()
-                            },
+                            id: "per-page-select",
+                            options: _vm.pageOptions,
+                            size: "sm",
                           },
                           model: {
-                            value: _vm.filter,
+                            value: _vm.perPage,
                             callback: function ($$v) {
-                              _vm.filter = $$v
+                              _vm.perPage = $$v
                             },
-                            expression: "filter",
+                            expression: "perPage",
                           },
                         }),
                       ],
                       1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      { staticClass: "text-center", attrs: { md: "1" } },
-                      [
-                        _c(
-                          "button",
-                          {
-                            directives: [
-                              {
-                                name: "b-tooltip",
-                                rawName: "v-b-tooltip.hover",
-                                modifiers: { hover: true },
-                              },
-                            ],
-                            staticClass: "btn btn-primary btn_refresh",
-                            attrs: { title: _vm.__("refresh") },
-                            on: {
-                              click: function ($event) {
-                                return _vm.getFaqs()
-                              },
-                            },
-                          },
-                          [
-                            _c("i", {
-                              staticClass: "fa fa-refresh",
-                              attrs: { "aria-hidden": "true" },
-                            }),
-                          ]
-                        ),
-                      ]
                     ),
                   ],
                   1
                 ),
                 _vm._v(" "),
-                _vm.enableDragDrop
-                  ? _c("div", { staticClass: "table-responsive" }, [
-                      _c(
-                        "table",
-                        { staticClass: "table table-bordered table-sm" },
-                        [
-                          _c("thead", [
-                            _c("tr", [
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-center",
-                                  staticStyle: { width: "50px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("drag")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-center",
-                                  staticStyle: { width: "80px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("id")))]
-                              ),
-                              _vm._v(" "),
-                              _c("th", [
-                                _vm._v(
-                                  _vm._s(_vm.__("frequently_asked_questions"))
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-center",
-                                  staticStyle: { width: "100px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("sort_order")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-center",
-                                  staticStyle: { width: "100px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("status")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-center",
-                                  staticStyle: { width: "120px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("actions")))]
-                              ),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c(
-                            "draggable",
-                            _vm._b(
-                              {
-                                attrs: {
-                                  tag: "tbody",
-                                  disabled: !_vm.enableDragDrop,
-                                  handle: ".drag-handle",
-                                },
-                                on: {
-                                  start: function ($event) {
-                                    _vm.isDragging = true
-                                  },
-                                  end: function ($event) {
-                                    _vm.isDragging = false
-                                  },
-                                  change: _vm.updateFaqsOrder,
-                                },
-                                model: {
-                                  value: _vm.faqs,
-                                  callback: function ($$v) {
-                                    _vm.faqs = $$v
-                                  },
-                                  expression: "faqs",
-                                },
-                              },
-                              "draggable",
-                              _vm.dragOptions,
-                              false
-                            ),
-                            _vm._l(_vm.translatedFaqs, function (faq) {
-                              return _c(
-                                "tr",
-                                {
-                                  key: faq.id,
-                                  class: { dragging: _vm.isDragging },
-                                },
-                                [
-                                  _c(
-                                    "td",
-                                    {
-                                      staticClass: "text-center drag-handle",
-                                      staticStyle: { cursor: "move" },
-                                    },
-                                    [
-                                      _c("i", {
-                                        staticClass: "fas fa-arrows-alt",
-                                      }),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c("td", { staticClass: "text-center" }, [
-                                    _vm._v(_vm._s(faq.id)),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("td", [
-                                    _c(
-                                      "a",
-                                      {
-                                        staticStyle: { color: "#435ebe" },
-                                        attrs: { href: "javascript:void(0)" },
-                                      },
-                                      [_vm._v(_vm._s(faq.question))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("div", { staticClass: "faq-answer" }, [
-                                      !_vm.shouldTruncate(faq.answer) ||
-                                      _vm.expandedFaqs[faq.id]
-                                        ? _c("p", { staticClass: "mb-0" }, [
-                                            _vm._v(
-                                              "\n                                                " +
-                                                _vm._s(faq.answer) +
-                                                "\n                                            "
-                                            ),
-                                          ])
-                                        : _c("p", { staticClass: "mb-0" }, [
-                                            _vm._v(
-                                              "\n                                                " +
-                                                _vm._s(
-                                                  _vm.getTruncatedText(
-                                                    faq.answer
-                                                  )
-                                                ) +
-                                                "\n                                            "
-                                            ),
-                                          ]),
-                                      _vm._v(" "),
-                                      _vm.shouldTruncate(faq.answer)
-                                        ? _c(
-                                            "a",
-                                            {
-                                              staticStyle: {
-                                                color: "#007bff",
-                                                "font-size": "12px",
-                                                cursor: "pointer",
-                                              },
-                                              attrs: {
-                                                href: "javascript:void(0)",
-                                              },
-                                              on: {
-                                                click: function ($event) {
-                                                  return _vm.toggleFaqExpansion(
-                                                    faq.id
-                                                  )
-                                                },
-                                              },
-                                            },
-                                            [
-                                              _vm._v(
-                                                "\n                                                " +
-                                                  _vm._s(
-                                                    _vm.expandedFaqs[faq.id]
-                                                      ? _vm.__("view_less")
-                                                      : _vm.__("view_more")
-                                                  ) +
-                                                  "\n                                            "
-                                              ),
-                                            ]
-                                          )
-                                        : _vm._e(),
-                                    ]),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("td", { staticClass: "text-center" }, [
-                                    _vm._v(_vm._s(faq.sort_order)),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("td", { staticClass: "text-center" }, [
-                                    faq.status == 1
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-success" },
-                                          [_vm._v(_vm._s(_vm.__("active")))]
-                                        )
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    faq.status == 0
-                                      ? _c(
-                                          "span",
-                                          { staticClass: "badge bg-danger" },
-                                          [_vm._v(_vm._s(_vm.__("deactive")))]
-                                        )
-                                      : _vm._e(),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("td", { staticClass: "text-center" }, [
-                                    _vm.$can("subscription_faq_update")
-                                      ? _c(
-                                          "button",
-                                          {
-                                            directives: [
-                                              {
-                                                name: "b-tooltip",
-                                                rawName: "v-b-tooltip.hover",
-                                                modifiers: { hover: true },
-                                              },
-                                            ],
-                                            staticClass:
-                                              "btn btn-sm btn-primary",
-                                            attrs: { title: _vm.__("edit") },
-                                            on: {
-                                              click: function ($event) {
-                                                return _vm.editFaq(faq)
-                                              },
-                                            },
-                                          },
-                                          [
-                                            _c("i", {
-                                              staticClass: "fa fa-pencil-alt",
-                                            }),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.$can("subscription_faq_delete")
-                                      ? _c(
-                                          "button",
-                                          {
-                                            directives: [
-                                              {
-                                                name: "b-tooltip",
-                                                rawName: "v-b-tooltip.hover",
-                                                modifiers: { hover: true },
-                                              },
-                                            ],
-                                            staticClass:
-                                              "btn btn-sm btn-danger",
-                                            attrs: { title: _vm.__("delete") },
-                                            on: {
-                                              click: function ($event) {
-                                                _vm.deleteFaq(
-                                                  _vm.getFaqIndex(faq.id),
-                                                  faq.id
-                                                )
-                                              },
-                                            },
-                                          },
-                                          [
-                                            _c("i", {
-                                              staticClass: "fa fa-trash",
-                                            }),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                  ]),
-                                ]
-                              )
-                            }),
-                            0
-                          ),
-                        ],
-                        1
-                      ),
-                    ])
-                  : _c(
-                      "div",
-                      { staticClass: "table-responsive" },
-                      [
-                        _c("b-table", {
-                          attrs: {
-                            items: _vm.translatedFaqs,
-                            fields: _vm.fields,
-                            "current-page": _vm.currentPage,
-                            "per-page": _vm.perPage,
-                            "sort-by": _vm.sortBy,
-                            "sort-desc": _vm.sortDesc,
-                            "sort-direction": _vm.sortDirection,
-                            bordered: true,
-                            busy: _vm.isLoading,
-                            stacked: "md",
-                            "show-empty": "",
-                            small: "",
-                          },
-                          on: {
-                            "update:sortBy": function ($event) {
-                              _vm.sortBy = $event
-                            },
-                            "update:sort-by": function ($event) {
-                              _vm.sortBy = $event
-                            },
-                            "update:sortDesc": function ($event) {
-                              _vm.sortDesc = $event
-                            },
-                            "update:sort-desc": function ($event) {
-                              _vm.sortDesc = $event
-                            },
-                            filtered: _vm.onFiltered,
-                          },
-                          scopedSlots: _vm._u([
-                            {
-                              key: "table-busy",
-                              fn: function () {
-                                return [
-                                  _c(
-                                    "div",
-                                    {
-                                      staticClass:
-                                        "text-center text-black my-2",
-                                    },
-                                    [
-                                      _c("b-spinner", {
-                                        staticClass: "align-middle",
-                                      }),
-                                      _vm._v(" "),
-                                      _c("strong", [
-                                        _vm._v(
-                                          _vm._s(_vm.__("loading")) + "..."
-                                        ),
-                                      ]),
-                                    ],
-                                    1
-                                  ),
-                                ]
-                              },
-                              proxy: true,
-                            },
-                            {
-                              key: "cell(faqs)",
-                              fn: function (row) {
-                                return [
-                                  _c(
-                                    "a",
-                                    {
-                                      staticStyle: { color: "#435ebe" },
-                                      attrs: { href: "javascript:void(0)" },
-                                    },
-                                    [_vm._v(_vm._s(row.item.question))]
-                                  ),
-                                  _vm._v(" "),
-                                  _c("div", { staticClass: "faq-answer" }, [
-                                    !_vm.shouldTruncate(row.item.answer) ||
-                                    _vm.expandedFaqs[row.item.id]
-                                      ? _c("p", { staticClass: "mb-0" }, [
-                                          _vm._v(
-                                            "\n                                        " +
-                                              _vm._s(row.item.answer) +
-                                              "\n                                    "
-                                          ),
-                                        ])
-                                      : _c("p", { staticClass: "mb-0" }, [
-                                          _vm._v(
-                                            "\n                                        " +
-                                              _vm._s(
-                                                _vm.getTruncatedText(
-                                                  row.item.answer
-                                                )
-                                              ) +
-                                              "\n                                    "
-                                          ),
-                                        ]),
-                                    _vm._v(" "),
-                                    _vm.shouldTruncate(row.item.answer)
-                                      ? _c(
-                                          "a",
-                                          {
-                                            staticStyle: {
-                                              color: "#007bff",
-                                              "font-size": "12px",
-                                              cursor: "pointer",
-                                            },
-                                            attrs: {
-                                              href: "javascript:void(0)",
-                                            },
-                                            on: {
-                                              click: function ($event) {
-                                                return _vm.toggleFaqExpansion(
-                                                  row.item.id
-                                                )
-                                              },
-                                            },
-                                          },
-                                          [
-                                            _vm._v(
-                                              "\n                                        " +
-                                                _vm._s(
-                                                  _vm.expandedFaqs[row.item.id]
-                                                    ? _vm.__("view_less")
-                                                    : _vm.__("view_more")
-                                                ) +
-                                                "\n                                    "
-                                            ),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                  ]),
-                                ]
-                              },
-                            },
-                            {
-                              key: "cell(sort_order)",
-                              fn: function (row) {
-                                return [
-                                  _c("span", [
-                                    _vm._v(_vm._s(row.item.sort_order)),
-                                  ]),
-                                ]
-                              },
-                            },
-                            {
-                              key: "cell(status)",
-                              fn: function (row) {
-                                return [
-                                  row.item.status == 1
-                                    ? _c(
-                                        "span",
-                                        { staticClass: "badge bg-success" },
-                                        [_vm._v(_vm._s(_vm.__("active")))]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  row.item.status == 0
-                                    ? _c(
-                                        "span",
-                                        { staticClass: "badge bg-danger" },
-                                        [_vm._v(_vm._s(_vm.__("deactive")))]
-                                      )
-                                    : _vm._e(),
-                                ]
-                              },
-                            },
-                            {
-                              key: "cell(actions)",
-                              fn: function (row) {
-                                return [
-                                  _vm.$can("subscription_faq_update")
-                                    ? _c(
-                                        "button",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
-                                            },
-                                          ],
-                                          staticClass: "btn btn-sm btn-primary",
-                                          attrs: { title: _vm.__("edit") },
-                                          on: {
-                                            click: function ($event) {
-                                              return _vm.editFaq(row.item)
-                                            },
-                                          },
-                                        },
-                                        [
-                                          _c("i", {
-                                            staticClass: "fa fa-pencil-alt",
-                                          }),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  _vm.$can("subscription_faq_delete")
-                                    ? _c(
-                                        "button",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
-                                            },
-                                          ],
-                                          staticClass: "btn btn-sm btn-danger",
-                                          attrs: { title: _vm.__("delete") },
-                                          on: {
-                                            click: function ($event) {
-                                              return _vm.deleteFaq(
-                                                row.index,
-                                                row.item.id
-                                              )
-                                            },
-                                          },
-                                        },
-                                        [
-                                          _c("i", {
-                                            staticClass: "fa fa-trash",
-                                          }),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                ]
-                              },
-                            },
-                          ]),
-                        }),
-                      ],
-                      1
-                    ),
-                _vm._v(" "),
-                !_vm.enableDragDrop
-                  ? _c(
-                      "b-row",
-                      [
-                        _c(
-                          "b-col",
-                          { staticClass: "my-1", attrs: { md: "2" } },
-                          [
-                            _c(
-                              "b-form-group",
-                              {
-                                staticClass: "mb-0",
-                                attrs: {
-                                  label: _vm.__("per_page"),
-                                  "label-for": "per-page-select",
-                                  "label-align-sm": "right",
-                                  "label-size": "sm",
-                                },
-                              },
-                              [
-                                _c("b-form-select", {
-                                  staticClass: "form-control form-select",
-                                  attrs: {
-                                    id: "per-page-select",
-                                    options: _vm.pageOptions,
-                                    size: "sm",
-                                  },
-                                  model: {
-                                    value: _vm.perPage,
-                                    callback: function ($$v) {
-                                      _vm.perPage = $$v
-                                    },
-                                    expression: "perPage",
-                                  },
-                                }),
-                              ],
-                              1
-                            ),
-                          ],
-                          1
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "b-col",
-                          {
-                            staticClass: "my-1",
-                            attrs: { md: "4", "offset-md": "6" },
-                          },
-                          [
-                            _c("b-pagination", {
-                              staticClass: "my-0",
-                              attrs: {
-                                "total-rows": _vm.totalRows,
-                                "per-page": _vm.perPage,
-                                align: "fill",
-                                size: "sm",
-                              },
-                              model: {
-                                value: _vm.currentPage,
-                                callback: function ($$v) {
-                                  _vm.currentPage = $$v
-                                },
-                                expression: "currentPage",
-                              },
-                            }),
-                          ],
-                          1
-                        ),
-                      ],
-                      1
-                    )
-                  : _c(
-                      "b-row",
-                      { staticClass: "mt-2" },
-                      [
-                        _c("b-col", [
-                          _c("p", { staticClass: "text-muted mb-0" }, [
-                            _vm._v(
-                              _vm._s(_vm.__("total")) +
-                                ": " +
-                                _vm._s(_vm.totalRows) +
-                                " " +
-                                _vm._s(_vm.__("items"))
-                            ),
-                          ]),
-                        ]),
-                      ],
-                      1
-                    ),
+                _c("b-pagination", {
+                  staticClass: "list-pagination",
+                  attrs: {
+                    "total-rows": _vm.totalRows,
+                    "per-page": _vm.perPage,
+                    align: "fill",
+                    size: "sm",
+                  },
+                  model: {
+                    value: _vm.currentPage,
+                    callback: function ($$v) {
+                      _vm.currentPage = $$v
+                    },
+                    expression: "currentPage",
+                  },
+                }),
               ],
               1
-            ),
-          ]),
-        ]),
+            )
+          : _c("div", { staticClass: "list-footer mt-2" }, [
+              _c("p", { staticClass: "text-muted mb-0" }, [
+                _vm._v(
+                  _vm._s(_vm.__("total")) +
+                    ": " +
+                    _vm._s(_vm.totalRows) +
+                    " " +
+                    _vm._s(_vm.__("items"))
+                ),
+              ]),
+            ]),
       ]),
       _vm._v(" "),
       _c(

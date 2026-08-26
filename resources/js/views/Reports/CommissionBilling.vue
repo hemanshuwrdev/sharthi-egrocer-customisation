@@ -1,24 +1,10 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('commission_billing') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item">
-                                    <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('commission_billing') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('commission_billing') }}</h3>
+        </div>
 
+        <div>
             <section class="section">
 
                 <!-- Period tabs -->
@@ -128,169 +114,163 @@
 
                 <!-- ── TAB 1: Distributor Summary ── -->
                 <div v-if="activeTab === 'summary'">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="list-surface">
+                        <div class="list-toolbar">
                             <h4 class="card-title mb-0">{{ __('distributor_gmv_commission_summary') }}</h4>
-                            <button class="btn btn-sm btn-primary" @click="loadSummary">
+                            <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="loadSummary">
                                 <i class="fa fa-refresh"></i>
                             </button>
                         </div>
-                        <div class="card-body">
-                            <div v-if="summaryLoading" class="text-center py-4">
-                                <b-spinner></b-spinner>
-                            </div>
-                            <div v-else class="table-responsive">
-                                <b-table
-                                    :items="summaryData"
-                                    :fields="summaryFields"
-                                    :filter="summaryFilter"
-                                    :current-page="summaryCurrentPage"
-                                    :per-page="summaryPerPage"
-                                    :busy="summaryLoading"
-                                    :bordered="true"
-                                    show-empty
-                                    small
-                                    stacked="md">
-                                    <template #cell(commission_rate)="row">
-                                        {{ row.item.commission_rate }}%
-                                    </template>
-                                    <template #cell(gmv_this_month)="row">
-                                        {{ $currency }} {{ row.item.gmv_this_month.toFixed(2) }}
-                                    </template>
-                                    <template #cell(commission_this_month)="row">
-                                        {{ $currency }} {{ row.item.commission_this_month.toFixed(2) }}
-                                    </template>
-                                    <template #cell(gmv_all_time)="row">
-                                        {{ $currency }} {{ row.item.gmv_all_time.toFixed(2) }}
-                                    </template>
-                                    <template #cell(commission_all_time)="row">
-                                        {{ $currency }} {{ row.item.commission_all_time.toFixed(2) }}
-                                    </template>
-                                    <template #cell(actions)="row">
+                        <div v-if="summaryLoading" class="text-center py-4">
+                            <b-spinner></b-spinner>
+                        </div>
+                        <div v-else class="table-responsive">
+                            <b-table
+                                :items="summaryData"
+                                :fields="summaryFields"
+                                :filter="summaryFilter"
+                                :current-page="summaryCurrentPage"
+                                :per-page="summaryPerPage"
+                                :busy="summaryLoading"
+                                :bordered="true"
+                                show-empty
+                                small
+                                stacked="md">
+                                <template #cell(commission_rate)="row">
+                                    {{ row.item.commission_rate }}%
+                                </template>
+                                <template #cell(gmv_this_month)="row">
+                                    {{ $currency }} {{ row.item.gmv_this_month.toFixed(2) }}
+                                </template>
+                                <template #cell(commission_this_month)="row">
+                                    {{ $currency }} {{ row.item.commission_this_month.toFixed(2) }}
+                                </template>
+                                <template #cell(gmv_all_time)="row">
+                                    {{ $currency }} {{ row.item.gmv_all_time.toFixed(2) }}
+                                </template>
+                                <template #cell(commission_all_time)="row">
+                                    {{ $currency }} {{ row.item.commission_all_time.toFixed(2) }}
+                                </template>
+                                <template #cell(actions)="row">
+                                    <div class="list-actions">
                                         <router-link
                                             :to="'/commission_billing/' + row.item.seller_id"
-                                            class="btn btn-sm btn-outline-primary">
-                                            {{ __('view_detail') }}
+                                            class="list-action-btn is-view" v-b-tooltip.hover
+                                            :title="__('view_detail')">
+                                            <i class="fa fa-eye"></i>
                                         </router-link>
-                                    </template>
-                                </b-table>
-                            </div>
-                            <b-row class="mt-2" v-if="summaryData.length">
-                                <b-col md="3">
-                                    <div class="text-success h6">
-                                        {{ __('total_gmv_month') }}: {{ $currency }} {{ totalGmvMonth.toFixed(2) }}
                                     </div>
-                                </b-col>
-                                <b-col md="3">
-                                    <div class="text-primary h6">
-                                        {{ __('total_commission_month') }}: {{ $currency }} {{ totalCommMonth.toFixed(2) }}
-                                    </div>
-                                </b-col>
-                            </b-row>
-                            <b-row class="mt-2" v-if="summaryData.length">
-                                <b-col md="2">
-                                    <b-form-group
-                                        :label="__('per_page')"
-                                        label-for="summary-per-page-select"
-                                        label-align-sm="right"
-                                        label-size="sm"
-                                        class="mb-0">
-                                        <b-form-select
-                                            id="summary-per-page-select"
-                                            v-model="summaryPerPage"
-                                            :options="summaryPageOptions"
-                                            size="sm"
-                                            class="form-control form-select"
-                                        ></b-form-select>
-                                    </b-form-group>
-                                </b-col>
-                                <b-col md="4" offset-md="6">
-                                    <b-pagination
-                                        v-model="summaryCurrentPage"
-                                        :total-rows="summaryData.length"
-                                        :per-page="summaryPerPage"
-                                        align="fill"
+                                </template>
+                            </b-table>
+                        </div>
+                        <b-row class="mt-2" v-if="summaryData.length">
+                            <b-col md="3">
+                                <div class="text-success h6">
+                                    {{ __('total_gmv_month') }}: {{ $currency }} {{ totalGmvMonth.toFixed(2) }}
+                                </div>
+                            </b-col>
+                            <b-col md="3">
+                                <div class="text-primary h6">
+                                    {{ __('total_commission_month') }}: {{ $currency }} {{ totalCommMonth.toFixed(2) }}
+                                </div>
+                            </b-col>
+                        </b-row>
+                        <div class="list-footer" v-if="summaryData.length">
+                            <div class="list-perpage">
+                                <b-form-group
+                                    :label="__('per_page')"
+                                    label-for="summary-per-page-select"
+                                    label-align-sm="right"
+                                    label-size="sm"
+                                    class="mb-0">
+                                    <b-form-select
+                                        id="summary-per-page-select"
+                                        v-model="summaryPerPage"
+                                        :options="summaryPageOptions"
                                         size="sm"
-                                        class="my-0"
-                                    ></b-pagination>
-                                </b-col>
-                            </b-row>
+                                        class="form-control form-select"
+                                    ></b-form-select>
+                                </b-form-group>
+                            </div>
+                            <b-pagination
+                                v-model="summaryCurrentPage"
+                                :total-rows="summaryData.length"
+                                :per-page="summaryPerPage"
+                                align="fill"
+                                size="sm"
+                                class="list-pagination"
+                            ></b-pagination>
                         </div>
                     </div>
                 </div>
 
                 <!-- ── TAB 2: All Transactions ── -->
                 <div v-if="activeTab === 'transactions'">
-                    <div class="card">
-                        <div class="card-header">
+                    <div class="list-surface">
+                        <div class="list-toolbar">
                             <h4 class="card-title">{{ __('all_commission_transactions') }}</h4>
                         </div>
-                        <div class="card-body">
-                            <b-row class="mb-3">
-                                <b-col md="4">
-                                    <h6 class="box-title">{{ __('from_to_date') }}</h6>
-                                    <div class="d-flex align-items-center">
-                                        <date-range-picker
-                                            :append-to-body="true"
-                                            :single-date-picker="'range'"
-                                            :autoApply="false"
-                                            :showDropdowns="true"
-                                            v-model="txDateRange"
-                                            :maxDate="maxDate"
-                                            @update="loadTransactions(1)"
-                                            :locale-data="dateRangePickerLocale"
-                                            :ranges="dateRangePickerRanges"
-                                        ></date-range-picker>
-                                        <button class="btn btn-sm btn-danger ms-1"
-                                            @click="txDateRange = { startDate: null, endDate: null }; loadTransactions(1)">
-                                            {{ __('clear') }}
-                                        </button>
-                                    </div>
-                                </b-col>
-                                <b-col md="3">
-                                    <h6 class="box-title">{{ __('seller') }}</h6>
-                                    <select v-model="txSeller" @change="loadTransactions(1)" class="form-control form-select">
-                                        <option value="">{{ __('all_distributors') }}</option>
-                                        <option v-for="s in sellers" :key="s.seller_id" :value="s.seller_id">{{ s.name }}</option>
-                                    </select>
-                                </b-col>
-                                <b-col md="1" class="d-flex align-items-end">
-                                    <button class="btn btn-primary btn_refresh" @click="loadTransactions(1)">
-                                        <i class="fa fa-refresh"></i>
+                        <b-row class="mb-3">
+                            <b-col md="4">
+                                <h6 class="box-title">{{ __('from_to_date') }}</h6>
+                                <div class="d-flex align-items-center">
+                                    <date-range-picker
+                                        :append-to-body="true"
+                                        :single-date-picker="'range'"
+                                        :autoApply="false"
+                                        :showDropdowns="true"
+                                        v-model="txDateRange"
+                                        :maxDate="maxDate"
+                                        @update="loadTransactions(1)"
+                                        :locale-data="dateRangePickerLocale"
+                                        :ranges="dateRangePickerRanges"
+                                    ></date-range-picker>
+                                    <button class="btn btn-sm btn-danger ms-1"
+                                        @click="txDateRange = { startDate: null, endDate: null }; loadTransactions(1)">
+                                        {{ __('clear') }}
                                     </button>
-                                </b-col>
-                            </b-row>
-                            <div v-if="txLoading" class="text-center py-4"><b-spinner></b-spinner></div>
-                            <div v-else>
-                                <div class="table-responsive">
-                                    <b-table
-                                        :items="txData"
-                                        :fields="txFields2"
-                                        :bordered="true"
-                                        show-empty
-                                        small
-                                        stacked="md">
-                                        <template #cell(order_item_amount)="row">{{ $currency }} {{ parseFloat(row.item.order_item_amount).toFixed(2) }}</template>
-                                        <template #cell(commission_amount)="row">{{ $currency }} {{ parseFloat(row.item.commission_amount).toFixed(2) }}</template>
-                                        <template #cell(seller_commission_percentage)="row">{{ row.item.seller_commission_percentage }}%</template>
-                                    </b-table>
                                 </div>
-                                <b-row class="mt-2">
-                                    <b-col md="4">
-                                        <div class="text-success h6">
-                                            {{ __('total_commission') }}: {{ $currency }} {{ totalTxCommission.toFixed(2) }}
-                                        </div>
-                                    </b-col>
-                                    <b-col md="4" offset-md="4">
-                                        <b-pagination
-                                            v-model="txPage"
-                                            :total-rows="txTotal"
-                                            :per-page="txPerPage"
-                                            @change="loadTransactions"
-                                            size="sm"
-                                        ></b-pagination>
-                                    </b-col>
-                                </b-row>
+                            </b-col>
+                            <b-col md="3">
+                                <h6 class="box-title">{{ __('seller') }}</h6>
+                                <select v-model="txSeller" @change="loadTransactions(1)" class="form-control form-select">
+                                    <option value="">{{ __('all_distributors') }}</option>
+                                    <option v-for="s in sellers" :key="s.seller_id" :value="s.seller_id">{{ s.name }}</option>
+                                </select>
+                            </b-col>
+                            <b-col md="1" class="d-flex align-items-end">
+                                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="loadTransactions(1)">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                            </b-col>
+                        </b-row>
+                        <div v-if="txLoading" class="text-center py-4"><b-spinner></b-spinner></div>
+                        <div v-else>
+                            <div class="table-responsive">
+                                <b-table
+                                    :items="txData"
+                                    :fields="txFields2"
+                                    :bordered="true"
+                                    show-empty
+                                    small
+                                    stacked="md">
+                                    <template #cell(order_item_amount)="row">{{ $currency }} {{ parseFloat(row.item.order_item_amount).toFixed(2) }}</template>
+                                    <template #cell(commission_amount)="row">{{ $currency }} {{ parseFloat(row.item.commission_amount).toFixed(2) }}</template>
+                                    <template #cell(seller_commission_percentage)="row">{{ row.item.seller_commission_percentage }}%</template>
+                                </b-table>
+                            </div>
+                            <div class="list-footer">
+                                <div class="text-success h6">
+                                    {{ __('total_commission') }}: {{ $currency }} {{ totalTxCommission.toFixed(2) }}
+                                </div>
+                                <b-pagination
+                                    v-model="txPage"
+                                    :total-rows="txTotal"
+                                    :per-page="txPerPage"
+                                    @change="loadTransactions"
+                                    size="sm"
+                                    class="list-pagination"
+                                ></b-pagination>
                             </div>
                         </div>
                     </div>

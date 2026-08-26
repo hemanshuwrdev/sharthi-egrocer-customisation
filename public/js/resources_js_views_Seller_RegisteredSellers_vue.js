@@ -233,30 +233,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -636,899 +612,712 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-          _c("h3", [_vm._v(" " + _vm._s(_vm.__("seller_requests")))]),
-        ]),
+  return _c("div", { staticClass: "list-page" }, [
+    _c("div", { staticClass: "page-head" }, [
+      _c("h3", { staticClass: "page-head-title" }, [
+        _vm._v(_vm._s(_vm.__("seller_requests"))),
+      ]),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "list-surface" }, [
+      _c("div", { staticClass: "list-toolbar" }, [
+        _c(
+          "div",
+          { staticClass: "list-search" },
+          [
+            _c("i", {
+              staticClass: "fa fa-search list-search-icon",
+              attrs: { "aria-hidden": "true" },
+            }),
+            _vm._v(" "),
+            _c("b-form-input", {
+              attrs: {
+                id: "filter-input",
+                type: "search",
+                placeholder: _vm.__("search"),
+              },
+              on: {
+                input: function ($event) {
+                  return _vm.getRecords()
+                },
+              },
+              model: {
+                value: _vm.filter,
+                callback: function ($$v) {
+                  _vm.filter = $$v
+                },
+                expression: "filter",
+              },
+            }),
+          ],
+          1
+        ),
         _vm._v(" "),
-        _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-          _c(
-            "nav",
-            {
-              staticClass: "breadcrumb-header float-start float-lg-end",
-              attrs: { "aria-label": "breadcrumb" },
+        _c(
+          "button",
+          {
+            directives: [
+              {
+                name: "b-tooltip",
+                rawName: "v-b-tooltip.hover",
+                modifiers: { hover: true },
+              },
+            ],
+            staticClass: "list-icon-btn",
+            attrs: { title: _vm.__("refresh") },
+            on: {
+              click: function ($event) {
+                return _vm.getRecords()
+              },
             },
-            [
-              _c("ol", { staticClass: "breadcrumb" }, [
-                _c(
-                  "li",
-                  { staticClass: "breadcrumb-item" },
-                  [
-                    _c("router-link", { attrs: { to: "/dashboard" } }, [
-                      _vm._v(_vm._s(_vm.__("dashboard"))),
-                    ]),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "li",
-                  {
-                    staticClass: "breadcrumb-item active",
-                    attrs: { "aria-current": "page" },
-                  },
-                  [_vm._v(_vm._s(_vm.__("seller_requests")))]
-                ),
-              ]),
-            ]
-          ),
-        ]),
+          },
+          [
+            _c("i", {
+              staticClass: "fa fa-refresh",
+              attrs: { "aria-hidden": "true" },
+            }),
+          ]
+        ),
       ]),
       _vm._v(" "),
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-12 order-md-1 order-last" }, [
-          _c("div", { staticClass: "card" }, [
-            _c("div", { staticClass: "card-header" }, [
-              _c("h4", [_vm._v(_vm._s(_vm.__("seller_requests")))]),
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "card-body" },
-              [
-                _c(
-                  "b-row",
-                  { staticClass: "mb-2" },
-                  [
+      _c(
+        "div",
+        { staticClass: "table-responsive" },
+        [
+          _c("b-table", {
+            attrs: {
+              items: _vm.translatedRecords,
+              fields: _vm.fields,
+              "current-page": _vm.currentPage,
+              "per-page": _vm.perPage,
+              "filter-included-fields": _vm.filterOn,
+              "sort-by": _vm.sortBy,
+              "sort-desc": _vm.sortDesc,
+              "sort-direction": _vm.sortDirection,
+              bordered: true,
+              busy: _vm.isLoading,
+              stacked: "md",
+              "show-empty": "",
+              small: "",
+            },
+            on: {
+              "update:sortBy": function ($event) {
+                _vm.sortBy = $event
+              },
+              "update:sort-by": function ($event) {
+                _vm.sortBy = $event
+              },
+              "update:sortDesc": function ($event) {
+                _vm.sortDesc = $event
+              },
+              "update:sort-desc": function ($event) {
+                _vm.sortDesc = $event
+              },
+            },
+            scopedSlots: _vm._u([
+              {
+                key: "table-busy",
+                fn: function () {
+                  return [
                     _c(
-                      "b-col",
-                      { attrs: { md: "3", "offset-md": "8" } },
+                      "div",
+                      { staticClass: "text-center text-black my-2" },
                       [
-                        _c("h6", { staticClass: "box-title" }, [
-                          _vm._v(_vm._s(_vm.__("search"))),
-                        ]),
+                        _c("b-spinner", { staticClass: "align-middle" }),
                         _vm._v(" "),
-                        _c("b-form-input", {
-                          attrs: {
-                            id: "filter-input",
-                            type: "search",
-                            placeholder: _vm.__("search"),
-                          },
-                          on: {
-                            input: function ($event) {
-                              return _vm.getRecords()
-                            },
-                          },
-                          model: {
-                            value: _vm.filter,
-                            callback: function ($$v) {
-                              _vm.filter = $$v
-                            },
-                            expression: "filter",
-                          },
-                        }),
+                        _c("strong", [
+                          _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                        ]),
                       ],
                       1
                     ),
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "cell(email)",
+                fn: function (row) {
+                  return [
+                    _vm._v(
+                      "\n                                " +
+                        _vm._s(_vm._f("emailMask")(row.item.email)) +
+                        "\n                            "
+                    ),
+                  ]
+                },
+              },
+              {
+                key: "cell(mobile)",
+                fn: function (row) {
+                  return [
+                    _vm._v(
+                      "\n                                " +
+                        _vm._s(_vm._f("mobileMask")(row.item.mobile)) +
+                        "\n                            "
+                    ),
+                  ]
+                },
+              },
+              {
+                key: "cell(seller_info)",
+                fn: function (row) {
+                  return [
+                    _c(
+                      "small",
+                      {
+                        staticClass:
+                          "d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2",
+                        attrs: { id: "seller" + row.item.id },
+                      },
+                      [_c("i", { staticClass: "fa fa-info-circle" })]
+                    ),
                     _vm._v(" "),
                     _c(
-                      "b-col",
-                      { staticClass: "text-center", attrs: { md: "1" } },
-                      [
-                        _c(
-                          "button",
-                          {
-                            directives: [
-                              {
-                                name: "b-tooltip",
-                                rawName: "v-b-tooltip.hover",
-                                modifiers: { hover: true },
-                              },
-                            ],
-                            staticClass: "btn btn-primary btn_refresh",
-                            attrs: { title: _vm.__("refresh") },
-                            on: {
-                              click: function ($event) {
-                                return _vm.getRecords()
-                              },
-                            },
-                          },
+                      "b-popover",
+                      {
+                        attrs: {
+                          target: "seller" + row.item.id,
+                          triggers: "hover",
+                          placement: "left",
+                        },
+                        scopedSlots: _vm._u(
                           [
-                            _c("i", {
-                              staticClass: "fa fa-refresh",
-                              attrs: { "aria-hidden": "true" },
-                            }),
-                          ]
+                            {
+                              key: "title",
+                              fn: function () {
+                                return [
+                                  _vm._v(
+                                    "\n                                       " +
+                                      _vm._s(_vm.__("sellr_details")) +
+                                      "\n                                    "
+                                  ),
+                                ]
+                              },
+                              proxy: true,
+                            },
+                          ],
+                          null,
+                          true
                         ),
+                      },
+                      [
+                        _vm._v(" "),
+                        _c("table", { staticClass: "table table-borderless" }, [
+                          _c("tr", [
+                            _c("th", [_vm._v(" " + _vm._s(_vm.__("name")))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(" : " + _vm._s(row.item.name))]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", [_vm._v(" " + _vm._s(_vm.__("email")))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(" : " + _vm._s(row.item.email))]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", [_vm._v(" " + _vm._s(_vm.__("mobile")))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(" : " + _vm._s(row.item.mobile))]),
+                          ]),
+                        ]),
                       ]
                     ),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "b-row",
-                  { staticClass: "table-responsive" },
-                  [
-                    _c("b-table", {
-                      attrs: {
-                        items: _vm.translatedRecords,
-                        fields: _vm.fields,
-                        "current-page": _vm.currentPage,
-                        "per-page": _vm.perPage,
-                        "filter-included-fields": _vm.filterOn,
-                        "sort-by": _vm.sortBy,
-                        "sort-desc": _vm.sortDesc,
-                        "sort-direction": _vm.sortDirection,
-                        bordered: true,
-                        busy: _vm.isLoading,
-                        stacked: "md",
-                        "show-empty": "",
-                        small: "",
-                      },
-                      on: {
-                        "update:sortBy": function ($event) {
-                          _vm.sortBy = $event
-                        },
-                        "update:sort-by": function ($event) {
-                          _vm.sortBy = $event
-                        },
-                        "update:sortDesc": function ($event) {
-                          _vm.sortDesc = $event
-                        },
-                        "update:sort-desc": function ($event) {
-                          _vm.sortDesc = $event
-                        },
-                      },
-                      scopedSlots: _vm._u([
-                        {
-                          key: "table-busy",
-                          fn: function () {
-                            return [
-                              _c(
-                                "div",
-                                { staticClass: "text-center text-black my-2" },
-                                [
-                                  _c("b-spinner", {
-                                    staticClass: "align-middle",
-                                  }),
-                                  _vm._v(" "),
-                                  _c("strong", [
-                                    _vm._v(_vm._s(_vm.__("loading")) + "..."),
-                                  ]),
-                                ],
-                                1
-                              ),
-                            ]
-                          },
-                          proxy: true,
-                        },
-                        {
-                          key: "cell(email)",
-                          fn: function (row) {
-                            return [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(_vm._f("emailMask")(row.item.email)) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(mobile)",
-                          fn: function (row) {
-                            return [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(
-                                    _vm._f("mobileMask")(row.item.mobile)
-                                  ) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(seller_info)",
-                          fn: function (row) {
-                            return [
-                              _c(
-                                "small",
-                                {
-                                  staticClass:
-                                    "d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2",
-                                  attrs: { id: "seller" + row.item.id },
-                                },
-                                [_c("i", { staticClass: "fa fa-info-circle" })]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-popover",
-                                {
-                                  attrs: {
-                                    target: "seller" + row.item.id,
-                                    triggers: "hover",
-                                    placement: "left",
-                                  },
-                                  scopedSlots: _vm._u(
-                                    [
-                                      {
-                                        key: "title",
-                                        fn: function () {
-                                          return [
-                                            _vm._v(
-                                              "\n                                       " +
-                                                _vm._s(
-                                                  _vm.__("sellr_details")
-                                                ) +
-                                                "\n                                    "
-                                            ),
-                                          ]
-                                        },
-                                        proxy: true,
-                                      },
-                                    ],
-                                    null,
-                                    true
-                                  ),
-                                },
-                                [
-                                  _vm._v(" "),
-                                  _c(
-                                    "table",
-                                    { staticClass: "table table-borderless" },
-                                    [
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(" " + _vm._s(_vm.__("name"))),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(" : " + _vm._s(row.item.name)),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(" " + _vm._s(_vm.__("email"))),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " + _vm._s(row.item.email)
-                                          ),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(
-                                            " " + _vm._s(_vm.__("mobile"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " + _vm._s(row.item.mobile)
-                                          ),
-                                        ]),
-                                      ]),
-                                    ]
-                                  ),
-                                ]
-                              ),
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(row.item.name) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(store_info)",
-                          fn: function (row) {
-                            return [
-                              _c(
-                                "small",
-                                {
-                                  staticClass:
-                                    "d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2",
-                                  attrs: { id: "store" + row.item.id },
-                                },
-                                [_c("i", { staticClass: "fa fa-info-circle" })]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-popover",
-                                {
-                                  attrs: {
-                                    target: "store" + row.item.id,
-                                    triggers: "hover",
-                                    placement: "left",
-                                  },
-                                  scopedSlots: _vm._u(
-                                    [
-                                      {
-                                        key: "title",
-                                        fn: function () {
-                                          return [
-                                            _vm._v(
-                                              "\n                                        " +
-                                                _vm._s(
-                                                  _vm.__("store_details")
-                                                ) +
-                                                "\n                                    "
-                                            ),
-                                          ]
-                                        },
-                                        proxy: true,
-                                      },
-                                    ],
-                                    null,
-                                    true
-                                  ),
-                                },
-                                [
-                                  _vm._v(" "),
-                                  _c(
-                                    "table",
-                                    { staticClass: "table table-borderless" },
-                                    [
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(" " + _vm._s(_vm.__("name"))),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " + _vm._s(row.item.store_name)
-                                          ),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(" " + _vm._s(_vm.__("url"))),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " + _vm._s(row.item.store_url)
-                                          ),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(
-                                            " " + _vm._s(_vm.__("description"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " +
-                                              _vm._s(
-                                                _vm.strip_tags(
-                                                  row.item.store_description
-                                                )
-                                              )
-                                          ),
-                                        ]),
-                                      ]),
-                                    ]
-                                  ),
-                                ]
-                              ),
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(row.item.store_name) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(cities)",
-                          fn: function (row) {
-                            return [
-                              row.item.cities && row.item.cities.length
-                                ? _c("span", [
-                                    _vm._v(
-                                      "\n                                    " +
-                                        _vm._s(
-                                          row.item.cities
-                                            .map(function (c) {
-                                              return c.zone
-                                            })
-                                            .filter(Boolean)
-                                            .join(", ")
-                                        ) +
-                                        "\n                                "
-                                    ),
-                                  ])
-                                : _vm._e(),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(other_info)",
-                          fn: function (row) {
-                            return [
-                              _c(
-                                "small",
-                                {
-                                  staticClass:
-                                    "d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2",
-                                  attrs: { id: "other" + row.item.id },
-                                },
-                                [_c("i", { staticClass: "fa fa-info-circle" })]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-popover",
-                                {
-                                  attrs: {
-                                    target: "other" + row.item.id,
-                                    triggers: "hover",
-                                    placement: "left",
-                                  },
-                                  scopedSlots: _vm._u(
-                                    [
-                                      {
-                                        key: "title",
-                                        fn: function () {
-                                          return [
-                                            _vm._v(
-                                              "\n                                         " +
-                                                _vm._s(
-                                                  _vm.__("store_details")
-                                                ) +
-                                                "\n                                    "
-                                            ),
-                                          ]
-                                        },
-                                        proxy: true,
-                                      },
-                                    ],
-                                    null,
-                                    true
-                                  ),
-                                },
-                                [
-                                  _vm._v(" "),
-                                  _c(
-                                    "table",
-                                    { staticClass: "table table-borderless" },
-                                    [
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(_vm._s(_vm.__("tax_name"))),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " + _vm._s(row.item.tax_name)
-                                          ),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(
-                                            " " + _vm._s(_vm.__("tax_no"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " + _vm._s(row.item.tax_number)
-                                          ),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("tr", [
-                                        _c("th", [
-                                          _vm._v(
-                                            " " + _vm._s(_vm.__("pan_no"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("td", [
-                                          _vm._v(
-                                            " : " + _vm._s(row.item.pan_number)
-                                          ),
-                                        ]),
-                                      ]),
-                                      _vm._v(" "),
-                                      row.item.bank_name
-                                        ? _c("tr", [
-                                            _c("th", [
-                                              _vm._v(
-                                                " " +
-                                                  _vm._s(_vm.__("bank_name"))
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("td", [
-                                              _vm._v(
-                                                " : " +
-                                                  _vm._s(row.item.bank_name)
-                                              ),
-                                            ]),
-                                          ])
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      row.item.account_number
-                                        ? _c("tr", [
-                                            _c("th", [
-                                              _vm._v(
-                                                " " +
-                                                  _vm._s(
-                                                    _vm.__("account_number")
-                                                  )
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("td", [
-                                              _vm._v(
-                                                " : " +
-                                                  _vm._s(
-                                                    row.item.account_number
-                                                  )
-                                              ),
-                                            ]),
-                                          ])
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      row.item.bank_ifsc_code ||
-                                      row.item.ifsc_code
-                                        ? _c("tr", [
-                                            _c("th", [
-                                              _vm._v(
-                                                " " +
-                                                  _vm._s(
-                                                    _vm.__("bank_ifsc_code")
-                                                  )
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("td", [
-                                              _vm._v(
-                                                " : " +
-                                                  _vm._s(
-                                                    row.item.bank_ifsc_code ||
-                                                      row.item.ifsc_code
-                                                  )
-                                              ),
-                                            ]),
-                                          ])
-                                        : _vm._e(),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c("p", [
-                                    _c(
-                                      "a",
-                                      {
-                                        staticClass: "badge bg-success",
-                                        attrs: {
-                                          target: "_blank",
-                                          href: row.item
-                                            .national_identity_card_url,
-                                        },
-                                      },
-                                      [
-                                        _c("i", { staticClass: "fa fa-eye" }),
-                                        _vm._v(
-                                          "  " +
-                                            _vm._s(
-                                              _vm.__("national_identity_card")
-                                            )
-                                        ),
-                                      ]
-                                    ),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("p", [
-                                    _c(
-                                      "a",
-                                      {
-                                        staticClass: "badge bg-success",
-                                        attrs: {
-                                          target: "_blank",
-                                          href: row.item.address_proof_url,
-                                        },
-                                      },
-                                      [
-                                        _c("i", { staticClass: "fa fa-eye" }),
-                                        _vm._v(
-                                          "  " +
-                                            _vm._s(_vm.__("address_proof")) +
-                                            " "
-                                        ),
-                                      ]
-                                    ),
-                                  ]),
-                                ]
-                              ),
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(row.item.store_name) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(logo)",
-                          fn: function (row) {
-                            return [
-                              !row.item.logo
-                                ? _c("span", [
-                                    _vm._v(_vm._s(_vm.__("no_image"))),
-                                  ])
-                                : _c("img", {
-                                    attrs: {
-                                      src: _vm.$storageUrl + row.item.logo,
-                                      height: "50",
-                                    },
-                                  }),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(created_at)",
-                          fn: function (row) {
-                            return [
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(row.item.created_at) +
-                                  "\n                            "
-                              ),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(status)",
-                          fn: function (row) {
-                            return [
-                              row.item.status == 0
-                                ? _c(
-                                    "label",
-                                    { staticClass: "badge bg-primary" },
-                                    [_vm._v(_vm._s(_vm.__("registered")))]
-                                  )
-                                : row.item.status == 1
-                                ? _c(
-                                    "label",
-                                    { staticClass: "badge bg-success" },
-                                    [_vm._v(_vm._s(_vm.__("approved")))]
-                                  )
-                                : row.item.status == 2
-                                ? _c(
-                                    "label",
-                                    { staticClass: "badge bg-warning" },
-                                    [_vm._v(_vm._s(_vm.__("reject")))]
-                                  )
-                                : row.item.status == 3
-                                ? _c(
-                                    "label",
-                                    { staticClass: "badge bg-danger" },
-                                    [_vm._v(_vm._s(_vm.__("deactive")))]
-                                  )
-                                : row.item.status == 7
-                                ? _c(
-                                    "label",
-                                    { staticClass: "badge bg-danger" },
-                                    [_vm._v(_vm._s(_vm.__("removed")))]
-                                  )
-                                : _vm._e(),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(require_products_approval)",
-                          fn: function (row) {
-                            return [
-                              row.item.require_products_approval == 1
-                                ? _c(
-                                    "label",
-                                    { staticClass: "badge bg-success" },
-                                    [_vm._v(_vm._s(_vm.__("yes")))]
-                                  )
-                                : row.item.require_products_approval == 0
-                                ? _c(
-                                    "label",
-                                    { staticClass: "badge bg-danger" },
-                                    [_vm._v(_vm._s(_vm.__("no")))]
-                                  )
-                                : _vm._e(),
-                            ]
-                          },
-                        },
-                        {
-                          key: "cell(actions)",
-                          fn: function (row) {
-                            return [
-                              _vm.$can("seller_delete")
-                                ? _c(
-                                    "button",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "b-tooltip",
-                                          rawName: "v-b-tooltip.hover",
-                                          modifiers: { hover: true },
-                                        },
-                                      ],
-                                      staticClass: "btn btn-sm btn-success",
-                                      attrs: {
-                                        type: "button",
-                                        title: "Change Status",
-                                      },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.updateStatus(
-                                            row.index,
-                                            row.item.id,
-                                            1
-                                          )
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _vm._v(
-                                        "\n                                     " +
-                                          _vm._s(_vm.__("approved")) +
-                                          "\n                                "
-                                      ),
-                                    ]
-                                  )
-                                : _vm._e(),
-                              _vm._v(" "),
-                              _vm.$can("seller_delete")
-                                ? _c(
-                                    "button",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "b-tooltip",
-                                          rawName: "v-b-tooltip.hover",
-                                          modifiers: { hover: true },
-                                        },
-                                      ],
-                                      staticClass: "btn btn-sm btn-danger",
-                                      attrs: {
-                                        type: "button",
-                                        title: "Change Status",
-                                      },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.updateStatus(
-                                            row.index,
-                                            row.item.id,
-                                            2
-                                          )
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _vm._v(
-                                        "\n                                     " +
-                                          _vm._s(_vm.__("reject")) +
-                                          "\n                                "
-                                      ),
-                                    ]
-                                  )
-                                : _vm._e(),
-                            ]
-                          },
-                        },
-                      ]),
-                    }),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "b-row",
-                  [
+                    _vm._v(
+                      "\n                                " +
+                        _vm._s(row.item.name) +
+                        "\n                            "
+                    ),
+                  ]
+                },
+              },
+              {
+                key: "cell(store_info)",
+                fn: function (row) {
+                  return [
                     _c(
-                      "b-col",
-                      { staticClass: "my-1", attrs: { md: "2" } },
-                      [
-                        _c(
-                          "b-form-group",
-                          {
-                            staticClass: "mb-0",
-                            attrs: {
-                              label: _vm.__("per_page"),
-                              "label-for": "per-page-select",
-                              "label-align-sm": "right",
-                              "label-size": "sm",
-                            },
-                          },
-                          [
-                            _c("b-form-select", {
-                              staticClass: "form-control form-select",
-                              attrs: {
-                                id: "per-page-select",
-                                options: _vm.pageOptions,
-                                size: "sm",
-                              },
-                              model: {
-                                value: _vm.perPage,
-                                callback: function ($$v) {
-                                  _vm.perPage = $$v
-                                },
-                                expression: "perPage",
-                              },
-                            }),
-                          ],
-                          1
-                        ),
-                      ],
-                      1
+                      "small",
+                      {
+                        staticClass:
+                          "d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2",
+                        attrs: { id: "store" + row.item.id },
+                      },
+                      [_c("i", { staticClass: "fa fa-info-circle" })]
                     ),
                     _vm._v(" "),
                     _c(
-                      "b-col",
+                      "b-popover",
                       {
-                        staticClass: "my-1",
-                        attrs: { md: "4", "offset-md": "6" },
+                        attrs: {
+                          target: "store" + row.item.id,
+                          triggers: "hover",
+                          placement: "left",
+                        },
+                        scopedSlots: _vm._u(
+                          [
+                            {
+                              key: "title",
+                              fn: function () {
+                                return [
+                                  _vm._v(
+                                    "\n                                        " +
+                                      _vm._s(_vm.__("store_details")) +
+                                      "\n                                    "
+                                  ),
+                                ]
+                              },
+                              proxy: true,
+                            },
+                          ],
+                          null,
+                          true
+                        ),
                       },
                       [
-                        _c("label", [
+                        _vm._v(" "),
+                        _c("table", { staticClass: "table table-borderless" }, [
+                          _c("tr", [
+                            _c("th", [_vm._v(" " + _vm._s(_vm.__("name")))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(" : " + _vm._s(row.item.store_name)),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", [_vm._v(" " + _vm._s(_vm.__("url")))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(" : " + _vm._s(row.item.store_url)),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", [
+                              _vm._v(" " + _vm._s(_vm.__("description"))),
+                            ]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(
+                                " : " +
+                                  _vm._s(
+                                    _vm.strip_tags(row.item.store_description)
+                                  )
+                              ),
+                            ]),
+                          ]),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(
+                      "\n                                " +
+                        _vm._s(row.item.store_name) +
+                        "\n                            "
+                    ),
+                  ]
+                },
+              },
+              {
+                key: "cell(cities)",
+                fn: function (row) {
+                  return [
+                    row.item.cities && row.item.cities.length
+                      ? _c("span", [
                           _vm._v(
-                            _vm._s(_vm.__("total_records")) +
-                              " :- " +
-                              _vm._s(_vm.totalRows) +
-                              " "
+                            "\n                                    " +
+                              _vm._s(
+                                row.item.cities
+                                  .map(function (c) {
+                                    return c.zone
+                                  })
+                                  .filter(Boolean)
+                                  .join(", ")
+                              ) +
+                              "\n                                "
+                          ),
+                        ])
+                      : _vm._e(),
+                  ]
+                },
+              },
+              {
+                key: "cell(other_info)",
+                fn: function (row) {
+                  return [
+                    _c(
+                      "small",
+                      {
+                        staticClass:
+                          "d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2",
+                        attrs: { id: "other" + row.item.id },
+                      },
+                      [_c("i", { staticClass: "fa fa-info-circle" })]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "b-popover",
+                      {
+                        attrs: {
+                          target: "other" + row.item.id,
+                          triggers: "hover",
+                          placement: "left",
+                        },
+                        scopedSlots: _vm._u(
+                          [
+                            {
+                              key: "title",
+                              fn: function () {
+                                return [
+                                  _vm._v(
+                                    "\n                                         " +
+                                      _vm._s(_vm.__("store_details")) +
+                                      "\n                                    "
+                                  ),
+                                ]
+                              },
+                              proxy: true,
+                            },
+                          ],
+                          null,
+                          true
+                        ),
+                      },
+                      [
+                        _vm._v(" "),
+                        _c("table", { staticClass: "table table-borderless" }, [
+                          _c("tr", [
+                            _c("th", [_vm._v(_vm._s(_vm.__("tax_name")))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(" : " + _vm._s(row.item.tax_name)),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", [_vm._v(" " + _vm._s(_vm.__("tax_no")))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(" : " + _vm._s(row.item.tax_number)),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", [_vm._v(" " + _vm._s(_vm.__("pan_no")))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(" : " + _vm._s(row.item.pan_number)),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          row.item.bank_name
+                            ? _c("tr", [
+                                _c("th", [
+                                  _vm._v(" " + _vm._s(_vm.__("bank_name"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(" : " + _vm._s(row.item.bank_name)),
+                                ]),
+                              ])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          row.item.account_number
+                            ? _c("tr", [
+                                _c("th", [
+                                  _vm._v(
+                                    " " + _vm._s(_vm.__("account_number"))
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    " : " + _vm._s(row.item.account_number)
+                                  ),
+                                ]),
+                              ])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          row.item.bank_ifsc_code || row.item.ifsc_code
+                            ? _c("tr", [
+                                _c("th", [
+                                  _vm._v(
+                                    " " + _vm._s(_vm.__("bank_ifsc_code"))
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    " : " +
+                                      _vm._s(
+                                        row.item.bank_ifsc_code ||
+                                          row.item.ifsc_code
+                                      )
+                                  ),
+                                ]),
+                              ])
+                            : _vm._e(),
+                        ]),
+                        _vm._v(" "),
+                        _c("p", [
+                          _c(
+                            "a",
+                            {
+                              staticClass: "badge bg-success",
+                              attrs: {
+                                target: "_blank",
+                                href: row.item.national_identity_card_url,
+                              },
+                            },
+                            [
+                              _c("i", { staticClass: "fa fa-eye" }),
+                              _vm._v(
+                                "  " + _vm._s(_vm.__("national_identity_card"))
+                              ),
+                            ]
                           ),
                         ]),
                         _vm._v(" "),
-                        _c("b-pagination", {
-                          staticClass: "my-0",
-                          attrs: {
-                            "total-rows": _vm.totalRows,
-                            "per-page": _vm.perPage,
-                            align: "fill",
-                            size: "sm",
-                          },
-                          model: {
-                            value: _vm.currentPage,
-                            callback: function ($$v) {
-                              _vm.currentPage = $$v
+                        _c("p", [
+                          _c(
+                            "a",
+                            {
+                              staticClass: "badge bg-success",
+                              attrs: {
+                                target: "_blank",
+                                href: row.item.address_proof_url,
+                              },
                             },
-                            expression: "currentPage",
+                            [
+                              _c("i", { staticClass: "fa fa-eye" }),
+                              _vm._v(
+                                "  " + _vm._s(_vm.__("address_proof")) + " "
+                              ),
+                            ]
+                          ),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(
+                      "\n                                " +
+                        _vm._s(row.item.store_name) +
+                        "\n                            "
+                    ),
+                  ]
+                },
+              },
+              {
+                key: "cell(logo)",
+                fn: function (row) {
+                  return [
+                    !row.item.logo
+                      ? _c("span", [_vm._v(_vm._s(_vm.__("no_image")))])
+                      : _c("img", {
+                          attrs: {
+                            src: _vm.$storageUrl + row.item.logo,
+                            height: "50",
                           },
                         }),
-                      ],
-                      1
+                  ]
+                },
+              },
+              {
+                key: "cell(created_at)",
+                fn: function (row) {
+                  return [
+                    _vm._v(
+                      "\n                                " +
+                        _vm._s(row.item.created_at) +
+                        "\n                            "
                     ),
-                  ],
-                  1
-                ),
+                  ]
+                },
+              },
+              {
+                key: "cell(status)",
+                fn: function (row) {
+                  return [
+                    row.item.status == 0
+                      ? _c("label", { staticClass: "badge bg-primary" }, [
+                          _vm._v(_vm._s(_vm.__("registered"))),
+                        ])
+                      : row.item.status == 1
+                      ? _c("label", { staticClass: "badge bg-success" }, [
+                          _vm._v(_vm._s(_vm.__("approved"))),
+                        ])
+                      : row.item.status == 2
+                      ? _c("label", { staticClass: "badge bg-warning" }, [
+                          _vm._v(_vm._s(_vm.__("reject"))),
+                        ])
+                      : row.item.status == 3
+                      ? _c("label", { staticClass: "badge bg-danger" }, [
+                          _vm._v(_vm._s(_vm.__("deactive"))),
+                        ])
+                      : row.item.status == 7
+                      ? _c("label", { staticClass: "badge bg-danger" }, [
+                          _vm._v(_vm._s(_vm.__("removed"))),
+                        ])
+                      : _vm._e(),
+                  ]
+                },
+              },
+              {
+                key: "cell(require_products_approval)",
+                fn: function (row) {
+                  return [
+                    row.item.require_products_approval == 1
+                      ? _c("label", { staticClass: "badge bg-success" }, [
+                          _vm._v(_vm._s(_vm.__("yes"))),
+                        ])
+                      : row.item.require_products_approval == 0
+                      ? _c("label", { staticClass: "badge bg-danger" }, [
+                          _vm._v(_vm._s(_vm.__("no"))),
+                        ])
+                      : _vm._e(),
+                  ]
+                },
+              },
+              {
+                key: "cell(actions)",
+                fn: function (row) {
+                  return [
+                    _c("div", { staticClass: "list-actions" }, [
+                      _vm.$can("seller_delete")
+                        ? _c(
+                            "button",
+                            {
+                              directives: [
+                                {
+                                  name: "b-tooltip",
+                                  rawName: "v-b-tooltip.hover",
+                                  modifiers: { hover: true },
+                                },
+                              ],
+                              staticClass: "btn btn-sm btn-success",
+                              attrs: { type: "button", title: "Change Status" },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.updateStatus(
+                                    row.index,
+                                    row.item.id,
+                                    1
+                                  )
+                                },
+                              },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                         " +
+                                  _vm._s(_vm.__("approved")) +
+                                  "\n                                    "
+                              ),
+                            ]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.$can("seller_delete")
+                        ? _c(
+                            "button",
+                            {
+                              directives: [
+                                {
+                                  name: "b-tooltip",
+                                  rawName: "v-b-tooltip.hover",
+                                  modifiers: { hover: true },
+                                },
+                              ],
+                              staticClass: "btn btn-sm btn-danger",
+                              attrs: { type: "button", title: "Change Status" },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.updateStatus(
+                                    row.index,
+                                    row.item.id,
+                                    2
+                                  )
+                                },
+                              },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                         " +
+                                  _vm._s(_vm.__("reject")) +
+                                  "\n                                    "
+                              ),
+                            ]
+                          )
+                        : _vm._e(),
+                    ]),
+                  ]
+                },
+              },
+            ]),
+          }),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "list-footer" }, [
+        _c(
+          "div",
+          { staticClass: "list-perpage" },
+          [
+            _c(
+              "b-form-group",
+              {
+                staticClass: "mb-0",
+                attrs: {
+                  label: _vm.__("per_page"),
+                  "label-for": "per-page-select",
+                  "label-align-sm": "right",
+                  "label-size": "sm",
+                },
+              },
+              [
+                _c("b-form-select", {
+                  staticClass: "form-control form-select",
+                  attrs: {
+                    id: "per-page-select",
+                    options: _vm.pageOptions,
+                    size: "sm",
+                  },
+                  model: {
+                    value: _vm.perPage,
+                    callback: function ($$v) {
+                      _vm.perPage = $$v
+                    },
+                    expression: "perPage",
+                  },
+                }),
               ],
               1
             ),
-          ]),
-        ]),
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          [
+            _c("b-pagination", {
+              staticClass: "list-pagination",
+              attrs: {
+                "total-rows": _vm.totalRows,
+                "per-page": _vm.perPage,
+                align: "fill",
+                size: "sm",
+              },
+              model: {
+                value: _vm.currentPage,
+                callback: function ($$v) {
+                  _vm.currentPage = $$v
+                },
+                expression: "currentPage",
+              },
+            }),
+          ],
+          1
+        ),
       ]),
     ]),
   ])

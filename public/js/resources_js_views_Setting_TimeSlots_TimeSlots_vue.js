@@ -530,31 +530,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -1963,751 +1938,654 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c(
     "div",
+    { staticClass: "list-page" },
     [
-      _c("div", { staticClass: "page-heading" }, [
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-            _c("h3", [_vm._v(_vm._s(_vm.__("manage_time_slots")))]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-            _c(
-              "nav",
+      _c("div", { staticClass: "page-head" }, [
+        _c("h3", { staticClass: "page-head-title" }, [
+          _vm._v(_vm._s(_vm.__("time_slot_config"))),
+        ]),
+        _vm._v(" "),
+        _vm.$can("time_slot_create")
+          ? _c(
+              "button",
               {
-                staticClass: "breadcrumb-header float-start float-lg-end",
-                attrs: { "aria-label": "breadcrumb" },
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value:
+                      _vm.timeSlot_settingsObject.time_slots_is_enabled == 1,
+                    expression:
+                      "timeSlot_settingsObject.time_slots_is_enabled == 1",
+                  },
+                ],
+                staticClass:
+                  "btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap",
+                on: {
+                  click: function ($event) {
+                    _vm.edit_record = true
+                  },
+                },
               },
               [
-                _c("ol", { staticClass: "breadcrumb" }, [
+                _c("i", {
+                  staticClass: "fa fa-plus",
+                  attrs: { "aria-hidden": "true" },
+                }),
+                _vm._v(" "),
+                _c("span", [_vm._v(_vm._s(_vm.__("add")))]),
+              ]
+            )
+          : _vm._e(),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "list-surface" }, [
+        _c("div", { staticClass: "row" }, [
+          _c("div", { staticClass: "col-md-4" }, [
+            _c("div", { staticClass: "box-body" }, [
+              _c("div", { staticClass: "form-group" }, [
+                _c("label", { attrs: { for: "time_slot_setting" } }, [
+                  _vm._v(_vm._s(_vm.__("time_slot_setting"))),
+                ]),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.timeSlot_settingsObject.time_slot_setting,
+                      expression: "timeSlot_settingsObject.time_slot_setting",
+                    },
+                  ],
+                  staticClass: "form-check-input",
+                  attrs: { type: "checkbox", id: "time_slot_setting" },
+                  domProps: {
+                    value: 1,
+                    checked: Array.isArray(
+                      _vm.timeSlot_settingsObject.time_slot_setting
+                    )
+                      ? _vm._i(
+                          _vm.timeSlot_settingsObject.time_slot_setting,
+                          1
+                        ) > -1
+                      : _vm.timeSlot_settingsObject.time_slot_setting,
+                  },
+                  on: {
+                    change: function ($event) {
+                      var $$a = _vm.timeSlot_settingsObject.time_slot_setting,
+                        $$el = $event.target,
+                        $$c = $$el.checked ? true : false
+                      if (Array.isArray($$a)) {
+                        var $$v = 1,
+                          $$i = _vm._i($$a, $$v)
+                        if ($$el.checked) {
+                          $$i < 0 &&
+                            _vm.$set(
+                              _vm.timeSlot_settingsObject,
+                              "time_slot_setting",
+                              $$a.concat([$$v])
+                            )
+                        } else {
+                          $$i > -1 &&
+                            _vm.$set(
+                              _vm.timeSlot_settingsObject,
+                              "time_slot_setting",
+                              $$a.slice(0, $$i).concat($$a.slice($$i + 1))
+                            )
+                        }
+                      } else {
+                        _vm.$set(
+                          _vm.timeSlot_settingsObject,
+                          "time_slot_setting",
+                          $$c
+                        )
+                      }
+                    },
+                  },
+                }),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "form-group" }, [
+                _c("label", [_vm._v(_vm._s(_vm.__("delivery_estimate_days")))]),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.timeSlot_settingsObject.delivery_estimate_days,
+                      expression:
+                        "timeSlot_settingsObject.delivery_estimate_days",
+                    },
+                  ],
+                  staticClass: "form-control",
+                  attrs: { type: "number", min: "1", required: "" },
+                  domProps: {
+                    value: _vm.timeSlot_settingsObject.delivery_estimate_days,
+                  },
+                  on: {
+                    input: [
+                      function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.$set(
+                          _vm.timeSlot_settingsObject,
+                          "delivery_estimate_days",
+                          $event.target.value
+                        )
+                      },
+                      _vm.validateNoOfEstimateDays,
+                    ],
+                  },
+                }),
+                _vm._v(" "),
+                _vm.validationNoOfEstimateDaysError
+                  ? _c("span", { staticClass: "error" }, [
+                      _vm._v(_vm._s(_vm.validationNoOfEstimateDaysError)),
+                    ])
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "form-group" }, [
+                _c("label", { attrs: { for: "time_slots_is_enabled" } }, [
+                  _vm._v(
+                    _vm._s(_vm.__("enable")) +
+                      " / " +
+                      _vm._s(_vm.__("disable")) +
+                      " " +
+                      _vm._s(_vm.__("time_slots"))
+                  ),
+                ]),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.timeSlot_settingsObject.time_slots_is_enabled,
+                      expression:
+                        "timeSlot_settingsObject.time_slots_is_enabled",
+                    },
+                  ],
+                  staticClass: "form-check-input",
+                  attrs: {
+                    type: "checkbox",
+                    required: "",
+                    id: "time_slots_is_enabled",
+                    disabled: !_vm.timeSlot_settingsObject.time_slot_setting,
+                  },
+                  domProps: {
+                    value: 0,
+                    checked: Array.isArray(
+                      _vm.timeSlot_settingsObject.time_slots_is_enabled
+                    )
+                      ? _vm._i(
+                          _vm.timeSlot_settingsObject.time_slots_is_enabled,
+                          0
+                        ) > -1
+                      : _vm.timeSlot_settingsObject.time_slots_is_enabled,
+                  },
+                  on: {
+                    change: function ($event) {
+                      var $$a =
+                          _vm.timeSlot_settingsObject.time_slots_is_enabled,
+                        $$el = $event.target,
+                        $$c = $$el.checked ? true : false
+                      if (Array.isArray($$a)) {
+                        var $$v = 0,
+                          $$i = _vm._i($$a, $$v)
+                        if ($$el.checked) {
+                          $$i < 0 &&
+                            _vm.$set(
+                              _vm.timeSlot_settingsObject,
+                              "time_slots_is_enabled",
+                              $$a.concat([$$v])
+                            )
+                        } else {
+                          $$i > -1 &&
+                            _vm.$set(
+                              _vm.timeSlot_settingsObject,
+                              "time_slots_is_enabled",
+                              $$a.slice(0, $$i).concat($$a.slice($$i + 1))
+                            )
+                        }
+                      } else {
+                        _vm.$set(
+                          _vm.timeSlot_settingsObject,
+                          "time_slots_is_enabled",
+                          $$c
+                        )
+                      }
+                    },
+                  },
+                }),
+              ]),
+              _vm._v(" "),
+              _vm.timeSlot_settingsObject.time_slots_is_enabled == 1
+                ? _c("div", { staticClass: "form-group" }, [
+                    _c("label", [
+                      _vm._v(
+                        _vm._s(_vm.__("how_many_days_you_want_to_allow")) + "?"
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value:
+                            _vm.timeSlot_settingsObject.time_slots_allowed_days,
+                          expression:
+                            "timeSlot_settingsObject.time_slots_allowed_days",
+                        },
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "number", min: "1", required: "" },
+                      domProps: {
+                        value:
+                          _vm.timeSlot_settingsObject.time_slots_allowed_days,
+                      },
+                      on: {
+                        input: [
+                          function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(
+                              _vm.timeSlot_settingsObject,
+                              "time_slots_allowed_days",
+                              $event.target.value
+                            )
+                          },
+                          _vm.validateNoOfDays,
+                        ],
+                      },
+                    }),
+                    _vm._v(" "),
+                    _vm.validationNoOfDaysError
+                      ? _c("span", { staticClass: "error" }, [
+                          _vm._v(_vm._s(_vm.validationNoOfDaysError)),
+                        ])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _c("br"),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _c("div", { staticClass: "box-footer" }, [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-primary",
+                    attrs: { type: "submit", disabled: _vm.isLoading },
+                    on: { click: _vm.addTimeSlotsSettings },
+                  },
+                  [
+                    _vm._v(" " + _vm._s(_vm.__("add")) + " "),
+                    _vm.isLoading
+                      ? _c("b-spinner", {
+                          attrs: { small: "", label: "Spinning" },
+                        })
+                      : _vm._e(),
+                  ],
+                  1
+                ),
+              ]),
+            ]),
+          ]),
+          _vm._v(" "),
+          _vm.timeSlot_settingsObject.time_slots_is_enabled == 1
+            ? _c("div", { staticClass: "col-md-8" }, [
+                _c("div", { staticClass: "list-toolbar" }, [
                   _c(
-                    "li",
-                    { staticClass: "breadcrumb-item" },
+                    "div",
+                    { staticClass: "list-search" },
                     [
-                      _c("router-link", { attrs: { to: "/dashboard" } }, [
-                        _vm._v(_vm._s(_vm.__("dashboard"))),
-                      ]),
+                      _c("i", {
+                        staticClass: "fa fa-search list-search-icon",
+                        attrs: { "aria-hidden": "true" },
+                      }),
+                      _vm._v(" "),
+                      _c("b-form-input", {
+                        attrs: {
+                          id: "filter-input",
+                          type: "search",
+                          placeholder: _vm.__("search"),
+                        },
+                        model: {
+                          value: _vm.filter,
+                          callback: function ($$v) {
+                            _vm.filter = $$v
+                          },
+                          expression: "filter",
+                        },
+                      }),
                     ],
                     1
                   ),
                   _vm._v(" "),
                   _c(
-                    "li",
+                    "button",
                     {
-                      staticClass: "breadcrumb-item active",
-                      attrs: { "aria-current": "page" },
+                      directives: [
+                        {
+                          name: "b-tooltip",
+                          rawName: "v-b-tooltip.hover",
+                          modifiers: { hover: true },
+                        },
+                      ],
+                      staticClass: "list-icon-btn",
+                      attrs: { title: _vm.__("refresh") },
+                      on: {
+                        click: function ($event) {
+                          return _vm.getTimeSlots()
+                        },
+                      },
                     },
-                    [_vm._v(_vm._s(_vm.__("manage_time_slots")))]
+                    [
+                      _c("i", {
+                        staticClass: "fa fa-refresh",
+                        attrs: { "aria-hidden": "true" },
+                      }),
+                    ]
                   ),
                 ]),
-              ]
-            ),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-md-12 order-md-1 order-last" }, [
-            _c("div", { staticClass: "card" }, [
-              _c("div", { staticClass: "card-header" }, [
-                _c("h4", [_vm._v(_vm._s(_vm.__("time_slot_config")))]),
                 _vm._v(" "),
-                _c("span", { staticClass: "pull-right" }, [
-                  _vm.$can("time_slot_create")
-                    ? _c(
-                        "button",
-                        {
-                          directives: [
-                            {
-                              name: "show",
-                              rawName: "v-show",
-                              value:
-                                _vm.timeSlot_settingsObject
-                                  .time_slots_is_enabled == 1,
-                              expression:
-                                "timeSlot_settingsObject.time_slots_is_enabled == 1",
-                            },
-                          ],
-                          staticClass: "btn btn-primary",
-                          on: {
-                            click: function ($event) {
-                              _vm.edit_record = true
-                            },
-                          },
+                _c(
+                  "div",
+                  { staticClass: "table-responsive" },
+                  [
+                    _c("b-table", {
+                      attrs: {
+                        items: _vm.translatedTimeSlots,
+                        fields: _vm.fields,
+                        "current-page": _vm.currentPage,
+                        "per-page": _vm.perPage,
+                        filter: _vm.filter,
+                        "filter-included-fields": _vm.filterOn,
+                        "sort-by": _vm.sortBy,
+                        "sort-desc": _vm.sortDesc,
+                        "sort-direction": _vm.sortDirection,
+                        bordered: true,
+                        busy: _vm.isLoading,
+                        stacked: "md",
+                        "show-empty": "",
+                        small: "",
+                      },
+                      on: {
+                        "update:sortBy": function ($event) {
+                          _vm.sortBy = $event
                         },
-                        [_vm._v(_vm._s(_vm.__("add_new_time_slot")))]
-                      )
-                    : _vm._e(),
-                ]),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "card-body" }, [
-                _c("div", { staticClass: "row" }, [
-                  _c("div", { staticClass: "col-md-4" }, [
-                    _c("div", { staticClass: "box-body" }, [
-                      _c("div", { staticClass: "form-group" }, [
-                        _c("label", { attrs: { for: "time_slot_setting" } }, [
-                          _vm._v(_vm._s(_vm.__("time_slot_setting"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value:
-                                _vm.timeSlot_settingsObject.time_slot_setting,
-                              expression:
-                                "timeSlot_settingsObject.time_slot_setting",
-                            },
-                          ],
-                          staticClass: "form-check-input",
-                          attrs: { type: "checkbox", id: "time_slot_setting" },
-                          domProps: {
-                            value: 1,
-                            checked: Array.isArray(
-                              _vm.timeSlot_settingsObject.time_slot_setting
-                            )
-                              ? _vm._i(
-                                  _vm.timeSlot_settingsObject.time_slot_setting,
-                                  1
-                                ) > -1
-                              : _vm.timeSlot_settingsObject.time_slot_setting,
-                          },
-                          on: {
-                            change: function ($event) {
-                              var $$a =
-                                  _vm.timeSlot_settingsObject.time_slot_setting,
-                                $$el = $event.target,
-                                $$c = $$el.checked ? true : false
-                              if (Array.isArray($$a)) {
-                                var $$v = 1,
-                                  $$i = _vm._i($$a, $$v)
-                                if ($$el.checked) {
-                                  $$i < 0 &&
-                                    _vm.$set(
-                                      _vm.timeSlot_settingsObject,
-                                      "time_slot_setting",
-                                      $$a.concat([$$v])
-                                    )
-                                } else {
-                                  $$i > -1 &&
-                                    _vm.$set(
-                                      _vm.timeSlot_settingsObject,
-                                      "time_slot_setting",
-                                      $$a
-                                        .slice(0, $$i)
-                                        .concat($$a.slice($$i + 1))
-                                    )
-                                }
-                              } else {
-                                _vm.$set(
-                                  _vm.timeSlot_settingsObject,
-                                  "time_slot_setting",
-                                  $$c
-                                )
-                              }
-                            },
-                          },
-                        }),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "form-group" }, [
-                        _c("label", [
-                          _vm._v(_vm._s(_vm.__("delivery_estimate_days"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value:
-                                _vm.timeSlot_settingsObject
-                                  .delivery_estimate_days,
-                              expression:
-                                "timeSlot_settingsObject.delivery_estimate_days",
-                            },
-                          ],
-                          staticClass: "form-control",
-                          attrs: { type: "number", min: "1", required: "" },
-                          domProps: {
-                            value:
-                              _vm.timeSlot_settingsObject
-                                .delivery_estimate_days,
-                          },
-                          on: {
-                            input: [
-                              function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.timeSlot_settingsObject,
-                                  "delivery_estimate_days",
-                                  $event.target.value
-                                )
-                              },
-                              _vm.validateNoOfEstimateDays,
-                            ],
-                          },
-                        }),
-                        _vm._v(" "),
-                        _vm.validationNoOfEstimateDaysError
-                          ? _c("span", { staticClass: "error" }, [
-                              _vm._v(
-                                _vm._s(_vm.validationNoOfEstimateDaysError)
-                              ),
-                            ])
-                          : _vm._e(),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "form-group" }, [
-                        _c(
-                          "label",
-                          { attrs: { for: "time_slots_is_enabled" } },
-                          [
-                            _vm._v(
-                              _vm._s(_vm.__("enable")) +
-                                " / " +
-                                _vm._s(_vm.__("disable")) +
-                                " " +
-                                _vm._s(_vm.__("time_slots"))
-                            ),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value:
-                                _vm.timeSlot_settingsObject
-                                  .time_slots_is_enabled,
-                              expression:
-                                "timeSlot_settingsObject.time_slots_is_enabled",
-                            },
-                          ],
-                          staticClass: "form-check-input",
-                          attrs: {
-                            type: "checkbox",
-                            required: "",
-                            id: "time_slots_is_enabled",
-                            disabled:
-                              !_vm.timeSlot_settingsObject.time_slot_setting,
-                          },
-                          domProps: {
-                            value: 0,
-                            checked: Array.isArray(
-                              _vm.timeSlot_settingsObject.time_slots_is_enabled
-                            )
-                              ? _vm._i(
-                                  _vm.timeSlot_settingsObject
-                                    .time_slots_is_enabled,
-                                  0
-                                ) > -1
-                              : _vm.timeSlot_settingsObject
-                                  .time_slots_is_enabled,
-                          },
-                          on: {
-                            change: function ($event) {
-                              var $$a =
-                                  _vm.timeSlot_settingsObject
-                                    .time_slots_is_enabled,
-                                $$el = $event.target,
-                                $$c = $$el.checked ? true : false
-                              if (Array.isArray($$a)) {
-                                var $$v = 0,
-                                  $$i = _vm._i($$a, $$v)
-                                if ($$el.checked) {
-                                  $$i < 0 &&
-                                    _vm.$set(
-                                      _vm.timeSlot_settingsObject,
-                                      "time_slots_is_enabled",
-                                      $$a.concat([$$v])
-                                    )
-                                } else {
-                                  $$i > -1 &&
-                                    _vm.$set(
-                                      _vm.timeSlot_settingsObject,
-                                      "time_slots_is_enabled",
-                                      $$a
-                                        .slice(0, $$i)
-                                        .concat($$a.slice($$i + 1))
-                                    )
-                                }
-                              } else {
-                                _vm.$set(
-                                  _vm.timeSlot_settingsObject,
-                                  "time_slots_is_enabled",
-                                  $$c
-                                )
-                              }
-                            },
-                          },
-                        }),
-                      ]),
-                      _vm._v(" "),
-                      _vm.timeSlot_settingsObject.time_slots_is_enabled == 1
-                        ? _c("div", { staticClass: "form-group" }, [
-                            _c("label", [
-                              _vm._v(
-                                _vm._s(
-                                  _vm.__("how_many_days_you_want_to_allow")
-                                ) + "?"
-                              ),
-                            ]),
-                            _vm._v(" "),
-                            _c("input", {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model",
-                                  value:
-                                    _vm.timeSlot_settingsObject
-                                      .time_slots_allowed_days,
-                                  expression:
-                                    "timeSlot_settingsObject.time_slots_allowed_days",
-                                },
-                              ],
-                              staticClass: "form-control",
-                              attrs: { type: "number", min: "1", required: "" },
-                              domProps: {
-                                value:
-                                  _vm.timeSlot_settingsObject
-                                    .time_slots_allowed_days,
-                              },
-                              on: {
-                                input: [
-                                  function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.timeSlot_settingsObject,
-                                      "time_slots_allowed_days",
-                                      $event.target.value
-                                    )
+                        "update:sort-by": function ($event) {
+                          _vm.sortBy = $event
+                        },
+                        "update:sortDesc": function ($event) {
+                          _vm.sortDesc = $event
+                        },
+                        "update:sort-desc": function ($event) {
+                          _vm.sortDesc = $event
+                        },
+                      },
+                      scopedSlots: _vm._u(
+                        [
+                          {
+                            key: "table-busy",
+                            fn: function () {
+                              return [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass: "text-center text-black my-2",
                                   },
-                                  _vm.validateNoOfDays,
-                                ],
+                                  [
+                                    _c("b-spinner", {
+                                      staticClass: "align-middle",
+                                    }),
+                                    _vm._v(" "),
+                                    _c("strong", [
+                                      _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                                    ]),
+                                  ],
+                                  1
+                                ),
+                              ]
+                            },
+                            proxy: true,
+                          },
+                          {
+                            key: "cell(status)",
+                            fn: function (row) {
+                              return [
+                                row.item.status == 1
+                                  ? _c(
+                                      "span",
+                                      { staticClass: "badge bg-success" },
+                                      [_vm._v(_vm._s(_vm.__("active")))]
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                row.item.status == 0
+                                  ? _c(
+                                      "span",
+                                      { staticClass: "badge bg-danger" },
+                                      [_vm._v(_vm._s(_vm.__("deactive")))]
+                                    )
+                                  : _vm._e(),
+                              ]
+                            },
+                          },
+                          {
+                            key: "cell(is_free_delivery)",
+                            fn: function (row) {
+                              return [
+                                row.item.is_free_delivery == 1
+                                  ? _c(
+                                      "span",
+                                      { staticClass: "badge bg-success" },
+                                      [_vm._v(_vm._s(_vm.__("yes")))]
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                row.item.is_free_delivery == 0
+                                  ? _c(
+                                      "span",
+                                      { staticClass: "badge bg-secondary" },
+                                      [_vm._v(_vm._s(_vm.__("no")))]
+                                    )
+                                  : _vm._e(),
+                              ]
+                            },
+                          },
+                          {
+                            key: "cell(from_time)",
+                            fn: function (row) {
+                              return [
+                                _vm._v(
+                                  "\n                      " +
+                                    _vm._s(
+                                      _vm.timeSlotTimeLabel(
+                                        row.item,
+                                        "from_time"
+                                      )
+                                    ) +
+                                    "\n                    "
+                                ),
+                              ]
+                            },
+                          },
+                          {
+                            key: "cell(to_time)",
+                            fn: function (row) {
+                              return [
+                                _vm._v(
+                                  "\n                      " +
+                                    _vm._s(
+                                      _vm.timeSlotTimeLabel(row.item, "to_time")
+                                    ) +
+                                    "\n                    "
+                                ),
+                              ]
+                            },
+                          },
+                          {
+                            key: "cell(last_order_time)",
+                            fn: function (row) {
+                              return [
+                                _vm._v(
+                                  "\n                      " +
+                                    _vm._s(
+                                      _vm.timeSlotTimeLabel(
+                                        row.item,
+                                        "last_order_time"
+                                      )
+                                    ) +
+                                    "\n                    "
+                                ),
+                              ]
+                            },
+                          },
+                          {
+                            key: "cell(actions)",
+                            fn: function (row) {
+                              return [
+                                _c("div", { staticClass: "list-actions" }, [
+                                  _vm.$can("time_slot_update")
+                                    ? _c(
+                                        "button",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "b-tooltip",
+                                              rawName: "v-b-tooltip.hover",
+                                              modifiers: { hover: true },
+                                            },
+                                          ],
+                                          staticClass:
+                                            "list-action-btn is-edit",
+                                          attrs: { title: _vm.__("edit") },
+                                          on: {
+                                            click: function ($event) {
+                                              _vm.edit_record = row.item
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _c("i", {
+                                            staticClass: "fa fa-pencil-alt",
+                                          }),
+                                        ]
+                                      )
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.$can("time_slot_delete")
+                                    ? _c(
+                                        "button",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "b-tooltip",
+                                              rawName: "v-b-tooltip.hover",
+                                              modifiers: { hover: true },
+                                            },
+                                          ],
+                                          staticClass:
+                                            "list-action-btn is-delete",
+                                          attrs: { title: _vm.__("delete") },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.deleteTimeSlots(
+                                                row.index,
+                                                row.item.id
+                                              )
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _c("i", {
+                                            staticClass: "fa fa-trash",
+                                          }),
+                                        ]
+                                      )
+                                    : _vm._e(),
+                                ]),
+                              ]
+                            },
+                          },
+                        ],
+                        null,
+                        false,
+                        321043089
+                      ),
+                    }),
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "list-footer" },
+                  [
+                    _c(
+                      "div",
+                      { staticClass: "list-perpage" },
+                      [
+                        _c(
+                          "b-form-group",
+                          {
+                            staticClass: "mb-0",
+                            attrs: {
+                              label: _vm.__("per_page"),
+                              "label-for": "per-page-select",
+                              "label-align-sm": "right",
+                              "label-size": "sm",
+                            },
+                          },
+                          [
+                            _c("b-form-select", {
+                              staticClass: "form-control form-select",
+                              attrs: {
+                                id: "per-page-select",
+                                options: _vm.pageOptions,
+                                size: "sm",
+                              },
+                              model: {
+                                value: _vm.perPage,
+                                callback: function ($$v) {
+                                  _vm.perPage = $$v
+                                },
+                                expression: "perPage",
                               },
                             }),
-                            _vm._v(" "),
-                            _vm.validationNoOfDaysError
-                              ? _c("span", { staticClass: "error" }, [
-                                  _vm._v(_vm._s(_vm.validationNoOfDaysError)),
-                                ])
-                              : _vm._e(),
-                            _vm._v(" "),
-                            _c("br"),
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "box-footer" }, [
-                        _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-primary",
-                            attrs: { type: "submit", disabled: _vm.isLoading },
-                            on: { click: _vm.addTimeSlotsSettings },
-                          },
-                          [
-                            _vm._v(" " + _vm._s(_vm.__("add")) + " "),
-                            _vm.isLoading
-                              ? _c("b-spinner", {
-                                  attrs: { small: "", label: "Spinning" },
-                                })
-                              : _vm._e(),
                           ],
                           1
                         ),
-                      ]),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _vm.timeSlot_settingsObject.time_slots_is_enabled == 1
-                    ? _c(
-                        "div",
-                        { staticClass: "col-md-8" },
-                        [
-                          _c(
-                            "b-row",
-                            { staticClass: "mb-2" },
-                            [
-                              _c(
-                                "b-col",
-                                { attrs: { md: "3", "offset-md": "8" } },
-                                [
-                                  _c("h6", { staticClass: "box-title" }, [
-                                    _vm._v(_vm._s(_vm.__("search"))),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("b-form-input", {
-                                    attrs: {
-                                      id: "filter-input",
-                                      type: "search",
-                                      placeholder: _vm.__("search"),
-                                    },
-                                    model: {
-                                      value: _vm.filter,
-                                      callback: function ($$v) {
-                                        _vm.filter = $$v
-                                      },
-                                      expression: "filter",
-                                    },
-                                  }),
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-col",
-                                {
-                                  staticClass: "text-center",
-                                  attrs: { md: "1" },
-                                },
-                                [
-                                  _c(
-                                    "button",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "b-tooltip",
-                                          rawName: "v-b-tooltip.hover",
-                                          modifiers: { hover: true },
-                                        },
-                                      ],
-                                      staticClass:
-                                        "btn btn-primary btn_refresh",
-                                      attrs: { title: _vm.__("refresh") },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.getTimeSlots()
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _c("i", {
-                                        staticClass: "fa fa-refresh",
-                                        attrs: { "aria-hidden": "true" },
-                                      }),
-                                    ]
-                                  ),
-                                ]
-                              ),
-                            ],
-                            1
-                          ),
-                          _vm._v(" "),
-                          _c("b-table", {
-                            attrs: {
-                              items: _vm.translatedTimeSlots,
-                              fields: _vm.fields,
-                              "current-page": _vm.currentPage,
-                              "per-page": _vm.perPage,
-                              filter: _vm.filter,
-                              "filter-included-fields": _vm.filterOn,
-                              "sort-by": _vm.sortBy,
-                              "sort-desc": _vm.sortDesc,
-                              "sort-direction": _vm.sortDirection,
-                              bordered: true,
-                              busy: _vm.isLoading,
-                              stacked: "md",
-                              "show-empty": "",
-                              small: "",
-                            },
-                            on: {
-                              "update:sortBy": function ($event) {
-                                _vm.sortBy = $event
-                              },
-                              "update:sort-by": function ($event) {
-                                _vm.sortBy = $event
-                              },
-                              "update:sortDesc": function ($event) {
-                                _vm.sortDesc = $event
-                              },
-                              "update:sort-desc": function ($event) {
-                                _vm.sortDesc = $event
-                              },
-                            },
-                            scopedSlots: _vm._u(
-                              [
-                                {
-                                  key: "table-busy",
-                                  fn: function () {
-                                    return [
-                                      _c(
-                                        "div",
-                                        {
-                                          staticClass:
-                                            "text-center text-black my-2",
-                                        },
-                                        [
-                                          _c("b-spinner", {
-                                            staticClass: "align-middle",
-                                          }),
-                                          _vm._v(" "),
-                                          _c("strong", [
-                                            _vm._v(
-                                              _vm._s(_vm.__("loading")) + "..."
-                                            ),
-                                          ]),
-                                        ],
-                                        1
-                                      ),
-                                    ]
-                                  },
-                                  proxy: true,
-                                },
-                                {
-                                  key: "cell(status)",
-                                  fn: function (row) {
-                                    return [
-                                      row.item.status == 1
-                                        ? _c(
-                                            "span",
-                                            { staticClass: "badge bg-success" },
-                                            [_vm._v(_vm._s(_vm.__("active")))]
-                                          )
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      row.item.status == 0
-                                        ? _c(
-                                            "span",
-                                            { staticClass: "badge bg-danger" },
-                                            [_vm._v(_vm._s(_vm.__("deactive")))]
-                                          )
-                                        : _vm._e(),
-                                    ]
-                                  },
-                                },
-                                {
-                                  key: "cell(is_free_delivery)",
-                                  fn: function (row) {
-                                    return [
-                                      row.item.is_free_delivery == 1
-                                        ? _c(
-                                            "span",
-                                            { staticClass: "badge bg-success" },
-                                            [_vm._v(_vm._s(_vm.__("yes")))]
-                                          )
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      row.item.is_free_delivery == 0
-                                        ? _c(
-                                            "span",
-                                            {
-                                              staticClass: "badge bg-secondary",
-                                            },
-                                            [_vm._v(_vm._s(_vm.__("no")))]
-                                          )
-                                        : _vm._e(),
-                                    ]
-                                  },
-                                },
-                                {
-                                  key: "cell(from_time)",
-                                  fn: function (row) {
-                                    return [
-                                      _vm._v(
-                                        "\n                      " +
-                                          _vm._s(
-                                            _vm.timeSlotTimeLabel(
-                                              row.item,
-                                              "from_time"
-                                            )
-                                          ) +
-                                          "\n                    "
-                                      ),
-                                    ]
-                                  },
-                                },
-                                {
-                                  key: "cell(to_time)",
-                                  fn: function (row) {
-                                    return [
-                                      _vm._v(
-                                        "\n                      " +
-                                          _vm._s(
-                                            _vm.timeSlotTimeLabel(
-                                              row.item,
-                                              "to_time"
-                                            )
-                                          ) +
-                                          "\n                    "
-                                      ),
-                                    ]
-                                  },
-                                },
-                                {
-                                  key: "cell(last_order_time)",
-                                  fn: function (row) {
-                                    return [
-                                      _vm._v(
-                                        "\n                      " +
-                                          _vm._s(
-                                            _vm.timeSlotTimeLabel(
-                                              row.item,
-                                              "last_order_time"
-                                            )
-                                          ) +
-                                          "\n                    "
-                                      ),
-                                    ]
-                                  },
-                                },
-                                {
-                                  key: "cell(actions)",
-                                  fn: function (row) {
-                                    return [
-                                      _vm.$can("time_slot_update")
-                                        ? _c(
-                                            "button",
-                                            {
-                                              directives: [
-                                                {
-                                                  name: "b-tooltip",
-                                                  rawName: "v-b-tooltip.hover",
-                                                  modifiers: { hover: true },
-                                                },
-                                              ],
-                                              staticClass:
-                                                "btn btn-sm btn-primary",
-                                              attrs: { title: _vm.__("edit") },
-                                              on: {
-                                                click: function ($event) {
-                                                  _vm.edit_record = row.item
-                                                },
-                                              },
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass: "fa fa-pencil-alt",
-                                              }),
-                                            ]
-                                          )
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      _vm.$can("time_slot_delete")
-                                        ? _c(
-                                            "button",
-                                            {
-                                              directives: [
-                                                {
-                                                  name: "b-tooltip",
-                                                  rawName: "v-b-tooltip.hover",
-                                                  modifiers: { hover: true },
-                                                },
-                                              ],
-                                              staticClass:
-                                                "btn btn-sm btn-danger",
-                                              attrs: {
-                                                title: _vm.__("delete"),
-                                              },
-                                              on: {
-                                                click: function ($event) {
-                                                  return _vm.deleteTimeSlots(
-                                                    row.index,
-                                                    row.item.id
-                                                  )
-                                                },
-                                              },
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass: "fa fa-trash",
-                                              }),
-                                            ]
-                                          )
-                                        : _vm._e(),
-                                    ]
-                                  },
-                                },
-                              ],
-                              null,
-                              false,
-                              2751503787
-                            ),
-                          }),
-                          _vm._v(" "),
-                          _c(
-                            "b-row",
-                            [
-                              _c(
-                                "b-col",
-                                { staticClass: "my-1", attrs: { md: "2" } },
-                                [
-                                  _c(
-                                    "b-form-group",
-                                    {
-                                      staticClass: "mb-0",
-                                      attrs: {
-                                        label: _vm.__("per_page"),
-                                        "label-for": "per-page-select",
-                                        "label-align-sm": "right",
-                                        "label-size": "sm",
-                                      },
-                                    },
-                                    [
-                                      _c("b-form-select", {
-                                        staticClass: "form-control form-select",
-                                        attrs: {
-                                          id: "per-page-select",
-                                          options: _vm.pageOptions,
-                                          size: "sm",
-                                        },
-                                        model: {
-                                          value: _vm.perPage,
-                                          callback: function ($$v) {
-                                            _vm.perPage = $$v
-                                          },
-                                          expression: "perPage",
-                                        },
-                                      }),
-                                    ],
-                                    1
-                                  ),
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-col",
-                                {
-                                  staticClass: "my-1",
-                                  attrs: { md: "4", "offset-md": "6" },
-                                },
-                                [
-                                  _c("b-pagination", {
-                                    staticClass: "my-0",
-                                    attrs: {
-                                      "total-rows": _vm.totalRows,
-                                      "per-page": _vm.perPage,
-                                      align: "fill",
-                                      size: "sm",
-                                    },
-                                    model: {
-                                      value: _vm.currentPage,
-                                      callback: function ($$v) {
-                                        _vm.currentPage = $$v
-                                      },
-                                      expression: "currentPage",
-                                    },
-                                  }),
-                                ],
-                                1
-                              ),
-                            ],
-                            1
-                          ),
-                        ],
-                        1
-                      )
-                    : _vm._e(),
-                ]),
-              ]),
-            ]),
-          ]),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c("b-pagination", {
+                      staticClass: "list-pagination",
+                      attrs: {
+                        "total-rows": _vm.totalRows,
+                        "per-page": _vm.perPage,
+                        align: "fill",
+                        size: "sm",
+                      },
+                      model: {
+                        value: _vm.currentPage,
+                        callback: function ($$v) {
+                          _vm.currentPage = $$v
+                        },
+                        expression: "currentPage",
+                      },
+                    }),
+                  ],
+                  1
+                ),
+              ])
+            : _vm._e(),
         ]),
       ]),
       _vm._v(" "),

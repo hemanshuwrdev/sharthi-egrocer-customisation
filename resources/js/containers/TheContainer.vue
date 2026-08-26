@@ -14,9 +14,6 @@
                             </router-link>
                         </div>
                     </div>
-                    <div class="toggler" style="position: absolute; top: 0; right: 0;">
-                        <a href="javascript:void(0)" class="sidebar-hide"><i class="bi bi-x bi-middle"></i></a>
-                    </div>
                 </div>
                 <div class="sidebar-menu">
                     <ul class="menu">
@@ -70,9 +67,9 @@
                 <button class="sidebar-toggler btn x"><i data-feather="x"></i></button>
             </div>
         </div>
-        <vertical-header></vertical-header>
         <div id="main">
-            <div>
+            <vertical-header></vertical-header>
+            <div id="main-content">
                 <router-view></router-view>
             </div>
             <the-footer></the-footer>
@@ -115,10 +112,25 @@ export default {
                 item.classList.add('open');
             }
         });
+
+        const sidebarEl = document.getElementById('sidebar');
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        if (sidebarMenu && sidebarEl) {
+            sidebarMenu.addEventListener('click', (e) => {
+                if (window.innerWidth >= 1200 && !sidebarEl.classList.contains('active')) {
+                    sidebarEl.classList.add('active');
+                }
+            });
+        }
+
         for (var i = 0; i < sidebarItems.length; i++) {
             let sidebarItem = sidebarItems[i];
-            sidebarItems[i].querySelector('.sidebar-link').addEventListener('click', function (e) {
+            sidebarItems[i].querySelector('.sidebar-link')?.addEventListener('click', function (e) {
                 e.preventDefault();
+
+                if (window.innerWidth >= 1200 && sidebarEl && !sidebarEl.classList.contains('active')) {
+                    sidebarEl.classList.add('active');
+                }
 
                 let submenu = sidebarItem.querySelector('.submenu');
                 const isCurrentlyOpen = submenu?.classList?.contains('active');
@@ -181,25 +193,23 @@ export default {
                 updateSidebarBackdrop();
             }
         });
-        document.querySelector('.burger-btn').addEventListener('click', () => {
-            document.getElementById('sidebar')?.classList?.toggle('active');
-            updateSidebarBackdrop();
-        });
-        document.querySelector('.sidebar-hide').addEventListener('click', () => {
+        document.querySelector('.sidebar-hide')?.addEventListener('click', () => {
             document.getElementById('sidebar')?.classList?.toggle('active');
             updateSidebarBackdrop();
         });
         // Perfect Scrollbar Init
         if (typeof PerfectScrollbar.default == 'function') {
             const container = document.querySelector(".sidebar-wrapper");
-            const ps = new PerfectScrollbar.default(container, {
-                wheelPropagation: false
-            });
+            if (container) {
+                const ps = new PerfectScrollbar.default(container, {
+                    wheelPropagation: false
+                });
+            }
         }
 
         // Scroll into active sidebar
         if (document.querySelector('.sidebar-item.active')) {
-            document.querySelector('.sidebar-item.active').scrollIntoView(false)
+            document.querySelector('.sidebar-item.active')?.scrollIntoView(false)
         }
 
 

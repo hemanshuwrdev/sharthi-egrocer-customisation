@@ -1,162 +1,129 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{__('product_requests')}}</h3>
-                </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">
-                                <router-link to="/dashboard">{{__('dashboard')}}</router-link>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{__('product_requests')}}</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{__('product_requests')}}</h3>
+        </div>
 
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4>{{__('product_requests')}}</h4>
-                        </div>
-                        <div class="card-body">
-                        <b-row class="mb-2">
-                            <b-col md="3">
-                                <h6 class="box-title">{{ __('filter_by_status') }}</h6>
-                                <select v-model="statusFilter" class="form-control form-select" @change="getRequests()">
-                                    <option value="">{{__('all_statuses')}}</option>
-                                    <option value="pending">{{__('pending')}}</option>
-                                    <option value="accepted">{{__('accepted')}}</option>
-                                    <option value="rejected">{{__('rejected')}}</option>
-                                </select>
-                            </b-col>
-                            <b-col md="3" offset-md="5">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input
-                                    id="filter-input"
-                                    v-model="filter"
-                                    type="search"
-                                    :placeholder="__('search')"
-                                ></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getRequests()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </b-row>
-                        <div class="table-responsive">
-                            <b-table
-                                :items="filteredRequests"
-                                :fields="fields"
-                                :current-page="currentPage"
-                                :per-page="perPage"
-                                :filter="filter"
-                                :filter-included-fields="filterOn"
-                                :sort-by.sync="sortBy"
-                                :sort-desc.sync="sortDesc"
-                                :sort-direction="sortDirection"
-                                :bordered="true"
-                                :busy="isLoading"
-                                stacked="md"
-                                show-empty
-                                small>
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
-                                <template #cell(customer_name)="row">
-                                    <span v-if="row.item.customer">{{ row.item.customer.name }}</span>
-                                    <span v-else class="text-muted">-</span>
-                                </template>
-                                <template #cell(description)="row">
-                                    <div v-if="row.item.description" class="text-truncate" style="max-width: 200px;">
-                                        {{ row.item.description }}
-                                    </div>
-                                    <span v-else class="text-muted">-</span>
-                                </template>
-                                <template #cell(image)="row">
-                                    <img v-if="row.item.image_url" :src="row.item.image_url" 
-                                         class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;"
-                                         @click="openImageModal(row.item.image_url)">
-                                    <span v-else class="text-muted">-</span>
-                                </template>
-                                <template #cell(status)="row">
-                                    <span class="badge" :class="getStatusVariant(row.item.status)">
-                                        {{ getStatusText(row.item.status) }}
-                                    </span>
-                                </template>
-                                <template #cell(product)="row">
-                                    <span v-if="row.item.product">{{ row.item.product.name }}</span>
-                                    <span v-else class="text-muted">-</span>
-                                </template>
-                                <template #cell(action)="row">
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-info" v-b-tooltip.hover :title="__('view')" @click="viewRequestDetails(row.item)">
-                                            <i class="fa fa-eye"></i>
-                                        </button>
-                                        <class v-if="$can('product_request_update')">
-                                        <button v-if="row.item.status === 'pending'" 
-                                                class="btn btn-sm btn-success ml-1" v-b-tooltip.hover :title="__('approve')"
-                                                @click="acceptRequest(row.item)">
-                                            <i class="fa fa-check"></i>
-                                        </button>
-                                        <button v-if="row.item.status === 'pending'" v-b-tooltip.hover :title="__('reject')"
-                                                class="btn btn-sm btn-danger" 
-                                                @click="rejectRequest(row.item)">
-                                            <i class="fa fa-times"></i>
-                                        </button>
-                                        </class>
-                                        <class v-if="$can('product_request_delete')">
-                                        <button class="btn btn-sm btn-danger ml-1" v-b-tooltip.hover :title="__('delete')"
-                                                @click="deleteRequest(row.item)">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                        </class>
-                                    </div>
-                                </template>
-                            </b-table>
-                        </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <label>
-                                    <b-form-group
-                                    :label="__('per_page')"
-                                    label-for="per-page-select"
-                                    label-align-sm="right"
-                                    label-size="sm"
-                                    class="mb-0">
-                                    <b-form-select
-                                        id="per-page-select"
-                                        v-model="perPage"
-                                        :options="pageOptions"
-                                        size="sm"
-                                        class="form-control form-select"
-                                    ></b-form-select>
-                                </b-form-group>
-                                </label>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <label>{{__('total_records')}}:- {{ totalRows }}</label>
-                                <b-pagination
-                                    v-model="currentPage"
-                                    :total-rows="totalRows"
-                                    :per-page="perPage"
-                                    align="fill"
-                                    size="sm"
-                                    class="my-0"
-                                ></b-pagination>
-                            </b-col>
-                        </b-row>
-                        </div>
-                    </div>
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <select v-model="statusFilter" class="form-control form-select" @change="getRequests()">
+                    <option value="">{{__('all_statuses')}}</option>
+                    <option value="pending">{{__('pending')}}</option>
+                    <option value="accepted">{{__('accepted')}}</option>
+                    <option value="rejected">{{__('rejected')}}</option>
+                </select>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input
+                        id="filter-input"
+                        v-model="filter"
+                        type="search"
+                        :placeholder="__('search')"
+                    ></b-form-input>
                 </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRequests()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="table-responsive">
+                <b-table
+                    :items="filteredRequests"
+                    :fields="fields"
+                    :current-page="currentPage"
+                    :per-page="perPage"
+                    :filter="filter"
+                    :filter-included-fields="filterOn"
+                    :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc"
+                    :sort-direction="sortDirection"
+                    :bordered="true"
+                    :busy="isLoading"
+                    stacked="md"
+                    show-empty
+                    small>
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
+                        </div>
+                    </template>
+                    <template #cell(customer_name)="row">
+                        <span v-if="row.item.customer">{{ row.item.customer.name }}</span>
+                        <span v-else class="text-muted">-</span>
+                    </template>
+                    <template #cell(description)="row">
+                        <div v-if="row.item.description" class="text-truncate" style="max-width: 200px;">
+                            {{ row.item.description }}
+                        </div>
+                        <span v-else class="text-muted">-</span>
+                    </template>
+                    <template #cell(image)="row">
+                        <img v-if="row.item.image_url" :src="row.item.image_url"
+                             class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;"
+                             @click="openImageModal(row.item.image_url)">
+                        <span v-else class="text-muted">-</span>
+                    </template>
+                    <template #cell(status)="row">
+                        <span class="badge" :class="getStatusVariant(row.item.status)">
+                            {{ getStatusText(row.item.status) }}
+                        </span>
+                    </template>
+                    <template #cell(product)="row">
+                        <span v-if="row.item.product">{{ row.item.product.name }}</span>
+                        <span v-else class="text-muted">-</span>
+                    </template>
+                    <template #cell(action)="row">
+                        <div class="list-actions">
+                            <button class="list-action-btn is-view" v-b-tooltip.hover :title="__('view')" @click="viewRequestDetails(row.item)">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                            <class v-if="$can('product_request_update')">
+                            <button v-if="row.item.status === 'pending'"
+                                    class="list-action-btn" v-b-tooltip.hover :title="__('approve')"
+                                    @click="acceptRequest(row.item)">
+                                <i class="fa fa-check"></i>
+                            </button>
+                            <button v-if="row.item.status === 'pending'" v-b-tooltip.hover :title="__('reject')"
+                                    class="list-action-btn is-delete"
+                                    @click="rejectRequest(row.item)">
+                                <i class="fa fa-times"></i>
+                            </button>
+                            </class>
+                            <class v-if="$can('product_request_delete')">
+                            <button class="list-action-btn is-delete" v-b-tooltip.hover :title="__('delete')"
+                                    @click="deleteRequest(row.item)">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                            </class>
+                        </div>
+                    </template>
+                </b-table>
+            </div>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                        ></b-form-select>
+                    </b-form-group>
+                </div>
+                <b-pagination
+                    v-model="currentPage"
+                    :total-rows="totalRows"
+                    :per-page="perPage"
+                    align="fill"
+                    size="sm"
+                    class="list-pagination"
+                ></b-pagination>
             </div>
         </div>
 

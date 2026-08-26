@@ -1,143 +1,119 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('manage_withdrawal_requests') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item">
-                                    <router-link to="/delivery_boy/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('manage_withdrawal_requests') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">{{ __('withdrawal_request') }}</h4>
-                        <span class="pull-right">
-                            <button class="btn btn-primary" @click="create_new=true">{{ __('create_withdraw_request') }}</button>
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <b-row class="mb-2">
-                            <b-col md="3" offset-md="5">
-                                <h6 class="box-title">{{ __('filter_by_status') }}</h6>
-                                <form method="post">
-                                    <select @change="getWthdrawalRequests()" v-model="status"
-                                            class="form-control form-select">
-                                        <option value="">{{__('select_status')}}</option>
-                                        <option value="0">{{__('pending')}}</option>
-                                        <option value="1">{{__('approved')}}</option>
-                                        <option value="2">{{__('rejected')}}</option>
-                                    </select>
-                                </form>
-                            </b-col>
-                            <b-col md="3">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input
-                                    id="filter-input"
-                                    v-model="filter"
-                                    type="search"
-                                    :placeholder="__('search')"
-                                ></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getWthdrawalRequests()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </b-row>
-                        <div class="table-responsive">
-                            <b-table
-                            :items="withdrawalRequests"
-                            :fields="fields"
-                            :current-page="currentPage"
-                            :per-page="perPage"
-                            :filter="filter"
-                            :filter-included-fields="filterOn"
-                            :sort-by.sync="sortBy"
-                            :sort-desc.sync="sortDesc"
-                            :sort-direction="sortDirection"
-                            :bordered="true"
-                            :busy="isLoading"
-                            stacked="md"
-                            show-empty
-                            small>
-                            <template #table-busy>
-                                <div class="text-center text-black my-2">
-                                    <b-spinner class="align-middle"></b-spinner>
-                                    <strong>{{ __('loading') }}...</strong>
-                                </div>
-                            </template>
-                            <template #head(amount)="row">
-                                {{__('amount')+' ('+$currency+')' }}
-                            </template>
-                            <template #cell(status)="row">
-                                <span v-if="row.item.status === 0" class="badge bg-warning">{{ __('pending') }}</span>
-                                <span v-else-if="row.item.status === 1" class="badge bg-success">{{ __('approved') }}</span>
-                                <span v-else-if="row.item.status === 2" class="badge bg-danger">{{ __('rejected') }}</span>
-                                <span v-else class="badge bg-danger">{{ __('undefine') }}</span>
-                            </template>
-                            <template #cell(receipt_image)="row">
-                                    <img :src="row.item.receipt_image_url" height="50" />
-                                </template>
-                            <template #cell(created_at)="row">
-                                {{ row.item.created_at }}
-                            </template>
-                            <template #cell(message)="row">
-                                <small :id="'bonus'+row.item.id" class="d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2">
-                                    <i class="fa fa-info-circle"></i>
-                                </small>
-                                <b-popover :target="'bonus'+row.item.id" triggers="hover" placement="left">
-                                    {{ row.item.message }}
-                                </b-popover>
-
-                            </template>
-                        </b-table>
-                        </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <label>
-                                    <b-form-group
-                                        :label="__('per_page')"
-                                        label-for="per-page-select"
-                                        label-align-sm="right"
-                                        label-size="sm"
-                                        class="mb-0">
-                                        <b-form-select
-                                            id="per-page-select"
-                                            v-model="perPage"
-                                            :options="pageOptions"
-                                            size="sm"
-                                            class="form-control form-select"
-                                        ></b-form-select>
-                                    </b-form-group>
-                                </label>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <label>{{__('total_records')}}:- {{ totalRows }}</label>
-                                <b-pagination
-                                    v-model="currentPage"
-                                    :total-rows="totalRows"
-                                    :per-page="perPage"
-                                    align="fill"
-                                    size="sm"
-                                    class="my-0"
-                                ></b-pagination>
-                            </b-col>
-                        </b-row>
-                    </div>
-                </div>
-            </section>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('withdrawal_request') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                @click="create_new=true">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('create_withdraw_request') }}</span>
+            </button>
         </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <b-col md="3">
+                    <h6 class="box-title">{{ __('filter_by_status') }}</h6>
+                    <form method="post">
+                        <select @change="getWthdrawalRequests()" v-model="status"
+                                class="form-control form-select">
+                            <option value="">{{__('select_status')}}</option>
+                            <option value="0">{{__('pending')}}</option>
+                            <option value="1">{{__('approved')}}</option>
+                            <option value="2">{{__('rejected')}}</option>
+                        </select>
+                    </form>
+                </b-col>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input
+                        id="filter-input"
+                        v-model="filter"
+                        type="search"
+                        :placeholder="__('search')"
+                    ></b-form-input>
+                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getWthdrawalRequests()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <b-table
+                :items="withdrawalRequests"
+                :fields="fields"
+                :current-page="currentPage"
+                :per-page="perPage"
+                :filter="filter"
+                :filter-included-fields="filterOn"
+                :sort-by.sync="sortBy"
+                :sort-desc.sync="sortDesc"
+                :sort-direction="sortDirection"
+                :bordered="true"
+                :busy="isLoading"
+                stacked="md"
+                show-empty
+                small>
+                <template #table-busy>
+                    <div class="text-center text-black my-2">
+                        <b-spinner class="align-middle"></b-spinner>
+                        <strong>{{ __('loading') }}...</strong>
+                    </div>
+                </template>
+                <template #head(amount)="row">
+                    {{__('amount')+' ('+$currency+')' }}
+                </template>
+                <template #cell(status)="row">
+                    <span v-if="row.item.status === 0" class="badge bg-warning">{{ __('pending') }}</span>
+                    <span v-else-if="row.item.status === 1" class="badge bg-success">{{ __('approved') }}</span>
+                    <span v-else-if="row.item.status === 2" class="badge bg-danger">{{ __('rejected') }}</span>
+                    <span v-else class="badge bg-danger">{{ __('undefine') }}</span>
+                </template>
+                <template #cell(receipt_image)="row">
+                        <img :src="row.item.receipt_image_url" height="50" />
+                    </template>
+                <template #cell(created_at)="row">
+                    {{ row.item.created_at }}
+                </template>
+                <template #cell(message)="row">
+                    <small :id="'bonus'+row.item.id" class="d-inline-flex mb-3 px-2 py-1 text-muted bg-secondary bg-opacity-10 border border-secondary border-opacity-10 rounded-2">
+                        <i class="fa fa-info-circle"></i>
+                    </small>
+                    <b-popover :target="'bonus'+row.item.id" triggers="hover" placement="left">
+                        {{ row.item.message }}
+                    </b-popover>
+
+                </template>
+            </b-table>
+            </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                        ></b-form-select>
+                    </b-form-group>
+                </div>
+                <b-pagination
+                    v-model="currentPage"
+                    :total-rows="totalRows"
+                    :per-page="perPage"
+                    align="fill"
+                    size="sm"
+                    class="list-pagination"
+                ></b-pagination>
+            </div>
+        </div>
+
         <!-- Add / Edit -->
         <app-edit-record
             v-if="create_new || edit_record"

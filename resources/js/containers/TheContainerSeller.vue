@@ -3,7 +3,7 @@
         <div id="sidebar" class="active">
             <div class="sidebar-wrapper active">
                 <div class="sidebar-header">
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-center align-items-center" style="position: relative;">
                         <div class="logo">
                             <router-link to="/seller"
                                 style="display: flex; align-items: center; justify-content: flex-start;">
@@ -11,13 +11,9 @@
                                     alt='Logo' srcset="" />
                                 <img class="container-logo" v-else :src="$baseUrl + '/images/logo.png'" alt='Logo'
                                     srcset="" />
-                                {{ $appName }}
+                                <span class="sidebar-brand-text">{{ $appName }}</span>
                             </router-link>
                         </div>
-                    </div>
-                    <div class="toggler" style="position: absolute; top: 0; right: 0;">
-                        <a href="javascript:void(0)" class="sidebar-hide"><i
-                                class="bi bi-x bi-middle"></i></a>
                     </div>
                 </div>
                 <div class="sidebar-menu">
@@ -60,10 +56,11 @@
             </div>
         </div>
 
-        <vertical-header></vertical-header>
-
         <div id="main">
-            <router-view></router-view>
+            <vertical-header></vertical-header>
+            <div id="main-content">
+                <router-view></router-view>
+            </div>
         </div>
 
         <!-- Blocked Status Modal -->
@@ -122,10 +119,23 @@ export default {
 
         function slideToggle(t, e, o) { 0 === t.clientHeight ? j(t, e, o, !0) : j(t, e, o) } function slideUp(t, e, o) { j(t, e, o) } function slideDown(t, e, o) { j(t, e, o, !0) } function j(t, e, o, i) { void 0 === e && (e = 400), void 0 === i && (i = !1), t.style.overflow = "hidden", i && (t.style.display = "block"); var p, l = window.getComputedStyle(t), n = parseFloat(l.getPropertyValue("height")), a = parseFloat(l.getPropertyValue("padding-top")), s = parseFloat(l.getPropertyValue("padding-bottom")), r = parseFloat(l.getPropertyValue("margin-top")), d = parseFloat(l.getPropertyValue("margin-bottom")), g = n / e, y = a / e, m = s / e, u = r / e, h = d / e; window.requestAnimationFrame(function l(x) { void 0 === p && (p = x); var f = x - p; i ? (t.style.height = g * f + "px", t.style.paddingTop = y * f + "px", t.style.paddingBottom = m * f + "px", t.style.marginTop = u * f + "px", t.style.marginBottom = h * f + "px") : (t.style.height = n - g * f + "px", t.style.paddingTop = a - y * f + "px", t.style.paddingBottom = s - m * f + "px", t.style.marginTop = r - u * f + "px", t.style.marginBottom = d - h * f + "px"), f >= e ? (t.style.height = "", t.style.paddingTop = "", t.style.paddingBottom = "", t.style.marginTop = "", t.style.marginBottom = "", t.style.overflow = "", i || (t.style.display = "none"), "function" == typeof o && o()) : window.requestAnimationFrame(l) }) }
         let sidebarItems = document.querySelectorAll('.sidebar-item.has-sub');
+        const sidebarEl = document.getElementById('sidebar');
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        if (sidebarMenu && sidebarEl) {
+            sidebarMenu.addEventListener('click', (e) => {
+                if (window.innerWidth >= 1200 && !sidebarEl.classList.contains('active')) {
+                    sidebarEl.classList.add('active');
+                }
+            });
+        }
         for (var i = 0; i < sidebarItems.length; i++) {
             let sidebarItem = sidebarItems[i];
-            sidebarItems[i].querySelector('.sidebar-link').addEventListener('click', function (e) {
+            sidebarItems[i].querySelector('.sidebar-link')?.addEventListener('click', function (e) {
                 e.preventDefault();
+
+                if (window.innerWidth >= 1200 && sidebarEl && !sidebarEl.classList.contains('active')) {
+                    sidebarEl.classList.add('active');
+                }
 
                 let submenu = sidebarItem.querySelector('.submenu');
                 if (submenu?.classList?.contains('active')) submenu.style.display = "block"
@@ -167,23 +177,21 @@ export default {
                 updateSidebarBackdrop();
             }
         });
-        document.querySelector('.burger-btn').addEventListener('click', () => {
-            document.getElementById('sidebar')?.classList?.toggle('active');
-            updateSidebarBackdrop();
-        });
-        document.querySelector('.sidebar-hide').addEventListener('click', () => {
+        document.querySelector('.sidebar-hide')?.addEventListener('click', () => {
             document.getElementById('sidebar')?.classList?.toggle('active');
             updateSidebarBackdrop();
         });
         // Perfect Scrollbar Init
         if (typeof PerfectScrollbar.default == 'function') {
             const container = document.querySelector(".sidebar-wrapper");
-            const ps = new PerfectScrollbar.default(container, {
-                wheelPropagation: false
-            });
+            if (container) {
+                const ps = new PerfectScrollbar.default(container, {
+                    wheelPropagation: false
+                });
+            }
         }
         // Scroll into active sidebar
-        document.querySelector('.sidebar-item.active').scrollIntoView(false)
+        document.querySelector('.sidebar-item.active')?.scrollIntoView(false)
     },
     beforeDestroy() {
         // Clear the status check interval when component is destroyed

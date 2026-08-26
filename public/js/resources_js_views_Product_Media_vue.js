@@ -160,34 +160,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -694,610 +666,495 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "page-title" }, [
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-            _c("h3", [_vm._v(_vm._s(_vm.__("media")))]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
+  return _c("div", { staticClass: "list-page" }, [
+    _c("div", { staticClass: "page-head" }, [
+      _c("h3", { staticClass: "page-head-title" }, [
+        _vm._v(_vm._s(_vm.__("media_upload_form"))),
+      ]),
+    ]),
+    _vm._v(" "),
+    _c(
+      "div",
+      { staticClass: "list-surface" },
+      [
+        _c("b-row", [
+          _c("div", { staticClass: "col-md-12" }, [
             _c(
-              "nav",
+              "form",
+              { attrs: { method: "POST", enctype: "multipart/form-data" } },
+              [
+                _c(
+                  "vue-dropzone",
+                  {
+                    ref: "myVueDropzone",
+                    attrs: {
+                      id: "dropzone",
+                      options: _vm.dropzoneOptions,
+                      useCustomSlot: true,
+                    },
+                    on: { "vdropzone-success": _vm.uploadSuccess },
+                  },
+                  [
+                    _c("div", { staticClass: "dropzone-custom-content" }, [
+                      _c("h3", { staticClass: "dropzone-custom-title" }, [
+                        _c("i", { staticClass: "fa fa-upload" }),
+                        _vm._v(
+                          " " + _vm._s(_vm.__("drag_and_drop_to_upload_image"))
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "subtitle" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.__(
+                              "or_click_to_select_a_image_from_your_device"
+                            )
+                          )
+                        ),
+                      ]),
+                    ]),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-primary mt-2",
+                    attrs: { type: "button", disabled: _vm.submitBtn === true },
+                    on: {
+                      click: function ($event) {
+                        return _vm.uploadImage()
+                      },
+                    },
+                  },
+                  [
+                    !_vm.isLoading
+                      ? _c("i", { staticClass: "fa fa-upload" })
+                      : _vm._e(),
+                    _vm._v(
+                      " " +
+                        _vm._s(_vm.__("upload")) +
+                        "\n                        "
+                    ),
+                    _vm.isLoading
+                      ? _c("b-spinner", {
+                          attrs: { small: "", label: "Spinning" },
+                        })
+                      : _vm._e(),
+                  ],
+                  1
+                ),
+              ],
+              1
+            ),
+          ]),
+        ]),
+        _vm._v(" "),
+        _c("h4", { staticClass: "card-title mt-3" }, [
+          _vm._v(_vm._s(_vm.__("media_list"))),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "list-toolbar" },
+          [
+            _c(
+              "div",
+              { staticClass: "list-search" },
+              [
+                _c("i", {
+                  staticClass: "fa fa-search list-search-icon",
+                  attrs: { "aria-hidden": "true" },
+                }),
+                _vm._v(" "),
+                _c("b-form-input", {
+                  attrs: {
+                    id: "filter-input",
+                    type: "search",
+                    placeholder: _vm.__("search"),
+                  },
+                  model: {
+                    value: _vm.filter,
+                    callback: function ($$v) {
+                      _vm.filter = $$v
+                    },
+                    expression: "filter",
+                  },
+                }),
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _c(
+              "b-dropdown",
               {
-                staticClass: "breadcrumb-header float-start float-lg-end",
-                attrs: { "aria-label": "breadcrumb" },
+                attrs: {
+                  size: "sm",
+                  dropright: "",
+                  text: _vm.__("actions"),
+                  "split-variant": "outline-primary",
+                  variant: "primary",
+                  disabled: _vm.selectedItems.length === 0,
+                },
               },
               [
-                _c("ol", { staticClass: "breadcrumb" }, [
-                  _vm.isSellerRoute
-                    ? _c(
-                        "li",
-                        { staticClass: "breadcrumb-item" },
+                _c(
+                  "b-dropdown-item",
+                  {
+                    attrs: { href: "javascript:void(0);" },
+                    on: { click: _vm.multipleDelete },
+                  },
+                  [
+                    _c(
+                      "span",
+                      {
+                        staticClass: "text-danger",
+                        staticStyle: { "font-weight": "bold" },
+                      },
+                      [
+                        _c("i", { staticClass: "fa fa-trash" }),
+                        _vm._v(" " + _vm._s(_vm.__("delete_selected_media"))),
+                      ]
+                    ),
+                  ]
+                ),
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _c(
+              "button",
+              {
+                directives: [
+                  {
+                    name: "b-tooltip",
+                    rawName: "v-b-tooltip.hover",
+                    modifiers: { hover: true },
+                  },
+                ],
+                staticClass: "list-icon-btn",
+                attrs: { title: _vm.__("refresh") },
+                on: {
+                  click: function ($event) {
+                    return _vm.getMedia()
+                  },
+                },
+              },
+              [
+                _c("i", {
+                  staticClass: "fa fa-refresh",
+                  attrs: { "aria-hidden": "true" },
+                }),
+              ]
+            ),
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "table-responsive" },
+          [
+            _c("b-table", {
+              attrs: {
+                items: _vm.media,
+                fields: _vm.fields,
+                "current-page": _vm.currentPage,
+                "per-page": _vm.perPage,
+                filter: _vm.filter,
+                "filter-included-fields": _vm.filterOn,
+                "sort-by": _vm.sortBy,
+                "sort-desc": _vm.sortDesc,
+                "sort-direction": _vm.sortDirection,
+                bordered: true,
+                busy: _vm.isLoading,
+                stacked: "md",
+                "show-empty": "",
+                small: "",
+              },
+              on: {
+                "update:sortBy": function ($event) {
+                  _vm.sortBy = $event
+                },
+                "update:sort-by": function ($event) {
+                  _vm.sortBy = $event
+                },
+                "update:sortDesc": function ($event) {
+                  _vm.sortDesc = $event
+                },
+                "update:sort-desc": function ($event) {
+                  _vm.sortDesc = $event
+                },
+              },
+              scopedSlots: _vm._u([
+                {
+                  key: "table-busy",
+                  fn: function () {
+                    return [
+                      _c(
+                        "div",
+                        { staticClass: "text-center text-black my-2" },
                         [
-                          _c(
-                            "router-link",
-                            { attrs: { to: "/seller/dashboard" } },
-                            [_vm._v(_vm._s(_vm.__("dashboard")))]
-                          ),
-                        ],
-                        1
-                      )
-                    : _c(
-                        "li",
-                        { staticClass: "breadcrumb-item" },
-                        [
-                          _c("router-link", { attrs: { to: "/dashboard" } }, [
-                            _vm._v(_vm._s(_vm.__("dashboard"))),
+                          _c("b-spinner", { staticClass: "align-middle" }),
+                          _vm._v(" "),
+                          _c("strong", [
+                            _vm._v(_vm._s(_vm.__("loading")) + "..."),
                           ]),
                         ],
                         1
                       ),
-                  _vm._v(" "),
-                  _c(
-                    "li",
-                    {
-                      staticClass: "breadcrumb-item active",
-                      attrs: { "aria-current": "page" },
-                    },
-                    [_vm._v(_vm._s(_vm.__("media")))]
-                  ),
-                ]),
-              ]
-            ),
-          ]),
-        ]),
-      ]),
-      _vm._v(" "),
-      _c("section", { staticClass: "section" }, [
-        _c("div", { staticClass: "card" }, [
-          _c("div", { staticClass: "card-header" }, [
-            _c("h4", { staticClass: "card-title" }, [
-              _vm._v(_vm._s(_vm.__("media_upload_form"))),
-            ]),
-          ]),
-          _vm._v(" "),
-          _c(
-            "div",
-            { staticClass: "card-body" },
-            [
-              _c("b-row", [
-                _c("div", { staticClass: "col-md-12" }, [
-                  _c(
-                    "form",
-                    {
-                      attrs: { method: "POST", enctype: "multipart/form-data" },
-                    },
-                    [
-                      _c(
-                        "vue-dropzone",
-                        {
-                          ref: "myVueDropzone",
-                          attrs: {
-                            id: "dropzone",
-                            options: _vm.dropzoneOptions,
-                            useCustomSlot: true,
-                          },
-                          on: { "vdropzone-success": _vm.uploadSuccess },
-                        },
-                        [
-                          _c(
-                            "div",
-                            { staticClass: "dropzone-custom-content" },
-                            [
-                              _c(
-                                "h3",
-                                { staticClass: "dropzone-custom-title" },
-                                [
-                                  _c("i", { staticClass: "fa fa-upload" }),
-                                  _vm._v(
-                                    " " +
-                                      _vm._s(
-                                        _vm.__("drag_and_drop_to_upload_image")
-                                      )
-                                  ),
-                                ]
-                              ),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "subtitle" }, [
-                                _vm._v(
-                                  _vm._s(
-                                    _vm.__(
-                                      "or_click_to_select_a_image_from_your_device"
-                                    )
-                                  )
-                                ),
-                              ]),
-                            ]
-                          ),
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "button",
-                        {
-                          staticClass: "btn btn-primary mt-2",
-                          attrs: {
-                            type: "button",
-                            disabled: _vm.submitBtn === true,
-                          },
-                          on: {
-                            click: function ($event) {
-                              return _vm.uploadImage()
-                            },
-                          },
-                        },
-                        [
-                          !_vm.isLoading
-                            ? _c("i", { staticClass: "fa fa-upload" })
-                            : _vm._e(),
-                          _vm._v(
-                            " " +
-                              _vm._s(_vm.__("upload")) +
-                              "\n                                    "
-                          ),
-                          _vm.isLoading
-                            ? _c("b-spinner", {
-                                attrs: { small: "", label: "Spinning" },
-                              })
-                            : _vm._e(),
-                        ],
-                        1
-                      ),
-                    ],
-                    1
-                  ),
-                ]),
-              ]),
-              _vm._v(" "),
-              _c(
-                "b-row",
-                { staticClass: "mb-2" },
-                [
-                  _c("h4", { staticClass: "card-title mt-3" }, [
-                    _vm._v(_vm._s(_vm.__("media_list"))),
-                  ]),
-                  _vm._v(" "),
-                  _c(
-                    "b-col",
-                    { staticClass: "text-center", attrs: { md: "1" } },
-                    [
-                      _c(
-                        "b-dropdown",
-                        {
-                          staticClass: "mt-3",
-                          attrs: {
-                            size: "sm",
-                            dropright: "",
-                            text: _vm.__("actions"),
-                            "split-variant": "outline-primary",
-                            variant: "primary",
-                            disabled: _vm.selectedItems.length === 0,
-                          },
-                        },
-                        [
-                          _c(
-                            "b-dropdown-item",
-                            {
-                              attrs: { href: "javascript:void(0);" },
-                              on: { click: _vm.multipleDelete },
-                            },
-                            [
-                              _c(
-                                "span",
-                                {
-                                  staticClass: "text-danger",
-                                  staticStyle: { "font-weight": "bold" },
-                                },
-                                [
-                                  _c("i", { staticClass: "fa fa-trash" }),
-                                  _vm._v(
-                                    " " +
-                                      _vm._s(_vm.__("delete_selected_media"))
-                                  ),
-                                ]
-                              ),
-                            ]
-                          ),
-                        ],
-                        1
-                      ),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-col",
-                    { attrs: { md: "3", "offset-md": "7" } },
-                    [
-                      _c("h6", { staticClass: "box-title" }, [
-                        _vm._v(_vm._s(_vm.__("search"))),
-                      ]),
-                      _vm._v(" "),
-                      _c("b-form-input", {
-                        attrs: {
-                          id: "filter-input",
-                          type: "search",
-                          placeholder: _vm.__("search"),
-                        },
-                        model: {
-                          value: _vm.filter,
-                          callback: function ($$v) {
-                            _vm.filter = $$v
-                          },
-                          expression: "filter",
-                        },
-                      }),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-col",
-                    { staticClass: "text-center", attrs: { md: "1" } },
-                    [
-                      _c(
-                        "button",
-                        {
-                          directives: [
-                            {
-                              name: "b-tooltip",
-                              rawName: "v-b-tooltip.hover",
-                              modifiers: { hover: true },
-                            },
-                          ],
-                          staticClass: "btn btn-primary btn_refresh",
-                          attrs: { title: _vm.__("refresh") },
-                          on: {
-                            click: function ($event) {
-                              return _vm.getMedia()
-                            },
-                          },
-                        },
-                        [
-                          _c("i", {
-                            staticClass: "fa fa-refresh",
-                            attrs: { "aria-hidden": "true" },
-                          }),
-                        ]
-                      ),
                     ]
-                  ),
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "table-responsive" },
-                [
-                  _c("b-table", {
-                    attrs: {
-                      items: _vm.media,
-                      fields: _vm.fields,
-                      "current-page": _vm.currentPage,
-                      "per-page": _vm.perPage,
-                      filter: _vm.filter,
-                      "filter-included-fields": _vm.filterOn,
-                      "sort-by": _vm.sortBy,
-                      "sort-desc": _vm.sortDesc,
-                      "sort-direction": _vm.sortDirection,
-                      bordered: true,
-                      busy: _vm.isLoading,
-                      stacked: "md",
-                      "show-empty": "",
-                      small: "",
-                    },
-                    on: {
-                      "update:sortBy": function ($event) {
-                        _vm.sortBy = $event
-                      },
-                      "update:sort-by": function ($event) {
-                        _vm.sortBy = $event
-                      },
-                      "update:sortDesc": function ($event) {
-                        _vm.sortDesc = $event
-                      },
-                      "update:sort-desc": function ($event) {
-                        _vm.sortDesc = $event
-                      },
-                    },
-                    scopedSlots: _vm._u([
-                      {
-                        key: "table-busy",
-                        fn: function () {
-                          return [
-                            _c(
-                              "div",
-                              { staticClass: "text-center text-black my-2" },
-                              [
-                                _c("b-spinner", {
-                                  staticClass: "align-middle",
-                                }),
-                                _vm._v(" "),
-                                _c("strong", [
-                                  _vm._v(_vm._s(_vm.__("loading")) + "..."),
-                                ]),
-                              ],
-                              1
-                            ),
-                          ]
-                        },
-                        proxy: true,
-                      },
-                      {
-                        key: "head(select)",
-                        fn: function (row) {
-                          return [
-                            _c("input", {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model",
-                                  value: _vm.all_select,
-                                  expression: "all_select",
-                                },
-                              ],
-                              staticClass: "form-check-input",
-                              attrs: { type: "checkbox" },
-                              domProps: {
-                                checked: Array.isArray(_vm.all_select)
-                                  ? _vm._i(_vm.all_select, null) > -1
-                                  : _vm.all_select,
-                              },
-                              on: {
-                                click: _vm.allSelectCheckBox,
-                                change: function ($event) {
-                                  var $$a = _vm.all_select,
-                                    $$el = $event.target,
-                                    $$c = $$el.checked ? true : false
-                                  if (Array.isArray($$a)) {
-                                    var $$v = null,
-                                      $$i = _vm._i($$a, $$v)
-                                    if ($$el.checked) {
-                                      $$i < 0 &&
-                                        (_vm.all_select = $$a.concat([$$v]))
-                                    } else {
-                                      $$i > -1 &&
-                                        (_vm.all_select = $$a
-                                          .slice(0, $$i)
-                                          .concat($$a.slice($$i + 1)))
-                                    }
-                                  } else {
-                                    _vm.all_select = $$c
-                                  }
-                                },
-                              },
-                            }),
-                          ]
-                        },
-                      },
-                      {
-                        key: "cell(select)",
-                        fn: function (row) {
-                          return [
-                            _c("input", {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model",
-                                  value: _vm.selectedItems,
-                                  expression: "selectedItems",
-                                },
-                              ],
-                              staticClass: "form-check-input",
-                              attrs: { type: "checkbox" },
-                              domProps: {
-                                value: "" + row.item.id,
-                                checked: Array.isArray(_vm.selectedItems)
-                                  ? _vm._i(
-                                      _vm.selectedItems,
-                                      "" + row.item.id
-                                    ) > -1
-                                  : _vm.selectedItems,
-                              },
-                              on: {
-                                change: [
-                                  function ($event) {
-                                    var $$a = _vm.selectedItems,
-                                      $$el = $event.target,
-                                      $$c = $$el.checked ? true : false
-                                    if (Array.isArray($$a)) {
-                                      var $$v = "" + row.item.id,
-                                        $$i = _vm._i($$a, $$v)
-                                      if ($$el.checked) {
-                                        $$i < 0 &&
-                                          (_vm.selectedItems = $$a.concat([
-                                            $$v,
-                                          ]))
-                                      } else {
-                                        $$i > -1 &&
-                                          (_vm.selectedItems = $$a
-                                            .slice(0, $$i)
-                                            .concat($$a.slice($$i + 1)))
-                                      }
-                                    } else {
-                                      _vm.selectedItems = $$c
-                                    }
-                                  },
-                                  _vm.selectCheckBox,
-                                ],
-                              },
-                            }),
-                          ]
-                        },
-                      },
-                      {
-                        key: "cell(image)",
-                        fn: function (row) {
-                          return [
-                            row.item.name
-                              ? _c("img", {
-                                  attrs: {
-                                    src:
-                                      _vm.$storageUrl +
-                                      row.item.sub_directory +
-                                      row.item.name,
-                                    height: "50",
-                                  },
-                                })
-                              : _vm._e(),
-                          ]
-                        },
-                      },
-                      {
-                        key: "cell(actions)",
-                        fn: function (row) {
-                          return [
-                            _c(
-                              "button",
-                              {
-                                directives: [
-                                  {
-                                    name: "clipboard",
-                                    rawName: "v-clipboard",
-                                    value: function () {
-                                      return (
-                                        row.item.sub_directory + row.item.name
-                                      )
-                                    },
-                                    expression:
-                                      "() => row.item.sub_directory + row.item.name",
-                                  },
-                                ],
-                                staticClass: "btn btn-sm btn-primary",
-                                attrs: { type: "button" },
-                                on: {
-                                  click: function ($event) {
-                                    return _vm.copyPath(row.item.id)
-                                  },
-                                },
-                              },
-                              [
-                                !_vm.copies.includes(row.item.id)
-                                  ? _c("span", [
-                                      _vm._v(
-                                        "\n                                        " +
-                                          _vm._s(_vm.__("copy")) +
-                                          "\n                                    "
-                                      ),
-                                    ])
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                _vm.copies.includes(row.item.id)
-                                  ? _c("span", [_vm._v("Copied!")])
-                                  : _vm._e(),
-                              ]
-                            ),
-                            _vm._v(" "),
-                            _c(
-                              "button",
-                              {
-                                staticClass: "btn btn-sm btn-danger",
-                                attrs: { type: "button" },
-                                on: {
-                                  click: function ($event) {
-                                    return _vm.deleteMedia(
-                                      row.index,
-                                      row.item.id
-                                    )
-                                  },
-                                },
-                              },
-                              [
-                                _vm._v(
-                                  "\n                                    " +
-                                    _vm._s(_vm.__("delete")) +
-                                    "\n                                "
-                                ),
-                              ]
-                            ),
-                          ]
-                        },
-                      },
-                    ]),
-                  }),
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "b-row",
-                [
-                  _c(
-                    "b-col",
-                    { staticClass: "my-1", attrs: { md: "2" } },
-                    [
-                      _c(
-                        "b-form-group",
-                        {
-                          staticClass: "mb-0",
-                          attrs: {
-                            label: _vm.__("per_page"),
-                            "label-for": "per-page-select",
-                            "label-align-sm": "right",
-                            "label-size": "sm",
+                  },
+                  proxy: true,
+                },
+                {
+                  key: "head(select)",
+                  fn: function (row) {
+                    return [
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.all_select,
+                            expression: "all_select",
                           },
-                        },
-                        [
-                          _c("b-form-select", {
-                            staticClass: "form-control form-select",
-                            attrs: {
-                              id: "per-page-select",
-                              options: _vm.pageOptions,
-                              size: "sm",
-                            },
-                            model: {
-                              value: _vm.perPage,
-                              callback: function ($$v) {
-                                _vm.perPage = $$v
-                              },
-                              expression: "perPage",
-                            },
-                          }),
                         ],
-                        1
-                      ),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-col",
-                    {
-                      staticClass: "my-1",
-                      attrs: { md: "4", "offset-md": "6" },
-                    },
-                    [
-                      _c("b-pagination", {
-                        staticClass: "my-0",
-                        attrs: {
-                          "total-rows": _vm.totalRows,
-                          "per-page": _vm.perPage,
-                          align: "fill",
-                          size: "sm",
+                        staticClass: "form-check-input",
+                        attrs: { type: "checkbox" },
+                        domProps: {
+                          checked: Array.isArray(_vm.all_select)
+                            ? _vm._i(_vm.all_select, null) > -1
+                            : _vm.all_select,
                         },
-                        model: {
-                          value: _vm.currentPage,
-                          callback: function ($$v) {
-                            _vm.currentPage = $$v
+                        on: {
+                          click: _vm.allSelectCheckBox,
+                          change: function ($event) {
+                            var $$a = _vm.all_select,
+                              $$el = $event.target,
+                              $$c = $$el.checked ? true : false
+                            if (Array.isArray($$a)) {
+                              var $$v = null,
+                                $$i = _vm._i($$a, $$v)
+                              if ($$el.checked) {
+                                $$i < 0 && (_vm.all_select = $$a.concat([$$v]))
+                              } else {
+                                $$i > -1 &&
+                                  (_vm.all_select = $$a
+                                    .slice(0, $$i)
+                                    .concat($$a.slice($$i + 1)))
+                              }
+                            } else {
+                              _vm.all_select = $$c
+                            }
                           },
-                          expression: "currentPage",
                         },
                       }),
-                    ],
-                    1
-                  ),
-                ],
-                1
-              ),
-            ],
-            1
-          ),
-        ]),
-      ]),
-    ]),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(select)",
+                  fn: function (row) {
+                    return [
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.selectedItems,
+                            expression: "selectedItems",
+                          },
+                        ],
+                        staticClass: "form-check-input",
+                        attrs: { type: "checkbox" },
+                        domProps: {
+                          value: "" + row.item.id,
+                          checked: Array.isArray(_vm.selectedItems)
+                            ? _vm._i(_vm.selectedItems, "" + row.item.id) > -1
+                            : _vm.selectedItems,
+                        },
+                        on: {
+                          change: [
+                            function ($event) {
+                              var $$a = _vm.selectedItems,
+                                $$el = $event.target,
+                                $$c = $$el.checked ? true : false
+                              if (Array.isArray($$a)) {
+                                var $$v = "" + row.item.id,
+                                  $$i = _vm._i($$a, $$v)
+                                if ($$el.checked) {
+                                  $$i < 0 &&
+                                    (_vm.selectedItems = $$a.concat([$$v]))
+                                } else {
+                                  $$i > -1 &&
+                                    (_vm.selectedItems = $$a
+                                      .slice(0, $$i)
+                                      .concat($$a.slice($$i + 1)))
+                                }
+                              } else {
+                                _vm.selectedItems = $$c
+                              }
+                            },
+                            _vm.selectCheckBox,
+                          ],
+                        },
+                      }),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(image)",
+                  fn: function (row) {
+                    return [
+                      row.item.name
+                        ? _c("img", {
+                            attrs: {
+                              src:
+                                _vm.$storageUrl +
+                                row.item.sub_directory +
+                                row.item.name,
+                              height: "50",
+                            },
+                          })
+                        : _vm._e(),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(actions)",
+                  fn: function (row) {
+                    return [
+                      _c("div", { staticClass: "list-actions" }, [
+                        _c(
+                          "button",
+                          {
+                            directives: [
+                              {
+                                name: "clipboard",
+                                rawName: "v-clipboard",
+                                value: function () {
+                                  return row.item.sub_directory + row.item.name
+                                },
+                                expression:
+                                  "() => row.item.sub_directory + row.item.name",
+                              },
+                              {
+                                name: "b-tooltip",
+                                rawName: "v-b-tooltip.hover",
+                                modifiers: { hover: true },
+                              },
+                            ],
+                            staticClass: "list-action-btn",
+                            attrs: {
+                              type: "button",
+                              title: _vm.copies.includes(row.item.id)
+                                ? "Copied!"
+                                : _vm.__("copy"),
+                            },
+                            on: {
+                              click: function ($event) {
+                                return _vm.copyPath(row.item.id)
+                              },
+                            },
+                          },
+                          [_c("i", { staticClass: "fa fa-copy" })]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "button",
+                          {
+                            directives: [
+                              {
+                                name: "b-tooltip",
+                                rawName: "v-b-tooltip.hover",
+                                modifiers: { hover: true },
+                              },
+                            ],
+                            staticClass: "list-action-btn is-delete",
+                            attrs: { type: "button", title: _vm.__("delete") },
+                            on: {
+                              click: function ($event) {
+                                return _vm.deleteMedia(row.index, row.item.id)
+                              },
+                            },
+                          },
+                          [_c("i", { staticClass: "fa fa-trash" })]
+                        ),
+                      ]),
+                    ]
+                  },
+                },
+              ]),
+            }),
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "list-footer" },
+          [
+            _c(
+              "div",
+              { staticClass: "list-perpage" },
+              [
+                _c(
+                  "b-form-group",
+                  {
+                    staticClass: "mb-0",
+                    attrs: {
+                      label: _vm.__("per_page"),
+                      "label-for": "per-page-select",
+                      "label-align-sm": "right",
+                      "label-size": "sm",
+                    },
+                  },
+                  [
+                    _c("b-form-select", {
+                      staticClass: "form-control form-select",
+                      attrs: {
+                        id: "per-page-select",
+                        options: _vm.pageOptions,
+                        size: "sm",
+                      },
+                      model: {
+                        value: _vm.perPage,
+                        callback: function ($$v) {
+                          _vm.perPage = $$v
+                        },
+                        expression: "perPage",
+                      },
+                    }),
+                  ],
+                  1
+                ),
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _c("b-pagination", {
+              staticClass: "list-pagination",
+              attrs: {
+                "total-rows": _vm.totalRows,
+                "per-page": _vm.perPage,
+                align: "fill",
+                size: "sm",
+              },
+              model: {
+                value: _vm.currentPage,
+                callback: function ($$v) {
+                  _vm.currentPage = $$v
+                },
+                expression: "currentPage",
+              },
+            }),
+          ],
+          1
+        ),
+      ],
+      1
+    ),
   ])
 }
 var staticRenderFns = []

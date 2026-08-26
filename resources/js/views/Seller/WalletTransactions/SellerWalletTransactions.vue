@@ -1,52 +1,29 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('manage_seller_wallet') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item" v-if="isSellerRoute">
-                                    <router-link to="/seller/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item" v-else>
-                                    <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('manage_seller_wallet') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('wallet_transactions') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap" @click="create_new=true" v-if="login_user.role.name === 'Super Admin' || login_user.role.name === 'Admin'">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_transactions') }}</span>
+            </button>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input
+                        id="filter-input"
+                        v-model="filter"
+                        type="search"
+                        :placeholder="__('search')"
+                        @input="getWalletTransactions()"
+                    ></b-form-input>
                 </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getWalletTransactions()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">{{ __('wallet_transactions') }}</h4>
-                        <span class="pull-right" v-if="login_user.role.name === 'Super Admin' || login_user.role.name === 'Admin'">
-                            <button class="btn btn-primary" @click="create_new=true"> {{ __('add_transactions') }}</button>
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <b-row class="mb-2">
-                            <b-col md="3" offset-md="8">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input
-                                    id="filter-input"
-                                    v-model="filter"
-                                    type="search"
-                                    :placeholder="__('search')"
-                                    @input="getWalletTransactions()"
-                                ></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getWalletTransactions()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </b-row>
                         <div class="table-responsive">
                             <b-table
                                 :items="walletTransactions"
@@ -93,10 +70,12 @@
                                     {{ row.item.amount }}
                                 </template>
                                 <template #cell(actions)="row">
-                                    <button class="btn btn-sm btn-primary" @click="row.toggleDetails" v-b-tooltip.hover :title="__('view')">
-                                        <i v-if="row.detailsShowing" class="fa fa-eye-slash"></i>
-                                        <i v-else class="fa fa-eye"></i>
-                                    </button>
+                                    <div class="list-actions">
+                                        <button class="list-action-btn is-view" @click="row.toggleDetails" v-b-tooltip.hover :title="__('view')">
+                                            <i v-if="row.detailsShowing" class="fa fa-eye-slash"></i>
+                                            <i v-else class="fa fa-eye"></i>
+                                        </button>
+                                    </div>
                                 </template>
 
                                 <template #row-details="row">
@@ -162,42 +141,39 @@
 
                             </b-table>
                         </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <b-form-group
-                                    :label="__('per_page')"
-                                    label-for="per-page-select"
-                                    label-align-sm="right"
-                                    label-size="sm"
-                                    class="mb-0">
-                                    <b-form-select
-                                        id="per-page-select"
-                                        v-model="perPage"
-                                        :options="pageOptions"
-                                        size="sm"
-                                        class="form-control form-select"
-                                        @input="getWalletTransactions()"
-                                    ></b-form-select>
-                                </b-form-group>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <label>{{__('total_records')}} :- {{ totalRows }} </label>
-                                <b-pagination
-                                    v-model="currentPage"
-                                    @input="getWalletTransactions()"
-                                    :total-rows="totalRows"
-                                    :per-page="perPage"
-                                    align="fill"
-                                    size="sm"
-                                    class="my-0"
-                                ></b-pagination>
-                            </b-col>
-                        </b-row>
 
-                    </div>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                            @input="getWalletTransactions()"
+                        ></b-form-select>
+                    </b-form-group>
                 </div>
-            </section>
+                <div>
+                    <b-pagination
+                        v-model="currentPage"
+                        @input="getWalletTransactions()"
+                        :total-rows="totalRows"
+                        :per-page="perPage"
+                        align="fill"
+                        size="sm"
+                        class="list-pagination"
+                    ></b-pagination>
+                </div>
+            </div>
         </div>
+
         <!-- Add / Edit -->
         <app-edit-record
             v-if="create_new || edit_record"

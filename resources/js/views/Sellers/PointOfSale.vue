@@ -2149,7 +2149,9 @@ body.pos-active header {
     display: none !important;
 }
 
-body.pos-active #main {
+body.pos-active #main,
+body.pos-active #sidebar.active ~ #main,
+body.pos-active #sidebar:not(.active) ~ #main {
     padding: 0px 10px 10px 10px !important;
     margin: 0px !important;
 }

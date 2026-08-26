@@ -1,53 +1,32 @@
 <template>
-
-    <div>
-
-        <div class="page-heading">
-            <div class="row">
-            <div class="col-12 col-md-6 order-md-1 order-last">
-                <h3>{{ __('role') }}</h3>
-            </div>
-            <div class="col-12 col-md-6 order-md-2 order-first">
-                <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard') }}</router-link></li>
-                        <li class="breadcrumb-item active" aria-current="page">{{ __('role') }}</li>
-                    </ol>
-                </nav>
-            </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('role') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                @click="openCreateModal()">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_new') }}</span>
+            </button>
         </div>
 
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input
+                        id="filter-input"
+                        v-model="filter"
+                        type="search"
+                        :placeholder="__('search')"
+                    ></b-form-input>
+                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+            </div>
 
-                        <div class="card-header">
-                            <h4>{{ __('role') }}</h4>
-                            <span class="pull-right">
-                                <button class="btn btn-primary"  @click="openCreateModal()">{{ __('add_new') }}</button>
-                            </span>
-                        </div>
-
-                        <div class="card-body">
-                            <b-row class="mb-2">
-                                <b-col md="3" offset-md="8">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input
-                                        id="filter-input"
-                                        v-model="filter"
-                                        type="search"
-                                        :placeholder="__('search')"
-                                    ></b-form-input>
-                                </b-col>
-                                <b-col md="1" class="text-center">
-                                    <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </button>
-                                </b-col>
-
-                            </b-row>
-
-                            <b-table
+            <div class="table-responsive">
+                <b-table
                                 :items="roles"
                                 :fields="fields"
                                 :current-page="currentPage"
@@ -71,48 +50,43 @@
                                 </template>
 
                                 <template #cell(actions)="row">
-                                    <button v-if="!nonDeleteAbleRoles.includes(row.item.name)" class="btn btn-sm btn-primary" @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')">
-                                        <i class="fa fa-pencil-alt"></i>
-                                    </button>
-                                    <button v-if="!nonDeleteAbleRoles.includes(row.item.name)" class="btn btn-sm btn-danger" @click="deleteRecord(row.index,row.item.id)" v-b-tooltip.hover :title="__('delete')"><i class="fa fa-trash"></i></button>
+                                    <div class="list-actions">
+                                        <button v-if="!nonDeleteAbleRoles.includes(row.item.name)" class="list-action-btn is-edit" @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')">
+                                            <i class="fa fa-pencil-alt"></i>
+                                        </button>
+                                        <button v-if="!nonDeleteAbleRoles.includes(row.item.name)" class="list-action-btn is-delete" @click="deleteRecord(row.index,row.item.id)" v-b-tooltip.hover :title="__('delete')"><i class="fa fa-trash"></i></button>
+                                    </div>
                                 </template>
 
-                            </b-table>
-                            <b-row>
-                                <b-col  md="2" class="my-1">
-                                    <b-form-group
-                                        :label="__('per_page')"
-                                        label-for="per-page-select"
-                                        label-align-sm="right"
-                                        label-size="sm"
-                                        class="mb-0">
+                </b-table>
+            </div>
 
-                                        <b-form-select
-                                            id="per-page-select"
-                                            v-model="perPage"
-                                            :options="pageOptions"
-                                            size="sm"
-                                            class="form-control form-select"
-                                        ></b-form-select>
-                                    </b-form-group>
-                                </b-col>
-                                <b-col  md="4" class="my-1" offset-md="6">
-                                    <label>{{__('total_records')}} :- {{ totalRows }} </label>
-                                    <b-pagination
-                                        v-model="currentPage"
-                                        :total-rows="totalRows"
-                                        :per-page="perPage"
-                                        align="fill"
-                                        size="sm"
-                                        class="my-0"
-                                    ></b-pagination>
-                                </b-col>
-                            </b-row>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
 
-
-                        </div>
-                    </div>
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                        ></b-form-select>
+                    </b-form-group>
                 </div>
+                <b-pagination
+                    v-model="currentPage"
+                    :total-rows="totalRows"
+                    :per-page="perPage"
+                    align="fill"
+                    size="sm"
+                    class="list-pagination"
+                ></b-pagination>
             </div>
         </div>
 

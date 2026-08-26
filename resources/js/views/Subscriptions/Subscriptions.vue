@@ -1,135 +1,107 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{ __('manage_subscriptions') }}</h3>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('subscription_plans') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                @click="openAddModal" v-b-tooltip.hover :title="__('add_subscription')"
+                v-if="$can('subscription_create')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_subscription') }}</span>
+            </button>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="d-flex gap-2">
+                    <b-form-input id="subscription-name-input" v-model="subscriptionName"
+                        type="text" :placeholder="__('enter_subscription_name')"></b-form-input>
+                    <button class="btn btn-primary" @click="updateSubscriptionName"
+                        :disabled="isUpdatingName" v-b-tooltip.hover :title="__('update')">
+                        <span v-if="isUpdatingName">
+                            <i class="fa fa-spinner fa-spin"></i>
+                        </span>
+                        <span v-else>
+                            <i class="fa fa-save"></i>
+                        </span>
+                    </button>
                 </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{ __('manage_subscriptions') }}</li>
-                        </ol>
-                    </nav>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search"
+                        :placeholder="__('search')" @input="currentPage = 1; getPlans()"></b-form-input>
                 </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
+                    @click="getPlans()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
+            <div class="table-responsive">
+                <b-table :items="translatedPlans" :fields="fields" :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
+                    :busy="isLoading" stacked="md" show-empty small class="text-nowrap">
 
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4>{{ __('subscription_plans') }}</h4>
-                            <span class="pull-right">
-                                <button class="btn btn-primary" @click="openAddModal" v-b-tooltip.hover
-                                    :title="__('add_subscription')" v-if="$can('subscription_create')">{{
-                                        __('add_subscription') }}</button>
-                            </span>
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
-                        <div class="card-body">
-                            <b-row class="mb-2">
-                                <b-col md="3">
-                                    <h6 class="box-title">{{ __('subscription_name') }}</h6>
-                                    <div class="d-flex gap-2">
-                                        <b-form-input id="subscription-name-input" v-model="subscriptionName"
-                                            type="text" :placeholder="__('enter_subscription_name')"></b-form-input>
-                                        <button class="btn btn-primary" @click="updateSubscriptionName"
-                                            :disabled="isUpdatingName" v-b-tooltip.hover :title="__('update')">
-                                            <span v-if="isUpdatingName">
-                                                <i class="fa fa-spinner fa-spin"></i>
-                                            </span>
-                                            <span v-else>
-                                                <i class="fa fa-save"></i>
-                                            </span>
-                                        </button>
-                                    </div>
-                                </b-col>
-                                <b-col md="3" offset-md="5">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input id="filter-input" v-model="filter" type="search"
-                                        :placeholder="__('search')" @input="currentPage = 1; getPlans()"></b-form-input>
-                                </b-col>
-                                <b-col md="1" class="text-center">
-                                    <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                        @click="getPlans()">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </button>
-                                </b-col>
-                            </b-row>
-                            <div class="table-responsive">
-                                <b-table :items="translatedPlans" :fields="fields" :sort-by.sync="sortBy"
-                                    :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
-                                    :busy="isLoading" stacked="md" show-empty small class="text-nowrap">
+                    </template>
 
-                                    <template #table-busy>
-                                        <div class="text-center text-black my-2">
-                                            <b-spinner class="align-middle"></b-spinner>
-                                            <strong>{{ __('loading') }}...</strong>
-                                        </div>
-                                    </template>
+                    <template #cell(name)="row">
+                        <strong>{{ row.item.name }}</strong>
+                    </template>
 
-                                    <template #cell(name)="row">
-                                        <strong>{{ row.item.name }}</strong>
-                                    </template>
+                    <template #cell(days)="row">
+                        <span>{{ row.item.days }} {{ __('days') }}</span>
+                    </template>
 
-                                    <template #cell(days)="row">
-                                        <span>{{ row.item.days }} {{ __('days') }}</span>
-                                    </template>
+                    <template #cell(price)="row">
+                        <span>{{ parseFloat(row.item.price).toFixed(2) }}</span>
+                    </template>
 
-                                    <template #cell(price)="row">
-                                        <span>{{ parseFloat(row.item.price).toFixed(2) }}</span>
-                                    </template>
+                    <template #cell(discounted_price)="row">
+                        <span v-if="row.item.discounted_price">{{
+                            parseFloat(row.item.discounted_price).toFixed(2) }}</span>
+                        <span v-else class="text-muted">-</span>
+                    </template>
 
-                                    <template #cell(discounted_price)="row">
-                                        <span v-if="row.item.discounted_price">{{
-                                            parseFloat(row.item.discounted_price).toFixed(2) }}</span>
-                                        <span v-else class="text-muted">-</span>
-                                    </template>
+                    <template #cell(free_delivery_above)="row">
+                        <span v-if="row.item.free_delivery_above">{{
+                            parseFloat(row.item.free_delivery_above).toFixed(2) }}</span>
+                        <span v-else class="text-muted">-</span>
+                    </template>
 
-                                    <template #cell(free_delivery_above)="row">
-                                        <span v-if="row.item.free_delivery_above">{{
-                                            parseFloat(row.item.free_delivery_above).toFixed(2) }}</span>
-                                        <span v-else class="text-muted">-</span>
-                                    </template>
+                    <template #cell(status)="row">
+                        <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active')
+                            }}</span>
+                        <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
+                            }}</span>
+                    </template>
 
-                                    <template #cell(status)="row">
-                                        <span class='badge bg-success' v-if="row.item.status == 1">{{ __('active')
-                                            }}</span>
-                                        <span class='badge bg-danger' v-if="row.item.status == 0">{{ __('deactive')
-                                            }}</span>
-                                    </template>
-
-                                    <template #cell(actions)="row">
-                                        <button class="btn btn-sm btn-primary" @click="editPlan(row.item)"
-                                            v-if="$can('subscription_update')" v-b-tooltip.hover :title="__('edit')"><i
-                                                class="fa fa-pencil-alt"></i></button>
-                                        <button class="btn btn-sm btn-danger"
-                                            @click="deletePlan(row.index, row.item.id)"
-                                            v-if="$can('subscription_delete')" v-b-tooltip.hover
-                                            :title="__('delete')"><i class="fa fa-trash"></i></button>
-                                    </template>
-
-                                </b-table>
-                            </div>
-                            <b-row>
-                                <b-col md="2" class="my-1">
-                                    <label>
-                                        <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                            label-align-sm="right" label-size="sm" class="mb-0">
-                                            <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                                size="sm" class="form-control form-select"></b-form-select>
-                                        </b-form-group>
-                                    </label>
-                                </b-col>
-                                <b-col md="2" class="my-1" offset-md="8">
-                                    <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                        align="fill" size="sm" class="my-0"></b-pagination>
-                                </b-col>
-                            </b-row>
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <button class="list-action-btn is-edit" @click="editPlan(row.item)"
+                                v-if="$can('subscription_update')" v-b-tooltip.hover :title="__('edit')"><i
+                                    class="fa fa-pencil-alt"></i></button>
+                            <button class="list-action-btn is-delete"
+                                @click="deletePlan(row.index, row.item.id)"
+                                v-if="$can('subscription_delete')" v-b-tooltip.hover
+                                :title="__('delete')"><i class="fa fa-trash"></i></button>
                         </div>
-                    </div>
+                    </template>
+
+                </b-table>
+            </div>
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select"
+                        label-align-sm="right" label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
                 </div>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
+                    align="fill" size="sm" class="list-pagination"></b-pagination>
             </div>
         </div>
 

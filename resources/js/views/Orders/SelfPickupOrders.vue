@@ -1,78 +1,57 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('self_pickup_orders') }}</h3>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('self_pickup_orders') }}</h3>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <b-col lg="4" md="4">
+                    <h6 class="box-title">{{ __('from_and_to_date') }}</h6>
+                    <div class="d-flex justify-content-center align-items-center">
+                        <date-range-picker :autoApply=false :showDropdowns=true v-model="dateRange"
+                            :maxDate="maxDate" @update="handleFilterChange" :locale-data="dateRangePickerLocale" :ranges="dateRangePickerRanges"
+                            :append-to-body="true" opens="right"></date-range-picker>
+                        <button class="btn btn-sm btn-danger ml-1" @click="clearDate()">
+                            {{ __('clear') }}
+                        </button>
                     </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><router-link to="/dashboard">{{ __('dashboard')
-                                }}</router-link></li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('self_pickup_orders') }}
-                                </li>
-                            </ol>
-                        </nav>
-                    </div>
+                </b-col>
+                <b-col lg="2" md="4" v-if="!isSeller">
+                    <h6 class="box-title" for="seller">{{ __('seller') }}</h6>
+                    <select name="seller" id="seller" v-model="seller" @change="handleFilterChange()"
+                        class="form-control form-select">
+                        <option value="">{{ __('all_sellers') }}</option>
+                        <option v-for="seller in sellers" :value="seller.id">{{ getDisplayName(seller.name)
+                        }}</option>
+                    </select>
+                </b-col>
+                <b-col lg="2" md="4">
+                    <h6 class="box-title" for="status">{{ __('status') }} </h6>
+                    <select id="status" name="status" v-model="status" @change="handleFilterChange()"
+                        class="form-control form-select">
+                        <option value="">{{ __('all_orders') }}</option>
+                        <option v-for="status in statuses" :value='status.id'>{{
+                            getStatusDisplayName(status) }}</option>
+                    </select>
+                </b-col>
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="search" type="search"
+                        :placeholder="__('search')" @input="handleFilterChange()"></b-form-input>
                 </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
+                    @click="getSelfPickupOrders()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">{{ __('self_pickup_orders') }}</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-2 ps-2">
-                            <b-col lg="4" md="4">
-                                <h6 class="box-title">{{ __('from_and_to_date') }}</h6>
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <date-range-picker :autoApply=false :showDropdowns=true v-model="dateRange"
-                                        :maxDate="maxDate" @update="handleFilterChange" :locale-data="dateRangePickerLocale" :ranges="dateRangePickerRanges"
-                                        :append-to-body="true" opens="right"></date-range-picker>
-                                    <button class="btn btn-sm btn-danger ml-1" @click="clearDate()">
-                                        {{ __('clear') }}
-                                    </button>
-                                </div>
-                            </b-col>
-                            <b-col lg="2" md="4" v-if="!isSeller">
-                                <h6 class="box-title" for="seller">{{ __('seller') }}</h6>
-                                <select name="seller" id="seller" v-model="seller" @change="handleFilterChange()"
-                                    class="form-control form-select">
-                                    <option value="">{{ __('all_sellers') }}</option>
-                                    <option v-for="seller in sellers" :value="seller.id">{{ getDisplayName(seller.name)
-                                    }}</option>
-                                </select>
-                            </b-col>
-                            <b-col lg="2" md="4">
-                                <h6 class="box-title" for="status">{{ __('status') }} </h6>
-                                <select id="status" name="status" v-model="status" @change="handleFilterChange()"
-                                    class="form-control form-select">
-                                    <option value="">{{ __('all_orders') }}</option>
-                                    <option v-for="status in statuses" :value='status.id'>{{
-                                        getStatusDisplayName(status) }}</option>
-                                </select>
-                            </b-col>
-                            <b-col lg="3" md="4">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input id="filter-input" v-model="search" type="search"
-                                    :placeholder="__('search')" @input="handleFilterChange()"></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                    @click="getSelfPickupOrders()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </div>
-                        <div class="table-responsive mt-3">
-                            <b-table responsive="sm" :items="orders" :fields="filteredOrderFields" show-details
-                                :tbody-tr-class="() => 'cursor-pointer'" :details-td-class="'p-0 bg-light'"
-                                :filter="filter" :filter-included-fields="filterOn" :sort-by.sync="sortBy"
-                                :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
-                                :busy="isLoading" :foot-clone="true" :no-footer-sorting="true"
-                                :no-border-collapse="false" stacked="md" show-empty small>
+            <div class="table-responsive">
+                <b-table responsive="sm" :items="orders" :fields="filteredOrderFields" show-details
+                    :tbody-tr-class="() => 'cursor-pointer'" :details-td-class="'p-0 bg-light'"
+                    :filter="filter" :filter-included-fields="filterOn" :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
+                    :busy="isLoading" :foot-clone="true" :no-footer-sorting="true"
+                    :no-border-collapse="false" stacked="md" show-empty small>
 
                                 <template #cell(id)="row">
                                     <span @click.stop="toggleOrder(row)" style="cursor:pointer;">
@@ -109,15 +88,17 @@
                                 </template>
 
                                 <template #cell(actions)="row">
-                                    <router-link
-                                        :to="{ name: 'ViewSelfPickupOrder', params: { id: row.item.id, record: row.item } }"
-                                        v-b-tooltip.hover :title="__('view')" class="btn btn-primary btn-sm"><i
-                                            class="fa fa-eye"></i></router-link>
-                                    <button class="btn btn-danger btn-sm" v-b-tooltip.hover :title="__('delete')"
-                                        @click="deleteOrder(row.index, row.item.id)"
-                                        v-if="$can('self_pickup_order_delete') && !isSeller">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
+                                    <div class="list-actions">
+                                        <router-link
+                                            :to="{ name: 'ViewSelfPickupOrder', params: { id: row.item.id, record: row.item } }"
+                                            v-b-tooltip.hover :title="__('view')" class="list-action-btn is-view"><i
+                                                class="fa fa-eye"></i></router-link>
+                                        <button class="list-action-btn is-delete" v-b-tooltip.hover :title="__('delete')"
+                                            @click="deleteOrder(row.index, row.item.id)"
+                                            v-if="$can('self_pickup_order_delete') && !isSeller">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </template>
 
                                 <template #row-details="row">
@@ -178,24 +159,20 @@
 
                                 </template>
 
-                            </b-table>
-                        </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
-                                    label-size="sm" class="mb-0">
-                                    <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                        size="sm" class="form-control form-select"></b-form-select>
-                                </b-form-group>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <b-pagination v-model="currentPage" :total-rows="totalOrderRows" :per-page="perPage"
-                                    align="fill" size="sm" class="my-0"></b-pagination>
-                            </b-col>
-                        </b-row>
-                    </div>
+                </b-table>
+            </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right"
+                        label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions" size="sm"
+                            class="form-control form-select"></b-form-select>
+                    </b-form-group>
                 </div>
-            </section>
+                <b-pagination v-model="currentPage" :total-rows="totalOrderRows" :per-page="perPage" align="fill"
+                    size="sm" class="list-pagination"></b-pagination>
+            </div>
         </div>
     </div>
 </template>

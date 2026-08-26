@@ -1,41 +1,23 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('schemes') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><router-link to="/seller/dashboard">{{ __('dashboard') }}</router-link></li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ __('schemes') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('schemes') }}</h3>
+            <router-link to="/seller/schemes/create" class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap" v-b-tooltip.hover :title="__('add_scheme')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_scheme') }}</span>
+            </router-link>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search" :placeholder="__('search')"></b-form-input>
                 </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getSchemes()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
-            <section class="section">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">{{ __('schemes') }}</h4>
-                        <span class="pull-right">
-                            <router-link to="/seller/schemes/create" class="btn btn-primary" v-b-tooltip.hover :title="__('add_scheme')">{{ __('add_scheme') }}</router-link>
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <b-row class="mb-2">
-                            <b-col md="3" offset-md="8">
-                                <h6 class="box-title">{{ __('search') }}</h6>
-                                <b-form-input id="filter-input" v-model="filter" type="search" :placeholder="__('search')"></b-form-input>
-                            </b-col>
-                            <b-col md="1" class="text-center">
-                                <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getSchemes()">
-                                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                                </button>
-                            </b-col>
-                        </b-row>
                         <div class="table-responsive">
                             <b-table :items="schemes" :fields="fields" :current-page="currentPage" :per-page="perPage" :filter="filter" :filter-included-fields="filterOn" :bordered="true" :busy="isLoading" stacked="md" show-empty small>
                                 <template #table-busy>
@@ -74,28 +56,26 @@
                                 </template>
 
                                 <template #cell(actions)="row">
-                                    <router-link :to="{ name: 'SellerEditScheme', params: { id: row.item.id } }" v-b-tooltip.hover :title="__('edit')" class="btn btn-primary btn-sm me-2">
-                                        <i class="fa fa-pencil-alt"></i>
-                                    </router-link>
-                                    <button class="btn btn-sm btn-danger" @click="deleteScheme(row.index, row.item.id)" v-b-tooltip.hover :title="__('delete')">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
+                                    <div class="list-actions">
+                                        <router-link :to="{ name: 'SellerEditScheme', params: { id: row.item.id } }" v-b-tooltip.hover :title="__('edit')" class="list-action-btn is-edit">
+                                            <i class="fa fa-pencil-alt"></i>
+                                        </router-link>
+                                        <button class="list-action-btn is-delete" @click="deleteScheme(row.index, row.item.id)" v-b-tooltip.hover :title="__('delete')">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </template>
                             </b-table>
                         </div>
-                        <b-row>
-                            <b-col md="2" class="my-1">
-                                <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right" label-size="sm" class="mb-0">
-                                    <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions" size="sm"></b-form-select>
-                                </b-form-group>
-                            </b-col>
-                            <b-col md="4" class="my-1" offset-md="6">
-                                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm" class="my-0"></b-pagination>
-                            </b-col>
-                        </b-row>
-                    </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group :label="__('per_page')" label-for="per-page-select" label-align-sm="right" label-size="sm" class="mb-0">
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions" size="sm" class="form-control form-select"></b-form-select>
+                    </b-form-group>
                 </div>
-            </section>
+                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm" class="list-pagination"></b-pagination>
+            </div>
         </div>
     </div>
 </template>

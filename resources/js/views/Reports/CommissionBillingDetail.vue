@@ -1,27 +1,10 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ seller ? seller.name : __('commission_billing') }}</h3>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item">
-                                    <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item">
-                                    <router-link to="/commission_billing">{{ __('commission_billing') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">{{ seller ? seller.name : __('detail') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ seller ? seller.name : __('commission_billing') }}</h3>
+        </div>
 
+        <div>
             <section class="section">
 
                 <div v-if="loading && !seller" class="text-center py-5">
@@ -94,79 +77,73 @@
                     </b-row>
 
                     <!-- Transaction history -->
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="list-surface">
+                        <div class="list-toolbar">
                             <h4 class="card-title mb-0">{{ __('commission_transaction_history') }}</h4>
                         </div>
-                        <div class="card-body">
-                            <!-- Filters -->
-                            <b-row class="mb-3">
-                                <b-col md="5">
-                                    <h6 class="box-title">{{ __('from_to_date') }}</h6>
-                                    <div class="d-flex align-items-center">
-                                        <date-range-picker
-                                            :append-to-body="true"
-                                            :single-date-picker="'range'"
-                                            :autoApply="false"
-                                            :showDropdowns="true"
-                                            v-model="dateRange"
-                                            :maxDate="maxDate"
-                                            @update="load(1)"
-                                            :locale-data="dateRangePickerLocale"
-                                            :ranges="dateRangePickerRanges"
-                                        ></date-range-picker>
-                                        <button class="btn btn-sm btn-danger ms-1"
-                                            @click="dateRange = { startDate: null, endDate: null }; load(1)">
-                                            {{ __('clear') }}
-                                        </button>
-                                    </div>
-                                </b-col>
-                                <b-col md="1" class="d-flex align-items-end">
-                                    <button class="btn btn-primary btn_refresh" @click="load(1)">
-                                        <i class="fa fa-refresh"></i>
+                        <!-- Filters -->
+                        <b-row class="mb-3">
+                            <b-col md="5">
+                                <h6 class="box-title">{{ __('from_to_date') }}</h6>
+                                <div class="d-flex align-items-center">
+                                    <date-range-picker
+                                        :append-to-body="true"
+                                        :single-date-picker="'range'"
+                                        :autoApply="false"
+                                        :showDropdowns="true"
+                                        v-model="dateRange"
+                                        :maxDate="maxDate"
+                                        @update="load(1)"
+                                        :locale-data="dateRangePickerLocale"
+                                        :ranges="dateRangePickerRanges"
+                                    ></date-range-picker>
+                                    <button class="btn btn-sm btn-danger ms-1"
+                                        @click="dateRange = { startDate: null, endDate: null }; load(1)">
+                                        {{ __('clear') }}
                                     </button>
-                                </b-col>
-                            </b-row>
-
-                            <div v-if="loading" class="text-center py-3"><b-spinner></b-spinner></div>
-                            <div v-else>
-                                <div class="table-responsive">
-                                    <b-table
-                                        :items="data.transactions.data"
-                                        :fields="txFields"
-                                        :bordered="true"
-                                        show-empty
-                                        small
-                                        stacked="md">
-                                        <template #cell(order_item_amount)="row">
-                                            {{ $currency }} {{ parseFloat(row.item.order_item_amount).toFixed(2) }}
-                                        </template>
-                                        <template #cell(commission_amount)="row">
-                                            {{ $currency }} {{ parseFloat(row.item.commission_amount).toFixed(2) }}
-                                        </template>
-                                        <template #cell(seller_commission_percentage)="row">
-                                            {{ row.item.seller_commission_percentage }}%
-                                        </template>
-                                    </b-table>
                                 </div>
+                            </b-col>
+                            <b-col md="1" class="d-flex align-items-end">
+                                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="load(1)">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                            </b-col>
+                        </b-row>
 
-                                <b-row class="mt-2">
-                                    <b-col md="4">
-                                        <div class="text-primary h6">
-                                            {{ __('total_commission') }}: {{ $currency }} {{ data.commission_earned.all_time.toFixed(2) }}
-                                        </div>
-                                    </b-col>
-                                    <b-col md="4" offset-md="4" class="pr-0 d-flex justify-content-end">
-                                        <b-pagination
-                                            v-model="page"
-                                            :total-rows="data.transactions.total"
-                                            :per-page="perPage"
-                                            @change="load"
-                                            size="sm"
-                                            class="mb-0"
-                                        ></b-pagination>
-                                    </b-col>
-                                </b-row>
+                        <div v-if="loading" class="text-center py-3"><b-spinner></b-spinner></div>
+                        <div v-else>
+                            <div class="table-responsive">
+                                <b-table
+                                    :items="data.transactions.data"
+                                    :fields="txFields"
+                                    :bordered="true"
+                                    show-empty
+                                    small
+                                    stacked="md">
+                                    <template #cell(order_item_amount)="row">
+                                        {{ $currency }} {{ parseFloat(row.item.order_item_amount).toFixed(2) }}
+                                    </template>
+                                    <template #cell(commission_amount)="row">
+                                        {{ $currency }} {{ parseFloat(row.item.commission_amount).toFixed(2) }}
+                                    </template>
+                                    <template #cell(seller_commission_percentage)="row">
+                                        {{ row.item.seller_commission_percentage }}%
+                                    </template>
+                                </b-table>
+                            </div>
+
+                            <div class="list-footer">
+                                <div class="text-primary h6">
+                                    {{ __('total_commission') }}: {{ $currency }} {{ data.commission_earned.all_time.toFixed(2) }}
+                                </div>
+                                <b-pagination
+                                    v-model="page"
+                                    :total-rows="data.transactions.total"
+                                    :per-page="perPage"
+                                    @change="load"
+                                    size="sm"
+                                    class="list-pagination"
+                                ></b-pagination>
                             </div>
                         </div>
                     </div>

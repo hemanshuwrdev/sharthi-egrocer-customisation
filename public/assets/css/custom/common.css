@@ -2298,3 +2298,969 @@ code {
     padding: 2px 6px;
     border-radius: 4px;
 }
+
+/* ============================================================
+   SnapBuy design-system port — Part 1 (additive)
+   New CSS custom-property tokens + new list-page/page-head
+   classes. Nothing above this point is modified; nothing in
+   the DOM references these classes yet, so this block has no
+   effect on any existing page until later parts opt in.
+   ============================================================ */
+
+:root {
+    --app-sidebar-w: 300px;
+    --app-header-h: 64px;
+    --app-brand-h: 88px;
+    --app-surface: #ffffff;
+    --app-border: #e9edf5;
+    --app-card-bg: #ffffff;
+    --app-card-border: #e6eaf2;
+    --app-footer-ink: #212529;
+    --app-thead-bg: #f7f9fc;
+    --app-muted: #67748e;
+    --app-ink: #25396f;
+    --app-hover: rgba(67, 94, 190, 0.08);
+    --app-control-border: #d9dde3;
+    --app-skel-bg: #dfe3ec;
+    --app-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.theme-dark {
+    --app-surface: #1e1e2d;
+    --app-border: #2f2f45;
+    --app-card-bg: #1e1e2d;
+    --app-card-border: #383850;
+    --app-footer-ink: #c2c2d9;
+    --app-thead-bg: #23233a;
+    --app-muted: #9a9ab5;
+    --app-ink: #e6e6f0;
+    --app-hover: rgba(255, 255, 255, 0.07);
+    --app-control-border: rgba(255, 255, 255, 0.28);
+    --app-skel-bg: rgba(255, 255, 255, 0.11);
+}
+
+.list-page {
+    margin-bottom: 2rem;
+}
+
+/* ---- Page head ---- */
+.page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.page-head-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--app-ink);
+}
+
+.page-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ---- List surface (card-like wrapper for list pages) ---- */
+.list-surface {
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
+    border-radius: 0.7rem;
+    transition: background-color 0.2s var(--app-ease), border-color 0.2s var(--app-ease);
+}
+
+.list-surface > .card-header {
+    padding-bottom: 0.75rem;
+    border-bottom: none;
+}
+
+.list-surface table thead th {
+    background: var(--app-thead-bg);
+    color: var(--app-ink);
+    border-bottom: 1px solid var(--app-border) !important;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+
+.list-surface table.b-table td {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+/* SnapBuy tables have no vertical column dividers — only horizontal row lines. */
+.list-surface table.b-table th,
+.list-surface table.b-table td {
+    border-left: none !important;
+    border-right: none !important;
+}
+
+.list-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.list-filter-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--app-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.list-filter select,
+.list-filter .form-control,
+.list-filter .form-select {
+    min-width: 160px;
+    border-color: var(--app-control-border) !important;
+}
+
+.list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.list-toolbar-start,
+.list-toolbar-end {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.list-toolbar-end {
+    flex-wrap: nowrap;
+}
+
+/* Toolbars with extra filter controls: filters anchor left, search/refresh
+   anchor right, instead of cramming every control against the right edge. */
+.list-toolbar.has-filters {
+    justify-content: space-between;
+}
+
+.list-filter {
+    flex-shrink: 0;
+}
+
+.list-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 260px;
+}
+
+.list-search .form-control {
+    padding-left: 34px;
+    border-color: var(--app-control-border);
+}
+
+.list-search-icon {
+    position: absolute;
+    left: 10px;
+    width: 16px;
+    height: 16px;
+    color: var(--app-muted);
+    pointer-events: none;
+}
+
+.list-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 0.5rem;
+    border: 1px solid var(--app-control-border);
+    background: var(--app-surface);
+    color: var(--app-muted);
+    transition: background-color 0.15s var(--app-ease), color 0.15s var(--app-ease);
+}
+
+.burger-btn.list-icon-btn.d-block {
+    display: inline-flex !important;
+}
+
+.list-icon-btn:hover {
+    background: var(--app-hover);
+    color: var(--app-ink);
+}
+
+.list-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+/* ---- Row actions ---- */
+.list-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.list-action-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid var(--app-control-border) !important;
+    background: var(--app-surface) !important;
+    color: var(--app-muted) !important;
+    box-shadow: none !important;
+    transition: background-color 0.15s var(--app-ease), color 0.15s var(--app-ease);
+}
+
+.list-action-btn.is-edit,
+.list-action-btn.is-view,
+.list-action-btn.is-delete {
+    color: var(--app-muted) !important;
+}
+
+.list-action-btn.is-view:hover {
+    color: var(--app-ink) !important;
+}
+
+.list-action-btn.is-edit:hover {
+    color: #37a279 !important;
+}
+
+.list-action-btn.is-delete:hover {
+    color: #dc3545 !important;
+}
+
+.list-action-btn:hover {
+    background: var(--app-hover) !important;
+}
+
+/* Swap the font-awesome glyph for a lucide-style icon via CSS mask, so every
+   is-edit/is-view/is-delete button across all list pages updates from one
+   place — no need to touch each file's <i class="fa fa-..."> markup. */
+.list-action-btn.is-edit i,
+.list-action-btn.is-view i,
+.list-action-btn.is-delete i {
+    display: none !important;
+}
+
+.list-action-btn.is-edit::after,
+.list-action-btn.is-view::after,
+.list-action-btn.is-delete::after {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+.list-action-btn.is-edit::after {
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/><path d='m15 5 4 4'/></svg>");
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/><path d='m15 5 4 4'/></svg>");
+}
+
+.list-action-btn.is-view::after {
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0'/><circle cx='12' cy='12' r='3'/></svg>");
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0'/><circle cx='12' cy='12' r='3'/></svg>");
+}
+
+.list-action-btn.is-delete::after {
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/><path d='M3 6h18'/><path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg>");
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/><path d='M3 6h18'/><path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg>");
+}
+
+/* ---- Footer / pagination ---- */
+.list-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--app-border);
+}
+
+.list-perpage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--app-muted);
+    font-size: 0.875rem !important;
+}
+
+.list-perpage .form-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+}
+
+.list-perpage .form-group label {
+    margin: 0 !important;
+    white-space: nowrap;
+}
+
+.list-perpage .form-select,
+.list-perpage select {
+    font-size: 0.875rem !important;
+    min-width: 68px;
+    padding: 0.25rem 1.75rem 0.25rem 0.6rem !important;
+    border-color: var(--app-control-border) !important;
+    background-color: var(--app-surface) !important;
+    color: var(--app-ink) !important;
+}
+
+/* Force one consistent pagination look everywhere, regardless of each
+   page's own b-pagination `size` prop. */
+.list-pagination {
+    margin: 0 !important;
+}
+
+.list-pagination.pagination,
+.list-footer .pagination {
+    gap: 4px;
+}
+
+.list-pagination .page-item .page-link,
+.list-footer .page-item .page-link {
+    min-width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px !important;
+    font-size: 0.8125rem !important;
+    line-height: 1 !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid var(--app-control-border) !important;
+    background: var(--app-surface) !important;
+    color: var(--app-ink) !important;
+}
+
+.list-pagination .page-item.disabled .page-link,
+.list-footer .page-item.disabled .page-link {
+    color: var(--app-muted) !important;
+    opacity: 0.6;
+}
+
+.list-pagination .page-item:not(.disabled) .page-link:hover,
+.list-footer .page-item:not(.disabled) .page-link:hover {
+    background: var(--app-hover) !important;
+}
+
+.list-pagination .page-item.active .page-link,
+.list-footer .page-item.active .page-link {
+    background: #37a279 !important;
+    border-color: #37a279 !important;
+    color: #fff !important;
+}
+
+/* ---- Filters ---- */
+.list-filters {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.filter-panel {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 0.5rem;
+    padding: 16px;
+}
+
+.filter-slide-enter-active,
+.filter-slide-leave-active {
+    transition: max-height 0.25s var(--app-ease), opacity 0.2s var(--app-ease);
+    overflow: hidden;
+}
+
+.filter-slide-enter,
+.filter-slide-leave-to {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* ============================================================
+   SnapBuy design-system port — Part 4 (header, additive)
+   Visual-only classes for VerticalHeader.vue: no new icon
+   dependency, no behavior change — same bindings/methods,
+   just restyled chrome using the Part 1 tokens.
+   ============================================================ */
+
+.app-header {
+    background: var(--app-surface);
+    border-bottom: 1px solid var(--app-border);
+}
+
+.hdr-demo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.hdr-demo-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #dc3545;
+}
+
+.hdr-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: var(--app-border);
+}
+
+.hdr-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.hdr-caret {
+    color: var(--app-muted);
+}
+
+/* ---- Notification dropdown ---- */
+.notification-dropdown {
+    width: 320px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.notif-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.notif-head-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--app-ink);
+}
+
+.notif-count {
+    min-width: 20px;
+    height: 18px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(67, 94, 190, 0.12);
+    color: #435ebe;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.notif-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.notif-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-bottom: 1px solid var(--app-border);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s var(--app-ease);
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-item:hover {
+    background: var(--app-hover);
+}
+
+.notif-item.is-unread {
+    background: rgba(67, 94, 190, 0.05);
+}
+
+.notif-icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(67, 94, 190, 0.1);
+    color: #435ebe;
+}
+
+.notif-item:not(.is-unread) .notif-icon {
+    background: var(--app-hover);
+    color: var(--app-muted);
+}
+
+.notif-body {
+    min-width: 0;
+    flex: 1;
+}
+
+.notif-text {
+    display: block;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--app-ink);
+    white-space: normal;
+    word-break: break-word;
+}
+
+.notif-item.is-unread .notif-text {
+    font-weight: 600;
+}
+
+.notif-time {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    color: var(--app-muted);
+}
+
+.notif-unread-dot {
+    position: absolute;
+    top: 14px;
+    right: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #435ebe;
+}
+
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 28px 16px;
+    color: var(--app-muted);
+    font-size: 0.8rem;
+}
+
+.notif-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid var(--app-border);
+}
+
+.notif-see-all,
+.notif-mark-all {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.notif-see-all {
+    color: #435ebe;
+}
+
+.notif-mark-all {
+    color: var(--app-muted);
+}
+
+.notif-see-all:hover,
+.notif-mark-all:hover {
+    background: var(--app-hover);
+}
+
+/* ---- User chip ---- */
+.user-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    transition: background-color 0.15s var(--app-ease);
+}
+
+.user-chip:hover {
+    background: var(--app-hover);
+}
+
+.user-chip img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-chip-name {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--app-ink);
+    line-height: 1.2;
+}
+
+.user-chip-role {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--app-muted);
+    line-height: 1.2;
+}
+
+.user-dropdown-menu {
+    min-width: 210px;
+}
+
+/* ==========================================================================
+   Header Sidebar Toggle Icon (Rectangle Box) & Mini Collapsed Sidebar
+   ========================================================================== */
+
+/* 1. Rectangle Box Header Sidebar Toggle Button */
+.burger-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 8px;
+    background-color: var(--app-surface, #ffffff);
+    border: 1px solid var(--app-control-border, #dce7f1);
+    color: var(--app-ink, #25396f);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    margin-right: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.burger-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.burger-btn:hover,
+.burger-btn:focus {
+    background-color: #37a279 !important;
+    color: #ffffff !important;
+    border-color: #37a279 !important;
+    box-shadow: 0 4px 10px rgba(55, 162, 121, 0.3);
+}
+
+body.theme-dark .burger-btn {
+    background-color: #1e1e2d;
+    border-color: #2b2b40;
+    color: #a1a5b7;
+}
+
+body.theme-dark .burger-btn:hover {
+    background-color: #37a279 !important;
+    color: #ffffff !important;
+    border-color: #37a279 !important;
+}
+
+/* Sidebar Hide Toggle Button Styling */
+.sidebar-hide {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 8px;
+    background-color: var(--app-surface, #ffffff);
+    border: 1px solid var(--app-control-border, #dce7f1);
+    color: var(--app-ink, #25396f);
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.sidebar-hide svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.sidebar-hide:hover {
+    background-color: #37a279 !important;
+    color: #ffffff !important;
+    border-color: #37a279 !important;
+}
+
+body.theme-dark .sidebar-hide {
+    background-color: #1e1e2d;
+    border-color: #2b2b40;
+    color: #a1a5b7;
+}
+
+body.theme-dark .sidebar-hide:hover {
+    background-color: #37a279 !important;
+    color: #ffffff !important;
+    border-color: #37a279 !important;
+}
+
+/* 2. Desktop Mini / Collapsed Sidebar Behavior (Screen >= 1200px) */
+@media screen and (min-width: 1200px) {
+    /* Smooth transitions for sidebar and main content */
+    .sidebar-wrapper {
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow-x: hidden !important;
+    }
+
+    #main {
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        padding: 0 !important;
+    }
+
+    #main #main-content {
+        padding: 2rem !important;
+    }
+
+    body.rtl #main {
+        transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        padding: 0 !important;
+    }
+
+    /* EXPANDED STATE (#sidebar.active) */
+    #sidebar.active .sidebar-wrapper {
+        width: 300px !important;
+        left: 0 !important;
+    }
+    body.rtl #sidebar.active .sidebar-wrapper {
+        right: 0 !important;
+        left: auto !important;
+    }
+    #sidebar.active ~ #main {
+        margin-left: 300px !important;
+    }
+    body.rtl #sidebar.active ~ #main {
+        margin-right: 300px !important;
+        margin-left: 0 !important;
+    }
+
+    /* COLLAPSED / MINI STATE (#sidebar:not(.active)) */
+    #sidebar:not(.active) .sidebar-wrapper {
+        width: 75px !important;
+        left: 0 !important;
+    }
+    body.rtl #sidebar:not(.active) .sidebar-wrapper {
+        right: 0 !important;
+        left: auto !important;
+    }
+    #sidebar:not(.active) ~ #main {
+        margin-left: 75px !important;
+    }
+    body.rtl #sidebar:not(.active) ~ #main {
+        margin-right: 75px !important;
+        margin-left: 0 !important;
+    }
+
+    /* COLLAPSED MINI SIDEBAR INTERNAL ELEMENTS STYLING */
+    #sidebar:not(.active) .sidebar-wrapper .sidebar-header {
+        padding: 1rem 0.5rem !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    #sidebar:not(.active) .sidebar-wrapper .sidebar-header .logo {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    #sidebar:not(.active) .sidebar-wrapper .sidebar-header .container-logo {
+        height: 38px !important;
+        max-width: 45px !important;
+        width: auto !important;
+        padding: 0 !important;
+        object-fit: contain !important;
+    }
+
+    /* Seller/DeliveryBoy headers show a brand-name text next to the logo — no room when collapsed. */
+    #sidebar:not(.active) .sidebar-wrapper .sidebar-header .sidebar-brand-text {
+        display: none !important;
+    }
+
+    /* Hide toggler/close X inside header when collapsed */
+    #sidebar:not(.active) .sidebar-wrapper .toggler,
+    #sidebar:not(.active) .sidebar-wrapper .sidebar-toggler,
+    #sidebar:not(.active) .sidebar-wrapper .sidebar-hide {
+        display: none !important;
+    }
+
+    /* Hide search input in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .sidebar-search {
+        display: none !important;
+    }
+
+    /* Menu container padding in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .menu {
+        padding: 0 0.5rem !important;
+    }
+
+    /* Center-align sidebar items & links in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-item {
+        margin-top: 0.4rem !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+
+    /* The search box is also a .sidebar-item — needs to win over the rule above. */
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-item.sidebar-search {
+        display: none !important;
+    }
+
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-link {
+        padding: 0.75rem 0 !important;
+        width: 48px !important;
+        height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 0.5rem !important;
+        text-align: center !important;
+        position: relative !important;
+    }
+
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-link i,
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-link svg {
+        margin: 0 !important;
+        font-size: 1.25rem !important;
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+    }
+
+    /* Hide item text span in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-link span {
+        display: none !important;
+    }
+
+    /* Hide submenu chevron arrow indicator in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-item.has-sub .sidebar-link::after {
+        display: none !important;
+    }
+
+    /* Hide submenus in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .menu .submenu {
+        display: none !important;
+    }
+
+    /* Hide title items in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .menu .sidebar-title {
+        display: none !important;
+    }
+
+    /* Database Download button in collapsed mode */
+    #sidebar:not(.active) .sidebar-wrapper .menu .filteredDatabaseDownloadBtn button,
+    #sidebar:not(.active) .sidebar-wrapper .menu button.btn-primary {
+        padding: 0.6rem 0 !important;
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0.5rem auto !important;
+        border-radius: 0.5rem !important;
+    }
+    #sidebar:not(.active) .sidebar-wrapper .menu .filteredDatabaseDownloadBtn button i,
+    #sidebar:not(.active) .sidebar-wrapper .menu button.btn-primary i {
+        font-size: 1.1rem !important;
+        margin: 0 !important;
+    }
+}
+
+/* Circular Theme Switch Wave Transition Effect */
+.theme-circle-transition {
+    position: fixed;
+    z-index: 999999;
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0.98;
+    pointer-events: none;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-circle-transition.active {
+    transform: scale(1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+    z-index: 1;
+}
+
+::view-transition-new(root) {
+    z-index: 999999 !important;
+}
+
+
+

@@ -108,30 +108,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -336,350 +312,279 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-          _c("h3", [_vm._v(_vm._s(_vm.__("brands")))]),
-        ]),
+  return _c("div", { staticClass: "list-page" }, [
+    _c("div", { staticClass: "page-head" }, [
+      _c("h3", { staticClass: "page-head-title" }, [
+        _vm._v(_vm._s(_vm.__("brands"))),
+      ]),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "list-surface" }, [
+      _c("div", { staticClass: "list-toolbar" }, [
+        _c(
+          "div",
+          { staticClass: "list-search" },
+          [
+            _c("i", {
+              staticClass: "fa fa-search list-search-icon",
+              attrs: { "aria-hidden": "true" },
+            }),
+            _vm._v(" "),
+            _c("b-form-input", {
+              attrs: {
+                id: "filter-input",
+                type: "search",
+                placeholder: _vm.__("search"),
+              },
+              model: {
+                value: _vm.filter,
+                callback: function ($$v) {
+                  _vm.filter = $$v
+                },
+                expression: "filter",
+              },
+            }),
+          ],
+          1
+        ),
         _vm._v(" "),
-        _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-          _c(
-            "nav",
-            {
-              staticClass: "breadcrumb-header float-start float-lg-end",
-              attrs: { "aria-label": "breadcrumb" },
+        _c(
+          "button",
+          {
+            directives: [
+              {
+                name: "b-tooltip",
+                rawName: "v-b-tooltip.hover",
+                modifiers: { hover: true },
+              },
+            ],
+            staticClass: "list-icon-btn",
+            attrs: { title: _vm.__("refresh") },
+            on: {
+              click: function ($event) {
+                return _vm.getRecords()
+              },
             },
-            [
-              _c("ol", { staticClass: "breadcrumb" }, [
-                _c(
-                  "li",
-                  { staticClass: "breadcrumb-item" },
-                  [
-                    _c("router-link", { attrs: { to: "/seller/dashboard" } }, [
-                      _vm._v(_vm._s(_vm.__("dashboard"))),
-                    ]),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "li",
-                  {
-                    staticClass: "breadcrumb-item active",
-                    attrs: { "aria-current": "page" },
-                  },
-                  [_vm._v(_vm._s(_vm.__("brands")))]
-                ),
-              ]),
-            ]
-          ),
-        ]),
+          },
+          [
+            _c("i", {
+              staticClass: "fa fa-refresh",
+              attrs: { "aria-hidden": "true" },
+            }),
+          ]
+        ),
       ]),
       _vm._v(" "),
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-12 order-md-1 order-last" }, [
-          _c("div", { staticClass: "card" }, [
-            _c("div", { staticClass: "card-header" }, [
-              _c("h4", [_vm._v(_vm._s(_vm.__("brands")))]),
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "card-body" },
-              [
-                _c(
-                  "b-row",
-                  { staticClass: "mb-2" },
-                  [
+      _c(
+        "div",
+        { staticClass: "table-responsive" },
+        [
+          _c("b-table", {
+            attrs: {
+              items: _vm.brands,
+              fields: _vm.fields,
+              "sort-by": _vm.sortBy,
+              "sort-desc": _vm.sortDesc,
+              "sort-direction": _vm.sortDirection,
+              bordered: true,
+              busy: _vm.isLoading,
+              stacked: "md",
+              "show-empty": "",
+              small: "",
+            },
+            on: {
+              "update:sortBy": function ($event) {
+                _vm.sortBy = $event
+              },
+              "update:sort-by": function ($event) {
+                _vm.sortBy = $event
+              },
+              "update:sortDesc": function ($event) {
+                _vm.sortDesc = $event
+              },
+              "update:sort-desc": function ($event) {
+                _vm.sortDesc = $event
+              },
+            },
+            scopedSlots: _vm._u([
+              {
+                key: "table-busy",
+                fn: function () {
+                  return [
                     _c(
-                      "b-col",
-                      { attrs: { md: "3", "offset-md": "8" } },
+                      "div",
+                      { staticClass: "text-center text-black my-2" },
                       [
-                        _c("h6", { staticClass: "box-title" }, [
-                          _vm._v(_vm._s(_vm.__("search"))),
-                        ]),
+                        _c("b-spinner", { staticClass: "align-middle" }),
                         _vm._v(" "),
-                        _c("b-form-input", {
-                          attrs: {
-                            id: "filter-input",
-                            type: "search",
-                            placeholder: _vm.__("search"),
-                          },
-                          model: {
-                            value: _vm.filter,
-                            callback: function ($$v) {
-                              _vm.filter = $$v
-                            },
-                            expression: "filter",
-                          },
-                        }),
+                        _c("strong", [
+                          _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                        ]),
                       ],
                       1
                     ),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      { staticClass: "text-center", attrs: { md: "1" } },
-                      [
-                        _c(
-                          "button",
-                          {
-                            directives: [
-                              {
-                                name: "b-tooltip",
-                                rawName: "v-b-tooltip.hover",
-                                modifiers: { hover: true },
-                              },
-                            ],
-                            staticClass: "btn btn-primary btn_refresh",
-                            attrs: { title: _vm.__("refresh") },
-                            on: {
-                              click: function ($event) {
-                                return _vm.getRecords()
-                              },
-                            },
-                          },
-                          [
-                            _c("i", {
-                              staticClass: "fa fa-refresh",
-                              attrs: { "aria-hidden": "true" },
-                            }),
-                          ]
-                        ),
-                      ]
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "cell(id)",
+                fn: function (row) {
+                  return [
+                    _vm._v(
+                      "\n                                " +
+                        _vm._s(row.item.id) +
+                        "\n                            "
                     ),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c("b-table", {
-                  attrs: {
-                    items: _vm.brands,
-                    fields: _vm.fields,
-                    "sort-by": _vm.sortBy,
-                    "sort-desc": _vm.sortDesc,
-                    "sort-direction": _vm.sortDirection,
-                    bordered: true,
-                    busy: _vm.isLoading,
-                    stacked: "md",
-                    "show-empty": "",
-                    small: "",
-                  },
-                  on: {
-                    "update:sortBy": function ($event) {
-                      _vm.sortBy = $event
-                    },
-                    "update:sort-by": function ($event) {
-                      _vm.sortBy = $event
-                    },
-                    "update:sortDesc": function ($event) {
-                      _vm.sortDesc = $event
-                    },
-                    "update:sort-desc": function ($event) {
-                      _vm.sortDesc = $event
-                    },
-                  },
-                  scopedSlots: _vm._u([
-                    {
-                      key: "table-busy",
-                      fn: function () {
-                        return [
-                          _c(
-                            "div",
-                            { staticClass: "text-center text-black my-2" },
-                            [
-                              _c("b-spinner", { staticClass: "align-middle" }),
-                              _vm._v(" "),
-                              _c("strong", [
-                                _vm._v(_vm._s(_vm.__("loading")) + "..."),
-                              ]),
-                            ],
-                            1
-                          ),
-                        ]
-                      },
-                      proxy: true,
-                    },
-                    {
-                      key: "cell(id)",
-                      fn: function (row) {
-                        return [
-                          _vm._v(
-                            "\n                                " +
-                              _vm._s(row.item.id) +
-                              "\n                            "
-                          ),
-                        ]
-                      },
-                    },
-                    {
-                      key: "cell(image)",
-                      fn: function (row) {
-                        return [
-                          row.item.image === ""
-                            ? _c("p", [_vm._v("No Image")])
-                            : _c("img", {
-                                attrs: {
-                                  src: _vm.$storageUrl + row.item.image,
-                                  height: "50",
-                                },
-                              }),
-                        ]
-                      },
-                    },
-                    {
-                      key: "cell(status)",
-                      fn: function (row) {
-                        return [
-                          row.item.status == 1
-                            ? _c("span", { staticClass: "badge bg-success" }, [
-                                _vm._v(_vm._s(_vm.__("activate"))),
-                              ])
-                            : _c("span", { staticClass: "badge bg-danger" }, [
-                                _vm._v(_vm._s(_vm.__("deactivate"))),
-                              ]),
-                        ]
-                      },
-                    },
-                    {
-                      key: "cell(actions)",
-                      fn: function (row) {
-                        return [
-                          _c(
-                            "button",
-                            {
-                              directives: [
-                                {
-                                  name: "b-tooltip",
-                                  rawName: "v-b-tooltip.hover",
-                                  modifiers: { hover: true },
-                                },
-                              ],
-                              staticClass: "btn btn-sm btn-primary",
-                              attrs: { title: _vm.__("edit") },
-                              on: {
-                                click: function ($event) {
-                                  _vm.edit_record = row.item
-                                },
-                              },
-                            },
-                            [_c("i", { staticClass: "fa fa-pencil-alt" })]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "button",
-                            {
-                              directives: [
-                                {
-                                  name: "b-tooltip",
-                                  rawName: "v-b-tooltip.hover",
-                                  modifiers: { hover: true },
-                                },
-                              ],
-                              staticClass: "btn btn-sm btn-danger",
-                              attrs: { title: _vm.__("delete") },
-                              on: {
-                                click: function ($event) {
-                                  return _vm.deleteRecord(
-                                    row.index,
-                                    row.item.id
-                                  )
-                                },
-                              },
-                            },
-                            [_c("i", { staticClass: "fa fa-trash" })]
-                          ),
-                        ]
-                      },
-                    },
-                  ]),
-                }),
-                _vm._v(" "),
-                _c(
-                  "b-row",
-                  [
-                    _c(
-                      "b-col",
-                      { staticClass: "my-1", attrs: { md: "2" } },
-                      [
-                        _c(
-                          "b-form-group",
-                          {
-                            staticClass: "mb-0",
-                            attrs: {
-                              label: _vm.__("per_page"),
-                              "label-for": "per-page-select",
-                              "label-align-sm": "right",
-                              "label-size": "sm",
-                            },
+                  ]
+                },
+              },
+              {
+                key: "cell(image)",
+                fn: function (row) {
+                  return [
+                    row.item.image === ""
+                      ? _c("p", [_vm._v("No Image")])
+                      : _c("img", {
+                          attrs: {
+                            src: _vm.$storageUrl + row.item.image,
+                            height: "50",
                           },
-                          [
-                            _c("b-form-select", {
-                              staticClass: "form-control form-select",
-                              attrs: {
-                                id: "per-page-select",
-                                options: _vm.pageOptions,
-                                size: "sm",
-                              },
-                              model: {
-                                value: _vm.perPage,
-                                callback: function ($$v) {
-                                  _vm.perPage = $$v
-                                },
-                                expression: "perPage",
-                              },
-                            }),
+                        }),
+                  ]
+                },
+              },
+              {
+                key: "cell(status)",
+                fn: function (row) {
+                  return [
+                    row.item.status == 1
+                      ? _c("span", { staticClass: "badge bg-success" }, [
+                          _vm._v(_vm._s(_vm.__("activate"))),
+                        ])
+                      : _c("span", { staticClass: "badge bg-danger" }, [
+                          _vm._v(_vm._s(_vm.__("deactivate"))),
+                        ]),
+                  ]
+                },
+              },
+              {
+                key: "cell(actions)",
+                fn: function (row) {
+                  return [
+                    _c("div", { staticClass: "list-actions" }, [
+                      _c(
+                        "button",
+                        {
+                          directives: [
+                            {
+                              name: "b-tooltip",
+                              rawName: "v-b-tooltip.hover",
+                              modifiers: { hover: true },
+                            },
                           ],
-                          1
-                        ),
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-col",
-                      {
-                        staticClass: "my-1",
-                        attrs: { md: "4", "offset-md": "6" },
-                      },
-                      [
-                        _c("label", [
-                          _vm._v(
-                            _vm._s(_vm.__("total_records")) +
-                              " :- " +
-                              _vm._s(_vm.totalRows) +
-                              " "
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("b-pagination", {
-                          staticClass: "my-0",
-                          attrs: {
-                            "total-rows": _vm.totalRows,
-                            "per-page": _vm.perPage,
-                            align: "fill",
-                            size: "sm",
-                          },
-                          model: {
-                            value: _vm.currentPage,
-                            callback: function ($$v) {
-                              _vm.currentPage = $$v
+                          staticClass: "list-action-btn is-edit",
+                          attrs: { title: _vm.__("edit") },
+                          on: {
+                            click: function ($event) {
+                              _vm.edit_record = row.item
                             },
-                            expression: "currentPage",
                           },
-                        }),
-                      ],
-                      1
-                    ),
-                  ],
-                  1
-                ),
+                        },
+                        [_c("i", { staticClass: "fa fa-pencil-alt" })]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          directives: [
+                            {
+                              name: "b-tooltip",
+                              rawName: "v-b-tooltip.hover",
+                              modifiers: { hover: true },
+                            },
+                          ],
+                          staticClass: "list-action-btn is-delete",
+                          attrs: { title: _vm.__("delete") },
+                          on: {
+                            click: function ($event) {
+                              return _vm.deleteRecord(row.index, row.item.id)
+                            },
+                          },
+                        },
+                        [_c("i", { staticClass: "fa fa-trash" })]
+                      ),
+                    ]),
+                  ]
+                },
+              },
+            ]),
+          }),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "list-footer" }, [
+        _c(
+          "div",
+          { staticClass: "list-perpage" },
+          [
+            _c(
+              "b-form-group",
+              {
+                staticClass: "mb-0",
+                attrs: {
+                  label: _vm.__("per_page"),
+                  "label-for": "per-page-select",
+                  "label-align-sm": "right",
+                  "label-size": "sm",
+                },
+              },
+              [
+                _c("b-form-select", {
+                  staticClass: "form-control form-select",
+                  attrs: {
+                    id: "per-page-select",
+                    options: _vm.pageOptions,
+                    size: "sm",
+                  },
+                  model: {
+                    value: _vm.perPage,
+                    callback: function ($$v) {
+                      _vm.perPage = $$v
+                    },
+                    expression: "perPage",
+                  },
+                }),
               ],
               1
             ),
-          ]),
-        ]),
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          [
+            _c("b-pagination", {
+              staticClass: "list-pagination",
+              attrs: {
+                "total-rows": _vm.totalRows,
+                "per-page": _vm.perPage,
+                align: "fill",
+                size: "sm",
+              },
+              model: {
+                value: _vm.currentPage,
+                callback: function ($$v) {
+                  _vm.currentPage = $$v
+                },
+                expression: "currentPage",
+              },
+            }),
+          ],
+          1
+        ),
       ]),
     ]),
   ])

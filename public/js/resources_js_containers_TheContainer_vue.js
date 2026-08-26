@@ -95,9 +95,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
 
 
 
@@ -119,6 +116,7 @@ __webpack_require__.r(__webpack_exports__);
     '$route': 'checkPermissions'
   },
   mounted: function mounted() {
+    var _document$querySelect;
     if (window.localStorage.getItem('lang')) {
       this.lang = window.localStorage.getItem('lang');
       console.log(this.lang);
@@ -160,11 +158,24 @@ __webpack_require__.r(__webpack_exports__);
         item.classList.add('open');
       }
     });
+    var sidebarEl = document.getElementById('sidebar');
+    var sidebarMenu = document.querySelector('.sidebar-menu');
+    if (sidebarMenu && sidebarEl) {
+      sidebarMenu.addEventListener('click', function (e) {
+        if (window.innerWidth >= 1200 && !sidebarEl.classList.contains('active')) {
+          sidebarEl.classList.add('active');
+        }
+      });
+    }
     var _loop = function _loop() {
+      var _sidebarItems$i$query;
       var sidebarItem = sidebarItems[i];
-      sidebarItems[i].querySelector('.sidebar-link').addEventListener('click', function (e) {
+      (_sidebarItems$i$query = sidebarItems[i].querySelector('.sidebar-link')) === null || _sidebarItems$i$query === void 0 ? void 0 : _sidebarItems$i$query.addEventListener('click', function (e) {
         var _submenu$classList;
         e.preventDefault();
+        if (window.innerWidth >= 1200 && sidebarEl && !sidebarEl.classList.contains('active')) {
+          sidebarEl.classList.add('active');
+        }
         var submenu = sidebarItem.querySelector('.submenu');
         var isCurrentlyOpen = submenu === null || submenu === void 0 ? void 0 : (_submenu$classList = submenu.classList) === null || _submenu$classList === void 0 ? void 0 : _submenu$classList.contains('active');
 
@@ -236,27 +247,25 @@ __webpack_require__.r(__webpack_exports__);
         updateSidebarBackdrop();
       }
     });
-    document.querySelector('.burger-btn').addEventListener('click', function () {
+    (_document$querySelect = document.querySelector('.sidebar-hide')) === null || _document$querySelect === void 0 ? void 0 : _document$querySelect.addEventListener('click', function () {
       var _document$getElementB7, _document$getElementB8;
       (_document$getElementB7 = document.getElementById('sidebar')) === null || _document$getElementB7 === void 0 ? void 0 : (_document$getElementB8 = _document$getElementB7.classList) === null || _document$getElementB8 === void 0 ? void 0 : _document$getElementB8.toggle('active');
-      updateSidebarBackdrop();
-    });
-    document.querySelector('.sidebar-hide').addEventListener('click', function () {
-      var _document$getElementB9, _document$getElementB10;
-      (_document$getElementB9 = document.getElementById('sidebar')) === null || _document$getElementB9 === void 0 ? void 0 : (_document$getElementB10 = _document$getElementB9.classList) === null || _document$getElementB10 === void 0 ? void 0 : _document$getElementB10.toggle('active');
       updateSidebarBackdrop();
     });
     // Perfect Scrollbar Init
     if (typeof PerfectScrollbar["default"] == 'function') {
       var container = document.querySelector(".sidebar-wrapper");
-      var ps = new PerfectScrollbar["default"](container, {
-        wheelPropagation: false
-      });
+      if (container) {
+        var ps = new PerfectScrollbar["default"](container, {
+          wheelPropagation: false
+        });
+      }
     }
 
     // Scroll into active sidebar
     if (document.querySelector('.sidebar-item.active')) {
-      document.querySelector('.sidebar-item.active').scrollIntoView(false);
+      var _document$querySelect2;
+      (_document$querySelect2 = document.querySelector('.sidebar-item.active')) === null || _document$querySelect2 === void 0 ? void 0 : _document$querySelect2.scrollIntoView(false);
     }
   },
   data: function data() {
@@ -1043,8 +1052,8 @@ __webpack_require__.r(__webpack_exports__);
     closeSideBarMenu: function closeSideBarMenu() {
       var w = window.innerWidth;
       if (w < 1200) {
-        var _document$getElementB11, _document$getElementB12;
-        (_document$getElementB11 = document.getElementById('sidebar')) === null || _document$getElementB11 === void 0 ? void 0 : (_document$getElementB12 = _document$getElementB11.classList) === null || _document$getElementB12 === void 0 ? void 0 : _document$getElementB12.remove('active');
+        var _document$getElementB9, _document$getElementB10;
+        (_document$getElementB9 = document.getElementById('sidebar')) === null || _document$getElementB9 === void 0 ? void 0 : (_document$getElementB10 = _document$getElementB9.classList) === null || _document$getElementB10 === void 0 ? void 0 : _document$getElementB10.remove('active');
         var backdrop = document.querySelector('.sidebar-backdrop');
         if (backdrop) backdrop.remove();
       }
@@ -1506,55 +1515,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -1632,6 +1592,24 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   methods: {
+    toggleSidebar: function toggleSidebar() {
+      var sidebar = document.getElementById('sidebar');
+      if (!sidebar) return;
+      sidebar.classList.toggle('active');
+      var isSmallScreen = window.innerWidth < 1200;
+      var backdrop = document.querySelector('.sidebar-backdrop');
+      if (backdrop) backdrop.remove();
+      if (isSmallScreen && sidebar.classList.contains('active')) {
+        var b = document.createElement('div');
+        b.className = 'sidebar-backdrop';
+        b.addEventListener('click', function () {
+          sidebar.classList.remove('active');
+          var bd = document.querySelector('.sidebar-backdrop');
+          if (bd) bd.remove();
+        });
+        document.body.appendChild(b);
+      }
+    },
     //seller status toggle
     getSellerStatus: function getSellerStatus() {
       var _this2 = this;
@@ -1891,12 +1869,46 @@ __webpack_require__.r(__webpack_exports__);
       this.userTheme = user_theme;
       return user_theme;
     },
-    toggleTheme: function toggleTheme() {
+    toggleTheme: function toggleTheme(e) {
+      var _this13 = this;
+      var x = e ? e.clientX : window.innerWidth / 2;
+      var y = e ? e.clientY : window.innerHeight / 2;
+      var endRadius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
       var activeTheme = sessionStorage.getItem("user-theme");
-      if (activeTheme === "theme-light" || activeTheme == "" || activeTheme == "undefined" || activeTheme == "null") {
-        this.setTheme("theme-dark");
+      var nextTheme = activeTheme === "theme-light" || !activeTheme || activeTheme === "undefined" || activeTheme === "null" ? "theme-dark" : "theme-light";
+      if (document.startViewTransition) {
+        var transition = document.startViewTransition(function () {
+          _this13.setTheme(nextTheme);
+        });
+        transition.ready.then(function () {
+          var clipPath = ["circle(0px at ".concat(x, "px ").concat(y, "px)"), "circle(".concat(endRadius, "px at ").concat(x, "px ").concat(y, "px)")];
+          document.documentElement.animate({
+            clipPath: clipPath
+          }, {
+            duration: 500,
+            easing: 'ease-in-out',
+            pseudoElement: '::view-transition-new(root)'
+          });
+        });
       } else {
-        this.setTheme("theme-light");
+        var circle = document.createElement('div');
+        circle.className = 'theme-circle-transition';
+        var diameter = endRadius * 2;
+        circle.style.width = "".concat(diameter, "px");
+        circle.style.height = "".concat(diameter, "px");
+        circle.style.left = "".concat(x - endRadius, "px");
+        circle.style.top = "".concat(y - endRadius, "px");
+        circle.style.backgroundColor = nextTheme === 'theme-dark' ? '#151521' : '#f2f7ff';
+        document.body.appendChild(circle);
+        requestAnimationFrame(function () {
+          circle.classList.add('active');
+          setTimeout(function () {
+            _this13.setTheme(nextTheme);
+            setTimeout(function () {
+              circle.remove();
+            }, 300);
+          }, 300);
+        });
       }
     },
     onResize: function onResize() {
@@ -1932,22 +1944,22 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     handleNotificationClick: function handleNotificationClick(notification) {
-      var _this13 = this;
+      var _this14 = this;
       this.markAsReadNotification(notification);
       var orderId = notification.data.order_id;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/orders/view/' + orderId).then(function (response) {
         var order = response.data.data.order;
         if (order) {
           if (order.order_type === 'selfpickup') {
-            _this13.$router.push('/self_pickup_orders/view/' + orderId);
+            _this14.$router.push('/self_pickup_orders/view/' + orderId);
           } else {
-            _this13.$router.push('/orders/view/' + orderId);
+            _this14.$router.push('/orders/view/' + orderId);
           }
         } else {
-          _this13.$router.push('/orders/view/' + orderId);
+          _this14.$router.push('/orders/view/' + orderId);
         }
       })["catch"](function (error) {
-        _this13.$router.push('/orders/view/' + orderId);
+        _this14.$router.push('/orders/view/' + orderId);
       });
     }
   }
@@ -2378,272 +2390,243 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "app" } },
-    [
-      _c("div", { staticClass: "active", attrs: { id: "sidebar" } }, [
-        _c("div", { staticClass: "sidebar-wrapper active" }, [
-          _c("div", { staticClass: "sidebar-header" }, [
-            _c(
-              "div",
-              {
-                staticClass: "d-flex justify-content-center align-items-center",
-                staticStyle: { position: "relative" },
-              },
-              [
-                _c(
-                  "div",
-                  { staticClass: "logo" },
-                  [
-                    _c(
-                      "router-link",
-                      {
-                        staticStyle: {
-                          display: "flex",
-                          "align-items": "center",
-                          "justify-content": "center",
-                        },
-                        attrs: { to: "/" },
+  return _c("div", { attrs: { id: "app" } }, [
+    _c("div", { staticClass: "active", attrs: { id: "sidebar" } }, [
+      _c("div", { staticClass: "sidebar-wrapper active" }, [
+        _c("div", { staticClass: "sidebar-header" }, [
+          _c(
+            "div",
+            {
+              staticClass: "d-flex justify-content-center align-items-center",
+              staticStyle: { position: "relative" },
+            },
+            [
+              _c(
+                "div",
+                { staticClass: "logo" },
+                [
+                  _c(
+                    "router-link",
+                    {
+                      staticStyle: {
+                        display: "flex",
+                        "align-items": "center",
+                        "justify-content": "center",
                       },
-                      [
-                        _vm.$appLogo != ""
-                          ? _c("img", {
-                              staticClass: "container-logo",
-                              attrs: {
-                                src: _vm.$storageUrl + _vm.$appLogo,
-                                alt: "Logo",
-                                srcset: "",
-                              },
-                            })
-                          : _c("img", {
-                              staticClass: "container-logo",
-                              attrs: {
-                                src: _vm.$baseUrl + "/images/logo.png",
-                                alt: "Logo",
-                                srcset: "",
-                              },
-                            }),
-                      ]
-                    ),
-                  ],
-                  1
-                ),
-              ]
-            ),
-            _vm._v(" "),
-            _vm._m(0),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "sidebar-menu" }, [
-            _c(
-              "ul",
-              { staticClass: "menu" },
-              [
-                _c(
-                  "li",
-                  { staticClass: "sidebar-item sidebar-search" },
-                  [
-                    _c("b-form-input", {
-                      attrs: { type: "search", placeholder: _vm.__("search") },
-                      on: { keyup: _vm.filterItem, search: _vm.filterItem },
-                      model: {
-                        value: _vm.search,
-                        callback: function ($$v) {
-                          _vm.search = $$v
-                        },
-                        expression: "search",
-                      },
-                    }),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _vm._l(_vm.filteredSidebarItems, function (item) {
-                  return [
-                    (
-                      item.role == true
-                        ? _vm.$role("Super Admin")
-                        : (item.permission && _vm.$can(item.permission)) ||
-                          (item.permission === null &&
-                            _vm.isHasSub(item) &&
-                            _vm.hasAnySubmenuPermission(item))
-                    )
-                      ? _c(
-                          "li",
-                          {
-                            staticClass: "sidebar-item",
-                            class: {
-                              active:
-                                _vm.isActive(item.url) || _vm.subIsActive(item),
-                              "has-sub": _vm.isHasSub(item),
+                      attrs: { to: "/" },
+                    },
+                    [
+                      _vm.$appLogo != ""
+                        ? _c("img", {
+                            staticClass: "container-logo",
+                            attrs: {
+                              src: _vm.$storageUrl + _vm.$appLogo,
+                              alt: "Logo",
+                              srcset: "",
                             },
+                          })
+                        : _c("img", {
+                            staticClass: "container-logo",
+                            attrs: {
+                              src: _vm.$baseUrl + "/images/logo.png",
+                              alt: "Logo",
+                              srcset: "",
+                            },
+                          }),
+                    ]
+                  ),
+                ],
+                1
+              ),
+            ]
+          ),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "sidebar-menu" }, [
+          _c(
+            "ul",
+            { staticClass: "menu" },
+            [
+              _c(
+                "li",
+                { staticClass: "sidebar-item sidebar-search" },
+                [
+                  _c("b-form-input", {
+                    attrs: { type: "search", placeholder: _vm.__("search") },
+                    on: { keyup: _vm.filterItem, search: _vm.filterItem },
+                    model: {
+                      value: _vm.search,
+                      callback: function ($$v) {
+                        _vm.search = $$v
+                      },
+                      expression: "search",
+                    },
+                  }),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _vm._l(_vm.filteredSidebarItems, function (item) {
+                return [
+                  (
+                    item.role == true
+                      ? _vm.$role("Super Admin")
+                      : (item.permission && _vm.$can(item.permission)) ||
+                        (item.permission === null &&
+                          _vm.isHasSub(item) &&
+                          _vm.hasAnySubmenuPermission(item))
+                  )
+                    ? _c(
+                        "li",
+                        {
+                          staticClass: "sidebar-item",
+                          class: {
+                            active:
+                              _vm.isActive(item.url) || _vm.subIsActive(item),
+                            "has-sub": _vm.isHasSub(item),
                           },
-                          [
-                            _vm.isHasSub(item)
-                              ? [
-                                  _c("a", { staticClass: "sidebar-link" }, [
+                        },
+                        [
+                          _vm.isHasSub(item)
+                            ? [
+                                _c("a", { staticClass: "sidebar-link" }, [
+                                  _c("i", { class: "fa fa-" + item.icon }),
+                                  _vm._v(" "),
+                                  _c("span", [_vm._v(_vm._s(item.name))]),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "ul",
+                                  {
+                                    staticClass: "submenu",
+                                    class: { active: _vm.subIsActive(item) },
+                                  },
+                                  [
+                                    _vm._l(item.submenu, function (sub) {
+                                      return [
+                                        (
+                                          sub.role
+                                            ? _vm.$role("Super Admin")
+                                            : sub.permission &&
+                                              _vm.$can(sub.permission)
+                                        )
+                                          ? _c(
+                                              "li",
+                                              {
+                                                key: sub.key,
+                                                staticClass: "submenu-item",
+                                                class: {
+                                                  active: _vm.isActive(sub.url),
+                                                },
+                                              },
+                                              [
+                                                _c(
+                                                  "router-link",
+                                                  {
+                                                    attrs: { to: sub.url },
+                                                    on: {
+                                                      click: function ($event) {
+                                                        return _vm.closeSideBarMenu()
+                                                      },
+                                                    },
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "\n                                                " +
+                                                        _vm._s(sub.name) +
+                                                        "\n                                            "
+                                                    ),
+                                                  ]
+                                                ),
+                                              ],
+                                              1
+                                            )
+                                          : _vm._e(),
+                                      ]
+                                    }),
+                                  ],
+                                  2
+                                ),
+                              ]
+                            : [
+                                _c(
+                                  "router-link",
+                                  {
+                                    staticClass: "sidebar-link",
+                                    attrs: { to: item.url },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.closeSideBarMenu()
+                                      },
+                                    },
+                                  },
+                                  [
                                     _c("i", { class: "fa fa-" + item.icon }),
                                     _vm._v(" "),
                                     _c("span", [_vm._v(_vm._s(item.name))]),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c(
-                                    "ul",
-                                    {
-                                      staticClass: "submenu",
-                                      class: { active: _vm.subIsActive(item) },
-                                    },
-                                    [
-                                      _vm._l(item.submenu, function (sub) {
-                                        return [
-                                          (
-                                            sub.role
-                                              ? _vm.$role("Super Admin")
-                                              : sub.permission &&
-                                                _vm.$can(sub.permission)
-                                          )
-                                            ? _c(
-                                                "li",
-                                                {
-                                                  key: sub.key,
-                                                  staticClass: "submenu-item",
-                                                  class: {
-                                                    active: _vm.isActive(
-                                                      sub.url
-                                                    ),
-                                                  },
-                                                },
-                                                [
-                                                  _c(
-                                                    "router-link",
-                                                    {
-                                                      attrs: { to: sub.url },
-                                                      on: {
-                                                        click: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.closeSideBarMenu()
-                                                        },
-                                                      },
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        "\n                                                " +
-                                                          _vm._s(sub.name) +
-                                                          "\n                                            "
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ],
-                                                1
-                                              )
-                                            : _vm._e(),
-                                        ]
-                                      }),
-                                    ],
-                                    2
-                                  ),
-                                ]
-                              : [
-                                  _c(
-                                    "router-link",
-                                    {
-                                      staticClass: "sidebar-link",
-                                      attrs: { to: item.url },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.closeSideBarMenu()
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _c("i", { class: "fa fa-" + item.icon }),
-                                      _vm._v(" "),
-                                      _c("span", [_vm._v(_vm._s(item.name))]),
-                                    ]
-                                  ),
-                                ],
+                                  ]
+                                ),
+                              ],
+                        ],
+                        2
+                      )
+                    : _vm._e(),
+                ]
+              }),
+              _vm._v(" "),
+              _vm._l(_vm.filteredDatabaseDownloadBtn, function (item) {
+                return [
+                  (
+                    item.role == true
+                      ? _vm.$role("Super Admin")
+                      : item.permission && _vm.$can(item.permission)
+                  )
+                    ? _c("div", [
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-primary",
+                            on: { click: _vm.downloadDatabase },
+                          },
+                          [
+                            _c("i", { class: "fa fa-download" }),
+                            _vm.isLoading
+                              ? _c("b-spinner", {
+                                  attrs: { small: "", label: "Spinning" },
+                                })
+                              : _vm._e(),
+                            _vm._v(" Download Database"),
                           ],
-                          2
-                        )
-                      : _vm._e(),
-                  ]
-                }),
-                _vm._v(" "),
-                _vm._l(_vm.filteredDatabaseDownloadBtn, function (item) {
-                  return [
-                    (
-                      item.role == true
-                        ? _vm.$role("Super Admin")
-                        : item.permission && _vm.$can(item.permission)
-                    )
-                      ? _c("div", [
-                          _c(
-                            "button",
-                            {
-                              staticClass: "btn btn-primary",
-                              on: { click: _vm.downloadDatabase },
-                            },
-                            [
-                              _c("i", { class: "fa fa-download" }),
-                              _vm.isLoading
-                                ? _c("b-spinner", {
-                                    attrs: { small: "", label: "Spinning" },
-                                  })
-                                : _vm._e(),
-                              _vm._v(" Download Database"),
-                            ],
-                            1
-                          ),
-                        ])
-                      : _vm._e(),
-                  ]
-                }),
-              ],
-              2
-            ),
-          ]),
-          _vm._v(" "),
-          _vm._m(1),
+                          1
+                        ),
+                      ])
+                    : _vm._e(),
+                ]
+              }),
+            ],
+            2
+          ),
         ]),
+        _vm._v(" "),
+        _vm._m(0),
       ]),
-      _vm._v(" "),
-      _c("vertical-header"),
-      _vm._v(" "),
-      _c(
-        "div",
-        { attrs: { id: "main" } },
-        [_c("div", [_c("router-view")], 1), _vm._v(" "), _c("the-footer")],
-        1
-      ),
-    ],
-    1
-  )
+    ]),
+    _vm._v(" "),
+    _c(
+      "div",
+      { attrs: { id: "main" } },
+      [
+        _c("vertical-header"),
+        _vm._v(" "),
+        _c("div", { attrs: { id: "main-content" } }, [_c("router-view")], 1),
+        _vm._v(" "),
+        _c("the-footer"),
+      ],
+      1
+    ),
+  ])
 }
 var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c(
-      "div",
-      {
-        staticClass: "toggler",
-        staticStyle: { position: "absolute", top: "0", right: "0" },
-      },
-      [
-        _c(
-          "a",
-          {
-            staticClass: "sidebar-hide",
-            attrs: { href: "javascript:void(0)" },
-          },
-          [_c("i", { staticClass: "bi bi-x bi-middle" })]
-        ),
-      ]
-    )
-  },
   function () {
     var _vm = this
     var _h = _vm.$createElement
@@ -2789,10 +2772,42 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("header", { staticClass: "mb-3" }, [
+  return _c("header", { staticClass: "app-header mb-3" }, [
     _c("nav", { staticClass: "navbar navbar-expand-lg" }, [
       _c("div", { staticClass: "container-fluid" }, [
-        _vm._m(0),
+        _c(
+          "a",
+          {
+            staticClass: "burger-btn list-icon-btn d-block",
+            attrs: { href: "javascript:void(0)", title: "Toggle Sidebar" },
+            on: { click: _vm.toggleSidebar },
+          },
+          [
+            _c(
+              "svg",
+              {
+                staticClass: "lucide lucide-panel-left-icon lucide-panel-left",
+                attrs: {
+                  xmlns: "http://www.w3.org/2000/svg",
+                  width: "20",
+                  height: "20",
+                  viewBox: "0 0 24 24",
+                  fill: "none",
+                  stroke: "currentColor",
+                  "stroke-width": "2",
+                  "stroke-linecap": "round",
+                  "stroke-linejoin": "round",
+                },
+              },
+              [
+                _c("rect", {
+                  attrs: { width: "18", height: "18", x: "3", y: "3", rx: "2" },
+                }),
+                _c("path", { attrs: { d: "M9 3v18" } }),
+              ]
+            ),
+          ]
+        ),
         _vm._v(" "),
         _c(
           "div",
@@ -2800,7 +2815,8 @@ var render = function () {
           [
             _vm.$isDemo == 1 && _vm.windowWidth < this.$mobileWidth
               ? _c("div", { staticClass: "me-2" }, [
-                  _c("span", { staticClass: "badge bg-danger" }, [
+                  _c("span", { staticClass: "hdr-demo-badge" }, [
+                    _c("span", { staticClass: "hdr-demo-dot" }),
                     _vm._v(_vm._s(_vm.__("demo_mode"))),
                   ]),
                 ])
@@ -2809,7 +2825,7 @@ var render = function () {
             _c(
               "a",
               {
-                staticClass: "navbar-toggler navbar-toggler",
+                staticClass: "navbar-toggler list-icon-btn",
                 attrs: {
                   href: "javascript:void(0)",
                   "data-bs-toggle": "collapse",
@@ -2866,7 +2882,8 @@ var render = function () {
                             "div",
                             { staticClass: "d-flex gap-2 align-items-center" },
                             [
-                              _c("span", { staticClass: "badge bg-danger" }, [
+                              _c("span", { staticClass: "hdr-demo-badge" }, [
+                                _c("span", { staticClass: "hdr-demo-dot" }),
                                 _vm._v(_vm._s(_vm.__("demo_mode"))),
                               ]),
                             ]
@@ -2876,182 +2893,26 @@ var render = function () {
                     _vm._v(" "),
                     _c("li", { staticClass: "nav-item dropdown me-2" }, [
                       _c(
-                        "div",
+                        "button",
                         {
-                          staticClass:
-                            "theme-toggle d-flex gap-1 align-items-center",
+                          staticClass: "list-icon-btn",
+                          attrs: {
+                            type: "button",
+                            title:
+                              _vm.userTheme === "theme-dark"
+                                ? "Switch to light"
+                                : "Switch to dark",
+                          },
+                          on: {
+                            click: function ($event) {
+                              return _vm.toggleTheme($event)
+                            },
+                          },
                         },
                         [
-                          _c(
-                            "label",
-                            {
-                              staticStyle: { cursor: "pointer" },
-                              attrs: { for: "userTheme" },
-                            },
-                            [
-                              _vm.userTheme === "theme-dark"
-                                ? [
-                                    _c(
-                                      "svg",
-                                      {
-                                        staticClass: "iconify iconify--mdi",
-                                        attrs: {
-                                          xmlns: "http://www.w3.org/2000/svg",
-                                          "xmlns:xlink":
-                                            "http://www.w3.org/1999/xlink",
-                                          "aria-hidden": "true",
-                                          role: "img",
-                                          width: "20",
-                                          height: "20",
-                                          preserveAspectRatio: "xMidYMid meet",
-                                          viewBox: "0 0 24 24",
-                                        },
-                                      },
-                                      [
-                                        _c("path", {
-                                          attrs: {
-                                            fill: "currentColor",
-                                            d: "m17.75 4.09l-2.53 1.94l.91 3.06l-2.63-1.81l-2.63 1.81l.91-3.06l-2.53-1.94L12.44 4l1.06-3l1.06 3l3.19.09m3.5 6.91l-1.64 1.25l.59 1.98l-1.7-1.17l-1.7 1.17l.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95l2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85c-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14c.4-.4.82-.76 1.27-1.08c.75-.53 1.93.36 1.85 1.19c-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82c-2.81 3.14-2.7 7.96.31 10.98c3.02 3.01 7.84 3.12 10.98.31Z",
-                                          },
-                                        }),
-                                      ]
-                                    ),
-                                  ]
-                                : [
-                                    _c(
-                                      "svg",
-                                      {
-                                        staticClass:
-                                          "iconify iconify--system-uicons",
-                                        attrs: {
-                                          xmlns: "http://www.w3.org/2000/svg",
-                                          "xmlns:xlink":
-                                            "http://www.w3.org/1999/xlink",
-                                          "aria-hidden": "true",
-                                          role: "img",
-                                          width: "20",
-                                          height: "20",
-                                          preserveAspectRatio: "xMidYMid meet",
-                                          viewBox: "0 0 21 21",
-                                        },
-                                      },
-                                      [
-                                        _c(
-                                          "g",
-                                          {
-                                            attrs: {
-                                              fill: "none",
-                                              "fill-rule": "evenodd",
-                                              stroke: "currentColor",
-                                              "stroke-linecap": "round",
-                                              "stroke-linejoin": "round",
-                                            },
-                                          },
-                                          [
-                                            _c("path", {
-                                              attrs: {
-                                                d: "M10.5 14.5c2.219 0 4-1.763 4-3.982a4.003 4.003 0 0 0-4-4.018c-2.219 0-4 1.781-4 4c0 2.219 1.781 4 4 4zM4.136 4.136L5.55 5.55m9.9 9.9l1.414 1.414M1.5 10.5h2m14 0h2M4.135 16.863L5.55 15.45m9.899-9.9l1.414-1.415M10.5 19.5v-2m0-14v-2",
-                                                opacity: ".3",
-                                              },
-                                            }),
-                                            _vm._v(" "),
-                                            _c(
-                                              "g",
-                                              {
-                                                attrs: {
-                                                  transform:
-                                                    "translate(-210 -1)",
-                                                },
-                                              },
-                                              [
-                                                _c("path", {
-                                                  attrs: {
-                                                    d: "M220.5 2.5v2m6.5.5l-1.5 1.5",
-                                                  },
-                                                }),
-                                                _vm._v(" "),
-                                                _c("circle", {
-                                                  attrs: {
-                                                    cx: "220.5",
-                                                    cy: "11.5",
-                                                    r: "4",
-                                                  },
-                                                }),
-                                                _vm._v(" "),
-                                                _c("path", {
-                                                  attrs: {
-                                                    d: "m214 5l1.5 1.5m5 14v-2m6.5-.5l-1.5-1.5M214 18l1.5-1.5m-4-5h2m14 0h2",
-                                                  },
-                                                }),
-                                              ]
-                                            ),
-                                          ]
-                                        ),
-                                      ]
-                                    ),
-                                  ],
-                            ],
-                            2
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "form-check form-switch fs-6" },
-                            [
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.userTheme,
-                                    expression: "userTheme",
-                                  },
-                                ],
-                                staticClass: "form-check-input me-0",
-                                staticStyle: { cursor: "pointer" },
-                                attrs: {
-                                  type: "checkbox",
-                                  id: "userTheme",
-                                  "true-value": "theme-dark",
-                                  "false-value": "theme-light",
-                                },
-                                domProps: {
-                                  checked: Array.isArray(_vm.userTheme)
-                                    ? _vm._i(_vm.userTheme, null) > -1
-                                    : _vm._q(_vm.userTheme, "theme-dark"),
-                                },
-                                on: {
-                                  change: [
-                                    function ($event) {
-                                      var $$a = _vm.userTheme,
-                                        $$el = $event.target,
-                                        $$c = $$el.checked
-                                          ? "theme-dark"
-                                          : "theme-light"
-                                      if (Array.isArray($$a)) {
-                                        var $$v = null,
-                                          $$i = _vm._i($$a, $$v)
-                                        if ($$el.checked) {
-                                          $$i < 0 &&
-                                            (_vm.userTheme = $$a.concat([$$v]))
-                                        } else {
-                                          $$i > -1 &&
-                                            (_vm.userTheme = $$a
-                                              .slice(0, $$i)
-                                              .concat($$a.slice($$i + 1)))
-                                        }
-                                      } else {
-                                        _vm.userTheme = $$c
-                                      }
-                                    },
-                                    _vm.toggleTheme,
-                                  ],
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c("label", { staticClass: "form-check-label" }),
-                            ]
-                          ),
+                          _vm.userTheme === "theme-dark"
+                            ? _c("i", { staticClass: "bi bi-sun" })
+                            : _c("i", { staticClass: "bi bi-moon-stars" }),
                         ]
                       ),
                     ]),
@@ -3065,7 +2926,7 @@ var render = function () {
                             "button",
                             {
                               ref: "confirmButton",
-                              staticClass: "badge bg-success",
+                              staticClass: "list-icon-btn",
                               attrs: {
                                 type: "button",
                                 id: "confirmButton",
@@ -3192,7 +3053,7 @@ var render = function () {
                           _c(
                             "a",
                             {
-                              staticClass: "nav-link",
+                              staticClass: "list-icon-btn",
                               attrs: {
                                 href: this.$websiteUrl,
                                 target: "__blank",
@@ -3200,19 +3061,20 @@ var render = function () {
                             },
                             [
                               _c("i", {
-                                staticClass:
-                                  "fa fa-solid fa-globe fs-4 text-gray-600",
+                                staticClass: "fa fa-solid fa-globe",
+                                attrs: { "aria-hidden": "true" },
                               }),
                             ]
                           ),
                         ])
                       : _vm._e(),
                     _vm._v(" "),
-                    _c("li", { staticClass: "nav-item dropdown me-1 pt-2" }, [
+                    _c("li", { staticClass: "nav-item dropdown me-1" }, [
                       _c(
                         "a",
                         {
-                          staticClass: "nav-link active dropdown-toggle",
+                          staticClass:
+                            "list-icon-btn position-relative dropdown-toggle",
                           attrs: {
                             href: "#",
                             "data-bs-toggle": "dropdown",
@@ -3221,17 +3083,21 @@ var render = function () {
                         },
                         [
                           _c("i", {
-                            staticClass: "bi bi-bell fs-4 text-gray-600",
+                            staticClass: "bi bi-bell",
+                            attrs: { "aria-hidden": "true" },
                           }),
-                          _c(
-                            "span",
-                            {
-                              staticClass:
-                                "badge bg-success rounded-circle position-absolute translate-middle p-2",
-                              staticStyle: { bottom: "20px", left: "30px" },
-                            },
-                            [_vm._v(_vm._s(_vm.notifications_unread_count))]
-                          ),
+                          _vm._v(" "),
+                          _vm.notifications_unread_count > 0
+                            ? _c("span", { staticClass: "hdr-dot" }, [
+                                _vm._v(
+                                  _vm._s(
+                                    _vm.notifications_unread_count > 9
+                                      ? "9+"
+                                      : _vm.notifications_unread_count
+                                  )
+                                ),
+                              ])
+                            : _vm._e(),
                         ]
                       ),
                       _vm._v(" "),
@@ -3239,85 +3105,70 @@ var render = function () {
                         "ul",
                         {
                           staticClass:
-                            "dropdown-menu dropdown-menu-end notification-dropdown",
+                            "dropdown-menu dropdown-menu-end notification-dropdown p-0",
                           attrs: { "aria-labelledby": "dropdownMenuButton" },
                         },
                         [
-                          _c("li", [
-                            _c("h6", { staticClass: "dropdown-header" }, [
+                          _c("li", { staticClass: "notif-head" }, [
+                            _c("span", { staticClass: "notif-head-title" }, [
                               _vm._v(_vm._s(_vm.__("notifications"))),
                             ]),
+                            _vm._v(" "),
+                            _vm.notifications_unread_count > 0
+                              ? _c("span", { staticClass: "notif-count" }, [
+                                  _vm._v(
+                                    _vm._s(_vm.notifications_unread_count)
+                                  ),
+                                ])
+                              : _vm._e(),
                           ]),
                           _vm._v(" "),
-                          _vm._l(
-                            _vm.notifications.slice(0, 4),
-                            function (notification) {
-                              return _c(
-                                "li",
-                                {
-                                  staticClass:
-                                    "dropdown-item notification-item",
-                                },
-                                [
-                                  _c(
-                                    "a",
+                          _c(
+                            "li",
+                            { staticClass: "notif-scroll" },
+                            [
+                              _vm._l(
+                                _vm.notifications.slice(0, 4),
+                                function (notification) {
+                                  return _c(
+                                    "button",
                                     {
-                                      staticClass: "d-flex align-items-start",
+                                      staticClass: "notif-item",
+                                      class: {
+                                        "is-unread": !notification.read_at,
+                                      },
+                                      attrs: { type: "button" },
                                       on: {
                                         click: function ($event) {
-                                          return _vm.markAsReadNotification(
+                                          _vm.markAsReadNotification(
+                                            notification
+                                          )
+                                          _vm.handleNotificationClick(
                                             notification
                                           )
                                         },
                                       },
                                     },
                                     [
+                                      _vm._m(0, true),
+                                      _vm._v(" "),
                                       _c(
-                                        "div",
-                                        {
-                                          staticClass:
-                                            "notification-text w-100",
-                                        },
+                                        "span",
+                                        { staticClass: "notif-body" },
                                         [
                                           _c(
-                                            "p",
-                                            {
-                                              staticClass:
-                                                "notification-title font-bold mb-1",
-                                            },
+                                            "span",
+                                            { staticClass: "notif-text" },
                                             [
-                                              _c(
-                                                "a",
-                                                {
-                                                  staticStyle: {
-                                                    cursor: "pointer",
-                                                  },
-                                                  on: {
-                                                    click: function ($event) {
-                                                      return _vm.handleNotificationClick(
-                                                        notification
-                                                      )
-                                                    },
-                                                  },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "\n                                                    " +
-                                                      _vm._s(
-                                                        notification.data.text
-                                                      )
-                                                  ),
-                                                ]
+                                              _vm._v(
+                                                _vm._s(notification.data.text)
                                               ),
                                             ]
                                           ),
                                           _vm._v(" "),
                                           _c(
-                                            "p",
-                                            {
-                                              staticClass:
-                                                "notification-subtitle font-thin text-sm mb-0",
-                                            },
+                                            "span",
+                                            { staticClass: "notif-time" },
                                             [
                                               _vm._v(
                                                 _vm._s(
@@ -3331,122 +3182,97 @@ var render = function () {
                                         ]
                                       ),
                                     ]
-                                  ),
-                                ]
-                              )
-                            }
+                                  )
+                                }
+                              ),
+                              _vm._v(" "),
+                              _vm.notifications.length == 0
+                                ? _c("div", { staticClass: "notif-empty" }, [
+                                    _c("i", {
+                                      staticClass: "bi bi-bell-slash",
+                                      staticStyle: { "font-size": "1.5rem" },
+                                    }),
+                                    _vm._v(" "),
+                                    _c("span", [
+                                      _vm._v(
+                                        _vm._s(_vm.__("no_new_notification"))
+                                      ),
+                                    ]),
+                                  ])
+                                : _vm._e(),
+                            ],
+                            2
                           ),
                           _vm._v(" "),
                           _vm.notifications.length > 0
-                            ? _c("li", [
-                                _c("hr", { staticClass: "dropdown-divider" }),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  {
-                                    staticClass:
-                                      "d-flex flex-column gap-1 px-3 py-2",
-                                  },
-                                  [
-                                    _vm.notifications_unread_count > 0
-                                      ? _c(
-                                          "button",
-                                          {
-                                            staticClass:
-                                              "btn btn-sm btn-primary w-100",
-                                            on: {
-                                              click: _vm.confirmMarkAllAsRead,
-                                            },
+                            ? _c("li", { staticClass: "notif-foot" }, [
+                                _vm.isSellerRoute
+                                  ? _c(
+                                      "button",
+                                      {
+                                        staticClass: "notif-see-all",
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.$router.push(
+                                              "/seller/notification_panel"
+                                            )
                                           },
-                                          [
-                                            _c("i", {
-                                              staticClass:
-                                                "bi bi-check-all me-1",
-                                            }),
-                                            _vm._v(
-                                              "\n                                            " +
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "read_all_notifications"
-                                                  )
-                                                ) +
-                                                "\n                                        "
-                                            ),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.isSellerRoute
-                                      ? _c(
-                                          "button",
-                                          {
-                                            staticClass:
-                                              "btn btn-sm btn-outline-secondary w-100",
-                                            on: {
-                                              click: function ($event) {
-                                                return _vm.$router.push(
-                                                  "/seller/notification_panel"
-                                                )
-                                              },
-                                            },
-                                          },
-                                          [
-                                            _c("i", {
-                                              staticClass: "bi bi-bell me-1",
-                                            }),
-                                            _vm._v(
-                                              "\n                                            " +
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "see_all_notifications"
-                                                  )
-                                                ) +
-                                                "\n                                        "
-                                            ),
-                                          ]
-                                        )
-                                      : _c(
-                                          "button",
-                                          {
-                                            staticClass:
-                                              "btn btn-sm btn-outline-secondary w-100",
-                                            on: {
-                                              click: function ($event) {
-                                                return _vm.$router.push(
-                                                  "/notification_panel"
-                                                )
-                                              },
-                                            },
-                                          },
-                                          [
-                                            _c("i", {
-                                              staticClass: "bi bi-bell me-1",
-                                            }),
-                                            _vm._v(
-                                              "\n                                            " +
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "see_all_notifications"
-                                                  )
-                                                ) +
-                                                "\n                                        "
-                                            ),
-                                          ]
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                        " +
+                                            _vm._s(
+                                              _vm.__("see_all_notifications")
+                                            ) +
+                                            "\n                                    "
                                         ),
-                                  ]
-                                ),
+                                      ]
+                                    )
+                                  : _c(
+                                      "button",
+                                      {
+                                        staticClass: "notif-see-all",
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.$router.push(
+                                              "/notification_panel"
+                                            )
+                                          },
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                        " +
+                                            _vm._s(
+                                              _vm.__("see_all_notifications")
+                                            ) +
+                                            "\n                                    "
+                                        ),
+                                      ]
+                                    ),
+                                _vm._v(" "),
+                                _vm.notifications_unread_count > 0
+                                  ? _c(
+                                      "button",
+                                      {
+                                        staticClass: "notif-mark-all",
+                                        on: { click: _vm.confirmMarkAllAsRead },
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                        " +
+                                            _vm._s(
+                                              _vm.__("read_all_notifications")
+                                            ) +
+                                            "\n                                    "
+                                        ),
+                                      ]
+                                    )
+                                  : _vm._e(),
                               ])
                             : _vm._e(),
-                          _vm._v(" "),
-                          _c("li", [
-                            _vm.notifications.length == 0
-                              ? _c("a", { staticClass: "dropdown-item" }, [
-                                  _vm._v(_vm._s(_vm.__("no_new_notification"))),
-                                ])
-                              : _vm._e(),
-                          ]),
-                        ],
-                        2
+                        ]
                       ),
                     ]),
                     _vm._v(" "),
@@ -3515,6 +3341,7 @@ var render = function () {
                   _c(
                     "a",
                     {
+                      staticClass: "user-chip text-decoration-none",
                       attrs: {
                         href: "#",
                         "data-bs-toggle": "dropdown",
@@ -3522,37 +3349,37 @@ var render = function () {
                       },
                     },
                     [
-                      _c("div", { staticClass: "user-menu d-flex" }, [
-                        _c("div", { staticClass: "user-name text-end me-3" }, [
-                          _c("h6", { staticClass: "mb-0 text-gray-600" }, [
+                      _c("img", {
+                        attrs: { src: _vm.profile_url, alt: "profile" },
+                      }),
+                      _vm._v(" "),
+                      _c(
+                        "span",
+                        {
+                          staticClass:
+                            "d-none d-lg-flex flex-column text-start",
+                        },
+                        [
+                          _c("span", { staticClass: "user-chip-name" }, [
                             _vm._v(_vm._s(_vm.user.username)),
                           ]),
                           _vm._v(" "),
-                          _c(
-                            "p",
-                            { staticClass: "mb-0 text-sm text-gray-600" },
-                            [
-                              _vm._v(
-                                _vm._s(
-                                  _vm.role === "Seller"
-                                    ? _vm.__("seller")
-                                    : _vm.role
-                                )
-                              ),
-                            ]
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "user-img d-flex align-items-center" },
-                          [
-                            _c("div", { staticClass: "avatar avatar-md22" }, [
-                              _c("img", { attrs: { src: _vm.profile_url } }),
-                            ]),
-                          ]
-                        ),
-                      ]),
+                          _c("span", { staticClass: "user-chip-role" }, [
+                            _vm._v(
+                              _vm._s(
+                                _vm.role === "Seller"
+                                  ? _vm.__("seller")
+                                  : _vm.role
+                              )
+                            ),
+                          ]),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c("i", {
+                        staticClass:
+                          "bi bi-chevron-down hdr-caret d-none d-lg-block",
+                      }),
                     ]
                   ),
                   _vm._v(" "),
@@ -3902,14 +3729,9 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c(
-      "a",
-      {
-        staticClass: "burger-btn d-block",
-        attrs: { href: "javascript:void(0)" },
-      },
-      [_c("i", { staticClass: "fa fa-bars", attrs: { "aria-hidden": "true" } })]
-    )
+    return _c("span", { staticClass: "notif-icon" }, [
+      _c("i", { staticClass: "bi bi-bell", attrs: { "aria-hidden": "true" } }),
+    ])
   },
   function () {
     var _vm = this
