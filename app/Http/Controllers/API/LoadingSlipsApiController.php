@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
+use App\Models\BrandDistributorMapping;
 use App\Models\City;
 use App\Models\DeliveryBoy;
 use App\Models\LoadingSlip;
@@ -55,13 +56,15 @@ class LoadingSlipsApiController extends Controller
 
     public function getOrdersForAssignment(Request $request)
     {
-        $zone = $request->input('zone', '');
+        $cityId = $request->input('city_id', '');
+        $areaId = $request->input('area_id', '');
         $isRescheduled = $request->input('is_rescheduled', '');
 
-        $query = Order::select('orders.*', 'users.name as user_name', 'cities.zone as city_zone')
+        $query = Order::select('orders.*', 'users.name as user_name', 'cities.zone as city_zone', 'areas.name as area_name')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
             ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
+            ->leftJoin('areas', 'orders.area_id', '=', 'areas.id')
             ->whereNull('orders.loading_slip_id')
             ->where('orders.order_type', 'doorstep')
             ->whereIn('orders.active_status', [
@@ -97,8 +100,12 @@ class LoadingSlipsApiController extends Controller
             });
         }
 
-        if ($zone) {
-            $query->where('cities.zone', $zone);
+        if ($cityId) {
+            $query->where('user_addresses.city_id', $cityId);
+        }
+
+        if ($areaId) {
+            $query->where('orders.area_id', $areaId);
         }
 
         // Add is_rescheduled flag via subquery — avoids N+1 per order
@@ -128,11 +135,17 @@ class LoadingSlipsApiController extends Controller
 
     public function getZones()
     {
-        $zones = City::whereNotNull('zone')
-            ->where('zone', '!=', '')
-            ->distinct()
-            ->orderBy('zone')
-            ->pluck('zone');
+        $query = City::whereNotNull('zone')->where('zone', '!=', '');
+
+        if (auth()->user() && auth()->user()->seller) {
+            $cityIds = BrandDistributorMapping::where('seller_id', auth()->user()->seller->id)
+                ->distinct()
+                ->pluck('city_id');
+            $query->whereIn('id', $cityIds);
+        }
+
+        $zones = $query->orderBy('zone')->get(['id', 'zone']);
+
         return CommonHelper::responseWithData($zones);
     }
 
@@ -461,12 +474,15 @@ class LoadingSlipsApiController extends Controller
                 'rp.shop_name',
                 'rp.gst_no as customer_gst',
                 DB::raw('COALESCE(rp.party_name, rp.shop_name, users.name) as customer_name'),
-                'orders.mobile as customer_mobile'
+                'orders.mobile as customer_mobile',
+                'placing_salesman.name as salesman_name',
+                'placing_salesman.mobile as salesman_mobile'
             )
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
             ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
             ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
+            ->leftJoin('salesmen as placing_salesman', 'orders.placed_by_salesman_id', '=', 'placing_salesman.id')
             ->where('orders.loading_slip_id', $id)
             ->get();
 

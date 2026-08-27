@@ -1863,6 +1863,9 @@ class OrderApiController extends Controller
             'orders.id as order_id',
             "dboys.name as delivery_boy_name",
             "dboys.mobile as delivery_boy_mobile",
+            "orders.placed_by_salesman_id",
+            "placing_salesman.name as salesman_name",
+            "placing_salesman.mobile as salesman_mobile",
 
             DB::raw('(select name from users as u where u.id = orders.user_id) as user_name'),
             'address.address',
@@ -1875,6 +1878,7 @@ class OrderApiController extends Controller
         )->from("orders")
             ->leftJoin('user_addresses as address', 'orders.address_id', '=', 'address.id')
             ->leftJoin('delivery_boys as dboys', 'orders.delivery_boy_id', '=', 'dboys.id')
+            ->leftJoin('salesmen as placing_salesman', 'orders.placed_by_salesman_id', '=', 'placing_salesman.id')
             ->where("orders.user_id", "=", $user_id);
         if (!empty($order_id)) {
             $sql = $sql->where("orders.id", "=", $order_id);
@@ -1910,6 +1914,7 @@ class OrderApiController extends Controller
         $i = 0;
         foreach ($res as $key => $row) {
             $res[$key]->order_status_name = OrderStatusList::getTranslatedName((int) $row->active_status);
+            $res[$key]->placed_by = $row->placed_by_salesman_id ? 'salesman' : 'retailer';
             $res[$key]->address = $row->address . " " . $row->landmark . " " . $row->area . " " . $row->city . " " . $row->state . "-" . $row->pincode . " " . $row->country;
             if (is_string($row->additional_charges)) {
                 $res[$i]['additional_charges'] = json_decode($row->additional_charges, true) ?? [];

@@ -365,7 +365,7 @@ export default {
         return {
             isLoading: false,
             loggedUser: Auth.user,
-            center: {lat: 0, lng: 0},
+            center: {lat: 23.0225, lng: 72.5714},
 
             map:"",
             drawingManager:"",

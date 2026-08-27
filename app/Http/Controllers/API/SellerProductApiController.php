@@ -116,6 +116,8 @@ class SellerProductApiController extends Controller
                 'secondary_unit' => $v->secondaryUnit ? $v->secondaryUnit->name : null,
                 'secondary_unit_value' => $v->secondary_unit_value,
                 'allow_loose_qty' => (bool) $v->allow_loose_qty,
+                'max_qty_mode' => $v->max_qty_mode,
+                'max_qty_value' => $v->max_qty_value,
                 'weight' => $v->weight,
                 'image' => $v->image ?: ($mp ? $mp->image : null),
 

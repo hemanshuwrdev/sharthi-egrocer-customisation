@@ -71,12 +71,29 @@
                                             <td>{{ order.user_mobile | mobileMask }}</td>
                                         </tr>
                                         <tr>
+                                            <th class="th-width">{{ __('ordered_by') }}</th>
+                                            <td>
+                                                <template v-if="order.placed_by === 'salesman'">
+                                                    <span class="badge bg-info me-1">{{ __('salesman') }}</span>
+                                                    {{ order.salesman_name }}
+                                                </template>
+                                                <template v-else>
+                                                    <span class="badge bg-secondary me-1">{{ __('retailer') }}</span>
+                                                    {{ order.user_name }}
+                                                </template>
+                                            </td>
+                                        </tr>
+                                        <tr>
                                             <th class="th-width">{{ __('area') }}</th>
                                             <td>{{ order.address }}</td>
                                         </tr>
                                         <tr>
                                             <th class="th-width">{{ __('pincode') }}</th>
                                             <td>{{ order.pincode }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="th-width">{{ __('assigned_area') }}</th>
+                                            <td>{{ order.area_name || '-' }}</td>
                                         </tr>
 
                                         <tr>

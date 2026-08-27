@@ -245,6 +245,8 @@ class RetailerCatalogApiController extends Controller
                 // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
                 'qty_step'       => $first->allow_loose_qty ? 1 : ((float) ($first->secondary_unit_value ?? 1) ?: 1),
                 'min_qty'        => $first->allow_loose_qty ? 1 : ((float) ($first->secondary_unit_value ?? 1) ?: 1),
+                'max_qty_mode'   => $first->max_qty_mode,
+                'max_qty_value'  => $first->max_qty_value,
                 'weight' => $first->weight,
                 'image' => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed' => $overlapAllowed,
@@ -399,6 +401,8 @@ class RetailerCatalogApiController extends Controller
             // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
             'qty_step'       => $variant->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
             'min_qty'        => $variant->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
+            'max_qty_mode'   => $variant->max_qty_mode,
+            'max_qty_value'  => $variant->max_qty_value,
             'weight' => $variant->weight,
             'image' => $variant->image ?: $variant->masterProduct->image,
             'description' => $variant->masterProduct->description,

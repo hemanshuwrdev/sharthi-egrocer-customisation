@@ -73,41 +73,10 @@
                                         </div>
                                         <!-- Translate buttons END -->
 
-                                        <div class="form-group" v-if="language.is_default">
-                                            <label for="city_name"> {{ __('search_city') }}</label>
-                                            <GmapAutocomplete type="search" class="form-control"
-                                                :placeholder="__('search_city_on_map')" @place_changed="setPlace"
-                                                :options="{ fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'plus_code', 'types'], strictBounds: false }"
-                                                id="city_name">
-                                            </GmapAutocomplete>
-                                            <input type="hidden" v-model="city.formatted_address">
-                                            <span class="text text-primary">{{
-                                                __('search_your_city_where_you_will_deliver_the_food_and_to_find_co_ordinates')
-                                                }}</span>
-                                        </div>
-
-                                        <div class="form-group" v-if="language.is_default">
-                                            <label for="latitude">{{ __('latitude') }} <span
-                                                    class="text-danger text-sm">*</span></label>
-                                            <input type="text" class="form-control" name="latitude" id="latitude"
-                                                v-model="city.latitude" :placeholder="__('latitude')" required readonly>
-                                        </div>
-                                        <div class="form-group" v-if="language.is_default">
-                                            <label for="longitude"> {{ __('longitude') }}<span
-                                                    class="text-danger text-sm">*</span></label>
-                                            <input type="text" class="form-control" name="longitude" id="longitude"
-                                                v-model="city.longitude" :placeholder="__('longitude')" required
-                                                readonly>
-                                        </div>
-
-                                        <input type="hidden" name="name" v-model="city.name">
-
-                                        <div class="form-group" v-if="language.is_default">
-                                            <label for="state"> {{ __('state_name') }}<span
-                                                    class="text-danger text-sm">*</span></label>
-                                            <input type="text" class="form-control" name="state" id="state"
-                                                v-model="city.state" :placeholder="__('state_name')" required readonly>
-                                        </div>
+                                        <p class="text-muted mb-3" v-if="language.is_default">
+                                            <i class="fa fa-info-circle"></i>
+                                            {{ __('enter_a_zone_name_search_the_area_on_the_map_then_draw_the_zone_boundary_using_the_polygon_or_circle_tool') }}
+                                        </p>
 
                                         <div class="form-group">
                                             <label :for="'zone_' + language.id"> {{ __('zone_name') }}<span
@@ -119,6 +88,44 @@
                                                 :placeholder="__('zone_name')">
                                         </div>
 
+                                        <div class="form-group" v-if="language.is_default">
+                                            <label for="city_name"> {{ __('search_location') }}</label>
+                                            <GmapAutocomplete type="search" class="form-control"
+                                                :placeholder="__('search_your_location_on_map')" @place_changed="setPlace"
+                                                :options="{ fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'plus_code', 'types'], strictBounds: false }"
+                                                id="city_name">
+                                            </GmapAutocomplete>
+                                            <input type="hidden" name="name" v-model="city.name">
+                                            <input type="hidden" v-model="city.formatted_address">
+                                            <small class="text-muted">{{ __('search_to_navigate_map_then_draw_zone_boundary') }}</small>
+                                        </div>
+
+                                        <div class="row" v-if="language.is_default">
+                                            <div class="form-group col-md-6">
+                                                <label for="latitude">{{ __('latitude') }} <span
+                                                        class="text-danger text-sm">*</span></label>
+                                                <input type="text" class="form-control" name="latitude" id="latitude"
+                                                    v-model="city.latitude" :placeholder="__('latitude')" required readonly>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label for="longitude"> {{ __('longitude') }}<span
+                                                        class="text-danger text-sm">*</span></label>
+                                                <input type="text" class="form-control" name="longitude" id="longitude"
+                                                    v-model="city.longitude" :placeholder="__('longitude')" required
+                                                    readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-warning py-2 px-3" v-if="language.is_default && !vertices">
+                                            <i class="fa fa-draw-polygon mr-1"></i>
+                                            {{ __('draw_zone_boundary_on_map_using_tools') }}
+                                        </div>
+                                        <div class="alert alert-success py-2 px-3" v-else-if="language.is_default">
+                                            <i class="fa fa-check-circle mr-1"></i>
+                                            {{ __('zone_boundary_drawn_successfully') }}
+                                        </div>
+
+<!--
                                         <div class="form-group" v-if="language.is_default">
 
                                             <label for="time_to_travel">{{ __('time_to_travel_1km') }} <span
@@ -228,25 +235,30 @@
 
                                                     <div class="col-sm-1" v-if="index !== 0">
                                                         <a v-b-tooltip.hover :title="__('remove_row')" style="cursor: pointer;"
-                                                            @click="remove(index)">
-                                                            <i class="fa fa-times fa-2x"></i>
-                                                        </a>
-                                                    </div>
-
+                                                        @click="remove(index)">
+                                                        <i class="fa fa-times fa-2x"></i>
+                                                    </a>
                                                 </div>
-
+                                                
+                                    
+                                                </div>
                                             </div>
-                                        </div>
-                                    </b-tab></b-tabs>
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-primary"> {{ __('save') }}</button>
-                                    <button type="reset" class="btn btn-secondary">{{ __('clear') }}</button>
-                                </div>
+                                        </div> -->
 
-                            </form>
+                                   
+                                        
+                                        
+                                    </b-tab></b-tabs>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary"> {{ __('save') }}</button>
+                                        <button type="reset" class="btn btn-secondary">{{ __('clear') }}</button>
+                                    </div>
+                                    
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
+                    
                 <div class="col-12 col-md-6 order-md-1 order-last">
                     <div class="card h-100">
                         <div class="card-header">
@@ -288,6 +300,7 @@
                         </div>
                     </div>
                 </div>
+             
             </div>
         </div>
     </div>
@@ -302,7 +315,7 @@ export default {
     data: function () {
         return {
 
-            center: { lat: 0, lng: 0 },
+            center: { lat: 23.0225, lng: 72.5714 },
             currentPlace: null,
             markers: [],
             city: {
@@ -454,12 +467,6 @@ export default {
         },
         validateDefaultLanguage() {
 
-            if (!this.city.name || this.city.name.trim() === '') {
-                this.showError("Please enter zone name");
-                this.switchToDefaultLanguageTab();
-                return false;
-            }
-
             // Validate default language zone
             const defaultTranslation = this.translations[this.defaultLanguageId];
 
@@ -469,49 +476,80 @@ export default {
                 return false;
             }
 
-            // Validate Time to travel 1 (km) - required
-            if (this.city.time_to_travel === '' || this.city.time_to_travel === null || this.city.time_to_travel === undefined) {
-                this.showError(__('time_to_travel_1km') + ' ' + __('is_required'));
+            this.city.name = this.city.name || defaultTranslation.zone;
+
+            if (!this.city.latitude || !this.city.longitude) {
+                this.showError(__('please_search_and_select_city_on_map'));
                 this.switchToDefaultLanguageTab(true);
                 return false;
             }
 
-            // Validate Minimum Amount for Free Delivery - required
-            if (this.city.min_amount_for_free_delivery === '' || this.city.min_amount_for_free_delivery === null || this.city.min_amount_for_free_delivery === undefined) {
-                this.showError(__('minimum_amount_for_free_delivery') + ' ' + __('is_required'));
+            if (!this.vertices) {
+                this.showError(__('draw_zone_boundary_on_map_using_tools'));
                 this.switchToDefaultLanguageTab(true);
                 return false;
             }
 
-            // Validate Delivery Charge Methods - required
-            if (!this.city.delivery_charge_method || this.city.delivery_charge_method.trim() === '') {
-                this.showError(__('delivery_charge_methods') + ' ' + __('is_required'));
-                this.switchToDefaultLanguageTab(true);
-                return false;
-            }
+            // Delivery-charge fields are commented out in the form above (zone
+            // creation no longer needs delivery-charge data) - fill them with
+            // harmless defaults so the still-geo-based CityApiController::save
+            // validation passes.
+            this.city.state = this.city.state || '';
+            this.city.formatted_address = this.city.formatted_address || defaultTranslation.zone;
+            this.city.time_to_travel = this.city.time_to_travel || 0;
+            this.city.min_amount_for_free_delivery = this.city.min_amount_for_free_delivery || 0;
+            this.city.delivery_charge_method = this.city.delivery_charge_method || 'fixed_charge';
+            this.city.fixed_charge = this.city.fixed_charge || 0;
 
-            // Validate delivery charge method specific fields
-            if (this.city.delivery_charge_method === 'fixed_charge') {
-                if (this.city.fixed_charge === '' || this.city.fixed_charge === null || this.city.fixed_charge === undefined) {
-                    this.showError(__('fix_delivery_charges') + ' ' + __('is_required'));
-                    this.switchToDefaultLanguageTab(true);
-                    return false;
-                }
-            } else if (this.city.delivery_charge_method === 'per_km_charge') {
-                if (this.city.per_km_charge === '' || this.city.per_km_charge === null || this.city.per_km_charge === undefined) {
-                    this.showError(__('per_km_delivery_charges') + ' ' + __('is_required'));
-                    this.switchToDefaultLanguageTab(true);
-                    return false;
-                }
-            } else if (this.city.delivery_charge_method === 'range_wise_charges') {
-                const ranges = this.city.range_wise_charges || [];
-                const hasValidRange = ranges.some(r => (r.from_range !== '' && r.from_range != null) && (r.to_range !== '' && r.to_range != null) && (r.price !== '' && r.price != null));
-                if (!hasValidRange) {
-                    this.showError(__('range_wise_delivery_charges') + ' ' + __('is_required'));
-                    this.switchToDefaultLanguageTab(true);
-                    return false;
-                }
-            }
+            // if (!this.city.name || this.city.name.trim() === '') {
+            //     this.showError("Please enter zone name");
+            //     this.switchToDefaultLanguageTab();
+            //     return false;
+            // }
+
+            // // Validate Time to travel 1 (km) - required
+            // if (this.city.time_to_travel === '' || this.city.time_to_travel === null || this.city.time_to_travel === undefined) {
+            //     this.showError(__('time_to_travel_1km') + ' ' + __('is_required'));
+            //     this.switchToDefaultLanguageTab(true);
+            //     return false;
+            // }
+
+            // // Validate Minimum Amount for Free Delivery - required
+            // if (this.city.min_amount_for_free_delivery === '' || this.city.min_amount_for_free_delivery === null || this.city.min_amount_for_free_delivery === undefined) {
+            //     this.showError(__('minimum_amount_for_free_delivery') + ' ' + __('is_required'));
+            //     this.switchToDefaultLanguageTab(true);
+            //     return false;
+            // }
+
+            // // Validate Delivery Charge Methods - required
+            // if (!this.city.delivery_charge_method || this.city.delivery_charge_method.trim() === '') {
+            //     this.showError(__('delivery_charge_methods') + ' ' + __('is_required'));
+            //     this.switchToDefaultLanguageTab(true);
+            //     return false;
+            // }
+
+            // // Validate delivery charge method specific fields
+            // if (this.city.delivery_charge_method === 'fixed_charge') {
+            //     if (this.city.fixed_charge === '' || this.city.fixed_charge === null || this.city.fixed_charge === undefined) {
+            //         this.showError(__('fix_delivery_charges') + ' ' + __('is_required'));
+            //         this.switchToDefaultLanguageTab(true);
+            //         return false;
+            //     }
+            // } else if (this.city.delivery_charge_method === 'per_km_charge') {
+            //     if (this.city.per_km_charge === '' || this.city.per_km_charge === null || this.city.per_km_charge === undefined) {
+            //         this.showError(__('per_km_delivery_charges') + ' ' + __('is_required'));
+            //         this.switchToDefaultLanguageTab(true);
+            //         return false;
+            //     }
+            // } else if (this.city.delivery_charge_method === 'range_wise_charges') {
+            //     const ranges = this.city.range_wise_charges || [];
+            //     const hasValidRange = ranges.some(r => (r.from_range !== '' && r.from_range != null) && (r.to_range !== '' && r.to_range != null) && (r.price !== '' && r.price != null));
+            //     if (!hasValidRange) {
+            //         this.showError(__('range_wise_delivery_charges') + ' ' + __('is_required'));
+            //         this.switchToDefaultLanguageTab(true);
+            //         return false;
+            //     }
+            // }
 
             return true;
         },
@@ -750,10 +788,7 @@ export default {
 
             if (!this.validateDefaultLanguage()) return;
 
-            if (!this.vertices) {
-                this.showError("Draw Deliverable area on Map");
-                return;
-            }
+            this.geolocation_type = this.geolocation_type || 'circle';
 
             this.isLoading = true;
 

@@ -593,6 +593,15 @@
 
                         <span class="udaan-meta-label">Page No:</span>
                         <span class="udaan-meta-val">{{ $orderIndex + 1 }} / {{ count($orders) }}</span>
+
+                        <span class="udaan-meta-label">Order By:</span>
+                        <span class="udaan-meta-val">
+                            @if (!empty($order->salesman_name))
+                                Salesman - {{ $order->salesman_name }}{{ !empty($order->salesman_mobile) ? ' (' . $order->salesman_mobile . ')' : '' }}
+                            @else
+                                Retailer - {{ $order->customer_name }}{{ !empty($order->customer_mobile) ? ' (' . $order->customer_mobile . ')' : '' }}
+                            @endif
+                        </span>
                     </div>
                 </div>
 

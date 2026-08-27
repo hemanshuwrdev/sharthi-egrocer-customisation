@@ -318,6 +318,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -327,8 +340,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   data: function data() {
     return {
       center: {
-        lat: 0,
-        lng: 0
+        lat: 23.0225,
+        lng: 72.5714
       },
       currentPlace: null,
       markers: [],
@@ -478,12 +491,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.translations = allTranslations;
     },
     validateDefaultLanguage: function validateDefaultLanguage() {
-      if (!this.city.name || this.city.name.trim() === '') {
-        this.showError("Please enter zone name");
-        this.switchToDefaultLanguageTab();
-        return false;
-      }
-
       // Validate default language zone
       var defaultTranslation = this.translations[this.defaultLanguageId];
       if (!defaultTranslation.zone || defaultTranslation.zone.trim() === '') {
@@ -491,52 +498,79 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.switchToDefaultLanguageTab();
         return false;
       }
-
-      // Validate Time to travel 1 (km) - required
-      if (this.city.time_to_travel === '' || this.city.time_to_travel === null || this.city.time_to_travel === undefined) {
-        this.showError(__('time_to_travel_1km') + ' ' + __('is_required'));
+      this.city.name = this.city.name || defaultTranslation.zone;
+      if (!this.city.latitude || !this.city.longitude) {
+        this.showError(__('please_search_and_select_city_on_map'));
+        this.switchToDefaultLanguageTab(true);
+        return false;
+      }
+      if (!this.vertices) {
+        this.showError(__('draw_zone_boundary_on_map_using_tools'));
         this.switchToDefaultLanguageTab(true);
         return false;
       }
 
-      // Validate Minimum Amount for Free Delivery - required
-      if (this.city.min_amount_for_free_delivery === '' || this.city.min_amount_for_free_delivery === null || this.city.min_amount_for_free_delivery === undefined) {
-        this.showError(__('minimum_amount_for_free_delivery') + ' ' + __('is_required'));
-        this.switchToDefaultLanguageTab(true);
-        return false;
-      }
+      // Delivery-charge fields are commented out in the form above (zone
+      // creation no longer needs delivery-charge data) - fill them with
+      // harmless defaults so the still-geo-based CityApiController::save
+      // validation passes.
+      this.city.state = this.city.state || '';
+      this.city.formatted_address = this.city.formatted_address || defaultTranslation.zone;
+      this.city.time_to_travel = this.city.time_to_travel || 0;
+      this.city.min_amount_for_free_delivery = this.city.min_amount_for_free_delivery || 0;
+      this.city.delivery_charge_method = this.city.delivery_charge_method || 'fixed_charge';
+      this.city.fixed_charge = this.city.fixed_charge || 0;
 
-      // Validate Delivery Charge Methods - required
-      if (!this.city.delivery_charge_method || this.city.delivery_charge_method.trim() === '') {
-        this.showError(__('delivery_charge_methods') + ' ' + __('is_required'));
-        this.switchToDefaultLanguageTab(true);
-        return false;
-      }
+      // if (!this.city.name || this.city.name.trim() === '') {
+      //     this.showError("Please enter zone name");
+      //     this.switchToDefaultLanguageTab();
+      //     return false;
+      // }
 
-      // Validate delivery charge method specific fields
-      if (this.city.delivery_charge_method === 'fixed_charge') {
-        if (this.city.fixed_charge === '' || this.city.fixed_charge === null || this.city.fixed_charge === undefined) {
-          this.showError(__('fix_delivery_charges') + ' ' + __('is_required'));
-          this.switchToDefaultLanguageTab(true);
-          return false;
-        }
-      } else if (this.city.delivery_charge_method === 'per_km_charge') {
-        if (this.city.per_km_charge === '' || this.city.per_km_charge === null || this.city.per_km_charge === undefined) {
-          this.showError(__('per_km_delivery_charges') + ' ' + __('is_required'));
-          this.switchToDefaultLanguageTab(true);
-          return false;
-        }
-      } else if (this.city.delivery_charge_method === 'range_wise_charges') {
-        var ranges = this.city.range_wise_charges || [];
-        var hasValidRange = ranges.some(function (r) {
-          return r.from_range !== '' && r.from_range != null && r.to_range !== '' && r.to_range != null && r.price !== '' && r.price != null;
-        });
-        if (!hasValidRange) {
-          this.showError(__('range_wise_delivery_charges') + ' ' + __('is_required'));
-          this.switchToDefaultLanguageTab(true);
-          return false;
-        }
-      }
+      // // Validate Time to travel 1 (km) - required
+      // if (this.city.time_to_travel === '' || this.city.time_to_travel === null || this.city.time_to_travel === undefined) {
+      //     this.showError(__('time_to_travel_1km') + ' ' + __('is_required'));
+      //     this.switchToDefaultLanguageTab(true);
+      //     return false;
+      // }
+
+      // // Validate Minimum Amount for Free Delivery - required
+      // if (this.city.min_amount_for_free_delivery === '' || this.city.min_amount_for_free_delivery === null || this.city.min_amount_for_free_delivery === undefined) {
+      //     this.showError(__('minimum_amount_for_free_delivery') + ' ' + __('is_required'));
+      //     this.switchToDefaultLanguageTab(true);
+      //     return false;
+      // }
+
+      // // Validate Delivery Charge Methods - required
+      // if (!this.city.delivery_charge_method || this.city.delivery_charge_method.trim() === '') {
+      //     this.showError(__('delivery_charge_methods') + ' ' + __('is_required'));
+      //     this.switchToDefaultLanguageTab(true);
+      //     return false;
+      // }
+
+      // // Validate delivery charge method specific fields
+      // if (this.city.delivery_charge_method === 'fixed_charge') {
+      //     if (this.city.fixed_charge === '' || this.city.fixed_charge === null || this.city.fixed_charge === undefined) {
+      //         this.showError(__('fix_delivery_charges') + ' ' + __('is_required'));
+      //         this.switchToDefaultLanguageTab(true);
+      //         return false;
+      //     }
+      // } else if (this.city.delivery_charge_method === 'per_km_charge') {
+      //     if (this.city.per_km_charge === '' || this.city.per_km_charge === null || this.city.per_km_charge === undefined) {
+      //         this.showError(__('per_km_delivery_charges') + ' ' + __('is_required'));
+      //         this.switchToDefaultLanguageTab(true);
+      //         return false;
+      //     }
+      // } else if (this.city.delivery_charge_method === 'range_wise_charges') {
+      //     const ranges = this.city.range_wise_charges || [];
+      //     const hasValidRange = ranges.some(r => (r.from_range !== '' && r.from_range != null) && (r.to_range !== '' && r.to_range != null) && (r.price !== '' && r.price != null));
+      //     if (!hasValidRange) {
+      //         this.showError(__('range_wise_delivery_charges') + ' ' + __('is_required'));
+      //         this.switchToDefaultLanguageTab(true);
+      //         return false;
+      //     }
+      // }
+
       return true;
     },
     addRow: function addRow() {
@@ -769,13 +803,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                 }
                 return _context.abrupt("return");
               case 2:
-                if (_this7.vertices) {
-                  _context.next = 5;
-                  break;
-                }
-                _this7.showError("Draw Deliverable area on Map");
-                return _context.abrupt("return");
-              case 5:
+                _this7.geolocation_type = _this7.geolocation_type || 'circle';
                 _this7.isLoading = true;
                 cityId = _this7.city.id;
                 languagesToSave = [];
@@ -792,11 +820,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                     languagesToSave.push(language);
                   }
                 });
-                _context.prev = 11;
+                _context.prev = 9;
                 _i = 0, _languagesToSave = languagesToSave;
-              case 13:
+              case 11:
                 if (!(_i < _languagesToSave.length)) {
-                  _context.next = 27;
+                  _context.next = 25;
                   break;
                 }
                 language = _languagesToSave[_i];
@@ -826,44 +854,44 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                 // Always send translation fields
                 formData.append("language_id", language.id);
                 formData.append("zone", _this7.translations[language.id].zone || '');
-                _context.next = 22;
+                _context.next = 20;
                 return axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this7.$apiUrl + '/cities/save', formData);
-              case 22:
+              case 20:
                 response = _context.sent;
                 if (!cityId && (_response$data$data = response.data.data) !== null && _response$data$data !== void 0 && _response$data$data.id) {
                   cityId = response.data.data.id;
                 }
-              case 24:
+              case 22:
                 _i++;
-                _context.next = 13;
+                _context.next = 11;
                 break;
-              case 27:
+              case 25:
                 _this7.showMessage("success", __('city_saved_successfully'));
                 setTimeout(function () {
                   _this7.$router.push({
                     path: '/cities'
                   });
                 }, 1500);
-                _context.next = 34;
+                _context.next = 32;
                 break;
-              case 31:
-                _context.prev = 31;
-                _context.t0 = _context["catch"](11);
+              case 29:
+                _context.prev = 29;
+                _context.t0 = _context["catch"](9);
                 if ((_error$response = _context.t0.response) !== null && _error$response !== void 0 && (_error$response$data = _error$response.data) !== null && _error$response$data !== void 0 && _error$response$data.message) {
                   _this7.showError(_context.t0.response.data.message);
                 } else {
                   _this7.showError("Something went wrong!");
                 }
-              case 34:
-                _context.prev = 34;
+              case 32:
+                _context.prev = 32;
                 _this7.isLoading = false;
-                return _context.finish(34);
-              case 37:
+                return _context.finish(32);
+              case 35:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[11, 31, 34, 37]]);
+        }, _callee, null, [[9, 29, 32, 35]]);
       }))();
     }
   }
@@ -1291,22 +1319,22 @@ var render = function () {
                     _vm.city.id
                       ? [
                           _vm._v(
-                            "\n                                " +
+                            "\n                                    " +
                               _vm._s(_vm.__("edit")) +
-                              "\n                            "
+                              "\n                                "
                           ),
                         ]
                       : [
                           _vm._v(
-                            "\n                                " +
+                            "\n                                    " +
                               _vm._s(_vm.__("create")) +
-                              "\n                            "
+                              "\n                                "
                           ),
                         ],
                     _vm._v(
-                      "\n                            " +
+                      "\n                                " +
                         _vm._s(_vm.__("city")) +
-                        "\n                        "
+                        "\n                            "
                     ),
                   ],
                   2
@@ -1328,9 +1356,9 @@ var render = function () {
                     ? [_vm._v(_vm._s(_vm.__("edit")))]
                     : [_vm._v(_vm._s(_vm.__("create")))],
                   _vm._v(
-                    "\n                            " +
+                    "\n                                " +
                       _vm._s(_vm.__("city")) +
-                      "\n                        "
+                      "\n                            "
                   ),
                 ],
                 2
@@ -1387,9 +1415,9 @@ var render = function () {
                                           },
                                           [
                                             _vm._v(
-                                              "\n                                            " +
+                                              "\n                                                " +
                                                 _vm._s(language.name) +
-                                                "\n                                        "
+                                                "\n                                            "
                                             ),
                                           ]
                                         ),
@@ -1509,11 +1537,11 @@ var render = function () {
                                             },
                                             [
                                               _vm._v(
-                                                "\n                                            " +
+                                                "\n                                                " +
                                                   _vm._s(
                                                     _vm.translateSuccessMessage
                                                   ) +
-                                                  "\n                                        "
+                                                  "\n                                            "
                                               ),
                                             ]
                                           )
@@ -1524,267 +1552,19 @@ var render = function () {
                                 : _vm._e(),
                               _vm._v(" "),
                               language.is_default
-                                ? _c(
-                                    "div",
-                                    { staticClass: "form-group" },
-                                    [
-                                      _c(
-                                        "label",
-                                        { attrs: { for: "city_name" } },
-                                        [
-                                          _vm._v(
-                                            " " + _vm._s(_vm.__("search_city"))
-                                          ),
-                                        ]
-                                      ),
-                                      _vm._v(" "),
-                                      _c("GmapAutocomplete", {
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "search",
-                                          placeholder:
-                                            _vm.__("search_city_on_map"),
-                                          options: {
-                                            fields: [
-                                              "address_components",
-                                              "formatted_address",
-                                              "geometry",
-                                              "name",
-                                              "place_id",
-                                              "plus_code",
-                                              "types",
-                                            ],
-                                            strictBounds: false,
-                                          },
-                                          id: "city_name",
-                                        },
-                                        on: { place_changed: _vm.setPlace },
-                                      }),
-                                      _vm._v(" "),
-                                      _c("input", {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value: _vm.city.formatted_address,
-                                            expression:
-                                              "city.formatted_address",
-                                          },
-                                        ],
-                                        attrs: { type: "hidden" },
-                                        domProps: {
-                                          value: _vm.city.formatted_address,
-                                        },
-                                        on: {
-                                          input: function ($event) {
-                                            if ($event.target.composing) {
-                                              return
-                                            }
-                                            _vm.$set(
-                                              _vm.city,
-                                              "formatted_address",
-                                              $event.target.value
-                                            )
-                                          },
-                                        },
-                                      }),
-                                      _vm._v(" "),
-                                      _c(
-                                        "span",
-                                        { staticClass: "text text-primary" },
-                                        [
-                                          _vm._v(
-                                            _vm._s(
-                                              _vm.__(
-                                                "search_your_city_where_you_will_deliver_the_food_and_to_find_co_ordinates"
-                                              )
-                                            )
-                                          ),
-                                        ]
-                                      ),
-                                    ],
-                                    1
-                                  )
-                                : _vm._e(),
-                              _vm._v(" "),
-                              language.is_default
-                                ? _c("div", { staticClass: "form-group" }, [
-                                    _c(
-                                      "label",
-                                      { attrs: { for: "latitude" } },
-                                      [
-                                        _vm._v(
-                                          _vm._s(_vm.__("latitude")) + " "
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass: "text-danger text-sm",
-                                          },
-                                          [_vm._v("*")]
-                                        ),
-                                      ]
+                                ? _c("p", { staticClass: "text-muted mb-3" }, [
+                                    _c("i", {
+                                      staticClass: "fa fa-info-circle",
+                                    }),
+                                    _vm._v(
+                                      "\n                                            " +
+                                        _vm._s(
+                                          _vm.__(
+                                            "enter_a_zone_name_search_the_area_on_the_map_then_draw_the_zone_boundary_using_the_polygon_or_circle_tool"
+                                          )
+                                        ) +
+                                        "\n                                        "
                                     ),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.city.latitude,
-                                          expression: "city.latitude",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "text",
-                                        name: "latitude",
-                                        id: "latitude",
-                                        placeholder: _vm.__("latitude"),
-                                        required: "",
-                                        readonly: "",
-                                      },
-                                      domProps: { value: _vm.city.latitude },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.city,
-                                            "latitude",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              language.is_default
-                                ? _c("div", { staticClass: "form-group" }, [
-                                    _c(
-                                      "label",
-                                      { attrs: { for: "longitude" } },
-                                      [
-                                        _vm._v(
-                                          " " + _vm._s(_vm.__("longitude"))
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass: "text-danger text-sm",
-                                          },
-                                          [_vm._v("*")]
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.city.longitude,
-                                          expression: "city.longitude",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "text",
-                                        name: "longitude",
-                                        id: "longitude",
-                                        placeholder: _vm.__("longitude"),
-                                        required: "",
-                                        readonly: "",
-                                      },
-                                      domProps: { value: _vm.city.longitude },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.city,
-                                            "longitude",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.city.name,
-                                    expression: "city.name",
-                                  },
-                                ],
-                                attrs: { type: "hidden", name: "name" },
-                                domProps: { value: _vm.city.name },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.city,
-                                      "name",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              language.is_default
-                                ? _c("div", { staticClass: "form-group" }, [
-                                    _c("label", { attrs: { for: "state" } }, [
-                                      _vm._v(
-                                        " " + _vm._s(_vm.__("state_name"))
-                                      ),
-                                      _c(
-                                        "span",
-                                        { staticClass: "text-danger text-sm" },
-                                        [_vm._v("*")]
-                                      ),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.city.state,
-                                          expression: "city.state",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "text",
-                                        name: "state",
-                                        id: "state",
-                                        placeholder: _vm.__("state_name"),
-                                        required: "",
-                                        readonly: "",
-                                      },
-                                      domProps: { value: _vm.city.state },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.city,
-                                            "state",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
                                   ])
                                 : _vm._e(),
                               _vm._v(" "),
@@ -1846,211 +1626,83 @@ var render = function () {
                               ]),
                               _vm._v(" "),
                               language.is_default
-                                ? _c("div", { staticClass: "form-group" }, [
-                                    _c(
-                                      "label",
-                                      { attrs: { for: "time_to_travel" } },
-                                      [
-                                        _vm._v(
-                                          _vm._s(_vm.__("time_to_travel_1km")) +
-                                            " "
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass: "text-danger text-sm",
-                                          },
-                                          [_vm._v("*")]
-                                        ),
-                                        _vm._v(" "),
-                                        _c("small", [
-                                          _vm._v(
-                                            "(\n                                                " +
-                                              _vm._s(
-                                                _vm.__("enter_in_minutes")
-                                              ) +
-                                              ")"
-                                          ),
-                                        ]),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.city.time_to_travel,
-                                          expression: "city.time_to_travel",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "number",
-                                        name: "time_to_travel",
-                                        id: "time_to_travel",
-                                        min: "0",
-                                        max: "999999999",
-                                        placeholder: _vm.__(
-                                          "enter_time_to_travel_1km_in_minutes"
-                                        ),
-                                        required: "",
-                                      },
-                                      domProps: {
-                                        value: _vm.city.time_to_travel,
-                                      },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.city,
-                                            "time_to_travel",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              language.is_default
-                                ? _c("div", { staticClass: "form-group" }, [
-                                    _c(
-                                      "label",
-                                      {
-                                        attrs: {
-                                          for: "min_amount_for_free_delivery",
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          _vm._s(
-                                            _vm.__(
-                                              "minimum_amount_for_free_delivery"
-                                            )
-                                          )
-                                        ),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass: "text-danger text-xs",
-                                          },
-                                          [_vm._v("*")]
-                                        ),
-                                        _vm._v(" "),
-                                        _c("small", [
-                                          _vm._v(
-                                            "[ " +
-                                              _vm._s(_vm.$currency) +
-                                              "\n                                                ]"
-                                          ),
-                                        ]),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value:
-                                            _vm.city
-                                              .min_amount_for_free_delivery,
-                                          expression:
-                                            "city.min_amount_for_free_delivery",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "number",
-                                        name: "min_amount_for_free_delivery",
-                                        id: "min_amount_for_free_delivery",
-                                        placeholder: _vm.__(
-                                          "minimum_amount_for_free_delivery"
-                                        ),
-                                        min: "0",
-                                        max: "999999999",
-                                        required: "",
-                                      },
-                                      domProps: {
-                                        value:
-                                          _vm.city.min_amount_for_free_delivery,
-                                      },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.city,
-                                            "min_amount_for_free_delivery",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              language.is_default
                                 ? _c(
                                     "div",
-                                    { staticClass: "form-group d-none" },
+                                    { staticClass: "form-group" },
                                     [
                                       _c(
                                         "label",
-                                        {
-                                          attrs: {
-                                            for: "max_deliverable_distance",
-                                          },
-                                        },
+                                        { attrs: { for: "city_name" } },
                                         [
                                           _vm._v(
                                             " " +
-                                              _vm._s(
-                                                _vm.__(
-                                                  "maximum_delivarable_distance"
-                                                )
-                                              )
+                                              _vm._s(_vm.__("search_location"))
                                           ),
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass:
-                                                "text-danger text-xs",
-                                            },
-                                            [_vm._v("*")]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("small", [_vm._v("[Kilometre]")]),
                                         ]
                                       ),
+                                      _vm._v(" "),
+                                      _c("GmapAutocomplete", {
+                                        staticClass: "form-control",
+                                        attrs: {
+                                          type: "search",
+                                          placeholder: _vm.__(
+                                            "search_your_location_on_map"
+                                          ),
+                                          options: {
+                                            fields: [
+                                              "address_components",
+                                              "formatted_address",
+                                              "geometry",
+                                              "name",
+                                              "place_id",
+                                              "plus_code",
+                                              "types",
+                                            ],
+                                            strictBounds: false,
+                                          },
+                                          id: "city_name",
+                                        },
+                                        on: { place_changed: _vm.setPlace },
+                                      }),
                                       _vm._v(" "),
                                       _c("input", {
                                         directives: [
                                           {
                                             name: "model",
                                             rawName: "v-model",
-                                            value:
-                                              _vm.city.max_deliverable_distance,
-                                            expression:
-                                              "city.max_deliverable_distance",
+                                            value: _vm.city.name,
+                                            expression: "city.name",
                                           },
                                         ],
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "number",
-                                          name: "max_deliverable_distance",
-                                          placeholder:
-                                            "Enter Delivarable Maximum Distance in km",
-                                          min: "0",
-                                          max: "999999999",
+                                        attrs: { type: "hidden", name: "name" },
+                                        domProps: { value: _vm.city.name },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              _vm.city,
+                                              "name",
+                                              $event.target.value
+                                            )
+                                          },
                                         },
+                                      }),
+                                      _vm._v(" "),
+                                      _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.city.formatted_address,
+                                            expression:
+                                              "city.formatted_address",
+                                          },
+                                        ],
+                                        attrs: { type: "hidden" },
                                         domProps: {
-                                          value:
-                                            _vm.city.max_deliverable_distance,
+                                          value: _vm.city.formatted_address,
                                         },
                                         on: {
                                           input: function ($event) {
@@ -2059,688 +1711,197 @@ var render = function () {
                                             }
                                             _vm.$set(
                                               _vm.city,
-                                              "max_deliverable_distance",
+                                              "formatted_address",
                                               $event.target.value
                                             )
                                           },
                                         },
                                       }),
-                                    ]
+                                      _vm._v(" "),
+                                      _c(
+                                        "small",
+                                        { staticClass: "text-muted" },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.__(
+                                                "search_to_navigate_map_then_draw_zone_boundary"
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                    ],
+                                    1
                                   )
                                 : _vm._e(),
                               _vm._v(" "),
                               language.is_default
-                                ? _c("div", { staticClass: "form-group" }, [
+                                ? _c("div", { staticClass: "row" }, [
                                     _c(
-                                      "label",
-                                      {
-                                        staticClass: " col-12 col-form-label",
-                                        attrs: {
-                                          for: "delivery_charge_method",
-                                        },
-                                      },
+                                      "div",
+                                      { staticClass: "form-group col-md-6" },
                                       [
-                                        _vm._v(
-                                          _vm._s(
-                                            _vm.__("delivery_charge_methods")
-                                          ) + " "
-                                        ),
                                         _c(
-                                          "span",
-                                          {
-                                            staticClass: "text-danger text-sm",
-                                          },
-                                          [_vm._v("*")]
+                                          "label",
+                                          { attrs: { for: "latitude" } },
+                                          [
+                                            _vm._v(
+                                              _vm._s(_vm.__("latitude")) + " "
+                                            ),
+                                            _c(
+                                              "span",
+                                              {
+                                                staticClass:
+                                                  "text-danger text-sm",
+                                              },
+                                              [_vm._v("*")]
+                                            ),
+                                          ]
                                         ),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.city.latitude,
+                                              expression: "city.latitude",
+                                            },
+                                          ],
+                                          staticClass: "form-control",
+                                          attrs: {
+                                            type: "text",
+                                            name: "latitude",
+                                            id: "latitude",
+                                            placeholder: _vm.__("latitude"),
+                                            required: "",
+                                            readonly: "",
+                                          },
+                                          domProps: {
+                                            value: _vm.city.latitude,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                _vm.city,
+                                                "latitude",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
                                       ]
                                     ),
                                     _vm._v(" "),
                                     _c(
-                                      "select",
-                                      {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value:
-                                              _vm.city.delivery_charge_method,
-                                            expression:
-                                              "city.delivery_charge_method",
-                                          },
-                                        ],
-                                        staticClass: "form-control form-select",
-                                        attrs: {
-                                          name: "delivery_charge_method",
-                                          id: "delivery_charge_method",
-                                          required: "",
-                                        },
-                                        on: {
-                                          change: function ($event) {
-                                            var $$selectedVal =
-                                              Array.prototype.filter
-                                                .call(
-                                                  $event.target.options,
-                                                  function (o) {
-                                                    return o.selected
-                                                  }
-                                                )
-                                                .map(function (o) {
-                                                  var val =
-                                                    "_value" in o
-                                                      ? o._value
-                                                      : o.value
-                                                  return val
-                                                })
-                                            _vm.$set(
-                                              _vm.city,
-                                              "delivery_charge_method",
-                                              $event.target.multiple
-                                                ? $$selectedVal
-                                                : $$selectedVal[0]
-                                            )
-                                          },
-                                        },
-                                      },
+                                      "div",
+                                      { staticClass: "form-group col-md-6" },
                                       [
-                                        _c("option", { attrs: { value: "" } }, [
-                                          _vm._v(
-                                            _vm._s(_vm.__("select_method"))
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
                                         _c(
-                                          "option",
-                                          { attrs: { value: "fixed_charge" } },
+                                          "label",
+                                          { attrs: { for: "longitude" } },
                                           [
                                             _vm._v(
-                                              _vm._s(
-                                                _vm.__("fixed_delivery_charges")
+                                              " " + _vm._s(_vm.__("longitude"))
+                                            ),
+                                            _c(
+                                              "span",
+                                              {
+                                                staticClass:
+                                                  "text-danger text-sm",
+                                              },
+                                              [_vm._v("*")]
+                                            ),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.city.longitude,
+                                              expression: "city.longitude",
+                                            },
+                                          ],
+                                          staticClass: "form-control",
+                                          attrs: {
+                                            type: "text",
+                                            name: "longitude",
+                                            id: "longitude",
+                                            placeholder: _vm.__("longitude"),
+                                            required: "",
+                                            readonly: "",
+                                          },
+                                          domProps: {
+                                            value: _vm.city.longitude,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                _vm.city,
+                                                "longitude",
+                                                $event.target.value
                                               )
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "option",
-                                          { attrs: { value: "per_km_charge" } },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.__(
-                                                  "per_km_delivery_charges"
-                                                )
-                                              ) +
-                                                "\n                                            "
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "option",
-                                          {
-                                            attrs: {
-                                              value: "range_wise_charges",
                                             },
                                           },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.__(
-                                                  "range_wise_delivery_charges"
-                                                )
-                                              )
-                                            ),
-                                          ]
-                                        ),
+                                        }),
                                       ]
                                     ),
                                   ])
                                 : _vm._e(),
                               _vm._v(" "),
-                              language.is_default
-                                ? _c("div", [
-                                    _vm.city.delivery_charge_method ===
-                                    "fixed_charge"
-                                      ? _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c(
-                                              "label",
-                                              {
-                                                attrs: { for: "fixed_charge" },
-                                              },
-                                              [
-                                                _vm._v(
-                                                  " " +
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "fix_delivery_charges"
-                                                      )
-                                                    )
-                                                ),
-                                                _c(
-                                                  "span",
-                                                  {
-                                                    staticClass:
-                                                      "text-danger text-sm",
-                                                  },
-                                                  [_vm._v("*")]
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value: _vm.city.fixed_charge,
-                                                  expression:
-                                                    "city.fixed_charge",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "number",
-                                                name: "fixed_charge",
-                                                id: "fixed_charge",
-                                                placeholder: _vm.__(
-                                                  "fix_delivery_charges"
-                                                ),
-                                                min: "0",
-                                                max: "999999999",
-                                                step: "any",
-                                              },
-                                              domProps: {
-                                                value: _vm.city.fixed_charge,
-                                              },
-                                              on: {
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    _vm.city,
-                                                    "fixed_charge",
-                                                    $event.target.value
-                                                  )
-                                                },
-                                              },
-                                            }),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.city.delivery_charge_method ===
-                                    "per_km_charge"
-                                      ? _c(
-                                          "div",
-                                          { staticClass: "form-group" },
-                                          [
-                                            _c(
-                                              "label",
-                                              {
-                                                attrs: { for: "per_km_charge" },
-                                              },
-                                              [
-                                                _vm._v(
-                                                  _vm._s(
-                                                    _vm.__(
-                                                      "per_km_delivery_charges"
-                                                    )
-                                                  )
-                                                ),
-                                                _c(
-                                                  "span",
-                                                  {
-                                                    staticClass:
-                                                      "text-danger text-sm",
-                                                  },
-                                                  [_vm._v("*")]
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value: _vm.city.per_km_charge,
-                                                  expression:
-                                                    "city.per_km_charge",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "number",
-                                                name: "per_km_charge",
-                                                id: "per_km_charge",
-                                                placeholder: _vm.__(
-                                                  "per_km_delivery_charges"
-                                                ),
-                                                min: "0",
-                                                max: "999999999",
-                                                step: "any",
-                                              },
-                                              domProps: {
-                                                value: _vm.city.per_km_charge,
-                                              },
-                                              on: {
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    _vm.city,
-                                                    "per_km_charge",
-                                                    $event.target.value
-                                                  )
-                                                },
-                                              },
-                                            }),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value:
-                                                    _vm.city.boundary_points,
-                                                  expression:
-                                                    "city.boundary_points",
-                                                },
-                                              ],
-                                              staticClass:
-                                                "form-control d-none",
-                                              attrs: {
-                                                type: "text",
-                                                name: "boundary_points",
-                                                id: "boundary_points",
-                                                placeholder:
-                                                  _vm.__("boundary_points"),
-                                              },
-                                              domProps: {
-                                                value: _vm.city.boundary_points,
-                                              },
-                                              on: {
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    _vm.city,
-                                                    "boundary_points",
-                                                    $event.target.value
-                                                  )
-                                                },
-                                              },
-                                            }),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.city.delivery_charge_method ===
-                                    "range_wise_charges"
-                                      ? _c(
-                                          "div",
-                                          {
-                                            staticClass: "form-group col-sm-12",
-                                          },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "range_wise_delivery_charges"
-                                                  )
-                                                )
-                                              ),
-                                              _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "text-danger text-sm",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "*\n                                                "
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "text-secondary text-sm",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "set_proper_ranges_for_delivery_charge_do_not_repeat_the_range_value_to_next_range_for_e_g_1_3_4_6"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _vm._l(
-                                              _vm.city.range_wise_charges,
-                                              function (range, index) {
-                                                return _c(
-                                                  "div",
-                                                  {
-                                                    key: (_vm.key = index + 1),
-                                                    staticClass:
-                                                      "form-group row",
-                                                  },
-                                                  [
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass: "col-sm-1",
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          _vm._s(_vm.key) + "."
-                                                        ),
-                                                      ]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass: "col-sm-3",
-                                                      },
-                                                      [
-                                                        _c("input", {
-                                                          directives: [
-                                                            {
-                                                              name: "model",
-                                                              rawName:
-                                                                "v-model",
-                                                              value:
-                                                                range.from_range,
-                                                              expression:
-                                                                "range.from_range",
-                                                            },
-                                                          ],
-                                                          staticClass:
-                                                            "form-control",
-                                                          attrs: {
-                                                            type: "number",
-                                                            name: "from_range[]",
-                                                            id: "from_range",
-                                                            placeholder:
-                                                              _vm.__(
-                                                                "from_range"
-                                                              ),
-                                                            min: "0",
-                                                            max: "999999999",
-                                                          },
-                                                          domProps: {
-                                                            value:
-                                                              range.from_range,
-                                                          },
-                                                          on: {
-                                                            input: function (
-                                                              $event
-                                                            ) {
-                                                              if (
-                                                                $event.target
-                                                                  .composing
-                                                              ) {
-                                                                return
-                                                              }
-                                                              _vm.$set(
-                                                                range,
-                                                                "from_range",
-                                                                $event.target
-                                                                  .value
-                                                              )
-                                                            },
-                                                          },
-                                                        }),
-                                                      ]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass:
-                                                          "col-sm-1 btn btn-secondary",
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          _vm._s(_vm.__("to"))
-                                                        ),
-                                                      ]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass: "col-sm-3",
-                                                      },
-                                                      [
-                                                        _c("input", {
-                                                          directives: [
-                                                            {
-                                                              name: "model",
-                                                              rawName:
-                                                                "v-model",
-                                                              value:
-                                                                range.to_range,
-                                                              expression:
-                                                                "range.to_range",
-                                                            },
-                                                          ],
-                                                          staticClass:
-                                                            "form-control",
-                                                          attrs: {
-                                                            type: "number",
-                                                            name: "to_range[]",
-                                                            id: "to_range",
-                                                            placeholder:
-                                                              _vm.__(
-                                                                "to_range"
-                                                              ),
-                                                            min: "0",
-                                                            max: "999999999",
-                                                          },
-                                                          domProps: {
-                                                            value:
-                                                              range.to_range,
-                                                          },
-                                                          on: {
-                                                            input: function (
-                                                              $event
-                                                            ) {
-                                                              if (
-                                                                $event.target
-                                                                  .composing
-                                                              ) {
-                                                                return
-                                                              }
-                                                              _vm.$set(
-                                                                range,
-                                                                "to_range",
-                                                                $event.target
-                                                                  .value
-                                                              )
-                                                            },
-                                                          },
-                                                        }),
-                                                      ]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass: "col-sm-3",
-                                                      },
-                                                      [
-                                                        _c("input", {
-                                                          directives: [
-                                                            {
-                                                              name: "model",
-                                                              rawName:
-                                                                "v-model",
-                                                              value:
-                                                                range.price,
-                                                              expression:
-                                                                "range.price",
-                                                            },
-                                                          ],
-                                                          staticClass:
-                                                            "form-control",
-                                                          attrs: {
-                                                            type: "number",
-                                                            name: "price[]",
-                                                            id: "price",
-                                                            placeholder:
-                                                              _vm.__("price"),
-                                                            min: "0",
-                                                            max: "999999999",
-                                                            step: "any",
-                                                          },
-                                                          domProps: {
-                                                            value: range.price,
-                                                          },
-                                                          on: {
-                                                            input: function (
-                                                              $event
-                                                            ) {
-                                                              if (
-                                                                $event.target
-                                                                  .composing
-                                                              ) {
-                                                                return
-                                                              }
-                                                              _vm.$set(
-                                                                range,
-                                                                "price",
-                                                                $event.target
-                                                                  .value
-                                                              )
-                                                            },
-                                                          },
-                                                        }),
-                                                      ]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    index === 0
-                                                      ? _c(
-                                                          "div",
-                                                          {
-                                                            staticClass:
-                                                              "col-sm-1",
-                                                          },
-                                                          [
-                                                            _c(
-                                                              "a",
-                                                              {
-                                                                directives: [
-                                                                  {
-                                                                    name: "b-tooltip",
-                                                                    rawName:
-                                                                      "v-b-tooltip.hover",
-                                                                    modifiers: {
-                                                                      hover: true,
-                                                                    },
-                                                                  },
-                                                                ],
-                                                                staticStyle: {
-                                                                  cursor:
-                                                                    "pointer",
-                                                                },
-                                                                attrs: {
-                                                                  title:
-                                                                    _vm.__(
-                                                                      "add_row"
-                                                                    ),
-                                                                },
-                                                                on: {
-                                                                  click:
-                                                                    _vm.addRow,
-                                                                },
-                                                              },
-                                                              [
-                                                                _c("i", {
-                                                                  staticClass:
-                                                                    "fa fa-plus-square fa-2x",
-                                                                }),
-                                                              ]
-                                                            ),
-                                                          ]
-                                                        )
-                                                      : _vm._e(),
-                                                    _vm._v(" "),
-                                                    index !== 0
-                                                      ? _c(
-                                                          "div",
-                                                          {
-                                                            staticClass:
-                                                              "col-sm-1",
-                                                          },
-                                                          [
-                                                            _c(
-                                                              "a",
-                                                              {
-                                                                directives: [
-                                                                  {
-                                                                    name: "b-tooltip",
-                                                                    rawName:
-                                                                      "v-b-tooltip.hover",
-                                                                    modifiers: {
-                                                                      hover: true,
-                                                                    },
-                                                                  },
-                                                                ],
-                                                                staticStyle: {
-                                                                  cursor:
-                                                                    "pointer",
-                                                                },
-                                                                attrs: {
-                                                                  title:
-                                                                    _vm.__(
-                                                                      "remove_row"
-                                                                    ),
-                                                                },
-                                                                on: {
-                                                                  click:
-                                                                    function (
-                                                                      $event
-                                                                    ) {
-                                                                      return _vm.remove(
-                                                                        index
-                                                                      )
-                                                                    },
-                                                                },
-                                                              },
-                                                              [
-                                                                _c("i", {
-                                                                  staticClass:
-                                                                    "fa fa-times fa-2x",
-                                                                }),
-                                                              ]
-                                                            ),
-                                                          ]
-                                                        )
-                                                      : _vm._e(),
-                                                  ]
-                                                )
-                                              }
-                                            ),
-                                          ],
-                                          2
-                                        )
-                                      : _vm._e(),
-                                  ])
+                              language.is_default && !_vm.vertices
+                                ? _c(
+                                    "div",
+                                    {
+                                      staticClass:
+                                        "alert alert-warning py-2 px-3",
+                                    },
+                                    [
+                                      _c("i", {
+                                        staticClass: "fa fa-draw-polygon mr-1",
+                                      }),
+                                      _vm._v(
+                                        "\n                                            " +
+                                          _vm._s(
+                                            _vm.__(
+                                              "draw_zone_boundary_on_map_using_tools"
+                                            )
+                                          ) +
+                                          "\n                                        "
+                                      ),
+                                    ]
+                                  )
+                                : language.is_default
+                                ? _c(
+                                    "div",
+                                    {
+                                      staticClass:
+                                        "alert alert-success py-2 px-3",
+                                    },
+                                    [
+                                      _c("i", {
+                                        staticClass: "fa fa-check-circle mr-1",
+                                      }),
+                                      _vm._v(
+                                        "\n                                            " +
+                                          _vm._s(
+                                            _vm.__(
+                                              "zone_boundary_drawn_successfully"
+                                            )
+                                          ) +
+                                          "\n                                        "
+                                      ),
+                                    ]
+                                  )
                                 : _vm._e(),
                             ]
                           )

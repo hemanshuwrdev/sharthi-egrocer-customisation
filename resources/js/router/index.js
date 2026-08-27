@@ -183,6 +183,8 @@ const SystemUpdater = () => import("../views/Setting/SystemUpdater");
 // Location
 const City = () => import("../views/City/City");
 const EditCity = () => import("../views/City/EditCity");
+const Area = () => import("../views/Area/Area");
+const EditArea = () => import("../views/Area/EditArea");
 
 //Faqs
 const Faqs = () => import("../views/Faqs/Faqs");
@@ -1516,6 +1518,38 @@ function configRoutes() {
                         permission: 'order_list',
                         role: adminRoles,
                         title: 'City Edit'
+                    },
+                },
+                {
+                    path: "areas",
+                    name: "Area",
+                    component: Area,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Area'
+
+                    },
+                },
+                {
+                    path: "areas/create",
+                    name: "addArea",
+                    component: EditArea,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Area Create'
+
+                    },
+                },
+                {
+                    path: "areas/edit/:id",
+                    name: "EditArea",
+                    component: EditArea,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Area Edit'
                     },
                 },
                 {

@@ -90,6 +90,8 @@ class MasterProductApiController extends Controller
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.allow_loose_qty' => 'nullable|boolean',
+            'variants.*.max_qty_mode' => 'nullable|in:,per_order,per_day',
+            'variants.*.max_qty_value' => 'nullable|integer|min:1',
             'variants.*.weight' => 'nullable|numeric|min:0',
             'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
@@ -151,6 +153,8 @@ class MasterProductApiController extends Controller
                     $variant->secondary_unit_id = $v['secondary_unit_id'] ?? null;
                     $variant->secondary_unit_value = $v['secondary_unit_value'] ?? null;
                     $variant->allow_loose_qty = !empty($v['allow_loose_qty']) ? 1 : 0;
+                    $variant->max_qty_mode = !empty($v['max_qty_mode']) ? $v['max_qty_mode'] : null;
+                    $variant->max_qty_value = $variant->max_qty_mode ? ($v['max_qty_value'] ?? null) : null;
                     $variant->weight = $v['weight'] ?? null;
                     $variant->status = isset($v['status']) ? $v['status'] : 1;
 
@@ -194,6 +198,8 @@ class MasterProductApiController extends Controller
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.allow_loose_qty' => 'nullable|boolean',
+            'variants.*.max_qty_mode' => 'nullable|in:,per_order,per_day',
+            'variants.*.max_qty_value' => 'nullable|integer|min:1',
             'variants.*.weight' => 'nullable|numeric|min:0',
             'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
@@ -296,6 +302,8 @@ class MasterProductApiController extends Controller
                     $variant->secondary_unit_id = $v['secondary_unit_id'] ?? null;
                     $variant->secondary_unit_value = $v['secondary_unit_value'] ?? null;
                     $variant->allow_loose_qty = !empty($v['allow_loose_qty']) ? 1 : 0;
+                    $variant->max_qty_mode = !empty($v['max_qty_mode']) ? $v['max_qty_mode'] : null;
+                    $variant->max_qty_value = $variant->max_qty_mode ? ($v['max_qty_value'] ?? null) : null;
                     $variant->weight = $v['weight'] ?? null;
                     if (array_key_exists('status', $v)) {
                         $variant->status = $v['status'];

@@ -204,6 +204,18 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -212,9 +224,11 @@ __webpack_require__.r(__webpack_exports__);
     return {
       orders: [],
       zones: [],
+      areas: [],
       vehicles: [],
       drivers: [],
       selectedZone: '',
+      selectedArea: '',
       selectedRescheduled: '',
       selectedVehicleId: '',
       selectedVehicle: null,
@@ -272,16 +286,36 @@ __webpack_require__.r(__webpack_exports__);
         }
       });
     },
-    getVehicles: function getVehicles() {
+    onZoneChange: function onZoneChange() {
+      this.selectedArea = '';
+      this.areas = [];
+      if (this.selectedZone) {
+        this.getAreas();
+      }
+      this.getOrders();
+    },
+    getAreas: function getAreas() {
       var _this2 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/areas', {
+        params: {
+          city_id: this.selectedZone
+        }
+      }).then(function (res) {
+        if (res.data.status === 1) {
+          _this2.areas = res.data.data.areas || [];
+        }
+      });
+    },
+    getVehicles: function getVehicles() {
+      var _this3 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/vehicles/active').then(function (res) {
         if (res.data.status === 1) {
-          _this2.vehicles = res.data.data;
+          _this3.vehicles = res.data.data;
         }
       });
     },
     getDrivers: function getDrivers() {
-      var _this3 = this;
+      var _this4 = this;
       // Eager load delivery boys that are active
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/delivery_boys', {
         params: {
@@ -289,30 +323,31 @@ __webpack_require__.r(__webpack_exports__);
         }
       }).then(function (res) {
         if (res.data.status === 1) {
-          _this3.drivers = res.data.data.data || res.data.data;
+          _this4.drivers = res.data.data.data || res.data.data;
         }
       });
     },
     getOrders: function getOrders() {
-      var _this4 = this;
+      var _this5 = this;
       var params = {};
-      if (this.selectedZone) params.zone = this.selectedZone;
+      if (this.selectedZone) params.city_id = this.selectedZone;
+      if (this.selectedArea) params.area_id = this.selectedArea;
       if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/orders', {
         params: params
       }).then(function (res) {
         if (res.data.status === 1) {
-          _this4.orders = res.data.data;
-          _this4.selectedOrderIds = [];
-          _this4.selectAll = false;
-          _this4.calculateWeightSum();
+          _this5.orders = res.data.data;
+          _this5.selectedOrderIds = [];
+          _this5.selectAll = false;
+          _this5.calculateWeightSum();
         }
       });
     },
     updateVehicleCapacity: function updateVehicleCapacity() {
-      var _this5 = this;
+      var _this6 = this;
       this.selectedVehicle = this.vehicles.find(function (v) {
-        return v.id == _this5.selectedVehicleId;
+        return v.id == _this6.selectedVehicleId;
       }) || null;
       this.calculateWeightSum();
     },
@@ -336,11 +371,11 @@ __webpack_require__.r(__webpack_exports__);
       this.calculateWeightSum();
     },
     calculateWeightSum: function calculateWeightSum() {
-      var _this6 = this,
+      var _this7 = this,
         _this$selectedVehicle;
       var sum = 0;
       this.orders.forEach(function (order) {
-        if (_this6.selectedOrderIds.includes(order.id)) {
+        if (_this7.selectedOrderIds.includes(order.id)) {
           sum += parseFloat(order.weight || 0);
         }
       });
@@ -357,7 +392,7 @@ __webpack_require__.r(__webpack_exports__);
       return zone.charAt(0).toUpperCase() + zone.slice(1);
     },
     createLoadingSlip: function createLoadingSlip() {
-      var _this7 = this;
+      var _this8 = this;
       var confirmStock = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       this.loading = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.apiBase + '/loading_slips/save', {
@@ -366,17 +401,17 @@ __webpack_require__.r(__webpack_exports__);
         order_ids: this.selectedOrderIds,
         confirm_stock_shortage: confirmStock === true
       }).then(function (res) {
-        _this7.loading = false;
+        _this8.loading = false;
         if (res.data.status === 1) {
-          _this7.showSuccess(__('loading_slip_generated_and_route_optimized_successfully'));
-          _this7.$router.push(_this7.urlPrefix + '/loading_slips');
+          _this8.showSuccess(__('loading_slip_generated_and_route_optimized_successfully'));
+          _this8.$router.push(_this8.urlPrefix + '/loading_slips');
         } else if (res.data.status === 2) {
           var shortageListHtml = '<div class="text-left mt-2" style="max-height: 200px; overflow-y: auto; font-size: 14px;"><ul class="list-group list-group-flush">';
           res.data.shortages.forEach(function (item) {
             shortageListHtml += "<li class=\"list-group-item px-0 py-1 text-danger\">\n                            <strong>".concat(item.name, "</strong><br>\n                            <span class=\"text-muted small\">Required: <b>").concat(item.required, "</b> | Available: <b>").concat(item.available, "</b></span>\n                        </li>");
           });
           shortageListHtml += '</ul></div>';
-          _this7.$swal.fire({
+          _this8.$swal.fire({
             title: 'Stock Shortage Warning!',
             html: "<p class=\"mb-2\">The following items have insufficient database stock:</p>".concat(shortageListHtml, "<p class=\"mt-3\">Are you sure you want to proceed and generate the loading slip?</p>"),
             icon: 'warning',
@@ -387,15 +422,15 @@ __webpack_require__.r(__webpack_exports__);
             cancelButtonColor: '#d33'
           }).then(function (result) {
             if (result.value) {
-              _this7.createLoadingSlip(true);
+              _this8.createLoadingSlip(true);
             }
           });
         } else {
-          _this7.showError(res.data.message);
+          _this8.showError(res.data.message);
         }
       })["catch"](function (err) {
-        _this7.loading = false;
-        _this7.showError(__('an_error_occurred_during_slip_creation'));
+        _this8.loading = false;
+        _this8.showError(__('an_error_occurred_during_slip_creation'));
       });
     }
   }
@@ -650,7 +685,7 @@ var render = function () {
                                   ? $$selectedVal
                                   : $$selectedVal[0]
                               },
-                              _vm.getOrders,
+                              _vm.onZoneChange,
                             ],
                           },
                         },
@@ -662,8 +697,68 @@ var render = function () {
                           _vm._l(_vm.zones, function (zone) {
                             return _c(
                               "option",
-                              { key: zone, domProps: { value: zone } },
-                              [_vm._v(_vm._s(_vm.formatZone(zone)))]
+                              { key: zone.id, domProps: { value: zone.id } },
+                              [_vm._v(_vm._s(_vm.formatZone(zone.zone)))]
+                            )
+                          }),
+                        ],
+                        2
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "d-flex align-items-center" }, [
+                      _c(
+                        "label",
+                        {
+                          staticClass:
+                            "mb-0 text-muted font-weight-bold mr-2 text-nowrap",
+                        },
+                        [_vm._v(_vm._s(_vm.__("filter_by_area")) + ":")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "select",
+                        {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.selectedArea,
+                              expression: "selectedArea",
+                            },
+                          ],
+                          staticClass:
+                            "form-control form-select border-0 max-w-200 shadow-none",
+                          attrs: { disabled: !_vm.selectedZone },
+                          on: {
+                            change: [
+                              function ($event) {
+                                var $$selectedVal = Array.prototype.filter
+                                  .call($event.target.options, function (o) {
+                                    return o.selected
+                                  })
+                                  .map(function (o) {
+                                    var val = "_value" in o ? o._value : o.value
+                                    return val
+                                  })
+                                _vm.selectedArea = $event.target.multiple
+                                  ? $$selectedVal
+                                  : $$selectedVal[0]
+                              },
+                              _vm.getOrders,
+                            ],
+                          },
+                        },
+                        [
+                          _c("option", { attrs: { value: "" } }, [
+                            _vm._v(_vm._s(_vm.__("all_areas"))),
+                          ]),
+                          _vm._v(" "),
+                          _vm._l(_vm.areas, function (area) {
+                            return _c(
+                              "option",
+                              { key: area.id, domProps: { value: area.id } },
+                              [_vm._v(_vm._s(area.name))]
                             )
                           }),
                         ],
@@ -827,6 +922,15 @@ var render = function () {
                                 "py-3 font-weight-bold text-muted text-center",
                             },
                             [_vm._v(_vm._s(_vm.__("zone")))]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "th",
+                            {
+                              staticClass:
+                                "py-3 font-weight-bold text-muted text-center",
+                            },
+                            [_vm._v(_vm._s(_vm.__("area")))]
                           ),
                           _vm._v(" "),
                           _c(
@@ -1001,6 +1105,23 @@ var render = function () {
                                   ),
                                 ]),
                                 _vm._v(" "),
+                                _c("td", { staticClass: "text-center" }, [
+                                  order.area_name
+                                    ? _c(
+                                        "span",
+                                        {
+                                          staticClass:
+                                            "badge bg-soft-warning font-weight-bold",
+                                        },
+                                        [_vm._v(_vm._s(order.area_name))]
+                                      )
+                                    : _c(
+                                        "span",
+                                        { staticClass: "text-muted small" },
+                                        [_vm._v("-")]
+                                      ),
+                                ]),
+                                _vm._v(" "),
                                 _c(
                                   "td",
                                   {
@@ -1032,7 +1153,7 @@ var render = function () {
                                   "td",
                                   {
                                     staticClass: "text-center py-5 text-muted",
-                                    attrs: { colspan: "6" },
+                                    attrs: { colspan: "7" },
                                   },
                                   [
                                     _c("i", {

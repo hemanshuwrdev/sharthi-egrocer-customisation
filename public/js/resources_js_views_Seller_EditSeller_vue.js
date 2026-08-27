@@ -1129,8 +1129,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       skipCache: false,
       isLoading: false,
       center: {
-        lat: 0,
-        lng: 0
+        lat: 23.0225,
+        lng: 72.5714
       },
       map: "",
       drawingManager: "",
@@ -1194,8 +1194,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         radius: ''
       },
       cityMapCenter: {
-        lat: 20.5937,
-        lng: 78.9629
+        lat: 23.0225,
+        lng: 72.5714
       },
       cityMapMarkers: [],
       cityCurrentOverlay: null,
@@ -1254,8 +1254,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       pickup_store_timings: "",
       // Pickup map properties
       pickupCenter: {
-        lat: 0,
-        lng: 0
+        lat: 23.0225,
+        lng: 72.5714
       },
       pickupMarkers: [],
       pickupInfoWindow: {
@@ -8450,334 +8450,319 @@ var render = function () {
                                             ),
                                           ]),
                                           _vm._v(" "),
-                                          _vm.isSellerRole
-                                            ? _c(
-                                                "div",
-                                                { staticClass: "card" },
-                                                [
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass:
-                                                        "card-header",
-                                                    },
-                                                    [
-                                                      _c("h4", [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "seller_bank_information"
-                                                            )
-                                                          )
+                                          _c("div", { staticClass: "card" }, [
+                                            _c(
+                                              "div",
+                                              { staticClass: "card-header" },
+                                              [
+                                                _c("h4", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "seller_bank_information"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "div",
+                                              { staticClass: "card-body" },
+                                              [
+                                                _c(
+                                                  "div",
+                                                  { staticClass: "row" },
+                                                  [
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-3 mt-0",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "bank_name"
+                                                                  )
+                                                                )
+                                                              ),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
+                                                                {
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.bank_name,
+                                                                  expression:
+                                                                    "bank_name",
+                                                                },
+                                                              ],
+                                                              staticClass:
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "bank_name"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.bank_name,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.bank_name =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
                                                         ),
-                                                      ]),
-                                                    ]
-                                                  ),
-                                                  _vm._v(" "),
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass: "card-body",
-                                                    },
-                                                    [
-                                                      _c(
-                                                        "div",
-                                                        { staticClass: "row" },
-                                                        [
-                                                          _c(
-                                                            "div",
-                                                            {
-                                                              staticClass:
-                                                                "form-group col-md-3 mt-0",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
-                                                                {
-                                                                  staticClass:
-                                                                    "form-group",
-                                                                },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "bank_name"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.bank_name,
-                                                                          expression:
-                                                                            "bank_name",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "bank_name"
-                                                                        ),
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.bank_name,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.bank_name =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                ]
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-3 mt-0",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "account_number"
+                                                                  )
+                                                                )
                                                               ),
-                                                            ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "div",
-                                                            {
-                                                              staticClass:
-                                                                "form-group col-md-3 mt-0",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
                                                                 {
-                                                                  staticClass:
-                                                                    "form-group",
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.account_number,
+                                                                  expression:
+                                                                    "account_number",
                                                                 },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "account_number"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.account_number,
-                                                                          expression:
-                                                                            "account_number",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "account_number"
-                                                                        ),
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.account_number,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.account_number =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                ]
-                                                              ),
-                                                            ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "div",
-                                                            {
+                                                              ],
                                                               staticClass:
-                                                                "form-group col-md-3 mt-0",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
-                                                                {
-                                                                  staticClass:
-                                                                    "form-group",
-                                                                },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "bank_ifsc_code"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.bank_ifsc_code,
-                                                                          expression:
-                                                                            "bank_ifsc_code",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "bank_ifsc_code"
-                                                                        ),
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.bank_ifsc_code,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.bank_ifsc_code =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                ]
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "account_number"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.account_number,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.account_number =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-3 mt-0",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "bank_ifsc_code"
+                                                                  )
+                                                                )
                                                               ),
-                                                            ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _c(
-                                                            "div",
-                                                            {
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
+                                                                {
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.bank_ifsc_code,
+                                                                  expression:
+                                                                    "bank_ifsc_code",
+                                                                },
+                                                              ],
                                                               staticClass:
-                                                                "form-group col-md-3 mt-0",
-                                                            },
-                                                            [
-                                                              _c(
-                                                                "div",
-                                                                {
-                                                                  staticClass:
-                                                                    "form-group",
-                                                                },
-                                                                [
-                                                                  _c("label", [
-                                                                    _vm._v(
-                                                                      _vm._s(
-                                                                        _vm.__(
-                                                                          "bank_account_name"
-                                                                        )
-                                                                      )
-                                                                    ),
-                                                                  ]),
-                                                                  _vm._v(" "),
-                                                                  _c("input", {
-                                                                    directives:
-                                                                      [
-                                                                        {
-                                                                          name: "model",
-                                                                          rawName:
-                                                                            "v-model",
-                                                                          value:
-                                                                            _vm.account_name,
-                                                                          expression:
-                                                                            "account_name",
-                                                                        },
-                                                                      ],
-                                                                    staticClass:
-                                                                      "form-control",
-                                                                    attrs: {
-                                                                      type: "text",
-                                                                      placeholder:
-                                                                        _vm.__(
-                                                                          "bank_account_name"
-                                                                        ),
-                                                                    },
-                                                                    domProps: {
-                                                                      value:
-                                                                        _vm.account_name,
-                                                                    },
-                                                                    on: {
-                                                                      input:
-                                                                        function (
-                                                                          $event
-                                                                        ) {
-                                                                          if (
-                                                                            $event
-                                                                              .target
-                                                                              .composing
-                                                                          ) {
-                                                                            return
-                                                                          }
-                                                                          _vm.account_name =
-                                                                            $event.target.value
-                                                                        },
-                                                                    },
-                                                                  }),
-                                                                ]
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "bank_ifsc_code"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.bank_ifsc_code,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.bank_ifsc_code =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-3 mt-0",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "bank_account_name"
+                                                                  )
+                                                                )
                                                               ),
-                                                            ]
-                                                          ),
-                                                        ]
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              )
-                                            : _vm._e(),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
+                                                                {
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.account_name,
+                                                                  expression:
+                                                                    "account_name",
+                                                                },
+                                                              ],
+                                                              staticClass:
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "bank_account_name"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.account_name,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.account_name =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            ),
+                                          ]),
                                           _vm._v(" "),
                                           _c("div", { staticClass: "card" }, [
                                             _c(

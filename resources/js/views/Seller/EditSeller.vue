@@ -736,7 +736,7 @@
 
                                                 </div>
 
-                                                <div class="card" v-if="isSellerRole">
+                                                <div class="card">
                                                     <div class="card-header">
                                                         <h4>{{ __('seller_bank_information') }}</h4>
                                                     </div>
@@ -1092,7 +1092,7 @@ export default {
             skipCache: false,
 
             isLoading: false,
-            center: { lat: 0, lng: 0 },
+            center: { lat: 23.0225, lng: 72.5714 },
             map: "",
             drawingManager: "",
 
@@ -1145,7 +1145,7 @@ export default {
                 name: '', latitude: '', longitude: '', state: '', zone: '',
                 formatted_address: '', boundary_points: '', geolocation_type: '', radius: '',
             },
-            cityMapCenter: { lat: 20.5937, lng: 78.9629 },
+            cityMapCenter: { lat: 23.0225, lng: 72.5714 },
             cityMapMarkers: [],
             cityCurrentOverlay: null,
             cityVertices: '',
@@ -1197,7 +1197,7 @@ export default {
             pickup_store_timings: "",
 
             // Pickup map properties
-            pickupCenter: { lat: 0, lng: 0 },
+            pickupCenter: { lat: 23.0225, lng: 72.5714 },
             pickupMarkers: [],
             pickupInfoWindow: {
                 position: { lat: 0, lng: 0 },

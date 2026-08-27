@@ -225,6 +225,13 @@ class PermissionSeeder extends Seeder
                 'default_roles' => ['Super Admin', 'Admin']
             ],
 
+            /*area*/
+            [
+                'name' => ['area_list', 'area_create', 'area_update', 'area_delete'],
+                'category_name' => 'location',
+                'default_roles' => ['Super Admin', 'Admin']
+            ],
+
             /*featured_section*/
             [
                 'name' => [

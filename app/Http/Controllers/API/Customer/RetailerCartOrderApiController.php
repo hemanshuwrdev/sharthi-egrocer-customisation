@@ -73,7 +73,7 @@ class RetailerCartOrderApiController extends Controller
             $sellerId = $resolved['seller_id'];
         }
 
-        $line = MasterCatalogOrderHelper::resolveLine($sellerId, $variantId, $qty);
+        $line = MasterCatalogOrderHelper::resolveLine($sellerId, $variantId, $qty, $user->id);
         if (!$line['ok']) {
             return CommonHelper::responseError($line['error']);
         }
@@ -422,7 +422,7 @@ class RetailerCartOrderApiController extends Controller
                 $sellerId = $resolved['seller_id'];
             }
 
-            $line = MasterCatalogOrderHelper::resolveLine($sellerId, $variantId, $qty);
+            $line = MasterCatalogOrderHelper::resolveLine($sellerId, $variantId, $qty, $user->id);
             if (!$line['ok']) {
                 $results[] = ['index' => $idx, 'ok' => false, 'error' => $line['error']];
                 continue;
@@ -508,7 +508,7 @@ class RetailerCartOrderApiController extends Controller
         // Pre-validate every line before any write
         $resolved = [];
         foreach ($items as $row) {
-            $line = MasterCatalogOrderHelper::resolveLine((int) $row->seller_id, (int) $row->master_product_variant_id, (float) $row->qty);
+            $line = MasterCatalogOrderHelper::resolveLine((int) $row->seller_id, (int) $row->master_product_variant_id, (float) $row->qty, $user->id);
             if (!$line['ok']) {
                 return CommonHelper::responseError($line['error']);
             }

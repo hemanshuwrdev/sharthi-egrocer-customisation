@@ -395,8 +395,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       isLoading: false,
       loggedUser: _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].user,
       center: {
-        lat: 0,
-        lng: 0
+        lat: 23.0225,
+        lng: 72.5714
       },
       map: "",
       drawingManager: "",

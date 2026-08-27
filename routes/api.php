@@ -60,6 +60,9 @@ Route::get('categories', [\App\Http\Controllers\API\CategoryApiController::class
 
 Route::get('cities', [\App\Http\Controllers\API\CityApiController::class, 'getCities']);
 
+Route::get('areas', [\App\Http\Controllers\API\AreaApiController::class, 'getAreas']);
+Route::get('area/search-by-pincode', [\App\Http\Controllers\API\AreaApiController::class, 'searchByPincode']);
+
 Route::get('policies', [\App\Http\Controllers\SellerController::class, 'getPolicies']);
 
 Route::middleware('auth:api')->group(function () {
@@ -536,6 +539,12 @@ Route::middleware('auth:api')->group(function () {
         Route::get('edit/{id}', [\App\Http\Controllers\API\CityApiController::class, 'edit']);
         Route::post('update', [\App\Http\Controllers\API\CityApiController::class, 'update'])->name('cities.update');
         Route::post('delete', [\App\Http\Controllers\API\CityApiController::class, 'delete'])->name('cities.delete');
+    });
+
+    Route::group(['prefix' => 'areas'], function () {
+        Route::post('save', [\App\Http\Controllers\API\AreaApiController::class, 'save'])->name('areas.save');
+        Route::get('edit/{id}', [\App\Http\Controllers\API\AreaApiController::class, 'edit']);
+        Route::post('delete', [\App\Http\Controllers\API\AreaApiController::class, 'delete'])->name('areas.delete');
     });
 
     Route::group(['prefix' => 'faqs'], function () {

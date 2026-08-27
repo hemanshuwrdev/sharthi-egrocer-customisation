@@ -6,7 +6,6 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AdminToken;
 use App\Models\BrandDistributorMapping;
-use App\Models\City;
 use App\Models\RetailerAddressChangeRequest;
 use App\Models\RetailerProfile;
 use App\Models\Salesman;
@@ -284,30 +283,14 @@ class RetailerAddressChangeController extends Controller
     }
 
     /**
-     * The distributor's directly-mapped cities, expanded to every sibling city sharing
-     * the same zone label — so a request whose GPS point matched a different city
-     * polygon within the same zone still shows up for this distributor's salesmen.
+     * The distributor's directly-mapped cities. Each `cities` row is already its own
+     * zone, so the mapped city ids already ARE the zone ids — no further "expand to
+     * sibling cities sharing a zone label" step is needed.
      */
     private function territoryCityIds(int $sellerId): array
     {
-        $mappedCityIds = BrandDistributorMapping::where('seller_id', $sellerId)
-            ->pluck('city_id')->unique()->values();
-
-        if ($mappedCityIds->isEmpty()) {
-            return [];
-        }
-
-        $zones = City::whereIn('id', $mappedCityIds)
-            ->whereNotNull('zone')->where('zone', '!=', '')
-            ->pluck('zone')->unique()->values();
-
-        if ($zones->isEmpty()) {
-            return $mappedCityIds->all();
-        }
-
-        $zoneCityIds = City::whereIn('zone', $zones)->pluck('id');
-
-        return $mappedCityIds->merge($zoneCityIds)->unique()->values()->all();
+        return BrandDistributorMapping::where('seller_id', $sellerId)
+            ->pluck('city_id')->unique()->values()->all();
     }
 
     /**

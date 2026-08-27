@@ -4,6 +4,8 @@ namespace App\Helpers;
 
 use App\Models\BrandDistributorMapping;
 use App\Models\MasterProductVariant;
+use App\Models\OrderItem;
+use App\Models\OrderStatusList;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
 
@@ -29,7 +31,7 @@ class MasterCatalogOrderHelper
      *          'step' => float, 'secondary_unit' => string|null,
      *          'min_secondary_qty' => int, 'min_qty' => float ]
      */
-    public static function resolveLine(int $sellerId, int $masterProductVariantId, float $qty): array
+    public static function resolveLine(int $sellerId, int $masterProductVariantId, float $qty, ?int $userId = null): array
     {
         $variant = MasterProductVariant::with(['masterProduct.tax', 'secondaryUnit'])->find($masterProductVariantId);
         if (!$variant || !$variant->masterProduct) {
@@ -51,6 +53,18 @@ class MasterCatalogOrderHelper
         $qtyError = self::validateSecondaryQty($variant, $sp, $qty);
         if ($qtyError) {
             return self::fail($qtyError);
+        }
+        // ──────────────────────────────────────────────────────────────────────
+
+        // ── Max order quantity limit (admin-set, on the master variant). $userId is
+        // only passed at actual cart-mutation/order-placement call sites — a null
+        // $userId (e.g. the getCart() re-pricing pass) skips this check, since
+        // re-pricing an already-in-cart line isn't a new quantity decision.
+        if ($userId !== null) {
+            $qtyLimitError = self::validateQtyLimits($variant, $qty, $userId);
+            if ($qtyLimitError) {
+                return self::fail($qtyLimitError);
+            }
         }
         // ──────────────────────────────────────────────────────────────────────
 
@@ -166,6 +180,49 @@ class MasterCatalogOrderHelper
         }
 
         return null; // ✓ valid
+    }
+
+    /**
+     * Enforce the admin-set maximum order quantity (master_product_variants.max_qty_mode /
+     * max_qty_value) for a line — same cap for every distributor selling this variant.
+     *
+     * Per Order: $qty alone must not exceed the cap.
+     * Per Day: $qty PLUS everything this retailer already ordered today for this exact
+     * variant (excluding cancelled orders) must not exceed the cap.
+     *
+     * Optional — null/0 means no restriction. Returns an error string key on failure,
+     * null on success.
+     */
+    public static function validateQtyLimits(
+        MasterProductVariant $variant,
+        float $qty,
+        int $userId
+    ): ?string {
+        if (!$variant->max_qty_value) {
+            return null;
+        }
+
+        if ($variant->max_qty_mode === 'per_day') {
+            $orderedToday = OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->where('orders.user_id', $userId)
+                ->where('order_items.master_product_variant_id', $variant->id)
+                ->whereDate('orders.created_at', now()->toDateString())
+                ->where('orders.active_status', '!=', OrderStatusList::$cancelled)
+                ->sum('order_items.quantity');
+
+            if (((float) $orderedToday + $qty) > $variant->max_qty_value) {
+                return 'maximum_order_quantity_per_day_exceeded';
+            }
+
+            return null;
+        }
+
+        // Default / 'per_order' mode
+        if ($qty > $variant->max_qty_value) {
+            return 'maximum_order_quantity_per_order_exceeded';
+        }
+
+        return null;
     }
 
     /**

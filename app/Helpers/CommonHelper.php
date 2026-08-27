@@ -12,7 +12,6 @@ use App\Models\City;
 use App\Models\DeliveryBoy;
 use App\Models\Favorite;
 use App\Models\FundTransfer;
-use App\Models\MailSetting;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatus;
@@ -742,34 +741,14 @@ class CommonHelper
     }
 
     /**
-     * Resolve a lat/long to the FULL set of city ids covering the retailer's whole zone,
-     * not just the single city polygon the point happens to land inside. A "zone" is a
-     * text label (cities.zone) shared by several city polygons — a distributor mapped to
-     * any sibling city in the same zone should still be visible to a retailer standing in
-     * a different city polygon within that zone.
+     * Resolve a lat/long to the city id(s) covering that point. Each `cities` row is
+     * already its own zone (e.g. "Bhuj Zone" and "South Bhuj" are two distinct rows,
+     * both named "Bhuj") — so the matched city id(s) already ARE the zone id(s), no
+     * further "expand to sibling cities sharing a zone label" step is needed.
      */
     public static function getDeliverableZoneCityIds($latitude, $longitude)
     {
-        $matchedCityIds = self::getDeliverableCityIds($latitude, $longitude);
-        if (empty($matchedCityIds)) {
-            return [];
-        }
-
-        $zones = City::whereIn('id', $matchedCityIds)
-            ->whereNotNull('zone')
-            ->where('zone', '!=', '')
-            ->pluck('zone')
-            ->unique()
-            ->values();
-
-        if ($zones->isEmpty()) {
-            // Matched cities have no zone label — fall back to just the matched cities.
-            return $matchedCityIds;
-        }
-
-        $zoneCityIds = City::whereIn('zone', $zones)->pluck('id')->all();
-
-        return collect($matchedCityIds)->merge($zoneCityIds)->unique()->values()->all();
+        return self::getDeliverableCityIds($latitude, $longitude);
     }
 
     public static function getSellerIds($latitude, $longitude)
@@ -2518,6 +2497,7 @@ class CommonHelper
             'address.country as customer_country',
             'address.latitude as customer_latitude',
             'address.longitude as customer_longitude',
+            'areas.name as area_name',
             'sellers.id as seller_id',
             'sellers.name as seller_name',
             'sellers.mobile as seller_mobile',
@@ -2532,22 +2512,29 @@ class CommonHelper
             'order_items.id as order_item_id',
             'os.id as active_status',
             'os.status as status_name',
-            'schemes.name as scheme_name'
+            'schemes.name as scheme_name',
+            'placing_salesman.name as salesman_name',
+            'placing_salesman.mobile as salesman_mobile'
         )
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses as address', 'orders.address_id', '=', 'address.id')
             ->leftJoin('cities', 'address.city_id', '=', 'cities.id')
+            ->leftJoin('areas', 'orders.area_id', '=', 'areas.id')
             ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
             ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
             ->leftJoin('delivery_boys', 'orders.delivery_boy_id', '=', 'delivery_boys.id')
             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
             ->leftJoin('order_status_lists as os', 'orders.active_status', '=', 'os.id')
             ->leftJoin('schemes', 'orders.scheme_id', '=', 'schemes.id')
+            ->leftJoin('salesmen as placing_salesman', 'orders.placed_by_salesman_id', '=', 'placing_salesman.id')
             ->where('orders.id', $order_id)
             ->groupBy('orders.id')
             ->first();
         if ($order) {
+            // Who actually placed this order: the retailer themselves, or a salesman on their behalf.
+            $order->placed_by = $order->placed_by_salesman_id ? 'salesman' : 'retailer';
+
             $order->additional_charges = json_decode($order->additional_charges ?? "[]");
 
             if ($order->order_type == 'selfpickup') {

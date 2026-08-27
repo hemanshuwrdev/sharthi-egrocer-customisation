@@ -870,6 +870,18 @@ __webpack_require__.r(__webpack_exports__);
           url: '/cities',
           role: true,
           permission: 'city_list'
+        }, {
+          name: __('add_area'),
+          icon: 'grid-fill',
+          url: '/areas/create',
+          role: true,
+          permission: 'area_create'
+        }, {
+          name: __('manage_areas'),
+          icon: 'grid-fill',
+          url: '/areas',
+          role: true,
+          permission: 'area_list'
         }]
       }, {
         name: __('customers'),

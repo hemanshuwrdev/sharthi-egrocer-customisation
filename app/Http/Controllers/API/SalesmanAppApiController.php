@@ -729,6 +729,8 @@ class SalesmanAppApiController extends Controller
                 'secondary_unit_value' => $r->secondary_unit_value,
                 'qty_step'             => (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
                 'min_qty'              => (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
+                'max_qty_mode'         => $r->max_qty_mode,
+                'max_qty_value'        => $r->max_qty_value,
                 'weight'               => $r->weight,
                 'image'                => $r->image ?: ($mp ? $mp->image : null),
                 'offer'                => $offer,

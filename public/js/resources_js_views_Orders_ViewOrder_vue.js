@@ -411,6 +411,23 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1221,6 +1238,47 @@ var render = function () {
                           _vm._v(" "),
                           _c("tr", [
                             _c("th", { staticClass: "th-width" }, [
+                              _vm._v(_vm._s(_vm.__("ordered_by"))),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "td",
+                              [
+                                _vm.order.placed_by === "salesman"
+                                  ? [
+                                      _c(
+                                        "span",
+                                        { staticClass: "badge bg-info me-1" },
+                                        [_vm._v(_vm._s(_vm.__("salesman")))]
+                                      ),
+                                      _vm._v(
+                                        "\n                                                " +
+                                          _vm._s(_vm.order.salesman_name) +
+                                          "\n                                            "
+                                      ),
+                                    ]
+                                  : [
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass:
+                                            "badge bg-secondary me-1",
+                                        },
+                                        [_vm._v(_vm._s(_vm.__("retailer")))]
+                                      ),
+                                      _vm._v(
+                                        "\n                                                " +
+                                          _vm._s(_vm.order.user_name) +
+                                          "\n                                            "
+                                      ),
+                                    ],
+                              ],
+                              2
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", { staticClass: "th-width" }, [
                               _vm._v(_vm._s(_vm.__("area"))),
                             ]),
                             _vm._v(" "),
@@ -1233,6 +1291,16 @@ var render = function () {
                             ]),
                             _vm._v(" "),
                             _c("td", [_vm._v(_vm._s(_vm.order.pincode))]),
+                          ]),
+                          _vm._v(" "),
+                          _c("tr", [
+                            _c("th", { staticClass: "th-width" }, [
+                              _vm._v(_vm._s(_vm.__("assigned_area"))),
+                            ]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(_vm._s(_vm.order.area_name || "-")),
+                            ]),
                           ]),
                           _vm._v(" "),
                           _c("tr", [

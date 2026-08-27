@@ -135,6 +135,16 @@
                         <td align="left" style="color: #555; padding: 2px 5px; border: none;">Page No:</td>
                         <td align="right" style="padding: 2px 5px; border: none;">1 / 1</td>
                     </tr>
+                    <tr>
+                        <td align="left" style="color: #555; padding: 2px 5px; border: none;">Order By:</td>
+                        <td align="right" style="padding: 2px 5px; border: none;">
+                            @if (!empty($order->salesman_name))
+                                Salesman - {{ $order->salesman_name }}{{ !empty($order->salesman_mobile) ? ' (' . $order->salesman_mobile . ')' : '' }}
+                            @else
+                                Retailer - {{ $customerName }}{{ !empty($customerMobile) ? ' (' . $customerMobile . ')' : '' }}
+                            @endif
+                        </td>
+                    </tr>
                 </table>
             </td>
         </tr>

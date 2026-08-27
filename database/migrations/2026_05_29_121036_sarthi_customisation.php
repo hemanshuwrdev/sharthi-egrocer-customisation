@@ -330,6 +330,20 @@ class SarthiCustomisation extends Migration
             }
         });
 
+        // Master Catalog Variants: admin-set maximum order quantity (global ceiling,
+        // same for every distributor selling this variant). NULL value = no limit.
+        // Mode decides whether the cap applies to a single order, or cumulatively across
+        // everything a retailer has ordered for this product on the current server date.
+        Schema::table('master_product_variants', function (Blueprint $table) {
+            if (!Schema::hasColumn('master_product_variants', 'max_qty_mode')) {
+                $table->string('max_qty_mode', 20)->nullable()->after('allow_loose_qty')
+                    ->comment("'per_order' or 'per_day'");
+            }
+            if (!Schema::hasColumn('master_product_variants', 'max_qty_value')) {
+                $table->unsignedInteger('max_qty_value')->nullable()->after('max_qty_mode');
+            }
+        });
+
         // 11a. Master Catalog: SEO columns on master_products (default-language fallback)
         Schema::table('master_products', function (Blueprint $table) {
             if (!Schema::hasColumn('master_products', 'meta_title')) {
@@ -944,6 +958,74 @@ class SarthiCustomisation extends Migration
             $seed('delivery_boys', 'delivery_boy');
             $seed('users', 'retailer');
         }
+
+        // ── Area (pincode-based): admin manages retailer/order territory at this
+        //    granularity instead of cities. Each `cities` row is already used as
+        //    one Zone (unique id, e.g. "Bhuj Zone" vs "South Bhuj" both under
+        //    city name "Bhuj") — so Area links to its Zone via `city_id`
+        //    (a real FK to cities.id), not by matching a free-text zone string.
+        //    No separate zones table.
+        if (!Schema::hasTable('areas')) {
+            Schema::create('areas', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('city_id');
+                $table->string('name');
+                $table->string('pincode', 10);
+                $table->string('state')->nullable();
+                $table->string('district')->nullable();
+                $table->tinyInteger('status')->default(1);
+                $table->timestamps();
+
+                $table->index('city_id', 'idx_areas_city_id');
+                $table->index('pincode', 'idx_areas_pincode');
+            });
+        }
+
+        // ── Area: migrate existing installs from the old text-based `zone`
+        //    column to the real `city_id` FK (matches old zone text to the
+        //    corresponding cities row, then drops the old column).
+        if (Schema::hasTable('areas') && Schema::hasColumn('areas', 'zone') && !Schema::hasColumn('areas', 'city_id')) {
+            Schema::table('areas', function (Blueprint $table) {
+                $table->unsignedBigInteger('city_id')->nullable()->after('id');
+            });
+
+            DB::table('areas')->orderBy('id')->each(function ($area) {
+                $city = DB::table('cities')->where('zone', $area->zone)->first();
+                if ($city) {
+                    DB::table('areas')->where('id', $area->id)->update(['city_id' => $city->id]);
+                }
+            });
+
+            Schema::table('areas', function (Blueprint $table) {
+                $table->dropColumn('zone');
+                $table->unsignedBigInteger('city_id')->nullable(false)->change();
+                $table->index('city_id', 'idx_areas_city_id');
+            });
+        }
+
+        // ── Retailer address gets a real Area link (pincode-level, chosen
+        //    explicitly by the retailer via the pincode-search picker — one
+        //    pincode can match multiple Areas, so this is never auto-guessed).
+        if (Schema::hasTable('user_addresses') && !Schema::hasColumn('user_addresses', 'area_id')) {
+            Schema::table('user_addresses', function (Blueprint $table) {
+                $table->unsignedBigInteger('area_id')->nullable()->after('area');
+                $table->index('area_id', 'idx_user_addresses_area_id');
+            });
+
+            // One-time backfill: only where a pincode matches exactly ONE area
+            // (unambiguous). Ambiguous pincodes are left null on purpose.
+            DB::table('areas')
+                ->select('pincode', DB::raw('COUNT(*) as cnt'), DB::raw('MIN(id) as only_id'))
+                ->groupBy('pincode')
+                ->havingRaw('COUNT(*) = 1')
+                ->orderBy('pincode')
+                ->each(function ($area) {
+                    DB::table('user_addresses')
+                        ->where('pincode', $area->pincode)
+                        ->whereNull('area_id')
+                        ->update(['area_id' => $area->only_id]);
+                });
+        }
     }
 
     /**
@@ -953,6 +1035,8 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('areas');
+
         if (Schema::hasTable('mobile_registry')) {
             Schema::dropIfExists('mobile_registry');
         }

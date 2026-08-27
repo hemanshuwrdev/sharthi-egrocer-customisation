@@ -29,9 +29,16 @@
                                 <div class="d-flex align-items-center justify-content-md-end gap-3 flex-wrap">
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0 text-muted font-weight-bold mr-2 text-nowrap">{{ __('filter_by_zone') }}:</label>
-                                        <select v-model="selectedZone" @change="getOrders" class="form-control form-select border-0 max-w-200 shadow-none">
+                                        <select v-model="selectedZone" @change="onZoneChange" class="form-control form-select border-0 max-w-200 shadow-none">
                                             <option value="">{{ __('all_zones') }}</option>
-                                            <option v-for="zone in zones" :key="zone" :value="zone">{{ formatZone(zone) }}</option>
+                                            <option v-for="zone in zones" :key="zone.id" :value="zone.id">{{ formatZone(zone.zone) }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <label class="mb-0 text-muted font-weight-bold mr-2 text-nowrap">{{ __('filter_by_area') }}:</label>
+                                        <select v-model="selectedArea" @change="getOrders" :disabled="!selectedZone" class="form-control form-select border-0 max-w-200 shadow-none">
+                                            <option value="">{{ __('all_areas') }}</option>
+                                            <option v-for="area in areas" :key="area.id" :value="area.id">{{ area.name }}</option>
                                         </select>
                                     </div>
                                     <div class="d-flex align-items-center">
@@ -60,6 +67,7 @@
                                         <th class="py-3 font-weight-bold text-muted">{{ __('order_id') }}</th>
                                         <th class="py-3 font-weight-bold text-muted">{{ __('customer_name') }}</th>
                                         <th class="py-3 font-weight-bold text-muted text-center">{{ __('zone') }}</th>
+                                        <th class="py-3 font-weight-bold text-muted text-center">{{ __('area') }}</th>
                                         <th class="py-3 font-weight-bold text-muted text-right">{{ __('value') }}</th>
                                         <th class="py-3 font-weight-bold text-muted text-right">{{ __('weight_kg') }}</th>
                                     </tr>
@@ -82,13 +90,17 @@
                                         <td class="text-center">
                                             <span class="badge bg-soft-primary font-weight-bold">{{ formatZone(order.city_zone || 'Default') }}</span>
                                         </td>
+                                        <td class="text-center">
+                                            <span v-if="order.area_name" class="badge bg-soft-warning font-weight-bold">{{ order.area_name }}</span>
+                                            <span v-else class="text-muted small">-</span>
+                                        </td>
                                         <td class="text-right font-weight-bold">₹{{ order.final_total }}</td>
                                         <td class="text-right font-weight-bold">
                                             {{ order.weight || 0 }} kg
                                         </td>
                                     </tr>
                                     <tr v-if="orders.length === 0">
-                                        <td colspan="6" class="text-center py-5 text-muted">
+                                        <td colspan="7" class="text-center py-5 text-muted">
                                             <i class="fa fa-check-circle fa-2x mb-3 text-success"></i>
                                             <p class="mb-0 font-weight-bold">{{ __('hurray_all_doorstep_orders_are_already_assigned_to_slips') }}</p>
                                         </td>
@@ -198,9 +210,11 @@ export default {
         return {
             orders: [],
             zones: [],
+            areas: [],
             vehicles: [],
             drivers: [],
             selectedZone: '',
+            selectedArea: '',
             selectedRescheduled: '',
             selectedVehicleId: '',
             selectedVehicle: null,
@@ -251,6 +265,22 @@ export default {
                     }
                 });
         },
+        onZoneChange() {
+            this.selectedArea = '';
+            this.areas = [];
+            if (this.selectedZone) {
+                this.getAreas();
+            }
+            this.getOrders();
+        },
+        getAreas() {
+            axios.get(this.$apiUrl + '/areas', { params: { city_id: this.selectedZone } })
+                .then(res => {
+                    if (res.data.status === 1) {
+                        this.areas = res.data.data.areas || [];
+                    }
+                });
+        },
         getVehicles() {
             axios.get(this.apiBase + '/vehicles/active')
                 .then(res => {
@@ -270,7 +300,8 @@ export default {
         },
         getOrders() {
             const params = {};
-            if (this.selectedZone) params.zone = this.selectedZone;
+            if (this.selectedZone) params.city_id = this.selectedZone;
+            if (this.selectedArea) params.area_id = this.selectedArea;
             if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
             axios.get(this.apiBase + '/loading_slips/orders', { params }).then(res => {
                 if (res.data.status === 1) {
