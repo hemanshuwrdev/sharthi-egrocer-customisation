@@ -1,14 +1,10 @@
 <template>
-    <footer>
-        <div class="footer clearfix mb-0 text-muted ">
-            <div class="float-start">
-                <a href="javascript:void(0)" class="text-primary font-weight-normal" v-html="copyrightDetails"></a>
-            </div>
-            <div v-if="currentVersion !== ''" class="float-end">
-                <p>
-                  {{ __('version') }} : 
-                  <a href="javascript:void(0)">{{ $currentVersion }}</a>
-                </p>
+    <footer class="app-footer">
+        <div class="footer clearfix mb-0">
+            <div class="float-start footer-copyright" v-html="copyrightDetails"></div>
+            <div v-if="currentVersion !== ''" class="float-end footer-version">
+                {{ __('version') }} :
+                <span class="footer-version-badge">{{ $currentVersion }}</span>
             </div>
         </div>
     </footer>

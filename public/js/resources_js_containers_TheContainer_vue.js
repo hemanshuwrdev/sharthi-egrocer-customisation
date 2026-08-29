@@ -1127,10 +1127,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: 'TheFooter',
@@ -2780,27 +2776,20 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("footer", [
-    _c("div", { staticClass: "footer clearfix mb-0 text-muted " }, [
-      _c("div", { staticClass: "float-start" }, [
-        _c("a", {
-          staticClass: "text-primary font-weight-normal",
-          attrs: { href: "javascript:void(0)" },
-          domProps: { innerHTML: _vm._s(_vm.copyrightDetails) },
-        }),
-      ]),
+  return _c("footer", { staticClass: "app-footer" }, [
+    _c("div", { staticClass: "footer clearfix mb-0" }, [
+      _c("div", {
+        staticClass: "float-start footer-copyright",
+        domProps: { innerHTML: _vm._s(_vm.copyrightDetails) },
+      }),
       _vm._v(" "),
       _vm.currentVersion !== ""
-        ? _c("div", { staticClass: "float-end" }, [
-            _c("p", [
-              _vm._v(
-                "\n              " +
-                  _vm._s(_vm.__("version")) +
-                  " : \n              "
-              ),
-              _c("a", { attrs: { href: "javascript:void(0)" } }, [
-                _vm._v(_vm._s(_vm.$currentVersion)),
-              ]),
+        ? _c("div", { staticClass: "float-end footer-version" }, [
+            _vm._v(
+              "\n            " + _vm._s(_vm.__("version")) + " :\n            "
+            ),
+            _c("span", { staticClass: "footer-version-badge" }, [
+              _vm._v(_vm._s(_vm.$currentVersion)),
             ]),
           ])
         : _vm._e(),
