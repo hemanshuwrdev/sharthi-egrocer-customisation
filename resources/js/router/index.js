@@ -70,6 +70,8 @@ const PromoCode = () => import("../views/PromoCode/PromoCode");
 const TimeSlots = () => import("../views/Setting/TimeSlots/TimeSlots");
 //Setting - Store Settings
 const StoreSettings = () => import("../views/Setting/StoreSettings");
+//Setting - System Settings Hub
+const SystemSettingsHub = () => import("../views/Setting/SystemSettingsHub");
 //Setting - Units
 const Units = () => import("../views/Product/Units/Units");
 
@@ -849,6 +851,16 @@ function configRoutes() {
                         role: adminRoles,
                         title: 'Store Settings'
 
+                    },
+                },
+                {
+                    path: "system_settings",
+                    name: "System Settings",
+                    component: SystemSettingsHub,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'System'
                     },
                 },
                 {

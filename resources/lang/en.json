@@ -1999,5 +1999,6 @@
     "no_tags_available" : "No tags available",
     "cash_expected" : "Cash Expected",
     "add_new_category" : "Add New Category",
-    "select_language" : "Select Language"
+    "select_language" : "Select Language",
+    "go_to_settings" : "Go to settings"
 }
