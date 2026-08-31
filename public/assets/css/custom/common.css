@@ -1,3 +1,70 @@
+/* Status/tag pills — outline style (light tint bg, colored border+text)
+   instead of Bootstrap's solid-fill badges, applied globally via the
+   existing bg-* utility classes already used on every badge in the app. */
+.badge {
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    border: 1px solid transparent;
+    background: transparent;
+}
+
+.badge.bg-primary {
+    background-color: rgba(67, 94, 190, 0.08) !important;
+    border-color: rgba(67, 94, 190, 0.35);
+    color: #435ebe !important;
+}
+
+.badge.bg-secondary {
+    background-color: rgba(108, 117, 125, 0.08) !important;
+    border-color: rgba(108, 117, 125, 0.35);
+    color: #6c757d !important;
+}
+
+.badge.bg-success {
+    background-color: rgba(25, 135, 84, 0.08) !important;
+    border-color: rgba(25, 135, 84, 0.35);
+    color: #198754 !important;
+}
+
+.badge.bg-info {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border-color: rgba(13, 202, 240, 0.4);
+    color: #0891a8 !important;
+}
+
+.badge.bg-warning {
+    background-color: rgba(255, 193, 7, 0.12) !important;
+    border-color: rgba(255, 193, 7, 0.45);
+    color: #a17400 !important;
+}
+
+.badge.bg-danger {
+    background-color: rgba(220, 53, 69, 0.08) !important;
+    border-color: rgba(220, 53, 69, 0.35);
+    color: #dc3545 !important;
+}
+
+.badge.bg-dark,
+.badge.bg-black {
+    background-color: rgba(33, 37, 41, 0.08) !important;
+    border-color: rgba(33, 37, 41, 0.35);
+    color: var(--app-ink) !important;
+}
+
+/* Table thumbnail images — consistent rounded, framed, contained box
+   instead of raw edge-to-edge images of varying sizes. */
+.list-surface table td img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: var(--app-thead-bg);
+    border: 1px solid var(--app-border);
+    padding: 5px;
+}
+
 .sidebar-wrapper .menu {
     padding: 0 1rem;
 }
