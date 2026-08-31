@@ -65,6 +65,47 @@
     padding: 5px;
 }
 
+/* Sidebar scrollbar: thin green line instead of the default thick gray bar. */
+.sidebar-wrapper .ps__rail-y {
+    width: 3px !important;
+    background: transparent !important;
+}
+
+.sidebar-wrapper .ps__thumb-y {
+    width: 1px !important;
+    right: 1px !important;
+    background-color: #37a279 !important;
+}
+
+.sidebar-wrapper .ps__rail-y.ps--clicking .ps__thumb-y,
+.sidebar-wrapper .ps__rail-y:hover .ps__thumb-y {
+    width: 1px !important;
+    background-color: #37a279 !important;
+}
+
+.sidebar-wrapper .ps__rail-x {
+    display: none !important;
+}
+
+/* Native scrollbar fallback (when PerfectScrollbar hasn't initialized). */
+.sidebar-wrapper::-webkit-scrollbar {
+    width: 3px;
+}
+
+.sidebar-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-wrapper::-webkit-scrollbar-thumb {
+    background-color: #37a279;
+    border-radius: 999px;
+}
+
+.sidebar-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: #37a279 transparent;
+}
+
 .sidebar-wrapper .menu {
     padding: 0 1rem;
 }
