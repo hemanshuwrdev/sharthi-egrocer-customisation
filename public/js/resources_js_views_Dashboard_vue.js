@@ -567,6 +567,14 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -2360,7 +2368,7 @@ var render = function () {
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
           _c("div", { staticClass: "col-lg-6 col-md-12 col-sm-12 mb-4" }, [
-            _c("div", { staticClass: "card h-95" }, [
+            _c("div", { staticClass: "list-surface h-100" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title me-1" }, [
                   _vm._v(_vm._s(_vm.__("top_sellers"))),
@@ -2379,162 +2387,124 @@ var render = function () {
               _vm._v(" "),
               _c(
                 "div",
-                { staticClass: "card-body" },
+                { staticClass: "table-responsive" },
+                [
+                  _c("b-table", {
+                    attrs: {
+                      items: _vm.sellers,
+                      fields: _vm.sellerFields,
+                      "current-page": _vm.currentPage,
+                      "per-page": _vm.perPage,
+                      filter: _vm.sellerFilter,
+                      "filter-included-fields": _vm.filterOn,
+                      "sort-by": _vm.sellerSortBy,
+                      "sort-desc": _vm.sellerSortDesc,
+                      "sort-direction": _vm.sortDirection,
+                      bordered: true,
+                      "show-empty": "",
+                      small: "",
+                    },
+                    on: {
+                      "update:sortBy": function ($event) {
+                        _vm.sellerSortBy = $event
+                      },
+                      "update:sort-by": function ($event) {
+                        _vm.sellerSortBy = $event
+                      },
+                      "update:sortDesc": function ($event) {
+                        _vm.sellerSortDesc = $event
+                      },
+                      "update:sort-desc": function ($event) {
+                        _vm.sellerSortDesc = $event
+                      },
+                    },
+                    scopedSlots: _vm._u([
+                      {
+                        key: "head(total_revenue)",
+                        fn: function (row) {
+                          return [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(
+                                  _vm.__("total_revenue") +
+                                    "(" +
+                                    _vm.$currency +
+                                    ")"
+                                ) +
+                                "\n                                "
+                            ),
+                          ]
+                        },
+                      },
+                      {
+                        key: "cell(seller_name)",
+                        fn: function (row) {
+                          return [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(
+                                  _vm.getDisplayName(row.item.name) ||
+                                    row.item.seller_name ||
+                                    ""
+                                ) +
+                                "\n                                "
+                            ),
+                          ]
+                        },
+                      },
+                      {
+                        key: "cell(store_name)",
+                        fn: function (row) {
+                          return [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(
+                                  _vm.getDisplayName(row.item.store_name) || ""
+                                ) +
+                                "\n                                "
+                            ),
+                          ]
+                        },
+                      },
+                    ]),
+                  }),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "list-footer" },
                 [
                   _c(
                     "div",
-                    { staticClass: "table-responsive" },
-                    [
-                      _c("b-table", {
-                        staticClass: "modern-table",
-                        attrs: {
-                          items: _vm.sellers,
-                          fields: _vm.sellerFields,
-                          "current-page": _vm.currentPage,
-                          "per-page": _vm.perPage,
-                          filter: _vm.sellerFilter,
-                          "filter-included-fields": _vm.filterOn,
-                          "sort-by": _vm.sellerSortBy,
-                          "sort-desc": _vm.sellerSortDesc,
-                          "sort-direction": _vm.sortDirection,
-                          bordered: false,
-                          borderless: "",
-                          "tbody-tr-class": function () {
-                            return "modern-tr"
-                          },
-                          "show-empty": "",
-                        },
-                        on: {
-                          "update:sortBy": function ($event) {
-                            _vm.sellerSortBy = $event
-                          },
-                          "update:sort-by": function ($event) {
-                            _vm.sellerSortBy = $event
-                          },
-                          "update:sortDesc": function ($event) {
-                            _vm.sellerSortDesc = $event
-                          },
-                          "update:sort-desc": function ($event) {
-                            _vm.sellerSortDesc = $event
-                          },
-                        },
-                        scopedSlots: _vm._u([
-                          {
-                            key: "head(total_revenue)",
-                            fn: function (row) {
-                              return [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(
-                                      _vm.__("total_revenue") +
-                                        "(" +
-                                        _vm.$currency +
-                                        ")"
-                                    ) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            },
-                          },
-                          {
-                            key: "cell(seller_name)",
-                            fn: function (row) {
-                              return [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(
-                                      _vm.getDisplayName(row.item.name) ||
-                                        row.item.seller_name ||
-                                        ""
-                                    ) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            },
-                          },
-                          {
-                            key: "cell(store_name)",
-                            fn: function (row) {
-                              return [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(
-                                      _vm.getDisplayName(row.item.store_name) ||
-                                        ""
-                                    ) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            },
-                          },
-                        ]),
-                      }),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-row",
+                    { staticClass: "list-perpage" },
                     [
                       _c(
-                        "b-col",
-                        { staticClass: "my-1", attrs: { md: "2" } },
-                        [
-                          _c(
-                            "b-form-group",
-                            {
-                              staticClass: "mb-0",
-                              attrs: {
-                                label: _vm.__("per_page"),
-                                "label-for": "per-page-select",
-                                "label-align-sm": "right",
-                                "label-size": "sm",
-                              },
-                            },
-                            [
-                              _c("b-form-select", {
-                                staticClass: "form-control form-select",
-                                attrs: {
-                                  id: "per-page-select",
-                                  options: _vm.pageOptions,
-                                  size: "sm",
-                                },
-                                model: {
-                                  value: _vm.perPage,
-                                  callback: function ($$v) {
-                                    _vm.perPage = $$v
-                                  },
-                                  expression: "perPage",
-                                },
-                              }),
-                            ],
-                            1
-                          ),
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-col",
+                        "b-form-group",
                         {
-                          staticClass: "my-1",
-                          attrs: { md: "4", "offset-md": "6" },
+                          staticClass: "mb-0",
+                          attrs: {
+                            label: _vm.__("per_page"),
+                            "label-for": "per-page-select-sellers",
+                            "label-align-sm": "right",
+                            "label-size": "sm",
+                          },
                         },
                         [
-                          _c("b-pagination", {
-                            staticClass: "my-0",
+                          _c("b-form-select", {
+                            staticClass: "form-control form-select",
                             attrs: {
-                              "total-rows": _vm.totalRows,
-                              "per-page": _vm.perPage,
-                              align: "fill",
+                              id: "per-page-select-sellers",
+                              options: _vm.pageOptions,
                               size: "sm",
                             },
                             model: {
-                              value: _vm.currentPage,
+                              value: _vm.perPage,
                               callback: function ($$v) {
-                                _vm.currentPage = $$v
+                                _vm.perPage = $$v
                               },
-                              expression: "currentPage",
+                              expression: "perPage",
                             },
                           }),
                         ],
@@ -2543,6 +2513,23 @@ var render = function () {
                     ],
                     1
                   ),
+                  _vm._v(" "),
+                  _c("b-pagination", {
+                    staticClass: "list-pagination",
+                    attrs: {
+                      "total-rows": _vm.totalRows,
+                      "per-page": _vm.perPage,
+                      align: "fill",
+                      size: "sm",
+                    },
+                    model: {
+                      value: _vm.currentPage,
+                      callback: function ($$v) {
+                        _vm.currentPage = $$v
+                      },
+                      expression: "currentPage",
+                    },
+                  }),
                 ],
                 1
               ),
@@ -2550,7 +2537,7 @@ var render = function () {
           ]),
           _vm._v(" "),
           _c("div", { staticClass: "col-lg-6 col-md-12 col-sm-12 mb-4" }, [
-            _c("div", { staticClass: "card h-95" }, [
+            _c("div", { staticClass: "list-surface h-100" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title me-1" }, [
                   _vm._v(_vm._s(_vm.__("top_categories"))),
@@ -2569,163 +2556,124 @@ var render = function () {
               _vm._v(" "),
               _c(
                 "div",
-                { staticClass: "card-body" },
+                { staticClass: "table-responsive" },
+                [
+                  _c("b-table", {
+                    attrs: {
+                      items: _vm.categories,
+                      fields: _vm.categoryFields,
+                      "current-page": _vm.categoryCurrentPage,
+                      "per-page": _vm.categoryPerPage,
+                      filter: _vm.categoryFilter,
+                      "filter-included-fields": _vm.filterOn,
+                      "sort-by": _vm.categorySortBy,
+                      "sort-desc": _vm.categorySortDesc,
+                      "sort-direction": _vm.sortDirection,
+                      bordered: true,
+                      "show-empty": "",
+                      small: "",
+                    },
+                    on: {
+                      "update:sortBy": function ($event) {
+                        _vm.categorySortBy = $event
+                      },
+                      "update:sort-by": function ($event) {
+                        _vm.categorySortBy = $event
+                      },
+                      "update:sortDesc": function ($event) {
+                        _vm.categorySortDesc = $event
+                      },
+                      "update:sort-desc": function ($event) {
+                        _vm.categorySortDesc = $event
+                      },
+                    },
+                    scopedSlots: _vm._u([
+                      {
+                        key: "head(total_revenue)",
+                        fn: function (row) {
+                          return [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(
+                                  _vm.__("total_revenue") +
+                                    " (" +
+                                    _vm.$currency +
+                                    ")"
+                                ) +
+                                "\n                                "
+                            ),
+                          ]
+                        },
+                      },
+                      {
+                        key: "cell(category_name)",
+                        fn: function (row) {
+                          return [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(
+                                  _vm.getDisplayName(row.item.category_name) ||
+                                    ""
+                                ) +
+                                "\n                                "
+                            ),
+                          ]
+                        },
+                      },
+                      {
+                        key: "cell(product_name)",
+                        fn: function (row) {
+                          return [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(
+                                  _vm.getDisplayName(row.item.product_name) ||
+                                    ""
+                                ) +
+                                "\n                                "
+                            ),
+                          ]
+                        },
+                      },
+                    ]),
+                  }),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "list-footer" },
                 [
                   _c(
                     "div",
-                    { staticClass: "table-responsive" },
-                    [
-                      _c("b-table", {
-                        staticClass: "modern-table",
-                        attrs: {
-                          items: _vm.categories,
-                          fields: _vm.categoryFields,
-                          "current-page": _vm.categoryCurrentPage,
-                          "per-page": _vm.categoryPerPage,
-                          filter: _vm.categoryFilter,
-                          "filter-included-fields": _vm.filterOn,
-                          "sort-by": _vm.categorySortBy,
-                          "sort-desc": _vm.categorySortDesc,
-                          "sort-direction": _vm.sortDirection,
-                          bordered: false,
-                          borderless: "",
-                          "tbody-tr-class": function () {
-                            return "modern-tr"
-                          },
-                          "show-empty": "",
-                        },
-                        on: {
-                          "update:sortBy": function ($event) {
-                            _vm.categorySortBy = $event
-                          },
-                          "update:sort-by": function ($event) {
-                            _vm.categorySortBy = $event
-                          },
-                          "update:sortDesc": function ($event) {
-                            _vm.categorySortDesc = $event
-                          },
-                          "update:sort-desc": function ($event) {
-                            _vm.categorySortDesc = $event
-                          },
-                        },
-                        scopedSlots: _vm._u([
-                          {
-                            key: "head(total_revenue)",
-                            fn: function (row) {
-                              return [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(
-                                      _vm.__("total_revenue") +
-                                        " (" +
-                                        _vm.$currency +
-                                        ")"
-                                    ) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            },
-                          },
-                          {
-                            key: "cell(category_name)",
-                            fn: function (row) {
-                              return [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(
-                                      _vm.getDisplayName(
-                                        row.item.category_name
-                                      ) || ""
-                                    ) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            },
-                          },
-                          {
-                            key: "cell(product_name)",
-                            fn: function (row) {
-                              return [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(
-                                      _vm.getDisplayName(
-                                        row.item.product_name
-                                      ) || ""
-                                    ) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            },
-                          },
-                        ]),
-                      }),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-row",
+                    { staticClass: "list-perpage" },
                     [
                       _c(
-                        "b-col",
-                        { staticClass: "my-1", attrs: { md: "2" } },
-                        [
-                          _c(
-                            "b-form-group",
-                            {
-                              staticClass: "mb-0",
-                              attrs: {
-                                label: _vm.__("per_page"),
-                                "label-for": "per-page-select",
-                                "label-align-sm": "right",
-                                "label-size": "sm",
-                              },
-                            },
-                            [
-                              _c("b-form-select", {
-                                staticClass: "form-control form-select",
-                                attrs: {
-                                  id: "per-page-select",
-                                  options: _vm.pageOptions,
-                                  size: "sm",
-                                },
-                                model: {
-                                  value: _vm.categoryPerPage,
-                                  callback: function ($$v) {
-                                    _vm.categoryPerPage = $$v
-                                  },
-                                  expression: "categoryPerPage",
-                                },
-                              }),
-                            ],
-                            1
-                          ),
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-col",
+                        "b-form-group",
                         {
-                          staticClass: "my-1",
-                          attrs: { md: "4", "offset-md": "6" },
+                          staticClass: "mb-0",
+                          attrs: {
+                            label: _vm.__("per_page"),
+                            "label-for": "per-page-select-categories",
+                            "label-align-sm": "right",
+                            "label-size": "sm",
+                          },
                         },
                         [
-                          _c("b-pagination", {
-                            staticClass: "my-0",
+                          _c("b-form-select", {
+                            staticClass: "form-control form-select",
                             attrs: {
-                              "total-rows": _vm.categoryTotalRows,
-                              "per-page": _vm.categoryPerPage,
-                              align: "fill",
+                              id: "per-page-select-categories",
+                              options: _vm.pageOptions,
                               size: "sm",
                             },
                             model: {
-                              value: _vm.categoryCurrentPage,
+                              value: _vm.categoryPerPage,
                               callback: function ($$v) {
-                                _vm.categoryCurrentPage = $$v
+                                _vm.categoryPerPage = $$v
                               },
-                              expression: "categoryCurrentPage",
+                              expression: "categoryPerPage",
                             },
                           }),
                         ],
@@ -2734,6 +2682,23 @@ var render = function () {
                     ],
                     1
                   ),
+                  _vm._v(" "),
+                  _c("b-pagination", {
+                    staticClass: "list-pagination",
+                    attrs: {
+                      "total-rows": _vm.categoryTotalRows,
+                      "per-page": _vm.categoryPerPage,
+                      align: "fill",
+                      size: "sm",
+                    },
+                    model: {
+                      value: _vm.categoryCurrentPage,
+                      callback: function ($$v) {
+                        _vm.categoryCurrentPage = $$v
+                      },
+                      expression: "categoryCurrentPage",
+                    },
+                  }),
                 ],
                 1
               ),

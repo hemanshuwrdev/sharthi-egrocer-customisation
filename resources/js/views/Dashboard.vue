@@ -443,86 +443,94 @@
 
                     -->
                     <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
-                        <div class="card h-95">
+                        <div class="list-surface h-100">
                             <div class="card-header">
                                 <h4 class="card-title me-1">{{ __('top_sellers') }}</h4>
                                 <small>({{ __('month') }}: {{ currentMonth }})</small>
                             </div>
-                            <div class="card-body">
 
-                                <div class="table-responsive">
-                                    <b-table :items="sellers" :fields="sellerFields" :current-page="currentPage"
-                                        :per-page="perPage" :filter="sellerFilter" :filter-included-fields="filterOn"
-                                        :sort-by.sync="sellerSortBy" :sort-desc.sync="sellerSortDesc"
-                                        :sort-direction="sortDirection" :bordered="false" borderless class="modern-table" :tbody-tr-class="() => 'modern-tr'" show-empty>
-                                        <template #head(total_revenue)="row">
-                                            {{ __('total_revenue') + '(' + $currency + ')' }}
-                                        </template>
-                                        <template #cell(seller_name)="row">
-                                            {{ getDisplayName(row.item.name) || row.item.seller_name || '' }}
-                                        </template>
-                                        <template #cell(store_name)="row">
-                                            {{ getDisplayName(row.item.store_name) || '' }}
-                                        </template>
-                                    </b-table>
+                            <div class="table-responsive">
+                                <b-table :items="sellers" :fields="sellerFields" :current-page="currentPage"
+                                    :per-page="perPage" :filter="sellerFilter" :filter-included-fields="filterOn"
+                                    :sort-by.sync="sellerSortBy" :sort-desc.sync="sellerSortDesc"
+                                    :sort-direction="sortDirection" :bordered="true" show-empty small>
+                                    <template #head(total_revenue)="row">
+                                        {{ __('total_revenue') + '(' + $currency + ')' }}
+                                    </template>
+                                    <template #cell(seller_name)="row">
+                                        {{ getDisplayName(row.item.name) || row.item.seller_name || '' }}
+                                    </template>
+                                    <template #cell(store_name)="row">
+                                        {{ getDisplayName(row.item.store_name) || '' }}
+                                    </template>
+                                </b-table>
+                            </div>
+
+                            <div class="list-footer">
+                                <div class="list-perpage">
+                                    <b-form-group :label="__('per_page')" label-for="per-page-select-sellers"
+                                        label-align-sm="right" label-size="sm" class="mb-0">
+                                        <b-form-select id="per-page-select-sellers" v-model="perPage"
+                                            :options="pageOptions" size="sm"
+                                            class="form-control form-select">
+                                        </b-form-select>
+                                    </b-form-group>
                                 </div>
-                                <b-row>
-                                    <b-col md="2" class="my-1">
-                                        <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                            label-align-sm="right" label-size="sm" class="mb-0">
-                                            <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                                size="sm" class="form-control form-select"></b-form-select>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col md="4" class="my-1" offset-md="6">
-                                        <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                                            align="fill" size="sm" class="my-0"></b-pagination>
-                                    </b-col>
-                                </b-row>
+                                <b-pagination
+                                    v-model="currentPage"
+                                    :total-rows="totalRows"
+                                    :per-page="perPage"
+                                    align="fill"
+                                    size="sm"
+                                    class="list-pagination">
+                                </b-pagination>
                             </div>
                         </div>
                     </div>
 
                     <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
-                        <div class="card h-95">
+                        <div class="list-surface h-100">
                             <div class="card-header">
                                 <h4 class="card-title me-1">{{ __('top_categories') }}</h4>
                                 <small>({{ __('month') }}: {{ currentMonth }})</small>
                             </div>
-                            <div class="card-body">
 
-                                <div class="table-responsive">
-                                    <b-table :items="categories" :fields="categoryFields"
-                                        :current-page="categoryCurrentPage" :per-page="categoryPerPage"
-                                        :filter="categoryFilter" :filter-included-fields="filterOn"
-                                        :sort-by.sync="categorySortBy" :sort-desc.sync="categorySortDesc"
-                                        :sort-direction="sortDirection" :bordered="false" borderless class="modern-table" :tbody-tr-class="() => 'modern-tr'" show-empty>
-                                        <template #head(total_revenue)="row">
-                                            {{ __('total_revenue') + ' (' + $currency + ')' }}
-                                        </template>
-                                        <template #cell(category_name)="row">
-                                            {{ getDisplayName(row.item.category_name) || '' }}
-                                        </template>
-                                        <template #cell(product_name)="row">
-                                            {{ getDisplayName(row.item.product_name) || '' }}
-                                        </template>
-                                    </b-table>
+                            <div class="table-responsive">
+                                <b-table :items="categories" :fields="categoryFields"
+                                    :current-page="categoryCurrentPage" :per-page="categoryPerPage"
+                                    :filter="categoryFilter" :filter-included-fields="filterOn"
+                                    :sort-by.sync="categorySortBy" :sort-desc.sync="categorySortDesc"
+                                    :sort-direction="sortDirection" :bordered="true" show-empty small>
+                                    <template #head(total_revenue)="row">
+                                        {{ __('total_revenue') + ' (' + $currency + ')' }}
+                                    </template>
+                                    <template #cell(category_name)="row">
+                                        {{ getDisplayName(row.item.category_name) || '' }}
+                                    </template>
+                                    <template #cell(product_name)="row">
+                                        {{ getDisplayName(row.item.product_name) || '' }}
+                                    </template>
+                                </b-table>
+                            </div>
+
+                            <div class="list-footer">
+                                <div class="list-perpage">
+                                    <b-form-group :label="__('per_page')" label-for="per-page-select-categories"
+                                        label-align-sm="right" label-size="sm" class="mb-0">
+                                        <b-form-select id="per-page-select-categories" v-model="categoryPerPage"
+                                            :options="pageOptions" size="sm"
+                                            class="form-control form-select">
+                                        </b-form-select>
+                                    </b-form-group>
                                 </div>
-                                <b-row>
-                                    <b-col md="2" class="my-1">
-                                        <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                            label-align-sm="right" label-size="sm" class="mb-0">
-                                            <b-form-select id="per-page-select" v-model="categoryPerPage"
-                                                :options="pageOptions" size="sm"
-                                                class="form-control form-select"></b-form-select>
-                                        </b-form-group>
-                                    </b-col>
-                                    <b-col md="4" class="my-1" offset-md="6">
-                                        <b-pagination v-model="categoryCurrentPage" :total-rows="categoryTotalRows"
-                                            :per-page="categoryPerPage" align="fill" size="sm"
-                                            class="my-0"></b-pagination>
-                                    </b-col>
-                                </b-row>
+                                <b-pagination
+                                    v-model="categoryCurrentPage"
+                                    :total-rows="categoryTotalRows"
+                                    :per-page="categoryPerPage"
+                                    align="fill"
+                                    size="sm"
+                                    class="list-pagination">
+                                </b-pagination>
                             </div>
                         </div>
                     </div>
