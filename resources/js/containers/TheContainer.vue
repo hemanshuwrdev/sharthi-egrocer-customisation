@@ -24,9 +24,10 @@
                         </li>
 
                         <template v-for="item in filteredSidebarItems">
-                            <li class="sidebar-item"
-                                :class="{ 'active': isActive(item.url) || subIsActive(item), 'has-sub': isHasSub(item) }"
-                                v-if="item.role == true ? $role('Super Admin') : (item.permission && $can(item.permission)) || (item.permission === null && isHasSub(item) && hasAnySubmenuPermission(item))">
+                            <li v-if="item.type === 'title'" class="sidebar-title">{{ item.name }}</li>
+                            <li v-if="item.type !== 'title' && (item.role == true ? $role('Super Admin') : (item.permission && $can(item.permission)) || (item.permission === null && isHasSub(item) && hasAnySubmenuPermission(item)))"
+                                class="sidebar-item"
+                                :class="{ 'active': isActive(item.url) || subIsActive(item), 'has-sub': isHasSub(item) }">
 
                                 <template v-if="isHasSub(item)">
                                     <a class="sidebar-link">
@@ -222,6 +223,7 @@ export default {
             isLoading: false,
             suspecious: null,
             sidebarItems: [
+                { type: 'title', name: __('main') },
                 {
                     name: __('dashboard'),
                     icon: 'tachometer-alt',
@@ -244,6 +246,7 @@ export default {
                     permission: 'self_pickup_order_list'
                 },
                 */
+                { type: 'title', name: __('catalog') },
                 {
                     name: __('categories'),
                     icon: 'bullseye',
@@ -379,6 +382,7 @@ export default {
                     permission: 'stock_management',
                 },
                 */
+                { type: 'title', name: __('distributors') },
                 {
                     name: __('sellers'),
                     icon: 'male',
@@ -418,6 +422,7 @@ export default {
                         },
                     ],
                 },
+                { type: 'title', name: __('marketing') },
                 {
                     name: __('home_sliders'),
                     icon: 'picture-o',
@@ -633,6 +638,7 @@ export default {
                 //     ]
                 // },
 
+                { type: 'title', name: __('communication') },
                 {
                     name: __('notifications'),
                     icon: 'bell',
@@ -672,6 +678,7 @@ export default {
                     ]
                 },
 
+                { type: 'title', name: __('settings') },
                 {
                     name: __('system'),
                     icon: 'wrench',
@@ -702,6 +709,7 @@ export default {
                 },
                 */
 
+                { type: 'title', name: __('content') },
                 {
                     name: __('blogs'),
                     icon: 'pen',
@@ -823,6 +831,7 @@ export default {
                         }
                     ]
                 },
+                { type: 'title', name: __('customers') },
                 {
                     name: __('customers'),
                     icon: 'male',
@@ -868,6 +877,7 @@ export default {
                     ]
                 },
 
+                { type: 'title', name: __('reports') },
                 {
                     name: __('reports'),
                     icon: 'folder-open',
@@ -907,6 +917,7 @@ export default {
                     role: true
                 },
                 */
+                { type: 'title', name: __('administration') },
                 {
                     name: __('role'),
                     icon: 'user-secret',

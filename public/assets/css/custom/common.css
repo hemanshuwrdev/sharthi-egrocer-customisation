@@ -1,3 +1,14 @@
+/* Instrument Sans — matches the design system font */
+body,
+#sidebar,
+.sidebar-wrapper,
+.sidebar-wrapper .menu,
+.sidebar-wrapper .menu .sidebar-link,
+.sidebar-wrapper .menu .submenu .submenu-item a,
+.sidebar-wrapper .menu .sidebar-title {
+    font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
 /* Status/tag pills — outline style (light tint bg, colored border+text)
    instead of Bootstrap's solid-fill badges, applied globally via the
    existing bg-* utility classes already used on every badge in the app. */
@@ -107,15 +118,138 @@
 }
 
 .sidebar-wrapper .menu {
-    padding: 0 1rem;
+    padding: 0 0.35rem;
+}
+
+/* Sidebar parent menu links */
+.sidebar-wrapper .menu .sidebar-link {
+    padding: 0.6rem 0.5rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #25396f;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.sidebar-wrapper .menu .sidebar-link span {
+    margin-left: 0.6rem;
+}
+
+/* Section titles (e.g. CATALOG, MAIN, DISTRIBUTORS) - Aligned vertically with category icons */
+.sidebar-wrapper .menu .sidebar-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #475569;
+    margin: 1.25rem 0 0.5rem;
+    padding: 0 0.5rem;
+}
+
+/* Parent Dropdown open or active state: Light rounded container box matching reference image */
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link,
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link {
+    background-color: #f0f1f5;
+    color: #25396f !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link span,
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link span,
+.sidebar-wrapper .menu .sidebar-item.has-sub > .sidebar-link:hover span {
+    color: #25396f !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link i,
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link svg,
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link i,
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link svg,
+.sidebar-wrapper .menu .sidebar-item.has-sub > .sidebar-link:hover i,
+.sidebar-wrapper .menu .sidebar-item.has-sub > .sidebar-link:hover svg {
+    color: #25396f !important;
+    fill: none !important;
+}
+
+/* Hover state for inactive sidebar links */
+.sidebar-wrapper .menu .sidebar-item:not(.active) > .sidebar-link:hover {
+    background-color: #f0f1f5;
+}
+
+.sidebar-wrapper .menu .sidebar-item:not(.active) > .sidebar-link:hover span {
+    color: #25396f !important;
+}
+
+/* Single active menu item (e.g. Dashboard) keeps primary green styling with white text */
+.sidebar-wrapper .menu .sidebar-item:not(.has-sub).active > .sidebar-link {
+    background-color: #37a279;
+    color: #fff !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item:not(.has-sub).active > .sidebar-link span {
+    color: #fff !important;
+}
+
+/* Keep stroke-only lucide icons clean on active state */
+.sidebar-wrapper .menu .sidebar-item.active > .sidebar-link .sidebar-icon svg {
+    fill: none !important;
 }
 
 #sidebar {
     background-color: var(--app-surface);
 }
 
-.sidebar-wrapper .menu .sidebar-link span {
-    margin-left: 0.6rem;
+/* Submenu container: Indented so bullets line up under the parent item text */
+.sidebar-wrapper .menu .submenu {
+    padding-left: 1.6rem;
+    margin-left: 0;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+/* Submenu items: Custom round bullet dot matching reference image */
+.sidebar-wrapper .menu .submenu .submenu-item {
+    list-style: none;
+    position: relative;
+    padding-left: 1.1rem;
+    margin: 0.35rem 0;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 5px;
+    background-color: #8e9bba;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item a {
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    color: #25396f;
+    display: inline-block;
+    padding: 0.2rem 0;
+    transition: color 0.2s ease, margin-left 0.2s ease;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item a:hover {
+    color: #37a279;
+    margin-left: 0.2rem;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item.active > a {
+    color: #37a279;
+    font-weight: 600;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item.active::before {
+    background-color: #37a279;
 }
 
 /* Sticky footer: content grows to fill the viewport so the footer always
@@ -2554,7 +2688,7 @@ code {
    ============================================================ */
 
 :root {
-    --app-sidebar-w: 300px;
+    --app-sidebar-w: 260px;
     --app-header-h: 64px;
     --app-brand-h: 88px;
     --app-surface: #ffffff;
@@ -3330,7 +3464,7 @@ body.theme-dark .sidebar-hide:hover {
 
     /* EXPANDED STATE (#sidebar.active) */
     #sidebar.active .sidebar-wrapper {
-        width: 300px !important;
+        width: 260px !important;
         left: 0 !important;
     }
     body.rtl #sidebar.active .sidebar-wrapper {
@@ -3338,10 +3472,10 @@ body.theme-dark .sidebar-hide:hover {
         left: auto !important;
     }
     #sidebar.active ~ #main {
-        margin-left: 300px !important;
+        margin-left: 260px !important;
     }
     body.rtl #sidebar.active ~ #main {
-        margin-right: 300px !important;
+        margin-right: 260px !important;
         margin-left: 0 !important;
     }
 

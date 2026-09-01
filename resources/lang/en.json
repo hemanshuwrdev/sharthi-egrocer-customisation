@@ -2008,5 +2008,11 @@
     "india": "India",
     "good_morning": "Good morning",
     "good_afternoon": "Good afternoon",
-    "good_evening": "Good evening"
+    "good_evening": "Good evening",
+    "main" : "Main",
+    "catalog" : "Catalog",
+    "marketing" : "Marketing",
+    "communication" : "Communication",
+    "content" : "Content",
+    "administration" : "Administration"
 }

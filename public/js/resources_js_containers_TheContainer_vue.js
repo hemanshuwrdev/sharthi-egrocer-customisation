@@ -96,6 +96,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 
 
@@ -277,6 +278,9 @@ __webpack_require__.r(__webpack_exports__);
       isLoading: false,
       suspecious: null,
       sidebarItems: [{
+        type: 'title',
+        name: __('main')
+      }, {
         name: __('dashboard'),
         icon: 'tachometer-alt',
         url: '/dashboard',
@@ -299,6 +303,9 @@ __webpack_require__.r(__webpack_exports__);
       },
       */
       {
+        type: 'title',
+        name: __('catalog')
+      }, {
         name: __('categories'),
         icon: 'bullseye',
         permission: null,
@@ -422,6 +429,9 @@ __webpack_require__.r(__webpack_exports__);
       },
       */
       {
+        type: 'title',
+        name: __('distributors')
+      }, {
         name: __('sellers'),
         icon: 'male',
         permission: null,
@@ -455,6 +465,9 @@ __webpack_require__.r(__webpack_exports__);
           url: '/privacy_policy_seller',
           permission: 'manage_privacy_policy_seller_app'
         }]
+      }, {
+        type: 'title',
+        name: __('marketing')
       }, {
         name: __('home_sliders'),
         icon: 'picture-o',
@@ -654,6 +667,9 @@ __webpack_require__.r(__webpack_exports__);
       // },
 
       {
+        type: 'title',
+        name: __('communication')
+      }, {
         name: __('notifications'),
         icon: 'bell',
         url: '/notifications',
@@ -686,6 +702,9 @@ __webpack_require__.r(__webpack_exports__);
           permission: 'manage_emails'
         }]
       }, {
+        type: 'title',
+        name: __('settings')
+      }, {
         name: __('system'),
         icon: 'wrench',
         url: '/system_settings',
@@ -714,6 +733,9 @@ __webpack_require__.r(__webpack_exports__);
       */
 
       {
+        type: 'title',
+        name: __('content')
+      }, {
         name: __('blogs'),
         icon: 'pen',
         permission: null,
@@ -812,6 +834,9 @@ __webpack_require__.r(__webpack_exports__);
           permission: 'area_list'
         }]
       }, {
+        type: 'title',
+        name: __('customers')
+      }, {
         name: __('customers'),
         icon: 'male',
         permission: null,
@@ -850,6 +875,9 @@ __webpack_require__.r(__webpack_exports__);
           permission: 'manage_privacy_policy'
         }]
       }, {
+        type: 'title',
+        name: __('reports')
+      }, {
         name: __('reports'),
         icon: 'folder-open',
         permission: null,
@@ -884,6 +912,9 @@ __webpack_require__.r(__webpack_exports__);
       },
       */
       {
+        type: 'title',
+        name: __('administration')
+      }, {
         name: __('role'),
         icon: 'user-secret',
         url: '/role',
@@ -2503,14 +2534,19 @@ var render = function () {
               _vm._v(" "),
               _vm._l(_vm.filteredSidebarItems, function (item) {
                 return [
-                  (
-                    item.role == true
-                      ? _vm.$role("Super Admin")
-                      : (item.permission && _vm.$can(item.permission)) ||
-                        (item.permission === null &&
-                          _vm.isHasSub(item) &&
-                          _vm.hasAnySubmenuPermission(item))
-                  )
+                  item.type === "title"
+                    ? _c("li", { staticClass: "sidebar-title" }, [
+                        _vm._v(_vm._s(item.name)),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  item.type !== "title" &&
+                  (item.role == true
+                    ? _vm.$role("Super Admin")
+                    : (item.permission && _vm.$can(item.permission)) ||
+                      (item.permission === null &&
+                        _vm.isHasSub(item) &&
+                        _vm.hasAnySubmenuPermission(item)))
                     ? _c(
                         "li",
                         {
