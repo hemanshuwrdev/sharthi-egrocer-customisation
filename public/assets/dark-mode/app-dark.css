@@ -7349,10 +7349,18 @@ body.theme-dark #sidebar:not(.active) .sidebar-wrapper {
 body.theme-dark #sidebar:not(.active) ~ #main {
     margin-left: 0;
 }
+@media screen and (min-width: 1200px) {
+    body.theme-dark #sidebar.active ~ #main {
+        margin-left: 300px !important;
+    }
+    body.theme-dark #sidebar:not(.active) ~ #main {
+        margin-left: 75px !important;
+    }
+}
 body.theme-dark .sidebar-wrapper {
     background-color: #1e1e2d;
     bottom: 0;
-    height: 95vh;
+    height: 100vh;
     overflow-y: auto;
     position: fixed;
     top: 0;
@@ -8095,7 +8103,7 @@ body.theme-dark #main {
 }
 @media screen and (max-width: 1199px) {
     body.theme-dark #main {
-        margin-left: 0;
+        margin-left: 0 !important;
     }
 }
 body.theme-dark #main.layout-navbar {

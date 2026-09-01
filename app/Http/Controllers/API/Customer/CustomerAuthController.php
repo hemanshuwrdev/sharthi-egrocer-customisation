@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Customer;
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AdminToken;
+use App\Models\Area;
 use App\Models\BrandDistributorMapping;
 use App\Models\Cart;
 use App\Models\City;
@@ -498,15 +499,14 @@ class CustomerAuthController extends Controller
      *    mapped anywhere in the retailer's whole zone via brand_distributor_mappings
      *  - First salesman to verify claims the retailer (atomic, separate endpoint)
      *
-     * Body (required): name, country_code, mobile, shop_name, party_name, gps_lat, gps_lng, address
-     * Body (optional): gst_no, gps_lat, gps_lng, fcm_token, platform, language_id
+     * Body (required): country_code, mobile, shop_name, party_name, gps_lat, gps_lng, address
+     * Body (optional): gst_no, gps_lat, gps_lng, area_id, fcm_token, platform, language_id
      */
     public function registerRetailer(Request $request)
     {
         $registerCountryCode = $this->normalizeCountryCode($request->input('country_code'));
 
         $validator = Validator::make($request->all(), [
-            'name'         => 'required|string|max:120',
             'country_code' => 'required|string',
             'mobile'       => [
                 'required', 'numeric',
@@ -520,6 +520,7 @@ class CustomerAuthController extends Controller
             'gst_no'       => 'nullable|string|max:32',
             'gps_lat'      => 'required|numeric|between:-90,90',
             'gps_lng'      => 'required|numeric|between:-180,180',
+            'area_id'      => 'nullable|integer|exists:areas,id',
         ], [
             'mobile.unique' => 'mobile_number_already_taken',
         ]);
@@ -536,10 +537,22 @@ class CustomerAuthController extends Controller
         }
         $matchedCityId = CommonHelper::getDeliverableCityIds($request->gps_lat, $request->gps_lng)[0] ?? $zoneCityIds[0];
 
+        // Area is optional and explicitly picked by the retailer (never auto-guessed),
+        // same as the address-book area picker — but it must belong to the GPS-derived
+        // city, since city itself is never manual here.
+        $areaId = null;
+        if ($request->filled('area_id')) {
+            $areaBelongsToCity = Area::where('id', $request->area_id)->where('city_id', $matchedCityId)->exists();
+            if (!$areaBelongsToCity) {
+                return CommonHelper::responseError('invalid_area_for_location');
+            }
+            $areaId = $request->area_id;
+        }
+
         DB::beginTransaction();
         try {
             $user = new User();
-            $user->name = $request->get('name');
+            $user->name = $request->get('party_name');
             $user->mobile = $request->get('mobile');
             $user->country_code = $registerCountryCode;
             $user->type = 'phone';
@@ -557,6 +570,7 @@ class CustomerAuthController extends Controller
             $profile->party_name = $request->party_name;
             $profile->gst_no     = $request->gst_no;
             $profile->city_id    = $matchedCityId;
+            $profile->area_id    = $areaId;
             $profile->address    = $request->address;
             $profile->gps_lat    = $request->gps_lat;
             $profile->gps_lng    = $request->gps_lng;
@@ -572,7 +586,7 @@ class CustomerAuthController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('registerRetailer create failed: ' . $e->getMessage());
-            return CommonHelper::responseError('something_went_wrong');
+            return CommonHelper::responseError($e->getMessage());
         }
 
         // Auth + token

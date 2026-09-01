@@ -1026,6 +1026,17 @@ class SarthiCustomisation extends Migration
                         ->update(['area_id' => $area->only_id]);
                 });
         }
+
+        // ── Retailer registration also gets an optional Area link. City is still
+        //    GPS-derived (never manual), but the retailer/salesman can additionally
+        //    pin the exact Area within that city for finer-grained territory
+        //    reporting (LoadingSlipsApiController filters, admin area rollups).
+        if (Schema::hasTable('retailer_profiles') && !Schema::hasColumn('retailer_profiles', 'area_id')) {
+            Schema::table('retailer_profiles', function (Blueprint $table) {
+                $table->unsignedBigInteger('area_id')->nullable()->after('city_id');
+                $table->index('area_id', 'idx_rp_area_id');
+            });
+        }
     }
 
     /**

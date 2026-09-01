@@ -1,192 +1,116 @@
 <template>
     <div>
-        <div class="page-heading">
-            <h3>{{ __('dashboard') }}</h3>
+        <div class="page-heading d-flex justify-content-between align-items-center mb-4 text-start">
+            <div class="text-start w-100">
+                <h3 class="mb-0 fw-bold header-title text-start" style="color: #2b3674; font-size: 1.75rem; letter-spacing: -0.5px; text-align: left !important;">{{ __('welcome') }}, {{ adminName }}</h3>
+                <p class="mb-0 header-subtitle text-start" style="color: #05cd99; font-weight: 500; font-size: 0.95rem; text-align: left !important;">{{ __(greetingKey) }} &bull; {{ currentDate }}</p>
+            </div>
         </div>
         <div class="page-content">
             <section class="row">
                 <div class="row">
-                    <div class="col-12 col-xxl-6">
-                        <div class="row">
-                            <!-- Sarthi: Orders card hidden on admin dashboard, orders are distributor-managed
-                            <div class="col-6 col-lg-3 col-md-3 col-sm-6">
-                                <div class="card">
-                                    <router-link to="/orders">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row d-flex flex-column justify-content-center ">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big blue">
-                                                        <img
-                                                            :src="$baseUrl + '/assets/images/dashboard/Total_Orders.svg'">
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.order_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('orders') }}</h5>
-                                                </div>
+                    <div class="col-12">
+                        <div class="row align-items-start metric-card-wrapper">
+                            <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link :to="{ name: 'MasterProducts' }" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #4285F4; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-cubes fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('products') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.product_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-                            -->
-                            <div class="col-6 col-lg-4 col-md-4 col-sm-6">
-                                <div class="card">
-                                    <router-link :to="{ name: 'MasterProducts' }">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big orange">
-                                                        <i class="fa fa-cubes"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.product_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('products') }}</h5>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/users" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #10b981; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-users fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('customers') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.customer_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-4 col-md-4">
-                                <div class="card">
-                                    <router-link to="/users">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big sky">
-                                                        <img
-                                                            :src="$baseUrl + '/assets/images/dashboard/Total_Customers.svg'">
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.customer_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('customers') }}</h5>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/sellers" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #f59e0b; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-store fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('sellers') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.seller_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-4 col-md-4">
-                                <div class="card">
-                                    <router-link to="/sellers">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big lightgreen">
-                                                        <i class="fa fa-solid fa-store"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.seller_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('sellers') }}</h5>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/manage_categories" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #ef4444; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-bullseye fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('categories') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.category_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-
-                            <div class="col-6 col-lg-4 col-md-4">
-                                <div class="card">
-                                    <router-link to="/manage_categories">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row d-flex flex-column justify-content-center ">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big lightgreen">
-                                                        <i class="fa fa-bullseye"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.category_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('categories') }}</h5>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/brands" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #8b5cf6; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-code-branch fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('brands') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.brand_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-6 col-lg-4 col-md-4">
-                                <div class="card">
-                                    <router-link to="/brands">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big sky">
-                                                        <i class="fa fa-code-branch"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.brand_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('brands') }}</h5>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/cities" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #06b6d4; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-map fs-4"></i>
                                             </div>
-                                        </div>
-                                    </router-link>
-                                </div>
-                            </div>
-                            <!-- Sarthi: Sections card hidden on admin dashboard
-                            <div class="col-6 col-lg-3 col-md-3">
-                                <div class="card">
-                                    <router-link to="/sections">
-                                        <div class="card-body px-0 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big orange">
-                                                        <i class="fa fa-puzzle-piece"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.section_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('sections') }}</h5>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </router-link>
-                                </div>
-                            </div>
-                            -->
-                            <div class="col-6 col-lg-4 col-md-4">
-                                <div class="card">
-                                    <router-link to="/cities">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big blue">
-                                                        <i class="fa fa-map"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h3 class="font-extrabold mb-0">{{ record.city_count }}</h3>
-                                                    <h5 class="text-muted font-semibold">{{ __('city') }}</h5>
-                                                </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('city') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.city_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
-                    <div class="col-12 col-xxl-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4 class="card-title text-center">{{ __('product_category_count') }}</h4>
-                            </div>
-                            <div class="card-body">
-                                <div v-if="series2 && series2.length">
-                                    <apexcharts width="100%" type="pie" :options="options2" :series="series2"></apexcharts>
+                    <div class="col-12 col-md-6 col-lg-5 col-xl-4 mb-4">
+                        <div class="card shadow-sm border h-100" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                            <div class="card-body p-4">
+                                <h4 class="mb-0 fw-bold header-title text-start" style="color: #2b3674; font-size: 1.15rem; letter-spacing: -0.5px; text-align: left !important;">{{ __('product_category_count') }}</h4>
+                                <p class="text-muted small fw-semibold text-start mb-4" style="font-size: 13px; text-align: left !important;">{{ __('this_year') }}</p>
+                                <div v-if="series2 && series2.length" class="d-flex justify-content-center">
+                                    <apexcharts width="100%" type="donut" :options="options2" :series="series2"></apexcharts>
                                 </div>
                                 <div v-else class="text-center text-muted py-4">
                                     {{ __('no_product_found') }}
@@ -293,7 +217,7 @@
 
                 <!-- Sarthi: Order Out Lines status breakdown hidden on admin dashboard
                 <div class="row">
-                    <h5 class="mb-3"> {{ __('order_out_lines') }} </h5>
+                    <h5 class="mb-4"> {{ __('order_out_lines') }} </h5>
                     <div class="col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2 col-xxl-2 mb-2 mb-md-3"
                         v-for="status in record.status_order_count" :key="status.status">
                         <div class="card h-100">
@@ -387,15 +311,16 @@
                 -->
 
                 <div class="row">
-                    <!-- Sarthi: Latest Orders table hidden on admin dashboard, orders are distributor-managed
+                    <!-- Sarthi: Latest Orders table hidden on admin dashboard, orders are distributor-managed 
+
                     <div class="col-12" v-if="$can('order_list')">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4 class="card-title">{{ __('latest_orders') }}</h4>
+                        <div class="card shadow-sm border" style="border-radius: 12px; border-color: #E5E7EB !important; overflow: hidden;">
+                            <div class="card-header bg-white border-0 py-4">
+                                <h4 class="recent-orders-card-title mb-0">Recent Orders</h4>
                             </div>
                             <div class="card-body">
 
-                                <b-row class="mb-3 align-items-end">
+                                <b-row class="mb-4 align-items-end">
                                     <b-col cols="12" md="7" lg="4" class="mb-2">
                                         <label class="box-title d-block mb-1">{{ __('from_and_to_date') }}</label>
                                         <div class="d-flex align-items-center">
@@ -452,109 +377,50 @@
                                     <b-table :items="orders" :fields="orderFields" :current-page="orderCurrentPage"
                                         :per-page="orderPerPage" :filter="orderFilter"
                                         :filter-included-fields="filterOn" :sort-by.sync="sortBy"
-                                        :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
-                                        :busy="isLoading" stacked="md" show-empty show-details
-                                        @row-clicked="toggleOrder" :tbody-tr-class="() => 'cursor-pointer'" small>
-                                        <template #cell(id)="row">
-                                            <span @click.stop="toggleOrder(row)" style="cursor:pointer;">
-                                                <i class="fa"
-                                                    :class="row.detailsShowing ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
-                                                &nbsp; {{ row.item.id }}
-                                            </span>
-                                        </template>
+                                        :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="false" borderless
+                                        :busy="isLoading" show-empty class="modern-table"
+                                        @row-clicked="toggleOrder" :tbody-tr-class="() => 'cursor-pointer modern-tr'">
+
                                         <template #table-busy>
                                             <div class="text-center text-black my-2">
                                                 <b-spinner class="align-middle"></b-spinner>
-                                                <strong>{{ __('loading') }}</strong>
+                                                <strong>{{ __('loading') }}...</strong>
                                             </div>
                                         </template>
 
-                                        <template #head(total)="row">
-                                            {{ __('total') + ' (' + $currency + ')' }}
-                                        </template>
-                                        <template #head(delivery_charge)="row">
-                                            {{ __('dcharges') + ' (' + $currency + ')' }}
-                                        </template>
-                                        <template #head(tax)="row">
-                                            {{ __('tax') + ' (' + $currency + ') (%)' }}
-                                        </template>
-                                        <template #head(discount)="row">
-                                            {{ __('disc') + ' (' + $currency + ') (%)' }}
-                                        </template>
-                                        <template #head(promo_discount)="row">
-                                            {{ __('promo_disc') + ' (' + $currency + ')' }}
-                                        </template>
-                                        <template #head(wallet_balance)="row">
-                                            {{ __('wallet_used') + ' (' + $currency + ')' }}
-                                        </template>
-                                        <template #head(remaining_final)="row">
-                                            {{ __('ftotal') + ' (' + $currency + ')' }}
+                                        <template #cell(id)="row">
+                                            <div class="fw-bold text-dark">SB-ORD-00{{ row.item.id }}</div>
                                         </template>
 
+                                        <template #cell(user_name)="row">
+                                            <div class="fw-bold" style="color: #2b3674;">{{ row.item.user_name }}</div>
+                                            <div class="small text-muted">{{ row.item.mobile | mobileMask }}</div>
+                                        </template>
 
-                                        <template #cell(mobile)="row">
-                                            {{ row.item.mobile | mobileMask }}
+                                        <template #cell(mode)="row">
+                                            <span class="badge bg-light text-primary rounded-pill px-3 py-2 border border-primary-subtle" style="font-size: 0.8rem;">
+                                                <i class="fa fa-bolt me-1 text-success"></i> Quick
+                                            </span>
+                                        </template>
+
+                                        <template #cell(payment_method)="row">
+                                            <span class="text-uppercase fw-semibold">{{ row.item.payment_method }}</span>
                                         </template>
 
                                         <template #cell(active_status)="row">
-                                            <span class="badge" :class="getStatusBadgeClass(row.item.active_status)">{{
-                                                getStatusLabelById(row.item.active_status) }}</span>
+                                            <span class="badge rounded-pill px-3 py-2" :class="getModernStatusBadgeClass(row.item.active_status)">
+                                                {{ getStatusLabelById(row.item.active_status) }}
+                                            </span>
                                         </template>
 
-                                        <template #cell(actions)="row" v-if="$can('order_update')">
-                                            <router-link
-                                                :to="{ name: 'ViewOrder', params: { id: row.item.id, record: row.item } }"
-                                                v-b-tooltip.hover :title="__('view')" class="btn btn-primary btn-sm"><i
-                                                    class="fa fa-eye"></i></router-link>
-                                            <button class="btn btn-danger btn-sm" v-b-tooltip.hover
-                                                :title="__('delete')" v-if="$can('order_delete')"
-                                                @click="deleteOrder(row.index, row.item.id)"><i
-                                                    class="fa fa-trash"></i></button>
+                                        <template #cell(remaining_final)="row">
+                                            <div class="fw-bold text-dark">{{  }}{{ row.item.remaining_final }}</div>
                                         </template>
 
-                                        <template #row-details="row">
-                                            <b-card class="m-2 p-2" style="background:#f8fafc;">
-                                                <div
-                                                    class="row font-weight-bold text-center border-bottom pb-2 mb-2 d-none d-md-flex">
-                                                    <div class="col-md-3 text-left">{{ __('product') }}</div>
-                                                    <div class="col-md-2">{{ __('image') }}</div>
-                                                    <div class="col-md-2">{{ __('variant') }}</div>
-                                                    <div class="col-md-1">{{ __('qty') }}</div>
-                                                    <div class="col-md-2">{{ __('subtotal') }}</div>
-                                                    <div class="col-md-2">{{ __('status') }}</div>
-                                                </div>
-
-                                                <div v-if="row.item.order_items && row.item.order_items.length">
-                                                    <div v-for="(item, index) in row.item.order_items" :key="index"
-                                                        class="row align-items-center border-bottom py-3 bg-white text-center">
-                                                        <div class="col-md-3 text-left">
-                                                            <strong>{{ item.product_name }}</strong>
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <img :src="item.image" alt="Image" height="50" />
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            {{ item.variant_name || '-' }}
-                                                        </div>
-                                                        <div class="col-md-1">
-                                                            {{ item.quantity }}
-                                                        </div>
-                                                        <div class="col-md-2 font-weight-bold">
-                                                            {{ $currency }} {{ item.sub_total }}
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            {{ item.status_name }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div v-else-if="row.item.itemsLoading" class="text-center p-3">
-                                                    <b-spinner small></b-spinner> {{ __('loading') }}...
-                                                </div>
-                                                <div v-else class="text-center text-muted p-2">
-                                                    {{ __('no_products_found') }}
-                                                </div>
-                                            </b-card>
+                                        <template #cell(created_at)="row">
+                                            <div class="text-muted">{{ formatDate(row.item.created_at) }}</div>
                                         </template>
+
                                     </b-table>
                                 </div>
                                 <b-row>
@@ -574,9 +440,9 @@
                             </div>
                         </div>
                     </div>
-                    -->
 
-                    <div class="col-lg-6 col-md-12 col-sm-12">
+                    -->
+                    <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
                         <div class="card h-95">
                             <div class="card-header">
                                 <h4 class="card-title me-1">{{ __('top_sellers') }}</h4>
@@ -588,7 +454,7 @@
                                     <b-table :items="sellers" :fields="sellerFields" :current-page="currentPage"
                                         :per-page="perPage" :filter="sellerFilter" :filter-included-fields="filterOn"
                                         :sort-by.sync="sellerSortBy" :sort-desc.sync="sellerSortDesc"
-                                        :sort-direction="sortDirection" :bordered="true" stacked="md" show-empty small>
+                                        :sort-direction="sortDirection" :bordered="false" borderless class="modern-table" :tbody-tr-class="() => 'modern-tr'" show-empty>
                                         <template #head(total_revenue)="row">
                                             {{ __('total_revenue') + '(' + $currency + ')' }}
                                         </template>
@@ -617,7 +483,7 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-6 col-md-12 col-sm-12">
+                    <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
                         <div class="card h-95">
                             <div class="card-header">
                                 <h4 class="card-title me-1">{{ __('top_categories') }}</h4>
@@ -630,7 +496,7 @@
                                         :current-page="categoryCurrentPage" :per-page="categoryPerPage"
                                         :filter="categoryFilter" :filter-included-fields="filterOn"
                                         :sort-by.sync="categorySortBy" :sort-desc.sync="categorySortDesc"
-                                        :sort-direction="sortDirection" :bordered="true" stacked="md" show-empty small>
+                                        :sort-direction="sortDirection" :bordered="false" borderless class="modern-table" :tbody-tr-class="() => 'modern-tr'" show-empty>
                                         <template #head(total_revenue)="row">
                                             {{ __('total_revenue') + ' (' + $currency + ')' }}
                                         </template>
@@ -669,6 +535,7 @@
 <script>
 import DateRangePicker from 'vue2-daterange-picker'
 import DateRangePickerMixin from '../mixins/DateRangePickerMixin'
+import Auth from '../Auth.js';
 import axios from "axios";
 import { GChart } from 'vue-google-charts/legacy';
 import moment from "moment";
@@ -687,6 +554,7 @@ export default {
         startDate.setDate(startDate.getDate() - 30);
         return {
             dateRange: { startDate, endDate },
+            currentDate: moment().format('D MMM YYYY'),
             deliveryDateRange: { startDate: null, endDate: null },
             maxDate: new Date(),
             isLoading: false,
@@ -694,31 +562,25 @@ export default {
             currentMonth: "",
 
             sellerFields: [
-                { key: 'seller_id', label: __('seller_id'), sortable: false, sortDirection: 'desc' },
-                { key: 'seller_name', label: __('sellers'), sortable: false, class: 'text-center' },
-                { key: 'store_name', label: __('store_name'), sortable: false, class: 'text-center' },
-                { key: 'total_revenue', label: __('total_revenue'), sortable: false, class: 'text-center' },
+                { key: 'seller_name', label: __('name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' },
+                { key: 'store_name', label: __('store_name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'total_revenue', label: __('total_revenue').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' }
             ],
 
             categoryFields: [
-                { key: 'category_id', label: __('id'), sortable: false, sortDirection: 'desc' },
-                { key: 'category_name', label: __('category'), sortable: false, class: 'text-center' },
-                { key: 'product_name', label: __('product'), sortable: false, class: 'text-center' },
-                { key: 'total_revenue', label: __('total_revenue'), sortable: false, class: 'text-center' },
+                { key: 'category_name', label: __('name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' },
+                { key: 'product_name', label: __('product_name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'total_revenue', label: __('total_revenue').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' }
             ],
 
             orderFields: [
-                { key: 'id', label: __('oid'), sortable: true, sortDirection: 'desc' },
-                { key: 'user_name', label: __('user'), sortable: true, class: 'text-center' },
-                { key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center' },
-                { key: 'seller_name', label: __('seller'), sortable: false, class: 'text-center' },
-                { key: 'total', label: __('total') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
-                { key: 'delivery_charge', label: __('dcharges') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
-                { key: 'remaining_final', label: __('ftotal') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
-                { key: 'payment_method', label: __('p_method'), sortable: true, class: 'text-center' },
-                { key: 'delivery_time', label: __('d_time'), sortable: true, class: 'text-center' },
-                { key: 'active_status', label: __('status'), sortable: true, class: 'text-center' },
-                { key: "actions", label: __('actions') }
+                { key: 'id', label: __('order').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'user_name', label: __('customer').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'mode', label: __('mode').toUpperCase(), sortable: false, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'payment_method', label: __('p_method').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'active_status', label: __('status').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'remaining_final', label: __('amount').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
+                { key: 'created_at', label: __('date').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' }
             ],
 
             pageOptions: this.$pageOptions,
@@ -842,18 +704,33 @@ export default {
             }],
             options2: {
                 chart: {
-                    type: 'pie',
-                    height: '200',
+                    type: 'donut',
+                    height: '350',
                 },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%'
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                colors: ['#F59E0B', '#8B5CF6', '#10B981', '#3B82F6', '#14B8A6', '#EC4899', '#EF4444', '#FCD34D', '#A78BFA', '#34D399'],
                 legend: {
                     show: true,
                     position: 'bottom',
-                    fontSize: '12px',
-                    fontFamily: 'Helvetica, Arial, sans-serif',
+                    fontSize: '13px',
+                    fontFamily: 'Nunito, sans-serif',
                     markers: {
-                        width: 8,
-                        height: 8,
-                        radius: 2
+                        width: 12,
+                        height: 12,
+                        radius: 12
+                    },
+                    itemMargin: {
+                        horizontal: 10,
+                        vertical: 5
                     }
                 },
                 labels: [],
@@ -861,13 +738,24 @@ export default {
                     breakpoint: 9999,
                     options: {
                         chart: {
-                            height: 450
+                            height: 350
                         }
                     }
                 }]
             },
             series2: []
         };
+    },
+    computed: {
+        greetingKey() {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'good_morning';
+            if (hour < 18) return 'good_afternoon';
+            return 'good_evening';
+        },
+        adminName() {
+            return Auth.user ? Auth.user.username : '';
+        }
     },
     mounted() {
         // Set the initial number of items

@@ -11,7 +11,7 @@ class RetailerProfile extends Model
 
     protected $fillable = [
         'user_id', 'shop_name', 'party_name', 'gst_no',
-        'address', 'city_id', 'gps_lat', 'gps_lng',
+        'address', 'city_id', 'area_id', 'gps_lat', 'gps_lng',
         'verified_lat', 'verified_lng', 'storefront_photo', 'verification_notes',
         'verified_at', 'verified_by_salesman_id',
     ];
@@ -39,5 +39,10 @@ class RetailerProfile extends Model
     public function verifiedBy()
     {
         return $this->belongsTo(Salesman::class, 'verified_by_salesman_id', 'id');
+    }
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class, 'area_id', 'id');
     }
 }

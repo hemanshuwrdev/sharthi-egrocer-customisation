@@ -1819,7 +1819,7 @@ var render = function () {
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
           _c("div", { staticClass: "col-12 mb-3" }, [
-            _c("div", { staticClass: "card h-100" }, [
+            _c("div", { staticClass: "card h-100 dash-panel" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title" }, [
                   _vm._v(_vm._s(_vm.__("weekly_sales"))),
@@ -1875,7 +1875,7 @@ var render = function () {
                   staticClass: "col-12 col-sm-6 col-md-4 col-lg-3",
                 },
                 [
-                  _c("div", { staticClass: "card h-100" }, [
+                  _c("div", { staticClass: "card h-100 dash-panel" }, [
                     _c(
                       "div",
                       { staticClass: "card-body d-flex align-items-center" },
@@ -2063,7 +2063,7 @@ var render = function () {
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
           _c("div", { staticClass: "col-12" }, [
-            _c("div", { staticClass: "card" }, [
+            _c("div", { staticClass: "card dash-panel" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title" }, [
                   _vm._v(_vm._s(_vm.__("latest_orders"))),

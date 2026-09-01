@@ -12,6 +12,7 @@ use App\Models\City;
 use App\Models\DeliveryBoy;
 use App\Models\Favorite;
 use App\Models\FundTransfer;
+use App\Models\MailSetting;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatus;

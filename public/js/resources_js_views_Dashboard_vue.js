@@ -14,13 +14,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue2_daterange_picker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue2-daterange-picker */ "./node_modules/vue2-daterange-picker/dist/vue2-daterange-picker.umd.min.js");
 /* harmony import */ var vue2_daterange_picker__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vue2_daterange_picker__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _mixins_DateRangePickerMixin__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../mixins/DateRangePickerMixin */ "./resources/js/mixins/DateRangePickerMixin.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var vue_google_charts_legacy__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue-google-charts/legacy */ "./node_modules/vue-google-charts/legacy/index.js");
-/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! moment */ "./node_modules/moment/moment.js");
-/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(moment__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue-apexcharts */ "./node_modules/vue-apexcharts/dist/vue-apexcharts.js");
-/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(vue_apexcharts__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../Auth.js */ "./resources/js/Auth.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var vue_google_charts_legacy__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue-google-charts/legacy */ "./node_modules/vue-google-charts/legacy/index.js");
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! moment */ "./node_modules/moment/moment.js");
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(moment__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue-apexcharts */ "./node_modules/vue-apexcharts/dist/vue-apexcharts.js");
+/* harmony import */ var vue_apexcharts__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(vue_apexcharts__WEBPACK_IMPORTED_MODULE_6__);
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
@@ -566,140 +567,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+
 
 
 
@@ -711,8 +579,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
   name: 'Chart',
   mixins: [_mixins_DateRangePickerMixin__WEBPACK_IMPORTED_MODULE_1__["default"]],
   components: {
-    GChart: vue_google_charts_legacy__WEBPACK_IMPORTED_MODULE_3__.GChart,
-    apexcharts: (vue_apexcharts__WEBPACK_IMPORTED_MODULE_5___default()),
+    GChart: vue_google_charts_legacy__WEBPACK_IMPORTED_MODULE_4__.GChart,
+    apexcharts: (vue_apexcharts__WEBPACK_IMPORTED_MODULE_6___default()),
     DateRangePicker: (vue2_daterange_picker__WEBPACK_IMPORTED_MODULE_0___default())
   },
   data: function data() {
@@ -724,6 +592,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         startDate: startDate,
         endDate: endDate
       },
+      currentDate: moment__WEBPACK_IMPORTED_MODULE_5___default()().format('D MMM YYYY'),
       deliveryDateRange: {
         startDate: null,
         endDate: null
@@ -733,100 +602,85 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       record: [],
       currentMonth: "",
       sellerFields: [{
-        key: 'seller_id',
-        label: __('seller_id'),
-        sortable: false,
-        sortDirection: 'desc'
-      }, {
         key: 'seller_name',
-        label: __('sellers'),
-        sortable: false,
-        "class": 'text-center'
+        label: __('name').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
       }, {
         key: 'store_name',
-        label: __('store_name'),
-        sortable: false,
-        "class": 'text-center'
+        label: __('store_name').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }, {
         key: 'total_revenue',
-        label: __('total_revenue'),
-        sortable: false,
-        "class": 'text-center'
+        label: __('total_revenue').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
       }],
       categoryFields: [{
-        key: 'category_id',
-        label: __('id'),
-        sortable: false,
-        sortDirection: 'desc'
-      }, {
         key: 'category_name',
-        label: __('category'),
-        sortable: false,
-        "class": 'text-center'
+        label: __('name').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
       }, {
         key: 'product_name',
-        label: __('product'),
-        sortable: false,
-        "class": 'text-center'
+        label: __('product_name').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }, {
         key: 'total_revenue',
-        label: __('total_revenue'),
-        sortable: false,
-        "class": 'text-center'
+        label: __('total_revenue').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
       }],
       orderFields: [{
         key: 'id',
-        label: __('oid'),
+        label: __('order').toUpperCase(),
         sortable: true,
-        sortDirection: 'desc'
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }, {
         key: 'user_name',
-        label: __('user'),
+        label: __('customer').toUpperCase(),
         sortable: true,
-        "class": 'text-center'
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }, {
-        key: 'mobile',
-        label: __('mobile'),
-        sortable: true,
-        "class": 'text-center'
-      }, {
-        key: 'seller_name',
-        label: __('seller'),
+        key: 'mode',
+        label: __('mode').toUpperCase(),
         sortable: false,
-        "class": 'text-center'
-      }, {
-        key: 'total',
-        label: __('total') + '(' + this.$currency + ')',
-        sortable: true,
-        "class": 'text-center'
-      }, {
-        key: 'delivery_charge',
-        label: __('dcharges') + '(' + this.$currency + ')',
-        sortable: true,
-        "class": 'text-center'
-      }, {
-        key: 'remaining_final',
-        label: __('ftotal') + '(' + this.$currency + ')',
-        sortable: true,
-        "class": 'text-center'
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }, {
         key: 'payment_method',
-        label: __('p_method'),
+        label: __('p_method').toUpperCase(),
         sortable: true,
-        "class": 'text-center'
-      }, {
-        key: 'delivery_time',
-        label: __('d_time'),
-        sortable: true,
-        "class": 'text-center'
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }, {
         key: 'active_status',
-        label: __('status'),
+        label: __('status').toUpperCase(),
         sortable: true,
-        "class": 'text-center'
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }, {
-        key: "actions",
-        label: __('actions')
+        key: 'remaining_final',
+        label: __('amount').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
+      }, {
+        key: 'created_at',
+        label: __('date').toUpperCase(),
+        sortable: true,
+        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
       }],
       pageOptions: this.$pageOptions,
       sortBy: '',
@@ -935,18 +789,33 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       }],
       options2: {
         chart: {
-          type: 'pie',
-          height: '200'
+          type: 'donut',
+          height: '350'
         },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '65%'
+            }
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        colors: ['#F59E0B', '#8B5CF6', '#10B981', '#3B82F6', '#14B8A6', '#EC4899', '#EF4444', '#FCD34D', '#A78BFA', '#34D399'],
         legend: {
           show: true,
           position: 'bottom',
-          fontSize: '12px',
-          fontFamily: 'Helvetica, Arial, sans-serif',
+          fontSize: '13px',
+          fontFamily: 'Nunito, sans-serif',
           markers: {
-            width: 8,
-            height: 8,
-            radius: 2
+            width: 12,
+            height: 12,
+            radius: 12
+          },
+          itemMargin: {
+            horizontal: 10,
+            vertical: 5
           }
         },
         labels: [],
@@ -954,13 +823,24 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           breakpoint: 9999,
           options: {
             chart: {
-              height: 450
+              height: 350
             }
           }
         }]
       },
       series2: []
     };
+  },
+  computed: {
+    greetingKey: function greetingKey() {
+      var hour = new Date().getHours();
+      if (hour < 12) return 'good_morning';
+      if (hour < 18) return 'good_afternoon';
+      return 'good_evening';
+    },
+    adminName: function adminName() {
+      return _Auth_js__WEBPACK_IMPORTED_MODULE_2__["default"].user ? _Auth_js__WEBPACK_IMPORTED_MODULE_2__["default"].user.username : '';
+    }
   },
   mounted: function mounted() {
     // Set the initial number of items
@@ -982,10 +862,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
   methods: {
     barChart: function barChart() {
       var _this = this;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/orders/weekly_sales').then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/orders/weekly_sales').then(function (response) {
         _this.graphOrders = response.data.data;
         _this.graphOrders.forEach(function (order) {
-          _this.options.xaxis.categories.push(moment__WEBPACK_IMPORTED_MODULE_4___default()(order.order_date).format('DD-MMM'));
+          _this.options.xaxis.categories.push(moment__WEBPACK_IMPORTED_MODULE_5___default()(order.order_date).format('DD-MMM'));
           _this.series[0].data.push(order.total_sale);
         });
         _this.$refs.apexBarChart.updateSeries([{
@@ -995,7 +875,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     },
     pieChart: function pieChart() {
       var _this2 = this;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/categories/product_count').then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/categories/product_count').then(function (response) {
         _this2.graphCategories = response.data.data;
         _this2.graphCategories.forEach(function (category) {
           if (category.product_count !== 0) {
@@ -1039,7 +919,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       var _this3 = this;
       var vm = this;
       this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/dashboard').then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/dashboard').then(function (res) {
         vm.isLoading = false;
         var data = res.data;
         if (data.status === 1) {
@@ -1064,7 +944,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       var _this4 = this;
       var vm = this;
       this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/set_seller_wallet_transaction').then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/set_seller_wallet_transaction').then(function (res) {
         vm.isLoading = false;
         var data = res.data;
         if (data.status === 1) {
@@ -1088,7 +968,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     getOrderStatus: function getOrderStatus() {
       var _this5 = this;
       var vm = this;
-      Promise.all([axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/order_statuses'), axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/order_statuses/self_pickup')]).then(function (_ref) {
+      Promise.all([axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/order_statuses'), axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/order_statuses/self_pickup')]).then(function (_ref) {
         var _ref2 = _slicedToArray(_ref, 2),
           regularRes = _ref2[0],
           selfPickRes = _ref2[1];
@@ -1118,14 +998,14 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       this.isLoading = true;
       var vm = this;
       var param = {
-        "startDate": this.dateRange.startDate != null ? moment__WEBPACK_IMPORTED_MODULE_4___default()(this.dateRange.startDate).format('YYYY-MM-DD') : "",
-        "endDate": this.dateRange.endDate != null ? moment__WEBPACK_IMPORTED_MODULE_4___default()(this.dateRange.endDate).format('YYYY-MM-DD') : "",
+        "startDate": this.dateRange.startDate != null ? moment__WEBPACK_IMPORTED_MODULE_5___default()(this.dateRange.startDate).format('YYYY-MM-DD') : "",
+        "endDate": this.dateRange.endDate != null ? moment__WEBPACK_IMPORTED_MODULE_5___default()(this.dateRange.endDate).format('YYYY-MM-DD') : "",
         "seller": this.seller,
         "status": this.status,
-        startDeliveryDate: this.deliveryDateRange.startDate ? moment__WEBPACK_IMPORTED_MODULE_4___default()(this.deliveryDateRange.startDate).format('YYYY-MM-DD') : '',
-        endDeliveryDate: this.deliveryDateRange.endDate ? moment__WEBPACK_IMPORTED_MODULE_4___default()(this.deliveryDateRange.endDate).format('YYYY-MM-DD') : ''
+        startDeliveryDate: this.deliveryDateRange.startDate ? moment__WEBPACK_IMPORTED_MODULE_5___default()(this.deliveryDateRange.startDate).format('YYYY-MM-DD') : '',
+        endDeliveryDate: this.deliveryDateRange.endDate ? moment__WEBPACK_IMPORTED_MODULE_5___default()(this.deliveryDateRange.endDate).format('YYYY-MM-DD') : ''
       };
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/orders', {
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/orders', {
         params: param
       }).then(function (response) {
         var data = response.data;
@@ -1167,7 +1047,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           var postData = {
             id: id
           };
-          axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this7.$apiUrl + '/orders/delete', postData).then(function (response) {
+          axios__WEBPACK_IMPORTED_MODULE_3___default().post(_this7.$apiUrl + '/orders/delete', postData).then(function (response) {
             _this7.isLoading = false;
             var data = response.data;
             _this7.orders.splice(index, 1);
@@ -1203,7 +1083,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         return;
       }
       item.itemsLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/orders/view/' + item.id).then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/orders/view/' + item.id).then(function (res) {
         item.order_items = res.data.data.order_items || [];
         item.itemsLoading = false;
       })["catch"](function () {
@@ -1800,372 +1680,686 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("h3", [_vm._v(_vm._s(_vm.__("dashboard")))]),
-    ]),
+    _c(
+      "div",
+      {
+        staticClass:
+          "page-heading d-flex justify-content-between align-items-center mb-4 text-start",
+      },
+      [
+        _c("div", { staticClass: "text-start w-100" }, [
+          _c(
+            "h3",
+            {
+              staticClass: "mb-0 fw-bold header-title text-start",
+              staticStyle: {
+                color: "#2b3674",
+                "font-size": "1.75rem",
+                "letter-spacing": "-0.5px",
+                "text-align": "left !important",
+              },
+            },
+            [_vm._v(_vm._s(_vm.__("welcome")) + ", " + _vm._s(_vm.adminName))]
+          ),
+          _vm._v(" "),
+          _c(
+            "p",
+            {
+              staticClass: "mb-0 header-subtitle text-start",
+              staticStyle: {
+                color: "#05cd99",
+                "font-weight": "500",
+                "font-size": "0.95rem",
+                "text-align": "left !important",
+              },
+            },
+            [
+              _vm._v(
+                _vm._s(_vm.__(_vm.greetingKey)) +
+                  " • " +
+                  _vm._s(_vm.currentDate)
+              ),
+            ]
+          ),
+        ]),
+      ]
+    ),
     _vm._v(" "),
     _c("div", { staticClass: "page-content" }, [
       _c("section", { staticClass: "row" }, [
         _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-xxl-6" }, [
-            _c("div", { staticClass: "row" }, [
-              _c("div", { staticClass: "col-6 col-lg-4 col-md-4 col-sm-6" }, [
+          _c("div", { staticClass: "col-12" }, [
+            _c(
+              "div",
+              { staticClass: "row align-items-start metric-card-wrapper" },
+              [
                 _c(
                   "div",
-                  { staticClass: "card" },
+                  { staticClass: "col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2" },
                   [
                     _c(
-                      "router-link",
-                      { attrs: { to: { name: "MasterProducts" } } },
+                      "div",
+                      {
+                        staticClass: "card shadow-sm border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
                       [
-                        _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                          _c("div", { staticClass: "row" }, [
-                            _c(
-                              "div",
-                              {
-                                staticClass:
-                                  "col-md-12 d-flex justify-content-center align-items-center",
-                              },
-                              [
-                                _c(
-                                  "div",
-                                  { staticClass: "stats-icon-big orange" },
-                                  [_c("i", { staticClass: "fa fa-cubes" })]
-                                ),
-                              ]
-                            ),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              {
-                                staticClass:
-                                  "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                              },
-                              [
-                                _c(
-                                  "h3",
-                                  { staticClass: "font-extrabold mb-0" },
-                                  [_vm._v(_vm._s(_vm.record.product_count))]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "h5",
-                                  { staticClass: "text-muted font-semibold" },
-                                  [_vm._v(_vm._s(_vm.__("products")))]
-                                ),
-                              ]
-                            ),
-                          ]),
-                        ]),
-                      ]
-                    ),
-                  ],
-                  1
-                ),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "col-6 col-lg-4 col-md-4" }, [
-                _c(
-                  "div",
-                  { staticClass: "card" },
-                  [
-                    _c("router-link", { attrs: { to: "/users" } }, [
-                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                        _c("div", { staticClass: "row" }, [
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 d-flex justify-content-center align-items-center",
-                            },
-                            [
-                              _c("div", { staticClass: "stats-icon-big sky" }, [
-                                _c("img", {
-                                  attrs: {
-                                    src:
-                                      _vm.$baseUrl +
-                                      "/assets/images/dashboard/Total_Customers.svg",
-                                  },
-                                }),
-                              ]),
-                            ]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                            },
-                            [
-                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.record.customer_count)),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "h5",
-                                { staticClass: "text-muted font-semibold" },
-                                [_vm._v(_vm._s(_vm.__("customers")))]
-                              ),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]),
-                  ],
-                  1
-                ),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "col-6 col-lg-4 col-md-4" }, [
-                _c(
-                  "div",
-                  { staticClass: "card" },
-                  [
-                    _c("router-link", { attrs: { to: "/sellers" } }, [
-                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                        _c("div", { staticClass: "row" }, [
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 d-flex justify-content-center align-items-center",
-                            },
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "stats-icon-big lightgreen" },
-                                [
-                                  _c("i", {
-                                    staticClass: "fa fa-solid fa-store",
-                                  }),
-                                ]
-                              ),
-                            ]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                            },
-                            [
-                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.record.seller_count)),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "h5",
-                                { staticClass: "text-muted font-semibold" },
-                                [_vm._v(_vm._s(_vm.__("sellers")))]
-                              ),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]),
-                  ],
-                  1
-                ),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "col-6 col-lg-4 col-md-4" }, [
-                _c(
-                  "div",
-                  { staticClass: "card" },
-                  [
-                    _c("router-link", { attrs: { to: "/manage_categories" } }, [
-                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
                         _c(
-                          "div",
+                          "router-link",
                           {
                             staticClass:
-                              "row d-flex flex-column justify-content-center ",
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: { name: "MasterProducts" } },
                           },
                           [
                             _c(
                               "div",
                               {
                                 staticClass:
-                                  "col-md-12 d-flex justify-content-center align-items-center",
+                                  "card-body p-3 d-flex align-items-center",
                               },
                               [
                                 _c(
                                   "div",
-                                  { staticClass: "stats-icon-big lightgreen" },
-                                  [_c("i", { staticClass: "fa fa-bullseye" })]
-                                ),
-                              ]
-                            ),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              {
-                                staticClass:
-                                  "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                              },
-                              [
-                                _c(
-                                  "h3",
-                                  { staticClass: "font-extrabold mb-0" },
-                                  [_vm._v(_vm._s(_vm.record.category_count))]
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#4285F4",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-cubes fs-4" })]
                                 ),
                                 _vm._v(" "),
                                 _c(
-                                  "h5",
-                                  { staticClass: "text-muted font-semibold" },
-                                  [_vm._v(_vm._s(_vm.__("categories")))]
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: {
+                                          "font-size": "13px",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("products")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.product_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
                                 ),
                               ]
                             ),
                           ]
                         ),
-                      ]),
-                    ]),
-                  ],
-                  1
-                ),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "col-6 col-lg-4 col-md-4" }, [
-                _c(
-                  "div",
-                  { staticClass: "card" },
-                  [
-                    _c("router-link", { attrs: { to: "/brands" } }, [
-                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                        _c("div", { staticClass: "row" }, [
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 d-flex justify-content-center align-items-center",
-                            },
-                            [
-                              _c("div", { staticClass: "stats-icon-big sky" }, [
-                                _c("i", { staticClass: "fa fa-code-branch" }),
-                              ]),
-                            ]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                            },
-                            [
-                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.record.brand_count)),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "h5",
-                                { staticClass: "text-muted font-semibold" },
-                                [_vm._v(_vm._s(_vm.__("brands")))]
-                              ),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]),
-                  ],
-                  1
-                ),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "col-6 col-lg-4 col-md-4" }, [
-                _c(
-                  "div",
-                  { staticClass: "card" },
-                  [
-                    _c("router-link", { attrs: { to: "/cities" } }, [
-                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                        _c("div", { staticClass: "row" }, [
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 d-flex justify-content-center align-items-center",
-                            },
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "stats-icon-big blue" },
-                                [_c("i", { staticClass: "fa fa-map" })]
-                              ),
-                            ]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                            },
-                            [
-                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.record.city_count)),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "h5",
-                                { staticClass: "text-muted font-semibold" },
-                                [_vm._v(_vm._s(_vm.__("city")))]
-                              ),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]),
-                  ],
-                  1
-                ),
-              ]),
-            ]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-xxl-6" }, [
-            _c("div", { staticClass: "card" }, [
-              _c("div", { staticClass: "card-header" }, [
-                _c("h4", { staticClass: "card-title text-center" }, [
-                  _vm._v(_vm._s(_vm.__("product_category_count"))),
-                ]),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "card-body" }, [
-                _vm.series2 && _vm.series2.length
-                  ? _c(
-                      "div",
-                      [
-                        _c("apexcharts", {
-                          attrs: {
-                            width: "100%",
-                            type: "pie",
-                            options: _vm.options2,
-                            series: _vm.series2,
-                          },
-                        }),
                       ],
                       1
-                    )
-                  : _c("div", { staticClass: "text-center text-muted py-4" }, [
-                      _vm._v(
-                        "\n                                " +
-                          _vm._s(_vm.__("no_product_found")) +
-                          "\n                            "
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card shadow-sm border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/users" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#10b981",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-users fs-4" })]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: {
+                                          "font-size": "13px",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("customers")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.customer_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card shadow-sm border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/sellers" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#f59e0b",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-store fs-4" })]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: {
+                                          "font-size": "13px",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("sellers")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.seller_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card shadow-sm border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/manage_categories" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#ef4444",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass: "fa fa-bullseye fs-4",
+                                    }),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: {
+                                          "font-size": "13px",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("categories")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.category_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card shadow-sm border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/brands" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#8b5cf6",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass: "fa fa-code-branch fs-4",
+                                    }),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: {
+                                          "font-size": "13px",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("brands")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.brand_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card shadow-sm border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/cities" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#06b6d4",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-map fs-4" })]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: {
+                                          "font-size": "13px",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("city")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                          "text-align": "left !important",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.city_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+              ]
+            ),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-6 col-lg-5 col-xl-4 mb-4" }, [
+            _c(
+              "div",
+              {
+                staticClass: "card shadow-sm border h-100",
+                staticStyle: {
+                  "border-radius": "12px",
+                  "border-color": "#E5E7EB !important",
+                },
+              },
+              [
+                _c("div", { staticClass: "card-body p-4" }, [
+                  _c(
+                    "h4",
+                    {
+                      staticClass: "mb-0 fw-bold header-title text-start",
+                      staticStyle: {
+                        color: "#2b3674",
+                        "font-size": "1.15rem",
+                        "letter-spacing": "-0.5px",
+                        "text-align": "left !important",
+                      },
+                    },
+                    [_vm._v(_vm._s(_vm.__("product_category_count")))]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "p",
+                    {
+                      staticClass:
+                        "text-muted small fw-semibold text-start mb-4",
+                      staticStyle: {
+                        "font-size": "13px",
+                        "text-align": "left !important",
+                      },
+                    },
+                    [_vm._v(_vm._s(_vm.__("this_year")))]
+                  ),
+                  _vm._v(" "),
+                  _vm.series2 && _vm.series2.length
+                    ? _c(
+                        "div",
+                        { staticClass: "d-flex justify-content-center" },
+                        [
+                          _c("apexcharts", {
+                            attrs: {
+                              width: "100%",
+                              type: "donut",
+                              options: _vm.options2,
+                              series: _vm.series2,
+                            },
+                          }),
+                        ],
+                        1
+                      )
+                    : _c(
+                        "div",
+                        { staticClass: "text-center text-muted py-4" },
+                        [
+                          _vm._v(
+                            "\n                                " +
+                              _vm._s(_vm.__("no_product_found")) +
+                              "\n                            "
+                          ),
+                        ]
                       ),
-                    ]),
-              ]),
-            ]),
+                ]),
+              ]
+            ),
           ]),
         ]),
         _vm._v(" "),
         _vm._m(0),
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-lg-6 col-md-12 col-sm-12" }, [
+          _c("div", { staticClass: "col-lg-6 col-md-12 col-sm-12 mb-4" }, [
             _c("div", { staticClass: "card h-95" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title me-1" }, [
@@ -2192,6 +2386,7 @@ var render = function () {
                     { staticClass: "table-responsive" },
                     [
                       _c("b-table", {
+                        staticClass: "modern-table",
                         attrs: {
                           items: _vm.sellers,
                           fields: _vm.sellerFields,
@@ -2202,10 +2397,12 @@ var render = function () {
                           "sort-by": _vm.sellerSortBy,
                           "sort-desc": _vm.sellerSortDesc,
                           "sort-direction": _vm.sortDirection,
-                          bordered: true,
-                          stacked: "md",
+                          bordered: false,
+                          borderless: "",
+                          "tbody-tr-class": function () {
+                            return "modern-tr"
+                          },
                           "show-empty": "",
-                          small: "",
                         },
                         on: {
                           "update:sortBy": function ($event) {
@@ -2352,7 +2549,7 @@ var render = function () {
             ]),
           ]),
           _vm._v(" "),
-          _c("div", { staticClass: "col-lg-6 col-md-12 col-sm-12" }, [
+          _c("div", { staticClass: "col-lg-6 col-md-12 col-sm-12 mb-4" }, [
             _c("div", { staticClass: "card h-95" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title me-1" }, [
@@ -2379,6 +2576,7 @@ var render = function () {
                     { staticClass: "table-responsive" },
                     [
                       _c("b-table", {
+                        staticClass: "modern-table",
                         attrs: {
                           items: _vm.categories,
                           fields: _vm.categoryFields,
@@ -2389,10 +2587,12 @@ var render = function () {
                           "sort-by": _vm.categorySortBy,
                           "sort-desc": _vm.categorySortDesc,
                           "sort-direction": _vm.sortDirection,
-                          bordered: true,
-                          stacked: "md",
+                          bordered: false,
+                          borderless: "",
+                          "tbody-tr-class": function () {
+                            return "modern-tr"
+                          },
                           "show-empty": "",
-                          small: "",
                         },
                         on: {
                           "update:sortBy": function ($event) {

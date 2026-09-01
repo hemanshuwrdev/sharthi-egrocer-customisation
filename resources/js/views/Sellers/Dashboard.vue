@@ -164,7 +164,7 @@
                 <div class="row">
                     <!-- Chart Section -->
                     <div class="col-12 mb-3">
-                        <div class="card h-100">
+                        <div class="card h-100 dash-panel">
                             <div class="card-header">
                                 <h4 class="card-title">{{ __('weekly_sales') }}</h4>
                                 <p>{{ __('total_sale_in_last_week') }} ({{ __('month') }}: {{ currentMonth }})</p>
@@ -222,7 +222,7 @@
                     <h5 class="w-100">{{ __('order_out_lines') }}</h5>
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3" v-for="status in record.status_order_count"
                         :key="status.status">
-                        <div class="card h-100">
+                        <div class="card h-100 dash-panel">
                             <div class="card-body d-flex align-items-center">
                                 <!-- Left Icon -->
                                 <div class="me-3 flex-shrink-0">
@@ -280,7 +280,7 @@
 
                 <div class="row">
                     <div class="col-12">
-                        <div class="card">
+                        <div class="card dash-panel">
                             <div class="card-header">
                                 <h4 class="card-title">{{ __('latest_orders') }}</h4>
                             </div>

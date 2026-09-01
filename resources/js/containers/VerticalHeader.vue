@@ -1,5 +1,5 @@
 <template>
-    <header class="app-header mb-3">
+    <header class="app-header">
 
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">

@@ -3508,5 +3508,152 @@ body.theme-dark .sidebar-hide:hover {
     z-index: 999999 !important;
 }
 
+/* ============================================================
+   SnapBuy design-system port — Part 5 (dashboard, additive)
+   Visual-only restyle of the existing admin/seller dashboard
+   stat cards + chart/list panel headers. No new widgets and no
+   data changes — same bindings, same __() keys. The stat cards
+   keep their existing row > col-md-12 grid markup in the .vue
+   templates; here it's collapsed with display:contents so the
+   icon sits to the left of a stacked label/value, SnapBuy-style,
+   instead of the old centered vertical stack.
+   ============================================================ */
+
+.dashboard-counter .card,
+.dash-panel {
+    border-radius: 0.85rem;
+    transition: transform 0.15s var(--app-ease), box-shadow 0.15s var(--app-ease), border-color 0.15s var(--app-ease);
+}
+
+.dashboard-counter .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(20, 30, 60, 0.08);
+}
+
+body.theme-dark .dashboard-counter .card:hover {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-counter .card-body {
+    display: flex !important;
+    align-items: center;
+    gap: 1rem;
+    text-align: left;
+}
+
+.dashboard-counter .card-body > .row {
+    display: contents !important;
+}
+
+.dashboard-counter .card-body > .row > .col-md-12:not(.mt-3) {
+    display: contents !important;
+}
+
+.dashboard-counter .card-body > .row > .col-md-12.mt-3 {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    margin-top: 0 !important;
+    text-align: left;
+}
+
+.dashboard-counter .stats-icon-big {
+    flex-shrink: 0;
+    border-radius: 0.85rem;
+    width: 3.25rem;
+    height: 3.25rem;
+}
+
+.dashboard-counter .stats-icon-big i {
+    font-size: 1.4rem;
+}
+
+.dashboard-counter .stats-icon-big img {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
+.dashboard-counter h3.font-extrabold {
+    font-size: 1.5rem;
+    color: var(--app-ink);
+}
+
+.dashboard-counter h5.text-muted {
+    font-size: 0.78rem !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--app-muted) !important;
+}
+
+/* ---- Chart / list panel headers on the dashboard ---- */
+.product_category_count .card-header,
+.dash-panel .card-header {
+    border-bottom: 1px solid var(--app-border);
+    background: transparent;
+}
+
+.product_category_count .card-title,
+.dash-panel .card-title {
+    font-weight: 700;
+    color: var(--app-ink);
+    margin-bottom: 0;
+}
+
+.dash-panel .card-header small {
+    color: var(--app-muted);
+}
 
 
+
+
+/* Modern Table Styles */
+.modern-table {
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+.modern-table th {
+    border-top: none !important;
+    border-bottom: 1px solid #E5E7EB !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: #6B7280 !important;
+    padding: 1rem 1.5rem !important;
+    background-color: #F9FAFB !important;
+}
+
+.modern-table td {
+    padding: 1.25rem 1.5rem !important;
+    border-bottom: 1px solid #E5E7EB !important;
+    border-top: none !important;
+    vertical-align: middle;
+}
+
+.modern-tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* Soft Badges */
+.badge-soft-success { background-color: #D1FAE5; color: #065F46; }
+.badge-soft-warning { background-color: #FFEDD5; color: #9A3412; }
+.badge-soft-danger { background-color: #FEE2E2; color: #B91C1C; }
+.badge-soft-info { background-color: #E0F2FE; color: #075985; }
+.badge-soft-primary { background-color: #DBEAFE; color: #1E40AF; }
+.badge-soft-dark { background-color: #F3F4F6; color: #374151; }
+.badge-soft-secondary { background-color: #F3F4F6; color: #4B5563; }
+
+/* Dashboard Recent Orders Card Title */
+.recent-orders-card-title {
+    color: #2b3674;
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+/* Fix for metric cards height */
+.metric-card-wrapper .card {
+    height: 85px !important;
+    min-height: 85px !important;
+}
