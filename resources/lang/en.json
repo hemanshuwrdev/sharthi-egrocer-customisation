@@ -1788,6 +1788,8 @@
     "add_mapping": "Add Mapping",
     "edit_mapping": "Edit Mapping",
     "distributor": "Distributor",
+    "distributors": "Distributors",
+    "distributor_id": "Distributor ID",
     "cities": "Zones",
     "overlap_allowed": "Overlap Allowed",
     "if_allowed_multiple_distributors_can_sell_this_brand_in_the_same_territory": "If allowed, multiple distributors can sell this brand in the same territory.",

@@ -575,6 +575,14 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -610,42 +618,54 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       record: [],
       currentMonth: "",
       sellerFields: [{
-        key: 'seller_name',
-        label: __('name').toUpperCase(),
+        key: 'seller_id',
+        label: __('distributor_id').toUpperCase(),
         sortable: true,
-        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle py-3'
+      }, {
+        key: 'seller_name',
+        label: __('distributors').toUpperCase(),
+        sortable: true,
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
       }, {
         key: 'store_name',
         label: __('store_name').toUpperCase(),
         sortable: true,
-        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-start align-middle py-3'
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle py-3'
       }, {
         key: 'total_revenue',
-        label: __('total_revenue').toUpperCase(),
+        label: __('total_revenue').toUpperCase() + '(' + this.$currency + ')',
         sortable: true,
-        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
       }],
       categoryFields: [{
-        key: 'category_name',
-        label: __('name').toUpperCase(),
+        key: 'category_id',
+        label: __('id').toUpperCase(),
         sortable: true,
-        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle py-3'
+      }, {
+        key: 'category_name',
+        label: __('category').toUpperCase(),
+        sortable: true,
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
       }, {
         key: 'product_name',
-        label: __('product_name').toUpperCase(),
+        label: __('product').toUpperCase(),
         sortable: true,
-        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-start align-middle py-3'
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle py-3'
       }, {
         key: 'total_revenue',
-        label: __('total_revenue').toUpperCase(),
+        label: __('total_revenue').toUpperCase() + ' (' + this.$currency + ')',
         sortable: true,
-        thClass: 'text-start border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-start align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
       }],
       orderFields: [{
         key: 'id',
@@ -892,6 +912,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           }
         });
       });
+    },
+    sortIconClass: function sortIconClass(sortBy, sortDesc, key) {
+      if (sortBy !== key) return 'fa fa-sort';
+      return sortDesc ? 'fa fa-sort-down' : 'fa fa-sort-up';
     },
     getDisplayName: function getDisplayName(name) {
       if (name == null) return '';
@@ -1255,7 +1279,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue2_daterange_picker_dist_vue2_daterange_picker_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.vue-daterange-picker[data-v-1ebd09d2][data-v-1f79daf6] {\n    min-width: 80%;\n}\n@media only screen and (min-width: 600px) {\n.vue-daterange-picker[data-v-1ebd09d2][data-v-1f79daf6] {\n        min-width: 90%;\n}\n}\n.btn_product_count[data-v-1f79daf6] {\n    margin-bottom: 10px;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.vue-daterange-picker[data-v-1ebd09d2][data-v-1f79daf6] {\n    min-width: 80%;\n}\n@media only screen and (min-width: 600px) {\n.vue-daterange-picker[data-v-1ebd09d2][data-v-1f79daf6] {\n        min-width: 90%;\n}\n}\n.btn_product_count[data-v-1f79daf6] {\n    margin-bottom: 10px;\n}\n\n/* Sortable table headers: the label + sort caret render together as one\n   centered unit (via #head() slot) instead of bootstrap-vue's default\n   background-image caret pinned to the cell's far edge. */\n[data-v-1f79daf6] .list-surface table.b-table > thead > tr > [aria-sort] {\n    background-image: none !important;\n    padding-left: 0.3rem !important;\n    padding-right: 0.3rem !important;\n}\n.th-sort-inline[data-v-1f79daf6] {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    white-space: nowrap;\n}\n.th-sort-icon[data-v-1f79daf6] {\n    font-size: 0.7rem;\n    opacity: 0.6;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2420,19 +2444,26 @@ var render = function () {
                     },
                     scopedSlots: _vm._u([
                       {
-                        key: "head(total_revenue)",
-                        fn: function (row) {
+                        key: "head()",
+                        fn: function (data) {
                           return [
-                            _vm._v(
-                              "\n                                    " +
-                                _vm._s(
-                                  _vm.__("total_revenue") +
-                                    "(" +
-                                    _vm.$currency +
-                                    ")"
-                                ) +
-                                "\n                                "
-                            ),
+                            _c("span", { staticClass: "th-sort-inline" }, [
+                              _vm._v(
+                                "\n                                        " +
+                                  _vm._s(data.label) +
+                                  "\n                                        "
+                              ),
+                              data.field.sortable
+                                ? _c("i", {
+                                    staticClass: "th-sort-icon",
+                                    class: _vm.sortIconClass(
+                                      _vm.sellerSortBy,
+                                      _vm.sellerSortDesc,
+                                      data.column
+                                    ),
+                                  })
+                                : _vm._e(),
+                            ]),
                           ]
                         },
                       },
@@ -2589,19 +2620,26 @@ var render = function () {
                     },
                     scopedSlots: _vm._u([
                       {
-                        key: "head(total_revenue)",
-                        fn: function (row) {
+                        key: "head()",
+                        fn: function (data) {
                           return [
-                            _vm._v(
-                              "\n                                    " +
-                                _vm._s(
-                                  _vm.__("total_revenue") +
-                                    " (" +
-                                    _vm.$currency +
-                                    ")"
-                                ) +
-                                "\n                                "
-                            ),
+                            _c("span", { staticClass: "th-sort-inline" }, [
+                              _vm._v(
+                                "\n                                        " +
+                                  _vm._s(data.label) +
+                                  "\n                                        "
+                              ),
+                              data.field.sortable
+                                ? _c("i", {
+                                    staticClass: "th-sort-icon",
+                                    class: _vm.sortIconClass(
+                                      _vm.categorySortBy,
+                                      _vm.categorySortDesc,
+                                      data.column
+                                    ),
+                                  })
+                                : _vm._e(),
+                            ]),
                           ]
                         },
                       },

@@ -10,9 +10,12 @@ use App\Models\Favorite;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
 use App\Models\ProductRating;
+use App\Models\Scheme;
+use App\Models\SchemeProduct;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -187,6 +190,8 @@ class RetailerCatalogApiController extends Controller
             ->get()
             ->groupBy('seller_product_id');
 
+        $nearestSchemesBySp = self::nearestSchemesForSellerProducts($rows->pluck('sp_id'));
+
         // Preload ratings grouped by (product_id, seller_id) for seller-wise avg/count
         $masterProductIds = $rows->pluck('master_product_id')->unique();
         $ratingsBySellerProduct = ProductRating::whereIn('product_id', $masterProductIds)
@@ -194,12 +199,12 @@ class RetailerCatalogApiController extends Controller
             ->get(['product_id', 'seller_id', 'rate'])
             ->groupBy(fn($r) => $r->product_id . '_' . $r->seller_id);
 
-        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct, $favoriteVariantIds) {
+        $grouped = $rows->groupBy('id')->map(function ($group) use ($brandOverlap, $slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct, $favoriteVariantIds, $nearestSchemesBySp) {
             $first = $group->first();
             $mp = $first->masterProduct;
             $overlapAllowed = (int) ($brandOverlap[$first->mp_brand_id] ?? 0) === 1;
 
-            $offers = $group->map(function ($r) use ($slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct) {
+            $offers = $group->map(function ($r) use ($slabsBySp, $sellerNames, $sellers, $ratingsBySellerProduct, $nearestSchemesBySp) {
                 $sellerLogo  = $sellers[$r->sp_seller_id]->logo ?? null;
                 $ratingKey   = $r->master_product_id . '_' . $r->sp_seller_id;
                 $ratingGroup = $ratingsBySellerProduct[$ratingKey] ?? null;
@@ -222,6 +227,7 @@ class RetailerCatalogApiController extends Controller
                         : [],
                     'avg_rating'    => $ratingGroup ? round($ratingGroup->avg('rate'), 1) : null,
                     'total_ratings' => $ratingGroup ? $ratingGroup->count() : 0,
+                    'nearest_scheme' => $nearestSchemesBySp[$r->sp_id] ?? null,
                 ];
             })->sortBy(function ($o) {
                 return $o['discounted_price'] !== null && $o['discounted_price'] > 0 ? $o['discounted_price'] : $o['selling_price'];
@@ -361,7 +367,9 @@ class RetailerCatalogApiController extends Controller
         $brand = $variant->masterProduct->brand;
         $overlapAllowed = $brand && (int) $brand->is_overlap_allowed === 1;
 
-        $offers = $sellerProducts->map(function ($sp) {
+        $nearestSchemesBySp = self::nearestSchemesForSellerProducts($sellerProducts->pluck('id'));
+
+        $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp) {
             $sellerLogo = $sp->seller ? $sp->seller->logo : null;
             return [
                 'seller_id'        => $sp->seller_id,
@@ -379,6 +387,7 @@ class RetailerCatalogApiController extends Controller
                     'max_qty' => $s->max_qty,
                     'price' => (float) $s->price,
                 ])->values(),
+                'nearest_scheme' => $nearestSchemesBySp[$sp->id] ?? null,
             ];
         })->sortBy(fn($o) => $o['discounted_price'] !== null && $o['discounted_price'] > 0 ? $o['discounted_price'] : $o['selling_price'])
             ->values();
@@ -451,5 +460,81 @@ class RetailerCatalogApiController extends Controller
         }
 
         return ['price' => $base, 'slab' => null];
+    }
+
+    /**
+     * For each seller_product, resolve the single "nearest" currently-active scheme it
+     * participates in — either a buy_x_get_y where it's the buy product, or a
+     * group_discount_price/qty scheme it's listed under. "Nearest" = soonest end_date,
+     * i.e. the offer that's most urgent for the retailer to act on. Returns a map of
+     * seller_product_id => formatted scheme array (or null when no active scheme applies).
+     */
+    private static function nearestSchemesForSellerProducts(Collection $sellerProductIds): Collection
+    {
+        $sellerProductIds = $sellerProductIds->unique()->values();
+        if ($sellerProductIds->isEmpty()) {
+            return collect();
+        }
+
+        $bxgySchemes = Scheme::with(['freeProduct.masterProductVariant.masterProduct'])
+            ->where('type', Scheme::TYPE_BUY_X_GET_Y)
+            ->whereIn('buy_seller_product_id', $sellerProductIds)
+            ->active()
+            ->get()
+            ->keyBy('buy_seller_product_id');
+
+        $spToSchemeIds = SchemeProduct::whereIn('seller_product_id', $sellerProductIds)
+            ->get(['seller_product_id', 'scheme_id'])
+            ->groupBy('seller_product_id');
+
+        $groupSchemes = Scheme::with('schemeSlabs')
+            ->whereIn('id', $spToSchemeIds->flatten(1)->pluck('scheme_id')->unique())
+            ->whereIn('type', [Scheme::TYPE_GROUP_DISCOUNT_PRICE, Scheme::TYPE_GROUP_DISCOUNT_QTY])
+            ->active()
+            ->get()
+            ->keyBy('id');
+
+        return $sellerProductIds->mapWithKeys(function ($spId) use ($bxgySchemes, $spToSchemeIds, $groupSchemes) {
+            $candidates = collect();
+
+            if ($bxgySchemes->has($spId)) {
+                $candidates->push($bxgySchemes[$spId]);
+            }
+
+            foreach ($spToSchemeIds[$spId] ?? [] as $link) {
+                if ($groupSchemes->has($link->scheme_id)) {
+                    $candidates->push($groupSchemes[$link->scheme_id]);
+                }
+            }
+
+            if ($candidates->isEmpty()) {
+                return [$spId => null];
+            }
+
+            $nearest = $candidates->sortBy('end_date')->first();
+            return [$spId => self::formatNearestScheme($nearest)];
+        });
+    }
+
+    private static function formatNearestScheme(Scheme $s): array
+    {
+        $isBxgy = $s->type === Scheme::TYPE_BUY_X_GET_Y;
+
+        return [
+            'id'           => $s->id,
+            'name'         => $s->name,
+            'type'         => $s->type,
+            'end_date'     => $s->end_date,
+            'buy_qty'      => $isBxgy ? $s->buy_qty : null,
+            'free_product' => $isBxgy && $s->freeProduct
+                ? trim(($s->freeProduct->masterProductVariant->masterProduct->name ?? '') . ' — ' . ($s->freeProduct->masterProductVariant->sku ?? ''))
+                : null,
+            'free_qty'     => $isBxgy ? $s->free_qty : null,
+            'slabs'        => !$isBxgy ? $s->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
+                'min_value'      => (float) $sl->min_value,
+                'discount_type'  => $sl->discount_type,
+                'discount_value' => (float) $sl->discount_value,
+            ])->values() : [],
+        ];
     }
 }

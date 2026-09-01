@@ -24,11 +24,22 @@ class RetailerProfile extends Model
         'verified_lng' => 'float',
     ];
 
+    // Expose only the area's name on the API; the full `area` relation object
+    // is hidden to keep the response flat.
+    protected $appends = ['area_name'];
+
+    protected $hidden = ['area'];
+
     public function getStorefrontPhotoAttribute($value): ?string
     {
         if (!$value) return null;
         if (str_starts_with($value, 'http')) return $value;
         return asset('storage/' . $value);
+    }
+
+    public function getAreaNameAttribute(): ?string
+    {
+        return $this->area?->name;
     }
 
     public function user()

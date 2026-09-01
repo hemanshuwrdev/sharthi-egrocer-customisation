@@ -454,8 +454,12 @@
                                     :per-page="perPage" :filter="sellerFilter" :filter-included-fields="filterOn"
                                     :sort-by.sync="sellerSortBy" :sort-desc.sync="sellerSortDesc"
                                     :sort-direction="sortDirection" :bordered="true" show-empty small>
-                                    <template #head(total_revenue)="row">
-                                        {{ __('total_revenue') + '(' + $currency + ')' }}
+                                    <template #head()="data">
+                                        <span class="th-sort-inline">
+                                            {{ data.label }}
+                                            <i v-if="data.field.sortable" class="th-sort-icon"
+                                                :class="sortIconClass(sellerSortBy, sellerSortDesc, data.column)"></i>
+                                        </span>
                                     </template>
                                     <template #cell(seller_name)="row">
                                         {{ getDisplayName(row.item.name) || row.item.seller_name || '' }}
@@ -501,8 +505,12 @@
                                     :filter="categoryFilter" :filter-included-fields="filterOn"
                                     :sort-by.sync="categorySortBy" :sort-desc.sync="categorySortDesc"
                                     :sort-direction="sortDirection" :bordered="true" show-empty small>
-                                    <template #head(total_revenue)="row">
-                                        {{ __('total_revenue') + ' (' + $currency + ')' }}
+                                    <template #head()="data">
+                                        <span class="th-sort-inline">
+                                            {{ data.label }}
+                                            <i v-if="data.field.sortable" class="th-sort-icon"
+                                                :class="sortIconClass(categorySortBy, categorySortDesc, data.column)"></i>
+                                        </span>
                                     </template>
                                     <template #cell(category_name)="row">
                                         {{ getDisplayName(row.item.category_name) || '' }}
@@ -570,15 +578,17 @@ export default {
             currentMonth: "",
 
             sellerFields: [
-                { key: 'seller_name', label: __('name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' },
-                { key: 'store_name', label: __('store_name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
-                { key: 'total_revenue', label: __('total_revenue').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' }
+                { key: 'seller_id', label: __('distributor_id').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
+                { key: 'seller_name', label: __('distributors').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' },
+                { key: 'store_name', label: __('store_name').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
+                { key: 'total_revenue', label: __('total_revenue').toUpperCase() + '(' + this.$currency + ')', sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' }
             ],
 
             categoryFields: [
-                { key: 'category_name', label: __('name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' },
-                { key: 'product_name', label: __('product_name').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
-                { key: 'total_revenue', label: __('total_revenue').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle fw-bold py-3 text-dark' }
+                { key: 'category_id', label: __('id').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
+                { key: 'category_name', label: __('category').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' },
+                { key: 'product_name', label: __('product').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
+                { key: 'total_revenue', label: __('total_revenue').toUpperCase() + ' (' + this.$currency + ')', sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' }
             ],
 
             orderFields: [
@@ -806,6 +816,11 @@ export default {
                     }
                 });
             })
+        },
+
+        sortIconClass(sortBy, sortDesc, key) {
+            if (sortBy !== key) return 'fa fa-sort';
+            return sortDesc ? 'fa fa-sort-down' : 'fa fa-sort-up';
         },
 
         getDisplayName(name) {
@@ -1051,5 +1066,26 @@ export default {
 
 .btn_product_count {
     margin-bottom: 10px;
+}
+
+/* Sortable table headers: the label + sort caret render together as one
+   centered unit (via #head() slot) instead of bootstrap-vue's default
+   background-image caret pinned to the cell's far edge. */
+::v-deep .list-surface table.b-table > thead > tr > [aria-sort] {
+    background-image: none !important;
+    padding-left: 0.3rem !important;
+    padding-right: 0.3rem !important;
+}
+
+.th-sort-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.th-sort-icon {
+    font-size: 0.7rem;
+    opacity: 0.6;
 }
 </style>
