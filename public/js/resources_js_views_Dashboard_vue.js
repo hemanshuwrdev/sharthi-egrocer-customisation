@@ -583,6 +583,25 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -621,51 +640,51 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         key: 'seller_id',
         label: __('distributor_id').toUpperCase(),
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        thClass: 'text-center border-0 fw-semibold text-muted',
         tdClass: 'text-center align-middle py-3'
       }, {
         key: 'seller_name',
         label: __('distributors').toUpperCase(),
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted',
+        tdClass: 'text-center align-middle fw-bold py-3'
       }, {
         key: 'store_name',
         label: __('store_name').toUpperCase(),
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        thClass: 'text-center border-0 fw-semibold text-muted',
         tdClass: 'text-center align-middle py-3'
       }, {
         key: 'total_revenue',
         label: __('total_revenue').toUpperCase() + '(' + this.$currency + ')',
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted',
+        tdClass: 'text-center align-middle fw-bold py-3'
       }],
       categoryFields: [{
         key: 'category_id',
         label: __('id').toUpperCase(),
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        thClass: 'text-center border-0 fw-semibold text-muted',
         tdClass: 'text-center align-middle py-3'
       }, {
         key: 'category_name',
         label: __('category').toUpperCase(),
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted',
+        tdClass: 'text-center align-middle fw-bold py-3'
       }, {
         key: 'product_name',
         label: __('product').toUpperCase(),
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
+        thClass: 'text-center border-0 fw-semibold text-muted',
         tdClass: 'text-center align-middle py-3'
       }, {
         key: 'total_revenue',
         label: __('total_revenue').toUpperCase() + ' (' + this.$currency + ')',
         sortable: true,
-        thClass: 'text-center border-0 fw-semibold text-muted bg-light',
-        tdClass: 'text-center align-middle fw-bold py-3 text-dark'
+        thClass: 'text-center border-0 fw-semibold text-muted',
+        tdClass: 'text-center align-middle fw-bold py-3'
       }],
       orderFields: [{
         key: 'id',
@@ -734,6 +753,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       categoryTotalRows: 1,
       categoryCurrentPage: 1,
       categoryPerPage: 5,
+      brands: [],
       statuses: [],
       orders: [],
       orderTotalRows: 1,
@@ -960,6 +980,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           _this3.totalRows = _this3.sellers.length;
           _this3.categories = data.data.top_categories;
           _this3.categoryTotalRows = _this3.categories.length;
+          _this3.brands = data.data.top_brands || [];
         }
       })["catch"](function (error) {
         vm.isLoading = false;
@@ -2385,6 +2406,64 @@ var render = function () {
                 ]),
               ]
             ),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-6 col-lg-7 col-xl-8 mb-4" }, [
+            _c("div", { staticClass: "list-surface h-100" }, [
+              _c("div", { staticClass: "card-header" }, [
+                _c("h4", { staticClass: "card-title me-1" }, [
+                  _vm._v(_vm._s(_vm.__("top_brands"))),
+                ]),
+                _vm._v(" "),
+                _c("small", [
+                  _vm._v(
+                    "(" +
+                      _vm._s(_vm.__("month")) +
+                      ": " +
+                      _vm._s(_vm.currentMonth) +
+                      ")"
+                  ),
+                ]),
+              ]),
+              _vm._v(" "),
+              _vm.brands.length
+                ? _c(
+                    "div",
+                    { staticClass: "list-group list-group-flush" },
+                    _vm._l(_vm.brands, function (brand) {
+                      return _c(
+                        "div",
+                        {
+                          key: brand.brand_id,
+                          staticClass:
+                            "list-group-item d-flex align-items-center justify-content-between",
+                        },
+                        [
+                          _c("span", { staticClass: "fw-semibold" }, [
+                            _vm._v(
+                              _vm._s(_vm.getDisplayName(brand.brand_name) || "")
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          _c("span", { staticClass: "fw-bold text-dark" }, [
+                            _vm._v(
+                              _vm._s(_vm.$currency) +
+                                _vm._s(brand.total_revenue)
+                            ),
+                          ]),
+                        ]
+                      )
+                    }),
+                    0
+                  )
+                : _c("div", { staticClass: "text-center text-muted py-4" }, [
+                    _vm._v(
+                      "\n                            " +
+                        _vm._s(_vm.__("no_product_found")) +
+                        "\n                        "
+                    ),
+                  ]),
+            ]),
           ]),
         ]),
         _vm._v(" "),

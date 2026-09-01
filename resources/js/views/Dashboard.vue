@@ -119,6 +119,25 @@
                         </div>
                     </div>
 
+                    <div class="col-12 col-md-6 col-lg-7 col-xl-8 mb-4">
+                        <div class="list-surface h-100">
+                            <div class="card-header">
+                                <h4 class="card-title me-1">{{ __('top_brands') }}</h4>
+                                <small>({{ __('month') }}: {{ currentMonth }})</small>
+                            </div>
+                            <div v-if="brands.length" class="list-group list-group-flush">
+                                <div v-for="brand in brands" :key="brand.brand_id"
+                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                    <span class="fw-semibold">{{ getDisplayName(brand.brand_name) || '' }}</span>
+                                    <span class="fw-bold text-dark">{{ $currency }}{{ brand.total_revenue }}</span>
+                                </div>
+                            </div>
+                            <div v-else class="text-center text-muted py-4">
+                                {{ __('no_product_found') }}
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="row">
@@ -578,17 +597,17 @@ export default {
             currentMonth: "",
 
             sellerFields: [
-                { key: 'seller_id', label: __('distributor_id').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
-                { key: 'seller_name', label: __('distributors').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' },
-                { key: 'store_name', label: __('store_name').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
-                { key: 'total_revenue', label: __('total_revenue').toUpperCase() + '(' + this.$currency + ')', sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' }
+                { key: 'seller_id', label: __('distributor_id').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle py-3' },
+                { key: 'seller_name', label: __('distributors').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle fw-bold py-3' },
+                { key: 'store_name', label: __('store_name').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle py-3' },
+                { key: 'total_revenue', label: __('total_revenue').toUpperCase() + '(' + this.$currency + ')', sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle fw-bold py-3' }
             ],
 
             categoryFields: [
-                { key: 'category_id', label: __('id').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
-                { key: 'category_name', label: __('category').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' },
-                { key: 'product_name', label: __('product').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle py-3' },
-                { key: 'total_revenue', label: __('total_revenue').toUpperCase() + ' (' + this.$currency + ')', sortable: true, thClass: 'text-center border-0 fw-semibold text-muted bg-light', tdClass: 'text-center align-middle fw-bold py-3 text-dark' }
+                { key: 'category_id', label: __('id').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle py-3' },
+                { key: 'category_name', label: __('category').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle fw-bold py-3' },
+                { key: 'product_name', label: __('product').toUpperCase(), sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle py-3' },
+                { key: 'total_revenue', label: __('total_revenue').toUpperCase() + ' (' + this.$currency + ')', sortable: true, thClass: 'text-center border-0 fw-semibold text-muted', tdClass: 'text-center align-middle fw-bold py-3' }
             ],
 
             orderFields: [
@@ -631,6 +650,8 @@ export default {
             categoryTotalRows: 1,
             categoryCurrentPage: 1,
             categoryPerPage: 5,
+
+            brands: [],
 
             statuses: [],
             orders: [],
@@ -863,6 +884,7 @@ export default {
                     this.totalRows = this.sellers.length;
                     this.categories = data.data.top_categories;
                     this.categoryTotalRows = this.categories.length;
+                    this.brands = data.data.top_brands || [];
                 }
             }).catch(error => {
                 vm.isLoading = false;

@@ -2758,11 +2758,25 @@ body.theme-dark {
 .list-surface > .card-header {
     padding-bottom: 0.75rem;
     border-bottom: none;
+    background: transparent;
+}
+
+.list-surface > .card-header .card-title,
+.list-surface > .card-header h4 {
+    color: var(--app-ink);
+}
+
+.list-surface > .card-header small {
+    color: var(--app-muted);
+}
+
+.list-surface table {
+    color: var(--app-ink);
 }
 
 .list-surface table thead th {
-    background: var(--app-thead-bg);
-    color: var(--app-ink);
+    background: var(--app-thead-bg) !important;
+    color: var(--app-muted) !important;
     border-bottom: 1px solid var(--app-border) !important;
     text-transform: uppercase;
     font-size: 0.78rem;
@@ -2772,6 +2786,13 @@ body.theme-dark {
 .list-surface table.b-table td {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
+    color: var(--app-ink) !important;
+    border-color: var(--app-border) !important;
+}
+
+.list-surface table.b-table .empty-text,
+.list-surface table.b-table tbody tr.b-table-empty td {
+    color: var(--app-muted) !important;
 }
 
 /* SnapBuy tables have no vertical column dividers — only horizontal row lines. */

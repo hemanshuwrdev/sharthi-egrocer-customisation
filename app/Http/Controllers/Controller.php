@@ -199,6 +199,60 @@ class Controller extends BaseController
             }
         }
 
+        $data['top_brands'] = OrderItem::select(
+            'master_products.brand_id',
+            'brands.name as brand_name',
+            DB::raw("ROUND(SUM(order_items.sub_total),2) as total_revenue")
+        )
+            ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
+            ->leftJoin('master_product_variants', 'order_items.master_product_variant_id', '=', 'master_product_variants.id')
+            ->leftJoin('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
+            ->leftJoin('brands', 'master_products.brand_id', '=', 'brands.id')
+            ->where('sellers.status', 1)
+            ->whereMonth('order_items.created_at', now()->month)
+            ->whereYear('order_items.created_at', now()->year)
+            ->where('orders.active_status', '=', OrderStatusList::$delivered)
+            ->where('brands.status', 1)
+            ->whereNotNull('master_products.brand_id')
+            ->groupBy('master_products.brand_id')
+            ->orderBy('total_revenue', 'DESC')
+            ->limit(5)
+            ->get();
+
+        // Add brand_name as all-language translations (keyed by language code); fallback to default lang if missing
+        if ($data['top_brands']->isNotEmpty()) {
+            $languageService = app(LanguageService::class);
+            $defaultLang = $languageService->getDefaultLanguage();
+            $defaultCode = $defaultLang ? $languageService->getLanguageCode($defaultLang->id) : 'en';
+            $activeLangCodes = collect($languageService->getActiveLanguages())->pluck('code')->filter()->values()->all();
+
+            $brandIds = $data['top_brands']->pluck('brand_id')->unique()->filter()->values();
+            $brands = Brand::whereIn('id', $brandIds)->with('translations')->get()->keyBy('id');
+            foreach ($data['top_brands'] as $row) {
+                $origBrandName = $row->brand_name ?? '';
+                $brandNameByCode = [];
+                $brand = $brands->get($row->brand_id);
+                if ($brand) {
+                    $all = $brand->getAllActiveLanguageTranslations();
+                    foreach ($all as $t) {
+                        $code = $t['language_code'] ?? '';
+                        if ($code !== '') {
+                            $brandNameByCode[$code] = trim((string) ($t['name'] ?? ''));
+                        }
+                    }
+                }
+                $defaultBrandName = $brandNameByCode[$defaultCode] ?? $origBrandName;
+                $row->brand_name = (object) [];
+                foreach ($activeLangCodes as $code) {
+                    $row->brand_name->{$code} = ($brandNameByCode[$code] ?? '') !== '' ? $brandNameByCode[$code] : $defaultBrandName;
+                }
+                if ((array) $row->brand_name === []) {
+                    $row->brand_name = (object) ['en' => $origBrandName];
+                }
+            }
+        }
+
         $data['status_order_count'] = CommonHelper::getStatusOrderCount();
 
         return CommonHelper::responseWithData($data);
