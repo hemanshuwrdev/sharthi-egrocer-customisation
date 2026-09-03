@@ -19,122 +19,94 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-12 col-xl-6 dashboard-counter">
-                        <div class="row g-2">
-                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
-                                <div class="card">
-                                    <router-link to="/seller/orders">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row d-flex flex-column justify-content-center ">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big blue">
-                                                        <img
-                                                            :src="$baseUrl + '/assets/images/dashboard/Total_Orders.svg'">
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold text-center">{{ __('orders') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ record.order_count }}</h3>
-                                                </div>
+                    <div class="col-12">
+                        <div class="row align-items-start metric-card-wrapper">
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/seller/orders" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #4285F4; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-shopping-bag fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('orders') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.order_count }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
-                                <div class="card">
-                                    <router-link to="/seller/manage_products">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big orange">
-                                                        <i class="fa fa-cubes"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold text-center">{{ __('products') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ record.product_count }}</h3>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/seller/manage_products" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #f59e0b; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-cubes fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('products') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.product_count }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
-                                <div class="card">
-                                    <router-link to="/seller/categories">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big sky">
-                                                        <i class="fa fa-bullseye"></i>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold text-center">{{ __('category') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ record.category_count }}</h3>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/seller/categories" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #06b6d4; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-bullseye fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('category') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.category_count }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
 
-                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
-                                <div class="card">
-                                    <router-link to="/seller/delivery_boys">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big lightgreen">
-                                                        <i class="fa fa-male"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold text-center">{{ __('delivery_boys') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ record.driver_count || 0 }}</h3>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <router-link to="/seller/delivery_boys" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #10b981; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-male fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('delivery_boys') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.driver_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
-                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
-                                <div class="card">
-                                    <a href="#">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big orange">
-                                                        <i class="fa fa-users"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold text-center">{{ __('salesman') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ record.salesman_count || 0 }}</h3>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <a href="#" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #8b5cf6; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-users fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('salesman') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.salesman_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </a>
                                 </div>
                             </div>
-                            <div class="col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4">
-                                <div class="card">
-                                    <a href="#">
-                                        <div class="card-body px-3 py-4-5">
-                                            <div class="row">
-                                                <div class="col-md-12 d-flex justify-content-center align-items-center">
-                                                    <div class="stats-icon-big sky">
-                                                        <i class="fa fa-line-chart"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center">
-                                                    <h5 class="text-muted font-semibold text-center">{{ __('retailer') }}</h5>
-                                                    <h3 class="font-extrabold mb-0">{{ record.retailer_count || 0 }}</h3>
-                                                </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                    <a href="#" class="text-decoration-none text-dark d-block w-100">
+                                        <div class="card-body p-3 d-flex align-items-center">
+                                            <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #ef4444; color: white; border-radius: 12px !important;">
+                                                <i class="fa fa-line-chart fs-4"></i>
+                                            </div>
+                                            <div class="ms-3 text-start w-100">
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('retailer') }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.retailer_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </a>
@@ -142,9 +114,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="col-12 col-xl-6 product_category_count">
-                        <div class="card h-95">
+                <div class="row">
+                    <div class="col-12 col-xl-6 product_category_count mb-3">
+                        <div class="card h-100">
                             <div class="card-header">
                                 <h4 class="card-title">{{ __('product_category_count') }}</h4>
                             </div>
@@ -159,11 +133,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="row">
                     <!-- Chart Section -->
-                    <div class="col-12 mb-3">
+                    <div class="col-12 col-xl-6 mb-3">
                         <div class="card h-100 dash-panel">
                             <div class="card-header">
                                 <h4 class="card-title">{{ __('weekly_sales') }}</h4>
@@ -171,7 +143,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <apexchart :options="options" :series="series" width="100%" height="350"
+                                    <apexchart :options="options" :series="series" width="100%" height="220"
                                         ref="apexBarChart">
                                     </apexchart>
                                 </div>
@@ -222,8 +194,8 @@
                     <h5 class="w-100">{{ __('order_out_lines') }}</h5>
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3" v-for="status in record.status_order_count"
                         :key="status.status">
-                        <div class="card h-100 dash-panel">
-                            <div class="card-body d-flex align-items-center">
+                        <div class="card border mb-0 h-100" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                            <div class="card-body p-3 d-flex align-items-center">
                                 <!-- Left Icon -->
                                 <div class="me-3 flex-shrink-0">
                                     <div v-if="status.status == $pending" class="stats-icon payment_pending">
@@ -268,9 +240,9 @@
                                 </div>
 
                                 <!-- Right Content -->
-                                <div class="flex-grow-1">
-                                    <h6 class="text-muted font-semibold mb-1">{{ getStatusDisplayName(status) }}</h6>
-                                    <h4 class="font-extrabold mb-0">{{ status.order_count }}</h4>
+                                <div class="flex-grow-1 text-start">
+                                    <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ getStatusDisplayName(status) }}</div>
+                                    <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ status.order_count }}</div>
                                 </div>
 
                             </div>
@@ -280,7 +252,7 @@
 
                 <div class="row">
                     <div class="col-12">
-                        <div class="card dash-panel">
+                        <div class="list-surface">
                             <div class="card-header">
                                 <h4 class="card-title">{{ __('latest_orders') }}</h4>
                             </div>
@@ -330,7 +302,7 @@
                                             :placeholder="__('search')"></b-form-input>
                                     </b-col>
                                     <b-col cols="12" md="12" lg="1" class="text-center mb-2">
-                                        <button class="btn btn-primary btn_refresh" v-b-tooltip.hover
+                                        <button class="list-icon-btn" v-b-tooltip.hover
                                             :title="__('refresh')" @click="getLatestOrders()">
                                             <i class="fa fa-refresh" aria-hidden="true"></i>
                                         </button>
@@ -384,20 +356,18 @@
                                         </template>
                                     </b-table>
                                 </div>
-                                <b-row>
-                                    <b-col md="2" class="my-1">
+                                <div class="list-footer">
+                                    <div class="list-perpage">
                                         <b-form-group :label="__('per_page')" label-for="per-page-select"
                                             label-align-sm="right" label-size="sm" class="mb-0">
                                             <b-form-select id="per-page-select" v-model="orderPerPage"
                                                 :options="pageOptions" size="sm"
                                                 class="form-control form-select"></b-form-select>
                                         </b-form-group>
-                                    </b-col>
-                                    <b-col md="4" class="my-1" offset-md="6">
-                                        <b-pagination v-model="orderCurrentPage" :total-rows="orderTotalRows"
-                                            :per-page="orderPerPage" align="fill" size="sm" class="my-0"></b-pagination>
-                                    </b-col>
-                                </b-row>
+                                    </div>
+                                    <b-pagination v-model="orderCurrentPage" :total-rows="orderTotalRows"
+                                        :per-page="orderPerPage" align="fill" size="sm" class="list-pagination"></b-pagination>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -791,13 +761,13 @@ export default {
 }
 
 .chart-container {
-    min-height: 300px;
-    height: 60vh;
+    min-height: 220px;
+    height: 220px;
 }
 
 @media (max-width: 768px) {
     .chart-container {
-        height: 40vh;
+        height: 200px;
     }
 }
 </style>

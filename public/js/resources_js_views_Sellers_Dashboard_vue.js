@@ -401,36 +401,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -943,7 +913,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue2_daterange_picker_dist_vue2_daterange_picker_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.vue-daterange-picker[data-v-1ebd09d2][data-v-209c7b6a] {\n    min-width: 80%;\n}\n@media only screen and (min-width: 600px) {\n.vue-daterange-picker[data-v-1ebd09d2][data-v-209c7b6a] {\n        min-width: 90%;\n}\n}\n.btn_product_count[data-v-209c7b6a] {\n    margin-bottom: 10px;\n}\n.chart-container[data-v-209c7b6a] {\n    min-height: 300px;\n    height: 60vh;\n}\n@media (max-width: 768px) {\n.chart-container[data-v-209c7b6a] {\n        height: 40vh;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.vue-daterange-picker[data-v-1ebd09d2][data-v-209c7b6a] {\n    min-width: 80%;\n}\n@media only screen and (min-width: 600px) {\n.vue-daterange-picker[data-v-1ebd09d2][data-v-209c7b6a] {\n        min-width: 90%;\n}\n}\n.btn_product_count[data-v-209c7b6a] {\n    margin-bottom: 10px;\n}\n.chart-container[data-v-209c7b6a] {\n    min-height: 220px;\n    height: 220px;\n}\n@media (max-width: 768px) {\n.chart-container[data-v-209c7b6a] {\n        height: 200px;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -1433,392 +1403,545 @@ var render = function () {
           : _vm._e(),
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-xl-6 dashboard-counter" }, [
-            _c("div", { staticClass: "row g-2" }, [
-              _c(
-                "div",
-                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
-                [
-                  _c(
-                    "div",
-                    { staticClass: "card" },
-                    [
-                      _c("router-link", { attrs: { to: "/seller/orders" } }, [
-                        _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "row d-flex flex-column justify-content-center ",
-                            },
-                            [
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 d-flex justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "div",
-                                    { staticClass: "stats-icon-big blue" },
-                                    [
-                                      _c("img", {
-                                        attrs: {
-                                          src:
-                                            _vm.$baseUrl +
-                                            "/assets/images/dashboard/Total_Orders.svg",
-                                        },
-                                      }),
-                                    ]
-                                  ),
-                                ]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "h5",
-                                    {
-                                      staticClass:
-                                        "text-muted font-semibold text-center",
-                                    },
-                                    [_vm._v(_vm._s(_vm.__("orders")))]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "h3",
-                                    { staticClass: "font-extrabold mb-0" },
-                                    [_vm._v(_vm._s(_vm.record.order_count))]
-                                  ),
-                                ]
-                              ),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ],
-                    1
-                  ),
-                ]
-              ),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
-                [
-                  _c(
-                    "div",
-                    { staticClass: "card" },
-                    [
-                      _c(
-                        "router-link",
-                        { attrs: { to: "/seller/manage_products" } },
-                        [
-                          _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                            _c("div", { staticClass: "row" }, [
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 d-flex justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "div",
-                                    { staticClass: "stats-icon-big orange" },
-                                    [_c("i", { staticClass: "fa fa-cubes" })]
-                                  ),
-                                ]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "h5",
-                                    {
-                                      staticClass:
-                                        "text-muted font-semibold text-center",
-                                    },
-                                    [_vm._v(_vm._s(_vm.__("products")))]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "h3",
-                                    { staticClass: "font-extrabold mb-0" },
-                                    [_vm._v(_vm._s(_vm.record.product_count))]
-                                  ),
-                                ]
-                              ),
-                            ]),
-                          ]),
-                        ]
-                      ),
-                    ],
-                    1
-                  ),
-                ]
-              ),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
-                [
-                  _c(
-                    "div",
-                    { staticClass: "card" },
-                    [
-                      _c(
-                        "router-link",
-                        { attrs: { to: "/seller/categories" } },
-                        [
-                          _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                            _c("div", { staticClass: "row" }, [
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 d-flex justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "div",
-                                    { staticClass: "stats-icon-big sky" },
-                                    [_c("i", { staticClass: "fa fa-bullseye" })]
-                                  ),
-                                ]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "h5",
-                                    {
-                                      staticClass:
-                                        "text-muted font-semibold text-center",
-                                    },
-                                    [_vm._v(_vm._s(_vm.__("category")))]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "h3",
-                                    { staticClass: "font-extrabold mb-0" },
-                                    [_vm._v(_vm._s(_vm.record.category_count))]
-                                  ),
-                                ]
-                              ),
-                            ]),
-                          ]),
-                        ]
-                      ),
-                    ],
-                    1
-                  ),
-                ]
-              ),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
-                [
-                  _c(
-                    "div",
-                    { staticClass: "card" },
-                    [
-                      _c(
-                        "router-link",
-                        { attrs: { to: "/seller/delivery_boys" } },
-                        [
-                          _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                            _c("div", { staticClass: "row" }, [
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 d-flex justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "div",
-                                    {
-                                      staticClass: "stats-icon-big lightgreen",
-                                    },
-                                    [_c("i", { staticClass: "fa fa-male" })]
-                                  ),
-                                ]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                                },
-                                [
-                                  _c(
-                                    "h5",
-                                    {
-                                      staticClass:
-                                        "text-muted font-semibold text-center",
-                                    },
-                                    [_vm._v(_vm._s(_vm.__("delivery_boys")))]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "h3",
-                                    { staticClass: "font-extrabold mb-0" },
-                                    [
-                                      _vm._v(
-                                        _vm._s(_vm.record.driver_count || 0)
-                                      ),
-                                    ]
-                                  ),
-                                ]
-                              ),
-                            ]),
-                          ]),
-                        ]
-                      ),
-                    ],
-                    1
-                  ),
-                ]
-              ),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
-                [
-                  _c("div", { staticClass: "card" }, [
-                    _c("a", { attrs: { href: "#" } }, [
-                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                        _c("div", { staticClass: "row" }, [
-                          _vm._m(0),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                            },
-                            [
-                              _c(
-                                "h5",
-                                {
-                                  staticClass:
-                                    "text-muted font-semibold text-center",
-                                },
-                                [_vm._v(_vm._s(_vm.__("salesman")))]
-                              ),
-                              _vm._v(" "),
-                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.record.salesman_count || 0)),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]),
-                  ]),
-                ]
-              ),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "col-12 col-sm-4 col-md-4 col-lg-4 col-xl-4" },
-                [
-                  _c("div", { staticClass: "card" }, [
-                    _c("a", { attrs: { href: "#" } }, [
-                      _c("div", { staticClass: "card-body px-3 py-4-5" }, [
-                        _c("div", { staticClass: "row" }, [
-                          _vm._m(1),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "col-md-12 mt-3 d-flex flex-column justify-content-center align-items-center",
-                            },
-                            [
-                              _c(
-                                "h5",
-                                {
-                                  staticClass:
-                                    "text-muted font-semibold text-center",
-                                },
-                                [_vm._v(_vm._s(_vm.__("retailer")))]
-                              ),
-                              _vm._v(" "),
-                              _c("h3", { staticClass: "font-extrabold mb-0" }, [
-                                _vm._v(_vm._s(_vm.record.retailer_count || 0)),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]),
-                  ]),
-                ]
-              ),
-            ]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-xl-6 product_category_count" }, [
-            _c("div", { staticClass: "card h-95" }, [
-              _c("div", { staticClass: "card-header" }, [
-                _c("h4", { staticClass: "card-title" }, [
-                  _vm._v(_vm._s(_vm.__("product_category_count"))),
-                ]),
-              ]),
-              _vm._v(" "),
-              _c(
-                "div",
-                {
-                  staticClass:
-                    "card-body d-flex justify-content-center align-items-center chart-container",
-                },
-                [
-                  _vm.series2.length > 0
-                    ? [
-                        _c("apexcharts", {
-                          staticClass: "w-100",
-                          attrs: {
-                            height: "100%",
-                            type: "pie",
-                            options: _vm.options2,
-                            series: _vm.series2,
+          _c("div", { staticClass: "col-12" }, [
+            _c(
+              "div",
+              { staticClass: "row align-items-start metric-card-wrapper" },
+              [
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/seller/orders" },
                           },
-                        }),
-                      ]
-                    : [
-                        _c("p", { staticClass: "text-muted" }, [
-                          _vm._v(_vm._s(_vm.__("no_product_found"))),
-                        ]),
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#4285F4",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass: "fa fa-shopping-bag fs-4",
+                                    }),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: { "font-size": "13px" },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("orders")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.record.order_count))]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
                       ],
-                ],
-                2
-              ),
-            ]),
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/seller/manage_products" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#f59e0b",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-cubes fs-4" })]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: { "font-size": "13px" },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("products")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                        },
+                                      },
+                                      [_vm._v(_vm._s(_vm.record.product_count))]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/seller/categories" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#06b6d4",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass: "fa fa-bullseye fs-4",
+                                    }),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: { "font-size": "13px" },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("category")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.category_count)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { to: "/seller/delivery_boys" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+                                    staticStyle: {
+                                      width: "48px",
+                                      height: "48px",
+                                      "background-color": "#10b981",
+                                      color: "white",
+                                      "border-radius": "12px !important",
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-male fs-4" })]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: { "font-size": "13px" },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("delivery_boys")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.driver_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "a",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { href: "#" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _vm._m(0),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: { "font-size": "13px" },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("salesman")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.salesman_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ]
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "card border mb-4",
+                        staticStyle: {
+                          "border-radius": "12px",
+                          "border-color": "#E5E7EB !important",
+                        },
+                      },
+                      [
+                        _c(
+                          "a",
+                          {
+                            staticClass:
+                              "text-decoration-none text-dark d-block w-100",
+                            attrs: { href: "#" },
+                          },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-body p-3 d-flex align-items-center",
+                              },
+                              [
+                                _vm._m(1),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "ms-3 text-start w-100" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-muted small fw-semibold text-start",
+                                        staticStyle: { "font-size": "13px" },
+                                      },
+                                      [_vm._v(_vm._s(_vm.__("retailer")))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass: "fs-4 fw-bold text-start",
+                                        staticStyle: {
+                                          color: "#2b3674",
+                                          "line-height": "1.2",
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          _vm._s(_vm.record.retailer_count || 0)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ]
+                    ),
+                  ]
+                ),
+              ]
+            ),
           ]),
         ]),
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 mb-3" }, [
+          _c(
+            "div",
+            { staticClass: "col-12 col-xl-6 product_category_count mb-3" },
+            [
+              _c("div", { staticClass: "card h-100" }, [
+                _c("div", { staticClass: "card-header" }, [
+                  _c("h4", { staticClass: "card-title" }, [
+                    _vm._v(_vm._s(_vm.__("product_category_count"))),
+                  ]),
+                ]),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  {
+                    staticClass:
+                      "card-body d-flex justify-content-center align-items-center chart-container",
+                  },
+                  [
+                    _vm.series2.length > 0
+                      ? [
+                          _c("apexcharts", {
+                            staticClass: "w-100",
+                            attrs: {
+                              height: "100%",
+                              type: "pie",
+                              options: _vm.options2,
+                              series: _vm.series2,
+                            },
+                          }),
+                        ]
+                      : [
+                          _c("p", { staticClass: "text-muted" }, [
+                            _vm._v(_vm._s(_vm.__("no_product_found"))),
+                          ]),
+                        ],
+                  ],
+                  2
+                ),
+              ]),
+            ]
+          ),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-xl-6 mb-3" }, [
             _c("div", { staticClass: "card h-100 dash-panel" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title" }, [
@@ -1848,7 +1971,7 @@ var render = function () {
                         options: _vm.options,
                         series: _vm.series,
                         width: "100%",
-                        height: "350",
+                        height: "220",
                       },
                     }),
                   ],
@@ -1875,185 +1998,218 @@ var render = function () {
                   staticClass: "col-12 col-sm-6 col-md-4 col-lg-3",
                 },
                 [
-                  _c("div", { staticClass: "card h-100 dash-panel" }, [
-                    _c(
-                      "div",
-                      { staticClass: "card-body d-flex align-items-center" },
-                      [
-                        _c("div", { staticClass: "me-3 flex-shrink-0" }, [
-                          status.status == _vm.$pending
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon payment_pending" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Payment_Pending.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == _vm.$received
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon received" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Received.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == _vm.$processed
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon processed" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Processed.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == _vm.$shipped
-                            ? _c("div", { staticClass: "stats-icon shipped" }, [
-                                _c("img", {
-                                  attrs: {
-                                    src:
-                                      _vm.$baseUrl +
-                                      "/assets/images/dashboard/Shipped.svg",
-                                  },
-                                }),
-                              ])
-                            : status.status == _vm.$outForDelivery
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon outForDelivery" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Out_For_Delivery.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == _vm.$delivered
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon delivered" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Delivered.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == _vm.$cancelled
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon cancelled" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Cancelled.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == _vm.$returned
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon returned" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Returned.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == "Pending"
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon payment_pending" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Payment_Pending.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == "Ready for Pickup"
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon processed" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Processed.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == "Picked Up"
-                            ? _c(
-                                "div",
-                                { staticClass: "stats-icon delivered" },
-                                [
-                                  _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/assets/images/dashboard/Delivered.svg",
-                                    },
-                                  }),
-                                ]
-                              )
-                            : status.status == "Rescheduled"
-                            ? _c("div", { staticClass: "stats-icon purple" }, [
-                                _c("i", { staticClass: "fa fa-history" }),
-                              ])
-                            : _c("div", { staticClass: "stats-icon purple" }, [
-                                _c("i", { staticClass: "iconly-boldBag" }),
-                              ]),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "flex-grow-1" }, [
-                          _c(
-                            "h6",
-                            { staticClass: "text-muted font-semibold mb-1" },
-                            [_vm._v(_vm._s(_vm.getStatusDisplayName(status)))]
-                          ),
-                          _vm._v(" "),
-                          _c("h4", { staticClass: "font-extrabold mb-0" }, [
-                            _vm._v(_vm._s(status.order_count)),
+                  _c(
+                    "div",
+                    {
+                      staticClass: "card border mb-0 h-100",
+                      staticStyle: {
+                        "border-radius": "12px",
+                        "border-color": "#E5E7EB !important",
+                      },
+                    },
+                    [
+                      _c(
+                        "div",
+                        {
+                          staticClass:
+                            "card-body p-3 d-flex align-items-center",
+                        },
+                        [
+                          _c("div", { staticClass: "me-3 flex-shrink-0" }, [
+                            status.status == _vm.$pending
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon payment_pending" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Payment_Pending.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == _vm.$received
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon received" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Received.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == _vm.$processed
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon processed" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Processed.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == _vm.$shipped
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon shipped" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Shipped.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == _vm.$outForDelivery
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon outForDelivery" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Out_For_Delivery.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == _vm.$delivered
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon delivered" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Delivered.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == _vm.$cancelled
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon cancelled" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Cancelled.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == _vm.$returned
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon returned" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Returned.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == "Pending"
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon payment_pending" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Payment_Pending.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == "Ready for Pickup"
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon processed" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Processed.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == "Picked Up"
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon delivered" },
+                                  [
+                                    _c("img", {
+                                      attrs: {
+                                        src:
+                                          _vm.$baseUrl +
+                                          "/assets/images/dashboard/Delivered.svg",
+                                      },
+                                    }),
+                                  ]
+                                )
+                              : status.status == "Rescheduled"
+                              ? _c(
+                                  "div",
+                                  { staticClass: "stats-icon purple" },
+                                  [_c("i", { staticClass: "fa fa-history" })]
+                                )
+                              : _c(
+                                  "div",
+                                  { staticClass: "stats-icon purple" },
+                                  [_c("i", { staticClass: "iconly-boldBag" })]
+                                ),
                           ]),
-                        ]),
-                      ]
-                    ),
-                  ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "flex-grow-1 text-start" }, [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "text-muted small fw-semibold text-start",
+                                staticStyle: { "font-size": "13px" },
+                              },
+                              [_vm._v(_vm._s(_vm.getStatusDisplayName(status)))]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              {
+                                staticClass: "fs-4 fw-bold text-start",
+                                staticStyle: {
+                                  color: "#2b3674",
+                                  "line-height": "1.2",
+                                },
+                              },
+                              [_vm._v(_vm._s(status.order_count))]
+                            ),
+                          ]),
+                        ]
+                      ),
+                    ]
+                  ),
                 ]
               )
             }),
@@ -2063,7 +2219,7 @@ var render = function () {
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
           _c("div", { staticClass: "col-12" }, [
-            _c("div", { staticClass: "card dash-panel" }, [
+            _c("div", { staticClass: "list-surface" }, [
               _c("div", { staticClass: "card-header" }, [
                 _c("h4", { staticClass: "card-title" }, [
                   _vm._v(_vm._s(_vm.__("latest_orders"))),
@@ -2332,7 +2488,7 @@ var render = function () {
                                   modifiers: { hover: true },
                                 },
                               ],
-                              staticClass: "btn btn-primary btn_refresh",
+                              staticClass: "list-icon-btn",
                               attrs: { title: _vm.__("refresh") },
                               on: {
                                 click: function ($event) {
@@ -2584,11 +2740,12 @@ var render = function () {
                   ),
                   _vm._v(" "),
                   _c(
-                    "b-row",
+                    "div",
+                    { staticClass: "list-footer" },
                     [
                       _c(
-                        "b-col",
-                        { staticClass: "my-1", attrs: { md: "2" } },
+                        "div",
+                        { staticClass: "list-perpage" },
                         [
                           _c(
                             "b-form-group",
@@ -2624,32 +2781,22 @@ var render = function () {
                         1
                       ),
                       _vm._v(" "),
-                      _c(
-                        "b-col",
-                        {
-                          staticClass: "my-1",
-                          attrs: { md: "4", "offset-md": "6" },
+                      _c("b-pagination", {
+                        staticClass: "list-pagination",
+                        attrs: {
+                          "total-rows": _vm.orderTotalRows,
+                          "per-page": _vm.orderPerPage,
+                          align: "fill",
+                          size: "sm",
                         },
-                        [
-                          _c("b-pagination", {
-                            staticClass: "my-0",
-                            attrs: {
-                              "total-rows": _vm.orderTotalRows,
-                              "per-page": _vm.orderPerPage,
-                              align: "fill",
-                              size: "sm",
-                            },
-                            model: {
-                              value: _vm.orderCurrentPage,
-                              callback: function ($$v) {
-                                _vm.orderCurrentPage = $$v
-                              },
-                              expression: "orderCurrentPage",
-                            },
-                          }),
-                        ],
-                        1
-                      ),
+                        model: {
+                          value: _vm.orderCurrentPage,
+                          callback: function ($$v) {
+                            _vm.orderCurrentPage = $$v
+                          },
+                          expression: "orderCurrentPage",
+                        },
+                      }),
                     ],
                     1
                   ),
@@ -2672,13 +2819,16 @@ var staticRenderFns = [
       "div",
       {
         staticClass:
-          "col-md-12 d-flex justify-content-center align-items-center",
+          "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+        staticStyle: {
+          width: "48px",
+          height: "48px",
+          "background-color": "#8b5cf6",
+          color: "white",
+          "border-radius": "12px !important",
+        },
       },
-      [
-        _c("div", { staticClass: "stats-icon-big orange" }, [
-          _c("i", { staticClass: "fa fa-users" }),
-        ]),
-      ]
+      [_c("i", { staticClass: "fa fa-users fs-4" })]
     )
   },
   function () {
@@ -2689,13 +2839,16 @@ var staticRenderFns = [
       "div",
       {
         staticClass:
-          "col-md-12 d-flex justify-content-center align-items-center",
+          "rounded d-flex justify-content-center align-items-center flex-shrink-0",
+        staticStyle: {
+          width: "48px",
+          height: "48px",
+          "background-color": "#ef4444",
+          color: "white",
+          "border-radius": "12px !important",
+        },
       },
-      [
-        _c("div", { staticClass: "stats-icon-big sky" }, [
-          _c("i", { staticClass: "fa fa-line-chart" }),
-        ]),
-      ]
+      [_c("i", { staticClass: "fa fa-line-chart fs-4" })]
     )
   },
 ]
