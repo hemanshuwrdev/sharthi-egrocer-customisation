@@ -124,7 +124,7 @@ export default {
                 { key: 'username', label: __('username'), sortable: true, class: 'text-center' },
                 { key: 'email', label: __('email'), sortable: true, class: 'text-center' },
                 { key: 'role', label: __('role'),  class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

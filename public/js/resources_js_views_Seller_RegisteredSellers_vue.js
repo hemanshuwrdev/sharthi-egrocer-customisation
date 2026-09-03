@@ -296,7 +296,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sortDirection: 'desc'
       }, {
         key: 'actions',
-        label: __('actions')
+        label: __('actions'),
+        "class": 'text-center'
       }],
       totalRows: 1,
       currentPage: 1,

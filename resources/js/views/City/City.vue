@@ -130,7 +130,7 @@ export default {
                 {key: 'latitude', label: __('latitude'), sortable: true, sortDirection: 'desc'},
                 {key: 'longitude', label: __('longitude'), sortable: true, sortDirection: 'desc'},
                 {key: 'geolocation_type', label: __('geolocation_type'), sortable: true, sortDirection: 'desc'},
-                {key: 'actions', label: __('actions')}
+                {key: 'actions', label: __('actions'), class: 'text-center' }
             ],
 
             totalRows: 1,

@@ -171,7 +171,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         "class": 'text-center'
       }, {
         key: 'actions',
-        label: __('actions')
+        label: __('actions'),
+        "class": 'text-center'
       }],
       totalRows: 0,
       currentPage: 1,

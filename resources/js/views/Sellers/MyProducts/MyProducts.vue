@@ -26,6 +26,12 @@
                 <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
                     <i class="fa fa-refresh" aria-hidden="true"></i>
                 </button>
+                <button class="btn btn-sm btn-primary" :disabled="isBulkSaving || !rows.length"
+                    @click="saveAllRows()">
+                    <b-spinner small v-if="isBulkSaving"></b-spinner>
+                    <i v-else class="fa fa-save"></i>
+                    {{ __('bulk_save') }}
+                </button>
                 <b-dropdown dropleft menu-class="w-100 border dropdownOverflow"
                     v-b-tooltip.hover :title="__('columns')">
                     <template #button-content>
@@ -230,6 +236,7 @@ export default {
                 { key: 'actions', label: __('actions'), visible: true, class: 'text-center' },
             ],
             rows: [],
+            isBulkSaving: false,
             totalRows: 0,
             currentPage: 1,
             perPage: this.$perPage || 25,
@@ -307,7 +314,7 @@ export default {
 
         saveRow(row) {
             row._saving = true;
-            axios.post(this.$sellerApiUrl + '/products/update', {
+            return axios.post(this.$sellerApiUrl + '/products/update', {
                 product_variant_id: row.product_variant_id,
                 mrp: row.mrp,
                 selling_price: row.selling_price,
@@ -320,14 +327,29 @@ export default {
                         row.seller_product_id = res.data.data.seller_product_id;
                     }
                     this.showMessage('success', res.data.message || __('product_updated_successfully'));
+                    return { row, ok: true };
                 } else {
                     this.showError(res.data.message);
+                    return { row, ok: false };
                 }
             }).catch(err => {
                 row._saving = false;
                 const msg = (err.response && err.response.data && err.response.data.message) || __('something_went_wrong');
                 this.showError(msg);
+                return { row, ok: false };
             });
+        },
+        // Saves every currently loaded row's pricing/stock, one request at a
+        // time (reusing saveRow's own payload/response handling per row), so
+        // a distributor doesn't have to click "save" on each product one by one.
+        async saveAllRows() {
+            if (this.isBulkSaving || !this.rows.length) return;
+            this.isBulkSaving = true;
+            for (const row of this.rows) {
+                // saveRow() already shows its own success/error toast per row.
+                await this.saveRow(row);
+            }
+            this.isBulkSaving = false;
         },
         toggleStatus(row, event) {
             const newStatus = event.target.checked ? 1 : 0;

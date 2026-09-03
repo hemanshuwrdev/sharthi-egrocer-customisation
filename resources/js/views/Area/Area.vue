@@ -149,7 +149,7 @@ export default {
                 {key: 'state', label: __('state'), sortable: true, sortDirection: 'desc'},
                 {key: 'district', label: __('district'), sortable: true, sortDirection: 'desc'},
                 {key: 'status', label: __('status')},
-                {key: 'actions', label: __('actions')}
+                {key: 'actions', label: __('actions'), class: 'text-center' }
             ],
 
             totalRows: 1,

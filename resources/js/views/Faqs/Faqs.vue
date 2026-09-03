@@ -90,7 +90,7 @@ export default {
         return {
             fields: [
                 { key: 'faqs', label: __('frequently_asked_questions'), sortable: true },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

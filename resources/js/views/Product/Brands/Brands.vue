@@ -127,7 +127,7 @@ export default {
                 { key: 'status', label: __('status'), class: 'text-center', formatter: (value) => {
                     return value == 1 ? __('active') : __('deactive');
                 }},
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 0,
             currentPage: 1,

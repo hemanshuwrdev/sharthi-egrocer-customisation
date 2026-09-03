@@ -119,7 +119,7 @@ export default {
             fields: [
                 { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
                 { key: 'name', label: __('name'), sortable: true, class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

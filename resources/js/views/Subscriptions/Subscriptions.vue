@@ -326,7 +326,7 @@ export default {
                 { key: 'discounted_price', label: __('discounted_price') + ` (${c})` },
                 { key: 'free_delivery_above', label: __('free_delivery_above') + ` (${c})` },
                 { key: 'status', label: __('status') },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ];
         },
         translatedPlans() {

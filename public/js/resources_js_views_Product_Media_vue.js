@@ -234,7 +234,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         "class": 'text-center'
       }, {
         key: 'actions',
-        label: __('actions')
+        label: __('actions'),
+        "class": 'text-center'
       }],
       totalRows: 1,
       currentPage: 1,

@@ -161,7 +161,7 @@ export default {
                 { key: 'cash_received', label: __('cash_received'), sortable: true, class: 'text-center' },
                 { key: 'status', label: __('status'), sortable: true, class: 'text-center' },
                 { key: 'is_available', label: __('available'), class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

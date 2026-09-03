@@ -162,7 +162,7 @@ export default {
                 { key: 'status', label:  __('status'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'availability', label:  __('availability'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'require_products_approval', label:  __('require_products_approval'), class: 'text-center', sortable: true, sortDirection: 'desc' },
-                { key: 'actions', label:  __('actions') }
+                { key: 'actions', label:  __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

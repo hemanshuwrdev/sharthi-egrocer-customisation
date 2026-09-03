@@ -1010,6 +1010,7 @@ export default {
         checkPermissions() {
             var current_path = this.$route.path;
             var permission = '';
+            var role = false;
 
             this.sidebarItems.forEach(menu => {
                 //Only Main Categories
@@ -1017,11 +1018,13 @@ export default {
                     menu.submenu.forEach(submenu => {
                         if (submenu.url === current_path) {
                             permission = submenu.permission;
+                            role = submenu.role;
                         }
                     });
                 } else {
                     if (menu.url === current_path) {
                         permission = menu.permission;
+                        role = menu.role;
                     }
                 }
             });
@@ -1034,7 +1037,13 @@ export default {
                 window.localStorage.setItem('loginCheck', 1);
                 window.location.reload();
             }
-            else if (Auth.check() && permission && !this.$can(permission)) {
+            // Role-gated items (role: true) bypass the permission check here too —
+            // matches the sidebar template's own v-if, which uses $role('Super Admin')
+            // instead of $can(permission) for these same items.
+            else if (Auth.check() && role === true && !this.$role('Super Admin')) {
+                this.$router.push({ path: '/unauthorized' });
+            }
+            else if (Auth.check() && role !== true && permission && !this.$can(permission)) {
                 this.$router.push({ path: '/unauthorized' });
             }
 

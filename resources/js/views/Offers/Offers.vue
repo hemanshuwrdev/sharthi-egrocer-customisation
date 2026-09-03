@@ -206,7 +206,7 @@ export default {
                 { key: 'image', label:  __('image'),  class: 'text-center' },
                 { key: 'position', label:  __('position'),  class: 'text-center' },
                 { key: 'section_position', label: __('select_position'),  class: 'text-center' },
-                { key: 'actions', label:  __('actions') }
+                { key: 'actions', label:  __('actions'), class: 'text-center' }
             ],
 
             totalRows: 1,

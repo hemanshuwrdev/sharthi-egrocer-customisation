@@ -97,7 +97,7 @@ export default {
                 { key: 'status', label: __('status'), sortable: true, class: 'text-center' },
                 { key: 'type', label: __('type'), sortable: true, class: 'text-center' },
                 { key: 'created_at', label: __('date_time'), sortable: true, class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

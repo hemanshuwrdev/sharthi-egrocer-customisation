@@ -998,17 +998,20 @@ __webpack_require__.r(__webpack_exports__);
     checkPermissions: function checkPermissions() {
       var current_path = this.$route.path;
       var permission = '';
+      var role = false;
       this.sidebarItems.forEach(function (menu) {
         //Only Main Categories
         if (menu.submenu && menu.submenu.length > 0) {
           menu.submenu.forEach(function (submenu) {
             if (submenu.url === current_path) {
               permission = submenu.permission;
+              role = submenu.role;
             }
           });
         } else {
           if (menu.url === current_path) {
             permission = menu.permission;
+            role = menu.role;
           }
         }
       });
@@ -1019,7 +1022,15 @@ __webpack_require__.r(__webpack_exports__);
         }
         window.localStorage.setItem('loginCheck', 1);
         window.location.reload();
-      } else if (_Auth__WEBPACK_IMPORTED_MODULE_3__["default"].check() && permission && !this.$can(permission)) {
+      }
+      // Role-gated items (role: true) bypass the permission check here too —
+      // matches the sidebar template's own v-if, which uses $role('Super Admin')
+      // instead of $can(permission) for these same items.
+      else if (_Auth__WEBPACK_IMPORTED_MODULE_3__["default"].check() && role === true && !this.$role('Super Admin')) {
+        this.$router.push({
+          path: '/unauthorized'
+        });
+      } else if (_Auth__WEBPACK_IMPORTED_MODULE_3__["default"].check() && role !== true && permission && !this.$can(permission)) {
         this.$router.push({
           path: '/unauthorized'
         });

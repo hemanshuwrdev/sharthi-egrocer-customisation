@@ -83,7 +83,7 @@ export default {
                 { key: 'product_name', label: __('product'), sortable: true, class: 'text-center' },
                 { key: 'total_qty', label: __('quantity'), sortable: true, class: 'text-center' },
                 { key: 'seller_name', label: __('seller'), sortable: true, class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

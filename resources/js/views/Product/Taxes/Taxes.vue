@@ -124,7 +124,7 @@ export default {
                 { key: 'title', label: __('title'),  class: 'text-center' },
                 { key: 'percentage', label: __('percentage'),  class: 'text-center' },
                 { key: 'status', label: __('status'),  class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

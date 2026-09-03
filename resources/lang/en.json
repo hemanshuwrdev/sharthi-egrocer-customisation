@@ -2016,5 +2016,6 @@
     "content" : "Content",
     "administration" : "Administration",
     "top_brands" : "Top Brands",
-    "enter_hsn_code" : "Enter HSN Code"
+    "enter_hsn_code" : "Enter HSN Code",
+    "bulk_save" : "Bulk Save"
 }

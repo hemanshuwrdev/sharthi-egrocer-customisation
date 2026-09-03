@@ -113,7 +113,7 @@ export default {
                 {key: 'image', label: __('image'), class: 'text-center'},
                 {key: 'price', label: __('price'), class: 'text-center', sortable: true},
                 {key: 'discounted_price', label: __('discounted_price'), class: 'text-center', sortable: true},
-                {key: 'actions', label: __('actions')}
+                {key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

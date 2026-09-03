@@ -92,7 +92,7 @@ export default {
                 { key: 'short_code', label: __('short_code'), sortable: true, class: 'text-center' },
                 { key: 'parent_id', label: __('parent_id'), class: 'text-center' },
                 { key: 'conversion', label: __('conversion'), class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

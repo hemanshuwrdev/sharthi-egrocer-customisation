@@ -101,7 +101,7 @@ export default {
                 { key: 'code', label: __('code'), class: 'text-center' },
                 { key: 'logo', label: __('logo'), class: 'text-center' },
                 { key: 'status', label: __('status'), class: 'text-center', sortable: true, sortDirection: 'asc' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

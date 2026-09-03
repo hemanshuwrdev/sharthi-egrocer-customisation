@@ -374,7 +374,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }, {
         key: 'actions',
         label: __('actions'),
-        visible: true
+        visible: true,
+        "class": 'text-center'
       }],
       totalRows: 1,
       currentPage: 1,

@@ -144,7 +144,7 @@ export default {
                 { key: 'product_type', label: __('product_type'), class: 'text-center' },
                 { key: 'category_ids', label: __('category_ids'), class: 'text-center' },
                 { key: 'position', label: __('position'), class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

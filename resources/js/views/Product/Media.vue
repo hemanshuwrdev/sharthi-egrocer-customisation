@@ -174,7 +174,7 @@ export default {
                 {key: 'type', label: __('type'), sortable: true, class: 'text-center'},
                 {key: 'sub_directory', label: __('sub_directory'), sortable: true, class: 'text-center'},
                 {key: 'size', label: __('size'), sortable: true, class: 'text-center'},
-                {key: 'actions', label: __('actions')}
+                {key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

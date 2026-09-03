@@ -379,7 +379,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         label: __('status')
       }, {
         key: 'actions',
-        label: __('actions')
+        label: __('actions'),
+        "class": 'text-center'
       }];
     },
     translatedPlans: function translatedPlans() {

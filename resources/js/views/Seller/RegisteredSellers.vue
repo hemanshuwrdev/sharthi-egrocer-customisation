@@ -227,7 +227,7 @@ export default {
                 { key: 'commission', label: __('commission'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'created_at', label: __('date'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'status', label: __('status'), class: 'text-center', sortable: true, sortDirection: 'desc' },
-                { key: 'actions', label: __('actions')}
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

@@ -268,7 +268,7 @@ export default {
                 {key: 'return_status', label: __('return'), visible: false, class: 'text-center', sortable: true},
                 {key: 'cancelable_status', label: __('cancellation'), visible: false, class: 'text-center', sortable: true},
                 {key: 'till_status', label: __('till_status'), visible: false, class: 'text-center', sortable: true},
-                {key: 'actions', label: __('actions'), visible: true}
+                {key: 'actions', label: __('actions'), visible: true, class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

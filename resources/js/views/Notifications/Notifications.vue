@@ -83,7 +83,7 @@ export default {
                 { key: 'type_id', label: __('id'), class: 'text-center' },
                 { key: 'type_link', label: __('link'), class: 'text-center' },
                 { key: 'image', label: __('image'), class: 'text-center' },
-                { key: 'actions', label: __('actions') }
+                { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,

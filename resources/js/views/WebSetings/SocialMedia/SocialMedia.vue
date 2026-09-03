@@ -109,7 +109,7 @@ export default {
                 { key: 'id', label:  __('id') , sortable: true, sortDirection: 'desc' },
                 { key: 'icon', label:  __('icon') , sortable: true, class: 'text-center' },
                 { key: 'link', label: __('link') , sortable: true, class: 'text-center' },
-                { key: 'actions', label:  __('actions')  }
+                { key: 'actions', label:  __('actions'), class: 'text-center' }
             ],
             totalRows: 1,
             currentPage: 1,
