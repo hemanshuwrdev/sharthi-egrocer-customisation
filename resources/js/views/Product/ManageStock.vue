@@ -15,6 +15,12 @@
                     @click="getRecords()">
                     <i class="fa fa-refresh" aria-hidden="true"></i>
                 </button>
+                <button class="btn btn-sm btn-primary" :disabled="isBulkSaving || !groupedProducts.length"
+                    @click="saveAllStock()">
+                    <b-spinner small v-if="isBulkSaving"></b-spinner>
+                    <i v-else class="fa fa-save"></i>
+                    {{ __('bulk_save') }}
+                </button>
             </div>
             <div class="table-responsive">
                 <b-table :key="tableKey" :items="groupedProducts" :fields="fields"
@@ -56,16 +62,9 @@
 
                                 <!-- Stock column -->
                                 <template #cell(stock)="row">
-
-                                    <div
-                                        v-if="edit_record && edit_record.product_variant_id === row.item.product_variant_id">
-                                        <b-form-input v-model="edit_record.stock" type="number" min="0"
-                                            @keyup.enter="updateStock(row.item.product_variant_id)"></b-form-input>
-                                    </div>
-                                    <div v-else>
-                                        {{ row.item.stock }}
-                                    </div>
-
+                                    <b-form-input v-model.number="row.item.stock" type="number" min="0"
+                                        :disabled="row.item._saving"
+                                        @keyup.enter="saveStockRow(row.item)"></b-form-input>
                                 </template>
 
                                 <!-- Status column -->
@@ -79,15 +78,11 @@
                                 <!-- Actions column -->
                                 <template #cell(actions)="row">
                                     <div class="list-actions">
-                                        <button
-                                            v-if="edit_record && edit_record.product_variant_id === row.item.product_variant_id"
-                                            class="list-action-btn"
-                                            @click="updateStock(row.item.product_variant_id)">
-                                            <i class="fa fa-check"></i>
-                                        </button>
-                                        <button v-else class="list-action-btn is-edit" @click="edit_record = { ...row.item }"
-                                            v-b-tooltip.hover :title="__('edit')">
-                                            <i class="fa fa-pencil-alt"></i>
+                                        <button class="list-action-btn" :disabled="row.item._saving"
+                                            @click="saveStockRow(row.item)"
+                                            v-b-tooltip.hover :title="__('save')">
+                                            <b-spinner small v-if="row.item._saving"></b-spinner>
+                                            <i v-else class="fa fa-check"></i>
                                         </button>
                                     </div>
                                 </template>
@@ -143,7 +138,7 @@ export default {
             filterOn: ['name'],
             isLoading: false,
             products: [],
-            edit_record: null,
+            isBulkSaving: false,
             groupedProducts: [],
             lightboxSources: [],
             toggler: false,
@@ -299,7 +294,7 @@ export default {
                 if (ok) {
                     const raw = res.data;
                     const list = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
-                    this.groupedProducts = list.slice();
+                    this.groupedProducts = list.map(r => ({ ...r, _saving: false }));
                     this.totalRows = typeof res.total === 'number' ? res.total : (res.total ? parseInt(res.total, 10) : 0);
                     this.tableKey += 1;
                 } else {
@@ -313,29 +308,41 @@ export default {
                 this.showMessage('error', err.response && err.response.data && err.response.data.message ? err.response.data.message : __('something_went_wrong'));
             });
         },
-        updateStock(product_variant_id) {
-            if (this.edit_record.stock < 0) {
+        // Saves one row's stock in place (no full-list refetch, so it plays
+        // well with saveAllStock() looping over every row without resetting
+        // the others mid-loop).
+        saveStockRow(row) {
+            if (row.stock < 0) {
                 this.showMessage('error', __('stock_must_be_positive'));
-                return;
+                return Promise.resolve();
             }
-            this.isLoading = true;
-            axios.post(this.$apiUrl + '/products/update_variant_stock', {
-                id: product_variant_id,
-                stock: this.edit_record.stock
+            row._saving = true;
+            return axios.post(this.$apiUrl + '/products/update_variant_stock', {
+                id: row.product_variant_id,
+                stock: row.stock
             }).then((response) => {
-                this.isLoading = false;
+                row._saving = false;
                 if (response.data.status === 1) {
                     this.showMessage('success', response.data.message);
-                    this.getRecords(); // Refresh data after updating stock
                 } else {
                     this.showMessage('error', response.data.message);
                 }
-                this.edit_record = null; // Reset edit state
-
             }).catch(() => {
-                this.isLoading = false;
+                row._saving = false;
                 this.showMessage('error', __('update_failed'));
             });
+        },
+        // Saves every currently loaded row's stock, one request at a time
+        // (reusing saveStockRow's own payload/response handling per row), so
+        // stock for the whole page can be updated without clicking save on
+        // each product one by one.
+        async saveAllStock() {
+            if (this.isBulkSaving || !this.groupedProducts.length) return;
+            this.isBulkSaving = true;
+            for (const row of this.groupedProducts) {
+                await this.saveStockRow(row);
+            }
+            this.isBulkSaving = false;
         }
     }
 };

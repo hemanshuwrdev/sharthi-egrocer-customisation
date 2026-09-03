@@ -11,17 +11,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuejs_datatable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuejs-datatable */ "./node_modules/vuejs-datatable/dist/vuejs-datatable.esm.js");
-/* harmony import */ var fslightbox_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! fslightbox-vue */ "./node_modules/fslightbox-vue/index.js");
-/* harmony import */ var fslightbox_vue__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(fslightbox_vue__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var vuejs_datatable__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuejs-datatable */ "./node_modules/vuejs-datatable/dist/vuejs-datatable.esm.js");
+/* harmony import */ var fslightbox_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! fslightbox-vue */ "./node_modules/fslightbox-vue/index.js");
+/* harmony import */ var fslightbox_vue__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(fslightbox_vue__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_3__);
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
-//
-//
-//
-//
-//
 //
 //
 //
@@ -134,8 +140,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
-    VuejsDatatableFactory: vuejs_datatable__WEBPACK_IMPORTED_MODULE_0__.VuejsDatatableFactory,
-    FsLightbox: (fslightbox_vue__WEBPACK_IMPORTED_MODULE_1___default())
+    VuejsDatatableFactory: vuejs_datatable__WEBPACK_IMPORTED_MODULE_1__.VuejsDatatableFactory,
+    FsLightbox: (fslightbox_vue__WEBPACK_IMPORTED_MODULE_2___default())
   },
   data: function data() {
     return {
@@ -185,7 +191,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
       filterOn: ['name'],
       isLoading: false,
       products: [],
-      edit_record: null,
+      isBulkSaving: false,
       groupedProducts: [],
       lightboxSources: [],
       toggler: false,
@@ -220,7 +226,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     // Fetch active languages and set current language ID
     fetchActiveLanguages: function fetchActiveLanguages() {
       var _this2 = this;
-      return axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/active_languages').then(function (response) {
+      return axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/active_languages').then(function (response) {
         if (response.data.data && Array.isArray(response.data.data)) {
           _this2.activeLanguages = response.data.data;
           var appLocale = window.appLocale || 'en';
@@ -327,7 +333,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     getRecords: function getRecords() {
       var _this5 = this;
       this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/products/get_product_variants', {
+      axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/products/get_product_variants', {
         params: {
           page: this.currentPage,
           per_page: this.perPage,
@@ -340,7 +346,11 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         if (ok) {
           var raw = res.data;
           var list = Array.isArray(raw) ? raw : raw && _typeof(raw) === 'object' ? Object.values(raw) : [];
-          _this5.groupedProducts = list.slice();
+          _this5.groupedProducts = list.map(function (r) {
+            return _objectSpread(_objectSpread({}, r), {}, {
+              _saving: false
+            });
+          });
           _this5.totalRows = typeof res.total === 'number' ? res.total : res.total ? parseInt(res.total, 10) : 0;
           _this5.tableKey += 1;
         } else {
@@ -354,29 +364,84 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         _this5.showMessage('error', err.response && err.response.data && err.response.data.message ? err.response.data.message : __('something_went_wrong'));
       });
     },
-    updateStock: function updateStock(product_variant_id) {
+    // Saves one row's stock in place (no full-list refetch, so it plays
+    // well with saveAllStock() looping over every row without resetting
+    // the others mid-loop).
+    saveStockRow: function saveStockRow(row) {
       var _this6 = this;
-      if (this.edit_record.stock < 0) {
+      if (row.stock < 0) {
         this.showMessage('error', __('stock_must_be_positive'));
-        return;
+        return Promise.resolve();
       }
-      this.isLoading = true;
-      axios__WEBPACK_IMPORTED_MODULE_2___default().post(this.$apiUrl + '/products/update_variant_stock', {
-        id: product_variant_id,
-        stock: this.edit_record.stock
+      row._saving = true;
+      return axios__WEBPACK_IMPORTED_MODULE_3___default().post(this.$apiUrl + '/products/update_variant_stock', {
+        id: row.product_variant_id,
+        stock: row.stock
       }).then(function (response) {
-        _this6.isLoading = false;
+        row._saving = false;
         if (response.data.status === 1) {
           _this6.showMessage('success', response.data.message);
-          _this6.getRecords(); // Refresh data after updating stock
         } else {
           _this6.showMessage('error', response.data.message);
         }
-        _this6.edit_record = null; // Reset edit state
       })["catch"](function () {
-        _this6.isLoading = false;
+        row._saving = false;
         _this6.showMessage('error', __('update_failed'));
       });
+    },
+    // Saves every currently loaded row's stock, one request at a time
+    // (reusing saveStockRow's own payload/response handling per row), so
+    // stock for the whole page can be updated without clicking save on
+    // each product one by one.
+    saveAllStock: function saveAllStock() {
+      var _this7 = this;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+        var _iterator, _step, row;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!(_this7.isBulkSaving || !_this7.groupedProducts.length)) {
+                  _context.next = 2;
+                  break;
+                }
+                return _context.abrupt("return");
+              case 2:
+                _this7.isBulkSaving = true;
+                _iterator = _createForOfIteratorHelper(_this7.groupedProducts);
+                _context.prev = 4;
+                _iterator.s();
+              case 6:
+                if ((_step = _iterator.n()).done) {
+                  _context.next = 12;
+                  break;
+                }
+                row = _step.value;
+                _context.next = 10;
+                return _this7.saveStockRow(row);
+              case 10:
+                _context.next = 6;
+                break;
+              case 12:
+                _context.next = 17;
+                break;
+              case 14:
+                _context.prev = 14;
+                _context.t0 = _context["catch"](4);
+                _iterator.e(_context.t0);
+              case 17:
+                _context.prev = 17;
+                _iterator.f();
+                return _context.finish(17);
+              case 20:
+                _this7.isBulkSaving = false;
+              case 21:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[4, 14, 17, 20]]);
+      }))();
     }
   }
 });
@@ -537,6 +602,32 @@ var render = function () {
             }),
           ]
         ),
+        _vm._v(" "),
+        _c(
+          "button",
+          {
+            staticClass: "btn btn-sm btn-primary",
+            attrs: {
+              disabled: _vm.isBulkSaving || !_vm.groupedProducts.length,
+            },
+            on: {
+              click: function ($event) {
+                return _vm.saveAllStock()
+              },
+            },
+          },
+          [
+            _vm.isBulkSaving
+              ? _c("b-spinner", { attrs: { small: "" } })
+              : _c("i", { staticClass: "fa fa-save" }),
+            _vm._v(
+              "\n                " +
+                _vm._s(_vm.__("bulk_save")) +
+                "\n            "
+            ),
+          ],
+          1
+        ),
       ]),
       _vm._v(" "),
       _c(
@@ -653,51 +744,37 @@ var render = function () {
                 key: "cell(stock)",
                 fn: function (row) {
                   return [
-                    _vm.edit_record &&
-                    _vm.edit_record.product_variant_id ===
-                      row.item.product_variant_id
-                      ? _c(
-                          "div",
-                          [
-                            _c("b-form-input", {
-                              attrs: { type: "number", min: "0" },
-                              on: {
-                                keyup: function ($event) {
-                                  if (
-                                    !$event.type.indexOf("key") &&
-                                    _vm._k(
-                                      $event.keyCode,
-                                      "enter",
-                                      13,
-                                      $event.key,
-                                      "Enter"
-                                    )
-                                  ) {
-                                    return null
-                                  }
-                                  return _vm.updateStock(
-                                    row.item.product_variant_id
-                                  )
-                                },
-                              },
-                              model: {
-                                value: _vm.edit_record.stock,
-                                callback: function ($$v) {
-                                  _vm.$set(_vm.edit_record, "stock", $$v)
-                                },
-                                expression: "edit_record.stock",
-                              },
-                            }),
-                          ],
-                          1
-                        )
-                      : _c("div", [
-                          _vm._v(
-                            "\n                                    " +
-                              _vm._s(row.item.stock) +
-                              "\n                                "
-                          ),
-                        ]),
+                    _c("b-form-input", {
+                      attrs: {
+                        type: "number",
+                        min: "0",
+                        disabled: row.item._saving,
+                      },
+                      on: {
+                        keyup: function ($event) {
+                          if (
+                            !$event.type.indexOf("key") &&
+                            _vm._k(
+                              $event.keyCode,
+                              "enter",
+                              13,
+                              $event.key,
+                              "Enter"
+                            )
+                          ) {
+                            return null
+                          }
+                          return _vm.saveStockRow(row.item)
+                        },
+                      },
+                      model: {
+                        value: row.item.stock,
+                        callback: function ($$v) {
+                          _vm.$set(row.item, "stock", _vm._n($$v))
+                        },
+                        expression: "row.item.stock",
+                      },
+                    }),
                   ]
                 },
               },
@@ -720,43 +797,34 @@ var render = function () {
                 fn: function (row) {
                   return [
                     _c("div", { staticClass: "list-actions" }, [
-                      _vm.edit_record &&
-                      _vm.edit_record.product_variant_id ===
-                        row.item.product_variant_id
-                        ? _c(
-                            "button",
+                      _c(
+                        "button",
+                        {
+                          directives: [
                             {
-                              staticClass: "list-action-btn",
-                              on: {
-                                click: function ($event) {
-                                  return _vm.updateStock(
-                                    row.item.product_variant_id
-                                  )
-                                },
-                              },
+                              name: "b-tooltip",
+                              rawName: "v-b-tooltip.hover",
+                              modifiers: { hover: true },
                             },
-                            [_c("i", { staticClass: "fa fa-check" })]
-                          )
-                        : _c(
-                            "button",
-                            {
-                              directives: [
-                                {
-                                  name: "b-tooltip",
-                                  rawName: "v-b-tooltip.hover",
-                                  modifiers: { hover: true },
-                                },
-                              ],
-                              staticClass: "list-action-btn is-edit",
-                              attrs: { title: _vm.__("edit") },
-                              on: {
-                                click: function ($event) {
-                                  _vm.edit_record = Object.assign({}, row.item)
-                                },
-                              },
+                          ],
+                          staticClass: "list-action-btn",
+                          attrs: {
+                            disabled: row.item._saving,
+                            title: _vm.__("save"),
+                          },
+                          on: {
+                            click: function ($event) {
+                              return _vm.saveStockRow(row.item)
                             },
-                            [_c("i", { staticClass: "fa fa-pencil-alt" })]
-                          ),
+                          },
+                        },
+                        [
+                          row.item._saving
+                            ? _c("b-spinner", { attrs: { small: "" } })
+                            : _c("i", { staticClass: "fa fa-check" }),
+                        ],
+                        1
+                      ),
                     ]),
                   ]
                 },
