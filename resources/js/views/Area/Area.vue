@@ -1,134 +1,102 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{ __('manage_areas_pincode_wise') }}</h3>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('manage_areas') }}</h3>
+            <button class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                v-if="$can('area_create')" @click="$router.push('/areas/create')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_new_area') }}</span>
+            </button>
+        </div>
+
+        <div class="list-surface">
+            <div class="list-toolbar">
+                <div class="list-search">
+                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                    <b-form-input id="filter-input" v-model="filter" type="search"
+                        :placeholder="__('search')"></b-form-input>
                 </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">
-                                <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">{{ __('manage_areas') }}</li>
-                        </ol>
-                    </nav>
-                </div>
+                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
             </div>
 
-            <div class="row">
-                <div class="col-12 col-md-12 order-md-1 order-last">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4>{{ __('manage_areas') }}</h4>
-                            <span class="pull-right">
-                                <router-link to="/areas/create" class="btn btn-primary" v-if="$can('area_create')">{{ __('add_new_area') }}</router-link>
-                            </span>
+            <div class="table-responsive">
+                <b-table
+                    id="my-table"
+                    ref="table"
+                    head-variant="unset"
+                    :items="areas"
+                    :fields="fields"
+                    :filter="filter"
+                    :filter-included-fields="filterOn"
+                    :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc"
+                    :sort-direction="sortDirection"
+                    @sort-changed="getRecords"
+                    :bordered="true"
+                    :busy="isLoading"
+                    stacked="md"
+                    show-empty
+                    small
+                    empty-text="There are no areas to show"
+                    :key="tableKey"
+                >
+                    <template #table-busy>
+                        <div class="text-center text-black my-2">
+                            <b-spinner class="align-middle"></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
-                        <div class="card-body">
-                            <b-row class="mb-2">
-                                <b-col cols="11" lg="4" offset-lg="7">
-                                    <h6 class="box-title">{{ __('search') }}</h6>
-                                    <b-form-input
-                                        id="filter-input"
-                                        v-model="filter"
-                                        type="search"
-                                        :placeholder="__('search')"
-                                    ></b-form-input>
-                                </b-col>
-                                <b-col md="1" class="text-center">
-                                    <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </button>
-                                </b-col>
-                            </b-row>
-                            <div class="table-responsive">
-                                <b-table
-                                    id="my-table"
-                                    ref="table"
-                                    head-variant="unset"
-                                    :items="areas"
-                                    :fields="fields"
-                                    :filter="filter"
-                                    :filter-included-fields="filterOn"
-                                    :sort-by.sync="sortBy"
-                                    :sort-desc.sync="sortDesc"
-                                    :sort-direction="sortDirection"
-                                    @sort-changed="getRecords"
-                                    :bordered="true"
-                                    :busy="isLoading"
-                                    stacked="md"
-                                    show-empty
-                                    small
-                                    empty-text="There are no areas to show"
-                                    :key="tableKey"
-                                >
-                                    <template #table-busy>
-                                        <div class="text-center text-black my-2">
-                                            <b-spinner class="align-middle"></b-spinner>
-                                            <strong>{{ __('loading') }}...</strong>
-                                        </div>
-                                    </template>
-                                    <template #cell(status)="row">
-                                        <span class="badge" :class="row.item.status == 1 ? 'bg-success' : 'bg-danger'">
-                                            {{ row.item.status == 1 ? __('active') : __('inactive') }}
-                                        </span>
-                                    </template>
-                                    <template #cell(actions)="row">
-                                        <div style="width: 120px">
-                                            <router-link
-                                                :to="{ name: 'EditArea', params: { id: row.item.id, record: row.item } }"
-                                                v-b-tooltip.hover :title="__('edit')" class="btn btn-sm btn-primary"
-                                                v-if="$can('area_update')">
-                                                <i class="fa fa-pencil-alt"></i>
-                                            </router-link>
-                                            <button class="btn btn-sm btn-danger" v-b-tooltip.hover :title="__('delete')"
-                                                    @click="deleteRecord(row.index, row.item.id)"
-                                                    v-if="$can('area_delete')">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                </b-table>
-                            </div>
-                            <b-row>
-                                <b-col md="2" class="my-1">
-                                    <label>
-                                        <b-form-group
-                                            :label="__('per_page')"
-                                            label-for="per-page-select"
-                                            label-align-sm="right"
-                                            label-size="sm"
-                                            class="mb-0">
-                                            <b-form-select
-                                                id="per-page-select"
-                                                v-model="perPage"
-                                                :options="pageOptions"
-                                                size="sm"
-                                                class="form-control form-select"
-                                            ></b-form-select>
-                                        </b-form-group>
-                                    </label>
-                                </b-col>
-
-                                <b-col md="4" class="my-1" offset-md="6">
-                                    <label>{{ __('total_records') }}:- {{ totalRows }}</label>
-
-                                    <b-pagination
-                                        v-model="currentPage"
-                                        :total-rows="totalRows"
-                                        :per-page="perPage"
-                                        align="fill"
-                                        size="sm"
-                                        class="my-0"
-                                        @change="getRecords"
-                                    ></b-pagination>
-                                </b-col>
-                            </b-row>
+                    </template>
+                    <template #cell(status)="row">
+                        <span class="badge" :class="row.item.status == 1 ? 'bg-success' : 'bg-danger'">
+                            {{ row.item.status == 1 ? __('active') : __('inactive') }}
+                        </span>
+                    </template>
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <router-link
+                                :to="{ name: 'EditArea', params: { id: row.item.id, record: row.item } }"
+                                v-b-tooltip.hover :title="__('edit')" class="list-action-btn is-edit"
+                                v-if="$can('area_update')">
+                                <i class="fa fa-pencil-alt"></i>
+                            </router-link>
+                            <button class="list-action-btn is-delete" v-b-tooltip.hover :title="__('delete')"
+                                    @click="deleteRecord(row.index, row.item.id)"
+                                    v-if="$can('area_delete')">
+                                <i class="fa fa-trash"></i>
+                            </button>
                         </div>
-                    </div>
+                    </template>
+                </b-table>
+            </div>
+
+            <div class="list-footer">
+                <div class="list-perpage">
+                    <b-form-group
+                        :label="__('per_page')"
+                        label-for="per-page-select"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-form-select
+                            id="per-page-select"
+                            v-model="perPage"
+                            :options="pageOptions"
+                            size="sm"
+                            class="form-control form-select"
+                        ></b-form-select>
+                    </b-form-group>
                 </div>
+                <b-pagination
+                    v-model="currentPage"
+                    :total-rows="totalRows"
+                    :per-page="perPage"
+                    align="fill"
+                    size="sm"
+                    class="list-pagination"
+                    @change="getRecords"
+                ></b-pagination>
             </div>
         </div>
     </div>
