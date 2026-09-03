@@ -104,7 +104,8 @@
 
                                             <div class="col-md-6 mb-3">
                                                 <label>{{ __('category') }} <i class="text-danger">*</i></label>
-                                                <select class="form-control form-select" v-model="product.category_id" required>
+                                                <select class="form-control form-select" v-model="product.category_id"
+                                                    @change="onCategoryChange" required>
                                                     <option :value="null">-- {{ __('select') }} --</option>
                                                     <option v-for="c in categories" :key="c.id" :value="c.id">
                                                         {{ c.name }}
@@ -495,6 +496,17 @@ export default {
         });
     },
     methods: {
+        // Auto-fill HSN from the selected category's own HSN code, only when
+        // the product doesn't already have one entered/saved — never
+        // overwrite a value the user (or a loaded product) already has.
+        onCategoryChange() {
+            if (this.product.hsn) return;
+            const category = this.categories.find(c => c.id === this.product.category_id);
+            if (category && category.hsn) {
+                this.product.hsn = category.hsn;
+            }
+        },
+
         // ---------- Languages / translations ----------
         fetchActiveLanguages() {
             this.isLoadingLanguages = true;

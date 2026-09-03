@@ -68,6 +68,13 @@
                                 v-model="slug">
                         </div>
 
+                        <!-- HSN code (only show for default language) -->
+                        <div class="form-group" v-if="language.is_default">
+                            <label>{{ __('hsn_code') }}</label>
+                            <input type="text" class="form-control" :placeholder="__('enter_hsn_code')"
+                                v-model="hsn">
+                        </div>
+
                         <div class="form-group" :class="{ required: language.is_default }">
                             <label>{{ __('category_subtitle') }}</label>
                             <i class="text-danger" v-if="language.is_default">*</i>
@@ -190,6 +197,7 @@ export default {
             // Basic fields
             id: this.record ? this.record.id : null,
             slug: this.record ? this.record.slug : null,
+            hsn: this.record ? this.record.hsn : null,
             image_url: this.record ? this.record.image_url : null,
             status: this.record ? this.record.status : 1,
             parent_id: this.record ? this.record.parent_id : 0,
@@ -315,6 +323,7 @@ export default {
 
                         // Load base data
                         this.slug = category.slug;
+                        this.hsn = category.hsn;
                         this.parent_id = category.parent_id;
                         this.image_url = category.image_url;
                         this.status = category.status;
@@ -576,6 +585,7 @@ export default {
                     }
                     formData.append('language_id', language.id);
                     formData.append('slug', this.slug);
+                    formData.append('hsn', this.hsn || '');
                     formData.append('status', this.status);
                     formData.append('parent_id', this.parent_id);
 

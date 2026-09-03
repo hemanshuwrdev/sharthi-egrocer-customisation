@@ -121,7 +121,7 @@ export default {
                 { key: 'brand', label: __('brand') ? __('brand').charAt(0).toUpperCase() + __('brand').slice(1) : 'Brand', class: 'text-center' },
                 { key: 'variants_count', label: __('variants') ? __('variants').charAt(0).toUpperCase() + __('variants').slice(1) : 'Variants', class: 'text-center' },
                 { key: 'status', label: __('status'), class: 'text-center' },
-                { key: 'actions', label: __('actions') },
+                { key: 'actions', label: __('actions'), class: 'text-center' },
             ],
             totalRows: 0,
             currentPage: 1,

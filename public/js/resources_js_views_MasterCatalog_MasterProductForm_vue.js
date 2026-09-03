@@ -436,6 +436,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -513,20 +514,33 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
   },
   methods: {
+    // Auto-fill HSN from the selected category's own HSN code, only when
+    // the product doesn't already have one entered/saved — never
+    // overwrite a value the user (or a loaded product) already has.
+    onCategoryChange: function onCategoryChange() {
+      var _this2 = this;
+      if (this.product.hsn) return;
+      var category = this.categories.find(function (c) {
+        return c.id === _this2.product.category_id;
+      });
+      if (category && category.hsn) {
+        this.product.hsn = category.hsn;
+      }
+    },
     // ---------- Languages / translations ----------
     fetchActiveLanguages: function fetchActiveLanguages() {
-      var _this2 = this;
+      var _this3 = this;
       this.isLoadingLanguages = true;
       return axios.get(this.$apiUrl + '/active_languages').then(function (r) {
-        _this2.languages = r.data.data || [];
-        var defaultLang = _this2.languages.find(function (l) {
+        _this3.languages = r.data.data || [];
+        var defaultLang = _this3.languages.find(function (l) {
           return l.is_default === 1;
         });
-        if (defaultLang) _this2.defaultLanguageId = defaultLang.id;
-        _this2.initializeTranslations();
-        _this2.isLoadingLanguages = false;
+        if (defaultLang) _this3.defaultLanguageId = defaultLang.id;
+        _this3.initializeTranslations();
+        _this3.isLoadingLanguages = false;
       })["catch"](function () {
-        _this2.isLoadingLanguages = false;
+        _this3.isLoadingLanguages = false;
       });
     },
     initializeTranslations: function initializeTranslations() {
@@ -544,19 +558,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.translations = all;
     },
     loadTranslationsFromRecord: function loadTranslationsFromRecord(record) {
-      var _this3 = this;
+      var _this4 = this;
       if (!record || !Array.isArray(record.translations)) return;
       this.languages.forEach(function (language) {
         var t = record.translations.find(function (tr) {
           return tr.language_id === language.id;
         });
         if (t) {
-          _this3.$set(_this3.translations[language.id], 'name', t.name || '');
-          _this3.$set(_this3.translations[language.id], 'description', t.description || '');
-          _this3.$set(_this3.translations[language.id], 'meta_title', t.meta_title || '');
-          _this3.$set(_this3.translations[language.id], 'meta_keywords', t.meta_keywords || '');
-          _this3.$set(_this3.translations[language.id], 'schema_markup', t.schema_markup || '');
-          _this3.$set(_this3.translations[language.id], 'meta_description', t.meta_description || '');
+          _this4.$set(_this4.translations[language.id], 'name', t.name || '');
+          _this4.$set(_this4.translations[language.id], 'description', t.description || '');
+          _this4.$set(_this4.translations[language.id], 'meta_title', t.meta_title || '');
+          _this4.$set(_this4.translations[language.id], 'meta_keywords', t.meta_keywords || '');
+          _this4.$set(_this4.translations[language.id], 'schema_markup', t.schema_markup || '');
+          _this4.$set(_this4.translations[language.id], 'meta_description', t.meta_description || '');
         }
       });
 
@@ -572,9 +586,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     switchToDefaultLanguageTab: function switchToDefaultLanguageTab() {
-      var _this4 = this;
+      var _this5 = this;
       var idx = this.languages.findIndex(function (l) {
-        return l.id === _this4.defaultLanguageId;
+        return l.id === _this5.defaultLanguageId;
       });
       if (idx !== -1) this.activeLanguageTab = idx;
     },
@@ -602,30 +616,30 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     // ---------- Lookups ----------
     fetchLookups: function fetchLookups() {
-      var _this5 = this;
+      var _this6 = this;
       axios.get(this.$apiUrl + '/products/brands/get').then(function (r) {
-        _this5.brands = r.data.data || [];
+        _this6.brands = r.data.data || [];
       });
       axios.get(this.$apiUrl + '/categories', {
         params: {
           per_page: 1000
         }
       }).then(function (r) {
-        _this5.categories = r.data.data || [];
+        _this6.categories = r.data.data || [];
       })["catch"](function () {});
       axios.get(this.$apiUrl + '/products/taxes').then(function (r) {
-        _this5.taxes = r.data.data || [];
+        _this6.taxes = r.data.data || [];
       })["catch"](function () {});
       axios.get(this.$apiUrl + '/units/get').then(function (r) {
-        _this5.units = r.data.data || [];
+        _this6.units = r.data.data || [];
       })["catch"](function () {});
     },
     fetchProduct: function fetchProduct() {
-      var _this6 = this;
+      var _this7 = this;
       axios.get(this.$apiUrl + '/master_catalog/products/edit/' + this.id).then(function (r) {
         var p = r.data.data;
         if (!p) return;
-        _this6.product = {
+        _this7.product = {
           id: p.id,
           slug: p.slug || '',
           parent_company_id: p.parent_company_id,
@@ -636,13 +650,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           type: p.type || 'single',
           status: p.status
         };
-        _this6.pcQuery = p.parent_company ? p.parent_company.name : '';
+        _this7.pcQuery = p.parent_company ? p.parent_company.name : '';
         if (p.image) {
-          _this6.main_image_path = _this6.$storageUrl + p.image;
+          _this7.main_image_path = _this7.$storageUrl + p.image;
         }
-        _this6.other_images = Array.isArray(p.other_images) ? p.other_images.slice() : [];
+        _this7.other_images = Array.isArray(p.other_images) ? p.other_images.slice() : [];
         if (Array.isArray(p.variants) && p.variants.length) {
-          _this6.variants = p.variants.map(function (v) {
+          _this7.variants = p.variants.map(function (v) {
             return {
               _key: Math.random().toString(36).slice(2),
               id: v.id,
@@ -663,15 +677,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             };
           });
         }
-        _this6.loadTranslationsFromRecord(p);
+        _this7.loadTranslationsFromRecord(p);
       });
     },
     // ---------- Main image ----------
     triggerRefClick: function triggerRefClick(refName) {
-      var _this7 = this;
+      var _this8 = this;
       this.$nextTick(function () {
         try {
-          var ref = _this7.$refs[refName];
+          var ref = _this8.$refs[refName];
           if (!ref) return;
           if (Array.isArray(ref)) {
             for (var i = 0; i < ref.length; i++) {
@@ -811,22 +825,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     // ---------- Parent company picker ----------
     onPcInput: function onPcInput() {
-      var _this8 = this;
+      var _this9 = this;
       clearTimeout(this.pcDebounce);
       this.product.parent_company_id = null;
       this.pcDropdownOpen = true;
       this.pcDebounce = setTimeout(function () {
-        return _this8.searchPc();
+        return _this9.searchPc();
       }, 250);
     },
     searchPc: function searchPc() {
-      var _this9 = this;
+      var _this10 = this;
       axios.get(this.$apiUrl + '/master_catalog/parent_companies/search', {
         params: {
           q: this.pcQuery
         }
       }).then(function (r) {
-        _this9.pcResults = r.data.data || [];
+        _this10.pcResults = r.data.data || [];
       });
     },
     selectParentCompany: function selectParentCompany(pc) {
@@ -835,27 +849,27 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.pcDropdownOpen = false;
     },
     createParentCompany: function createParentCompany() {
-      var _this10 = this;
+      var _this11 = this;
       axios.post(this.$apiUrl + '/master_catalog/parent_companies/find_or_create', {
         name: this.pcQuery
       }).then(function (r) {
         var pc = r.data.data;
-        if (pc) _this10.selectParentCompany(pc);
+        if (pc) _this11.selectParentCompany(pc);
       });
     },
     onPcBlur: function onPcBlur() {
-      var _this11 = this;
+      var _this12 = this;
       setTimeout(function () {
-        _this11.pcDropdownOpen = false;
+        _this12.pcDropdownOpen = false;
       }, 150);
     },
     // ---------- Save ----------
     validateBeforeSave: function validateBeforeSave() {
-      var _this12 = this;
+      var _this13 = this;
       var form = this.$refs['my-form'];
       if (form && !form.reportValidity()) {
         this.$nextTick(function () {
-          return _this12.switchToDefaultLanguageTab();
+          return _this13.switchToDefaultLanguageTab();
         });
         return false;
       }
@@ -896,9 +910,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return true;
     },
     buildTranslationsPayload: function buildTranslationsPayload() {
-      var _this13 = this;
+      var _this14 = this;
       return this.languages.map(function (language) {
-        var t = _this13.translations[language.id] || {};
+        var t = _this14.translations[language.id] || {};
         return {
           language_id: language.id,
           name: t.name || '',
@@ -911,7 +925,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     },
     save: function save() {
-      var _this14 = this;
+      var _this15 = this;
       if (!this.validateBeforeSave()) return;
       this.isSaving = true;
       var fd = new FormData();
@@ -959,17 +973,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           'Content-Type': 'multipart/form-data'
         }
       }).then(function (res) {
-        _this14.isSaving = false;
+        _this15.isSaving = false;
         if (res.data.status) {
-          _this14.showMessage('success', res.data.message || __(_this14.isEdit ? 'master_product_updated_successfully' : 'master_product_saved_successfully'));
-          _this14.$router.push('/master_catalog/products');
+          _this15.showMessage('success', res.data.message || __(_this15.isEdit ? 'master_product_updated_successfully' : 'master_product_saved_successfully'));
+          _this15.$router.push('/master_catalog/products');
         } else {
-          _this14.showError(res.data.message);
+          _this15.showError(res.data.message);
         }
       })["catch"](function (err) {
-        _this14.isSaving = false;
+        _this15.isSaving = false;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this14.showError(msg);
+        _this15.showError(msg);
       });
     }
   }
@@ -1670,33 +1684,37 @@ var render = function () {
                                                       "form-control form-select",
                                                     attrs: { required: "" },
                                                     on: {
-                                                      change: function (
-                                                        $event
-                                                      ) {
-                                                        var $$selectedVal =
-                                                          Array.prototype.filter
-                                                            .call(
-                                                              $event.target
-                                                                .options,
-                                                              function (o) {
-                                                                return o.selected
-                                                              }
-                                                            )
-                                                            .map(function (o) {
-                                                              var val =
-                                                                "_value" in o
-                                                                  ? o._value
-                                                                  : o.value
-                                                              return val
-                                                            })
-                                                        _vm.$set(
-                                                          _vm.product,
-                                                          "category_id",
-                                                          $event.target.multiple
-                                                            ? $$selectedVal
-                                                            : $$selectedVal[0]
-                                                        )
-                                                      },
+                                                      change: [
+                                                        function ($event) {
+                                                          var $$selectedVal =
+                                                            Array.prototype.filter
+                                                              .call(
+                                                                $event.target
+                                                                  .options,
+                                                                function (o) {
+                                                                  return o.selected
+                                                                }
+                                                              )
+                                                              .map(function (
+                                                                o
+                                                              ) {
+                                                                var val =
+                                                                  "_value" in o
+                                                                    ? o._value
+                                                                    : o.value
+                                                                return val
+                                                              })
+                                                          _vm.$set(
+                                                            _vm.product,
+                                                            "category_id",
+                                                            $event.target
+                                                              .multiple
+                                                              ? $$selectedVal
+                                                              : $$selectedVal[0]
+                                                          )
+                                                        },
+                                                        _vm.onCategoryChange,
+                                                      ],
                                                     },
                                                   },
                                                   [

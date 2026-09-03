@@ -115,10 +115,10 @@ class CategoryApiController extends Controller
                     $categories = $categories->orderBy('row_order', 'ASC')
                         ->offset($offset)
                         ->limit($limit)
-                        ->get(['id', 'name', 'subtitle', 'slug', 'image']);
+                        ->get(['id', 'name', 'subtitle', 'slug', 'image', 'hsn']);
                 } else {
                     $categories = $categories->orderBy('row_order', 'ASC')
-                        ->get(['id', 'name', 'subtitle', 'slug', 'image']);
+                        ->get(['id', 'name', 'subtitle', 'slug', 'image', 'hsn']);
                 }
 
                 // For specific category tree (when category_id is passed), keep has_child / has_active_child
@@ -260,6 +260,7 @@ class CategoryApiController extends Controller
             $category->slug = $slug;
             $category->status = $request->status ?? 1;
             $category->parent_id = $request->parent_id ?? 0;
+            $category->hsn = $request->hsn ?? null;
             $category->web_image = '';
 
             $image = '';
@@ -330,6 +331,7 @@ class CategoryApiController extends Controller
         if ($isDefaultLanguage) {
             $category->status = $request->status ?? $category->status;
             $category->parent_id = $request->parent_id ?? $category->parent_id;
+            $category->hsn = $request->has('hsn') ? $request->hsn : $category->hsn;
         }
 
         if ($request->hasFile('image')) {

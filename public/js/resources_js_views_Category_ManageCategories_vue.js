@@ -193,6 +193,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -212,6 +219,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       // Basic fields
       id: this.record ? this.record.id : null,
       slug: this.record ? this.record.slug : null,
+      hsn: this.record ? this.record.hsn : null,
       image_url: this.record ? this.record.image_url : null,
       status: this.record ? this.record.status : 1,
       parent_id: this.record ? this.record.parent_id : 0,
@@ -321,6 +329,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
           // Load base data
           _this3.slug = category.slug;
+          _this3.hsn = category.hsn;
           _this3.parent_id = category.parent_id;
           _this3.image_url = category.image_url;
           _this3.status = category.status;
@@ -551,7 +560,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   i = 0;
                 case 2:
                   if (!(i < languagesToSave.length)) {
-                    _context.next = 34;
+                    _context.next = 35;
                     break;
                   }
                   language = languagesToSave[i];
@@ -562,6 +571,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   }
                   formData.append('language_id', language.id);
                   formData.append('slug', _this8.slug);
+                  formData.append('hsn', _this8.hsn || '');
                   formData.append('status', _this8.status);
                   formData.append('parent_id', _this8.parent_id);
 
@@ -581,38 +591,38 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   if (categoryId) {
                     url = _this8.$apiUrl + '/categories/update';
                   }
-                  _context.prev = 20;
-                  _context.next = 23;
+                  _context.prev = 21;
+                  _context.next = 24;
                   return axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData, {
                     headers: {
                       'Content-Type': 'multipart/form-data'
                     }
                   });
-                case 23:
+                case 24:
                   response = _context.sent;
                   // If this was the first save (default language), get the category ID
                   if (!categoryId && response.data.data && response.data.data.id) {
                     categoryId = response.data.data.id;
                   }
-                  _context.next = 31;
+                  _context.next = 32;
                   break;
-                case 27:
-                  _context.prev = 27;
-                  _context.t0 = _context["catch"](20);
+                case 28:
+                  _context.prev = 28;
+                  _context.t0 = _context["catch"](21);
                   console.error('Save failed:', _context.t0);
                   throw _context.t0;
-                case 31:
+                case 32:
                   i++;
                   _context.next = 2;
                   break;
-                case 34:
-                  return _context.abrupt("return", true);
                 case 35:
+                  return _context.abrupt("return", true);
+                case 36:
                 case "end":
                   return _context.stop();
               }
             }
-          }, _callee, null, [[20, 27]]);
+          }, _callee, null, [[21, 28]]);
         }));
         return function saveSequentially() {
           return _ref.apply(this, arguments);
@@ -1888,6 +1898,39 @@ var render = function () {
                                           return
                                         }
                                         _vm.slug = $event.target.value
+                                      },
+                                    },
+                                  }),
+                                ])
+                              : _vm._e(),
+                            _vm._v(" "),
+                            language.is_default
+                              ? _c("div", { staticClass: "form-group" }, [
+                                  _c("label", [
+                                    _vm._v(_vm._s(_vm.__("hsn_code"))),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.hsn,
+                                        expression: "hsn",
+                                      },
+                                    ],
+                                    staticClass: "form-control",
+                                    attrs: {
+                                      type: "text",
+                                      placeholder: _vm.__("enter_hsn_code"),
+                                    },
+                                    domProps: { value: _vm.hsn },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.hsn = $event.target.value
                                       },
                                     },
                                   }),

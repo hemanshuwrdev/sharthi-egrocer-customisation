@@ -1037,6 +1037,15 @@ class SarthiCustomisation extends Migration
                 $table->index('area_id', 'idx_rp_area_id');
             });
         }
+
+        // ── Category-level HSN code. Product creation auto-fills its own HSN
+        //    field from the selected category's code (MasterProductForm.vue),
+        //    but the product's own hsn value always takes precedence once set.
+        if (Schema::hasTable('categories') && !Schema::hasColumn('categories', 'hsn')) {
+            Schema::table('categories', function (Blueprint $table) {
+                $table->string('hsn')->nullable();
+            });
+        }
     }
 
     /**
@@ -1046,6 +1055,12 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('categories') && Schema::hasColumn('categories', 'hsn')) {
+            Schema::table('categories', function (Blueprint $table) {
+                $table->dropColumn('hsn');
+            });
+        }
+
         Schema::dropIfExists('areas');
 
         if (Schema::hasTable('mobile_registry')) {
