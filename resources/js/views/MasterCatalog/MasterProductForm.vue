@@ -271,9 +271,9 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>{{ __('sku') }}</th>
-                                    <th>{{ __('unit') }}</th>
+                                    <th>{{ __('outer_pack') }}</th>
                                     <th>{{ __('weight') }}</th>
-                                    <th>{{ __('secondary_unit') }}</th>
+                                    <th>{{ __('inner_pack') }}</th>
                                     <th>{{ __('secondary_value') }}</th>
                                     <th>{{ __('allow_loose_qty') }}</th>
                                     <th>{{ __('max_allowed_qty') }}</th>

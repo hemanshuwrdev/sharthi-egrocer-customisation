@@ -2017,5 +2017,7 @@
     "administration" : "Administration",
     "top_brands" : "Top Brands",
     "enter_hsn_code" : "Enter HSN Code",
-    "bulk_save" : "Bulk Save"
+    "bulk_save" : "Bulk Save",
+    "outer_pack" : "Outer Pack",
+    "inner_pack" : "Inner Pack"
 }

@@ -71,7 +71,7 @@ class TaxesApiController extends Controller
             ];
             if ($isDefaultLanguage) {
                 $rules['title']      = 'required|string';
-                $rules['percentage'] = 'required|numeric|min:0.1|max:100';
+                $rules['percentage'] = 'required|numeric|min:0|max:100';
             } else {
                 $rules['title']      = 'nullable|string';
                 $rules['percentage'] = 'nullable|numeric|min:0|max:100';

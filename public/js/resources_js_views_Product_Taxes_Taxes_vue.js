@@ -247,8 +247,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       return this.validateDefaultLanguage();
     },
     validatePercentage: function validatePercentage() {
-      if (this.percentage < 0.1 || this.percentage > 100) {
-        this.validationError = "Percentage must be between 1 and 100.";
+      if (this.percentage < 0 || this.percentage > 100) {
+        this.validationError = "Percentage must be between 0 and 100.";
       } else {
         this.validationError = null;
       }
@@ -1374,7 +1374,7 @@ var render = function () {
                                 attrs: {
                                   type: "number",
                                   placeholder: _vm.__("enter_percentage"),
-                                  min: "1",
+                                  min: "0",
                                   max: "100",
                                   step: "0.01",
                                   required:

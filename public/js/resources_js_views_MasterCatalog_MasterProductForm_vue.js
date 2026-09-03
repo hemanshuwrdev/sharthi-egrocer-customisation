@@ -2512,11 +2512,11 @@ var render = function () {
                     _c("tr", [
                       _c("th", [_vm._v(_vm._s(_vm.__("sku")))]),
                       _vm._v(" "),
-                      _c("th", [_vm._v(_vm._s(_vm.__("unit")))]),
+                      _c("th", [_vm._v(_vm._s(_vm.__("outer_pack")))]),
                       _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("weight")))]),
                       _vm._v(" "),
-                      _c("th", [_vm._v(_vm._s(_vm.__("secondary_unit")))]),
+                      _c("th", [_vm._v(_vm._s(_vm.__("inner_pack")))]),
                       _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("secondary_value")))]),
                       _vm._v(" "),

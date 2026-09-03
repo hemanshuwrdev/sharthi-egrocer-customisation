@@ -46,7 +46,7 @@
                             <label>{{ __('percentage') }}</label>
                             <i class="text-danger" v-if="lang.is_default">*</i>
                             <input type="number" class="form-control" v-model="percentage"
-                                :placeholder="__('enter_percentage')" min="1" max="100" @input="validatePercentage"
+                                :placeholder="__('enter_percentage')" min="0" max="100" @input="validatePercentage"
                                 step="0.01" :required="lang.is_default == 1 ? true : undefined">
                             <span v-if="validationError" class="error">{{ validationError }}</span>
                         </div>
@@ -231,8 +231,8 @@ export default {
         }
         ,
         validatePercentage() {
-            if (this.percentage < 0.1 || this.percentage > 100) {
-                this.validationError = "Percentage must be between 1 and 100.";
+            if (this.percentage < 0 || this.percentage > 100) {
+                this.validationError = "Percentage must be between 0 and 100.";
             } else {
                 this.validationError = null;
             }
