@@ -267,7 +267,7 @@
     "no_notification_found": "No Notification Found",
     "address_not_found": "Address Not Found",
     "invalid_area_for_pincode": "Selected area does not match the entered pincode",
-    "invalid_area_for_location": "Selected area does not belong to your detected zone",
+    "invalid_area": "Selected area is invalid or inactive",
     "address_deleted_successfully": "Address Deleted Successfully",
     "no_items_found_in_users_cart": "No item(s) found in users cart",
     "total_allowed_quantity_for_this_product_is": "Total allowed quantity for this product is ",

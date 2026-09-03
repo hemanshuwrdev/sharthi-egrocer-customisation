@@ -16,9 +16,4 @@ class Area extends Model
         'district',
         'status',
     ];
-
-    public function city()
-    {
-        return $this->belongsTo(City::class, 'city_id');
-    }
 }

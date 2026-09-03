@@ -12,7 +12,7 @@ class AreaApiController extends Controller
 {
     public function getAreas(Request $request)
     {
-        $query = Area::with('city')->orderBy('id', 'desc');
+        $query = Area::orderBy('id', 'desc');
 
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
@@ -20,15 +20,8 @@ class AreaApiController extends Controller
                 $query->where('name', 'like', '%' . $searchTerm . '%')
                     ->orWhere('pincode', 'like', '%' . $searchTerm . '%')
                     ->orWhere('state', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('district', 'like', '%' . $searchTerm . '%')
-                    ->orWhereHas('city', function ($q) use ($searchTerm) {
-                        $q->where('zone', 'like', '%' . $searchTerm . '%');
-                    });
+                    ->orWhere('district', 'like', '%' . $searchTerm . '%');
             });
-        }
-
-        if ($request->filled('city_id')) {
-            $query->where('city_id', $request->city_id);
         }
 
         $total = $query->count();
@@ -77,7 +70,6 @@ class AreaApiController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'city_id' => 'required|exists:cities,id',
             'name' => 'required',
             'pincode' => 'required',
         ]);
@@ -86,7 +78,6 @@ class AreaApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $area->city_id = $request->city_id;
         $area->name = $request->name;
         $area->pincode = $request->pincode;
         $area->state = $request->state;
@@ -102,7 +93,7 @@ class AreaApiController extends Controller
 
     public function edit($id)
     {
-        $area = Area::with('city')->find($id);
+        $area = Area::find($id);
 
         if (!$area) {
             return CommonHelper::responseError('Area not found');

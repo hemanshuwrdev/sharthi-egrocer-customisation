@@ -28,15 +28,8 @@
                             <div class="col-md-8">
                                 <div class="d-flex align-items-center justify-content-md-end gap-3 flex-wrap">
                                     <div class="d-flex align-items-center">
-                                        <label class="mb-0 text-muted font-weight-bold mr-2 text-nowrap">{{ __('filter_by_zone') }}:</label>
-                                        <select v-model="selectedZone" @change="onZoneChange" class="form-control form-select border-0 max-w-200 shadow-none">
-                                            <option value="">{{ __('all_zones') }}</option>
-                                            <option v-for="zone in zones" :key="zone.id" :value="zone.id">{{ formatZone(zone.zone) }}</option>
-                                        </select>
-                                    </div>
-                                    <div class="d-flex align-items-center">
                                         <label class="mb-0 text-muted font-weight-bold mr-2 text-nowrap">{{ __('filter_by_area') }}:</label>
-                                        <select v-model="selectedArea" @change="getOrders" :disabled="!selectedZone" class="form-control form-select border-0 max-w-200 shadow-none">
+                                        <select v-model="selectedArea" @change="getOrders" class="form-control form-select border-0 max-w-200 shadow-none">
                                             <option value="">{{ __('all_areas') }}</option>
                                             <option v-for="area in areas" :key="area.id" :value="area.id">{{ area.name }}</option>
                                         </select>
@@ -209,11 +202,9 @@ export default {
     data() {
         return {
             orders: [],
-            zones: [],
             areas: [],
             vehicles: [],
             drivers: [],
-            selectedZone: '',
             selectedArea: '',
             selectedRescheduled: '',
             selectedVehicleId: '',
@@ -251,30 +242,14 @@ export default {
         }
     },
     mounted() {
-        this.getZones();
+        this.getAreas();
         this.getVehicles();
         this.getDrivers();
         this.getOrders();
     },
     methods: {
-        getZones() {
-            axios.get(this.apiBase + '/loading_slips/zones')
-                .then(res => {
-                    if (res.data.status === 1) {
-                        this.zones = res.data.data;
-                    }
-                });
-        },
-        onZoneChange() {
-            this.selectedArea = '';
-            this.areas = [];
-            if (this.selectedZone) {
-                this.getAreas();
-            }
-            this.getOrders();
-        },
         getAreas() {
-            axios.get(this.$apiUrl + '/areas', { params: { city_id: this.selectedZone } })
+            axios.get(this.$apiUrl + '/areas')
                 .then(res => {
                     if (res.data.status === 1) {
                         this.areas = res.data.data.areas || [];
@@ -300,7 +275,6 @@ export default {
         },
         getOrders() {
             const params = {};
-            if (this.selectedZone) params.city_id = this.selectedZone;
             if (this.selectedArea) params.area_id = this.selectedArea;
             if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
             axios.get(this.apiBase + '/loading_slips/orders', { params }).then(res => {

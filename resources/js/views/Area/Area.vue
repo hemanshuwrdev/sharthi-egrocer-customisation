@@ -113,7 +113,6 @@ export default {
                 {key: 'id', label: __('id'), sortable: true, sortDirection: 'desc'},
                 {key: 'name', label: __('name'), sortable: true, sortDirection: 'desc'},
                 {key: 'pincode', label: __('pincode'), sortable: true, sortDirection: 'desc'},
-                {key: 'city.zone', label: __('zone'), sortable: false},
                 {key: 'state', label: __('state'), sortable: true, sortDirection: 'desc'},
                 {key: 'district', label: __('district'), sortable: true, sortDirection: 'desc'},
                 {key: 'status', label: __('status')},

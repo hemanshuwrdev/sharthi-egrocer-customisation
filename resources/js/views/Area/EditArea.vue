@@ -33,15 +33,6 @@
                         <div class="card-body">
                             <form ref="my-form" @submit.prevent="saveRecord" novalidate>
                                 <div class="form-group">
-                                    <label for="city_id">{{ __('zone') }}<span class="text-danger text-sm">*</span></label>
-                                    <select class="form-control form-select" name="city_id" id="city_id"
-                                        v-model="area.city_id" required>
-                                        <option value="">{{ __('select_zone') }}</option>
-                                        <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.zone }}</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
                                     <label for="name">{{ __('area_name') }}<span class="text-danger text-sm">*</span></label>
                                     <input type="text" class="form-control" name="name" id="name"
                                         v-model="area.name" :placeholder="__('area_name')" required>
@@ -93,14 +84,12 @@ export default {
         return {
             area: {
                 id: "",
-                city_id: "",
                 name: "",
                 pincode: "",
                 state: "",
                 district: "",
                 status: 1,
             },
-            cities: [],
             isLoading: false,
         }
     },
@@ -108,22 +97,11 @@ export default {
         this.area.id = this.$route.params.id;
         this.$apiUrl = '/api';
 
-        this.fetchCities();
-
         if (this.area.id) {
             this.loadArea();
         }
     },
     methods: {
-        fetchCities() {
-            return axios.get(this.$apiUrl + '/cities')
-                .then(response => {
-                    this.cities = response.data.data?.cities || [];
-                }).catch(() => {
-                    this.cities = [];
-                });
-        },
-
         loadArea() {
             return axios.get(this.$apiUrl + '/areas/edit/' + this.area.id)
                 .then(response => {
@@ -146,7 +124,7 @@ export default {
         },
 
         async saveRecord() {
-            if (!this.area.city_id || !this.area.name || !this.area.pincode) {
+            if (!this.area.name || !this.area.pincode) {
                 this.showError(__('please_fill_all_required_fields'));
                 return;
             }
@@ -157,7 +135,6 @@ export default {
             if (this.area.id) {
                 formData.append("id", this.area.id);
             }
-            formData.append("city_id", this.area.city_id);
             formData.append("name", this.area.name);
             formData.append("pincode", this.area.pincode);
             formData.append("state", this.area.state ?? '');

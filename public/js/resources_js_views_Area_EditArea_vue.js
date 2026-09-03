@@ -96,15 +96,6 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -112,109 +103,96 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     return {
       area: {
         id: "",
-        city_id: "",
         name: "",
         pincode: "",
         state: "",
         district: "",
         status: 1
       },
-      cities: [],
       isLoading: false
     };
   },
   created: function created() {
     this.area.id = this.$route.params.id;
     this.$apiUrl = '/api';
-    this.fetchCities();
     if (this.area.id) {
       this.loadArea();
     }
   },
   methods: {
-    fetchCities: function fetchCities() {
-      var _this = this;
-      return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/cities').then(function (response) {
-        var _response$data$data;
-        _this.cities = ((_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.cities) || [];
-      })["catch"](function () {
-        _this.cities = [];
-      });
-    },
     loadArea: function loadArea() {
-      var _this2 = this;
+      var _this = this;
       return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/areas/edit/' + this.area.id).then(function (response) {
         var area = response.data.data;
         if (!area) {
-          _this2.showError("Area not found");
+          _this.showError("Area not found");
           return;
         }
-        Object.keys(_this2.area).forEach(function (key) {
+        Object.keys(_this.area).forEach(function (key) {
           if (area[key] !== undefined && area[key] !== null) {
-            _this2.area[key] = area[key];
+            _this.area[key] = area[key];
           }
         });
       })["catch"](function () {
-        _this2.showError("Failed to load area");
+        _this.showError("Failed to load area");
       });
     },
     saveRecord: function saveRecord() {
-      var _this3 = this;
+      var _this2 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-        var _this3$area$state, _this3$area$district;
+        var _this2$area$state, _this2$area$district;
         var formData, _error$response, _error$response$data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(!_this3.area.city_id || !_this3.area.name || !_this3.area.pincode)) {
+                if (!(!_this2.area.name || !_this2.area.pincode)) {
                   _context.next = 3;
                   break;
                 }
-                _this3.showError(__('please_fill_all_required_fields'));
+                _this2.showError(__('please_fill_all_required_fields'));
                 return _context.abrupt("return");
               case 3:
-                _this3.isLoading = true;
+                _this2.isLoading = true;
                 formData = new FormData();
-                if (_this3.area.id) {
-                  formData.append("id", _this3.area.id);
+                if (_this2.area.id) {
+                  formData.append("id", _this2.area.id);
                 }
-                formData.append("city_id", _this3.area.city_id);
-                formData.append("name", _this3.area.name);
-                formData.append("pincode", _this3.area.pincode);
-                formData.append("state", (_this3$area$state = _this3.area.state) !== null && _this3$area$state !== void 0 ? _this3$area$state : '');
-                formData.append("district", (_this3$area$district = _this3.area.district) !== null && _this3$area$district !== void 0 ? _this3$area$district : '');
-                formData.append("status", _this3.area.status);
-                _context.prev = 12;
-                _context.next = 15;
-                return axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this3.$apiUrl + '/areas/save', formData);
-              case 15:
-                _this3.showMessage("success", __('area_saved_successfully'));
+                formData.append("name", _this2.area.name);
+                formData.append("pincode", _this2.area.pincode);
+                formData.append("state", (_this2$area$state = _this2.area.state) !== null && _this2$area$state !== void 0 ? _this2$area$state : '');
+                formData.append("district", (_this2$area$district = _this2.area.district) !== null && _this2$area$district !== void 0 ? _this2$area$district : '');
+                formData.append("status", _this2.area.status);
+                _context.prev = 11;
+                _context.next = 14;
+                return axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this2.$apiUrl + '/areas/save', formData);
+              case 14:
+                _this2.showMessage("success", __('area_saved_successfully'));
                 setTimeout(function () {
-                  _this3.$router.push({
+                  _this2.$router.push({
                     path: '/areas'
                   });
                 }, 1500);
-                _context.next = 22;
+                _context.next = 21;
                 break;
-              case 19:
-                _context.prev = 19;
-                _context.t0 = _context["catch"](12);
+              case 18:
+                _context.prev = 18;
+                _context.t0 = _context["catch"](11);
                 if ((_error$response = _context.t0.response) !== null && _error$response !== void 0 && (_error$response$data = _error$response.data) !== null && _error$response$data !== void 0 && _error$response$data.message) {
-                  _this3.showError(_context.t0.response.data.message);
+                  _this2.showError(_context.t0.response.data.message);
                 } else {
-                  _this3.showError("Something went wrong!");
+                  _this2.showError("Something went wrong!");
                 }
-              case 22:
-                _context.prev = 22;
-                _this3.isLoading = false;
-                return _context.finish(22);
-              case 25:
+              case 21:
+                _context.prev = 21;
+                _this2.isLoading = false;
+                return _context.finish(21);
+              case 24:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[12, 19, 22, 25]]);
+        }, _callee, null, [[11, 18, 21, 24]]);
       }))();
     }
   }
@@ -391,64 +369,6 @@ var render = function () {
                   },
                 },
                 [
-                  _c("div", { staticClass: "form-group" }, [
-                    _c("label", { attrs: { for: "city_id" } }, [
-                      _vm._v(_vm._s(_vm.__("zone"))),
-                      _c("span", { staticClass: "text-danger text-sm" }, [
-                        _vm._v("*"),
-                      ]),
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "select",
-                      {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.area.city_id,
-                            expression: "area.city_id",
-                          },
-                        ],
-                        staticClass: "form-control form-select",
-                        attrs: { name: "city_id", id: "city_id", required: "" },
-                        on: {
-                          change: function ($event) {
-                            var $$selectedVal = Array.prototype.filter
-                              .call($event.target.options, function (o) {
-                                return o.selected
-                              })
-                              .map(function (o) {
-                                var val = "_value" in o ? o._value : o.value
-                                return val
-                              })
-                            _vm.$set(
-                              _vm.area,
-                              "city_id",
-                              $event.target.multiple
-                                ? $$selectedVal
-                                : $$selectedVal[0]
-                            )
-                          },
-                        },
-                      },
-                      [
-                        _c("option", { attrs: { value: "" } }, [
-                          _vm._v(_vm._s(_vm.__("select_zone"))),
-                        ]),
-                        _vm._v(" "),
-                        _vm._l(_vm.cities, function (city) {
-                          return _c(
-                            "option",
-                            { key: city.id, domProps: { value: city.id } },
-                            [_vm._v(_vm._s(city.zone))]
-                          )
-                        }),
-                      ],
-                      2
-                    ),
-                  ]),
-                  _vm._v(" "),
                   _c("div", { staticClass: "form-group" }, [
                     _c("label", { attrs: { for: "name" } }, [
                       _vm._v(_vm._s(_vm.__("area_name"))),

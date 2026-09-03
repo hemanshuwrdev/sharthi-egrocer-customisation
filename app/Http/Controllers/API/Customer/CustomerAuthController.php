@@ -537,14 +537,14 @@ class CustomerAuthController extends Controller
         }
         $matchedCityId = CommonHelper::getDeliverableCityIds($request->gps_lat, $request->gps_lng)[0] ?? $zoneCityIds[0];
 
-        // Area is optional and explicitly picked by the retailer (never auto-guessed),
-        // same as the address-book area picker — but it must belong to the GPS-derived
-        // city, since city itself is never manual here.
+        // Area is optional and explicitly picked by the retailer (never auto-guessed).
+        // Area is an independent entity, unrelated to the GPS-derived city/zone — it's
+        // only validated for existing/active, same as AddressApiController::resolveAreaId.
         $areaId = null;
         if ($request->filled('area_id')) {
-            $areaBelongsToCity = Area::where('id', $request->area_id)->where('city_id', $matchedCityId)->exists();
-            if (!$areaBelongsToCity) {
-                return CommonHelper::responseError('invalid_area_for_location');
+            $areaExists = Area::where('id', $request->area_id)->where('status', 1)->exists();
+            if (!$areaExists) {
+                return CommonHelper::responseError('invalid_area');
             }
             $areaId = $request->area_id;
         }

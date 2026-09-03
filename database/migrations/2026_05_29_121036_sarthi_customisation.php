@@ -960,15 +960,14 @@ class SarthiCustomisation extends Migration
         }
 
         // ── Area (pincode-based): admin manages retailer/order territory at this
-        //    granularity instead of cities. Each `cities` row is already used as
-        //    one Zone (unique id, e.g. "Bhuj Zone" vs "South Bhuj" both under
-        //    city name "Bhuj") — so Area links to its Zone via `city_id`
-        //    (a real FK to cities.id), not by matching a free-text zone string.
-        //    No separate zones table.
+        //    granularity instead of cities. Area is a standalone entity used only
+        //    to identify/group retailers and filter orders — it is intentionally
+        //    NOT linked to City/Zone (kept as a legacy, unused, nullable column
+        //    below for old installs' existing data only).
         if (!Schema::hasTable('areas')) {
             Schema::create('areas', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('city_id');
+                $table->unsignedBigInteger('city_id')->nullable();
                 $table->string('name');
                 $table->string('pincode', 10);
                 $table->string('state')->nullable();
@@ -998,8 +997,16 @@ class SarthiCustomisation extends Migration
 
             Schema::table('areas', function (Blueprint $table) {
                 $table->dropColumn('zone');
-                $table->unsignedBigInteger('city_id')->nullable(false)->change();
+                $table->unsignedBigInteger('city_id')->nullable()->change();
                 $table->index('city_id', 'idx_areas_city_id');
+            });
+        }
+
+        // ── Area is now fully decoupled from City/Zone: `city_id` is no longer
+        //    required/used by app code (kept only for old installs' existing data).
+        if (Schema::hasColumn('areas', 'city_id')) {
+            Schema::table('areas', function (Blueprint $table) {
+                $table->unsignedBigInteger('city_id')->nullable()->change();
             });
         }
 

@@ -138,10 +138,6 @@ __webpack_require__.r(__webpack_exports__);
         sortable: true,
         sortDirection: 'desc'
       }, {
-        key: 'city.zone',
-        label: __('zone'),
-        sortable: false
-      }, {
         key: 'state',
         label: __('state'),
         sortable: true,
