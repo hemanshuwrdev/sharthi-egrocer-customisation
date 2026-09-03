@@ -1400,6 +1400,7 @@ var render = function () {
           _c(
             "b-tabs",
             {
+              staticClass: "list-surface-tabs",
               attrs: {
                 pills: "",
                 "active-nav-item-class": "font-weight-bold text-uppercase",
@@ -1415,7 +1416,7 @@ var render = function () {
                 [
                   _c(
                     "div",
-                    { staticClass: "table-responsive mt-3" },
+                    { staticClass: "table-responsive" },
                     [
                       _c("b-table", {
                         attrs: {
@@ -1800,36 +1801,48 @@ var render = function () {
                     1
                   ),
                   _vm._v(" "),
-                  _c("b-row", [
-                    _c("div", { staticClass: "col-md-4 text-success h6" }, [
-                      _vm._v(
-                        _vm._s(_vm.__("total_amount")) +
-                          " :- " +
-                          _vm._s(_vm.$currency) +
-                          " " +
-                          _vm._s(_vm.total_amount)
-                      ),
-                    ]),
+                  _c("b-row", { staticClass: "mx-0 px-3 py-3 border-top" }, [
+                    _c(
+                      "div",
+                      { staticClass: "col-md-4 text-success h6 mb-0" },
+                      [
+                        _vm._v(
+                          _vm._s(_vm.__("total_amount")) +
+                            " :- " +
+                            _vm._s(_vm.$currency) +
+                            " " +
+                            _vm._s(_vm.total_amount)
+                        ),
+                      ]
+                    ),
                     _vm._v(" "),
-                    _c("div", { staticClass: "col-md-4 text-success h6" }, [
-                      _vm._v(
-                        _vm._s(_vm.__("total_dchrg")) +
-                          " :- " +
-                          _vm._s(_vm.$currency) +
-                          " " +
-                          _vm._s(_vm.delivery_charge)
-                      ),
-                    ]),
+                    _c(
+                      "div",
+                      { staticClass: "col-md-4 text-success h6 mb-0" },
+                      [
+                        _vm._v(
+                          _vm._s(_vm.__("total_dchrg")) +
+                            " :- " +
+                            _vm._s(_vm.$currency) +
+                            " " +
+                            _vm._s(_vm.delivery_charge)
+                        ),
+                      ]
+                    ),
                     _vm._v(" "),
-                    _c("div", { staticClass: "col-md-4 text-success h6" }, [
-                      _vm._v(
-                        _vm._s(_vm.__("total_final_amount")) +
-                          " :- " +
-                          _vm._s(_vm.$currency) +
-                          " " +
-                          _vm._s(_vm.remaining_final)
-                      ),
-                    ]),
+                    _c(
+                      "div",
+                      { staticClass: "col-md-4 text-success h6 mb-0" },
+                      [
+                        _vm._v(
+                          _vm._s(_vm.__("total_final_amount")) +
+                            " :- " +
+                            _vm._s(_vm.$currency) +
+                            " " +
+                            _vm._s(_vm.remaining_final)
+                        ),
+                      ]
+                    ),
                   ]),
                   _vm._v(" "),
                   _c(
@@ -1906,7 +1919,7 @@ var render = function () {
                 [
                   _c(
                     "div",
-                    { staticClass: "table-responsive mt-3" },
+                    { staticClass: "table-responsive" },
                     [
                       _c("b-table", {
                         attrs: {
@@ -2178,10 +2191,13 @@ var render = function () {
                     1
                   ),
                   _vm._v(" "),
-                  _c("b-row", [
+                  _c("b-row", { staticClass: "mx-0 px-3 py-3 border-top" }, [
                     _c(
                       "div",
-                      { staticClass: "col-md-12 text-success text-center h6" },
+                      {
+                        staticClass:
+                          "col-md-12 text-success text-center h6 mb-0",
+                      },
                       [
                         _vm._v(
                           _vm._s(_vm.__("total")) +

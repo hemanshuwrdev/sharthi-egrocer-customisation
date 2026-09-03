@@ -52,9 +52,9 @@
                     </button>
                 </div>
             </div>
-                        <b-tabs pills active-nav-item-class="font-weight-bold text-uppercase">
+                        <b-tabs pills active-nav-item-class="font-weight-bold text-uppercase" class="list-surface-tabs">
                             <b-tab :title="__('orders')" active @click="getOrders">
-                                <div class="table-responsive mt-3">
+                                <div class="table-responsive">
                                     <b-table :items="orders" :fields="orderFields" :filter="filter"
                                         :filter-included-fields="filterOn" :sort-by.sync="sortBy"
                                         :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
@@ -141,12 +141,12 @@
                                         </template>
                                     </b-table>
                                 </div>
-                                <b-row>
-                                    <div class="col-md-4 text-success h6">{{ __('total_amount') }} :- {{ $currency }} {{
+                                <b-row class="mx-0 px-3 py-3 border-top">
+                                    <div class="col-md-4 text-success h6 mb-0">{{ __('total_amount') }} :- {{ $currency }} {{
                                         total_amount }}</div>
-                                    <div class="col-md-4 text-success h6">{{ __('total_dchrg') }} :- {{ $currency }} {{
+                                    <div class="col-md-4 text-success h6 mb-0">{{ __('total_dchrg') }} :- {{ $currency }} {{
                                         delivery_charge }}</div>
-                                    <div class="col-md-4 text-success h6">{{ __('total_final_amount') }} :- {{ $currency
+                                    <div class="col-md-4 text-success h6 mb-0">{{ __('total_final_amount') }} :- {{ $currency
                                     }} {{ remaining_final }}</div>
                                 </b-row>
                                 <div class="list-footer">
@@ -162,7 +162,7 @@
                                 </div>
                             </b-tab>
                             <b-tab :title="__('order_items')" @click="getOrders">
-                                <div class="table-responsive mt-3">
+                                <div class="table-responsive">
                                     <b-table :items="order_items" :fields="orderItemFields" :filter="filter"
                                         :filter-included-fields="filterOn" :sort-by.sync="sortBy"
                                         :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
@@ -230,8 +230,8 @@
                                         </template>
                                     </b-table>
                                 </div>
-                                <b-row>
-                                    <div class="col-md-12 text-success text-center h6">{{ __('total') }} :- {{ $currency
+                                <b-row class="mx-0 px-3 py-3 border-top">
+                                    <div class="col-md-12 text-success text-center h6 mb-0">{{ __('total') }} :- {{ $currency
                                     }} {{ order_items_total_sum
                                         }}</div>
                                 </b-row>

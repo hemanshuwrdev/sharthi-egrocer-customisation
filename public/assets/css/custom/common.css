@@ -3812,3 +3812,27 @@ body.theme-dark .dashboard-counter .card:hover {
     height: 85px !important;
     min-height: 85px !important;
 }
+
+/* list-surface + b-tabs (e.g. Orders "Orders"/"Order Items" tabs): give the
+   pill nav breathing room instead of sitting flush against the toolbar's
+   bottom border, and keep the table/footer flush like every other list page. */
+.list-surface-tabs > .nav-pills {
+    padding: 12px 16px 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--app-border);
+    gap: 6px;
+}
+
+.list-surface-tabs > .nav-pills .nav-link {
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+.list-surface-tabs > .nav-pills .nav-link.active {
+    background: #37a279 !important;
+}
+
+.list-surface-tabs > .tab-content > .tab-pane {
+    padding-top: 0;
+}
