@@ -258,15 +258,19 @@
                     $cgstPct = $taxPct / 2;
                     $sgstPct = $taxPct / 2;
 
-                    // sub_total is tax-exclusive; tax_amount is the per-unit tax that gets
-                    // added on top (same convention as customer/orders' getOrders()).
-                    $netTaxable = $item->sub_total;
+                    // order_items.sub_total is tax-INCLUSIVE ((price + tax) * qty), matching
+                    // customer/orders' getOrders() convention. Derive the tax-exclusive taxable
+                    // amount by subtracting tax from it, so GST is added only once on top.
                     $itemTax = (float) $item->tax_amount * $item->quantity;
-                    $itemTotal = $netTaxable + $itemTax;
+                    $itemTotal = (float) $item->sub_total;
+                    $netTaxable = $itemTotal - $itemTax;
                     $cgstAmt = $itemTax / 2;
                     $sgstAmt = $itemTax / 2;
 
+                    // $item->price/discounted_price are tax-inclusive (getOrderDetails() adds
+                    // tax_amount on top); subtract it back to get the GST-exclusive unit rate.
                     $rate = ($item->price != 0 && $item->price != "") ? $item->price : $item->discounted_price;
+                    $rate = $rate - (float) $item->tax_amount;
                     $discountRate = 0.0;
 
                     $totalBillQty += $item->quantity;
