@@ -3752,7 +3752,9 @@ var render = function () {
                                   _vm.sellerStatus === 1
                                     ? _c(
                                         "label",
-                                        { staticClass: "badge bg-success" },
+                                        {
+                                          staticClass: "badge bg-success ms-2",
+                                        },
                                         [
                                           _vm._v(
                                             "\n                                            " +
@@ -3763,7 +3765,7 @@ var render = function () {
                                       )
                                     : _c(
                                         "label",
-                                        { staticClass: "badge bg-danger" },
+                                        { staticClass: "badge bg-danger ms-2" },
                                         [
                                           _vm._v(
                                             "\n                                            " +
@@ -3842,7 +3844,9 @@ var render = function () {
                                   _vm.deliveryBoyStatus === 1
                                     ? _c(
                                         "label",
-                                        { staticClass: "badge bg-success" },
+                                        {
+                                          staticClass: "badge bg-success ms-2",
+                                        },
                                         [
                                           _vm._v(
                                             "\n                                            " +
@@ -3853,7 +3857,7 @@ var render = function () {
                                       )
                                     : _c(
                                         "label",
-                                        { staticClass: "badge bg-danger" },
+                                        { staticClass: "badge bg-danger ms-2" },
                                         [
                                           _vm._v(
                                             "\n                                            " +

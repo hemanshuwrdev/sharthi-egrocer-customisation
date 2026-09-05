@@ -200,10 +200,10 @@
                                                 style="cursor: pointer" :true-value="1" :false-value="3"
                                                 v-model="sellerStatus" :disabled="sellerStatusLoading"
                                                 @change="toggleSellerStatus">
-                                            <label v-if="sellerStatus === 1" class="badge bg-success">
+                                            <label v-if="sellerStatus === 1" class="badge bg-success ms-2">
                                                 {{ __('active') }}
                                             </label>
-                                            <label v-else class="badge bg-danger">
+                                            <label v-else class="badge bg-danger ms-2">
                                                 {{ __('deactive') }}
                                             </label>
                                         </div>
@@ -219,10 +219,10 @@
                                                 style="cursor: pointer" :true-value="1" :false-value="3"
                                                 v-model="deliveryBoyStatus" :disabled="deliveryBoyStatusLoading"
                                                 @change="toggleDeliveryBoyStatus">
-                                            <label v-if="deliveryBoyStatus === 1" class="badge bg-success">
+                                            <label v-if="deliveryBoyStatus === 1" class="badge bg-success ms-2">
                                                 {{ __('active') }}
                                             </label>
-                                            <label v-else class="badge bg-danger">
+                                            <label v-else class="badge bg-danger ms-2">
                                                 {{ __('deactive') }}
                                             </label>
                                         </div>

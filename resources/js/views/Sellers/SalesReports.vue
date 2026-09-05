@@ -73,7 +73,7 @@
                                 </template>
                             </b-table>
                         </div>
-                        <div class="text-success h6">{{ __('total_amount') }} :-  {{ $currency }} {{ final_total_sum }}</div>
+                        <div class="text-success h6 m-3">{{ __('total_amount') }} :-  {{ $currency }} {{ final_total_sum }}</div>
 
                 <div class="list-footer">
                     <div class="list-perpage">
@@ -192,12 +192,7 @@ export default {
 
 <style scoped>
 @import "../../../../node_modules/vue2-daterange-picker/dist/vue2-daterange-picker.css";
-.vue-daterange-picker[data-v-1ebd09d2] {
-    min-width: 80%;
-}
-@media only screen and (min-width: 600px) {
-    .vue-daterange-picker[data-v-1ebd09d2] {
-        min-width: 90%;
-    }
+.list-toolbar > .d-flex {
+    flex-shrink: 0;
 }
 </style>
