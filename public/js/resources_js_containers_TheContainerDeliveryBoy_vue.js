@@ -1407,7 +1407,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.switch-checkbox {\n    display: none;\n}\n:root {\n    --background-color-primary: #ebebeb;\n    --background-color-secondary: #fafafa;\n    --accent-color: #cacaca;\n    --text-primary-color: #222;\n    --element-size: 4rem;\n    /* <- this is the base size of our element */\n}\n.switch-label {\n    /* for width, use the standard element-size */\n    width: var(--element-size);\n\n    /* for other dimensions, calculate values based on it */\n    border-radius: var(--element-size);\n    border: calc(var(--element-size) * 0.025) solid var(--accent-color);\n    padding: calc(var(--element-size) * 0.1);\n    font-size: calc(var(--element-size) * 0.3);\n    height: calc(var(--element-size) * 0.35);\n\n    align-items: center;\n    background: var(--text-primary-color);\n    cursor: pointer;\n    display: flex;\n    position: relative;\n    transition: background 0.5s ease;\n    justify-content: space-between;\n    z-index: 1;\n}\n.switch-toggle {\n    position: absolute;\n    background-color: var(--background-color-primary);\n    border-radius: 50%;\n    top: calc(var(--element-size) * 0.07);\n    left: calc(var(--element-size) * 0.07);\n    height: calc(var(--element-size) * 0.4);\n    width: calc(var(--element-size) * 0.4);\n    transform: translateX(0);\n    transition: transform 0.3s ease, background-color 0.5s ease;\n}\n.switch-toggle-checked {\n    transform: translateX(calc(var(--element-size) * 0.6)) !important;\n}\n.user-dropdown-menu {\n    position: absolute !important;\n    right: 0 !important;\n    left: auto !important;\n    transform: none !important;\n    max-width: 250px;\n    min-width: 200px;\n    z-index: 1050;\n}\n.dropdown {\n    position: relative;\n}\n.navbar .dropdown-menu {\n    position: absolute !important;\n    top: 100% !important;\n    right: 0 !important;\n    left: auto !important;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.switch-checkbox {\n    display: none;\n}\n:root {\n    --background-color-primary: #ebebeb;\n    --background-color-secondary: #fafafa;\n    --accent-color: #cacaca;\n    --text-primary-color: #222;\n    --element-size: 4rem;\n    /* <- this is the base size of our element */\n}\n.switch-label {\n    /* for width, use the standard element-size */\n    width: var(--element-size);\n\n    /* for other dimensions, calculate values based on it */\n    border-radius: var(--element-size);\n    border: calc(var(--element-size) * 0.025) solid var(--accent-color);\n    padding: calc(var(--element-size) * 0.1);\n    font-size: calc(var(--element-size) * 0.3);\n    height: calc(var(--element-size) * 0.35);\n\n    align-items: center;\n    background: var(--text-primary-color);\n    cursor: pointer;\n    display: flex;\n    position: relative;\n    transition: background 0.5s ease;\n    justify-content: space-between;\n    z-index: 1;\n}\n.switch-toggle {\n    position: absolute;\n    background-color: var(--background-color-primary);\n    border-radius: 50%;\n    top: calc(var(--element-size) * 0.07);\n    left: calc(var(--element-size) * 0.07);\n    height: calc(var(--element-size) * 0.4);\n    width: calc(var(--element-size) * 0.4);\n    transform: translateX(0);\n    transition: transform 0.3s ease, background-color 0.5s ease;\n}\n.switch-toggle-checked {\n    transform: translateX(calc(var(--element-size) * 0.6)) !important;\n}\n.user-dropdown-menu {\n    position: absolute !important;\n    right: 0 !important;\n    left: auto !important;\n    transform: none !important;\n    max-width: 250px;\n    min-width: 200px;\n    z-index: 1050;\n}\n.dropdown {\n    position: relative;\n}\n.navbar .dropdown-menu {\n    position: absolute !important;\n    top: 100% !important;\n    right: 0 !important;\n    left: auto !important;\n}\n.hdr-accent-btn:hover {\n    background: rgba(34, 197, 94, 0.12);\n    color: #16a34a;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2297,7 +2297,7 @@ var render = function () {
                       _c(
                         "button",
                         {
-                          staticClass: "list-icon-btn",
+                          staticClass: "list-icon-btn hdr-accent-btn",
                           attrs: {
                             type: "button",
                             title:
@@ -2336,7 +2336,7 @@ var render = function () {
                             "button",
                             {
                               ref: "confirmButton",
-                              staticClass: "list-icon-btn",
+                              staticClass: "list-icon-btn hdr-accent-btn",
                               attrs: {
                                 type: "button",
                                 id: "confirmButton",
@@ -2484,7 +2484,7 @@ var render = function () {
                         "a",
                         {
                           staticClass:
-                            "list-icon-btn position-relative dropdown-toggle",
+                            "list-icon-btn hdr-accent-btn position-relative dropdown-toggle",
                           attrs: {
                             href: "#",
                             "data-bs-toggle": "dropdown",
@@ -2702,7 +2702,8 @@ var render = function () {
                       _c(
                         "a",
                         {
-                          staticClass: "list-icon-btn dropdown-toggle",
+                          staticClass:
+                            "list-icon-btn hdr-accent-btn dropdown-toggle",
                           attrs: {
                             href: "#",
                             "data-bs-toggle": "dropdown",

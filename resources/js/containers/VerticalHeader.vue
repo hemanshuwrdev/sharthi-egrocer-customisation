@@ -27,7 +27,7 @@
                             </li>
 
                             <li class="nav-item dropdown me-2">
-                                <button type="button" class="list-icon-btn" @click="toggleTheme($event)"
+                                <button type="button" class="list-icon-btn hdr-accent-btn" @click="toggleTheme($event)"
                                     :title="userTheme === 'theme-dark' ? 'Switch to light' : 'Switch to dark'">
                                     <span v-if="userTheme === 'theme-dark'" v-html="navIcon('sun')"></span>
                                     <span v-else v-html="navIcon('moon-stars')"></span>
@@ -37,7 +37,7 @@
                             <li class="nav-item dropdown me-2">
                                 <div class="d-flex gap-2 align-items-center">
 
-                                    <button type="button" class="list-icon-btn" @click="popoverShow = true"
+                                    <button type="button" class="list-icon-btn hdr-accent-btn" @click="popoverShow = true"
                                         id="confirmButton" ref="confirmButton" title="Clear">
                                         <b-spinner v-if="isSystemRefreshing" small label="Spinning"></b-spinner>
                                         <span v-else v-html="navIcon('refresh')"></span>
@@ -74,7 +74,7 @@
                             </li>
 
                             <li class="nav-item dropdown me-1">
-                                <a class="list-icon-btn position-relative dropdown-toggle" href="#"
+                                <a class="list-icon-btn hdr-accent-btn position-relative dropdown-toggle" href="#"
                                     data-bs-toggle="dropdown" aria-expanded="false">
                                     <span v-html="navIcon('bell')"></span>
                                     <span v-if="notifications_unread_count > 0" class="hdr-dot">{{
@@ -122,7 +122,7 @@
                                 </ul>
                             </li>
                             <li class="nav-item dropdown me-2">
-                                <a class="list-icon-btn dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                                <a class="list-icon-btn hdr-accent-btn dropdown-toggle" href="#" data-bs-toggle="dropdown"
                                     aria-expanded="false" :title="__('select_language')">
                                     <span v-html="navIcon('language')"></span>
                                 </a>
@@ -825,5 +825,10 @@ export default {
     top: 100% !important;
     right: 0 !important;
     left: auto !important;
+}
+
+.hdr-accent-btn:hover {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
 }
 </style>
