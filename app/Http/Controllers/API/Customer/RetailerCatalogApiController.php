@@ -216,6 +216,11 @@ class RetailerCatalogApiController extends Controller
                     'mrp'              => (float) $r->sp_mrp,
                     'selling_price'    => (float) $r->sp_selling_price,
                     'discounted_price' => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
+                    'price_by_unit'       => CommonHelper::buildUnitWisePriceSet([
+                        'mrp' => (float) $r->sp_mrp,
+                        'selling_price' => (float) $r->sp_selling_price,
+                        'discounted_price' => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
+                    ], $r->secondary_unit_value, $r->unit ? $r->unit->name : null, $r->secondaryUnit ? $r->secondaryUnit->name : null),
                     'stock'            => (float) $r->sp_stock,
                     'slab_prices'      => isset($slabsBySp[$r->sp_id])
                         ? $slabsBySp[$r->sp_id]->map(fn($s) => [
@@ -369,7 +374,7 @@ class RetailerCatalogApiController extends Controller
 
         $nearestSchemesBySp = self::nearestSchemesForSellerProducts($sellerProducts->pluck('id'));
 
-        $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp) {
+        $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp, $variant) {
             $sellerLogo = $sp->seller ? $sp->seller->logo : null;
             return [
                 'seller_id'        => $sp->seller_id,
@@ -380,6 +385,11 @@ class RetailerCatalogApiController extends Controller
                 'mrp' => (float) $sp->mrp,
                 'selling_price' => (float) $sp->selling_price,
                 'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                'price_by_unit' => CommonHelper::buildUnitWisePriceSet([
+                    'mrp' => (float) $sp->mrp,
+                    'selling_price' => (float) $sp->selling_price,
+                    'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                ], $variant->secondary_unit_value, $variant->unit ? $variant->unit->name : null, $variant->secondaryUnit ? $variant->secondaryUnit->name : null),
                 'stock' => (float) $sp->stock,
                 'slab_prices' => $sp->slabPrices->map(fn($s) => [
                     'id' => $s->id,

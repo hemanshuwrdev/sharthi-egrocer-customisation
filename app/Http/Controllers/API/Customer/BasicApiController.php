@@ -305,6 +305,11 @@ class BasicApiController extends Controller
                     'mrp'                => (float) $r->sp_mrp,
                     'selling_price'      => (float) $r->sp_selling_price,
                     'discounted_price'   => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
+                    'price_by_unit'         => CommonHelper::buildUnitWisePriceSet([
+                        'mrp' => (float) $r->sp_mrp,
+                        'selling_price' => (float) $r->sp_selling_price,
+                        'discounted_price' => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
+                    ], $r->secondary_unit_value, $r->unit ? $r->unit->name : null, $r->secondaryUnit ? $r->secondaryUnit->name : null),
                     'stock'              => (float) $r->sp_stock,
                     'is_favorited_seller' => $isAnySeller ? true : $favoritedSellerIds->contains($r->sp_seller_id),
                     'slab_prices'        => isset($slabsBySp[$r->sp_id])

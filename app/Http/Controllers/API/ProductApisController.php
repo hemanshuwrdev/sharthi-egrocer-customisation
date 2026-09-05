@@ -1686,6 +1686,11 @@ class ProductApisController extends Controller
                 'mrp' => $sp ? (float) $sp->mrp : 0,
                 'selling_price' => $sp ? (float) $sp->selling_price : 0,
                 'discounted_price' => $sp && $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                'price_by_unit' => CommonHelper::buildUnitWisePriceSet([
+                    'mrp' => $sp ? (float) $sp->mrp : 0,
+                    'selling_price' => $sp ? (float) $sp->selling_price : 0,
+                    'discounted_price' => $sp && $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                ], $v->secondary_unit_value, $v->unit ? $v->unit->name : null, $v->secondaryUnit ? $v->secondaryUnit->name : null),
                 'stock' => $sp ? (float) $sp->stock : 0,
                 'status' => $sp ? (int) $sp->status : 0,
                 'slab_prices' => $sp && isset($slabsBySp[$sp->id])

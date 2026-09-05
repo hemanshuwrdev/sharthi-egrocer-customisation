@@ -921,6 +921,11 @@ class CartApiController extends Controller
                 'mrp'                  => (float) $sp->mrp,
                 'selling_price'        => (float) $sp->selling_price,
                 'discounted_price'     => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                'price_by_unit'           => CommonHelper::buildUnitWisePriceSet([
+                    'mrp' => (float) $sp->mrp,
+                    'selling_price' => (float) $sp->selling_price,
+                    'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                ], $mpv ? $mpv->secondary_unit_value : null, $mpv && $mpv->unit ? $mpv->unit->name : null, $mpv && $mpv->secondaryUnit ? $mpv->secondaryUnit->name : null),
                 'stock'                => (float) $sp->stock,
                 'slab_prices'          => $sp->slabPrices->map(fn($s) => [
                     'id'      => $s->id,
