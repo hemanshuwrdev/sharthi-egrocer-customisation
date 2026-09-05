@@ -229,6 +229,41 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -288,6 +323,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         label: __('stock'),
         visible: true,
         "class": 'text-center'
+      }, {
+        key: 'allow_loose_qty',
+        label: __('allow_loose_qty'),
+        visible: false,
+        "class": 'text-center'
+      }, {
+        key: 'max_qty',
+        label: __('max_allowed_qty'),
+        visible: false,
+        "class": 'text-center',
+        thStyle: {
+          minWidth: '165px',
+          width: '165px'
+        }
       }, {
         key: 'slab_count',
         label: __('slabs'),
@@ -405,7 +454,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         mrp: row.mrp,
         selling_price: row.selling_price,
         stock: row.stock,
-        status: row.status
+        status: row.status,
+        allow_loose_qty: row.allow_loose_qty ? 1 : 0,
+        max_qty_mode: row.max_qty_mode || '',
+        max_qty_value: row.max_qty_mode && row.max_qty_value != null ? row.max_qty_value : ''
       }).then(function (res) {
         row._saving = false;
         if (res.data.status) {
@@ -534,6 +586,60 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 /***/ }),
 
+/***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css":
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__);
+// Imports
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, "\n.max-qty-head[data-v-147d0436] {\n    text-align: center;\n    line-height: 1.3;\n}\n.max-qty-cell[data-v-147d0436] {\n    display: flex;\n    flex-direction: column;\n    align-items: stretch;\n    gap: 10px;\n    min-width: 150px;\n    padding: 4px 0;\n}\n.max-qty-select[data-v-147d0436],\n.max-qty-input[data-v-147d0436] {\n    width: 100%;\n    height: 42px;\n    border-radius: 8px;\n    padding: 0 10px;\n    font-size: 0.875rem;\n}\n.max-qty-hint[data-v-147d0436] {\n    font-size: 12px;\n    color: #6c757d;\n    text-align: center;\n    line-height: 1.4;\n}\n", ""]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ }),
+
+/***/ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css":
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_style_index_0_id_147d0436_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../../../../node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css */ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css");
+
+            
+
+var options = {};
+
+options.insert = "head";
+options.singleton = false;
+
+var update = _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_style_index_0_id_147d0436_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__["default"], options);
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_style_index_0_id_147d0436_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__["default"].locals || {});
+
+/***/ }),
+
 /***/ "./resources/js/views/Sellers/MyProducts/MyProducts.vue":
 /*!**************************************************************!*\
   !*** ./resources/js/views/Sellers/MyProducts/MyProducts.vue ***!
@@ -545,23 +651,25 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _MyProducts_vue_vue_type_template_id_147d0436__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MyProducts.vue?vue&type=template&id=147d0436 */ "./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436");
+/* harmony import */ var _MyProducts_vue_vue_type_template_id_147d0436_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MyProducts.vue?vue&type=template&id=147d0436&scoped=true */ "./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436&scoped=true");
 /* harmony import */ var _MyProducts_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MyProducts.vue?vue&type=script&lang=js */ "./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=script&lang=js");
-/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+/* harmony import */ var _MyProducts_vue_vue_type_style_index_0_id_147d0436_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css */ "./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
 
+;
 
 
 /* normalize component */
-;
-var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
   _MyProducts_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
-  _MyProducts_vue_vue_type_template_id_147d0436__WEBPACK_IMPORTED_MODULE_0__.render,
-  _MyProducts_vue_vue_type_template_id_147d0436__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  _MyProducts_vue_vue_type_template_id_147d0436_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _MyProducts_vue_vue_type_template_id_147d0436_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
   false,
   null,
-  null,
+  "147d0436",
   null
   
 )
@@ -589,27 +697,40 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436":
-/*!********************************************************************************************!*\
-  !*** ./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436 ***!
-  \********************************************************************************************/
+/***/ "./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css":
+/*!**********************************************************************************************************************!*\
+  !*** ./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css ***!
+  \**********************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_style_loader_dist_cjs_js_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_style_index_0_id_147d0436_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/style-loader/dist/cjs.js!../../../../../node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css */ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=style&index=0&id=147d0436&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436&scoped=true":
+/*!********************************************************************************************************!*\
+  !*** ./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436&scoped=true ***!
+  \********************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   render: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_template_id_147d0436__WEBPACK_IMPORTED_MODULE_0__.render),
-/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_template_id_147d0436__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_template_id_147d0436_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_template_id_147d0436_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
-/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_template_id_147d0436__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MyProducts.vue?vue&type=template&id=147d0436 */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436");
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_MyProducts_vue_vue_type_template_id_147d0436_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MyProducts.vue?vue&type=template&id=147d0436&scoped=true */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436&scoped=true");
 
 
 /***/ }),
 
-/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436":
-/*!***********************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436 ***!
-  \***********************************************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436&scoped=true":
+/*!***********************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/MyProducts/MyProducts.vue?vue&type=template&id=147d0436&scoped=true ***!
+  \***********************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -1163,6 +1284,216 @@ var render = function () {
                           },
                         },
                       }),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(allow_loose_qty)",
+                  fn: function (row) {
+                    return [
+                      _c(
+                        "div",
+                        {
+                          staticClass:
+                            "form-check form-switch d-flex justify-content-center",
+                        },
+                        [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: row.item.allow_loose_qty,
+                                expression: "row.item.allow_loose_qty",
+                              },
+                            ],
+                            staticClass: "form-check-input",
+                            attrs: {
+                              type: "checkbox",
+                              role: "switch",
+                              title: _vm.__("allow_loose_qty_hint"),
+                            },
+                            domProps: {
+                              checked: Array.isArray(row.item.allow_loose_qty)
+                                ? _vm._i(row.item.allow_loose_qty, null) > -1
+                                : row.item.allow_loose_qty,
+                            },
+                            on: {
+                              change: function ($event) {
+                                var $$a = row.item.allow_loose_qty,
+                                  $$el = $event.target,
+                                  $$c = $$el.checked ? true : false
+                                if (Array.isArray($$a)) {
+                                  var $$v = null,
+                                    $$i = _vm._i($$a, $$v)
+                                  if ($$el.checked) {
+                                    $$i < 0 &&
+                                      _vm.$set(
+                                        row.item,
+                                        "allow_loose_qty",
+                                        $$a.concat([$$v])
+                                      )
+                                  } else {
+                                    $$i > -1 &&
+                                      _vm.$set(
+                                        row.item,
+                                        "allow_loose_qty",
+                                        $$a
+                                          .slice(0, $$i)
+                                          .concat($$a.slice($$i + 1))
+                                      )
+                                  }
+                                } else {
+                                  _vm.$set(row.item, "allow_loose_qty", $$c)
+                                }
+                              },
+                            },
+                          }),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "head(max_qty)",
+                  fn: function () {
+                    return [
+                      _c("div", { staticClass: "max-qty-head" }, [
+                        _c("div", [_vm._v(_vm._s(_vm.__("max")))]),
+                        _vm._v(" "),
+                        _c("div", [
+                          _vm._v(
+                            "\n                                            " +
+                              _vm._s(_vm.__("allowed_qty")) +
+                              "\n                                            "
+                          ),
+                          _c("i", {
+                            directives: [
+                              {
+                                name: "b-tooltip",
+                                rawName: "v-b-tooltip.hover",
+                                modifiers: { hover: true },
+                              },
+                            ],
+                            staticClass: "fa fa-info-circle",
+                            attrs: { title: _vm.__("max_allowed_qty_hint") },
+                          }),
+                        ]),
+                      ]),
+                    ]
+                  },
+                  proxy: true,
+                },
+                {
+                  key: "cell(max_qty)",
+                  fn: function (row) {
+                    return [
+                      _c("div", { staticClass: "max-qty-cell" }, [
+                        _c(
+                          "select",
+                          {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: row.item.max_qty_mode,
+                                expression: "row.item.max_qty_mode",
+                              },
+                            ],
+                            staticClass: "form-control max-qty-select",
+                            on: {
+                              change: [
+                                function ($event) {
+                                  var $$selectedVal = Array.prototype.filter
+                                    .call($event.target.options, function (o) {
+                                      return o.selected
+                                    })
+                                    .map(function (o) {
+                                      var val =
+                                        "_value" in o ? o._value : o.value
+                                      return val
+                                    })
+                                  _vm.$set(
+                                    row.item,
+                                    "max_qty_mode",
+                                    $event.target.multiple
+                                      ? $$selectedVal
+                                      : $$selectedVal[0]
+                                  )
+                                },
+                                function ($event) {
+                                  row.item.max_qty_mode ||
+                                    (row.item.max_qty_value = null)
+                                },
+                              ],
+                            },
+                          },
+                          [
+                            _c("option", { domProps: { value: null } }, [
+                              _vm._v(_vm._s(_vm.__("no_limit"))),
+                            ]),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "per_order" } }, [
+                              _vm._v(_vm._s(_vm.__("per_order"))),
+                            ]),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "per_day" } }, [
+                              _vm._v(_vm._s(_vm.__("per_day"))),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        row.item.max_qty_mode
+                          ? _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model.number",
+                                  value: row.item.max_qty_value,
+                                  expression: "row.item.max_qty_value",
+                                  modifiers: { number: true },
+                                },
+                              ],
+                              staticClass: "form-control max-qty-input",
+                              attrs: { type: "number", min: "1", step: "1" },
+                              domProps: { value: row.item.max_qty_value },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.$set(
+                                    row.item,
+                                    "max_qty_value",
+                                    _vm._n($event.target.value)
+                                  )
+                                },
+                                blur: function ($event) {
+                                  return _vm.$forceUpdate()
+                                },
+                              },
+                            })
+                          : _vm._e(),
+                        _vm._v(" "),
+                        row.item.max_qty_mode
+                          ? _c("div", { staticClass: "max-qty-hint" }, [
+                              _vm._v(
+                                "\n                                            " +
+                                  _vm._s(_vm.__("max_quantity_allowed"))
+                              ),
+                              _c("br"),
+                              _vm._v(
+                                "\n                                            " +
+                                  _vm._s(
+                                    row.item.max_qty_mode === "per_day"
+                                      ? _vm.__("per_day")
+                                      : _vm.__("per_order")
+                                  ) +
+                                  "\n                                        "
+                              ),
+                            ])
+                          : _vm._e(),
+                      ]),
                     ]
                   },
                 },

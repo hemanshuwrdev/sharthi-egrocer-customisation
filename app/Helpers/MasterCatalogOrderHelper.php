@@ -56,12 +56,12 @@ class MasterCatalogOrderHelper
         }
         // ──────────────────────────────────────────────────────────────────────
 
-        // ── Max order quantity limit (admin-set, on the master variant). $userId is
+        // ── Max order quantity limit (distributor-set, on the seller_product). $userId is
         // only passed at actual cart-mutation/order-placement call sites — a null
         // $userId (e.g. the getCart() re-pricing pass) skips this check, since
         // re-pricing an already-in-cart line isn't a new quantity decision.
         if ($userId !== null) {
-            $qtyLimitError = self::validateQtyLimits($variant, $qty, $userId);
+            $qtyLimitError = self::validateQtyLimits($sp, $variant->id, $qty, $userId);
             if ($qtyLimitError) {
                 return self::fail($qtyLimitError);
             }
@@ -102,7 +102,7 @@ class MasterCatalogOrderHelper
         // Stepper metadata (used by mobile app to render the quantity stepper widget).
         // Loose-enabled products: any qty is orderable, so the app should render a plain
         // 1-at-a-time stepper (step=1, min_qty=1) rather than a box-multiple stepper.
-        $allowLooseQty = (int) $variant->allow_loose_qty === 1;
+        $allowLooseQty = (int) $sp->allow_loose_qty === 1;
         $step          = (float) ($variant->secondary_unit_value ?? 1);
         $step          = $step > 0 ? $step : 1;
         $minQty        = $step;
@@ -141,9 +141,9 @@ class MasterCatalogOrderHelper
      *   - 1 box = secondary_unit_value packets (e.g. 20 packets per box)
      *   - Retailer orders in full boxes only: 20, 40, 60 ...
      *
-     * Exception: if the variant has allow_loose_qty=1, the retailer can order any qty
-     * (≥ 1 primary unit) — the box-multiple rule is only a display "step" hint for that
-     * product, not an enforced restriction.
+     * Exception: if the distributor's seller_product has allow_loose_qty=1, the retailer
+     * can order any qty (≥ 1 primary unit) — the box-multiple rule is only a display
+     * "step" hint for that product, not an enforced restriction.
      *
      * Returns an error string key on failure, null on success.
      * Products with no secondary unit configured (NULL / 0) → no restriction applied.
@@ -161,7 +161,7 @@ class MasterCatalogOrderHelper
         }
 
         // Loose selling allowed → skip the box-multiple restriction, just require ≥ 1.
-        if ((int) $variant->allow_loose_qty === 1) {
+        if ((int) $sp->allow_loose_qty === 1) {
             return $qty < 1 ? 'minimum_qty_is_1' : null;
         }
 
@@ -183,34 +183,36 @@ class MasterCatalogOrderHelper
     }
 
     /**
-     * Enforce the admin-set maximum order quantity (master_product_variants.max_qty_mode /
-     * max_qty_value) for a line — same cap for every distributor selling this variant.
+     * Enforce the distributor-set maximum order quantity (seller_products.max_qty_mode /
+     * max_qty_value) for a line — each distributor selling this variant sets their own cap.
      *
      * Per Order: $qty alone must not exceed the cap.
-     * Per Day: $qty PLUS everything this retailer already ordered today for this exact
-     * variant (excluding cancelled orders) must not exceed the cap.
+     * Per Day: $qty PLUS everything this retailer already ordered today from this
+     * distributor for this exact variant (excluding cancelled orders) must not exceed the cap.
      *
      * Optional — null/0 means no restriction. Returns an error string key on failure,
      * null on success.
      */
     public static function validateQtyLimits(
-        MasterProductVariant $variant,
+        SellerProduct $sp,
+        int $masterProductVariantId,
         float $qty,
         int $userId
     ): ?string {
-        if (!$variant->max_qty_value) {
+        if (!$sp->max_qty_value) {
             return null;
         }
 
-        if ($variant->max_qty_mode === 'per_day') {
+        if ($sp->max_qty_mode === 'per_day') {
             $orderedToday = OrderItem::join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('orders.user_id', $userId)
-                ->where('order_items.master_product_variant_id', $variant->id)
+                ->where('order_items.master_product_variant_id', $masterProductVariantId)
+                ->where('order_items.seller_id', $sp->seller_id)
                 ->whereDate('orders.created_at', now()->toDateString())
                 ->where('orders.active_status', '!=', OrderStatusList::$cancelled)
                 ->sum('order_items.quantity');
 
-            if (((float) $orderedToday + $qty) > $variant->max_qty_value) {
+            if (((float) $orderedToday + $qty) > $sp->max_qty_value) {
                 return 'maximum_order_quantity_per_day_exceeded';
             }
 
@@ -218,7 +220,7 @@ class MasterCatalogOrderHelper
         }
 
         // Default / 'per_order' mode
-        if ($qty > $variant->max_qty_value) {
+        if ($qty > $sp->max_qty_value) {
             return 'maximum_order_quantity_per_order_exceeded';
         }
 

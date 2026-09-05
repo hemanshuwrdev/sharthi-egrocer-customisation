@@ -275,8 +275,6 @@
                                     <th>{{ __('weight') }}</th>
                                     <th>{{ __('inner_pack') }}</th>
                                     <th>{{ __('secondary_value') }}</th>
-                                    <th>{{ __('allow_loose_qty') }}</th>
-                                    <th>{{ __('max_allowed_qty') }}</th>
                                     <th>{{ __('image') }}</th>
                                     <th>{{ __('status') }}</th>
                                     <th v-if="product.type === 'variable'" style="width:60px;">{{ __('actions') }}</th>
@@ -306,24 +304,6 @@
                                     <td>
                                         <input type="number" class="form-control form-control-sm" step="0.01"
                                             v-model.number="v.secondary_unit_value" />
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="form-check form-switch d-flex justify-content-center">
-                                            <input class="form-check-input" type="checkbox" role="switch"
-                                                v-model="v.allow_loose_qty"
-                                                :title="__('allow_loose_qty_hint')" />
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex gap-1">
-                                            <select class="form-control form-control-sm" v-model="v.max_qty_mode">
-                                                <option :value="null">{{ __('no_limit') }}</option>
-                                                <option value="per_order">{{ __('per_order') }}</option>
-                                                <option value="per_day">{{ __('per_day') }}</option>
-                                            </select>
-                                            <input type="number" class="form-control form-control-sm" min="1" step="1"
-                                                v-model.number="v.max_qty_value" :disabled="!v.max_qty_mode" />
-                                        </div>
                                     </td>
                                     <td>
                                         <input type="file" class="form-control form-control-sm" accept="image/*"
@@ -639,9 +619,6 @@ export default {
                         unit_id: v.unit_id,
                         secondary_unit_id: v.secondary_unit_id,
                         secondary_unit_value: v.secondary_unit_value,
-                        allow_loose_qty: !!v.allow_loose_qty,
-                        max_qty_mode: v.max_qty_mode,
-                        max_qty_value: v.max_qty_value,
                         weight: v.weight,
                         image: v.image,
                         status: v.status,
@@ -763,9 +740,6 @@ export default {
                 unit_id: null,
                 secondary_unit_id: null,
                 secondary_unit_value: null,
-                allow_loose_qty: false,
-                max_qty_mode: null,
-                max_qty_value: null,
                 weight: null,
                 image: null,
                 status: 1,
@@ -933,9 +907,6 @@ export default {
                 if (v.unit_id) fd.append(`variants[${idx}][unit_id]`, v.unit_id);
                 if (v.secondary_unit_id) fd.append(`variants[${idx}][secondary_unit_id]`, v.secondary_unit_id);
                 if (v.secondary_unit_value != null) fd.append(`variants[${idx}][secondary_unit_value]`, v.secondary_unit_value);
-                fd.append(`variants[${idx}][allow_loose_qty]`, v.allow_loose_qty ? 1 : 0);
-                fd.append(`variants[${idx}][max_qty_mode]`, v.max_qty_mode || '');
-                fd.append(`variants[${idx}][max_qty_value]`, v.max_qty_mode && v.max_qty_value != null ? v.max_qty_value : '');
                 if (v.weight != null) fd.append(`variants[${idx}][weight]`, v.weight);
                 fd.append(`variants[${idx}][status]`, v.status);
                 if (v._file) fd.append(`variants[${idx}][image]`, v._file);

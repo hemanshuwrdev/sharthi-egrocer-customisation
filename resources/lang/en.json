@@ -2019,5 +2019,9 @@
     "enter_hsn_code" : "Enter HSN Code",
     "bulk_save" : "Bulk Save",
     "outer_pack" : "Outer Pack",
-    "inner_pack" : "Inner Pack"
+    "inner_pack" : "Inner Pack",
+    "max" : "Max",
+    "allowed_qty" : "Allowed Qty",
+    "max_quantity_allowed" : "Max quantity allowed",
+    "max_allowed_qty_hint" : "Maximum quantity a retailer can order of this product from you"
 }

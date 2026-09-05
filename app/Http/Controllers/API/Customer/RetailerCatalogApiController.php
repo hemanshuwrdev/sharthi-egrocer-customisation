@@ -99,7 +99,10 @@ class RetailerCatalogApiController extends Controller
                 'seller_products.mrp as sp_mrp',
                 'seller_products.selling_price as sp_selling_price',
                 'seller_products.discounted_price as sp_discounted_price',
-                'seller_products.stock as sp_stock'
+                'seller_products.stock as sp_stock',
+                'seller_products.allow_loose_qty as sp_allow_loose_qty',
+                'seller_products.max_qty_mode as sp_max_qty_mode',
+                'seller_products.max_qty_value as sp_max_qty_value'
             );
 
         if ($filter !== '') {
@@ -222,6 +225,13 @@ class RetailerCatalogApiController extends Controller
                         'discounted_price' => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
                     ], $r->secondary_unit_value, $r->unit ? $r->unit->name : null, $r->secondaryUnit ? $r->secondaryUnit->name : null),
                     'stock'            => (float) $r->sp_stock,
+                    'allow_loose_qty'  => (bool) $r->sp_allow_loose_qty,
+                    // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
+                    // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
+                    'qty_step'         => $r->sp_allow_loose_qty ? 1 : ((float) ($r->secondary_unit_value ?? 1) ?: 1),
+                    'min_qty'          => $r->sp_allow_loose_qty ? 1 : ((float) ($r->secondary_unit_value ?? 1) ?: 1),
+                    'max_qty_mode'     => $r->sp_max_qty_mode,
+                    'max_qty_value'    => $r->sp_max_qty_value,
                     'slab_prices'      => isset($slabsBySp[$r->sp_id])
                         ? $slabsBySp[$r->sp_id]->map(fn($s) => [
                             'id'      => $s->id,
@@ -251,13 +261,8 @@ class RetailerCatalogApiController extends Controller
                 'unit' => $first->unit ? $first->unit->name : null,
                 'secondary_unit' => $first->secondaryUnit ? $first->secondaryUnit->name : null,
                 'secondary_unit_value' => $first->secondary_unit_value,
-                'allow_loose_qty' => (bool) $first->allow_loose_qty,
-                // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
-                // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
-                'qty_step'       => $first->allow_loose_qty ? 1 : ((float) ($first->secondary_unit_value ?? 1) ?: 1),
-                'min_qty'        => $first->allow_loose_qty ? 1 : ((float) ($first->secondary_unit_value ?? 1) ?: 1),
-                'max_qty_mode'   => $first->max_qty_mode,
-                'max_qty_value'  => $first->max_qty_value,
+                // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
+                // per-distributor — see each entry in `offers` (and `best_offer`).
                 'weight' => $first->weight,
                 'image' => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed' => $overlapAllowed,
@@ -391,6 +396,13 @@ class RetailerCatalogApiController extends Controller
                     'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
                 ], $variant->secondary_unit_value, $variant->unit ? $variant->unit->name : null, $variant->secondaryUnit ? $variant->secondaryUnit->name : null),
                 'stock' => (float) $sp->stock,
+                'allow_loose_qty' => (bool) $sp->allow_loose_qty,
+                // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
+                // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
+                'qty_step'       => $sp->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
+                'min_qty'        => $sp->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
+                'max_qty_mode'   => $sp->max_qty_mode,
+                'max_qty_value'  => $sp->max_qty_value,
                 'slab_prices' => $sp->slabPrices->map(fn($s) => [
                     'id' => $s->id,
                     'min_qty' => $s->min_qty,
@@ -415,13 +427,8 @@ class RetailerCatalogApiController extends Controller
             'unit' => $variant->unit ? $variant->unit->name : null,
             'secondary_unit' => $variant->secondaryUnit ? $variant->secondaryUnit->name : null,
             'secondary_unit_value' => $variant->secondary_unit_value,
-            'allow_loose_qty' => (bool) $variant->allow_loose_qty,
-            // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
-            // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
-            'qty_step'       => $variant->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
-            'min_qty'        => $variant->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
-            'max_qty_mode'   => $variant->max_qty_mode,
-            'max_qty_value'  => $variant->max_qty_value,
+            // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
+            // per-distributor — see each entry in `offers` (and `best_offer`).
             'weight' => $variant->weight,
             'image' => $variant->image ?: $variant->masterProduct->image,
             'description' => $variant->masterProduct->description,

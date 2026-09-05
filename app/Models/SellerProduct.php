@@ -19,6 +19,9 @@ class SellerProduct extends Model
         'discounted_price',
         'stock',
         'status',
+        'allow_loose_qty',
+        'max_qty_mode',
+        'max_qty_value',
     ];
 
     public function seller()

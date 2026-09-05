@@ -66,7 +66,10 @@ class SellerProductApiController extends Controller
                 'seller_products.selling_price as sp_selling_price',
                 'seller_products.discounted_price as sp_discounted_price',
                 'seller_products.stock as sp_stock',
-                'seller_products.status as sp_status'
+                'seller_products.status as sp_status',
+                'seller_products.allow_loose_qty as sp_allow_loose_qty',
+                'seller_products.max_qty_mode as sp_max_qty_mode',
+                'seller_products.max_qty_value as sp_max_qty_value'
             );
 
         if ($filter !== '') {
@@ -115,9 +118,9 @@ class SellerProductApiController extends Controller
                 'unit_id' => $v->unit_id,
                 'secondary_unit' => $v->secondaryUnit ? $v->secondaryUnit->name : null,
                 'secondary_unit_value' => $v->secondary_unit_value,
-                'allow_loose_qty' => (bool) $v->allow_loose_qty,
-                'max_qty_mode' => $v->max_qty_mode,
-                'max_qty_value' => $v->max_qty_value,
+                'allow_loose_qty' => (bool) $v->sp_allow_loose_qty,
+                'max_qty_mode' => $v->sp_max_qty_mode,
+                'max_qty_value' => $v->sp_max_qty_value,
                 'weight' => $v->weight,
                 'image' => $v->image ?: ($mp ? $mp->image : null),
 
@@ -154,6 +157,9 @@ class SellerProductApiController extends Controller
             'discounted_price' => 'nullable|numeric|min:0',
             'stock' => 'nullable|numeric|min:0',
             'status' => 'nullable|in:0,1',
+            'allow_loose_qty' => 'nullable|boolean',
+            'max_qty_mode' => 'nullable|in:per_order,per_day',
+            'max_qty_value' => 'nullable|integer|min:1',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -179,6 +185,9 @@ class SellerProductApiController extends Controller
         if ($request->has('stock')) $sp->stock = $request->stock ?: 0;
         if ($request->has('status')) $sp->status = $request->status;
         elseif (!$sp->exists) $sp->status = 0;
+        if ($request->has('allow_loose_qty')) $sp->allow_loose_qty = (bool) $request->allow_loose_qty;
+        if ($request->has('max_qty_mode')) $sp->max_qty_mode = $request->max_qty_mode ?: null;
+        if ($request->has('max_qty_value')) $sp->max_qty_value = $request->max_qty_value ?: null;
 
         $sp->save();
 
@@ -249,7 +258,7 @@ class SellerProductApiController extends Controller
         }
 
         $variant = $sp->masterProductVariant;
-        $step = ($variant && (int) $variant->allow_loose_qty === 1)
+        $step = ((int) $sp->allow_loose_qty === 1)
             ? 0
             : (float) ($variant?->secondary_unit_value ?? 0);
         $clean = CommonHelper::validateSlabRanges($request->slabs, $step);

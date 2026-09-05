@@ -664,7 +664,10 @@ class SalesmanAppApiController extends Controller
                 'seller_products.mrp as sp_mrp',
                 'seller_products.selling_price as sp_selling_price',
                 'seller_products.discounted_price as sp_discounted_price',
-                'seller_products.stock as sp_stock'
+                'seller_products.stock as sp_stock',
+                'seller_products.allow_loose_qty as sp_allow_loose_qty',
+                'seller_products.max_qty_mode as sp_max_qty_mode',
+                'seller_products.max_qty_value as sp_max_qty_value'
             );
 
         if ($filter !== '') {
@@ -732,10 +735,11 @@ class SalesmanAppApiController extends Controller
                 'unit'                 => $r->unit ? $r->unit->name : null,
                 'secondary_unit'       => $r->secondaryUnit ? $r->secondaryUnit->name : null,
                 'secondary_unit_value' => $r->secondary_unit_value,
-                'qty_step'             => (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
-                'min_qty'              => (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
-                'max_qty_mode'         => $r->max_qty_mode,
-                'max_qty_value'        => $r->max_qty_value,
+                'allow_loose_qty'      => (bool) $r->sp_allow_loose_qty,
+                'qty_step'             => $r->sp_allow_loose_qty ? 1 : (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
+                'min_qty'              => $r->sp_allow_loose_qty ? 1 : (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
+                'max_qty_mode'         => $r->sp_max_qty_mode,
+                'max_qty_value'        => $r->sp_max_qty_value,
                 'weight'               => $r->weight,
                 'image'                => $r->image ?: ($mp ? $mp->image : null),
                 'offer'                => $offer,

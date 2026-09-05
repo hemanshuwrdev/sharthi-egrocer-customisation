@@ -110,6 +110,41 @@
                                             class="form-control form-control-sm" v-model.number="row.item.stock" />
                                     </template>
 
+                                    <template #cell(allow_loose_qty)="row">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                v-model="row.item.allow_loose_qty"
+                                                :title="__('allow_loose_qty_hint')" />
+                                        </div>
+                                    </template>
+
+                                    <template #head(max_qty)>
+                                        <div class="max-qty-head">
+                                            <div>{{ __('max') }}</div>
+                                            <div>
+                                                {{ __('allowed_qty') }}
+                                                <i class="fa fa-info-circle" v-b-tooltip.hover :title="__('max_allowed_qty_hint')"></i>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <template #cell(max_qty)="row">
+                                        <div class="max-qty-cell">
+                                            <select class="form-control max-qty-select" v-model="row.item.max_qty_mode"
+                                                @change="row.item.max_qty_mode || (row.item.max_qty_value = null)">
+                                                <option :value="null">{{ __('no_limit') }}</option>
+                                                <option value="per_order">{{ __('per_order') }}</option>
+                                                <option value="per_day">{{ __('per_day') }}</option>
+                                            </select>
+                                            <input v-if="row.item.max_qty_mode" type="number" class="form-control max-qty-input"
+                                                min="1" step="1" v-model.number="row.item.max_qty_value" />
+                                            <div v-if="row.item.max_qty_mode" class="max-qty-hint">
+                                                {{ __('max_quantity_allowed') }}<br>
+                                                {{ row.item.max_qty_mode === 'per_day' ? __('per_day') : __('per_order') }}
+                                            </div>
+                                        </div>
+                                    </template>
+
                                     <template #cell(slab_count)="row">
                                         <button class="btn btn-sm btn-outline-secondary" @click="openSlabs(row.item)">
                                             <i class="fa fa-list"></i>
@@ -225,6 +260,8 @@ export default {
                 { key: 'mrp', label: __('mrp') + (this.$currency ? ' (' + this.$currency + ')' : ''), visible: true, class: 'text-center' },
                 { key: 'selling_price', label: __('selling_price') + (this.$currency ? ' (' + this.$currency + ')' : ''), visible: true, class: 'text-center' },
                 { key: 'stock', label: __('stock'), visible: true, class: 'text-center' },
+                { key: 'allow_loose_qty', label: __('allow_loose_qty'), visible: false, class: 'text-center' },
+                { key: 'max_qty', label: __('max_allowed_qty'), visible: false, class: 'text-center', thStyle: { minWidth: '165px', width: '165px' } },
                 { key: 'slab_count', label: __('slabs'), visible: true, class: 'text-center' },
                 { key: 'status', label: __('status'), visible: true, class: 'text-center' },
                 { key: 'actions', label: __('actions'), visible: true, class: 'text-center' },
@@ -313,6 +350,9 @@ export default {
                 selling_price: row.selling_price,
                 stock: row.stock,
                 status: row.status,
+                allow_loose_qty: row.allow_loose_qty ? 1 : 0,
+                max_qty_mode: row.max_qty_mode || '',
+                max_qty_value: row.max_qty_mode && row.max_qty_value != null ? row.max_qty_value : '',
             }).then(res => {
                 row._saving = false;
                 if (res.data.status) {
@@ -421,3 +461,35 @@ export default {
     },
 };
 </script>
+
+<style scoped>
+.max-qty-head {
+    text-align: center;
+    line-height: 1.3;
+}
+
+.max-qty-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+.max-qty-select,
+.max-qty-input {
+    width: 100%;
+    height: 42px;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 0.875rem;
+}
+
+.max-qty-hint {
+    font-size: 12px;
+    color: #6c757d;
+    text-align: center;
+    line-height: 1.4;
+}
+</style>

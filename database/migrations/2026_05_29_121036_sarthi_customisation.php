@@ -1053,6 +1053,25 @@ class SarthiCustomisation extends Migration
                 $table->string('hsn')->nullable();
             });
         }
+
+        // ── allow_loose_qty / max_qty_mode / max_qty_value move from the master
+        //    product variant (shared across every distributor) to per-distributor
+        //    seller_products, so each distributor can set their own loose-qty/min/max
+        //    rules. master_product_variants columns are left in place (unused going
+        //    forward) to avoid a destructive drop.
+        if (Schema::hasTable('seller_products')) {
+            Schema::table('seller_products', function (Blueprint $table) {
+                if (!Schema::hasColumn('seller_products', 'allow_loose_qty')) {
+                    $table->boolean('allow_loose_qty')->default(0)->after('status');
+                }
+                if (!Schema::hasColumn('seller_products', 'max_qty_mode')) {
+                    $table->string('max_qty_mode', 20)->nullable()->after('allow_loose_qty');
+                }
+                if (!Schema::hasColumn('seller_products', 'max_qty_value')) {
+                    $table->unsignedInteger('max_qty_value')->nullable()->after('max_qty_mode');
+                }
+            });
+        }
     }
 
     /**

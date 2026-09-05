@@ -417,26 +417,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -664,9 +644,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               unit_id: v.unit_id,
               secondary_unit_id: v.secondary_unit_id,
               secondary_unit_value: v.secondary_unit_value,
-              allow_loose_qty: !!v.allow_loose_qty,
-              max_qty_mode: v.max_qty_mode,
-              max_qty_value: v.max_qty_value,
               weight: v.weight,
               image: v.image,
               status: v.status,
@@ -776,9 +753,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         unit_id: null,
         secondary_unit_id: null,
         secondary_unit_value: null,
-        allow_loose_qty: false,
-        max_qty_mode: null,
-        max_qty_value: null,
         weight: null,
         image: null,
         status: 1,
@@ -959,9 +933,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         if (v.unit_id) fd.append("variants[".concat(idx, "][unit_id]"), v.unit_id);
         if (v.secondary_unit_id) fd.append("variants[".concat(idx, "][secondary_unit_id]"), v.secondary_unit_id);
         if (v.secondary_unit_value != null) fd.append("variants[".concat(idx, "][secondary_unit_value]"), v.secondary_unit_value);
-        fd.append("variants[".concat(idx, "][allow_loose_qty]"), v.allow_loose_qty ? 1 : 0);
-        fd.append("variants[".concat(idx, "][max_qty_mode]"), v.max_qty_mode || '');
-        fd.append("variants[".concat(idx, "][max_qty_value]"), v.max_qty_mode && v.max_qty_value != null ? v.max_qty_value : '');
         if (v.weight != null) fd.append("variants[".concat(idx, "][weight]"), v.weight);
         fd.append("variants[".concat(idx, "][status]"), v.status);
         if (v._file) fd.append("variants[".concat(idx, "][image]"), v._file);
@@ -2520,10 +2491,6 @@ var render = function () {
                       _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("secondary_value")))]),
                       _vm._v(" "),
-                      _c("th", [_vm._v(_vm._s(_vm.__("allow_loose_qty")))]),
-                      _vm._v(" "),
-                      _c("th", [_vm._v(_vm._s(_vm.__("max_allowed_qty")))]),
-                      _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("image")))]),
                       _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("status")))]),
@@ -2728,161 +2695,6 @@ var render = function () {
                               },
                             },
                           }),
-                        ]),
-                        _vm._v(" "),
-                        _c("td", { staticClass: "text-center" }, [
-                          _c(
-                            "div",
-                            {
-                              staticClass:
-                                "form-check form-switch d-flex justify-content-center",
-                            },
-                            [
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: v.allow_loose_qty,
-                                    expression: "v.allow_loose_qty",
-                                  },
-                                ],
-                                staticClass: "form-check-input",
-                                attrs: {
-                                  type: "checkbox",
-                                  role: "switch",
-                                  title: _vm.__("allow_loose_qty_hint"),
-                                },
-                                domProps: {
-                                  checked: Array.isArray(v.allow_loose_qty)
-                                    ? _vm._i(v.allow_loose_qty, null) > -1
-                                    : v.allow_loose_qty,
-                                },
-                                on: {
-                                  change: function ($event) {
-                                    var $$a = v.allow_loose_qty,
-                                      $$el = $event.target,
-                                      $$c = $$el.checked ? true : false
-                                    if (Array.isArray($$a)) {
-                                      var $$v = null,
-                                        $$i = _vm._i($$a, $$v)
-                                      if ($$el.checked) {
-                                        $$i < 0 &&
-                                          _vm.$set(
-                                            v,
-                                            "allow_loose_qty",
-                                            $$a.concat([$$v])
-                                          )
-                                      } else {
-                                        $$i > -1 &&
-                                          _vm.$set(
-                                            v,
-                                            "allow_loose_qty",
-                                            $$a
-                                              .slice(0, $$i)
-                                              .concat($$a.slice($$i + 1))
-                                          )
-                                      }
-                                    } else {
-                                      _vm.$set(v, "allow_loose_qty", $$c)
-                                    }
-                                  },
-                                },
-                              }),
-                            ]
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("td", [
-                          _c("div", { staticClass: "d-flex gap-1" }, [
-                            _c(
-                              "select",
-                              {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: v.max_qty_mode,
-                                    expression: "v.max_qty_mode",
-                                  },
-                                ],
-                                staticClass: "form-control form-control-sm",
-                                on: {
-                                  change: function ($event) {
-                                    var $$selectedVal = Array.prototype.filter
-                                      .call(
-                                        $event.target.options,
-                                        function (o) {
-                                          return o.selected
-                                        }
-                                      )
-                                      .map(function (o) {
-                                        var val =
-                                          "_value" in o ? o._value : o.value
-                                        return val
-                                      })
-                                    _vm.$set(
-                                      v,
-                                      "max_qty_mode",
-                                      $event.target.multiple
-                                        ? $$selectedVal
-                                        : $$selectedVal[0]
-                                    )
-                                  },
-                                },
-                              },
-                              [
-                                _c("option", { domProps: { value: null } }, [
-                                  _vm._v(_vm._s(_vm.__("no_limit"))),
-                                ]),
-                                _vm._v(" "),
-                                _c(
-                                  "option",
-                                  { attrs: { value: "per_order" } },
-                                  [_vm._v(_vm._s(_vm.__("per_order")))]
-                                ),
-                                _vm._v(" "),
-                                _c("option", { attrs: { value: "per_day" } }, [
-                                  _vm._v(_vm._s(_vm.__("per_day"))),
-                                ]),
-                              ]
-                            ),
-                            _vm._v(" "),
-                            _c("input", {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model.number",
-                                  value: v.max_qty_value,
-                                  expression: "v.max_qty_value",
-                                  modifiers: { number: true },
-                                },
-                              ],
-                              staticClass: "form-control form-control-sm",
-                              attrs: {
-                                type: "number",
-                                min: "1",
-                                step: "1",
-                                disabled: !v.max_qty_mode,
-                              },
-                              domProps: { value: v.max_qty_value },
-                              on: {
-                                input: function ($event) {
-                                  if ($event.target.composing) {
-                                    return
-                                  }
-                                  _vm.$set(
-                                    v,
-                                    "max_qty_value",
-                                    _vm._n($event.target.value)
-                                  )
-                                },
-                                blur: function ($event) {
-                                  return _vm.$forceUpdate()
-                                },
-                              },
-                            }),
-                          ]),
                         ]),
                         _vm._v(" "),
                         _c("td", [
