@@ -870,6 +870,7 @@ class SalesmanAppApiController extends Controller
             }
             $unitPrice = $line['unit_price'];
             $subtotal  = $unitPrice * (float) $row->qty;
+            $sp        = $line['seller_product'];
 
             $groups[$row->seller_id]['seller_id'] = (int) $row->seller_id;
             $groups[$row->seller_id]['items'][] = [
@@ -885,6 +886,14 @@ class SalesmanAppApiController extends Controller
                 'min_qty'  => (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
                 'image'    => $variant->image ?: ($variant->masterProduct->image ?? null),
                 'qty'      => (float) $row->qty,
+                'mrp'              => (float) $sp->mrp,
+                'price'            => (float) $sp->selling_price,
+                'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                'price_by_unit'    => CommonHelper::buildUnitWisePriceSet([
+                    'mrp' => (float) $sp->mrp,
+                    'selling_price' => (float) $sp->selling_price,
+                    'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                ], $variant->secondary_unit_value, $variant->unit ? $variant->unit->name : null, $variant->secondaryUnit ? $variant->secondaryUnit->name : null),
                 'unit_price' => $unitPrice,
                 'slab'     => $line['slab'],
                 'sub_total' => $subtotal,
