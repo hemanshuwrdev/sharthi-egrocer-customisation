@@ -171,6 +171,11 @@ class RetailerCartOrderApiController extends Controller
                 'price'            => (float) $sp->selling_price,
                 'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
                 'mrp'              => (float) $sp->mrp,
+                'price_by_unit'    => CommonHelper::buildUnitWisePriceSet([
+                    'mrp' => (float) $sp->mrp,
+                    'selling_price' => (float) $sp->selling_price,
+                    'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                ], $variant->secondary_unit_value, $variant->unit ? $variant->unit->name : null, $variant->secondaryUnit ? $variant->secondaryUnit->name : null),
                 'unit_price'       => $unitPrice,
                 'base_price'       => $line['base_price'],
                 'slab'             => $line['slab'],

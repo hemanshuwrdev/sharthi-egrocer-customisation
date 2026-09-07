@@ -1446,6 +1446,11 @@ class CommonHelper
                         'mrp'                      => self::doubleNumber($sp->mrp ?? 0),
                         'price'                    => $taxablePrice,
                         'discounted_price'         => $taxableDiscounted,
+                        'price_by_unit'            => self::buildUnitWisePriceSet([
+                            'mrp' => (float) ($sp->mrp ?? 0),
+                            'selling_price' => $sellingPrice,
+                            'discounted_price' => $discountedPrice > 0 ? $discountedPrice : null,
+                        ], $sp->secondary_unit_value ?? 0, $sp->stock_unit_name ?? null, $sp->secondary_unit_name ?? null),
                         'taxable_amount'           => $taxableAmount,
                         'calc_discount_percentage' => $calcDiscountPct,
                         'stock'                    => $stock,
