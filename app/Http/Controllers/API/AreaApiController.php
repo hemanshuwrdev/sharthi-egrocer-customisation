@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Area;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class AreaApiController extends Controller
@@ -55,6 +56,38 @@ class AreaApiController extends Controller
             ->get();
 
         return CommonHelper::responseWithData($areas);
+    }
+
+    public function lookupPincode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'pincode' => 'required|digits:6',
+        ]);
+
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        try {
+            $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])
+                ->timeout(5)
+                ->get('https://api.postalpincode.in/pincode/' . $request->pincode);
+        } catch (\Exception $e) {
+            return CommonHelper::responseError('pincode_lookup_failed');
+        }
+
+        $result = $response->json()[0] ?? null;
+
+        if (!$response->ok() || !$result || $result['Status'] !== 'Success' || empty($result['PostOffice'])) {
+            return CommonHelper::responseError('invalid_pincode');
+        }
+
+        $postOffice = $result['PostOffice'][0];
+
+        return CommonHelper::responseWithData([
+            'state' => $postOffice['State'],
+            'district' => $postOffice['District'],
+        ]);
     }
 
     public function save(Request $request)

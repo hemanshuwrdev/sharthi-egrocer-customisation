@@ -96,6 +96,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -109,7 +110,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         district: "",
         status: 1
       },
-      isLoading: false
+      isLoading: false,
+      pincodeLookupLoading: false,
+      pincodeLookupTimer: null
     };
   },
   created: function created() {
@@ -137,62 +140,111 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         _this.showError("Failed to load area");
       });
     },
-    saveRecord: function saveRecord() {
+    onPincodeInput: function onPincodeInput() {
       var _this2 = this;
+      clearTimeout(this.pincodeLookupTimer);
+      if (!/^\d{6}$/.test(this.area.pincode)) {
+        return;
+      }
+      this.pincodeLookupTimer = setTimeout(function () {
+        _this2.lookupPincode(_this2.area.pincode);
+      }, 400);
+    },
+    lookupPincode: function lookupPincode(pincode) {
+      var _this3 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-        var _this2$area$state, _this2$area$district;
-        var formData, _error$response, _error$response$data;
+        var response;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(!_this2.area.name || !_this2.area.pincode)) {
-                  _context.next = 3;
-                  break;
+                _this3.pincodeLookupLoading = true;
+                _context.prev = 1;
+                _context.next = 4;
+                return axios__WEBPACK_IMPORTED_MODULE_1___default().get(_this3.$apiUrl + '/areas/lookup-pincode', {
+                  params: {
+                    pincode: pincode
+                  }
+                });
+              case 4:
+                response = _context.sent;
+                if (response.data.status === 1) {
+                  _this3.area.state = response.data.data.state;
+                  _this3.area.district = response.data.data.district;
                 }
-                _this2.showError(__('please_fill_all_required_fields'));
-                return _context.abrupt("return");
-              case 3:
-                _this2.isLoading = true;
-                formData = new FormData();
-                if (_this2.area.id) {
-                  formData.append("id", _this2.area.id);
-                }
-                formData.append("name", _this2.area.name);
-                formData.append("pincode", _this2.area.pincode);
-                formData.append("state", (_this2$area$state = _this2.area.state) !== null && _this2$area$state !== void 0 ? _this2$area$state : '');
-                formData.append("district", (_this2$area$district = _this2.area.district) !== null && _this2$area$district !== void 0 ? _this2$area$district : '');
-                formData.append("status", _this2.area.status);
-                _context.prev = 11;
-                _context.next = 14;
-                return axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this2.$apiUrl + '/areas/save', formData);
-              case 14:
-                _this2.showMessage("success", __('area_saved_successfully'));
-                setTimeout(function () {
-                  _this2.$router.push({
-                    path: '/areas'
-                  });
-                }, 1500);
-                _context.next = 21;
+                _context.next = 10;
                 break;
-              case 18:
-                _context.prev = 18;
-                _context.t0 = _context["catch"](11);
-                if ((_error$response = _context.t0.response) !== null && _error$response !== void 0 && (_error$response$data = _error$response.data) !== null && _error$response$data !== void 0 && _error$response$data.message) {
-                  _this2.showError(_context.t0.response.data.message);
-                } else {
-                  _this2.showError("Something went wrong!");
-                }
-              case 21:
-                _context.prev = 21;
-                _this2.isLoading = false;
-                return _context.finish(21);
-              case 24:
+              case 8:
+                _context.prev = 8;
+                _context.t0 = _context["catch"](1);
+              case 10:
+                _context.prev = 10;
+                _this3.pincodeLookupLoading = false;
+                return _context.finish(10);
+              case 13:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[11, 18, 21, 24]]);
+        }, _callee, null, [[1, 8, 10, 13]]);
+      }))();
+    },
+    saveRecord: function saveRecord() {
+      var _this4 = this;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+        var _this4$area$state, _this4$area$district;
+        var formData, _error$response, _error$response$data;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!(!_this4.area.name || !_this4.area.pincode)) {
+                  _context2.next = 3;
+                  break;
+                }
+                _this4.showError(__('please_fill_all_required_fields'));
+                return _context2.abrupt("return");
+              case 3:
+                _this4.isLoading = true;
+                formData = new FormData();
+                if (_this4.area.id) {
+                  formData.append("id", _this4.area.id);
+                }
+                formData.append("name", _this4.area.name);
+                formData.append("pincode", _this4.area.pincode);
+                formData.append("state", (_this4$area$state = _this4.area.state) !== null && _this4$area$state !== void 0 ? _this4$area$state : '');
+                formData.append("district", (_this4$area$district = _this4.area.district) !== null && _this4$area$district !== void 0 ? _this4$area$district : '');
+                formData.append("status", _this4.area.status);
+                _context2.prev = 11;
+                _context2.next = 14;
+                return axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this4.$apiUrl + '/areas/save', formData);
+              case 14:
+                _this4.showMessage("success", __('area_saved_successfully'));
+                setTimeout(function () {
+                  _this4.$router.push({
+                    path: '/areas'
+                  });
+                }, 1500);
+                _context2.next = 21;
+                break;
+              case 18:
+                _context2.prev = 18;
+                _context2.t0 = _context2["catch"](11);
+                if ((_error$response = _context2.t0.response) !== null && _error$response !== void 0 && (_error$response$data = _error$response.data) !== null && _error$response$data !== void 0 && _error$response$data.message) {
+                  _this4.showError(_context2.t0.response.data.message);
+                } else {
+                  _this4.showError("Something went wrong!");
+                }
+              case 21:
+                _context2.prev = 21;
+                _this4.isLoading = false;
+                return _context2.finish(21);
+              case 24:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, null, [[11, 18, 21, 24]]);
       }))();
     }
   }
@@ -433,14 +485,23 @@ var render = function () {
                       },
                       domProps: { value: _vm.area.pincode },
                       on: {
-                        input: function ($event) {
-                          if ($event.target.composing) {
-                            return
-                          }
-                          _vm.$set(_vm.area, "pincode", $event.target.value)
-                        },
+                        input: [
+                          function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(_vm.area, "pincode", $event.target.value)
+                          },
+                          _vm.onPincodeInput,
+                        ],
                       },
                     }),
+                    _vm._v(" "),
+                    _vm.pincodeLookupLoading
+                      ? _c("small", { staticClass: "text-muted" }, [
+                          _vm._v(_vm._s(_vm.__("looking_up_pincode")) + "..."),
+                        ])
+                      : _vm._e(),
                   ]),
                   _vm._v(" "),
                   _c("div", { staticClass: "form-group" }, [

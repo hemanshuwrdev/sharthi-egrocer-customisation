@@ -545,6 +545,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('save', [\App\Http\Controllers\API\AreaApiController::class, 'save'])->name('areas.save');
         Route::get('edit/{id}', [\App\Http\Controllers\API\AreaApiController::class, 'edit']);
         Route::post('delete', [\App\Http\Controllers\API\AreaApiController::class, 'delete'])->name('areas.delete');
+        Route::get('lookup-pincode', [\App\Http\Controllers\API\AreaApiController::class, 'lookupPincode']);
     });
 
     Route::group(['prefix' => 'faqs'], function () {

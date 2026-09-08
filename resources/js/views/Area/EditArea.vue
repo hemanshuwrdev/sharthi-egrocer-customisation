@@ -41,7 +41,8 @@
                                 <div class="form-group">
                                     <label for="pincode">{{ __('pincode') }}<span class="text-danger text-sm">*</span></label>
                                     <input type="text" class="form-control" name="pincode" id="pincode"
-                                        v-model="area.pincode" :placeholder="__('pincode')" required>
+                                        v-model="area.pincode" @input="onPincodeInput" :placeholder="__('pincode')" required>
+                                    <small v-if="pincodeLookupLoading" class="text-muted">{{ __('looking_up_pincode') }}...</small>
                                 </div>
 
                                 <div class="form-group">
@@ -91,6 +92,8 @@ export default {
                 status: 1,
             },
             isLoading: false,
+            pincodeLookupLoading: false,
+            pincodeLookupTimer: null,
         }
     },
     created: function () {
@@ -121,6 +124,35 @@ export default {
                 .catch(() => {
                     this.showError("Failed to load area");
                 });
+        },
+
+        onPincodeInput() {
+            clearTimeout(this.pincodeLookupTimer);
+
+            if (!/^\d{6}$/.test(this.area.pincode)) {
+                return;
+            }
+
+            this.pincodeLookupTimer = setTimeout(() => {
+                this.lookupPincode(this.area.pincode);
+            }, 400);
+        },
+
+        async lookupPincode(pincode) {
+            this.pincodeLookupLoading = true;
+
+            try {
+                const response = await axios.get(this.$apiUrl + '/areas/lookup-pincode', { params: { pincode } });
+
+                if (response.data.status === 1) {
+                    this.area.state = response.data.data.state;
+                    this.area.district = response.data.data.district;
+                }
+            } catch (error) {
+                // pincode not found or lookup failed; leave state/district for manual entry
+            } finally {
+                this.pincodeLookupLoading = false;
+            }
         },
 
         async saveRecord() {

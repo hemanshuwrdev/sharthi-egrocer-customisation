@@ -3388,23 +3388,6 @@ var render = function () {
                     : _vm._e(),
                 ]),
               ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "col-4" }, [
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-primary w-100",
-                    on: { click: _vm.showRegisterModal },
-                  },
-                  [
-                    _vm._v(
-                      "\n                                " +
-                        _vm._s(_vm.__("register_user")) +
-                        "\n                            "
-                    ),
-                  ]
-                ),
-              ]),
             ]),
           ]),
         ]),

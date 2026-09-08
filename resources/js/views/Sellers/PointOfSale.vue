@@ -277,11 +277,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <!-- <div class="col-4">
                                 <button class="btn btn-primary w-100" @click="showRegisterModal">
                                     {{ __('register_user') }}
                                 </button>
-                            </div>
+                            </div> -->
                         </div>
 
                         <!-- <div v-if="selectedUser" class="user-details d-flex justify-content-around flex-wrap">
