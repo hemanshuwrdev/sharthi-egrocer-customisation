@@ -271,7 +271,10 @@ class BasicApiController extends Controller
                 'seller_products.mrp as sp_mrp',
                 'seller_products.selling_price as sp_selling_price',
                 'seller_products.discounted_price as sp_discounted_price',
-                'seller_products.stock as sp_stock'
+                'seller_products.stock as sp_stock',
+                'seller_products.allow_loose_qty as sp_allow_loose_qty',
+                'seller_products.max_qty_mode as sp_max_qty_mode',
+                'seller_products.max_qty_value as sp_max_qty_value'
             )
             ->get()
             ->filter(fn($r) => isset($allowedPairs[$r->mp_brand_id . '_' . $r->sp_seller_id]))
@@ -311,6 +314,9 @@ class BasicApiController extends Controller
                         'discounted_price' => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
                     ], $r->secondary_unit_value, $r->unit ? $r->unit->name : null, $r->secondaryUnit ? $r->secondaryUnit->name : null),
                     'stock'              => (float) $r->sp_stock,
+                    'allow_loose_qty'    => (bool) $r->sp_allow_loose_qty,
+                    'max_qty_mode'       => $r->sp_max_qty_mode ?? null,
+                    'max_qty_value'      => $r->sp_max_qty_value !== null ? (int) $r->sp_max_qty_value : null,
                     'is_favorited_seller' => $isAnySeller ? true : $favoritedSellerIds->contains($r->sp_seller_id),
                     'slab_prices'        => isset($slabsBySp[$r->sp_id])
                         ? $slabsBySp[$r->sp_id]->map(fn($s) => [

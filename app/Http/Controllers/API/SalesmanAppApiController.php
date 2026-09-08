@@ -889,6 +889,9 @@ class SalesmanAppApiController extends Controller
                 'mrp'              => (float) $sp->mrp,
                 'price'            => (float) $sp->selling_price,
                 'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
+                'allow_loose_qty'  => (bool) $sp->allow_loose_qty,
+                'max_qty_mode'     => $sp->max_qty_mode ?? null,
+                'max_qty_value'    => $sp->max_qty_value !== null ? (int) $sp->max_qty_value : null,
                 'price_by_unit'    => CommonHelper::buildUnitWisePriceSet([
                     'mrp' => (float) $sp->mrp,
                     'selling_price' => (float) $sp->selling_price,
