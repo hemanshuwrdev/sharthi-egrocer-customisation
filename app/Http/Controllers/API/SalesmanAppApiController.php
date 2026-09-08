@@ -17,6 +17,7 @@ use App\Models\Salesman;
 use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Models\UserToken;
 use App\Services\SchemeEngine;
 use Carbon\Carbon;
@@ -1050,11 +1051,21 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('address_or_coords_required');
         }
 
+        // Area filtering (Loading Slip) relies on orders.area_id being stored at creation
+        // time. Salesman-placed orders have no delivery address of their own, so tag the
+        // retailer's own area, falling back to the given address's area if the retailer
+        // has none set.
+        $areaId = $profile->area_id ?? null;
+        if (!$areaId && $request->filled('address_id')) {
+            $areaId = UserAddress::where('id', $request->address_id)->value('area_id');
+        }
+        $areaId = $areaId ?: 0;
+
         $bySeller = $items->groupBy('seller_id');
         $createdOrders = [];
 
         try {
-            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $lat, $lng, &$createdOrders) {
+            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $lat, $lng, $areaId, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerSubtotal = 0;
                     $schemeLines = [];
@@ -1107,6 +1118,7 @@ class SalesmanAppApiController extends Controller
                         'status'                  => json_encode([['received', date('Y-m-d H:i:s')]]),
                         'active_status'           => (string) OrderStatusList::$received,
                         'address_id'              => $request->address_id ?? 0,
+                        'area_id'                 => $areaId,
                         'created_at'              => now(),
                         'updated_at'              => now(),
                     ]);
