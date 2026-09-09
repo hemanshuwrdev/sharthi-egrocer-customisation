@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SchemeSlab extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $table = 'scheme_slabs';
 
     protected $fillable = [
@@ -26,5 +27,14 @@ class SchemeSlab extends Model
     public function scheme()
     {
         return $this->belongsTo(Scheme::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SchemeSlab');
     }
 }

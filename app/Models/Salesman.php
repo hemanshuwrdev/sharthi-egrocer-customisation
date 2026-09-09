@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Salesman extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     public static $statusActive = 1;
     public static $statusBlocked = 0;
 
@@ -32,5 +33,14 @@ class Salesman extends Model
     public function seller()
     {
         return $this->belongsTo(Seller::class, 'seller_id', 'id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Salesman');
     }
 }

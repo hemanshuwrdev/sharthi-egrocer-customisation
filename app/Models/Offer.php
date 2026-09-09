@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Offer extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
     protected $appends = ['image_url','type_name','type_slug','section_title'];
     protected $hidden = ['created_at','updated_at'];
     public function getImageUrlAttribute(){
@@ -55,4 +57,13 @@ class Offer extends Model
         return 'Below '.$section_title;
     }
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Offer');
+    }
 }

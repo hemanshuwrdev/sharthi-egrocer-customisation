@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Tax extends Model
 {
-    use HasFactory,HasTranslations;
-
+    use HasFactory,HasTranslations, LogsActivity;
     protected $table = 'taxes';
     public $timestamps = false;
 
@@ -34,4 +35,13 @@ class Tax extends Model
     return $this->hasMany(TaxTranslation::class);
 }
     
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Tax');
+    }
 }

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Favorite extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
     protected $hidden = [];
     protected $appends = [];
     protected $fillable = ['user_id', 'product_id', 'master_product_variant_id', 'seller_id'];
@@ -26,5 +28,14 @@ class Favorite extends Model
             return $image_url;
         }
         return $this->image;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Favorite');
     }
 }

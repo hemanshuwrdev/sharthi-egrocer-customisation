@@ -2756,7 +2756,7 @@ body.theme-dark {
 }
 
 .list-surface > .card-header {
-    padding-bottom: 0.75rem;
+    padding: 1.5rem 1.5rem 0.75rem !important;
     border-bottom: none;
     background: transparent;
 }

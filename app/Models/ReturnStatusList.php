@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ReturnStatusList extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     public $timestamps = false;
 
     public static $rPending = 1;
@@ -105,5 +106,14 @@ class ReturnStatusList extends Model
 
         // If __() returns the key itself (untranslated), fall back to the static name
         return ($translated !== $key) ? $translated : self::getStatusName($statusId);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ReturnStatusList');
     }
 }

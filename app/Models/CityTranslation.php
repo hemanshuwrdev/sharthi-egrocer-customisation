@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CityTranslation extends Model
 {
-      use HasFactory;
-
+      use HasFactory, LogsActivity;
     protected $table = 'city_translations';
 
     protected $fillable = [
@@ -32,4 +33,13 @@ class CityTranslation extends Model
         return $this->belongsTo(Language::class, 'language_id');
     }
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('CityTranslation');
+    }
 }

@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use App\Helpers\CommonHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Language extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
     protected $hidden = ['created_at','updated_at'];
     protected $fillable = ['supported_language_id','system_type','json_data','is_default','display_name','status'];
     protected $appends = ['system_type_name'];
@@ -49,4 +51,13 @@ class Language extends Model
         return strtoupper($value);
     }
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Language');
+    }
 }

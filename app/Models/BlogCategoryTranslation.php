@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BlogCategoryTranslation extends Model
 {
-    use HasFactory;
- 
+    use HasFactory, LogsActivity;
      protected $table = 'blog_category_translations';
 
         protected $fillable = [
@@ -42,4 +43,13 @@ class BlogCategoryTranslation extends Model
     }
        public $timestamps = false;
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('BlogCategoryTranslation');
+    }
 }

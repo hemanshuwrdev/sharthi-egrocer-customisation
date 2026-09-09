@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class DriverSettlement extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'delivery_boy_id', 'seller_id', 'settlement_date',
         'total_orders', 'total_cash', 'total_upi', 'total_cheque', 'total_signature',
@@ -27,5 +31,14 @@ class DriverSettlement extends Model
     public function deliveryBoy()
     {
         return $this->belongsTo(DeliveryBoy::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('DriverSettlement');
     }
 }

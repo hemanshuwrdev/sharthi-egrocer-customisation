@@ -3,14 +3,14 @@
 namespace App\Models;
 
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SeoSettingTranslation extends Model
 {
-    use HasFactory;
-
-
+    use HasFactory, LogsActivity;
      protected $table = 'seo_setting_translations';
 
     protected $fillable = [
@@ -31,5 +31,14 @@ class SeoSettingTranslation extends Model
     public function language()
     {
         return $this->belongsTo(Language::class, 'language_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SeoSettingTranslation');
     }
 }

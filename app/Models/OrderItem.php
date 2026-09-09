@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 //use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class OrderItem extends Model
 {
     //use HasFactory,SoftDeletes;
-    use HasFactory;
+    use HasFactory, LogsActivity;
     protected $hidden = [];
 protected $casts = [
         'id' => 'integer',
@@ -60,5 +62,14 @@ protected $casts = [
     public function user()
     {
         return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('OrderItem');
     }
 }

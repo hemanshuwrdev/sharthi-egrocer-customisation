@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\DeliveryBoyTranslation;
 class DeliveryBoy extends Model
 {
-    use HasFactory, HasTranslations;
-
+    use HasFactory, HasTranslations, LogsActivity;
     protected $table = 'delivery_boys';
     protected $translationModel = 'DeliveryBoyTranslation';
 
@@ -119,5 +120,14 @@ class DeliveryBoy extends Model
             return $national_identity_card_url;
         }
         return $this->national_identity_card;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('DeliveryBoy');
     }
 }

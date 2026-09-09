@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class LiveTracking extends Model
 {
+    use LogsActivity;
+
     use HasFactory; // Define the table name if it's not the default plural form
     protected $table = 'live_tracking';
 
@@ -31,5 +35,14 @@ class LiveTracking extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('LiveTracking');
     }
 }

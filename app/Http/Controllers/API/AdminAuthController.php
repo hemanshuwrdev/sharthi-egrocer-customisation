@@ -173,6 +173,12 @@ class AdminAuthController extends Controller
 
         Auth::login($user, false);
 
+        activity()
+            ->performedOn($user)
+            ->causedBy($user)
+            ->event('login')
+            ->log('Logged in');
+
         if (isset($request->fcm_token) && !empty($request->fcm_token)) {
             $type = "";
             $user_id = $user->id;
@@ -221,6 +227,14 @@ class AdminAuthController extends Controller
 
     public function logout(Request $request)
     {
+        $user = $request->user();
+
+        activity()
+            ->performedOn($user)
+            ->causedBy($user)
+            ->event('logout')
+            ->log('Logged out');
+
         $token = $request->user()->token();
         if ($token) {
             $token->revoke();

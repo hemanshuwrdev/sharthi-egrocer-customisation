@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PromoCode extends Model
 {
-    use HasFactory, HasTranslations;
-
+    use HasFactory, HasTranslations, LogsActivity;
     protected $appends = ['image_url','is_applicable','validity'];    
     protected $translatable = ['message'];
     protected $translationForeignKey = 'promo_code_id';
@@ -54,4 +55,13 @@ class PromoCode extends Model
 
 
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('PromoCode');
+    }
 }

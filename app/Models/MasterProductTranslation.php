@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MasterProductTranslation extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $table = 'master_product_translations';
 
     protected $fillable = [
@@ -43,5 +44,14 @@ class MasterProductTranslation extends Model
     public function language()
     {
         return $this->belongsTo(Language::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('MasterProductTranslation');
     }
 }

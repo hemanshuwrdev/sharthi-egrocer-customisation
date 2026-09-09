@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,8 +11,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
-
+    use HasFactory, SoftDeletes, LogsActivity;
     public static $activeType = 1;
     public static $previousType = 0;
     protected $casts = [
@@ -71,5 +72,14 @@ class Order extends Model
     public function deliveryBoy()
     {
         return $this->belongsTo(DeliveryBoy::class, 'delivery_boy_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Order');
     }
 }

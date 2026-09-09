@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SectionTranslation extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     public $timestamps = false;
     protected $table = 'section_translations';
 
@@ -32,5 +33,14 @@ class SectionTranslation extends Model
     public function language()
     {
         return $this->belongsTo(Language::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SectionTranslation');
     }
 }

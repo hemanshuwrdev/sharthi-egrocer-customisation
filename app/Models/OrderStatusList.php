@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class OrderStatusList extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     public $timestamps = false;
 
     public static $paymentPending = 1;
@@ -117,5 +118,14 @@ class OrderStatusList extends Model
         }
 
         return (string)$statusInput;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('OrderStatusList');
     }
 }

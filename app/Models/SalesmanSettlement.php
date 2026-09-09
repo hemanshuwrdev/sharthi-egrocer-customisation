@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class SalesmanSettlement extends Model
 {
+    use LogsActivity;
+
     protected $table = 'salesman_settlements';
 
     protected $fillable = [
@@ -29,5 +33,14 @@ class SalesmanSettlement extends Model
     public function salesman()
     {
         return $this->belongsTo(Salesman::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SalesmanSettlement');
     }
 }

@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SubscriptionFaq extends Model
 {
-    use HasFactory,HasTranslations;
-
+    use HasFactory,HasTranslations, LogsActivity;
     protected $table = 'subscription_faqs';
 
     //  protected $fillable = [
@@ -44,6 +45,15 @@ class SubscriptionFaq extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order', 'asc')->orderBy('id', 'desc');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SubscriptionFaq');
     }
 }
 

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MasterProductVariant extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $table = 'master_product_variants';
 
     protected $fillable = [
@@ -43,5 +44,14 @@ class MasterProductVariant extends Model
     public function sellerProducts()
     {
         return $this->hasMany(SellerProduct::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('MasterProductVariant');
     }
 }

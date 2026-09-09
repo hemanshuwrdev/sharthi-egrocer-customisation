@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SellerProductSlabPrice extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $table = 'seller_product_slab_prices';
 
     protected $fillable = [
@@ -21,5 +22,14 @@ class SellerProductSlabPrice extends Model
     public function sellerProduct()
     {
         return $this->belongsTo(SellerProduct::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SellerProductSlabPrice');
     }
 }

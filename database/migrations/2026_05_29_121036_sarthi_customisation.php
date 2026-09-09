@@ -1072,6 +1072,32 @@ class SarthiCustomisation extends Migration
                 }
             });
         }
+
+        // ── Activity log table (spatie/laravel-activitylog), for the superadmin
+        //    "Activity Logs" screen: records CRUD + login/logout events per role.
+        if (!Schema::hasTable('activity_log')) {
+            Schema::create('activity_log', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->string('log_name')->nullable();
+                $table->text('description');
+                $table->nullableMorphs('subject', 'subject');
+                $table->string('event')->nullable();
+                $table->nullableMorphs('causer', 'causer');
+                $table->json('properties')->nullable();
+                $table->uuid('batch_uuid')->nullable();
+                $table->timestamps();
+                $table->index('log_name');
+            });
+        } else {
+            Schema::table('activity_log', function (Blueprint $table) {
+                if (!Schema::hasColumn('activity_log', 'event')) {
+                    $table->string('event')->nullable()->after('subject_type');
+                }
+                if (!Schema::hasColumn('activity_log', 'batch_uuid')) {
+                    $table->uuid('batch_uuid')->nullable()->after('properties');
+                }
+            });
+        }
     }
 
     /**
@@ -1081,6 +1107,8 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('activity_log');
+
         if (Schema::hasTable('categories') && Schema::hasColumn('categories', 'hsn')) {
             Schema::table('categories', function (Blueprint $table) {
                 $table->dropColumn('hsn');

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SmsVerification extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $fillable = [
         'contact_number','code','status'
     ];
@@ -25,4 +26,13 @@ class SmsVerification extends Model
         $this->update($request->all());
         return $this;
         }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SmsVerification');
+    }
 }

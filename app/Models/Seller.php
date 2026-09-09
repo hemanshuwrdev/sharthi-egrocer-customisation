@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Seller extends Model
 {
-    use HasFactory, HasTranslations;
-
+    use HasFactory, HasTranslations, LogsActivity;
     protected $translatable = [
         'name',
         'store_name',
@@ -103,5 +104,14 @@ class Seller extends Model
         } else {
             $this->attributes['pickup_store_timings'] = $value;
         }
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Seller');
     }
 }

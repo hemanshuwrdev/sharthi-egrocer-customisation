@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class MobileRegistry extends Model
 {
+    use LogsActivity;
+
     protected $table = 'mobile_registry';
 
     protected $fillable = [
@@ -25,4 +29,13 @@ class MobileRegistry extends Model
         self::ROLE_DELIVERY_BOY => 'Delivery Boy',
         self::ROLE_RETAILER => 'Retailer',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('MobileRegistry');
+    }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,8 +12,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 class Admin extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable,HasRoles;
-
+    use HasApiTokens, HasFactory, Notifiable,HasRoles, LogsActivity;
     protected $appends = ['allPermissions','seller_status','delivery_boy_status','salesman_status'];
     protected $hidden = ['password'];
 
@@ -76,5 +77,14 @@ class Admin extends Authenticatable
             $status = $this->salesman->status;
         }
         return $status;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Admin');
     }
 }

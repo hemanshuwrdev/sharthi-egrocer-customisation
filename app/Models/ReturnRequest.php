@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ReturnRequest extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $fillable = [
         'user_id',
         'product_variant_id',
@@ -49,5 +50,14 @@ class ReturnRequest extends Model
     public function getStatusNameAttribute()
     {
         return ReturnStatusList::getStatusName($this->status);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ReturnRequest');
     }
 }

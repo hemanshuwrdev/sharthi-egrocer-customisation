@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SeoSetting extends Model
 {
-    use HasFactory,HasTranslations;
+    use HasFactory,HasTranslations, LogsActivity;
     // Specify the table if it's different from the default plural form
     protected $table = 'web_seo_pages';
 
@@ -45,4 +47,13 @@ class SeoSetting extends Model
         return $this->og_image;
     }
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SeoSetting');
+    }
 }

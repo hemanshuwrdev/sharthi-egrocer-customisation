@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 
 class OrderStatus extends Model
 {
+    use LogsActivity;
+
     public $timestamps = false;
     public static $userTypeScript = 0;
     public static $userTypeAdmin = 1;
@@ -44,5 +48,14 @@ class OrderStatus extends Model
     public function getdisplayDateTimeAttribute()
     {
         return \App\Helpers\CommonHelper::formatDateTime($this->created_at);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('OrderStatus');
     }
 }

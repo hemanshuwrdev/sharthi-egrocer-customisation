@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 
 class ProductRating extends Model
 {
-    use HasFactory;
-  
+    use HasFactory, LogsActivity;
     protected $hidden = ['created_at','deleted_at'];
 
    
@@ -30,5 +31,14 @@ class ProductRating extends Model
             $image_url = '';
         }
         return $image_url;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ProductRating');
     }
 }

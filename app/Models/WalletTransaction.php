@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class WalletTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
     public static $statusSuccess = "success";
     public static $statusFailed = "failed";
 
@@ -40,4 +42,13 @@ class WalletTransaction extends Model
         return (float) $value;
     }
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('WalletTransaction');
+    }
 }

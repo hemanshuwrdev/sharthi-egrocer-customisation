@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     public $timestamps = false;
     protected $fillable = ['variable', 'value'];
 
@@ -36,5 +37,14 @@ class Setting extends Model
         $setting = $settings->first();
         $setting->value = $value;
         $setting->save();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Setting');
     }
 }

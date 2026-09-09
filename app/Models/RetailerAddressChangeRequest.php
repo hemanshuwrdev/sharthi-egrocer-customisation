@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class RetailerAddressChangeRequest extends Model
 {
+    use LogsActivity;
+
     protected $table = 'retailer_address_change_requests';
 
     protected $fillable = [
@@ -52,5 +56,14 @@ class RetailerAddressChangeRequest extends Model
     public function newCity()
     {
         return $this->belongsTo(\App\Models\City::class, 'new_city_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('RetailerAddressChangeRequest');
     }
 }

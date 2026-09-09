@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SubscriptionPlanTranslation extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
         protected $fillable = [
         'subscription_plan_id',
         'language_id',
@@ -25,5 +27,14 @@ public function plan()
     public function language()
     {
         return $this->belongsTo(Language::class, 'language_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('SubscriptionPlanTranslation');
     }
 }

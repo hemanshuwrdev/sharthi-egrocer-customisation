@@ -190,6 +190,9 @@ const EditArea = () => import("../views/Area/EditArea");
 
 //Faqs
 const Faqs = () => import("../views/Faqs/Faqs");
+
+//Activity Logs
+const ActivityLogs = () => import("../views/ActivityLogs/ActivityLogs");
 // ProductInfo for  Sold Out Products
 const ProductInfo = () => import("../views/Dashboard/ProductInfo");
 
@@ -1431,6 +1434,16 @@ function configRoutes() {
                         role: adminRoles,
                         title: 'Role'
 
+                    },
+                },
+                {
+                    path: "activity_logs",
+                    name: "ActivityLogs",
+                    component: ActivityLogs,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Activity Logs'
                     },
                 },
                 {

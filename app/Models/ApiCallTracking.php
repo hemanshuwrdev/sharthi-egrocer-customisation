@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class ApiCallTracking extends Model
 {
+    use LogsActivity;
+
     protected $table = 'api_call_tracking';
     
     protected $fillable = [
@@ -58,5 +62,14 @@ class ApiCallTracking extends Model
     public static function getCallCountsBySource($source)
     {
         return self::where('source', $source)->get();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ApiCallTracking');
     }
 } 

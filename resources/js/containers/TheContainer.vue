@@ -930,6 +930,12 @@ export default {
                     url: '/faqs',
                     permission: 'faq_list',
                 },
+                {
+                    name: __('activity_logs'),
+                    icon: 'history',
+                    url: '/activity_logs',
+                    role: true
+                },
             ],
             databasedownloadBtn: [
                 {

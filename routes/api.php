@@ -437,6 +437,12 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [\App\Http\Controllers\API\WishlistsApiController::class, 'index']);
     });
 
+    Route::group(['prefix' => 'activity_logs'], function () {
+        Route::get('/', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'getList']);
+        Route::get('filters', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'filters']);
+        Route::get('{id}', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'show']);
+    });
+
     Route::group(['prefix' => 'system_users'], function () {
         Route::get('/', [\App\Http\Controllers\API\SystemUsersApiController::class, 'index']);
         Route::post('save', [\App\Http\Controllers\API\SystemUsersApiController::class, 'save'])->name('system_users.save');

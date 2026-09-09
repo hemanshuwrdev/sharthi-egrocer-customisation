@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class WithdrawalRequest extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     public static $typeUser = "user";
     public static $typeSeller = "seller";
     public static $typeDeliveryBoy = "delivery_boy";
@@ -62,4 +63,13 @@ class WithdrawalRequest extends Model
         return strtolower(str_replace(' ', '_',$this->type));
     }
 
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('WithdrawalRequest');
+    }
 }

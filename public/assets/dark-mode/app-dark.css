@@ -7351,7 +7351,7 @@ body.theme-dark #sidebar:not(.active) ~ #main {
 }
 @media screen and (min-width: 1200px) {
     body.theme-dark #sidebar.active ~ #main {
-        margin-left: 300px !important;
+        margin-left: 260px !important;
     }
     body.theme-dark #sidebar:not(.active) ~ #main {
         margin-left: 75px !important;
@@ -8097,7 +8097,7 @@ body.theme-dark .burger-btn {
     display: none;
 }
 body.theme-dark #main {
-    margin-left: 300px;
+    margin-left: 260px;
     min-height: 100vh;
     padding: 2rem;
 }

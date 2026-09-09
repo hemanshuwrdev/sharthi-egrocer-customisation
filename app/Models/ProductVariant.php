@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 class ProductVariant extends Model
 {
 
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $fillable = [
         'id',
         'product_id',
@@ -71,5 +72,14 @@ class ProductVariant extends Model
             : $this->attributes['price'];
 
         return $basePrice;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ProductVariant');
     }
 }

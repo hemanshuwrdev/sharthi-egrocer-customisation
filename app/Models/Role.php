@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,6 +13,8 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Role extends Model
 {
+    use LogsActivity;
+
 
     public static $roleSuperAdmin = 1;
     public static $roleAdmin = 2;
@@ -23,4 +27,13 @@ class Role extends Model
     public static $roleNameSeller = "Seller";
     public static $roleNameDeliveryBoy = "Delivery Boy";
     public static $roleNameSalesman = "Salesman";
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Role');
+    }
 }

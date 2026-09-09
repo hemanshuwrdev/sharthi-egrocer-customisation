@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CartNotification extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     protected $fillable = [
         'user_id',
         'cart_id',
@@ -27,5 +28,14 @@ class CartNotification extends Model
     public function cart()
     {
         return $this->belongsTo(Cart::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('CartNotification');
     }
 }

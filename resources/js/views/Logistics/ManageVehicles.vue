@@ -123,8 +123,10 @@
                     </template>
 
                     <template #cell(actions)="row">
-                        <button class="btn btn-sm btn-primary mr-2" @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')"><i class="fa fa-pencil-alt"></i></button>
-                        <button class="btn btn-sm btn-danger" @click="deleteVehicle(row.item.id)" v-b-tooltip.hover :title="__('delete')"><i class="fa fa-trash"></i></button>
+                        <div class="list-actions">
+                            <button class="list-action-btn is-edit" @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')"><i class="fa fa-pencil-alt"></i></button>
+                            <button class="list-action-btn is-delete" @click="deleteVehicle(row.item.id)" v-b-tooltip.hover :title="__('delete')"><i class="fa fa-trash"></i></button>
+                        </div>
                     </template>
 
                 </b-table>

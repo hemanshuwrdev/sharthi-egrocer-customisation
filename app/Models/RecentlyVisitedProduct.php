@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RecentlyVisitedProduct extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     // Table name
     protected $table = 'recently_visited_products';
 
@@ -41,5 +42,14 @@ class RecentlyVisitedProduct extends Model
     public function masterProduct()
     {
         return $this->belongsTo(MasterProduct::class, 'master_product_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('RecentlyVisitedProduct');
     }
 }

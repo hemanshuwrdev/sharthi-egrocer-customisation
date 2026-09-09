@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductSlabPrice extends Model
 {
+    use LogsActivity;
+
     protected $table = 'product_slab_prices';
 
     protected $fillable = [
@@ -24,5 +28,14 @@ class ProductSlabPrice extends Model
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id', 'id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ProductSlabPrice');
     }
 }

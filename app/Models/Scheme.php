@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Scheme extends Model
 {
-    use HasFactory;
-
+    use HasFactory, LogsActivity;
     public const TYPE_BUY_X_GET_Y          = 'buy_x_get_y';
     public const TYPE_GROUP_DISCOUNT_PRICE  = 'group_discount_price';
     public const TYPE_GROUP_DISCOUNT_QTY    = 'group_discount_qty';
@@ -54,5 +55,14 @@ class Scheme extends Model
         return $query->where('status', 1)
             ->whereDate('start_date', '<=', $today)
             ->whereDate('end_date', '>=', $today);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('Scheme');
     }
 }
