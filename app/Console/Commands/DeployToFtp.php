@@ -8,7 +8,7 @@ use Symfony\Component\Process\Process;
 class DeployToFtp extends Command
 {
     protected $signature = 'deploy:ftp
-        {commit? : Commit hash to diff against its parent (default: HEAD)}
+        {commit? : Starting commit — all changes from this commit through HEAD will be deployed (default: HEAD, i.e. just the last commit)}
         {--profile= : Profile key from .vscode/sftp.json — omit to be prompted}
         {--dry : List files that would upload, without uploading}';
 
@@ -69,7 +69,9 @@ class DeployToFtp extends Command
 
     private function changedFiles(string $commit): array
     {
-        $process = new Process(['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', $commit]);
+        // Diff from the commit's parent through HEAD, so all commits from
+        // $commit up to and including HEAD are covered, not just $commit itself.
+        $process = new Process(['git', 'diff', '--name-only', $commit . '^', 'HEAD']);
         $process->setWorkingDirectory(base_path());
         $process->run();
 

@@ -831,45 +831,54 @@ class BasicApiController extends Controller
             return CommonHelper::responseError('Latitude and longitude are required.');
         }
 
-        // Get seller IDs based on location
-        $seller_ids = CommonHelper::getSellerIds($latitude, $longitude);
+        // Sarthi master-catalog: brand availability is driven by brand_distributor_mappings
+        // (city -> brand/seller pairs), not the legacy `products` table (kept only for the
+        // old single-seller e-grocer schema, which Sarthi sellers never populate).
         $cityIds = CommonHelper::getDeliverableZoneCityIds($latitude, $longitude);
 
-        // If no sellers found in the area, return error
-        if (empty($seller_ids)) {
+        if (empty($cityIds)) {
             return CommonHelper::responseError('No sellers found in this area.');
         }
 
-        // Fetch brands with products sold by sellers in the area
-        $brands = Brand::where('status', 1)
-            ->whereHas('products', function ($query) use ($seller_ids, $cityIds) {
-                $query->whereIn('products.seller_id', $seller_ids)
-                    ->where('products.status', 1)
-                    ->where('products.is_approved', 1)
-                    ->whereExists(function ($categoryQuery) {
-                        $categoryQuery->select(DB::raw(1))
-                            ->from('categories')
-                            ->whereColumn('categories.id', 'products.category_id')
-                            ->where('categories.status', 1);
-                    });
-                if (!empty($cityIds)) {
-                    $query->where(function ($q) use ($cityIds) {
-                        $q->whereNotExists(function ($subquery) use ($cityIds) {
-                            $subquery->select(DB::raw(1))
-                                ->from('brand_distributor_mappings as bdm')
-                                ->whereColumn('bdm.brand_id', 'products.brand_id')
-                                ->whereIn('bdm.city_id', $cityIds);
-                        })
-                        ->orWhereExists(function ($subquery) use ($cityIds) {
-                            $subquery->select(DB::raw(1))
-                                ->from('brand_distributor_mappings as bdm')
-                                ->whereColumn('bdm.brand_id', 'products.brand_id')
-                                ->whereIn('bdm.city_id', $cityIds)
-                                ->whereColumn('bdm.seller_id', 'products.seller_id');
-                        });
-                    });
-                }
+        $mappings = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)
+            ->get(['brand_id', 'seller_id']);
+
+        if ($mappings->isEmpty()) {
+            return CommonHelper::responseError('No sellers found in this area.');
+        }
+
+        $brandIds = $mappings->pluck('brand_id')->unique()->values();
+        $sellerIds = $mappings->pluck('seller_id')->unique()->values();
+        $allowedPairs = $mappings->map(fn($m) => $m->brand_id . '_' . $m->seller_id)->unique()->flip();
+
+        // Which (brand, seller) pairs actually have a purchasable product?
+        $existingPairs = \App\Models\SellerProduct::query()
+            ->join('master_product_variants', 'master_product_variants.id', '=', 'seller_products.master_product_variant_id')
+            ->join('master_products', 'master_products.id', '=', 'master_product_variants.master_product_id')
+            ->whereIn('seller_products.seller_id', $sellerIds)
+            ->whereIn('master_products.brand_id', $brandIds)
+            ->where('seller_products.status', 1)
+            ->where('seller_products.selling_price', '>', 0)
+            ->where('master_product_variants.status', 1)
+            ->where('master_products.status', 1)
+            ->whereExists(function ($categoryQuery) {
+                $categoryQuery->select(DB::raw(1))
+                    ->from('categories')
+                    ->whereColumn('categories.id', 'master_products.category_id')
+                    ->where('categories.status', 1);
             })
+            ->select('master_products.brand_id', 'seller_products.seller_id')
+            ->distinct()
+            ->get();
+
+        $qualifyingBrandIds = $existingPairs
+            ->filter(fn($p) => isset($allowedPairs[$p->brand_id . '_' . $p->seller_id]))
+            ->pluck('brand_id')
+            ->unique()
+            ->values();
+
+        $brands = Brand::where('status', 1)
+            ->whereIn('id', $qualifyingBrandIds)
             ->orderBy('id', 'ASC');
 
         // Get total count before applying pagination
