@@ -130,7 +130,7 @@ class RetailerCartOrderApiController extends Controller
         }
 
         $variantIds = $items->pluck('master_product_variant_id')->unique();
-        $variants = MasterProductVariant::with(['masterProduct.brand', 'masterProduct.parentCompany', 'unit', 'secondaryUnit'])
+        $variants = MasterProductVariant::with(['masterProduct.brand', 'masterProduct.parentCompany', 'unit', 'secondaryUnit', 'weightUnit'])
             ->whereIn('id', $variantIds)
             ->get()
             ->keyBy('id');
@@ -166,6 +166,9 @@ class RetailerCartOrderApiController extends Controller
                 'brand' => $variant->masterProduct->brand->name ?? null,
                 'sku' => $variant->sku,
                 'unit' => $variant->unit->name ?? null,
+                'inner_pack_value' => $variant->inner_pack_value,
+                'weight' => $variant->weight,
+                'weight_unit' => $variant->weightUnit->name ?? null,
                 'image' => (function($img) { return $img ? (str_starts_with($img, 'http') ? $img : asset('storage/'.$img)) : null; })($variant->image ?: ($variant->masterProduct->image ?? null)),
                 'qty'              => (float) $row->qty,
                 'price'            => (float) $sp->selling_price,

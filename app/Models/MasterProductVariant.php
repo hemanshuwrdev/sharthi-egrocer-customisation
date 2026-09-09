@@ -17,11 +17,13 @@ class MasterProductVariant extends Model
         'sku',
         'unit_id',
         'secondary_unit_id',
+        'inner_pack_value',
         'secondary_unit_value',
         'allow_loose_qty',
         'max_qty_mode',
         'max_qty_value',
         'weight',
+        'weight_unit_id',
         'image',
         'status',
     ];
@@ -39,6 +41,11 @@ class MasterProductVariant extends Model
     public function secondaryUnit()
     {
         return $this->belongsTo(Unit::class, 'secondary_unit_id');
+    }
+
+    public function weightUnit()
+    {
+        return $this->belongsTo(Unit::class, 'weight_unit_id');
     }
 
     public function sellerProducts()

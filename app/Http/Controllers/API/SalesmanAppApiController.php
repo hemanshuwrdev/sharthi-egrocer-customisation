@@ -649,7 +649,7 @@ class SalesmanAppApiController extends Controller
         $filter   = trim((string) $request->input('filter', ''));
 
         $query = MasterProductVariant::query()
-            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit'])
+            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit', 'weightUnit'])
             ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
             ->join('seller_products', function ($j) use ($sellerId) {
                 $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
@@ -736,12 +736,14 @@ class SalesmanAppApiController extends Controller
                 'unit'                 => $r->unit ? $r->unit->name : null,
                 'secondary_unit'       => $r->secondaryUnit ? $r->secondaryUnit->name : null,
                 'secondary_unit_value' => $r->secondary_unit_value,
+                'inner_pack_value'     => $r->inner_pack_value,
                 'allow_loose_qty'      => (bool) $r->sp_allow_loose_qty,
                 'qty_step'             => $r->sp_allow_loose_qty ? 1 : (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
                 'min_qty'              => $r->sp_allow_loose_qty ? 1 : (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
                 'max_qty_mode'         => $r->sp_max_qty_mode,
                 'max_qty_value'        => $r->sp_max_qty_value,
                 'weight'               => $r->weight,
+                'weight_unit'          => $r->weightUnit ? $r->weightUnit->name : null,
                 'image'                => $r->image ?: ($mp ? $mp->image : null),
                 'offer'                => $offer,
             ];
@@ -851,7 +853,7 @@ class SalesmanAppApiController extends Controller
         }
 
         $variantIds = $items->pluck('master_product_variant_id')->unique();
-        $variants = MasterProductVariant::with(['masterProduct.brand', 'unit', 'secondaryUnit'])
+        $variants = MasterProductVariant::with(['masterProduct.brand', 'unit', 'secondaryUnit', 'weightUnit'])
             ->whereIn('id', $variantIds)->get()->keyBy('id');
 
         $groups = [];
@@ -883,6 +885,9 @@ class SalesmanAppApiController extends Controller
                 'unit'     => $variant->unit->name ?? null,
                 'secondary_unit' => $variant->secondaryUnit->name ?? null,
                 'secondary_unit_value' => $variant->secondary_unit_value,
+                'inner_pack_value' => $variant->inner_pack_value,
+                'weight' => $variant->weight,
+                'weight_unit' => $variant->weightUnit->name ?? null,
                 'qty_step' => (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
                 'min_qty'  => (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
                 'image'    => $variant->image ?: ($variant->masterProduct->image ?? null),

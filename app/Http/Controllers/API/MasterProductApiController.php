@@ -61,6 +61,7 @@ class MasterProductApiController extends Controller
             'category',
             'variants.unit',
             'variants.secondaryUnit',
+            'variants.weightUnit',
             'translations',
         ])->find($id);
         if (!$product) {
@@ -88,8 +89,10 @@ class MasterProductApiController extends Controller
             'variants.*.sku' => 'nullable|string|max:255',
             'variants.*.unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
+            'variants.*.inner_pack_value' => 'nullable|integer|min:0',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.weight' => 'nullable|numeric|min:0',
+            'variants.*.weight_unit_id' => 'nullable|exists:units,id',
             'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
         if ($validator->fails()) {
@@ -148,8 +151,10 @@ class MasterProductApiController extends Controller
                     $variant->sku = $v['sku'] ?? null;
                     $variant->unit_id = $v['unit_id'] ?? null;
                     $variant->secondary_unit_id = $v['secondary_unit_id'] ?? null;
+                    $variant->inner_pack_value = $v['inner_pack_value'] ?? null;
                     $variant->secondary_unit_value = $v['secondary_unit_value'] ?? null;
                     $variant->weight = $v['weight'] ?? null;
+                    $variant->weight_unit_id = $v['weight_unit_id'] ?? null;
                     $variant->status = isset($v['status']) ? $v['status'] : 1;
 
                     if ($request->hasFile("variants.$idx.image")) {
@@ -190,8 +195,10 @@ class MasterProductApiController extends Controller
             'variants.*.sku' => 'nullable|string|max:255',
             'variants.*.unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
+            'variants.*.inner_pack_value' => 'nullable|integer|min:0',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.weight' => 'nullable|numeric|min:0',
+            'variants.*.weight_unit_id' => 'nullable|exists:units,id',
             'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
         if ($validator->fails()) {
@@ -291,8 +298,10 @@ class MasterProductApiController extends Controller
                         $variant->unit_id = $v['unit_id'] ?: null;
                     }
                     $variant->secondary_unit_id = $v['secondary_unit_id'] ?? null;
+                    $variant->inner_pack_value = $v['inner_pack_value'] ?? null;
                     $variant->secondary_unit_value = $v['secondary_unit_value'] ?? null;
                     $variant->weight = $v['weight'] ?? null;
+                    $variant->weight_unit_id = $v['weight_unit_id'] ?? null;
                     if (array_key_exists('status', $v)) {
                         $variant->status = $v['status'];
                     } elseif (!$variant->exists) {

@@ -1011,7 +1011,7 @@ class ProductsApiController extends Controller
             ->get()
             ->keyBy('id');
 
-        $variants = MasterProductVariant::with('unit', 'secondaryUnit')
+        $variants = MasterProductVariant::with('unit', 'secondaryUnit', 'weightUnit')
             ->whereIn('master_product_id', $masterIds)
             ->where('status', 1)
             ->get()
@@ -1050,7 +1050,9 @@ class ProductsApiController extends Controller
                             'sku' => $v->sku,
                             'unit' => $v->unit ? $v->unit->name : null,
                             'measurement_unit_name' => $v->unit ? $v->unit->short_code : null,
+                            'inner_pack_value' => $v->inner_pack_value,
                             'weight' => $v->weight,
+                            'weight_unit' => $v->weightUnit ? $v->weightUnit->name : null,
                             'mrp' => $sp ? (float) $sp->mrp : 0,
                             'selling_price' => $sp ? (float) $sp->selling_price : 0,
                             'discounted_price' => $sp && $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
@@ -1419,7 +1421,7 @@ class ProductsApiController extends Controller
                     : collect();
             }
 
-            $variants = MasterProductVariant::with('unit', 'secondaryUnit')
+            $variants = MasterProductVariant::with('unit', 'secondaryUnit', 'weightUnit')
                 ->whereIn('master_product_id', $masterIds)
                 ->where('status', 1)
                 ->get()
@@ -1468,7 +1470,9 @@ class ProductsApiController extends Controller
                                 'unit' => $v->unit ? $v->unit->name : null,
                                 'secondary_unit' => $v->secondaryUnit ? $v->secondaryUnit->name : null,
                                 'secondary_unit_value' => $v->secondary_unit_value,
+                                'inner_pack_value' => $v->inner_pack_value,
                                 'weight' => $v->weight,
+                                'weight_unit' => $v->weightUnit ? $v->weightUnit->name : null,
                                 'image' => $v->image,
                                 'mrp' => $sp ? (float) $sp->mrp : 0,
                                 'selling_price' => $sp ? (float) $sp->selling_price : 0,

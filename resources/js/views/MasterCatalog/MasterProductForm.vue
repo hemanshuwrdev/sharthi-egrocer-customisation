@@ -271,10 +271,12 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>{{ __('sku') }}</th>
-                                    <th>{{ __('outer_pack') }}</th>
-                                    <th>{{ __('weight') }}</th>
-                                    <th>{{ __('inner_pack') }}</th>
+                                    <th>{{ __('outer_pack_unit') }}</th>
+                                    <th>{{ __('inner_pack_unit') }}</th>
+                                    <th>{{ __('inner_pack_value') }}</th>
                                     <th>{{ __('secondary_value') }}</th>
+                                    <th>{{ __('weight') }}</th>
+                                    <th>{{ __('weight_unit') }}</th>
                                     <th>{{ __('image') }}</th>
                                     <th>{{ __('status') }}</th>
                                     <th v-if="product.type === 'variable'" style="width:60px;">{{ __('actions') }}</th>
@@ -292,18 +294,28 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="number" class="form-control form-control-sm" step="0.001"
-                                            v-model.number="v.weight" />
-                                    </td>
-                                    <td>
                                         <select class="form-control form-control-sm" v-model="v.secondary_unit_id">
                                             <option :value="null">--</option>
                                             <option v-for="u in units" :key="u.id" :value="u.id">{{ u.name }}</option>
                                         </select>
                                     </td>
                                     <td>
+                                        <input type="number" class="form-control form-control-sm" step="1" min="0"
+                                            v-model.number="v.inner_pack_value" />
+                                    </td>
+                                    <td>
                                         <input type="number" class="form-control form-control-sm" step="0.01"
                                             v-model.number="v.secondary_unit_value" />
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" step="0.001"
+                                            v-model.number="v.weight" />
+                                    </td>
+                                    <td>
+                                        <select class="form-control form-control-sm" v-model="v.weight_unit_id">
+                                            <option :value="null">--</option>
+                                            <option v-for="u in units" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                        </select>
                                     </td>
                                     <td>
                                         <input type="file" class="form-control form-control-sm" accept="image/*"
@@ -618,8 +630,10 @@ export default {
                         sku: v.sku,
                         unit_id: v.unit_id,
                         secondary_unit_id: v.secondary_unit_id,
+                        inner_pack_value: v.inner_pack_value,
                         secondary_unit_value: v.secondary_unit_value,
                         weight: v.weight,
+                        weight_unit_id: v.weight_unit_id,
                         image: v.image,
                         status: v.status,
                         _file: null,
@@ -739,8 +753,10 @@ export default {
                 sku: '',
                 unit_id: null,
                 secondary_unit_id: null,
+                inner_pack_value: null,
                 secondary_unit_value: null,
                 weight: null,
+                weight_unit_id: null,
                 image: null,
                 status: 1,
                 _file: null,
@@ -906,8 +922,10 @@ export default {
                 fd.append(`variants[${idx}][sku]`, v.sku || '');
                 if (v.unit_id) fd.append(`variants[${idx}][unit_id]`, v.unit_id);
                 if (v.secondary_unit_id) fd.append(`variants[${idx}][secondary_unit_id]`, v.secondary_unit_id);
+                if (v.inner_pack_value != null) fd.append(`variants[${idx}][inner_pack_value]`, v.inner_pack_value);
                 if (v.secondary_unit_value != null) fd.append(`variants[${idx}][secondary_unit_value]`, v.secondary_unit_value);
                 if (v.weight != null) fd.append(`variants[${idx}][weight]`, v.weight);
+                if (v.weight_unit_id) fd.append(`variants[${idx}][weight_unit_id]`, v.weight_unit_id);
                 fd.append(`variants[${idx}][status]`, v.status);
                 if (v._file) fd.append(`variants[${idx}][image]`, v._file);
             });

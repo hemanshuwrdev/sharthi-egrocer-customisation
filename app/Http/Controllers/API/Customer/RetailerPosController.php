@@ -59,7 +59,7 @@ class RetailerPosController extends Controller
         $filter   = trim((string) $request->input('filter', ''));
 
         $query = MasterProductVariant::query()
-            ->with(['masterProduct.brand', 'masterProduct.category', 'unit', 'secondaryUnit'])
+            ->with(['masterProduct.brand', 'masterProduct.category', 'unit', 'secondaryUnit', 'weightUnit'])
             ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
             ->join('seller_products', function ($j) use ($sellerId) {
                 $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
@@ -126,10 +126,12 @@ class RetailerPosController extends Controller
                 'unit'                 => $r->unit ? $r->unit->name : null,
                 'secondary_unit'       => $r->secondaryUnit ? $r->secondaryUnit->name : null,
                 'secondary_unit_value' => $r->secondary_unit_value,
+                'inner_pack_value'     => $r->inner_pack_value,
                 // Stepper fields — salesman app configures qty widget using these
                 'qty_step'             => (float) ($r->secondary_unit_value ?? 1) ?: 1,
                 'min_qty'              => (float) ($r->secondary_unit_value ?? 1) ?: 1,
                 'weight'               => $r->weight,
+                'weight_unit'          => $r->weightUnit ? $r->weightUnit->name : null,
                 'image'                => $r->image ?: ($mp ? $mp->image : null),
                 'mrp'                  => (float) $r->sp_mrp,
                 'selling_price'        => (float) $r->sp_selling_price,

@@ -417,6 +417,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -643,8 +655,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               sku: v.sku,
               unit_id: v.unit_id,
               secondary_unit_id: v.secondary_unit_id,
+              inner_pack_value: v.inner_pack_value,
               secondary_unit_value: v.secondary_unit_value,
               weight: v.weight,
+              weight_unit_id: v.weight_unit_id,
               image: v.image,
               status: v.status,
               _file: null,
@@ -752,8 +766,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sku: '',
         unit_id: null,
         secondary_unit_id: null,
+        inner_pack_value: null,
         secondary_unit_value: null,
         weight: null,
+        weight_unit_id: null,
         image: null,
         status: 1,
         _file: null,
@@ -932,8 +948,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         fd.append("variants[".concat(idx, "][sku]"), v.sku || '');
         if (v.unit_id) fd.append("variants[".concat(idx, "][unit_id]"), v.unit_id);
         if (v.secondary_unit_id) fd.append("variants[".concat(idx, "][secondary_unit_id]"), v.secondary_unit_id);
+        if (v.inner_pack_value != null) fd.append("variants[".concat(idx, "][inner_pack_value]"), v.inner_pack_value);
         if (v.secondary_unit_value != null) fd.append("variants[".concat(idx, "][secondary_unit_value]"), v.secondary_unit_value);
         if (v.weight != null) fd.append("variants[".concat(idx, "][weight]"), v.weight);
+        if (v.weight_unit_id) fd.append("variants[".concat(idx, "][weight_unit_id]"), v.weight_unit_id);
         fd.append("variants[".concat(idx, "][status]"), v.status);
         if (v._file) fd.append("variants[".concat(idx, "][image]"), v._file);
       });
@@ -2483,13 +2501,17 @@ var render = function () {
                     _c("tr", [
                       _c("th", [_vm._v(_vm._s(_vm.__("sku")))]),
                       _vm._v(" "),
-                      _c("th", [_vm._v(_vm._s(_vm.__("outer_pack")))]),
+                      _c("th", [_vm._v(_vm._s(_vm.__("outer_pack_unit")))]),
+                      _vm._v(" "),
+                      _c("th", [_vm._v(_vm._s(_vm.__("inner_pack_unit")))]),
+                      _vm._v(" "),
+                      _c("th", [_vm._v(_vm._s(_vm.__("inner_pack_value")))]),
+                      _vm._v(" "),
+                      _c("th", [_vm._v(_vm._s(_vm.__("secondary_value")))]),
                       _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("weight")))]),
                       _vm._v(" "),
-                      _c("th", [_vm._v(_vm._s(_vm.__("inner_pack")))]),
-                      _vm._v(" "),
-                      _c("th", [_vm._v(_vm._s(_vm.__("secondary_value")))]),
+                      _c("th", [_vm._v(_vm._s(_vm.__("weight_unit")))]),
                       _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("image")))]),
                       _vm._v(" "),
@@ -2583,38 +2605,6 @@ var render = function () {
                         ]),
                         _vm._v(" "),
                         _c("td", [
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model.number",
-                                value: v.weight,
-                                expression: "v.weight",
-                                modifiers: { number: true },
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "number", step: "0.001" },
-                            domProps: { value: v.weight },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  v,
-                                  "weight",
-                                  _vm._n($event.target.value)
-                                )
-                              },
-                              blur: function ($event) {
-                                return _vm.$forceUpdate()
-                              },
-                            },
-                          }),
-                        ]),
-                        _vm._v(" "),
-                        _c("td", [
                           _c(
                             "select",
                             {
@@ -2671,6 +2661,38 @@ var render = function () {
                               {
                                 name: "model",
                                 rawName: "v-model.number",
+                                value: v.inner_pack_value,
+                                expression: "v.inner_pack_value",
+                                modifiers: { number: true },
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "number", step: "1", min: "0" },
+                            domProps: { value: v.inner_pack_value },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(
+                                  v,
+                                  "inner_pack_value",
+                                  _vm._n($event.target.value)
+                                )
+                              },
+                              blur: function ($event) {
+                                return _vm.$forceUpdate()
+                              },
+                            },
+                          }),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model.number",
                                 value: v.secondary_unit_value,
                                 expression: "v.secondary_unit_value",
                                 modifiers: { number: true },
@@ -2695,6 +2717,89 @@ var render = function () {
                               },
                             },
                           }),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model.number",
+                                value: v.weight,
+                                expression: "v.weight",
+                                modifiers: { number: true },
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "number", step: "0.001" },
+                            domProps: { value: v.weight },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(
+                                  v,
+                                  "weight",
+                                  _vm._n($event.target.value)
+                                )
+                              },
+                              blur: function ($event) {
+                                return _vm.$forceUpdate()
+                              },
+                            },
+                          }),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", [
+                          _c(
+                            "select",
+                            {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: v.weight_unit_id,
+                                  expression: "v.weight_unit_id",
+                                },
+                              ],
+                              staticClass: "form-control form-control-sm",
+                              on: {
+                                change: function ($event) {
+                                  var $$selectedVal = Array.prototype.filter
+                                    .call($event.target.options, function (o) {
+                                      return o.selected
+                                    })
+                                    .map(function (o) {
+                                      var val =
+                                        "_value" in o ? o._value : o.value
+                                      return val
+                                    })
+                                  _vm.$set(
+                                    v,
+                                    "weight_unit_id",
+                                    $event.target.multiple
+                                      ? $$selectedVal
+                                      : $$selectedVal[0]
+                                  )
+                                },
+                              },
+                            },
+                            [
+                              _c("option", { domProps: { value: null } }, [
+                                _vm._v("--"),
+                              ]),
+                              _vm._v(" "),
+                              _vm._l(_vm.units, function (u) {
+                                return _c(
+                                  "option",
+                                  { key: u.id, domProps: { value: u.id } },
+                                  [_vm._v(_vm._s(u.name))]
+                                )
+                              }),
+                            ],
+                            2
+                          ),
                         ]),
                         _vm._v(" "),
                         _c("td", [

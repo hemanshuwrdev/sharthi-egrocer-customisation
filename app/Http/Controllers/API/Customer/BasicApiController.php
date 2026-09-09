@@ -253,7 +253,7 @@ class BasicApiController extends Controller
         $brandOverlap = Brand::whereIn('id', $brandIds)->pluck('is_overlap_allowed', 'id');
 
         $rows = \App\Models\MasterProductVariant::query()
-            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit'])
+            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit', 'weightUnit'])
             ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
             ->join('seller_products', 'seller_products.master_product_variant_id', '=', 'master_product_variants.id')
             ->whereIn('master_product_variants.id', $variantIds)
@@ -342,9 +342,11 @@ class BasicApiController extends Controller
                 'unit'                 => $first->unit ? $first->unit->name : null,
                 'secondary_unit'       => $first->secondaryUnit ? $first->secondaryUnit->name : null,
                 'secondary_unit_value' => $first->secondary_unit_value,
+                'inner_pack_value'     => $first->inner_pack_value,
                 'qty_step'             => (float) ($first->secondary_unit_value ?? 1) ?: 1,
                 'min_qty'              => (float) ($first->secondary_unit_value ?? 1) ?: 1,
                 'weight'               => $first->weight,
+                'weight_unit'          => $first->weightUnit ? $first->weightUnit->name : null,
                 'image'                => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed'      => $overlapAllowed,
                 'offers'               => $offers,

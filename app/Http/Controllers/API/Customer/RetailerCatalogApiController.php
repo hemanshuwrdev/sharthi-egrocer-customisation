@@ -80,7 +80,7 @@ class RetailerCatalogApiController extends Controller
             : collect();
 
         $query = MasterProductVariant::query()
-            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit'])
+            ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit', 'weightUnit'])
             ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
             ->join('seller_products', function ($j) {
                 $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id');
@@ -261,9 +261,11 @@ class RetailerCatalogApiController extends Controller
                 'unit' => $first->unit ? $first->unit->name : null,
                 'secondary_unit' => $first->secondaryUnit ? $first->secondaryUnit->name : null,
                 'secondary_unit_value' => $first->secondary_unit_value,
+                'inner_pack_value' => $first->inner_pack_value,
                 // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
                 // per-distributor — see each entry in `offers` (and `best_offer`).
                 'weight' => $first->weight,
+                'weight_unit' => $first->weightUnit ? $first->weightUnit->name : null,
                 'image' => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed' => $overlapAllowed,
                 'is_favorite'   => $favoriteVariantIds->has($first->id),
@@ -343,7 +345,7 @@ class RetailerCatalogApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $variant = MasterProductVariant::with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit'])
+        $variant = MasterProductVariant::with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit', 'weightUnit'])
             ->find($request->product_variant_id);
         if (!$variant || !$variant->masterProduct) {
             return CommonHelper::responseError('master_product_not_found');
@@ -427,9 +429,11 @@ class RetailerCatalogApiController extends Controller
             'unit' => $variant->unit ? $variant->unit->name : null,
             'secondary_unit' => $variant->secondaryUnit ? $variant->secondaryUnit->name : null,
             'secondary_unit_value' => $variant->secondary_unit_value,
+            'inner_pack_value' => $variant->inner_pack_value,
             // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
             // per-distributor — see each entry in `offers` (and `best_offer`).
             'weight' => $variant->weight,
+            'weight_unit' => $variant->weightUnit ? $variant->weightUnit->name : null,
             'image' => $variant->image ?: $variant->masterProduct->image,
             'description' => $variant->masterProduct->description,
             'short_description' => $variant->masterProduct->short_description,
