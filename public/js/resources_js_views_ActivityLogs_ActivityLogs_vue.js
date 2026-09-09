@@ -114,6 +114,18 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -170,7 +182,23 @@ __webpack_require__.r(__webpack_exports__);
       selectedUser: '',
       selectedDate: '',
       showDetailModal: false,
-      detailRecord: null
+      detailRecord: null,
+      showClearModal: false,
+      clearing: false,
+      clearOlderThan: '90',
+      clearOlderThanOptions: [{
+        value: '90',
+        text: '90 ' + __('days')
+      }, {
+        value: '30',
+        text: '30 ' + __('days')
+      }, {
+        value: '7',
+        text: '7 ' + __('days')
+      }, {
+        value: 'everything',
+        text: __('everything')
+      }]
     };
   },
   created: function created() {
@@ -288,6 +316,21 @@ __webpack_require__.r(__webpack_exports__);
       })["catch"](function () {
         _this4.isLoading = false;
       });
+    },
+    clearLogs: function clearLogs(bvModalEvent) {
+      var _this5 = this;
+      bvModalEvent.preventDefault();
+      this.clearing = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/activity_logs/clear', {
+        older_than: this.clearOlderThan
+      }).then(function (response) {
+        _this5.clearing = false;
+        _this5.showClearModal = false;
+        _this5.showMessage('success', response.data && response.data.message || __('logs_cleared_successfully'));
+        _this5.fetchLogs(1);
+      })["catch"](function () {
+        _this5.clearing = false;
+      });
     }
   }
 });
@@ -382,11 +425,39 @@ var render = function () {
     "div",
     { staticClass: "list-page" },
     [
-      _c("div", { staticClass: "page-head" }, [
-        _c("h3", { staticClass: "page-head-title" }, [
-          _vm._v(_vm._s(_vm.__("activity_logs"))),
-        ]),
-      ]),
+      _c(
+        "div",
+        {
+          staticClass:
+            "page-head d-flex justify-content-between align-items-center",
+        },
+        [
+          _c("h3", { staticClass: "page-head-title" }, [
+            _vm._v(_vm._s(_vm.__("activity_logs"))),
+          ]),
+          _vm._v(" "),
+          _c(
+            "button",
+            {
+              staticClass:
+                "btn btn-outline-danger d-inline-flex align-items-center gap-2",
+              on: {
+                click: function ($event) {
+                  _vm.showClearModal = true
+                },
+              },
+            },
+            [
+              _c("i", {
+                staticClass: "fa fa-trash",
+                attrs: { "aria-hidden": "true" },
+              }),
+              _vm._v(" "),
+              _c("span", [_vm._v(_vm._s(_vm.__("clear_logs")))]),
+            ]
+          ),
+        ]
+      ),
       _vm._v(" "),
       _c("div", { staticClass: "list-surface" }, [
         _c(
@@ -850,6 +921,51 @@ var render = function () {
               ])
             : _vm._e(),
         ]
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            title: _vm.__("clear_logs"),
+            "ok-title": _vm.__("clear_logs"),
+            "ok-variant": "danger",
+            "cancel-title": _vm.__("cancel"),
+            "ok-disabled": _vm.clearing,
+          },
+          on: { ok: _vm.clearLogs },
+          model: {
+            value: _vm.showClearModal,
+            callback: function ($$v) {
+              _vm.showClearModal = $$v
+            },
+            expression: "showClearModal",
+          },
+        },
+        [
+          _c("p", { staticClass: "text-muted" }, [
+            _vm._v(_vm._s(_vm.__("clear_logs_hint"))),
+          ]),
+          _vm._v(" "),
+          _c(
+            "b-form-group",
+            { attrs: { label: _vm.__("delete_entries_older_than") } },
+            [
+              _c("b-form-select", {
+                attrs: { options: _vm.clearOlderThanOptions },
+                model: {
+                  value: _vm.clearOlderThan,
+                  callback: function ($$v) {
+                    _vm.clearOlderThan = $$v
+                  },
+                  expression: "clearOlderThan",
+                },
+              }),
+            ],
+            1
+          ),
+        ],
+        1
       ),
     ],
     1

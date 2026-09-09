@@ -1,7 +1,11 @@
 <template>
     <div class="list-page">
-        <div class="page-head">
+        <div class="page-head d-flex justify-content-between align-items-center">
             <h3 class="page-head-title">{{ __('activity_logs') }}</h3>
+            <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" @click="showClearModal = true">
+                <i class="fa fa-trash" aria-hidden="true"></i>
+                <span>{{ __('clear_logs') }}</span>
+            </button>
         </div>
 
         <div class="list-surface">
@@ -97,6 +101,14 @@
                 <pre v-if="detailRecord.properties">{{ JSON.stringify(detailRecord.properties, null, 2) }}</pre>
             </div>
         </b-modal>
+
+        <b-modal v-model="showClearModal" :title="__('clear_logs')" @ok="clearLogs" :ok-title="__('clear_logs')"
+            ok-variant="danger" :cancel-title="__('cancel')" :ok-disabled="clearing">
+            <p class="text-muted">{{ __('clear_logs_hint') }}</p>
+            <b-form-group :label="__('delete_entries_older_than')">
+                <b-form-select v-model="clearOlderThan" :options="clearOlderThanOptions"></b-form-select>
+            </b-form-group>
+        </b-modal>
     </div>
 </template>
 <script>
@@ -136,6 +148,16 @@ export default {
 
             showDetailModal: false,
             detailRecord: null,
+
+            showClearModal: false,
+            clearing: false,
+            clearOlderThan: '90',
+            clearOlderThanOptions: [
+                { value: '90', text: '90 ' + __('days') },
+                { value: '30', text: '30 ' + __('days') },
+                { value: '7', text: '7 ' + __('days') },
+                { value: 'everything', text: __('everything') },
+            ],
         }
     },
     created() {
@@ -225,6 +247,20 @@ export default {
                 })
                 .catch(() => {
                     this.isLoading = false;
+                });
+        },
+        clearLogs(bvModalEvent) {
+            bvModalEvent.preventDefault();
+            this.clearing = true;
+            axios.post(this.$apiUrl + '/activity_logs/clear', { older_than: this.clearOlderThan })
+                .then(response => {
+                    this.clearing = false;
+                    this.showClearModal = false;
+                    this.showMessage('success', (response.data && response.data.message) || __('logs_cleared_successfully'));
+                    this.fetchLogs(1);
+                })
+                .catch(() => {
+                    this.clearing = false;
                 });
         },
     }

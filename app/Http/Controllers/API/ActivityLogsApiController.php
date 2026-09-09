@@ -70,6 +70,22 @@ class ActivityLogsApiController extends Controller
         return CommonHelper::responseWithData($this->transform($activity, true));
     }
 
+    public function clearLogs(Request $request)
+    {
+        $olderThan = $request->get('older_than', '90');
+
+        $query = Activity::query();
+
+        if ($olderThan !== 'everything') {
+            $days = (int) $olderThan;
+            $query->where('created_at', '<', now()->subDays($days));
+        }
+
+        $deleted = $query->delete();
+
+        return CommonHelper::responseSuccessWithData(__('logs_cleared_successfully'), ['deleted' => $deleted]);
+    }
+
     public function filters()
     {
         $logTypes = Activity::select('log_name')->distinct()->orderBy('log_name')->pluck('log_name');

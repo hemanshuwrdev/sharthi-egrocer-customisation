@@ -440,6 +440,7 @@ Route::middleware('auth:api')->group(function () {
     Route::group(['prefix' => 'activity_logs'], function () {
         Route::get('/', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'getList']);
         Route::get('filters', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'filters']);
+        Route::post('clear', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'clearLogs']);
         Route::get('{id}', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'show']);
     });
 
