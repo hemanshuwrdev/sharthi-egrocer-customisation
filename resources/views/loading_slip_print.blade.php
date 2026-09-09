@@ -518,15 +518,15 @@
                     <td class="center" style="font-size: 14px; font-weight: bold; color: #df2029;">{{ $index + 1 }}
                     </td>
                     <td>
-                        <strong>{{ $order->party_name ?: ($order->shop_name ?: $order->user_name) }}</strong>
-                        @if ($order->city_zone)
-                            <span style="color: #666; font-size: 10px; font-weight: bold; margin-left: 10px;">(Zone:
-                                {{ $order->city_zone }})</span>
+                        <strong>{{ $order->shop_name ?: ($order->party_name ?: $order->user_name) }}</strong>
+                        @if ($order->area_name)
+                            <span style="color: #666; font-size: 10px; font-weight: bold; margin-left: 10px;">(Area:
+                                {{ $order->area_name }})</span>
                         @endif
                         <br><span
                             style="font-size: 10.5px; color: #555; font-weight: normal;">{{ $order->customer_address }}</span>
                     </td>
-                    <td class="center">#{{ $order->id }}</td>
+                    <td class="center">{{ $slip->slip_no }}</td>
                     <td class="right" style="font-weight: bold; font-size: 13px;">
                         ₹{{ number_format($order->final_total, 2) }}</td>
                 </tr>

@@ -165,8 +165,16 @@
             </td>
             <td width="40%" style="vertical-align: top; border: none; padding: 0 10px 0 0;">
                 <h4 style="margin: 0 0 6px 0; font-size: 12px; font-weight: 900; color: #000; text-transform: uppercase;">BILL TO/SHIP TO:</h4>
-                <p style="margin: 2px 0; line-height: 1.35; color: #222;"><strong>{{ $customerName }}</strong></p>
-                <p style="margin: 2px 0; line-height: 1.35; color: #222;">{{ $customerAddress }}</p>
+                @if (!empty($retailer->shop_name))
+                    <p style="margin: 2px 0; line-height: 1.35; color: #222;">Shop Name: <strong>{{ $retailer->shop_name }}</strong></p>
+                @endif
+                @if (!empty($retailer->party_name))
+                    <p style="margin: 2px 0; line-height: 1.35; color: #222;">Party Name: <strong>{{ $retailer->party_name }}</strong></p>
+                @endif
+                @if (empty($retailer->shop_name) && empty($retailer->party_name))
+                    <p style="margin: 2px 0; line-height: 1.35; color: #222;"><strong>{{ $customerName }}</strong></p>
+                @endif
+                <p style="margin: 2px 0; line-height: 1.35; color: #222;">Address: {{ $customerAddress }}</p>
                 <p style="margin: 2px 0; line-height: 1.35; color: #222;">Mobile: {{ $customerMobile }}</p>
                 <p style="margin: 2px 0; line-height: 1.35; color: #222;">GSTIN: {{ $customerGst }}</p>
             </td>

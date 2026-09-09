@@ -470,6 +470,7 @@ class LoadingSlipsApiController extends Controller
                 'users.name as user_name',
                 'user_addresses.address as customer_address',
                 'cities.zone as city_zone',
+                'areas.name as area_name',
                 'rp.party_name',
                 'rp.shop_name',
                 'rp.gst_no as customer_gst',
@@ -481,6 +482,7 @@ class LoadingSlipsApiController extends Controller
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
             ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
+            ->leftJoin('areas', 'user_addresses.area_id', '=', 'areas.id')
             ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
             ->leftJoin('salesmen as placing_salesman', 'orders.placed_by_salesman_id', '=', 'placing_salesman.id')
             ->where('orders.loading_slip_id', $id)
