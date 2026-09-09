@@ -55,9 +55,13 @@
                                 <i :class="statusIcon(settlement.status)" class="me-1"></i>
                                 {{ settlement.status_text }}
                             </span>
-                            <button class="btn btn-sm btn-outline-secondary" @click="exportReport">
-                                <i class="fa fa-download me-1"></i>{{ __('export_report') }}
-                            </button>
+                            <b-dropdown variant="outline-secondary" size="sm" right boundary="window" class="export-dropdown">
+                                <template #button-content>
+                                    <i class="fa fa-download me-1"></i>{{ __('export_report') }}
+                                </template>
+                                <b-dropdown-item href="#" @click.prevent="exportReport('csv')">{{ __('export_as_csv') }}</b-dropdown-item>
+                                <b-dropdown-item href="#" @click.prevent="exportReport('pdf')">{{ __('export_as_pdf') }}</b-dropdown-item>
+                            </b-dropdown>
                         </div>
                     </div>
                 </div>
@@ -359,6 +363,9 @@
 </template>
 
 <script>
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
 export default {
     name: 'SellerTripReconciliation',
     data() {
@@ -493,7 +500,14 @@ export default {
                 });
             });
         },
-        exportReport() {
+        exportReport(format) {
+            if (format === 'pdf') {
+                this.exportReportPdf();
+            } else {
+                this.exportReportCsv();
+            }
+        },
+        exportReportCsv() {
             const rows = [
                 ['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status'],
                 ...this.flatRows.map(r => [
@@ -509,6 +523,68 @@ export default {
             a.download = 'settlement-' + this.tripType + '-' + this.$route.params.id + '.csv';
             a.click();
             URL.revokeObjectURL(url);
+        },
+        exportReportPdf() {
+            const doc     = new jsPDF();
+            const pageW   = doc.internal.pageSize.getWidth();
+            const money   = (val) => 'Rs. ' + this.fmt(val);
+            const personName = this.settlement.person ? this.settlement.person.name : '-';
+            const typeLabel  = this.tripType === 'salesman' ? __('salesman') : __('driver');
+
+            // Header bar
+            doc.setFillColor(52, 58, 64);
+            doc.rect(0, 0, pageW, 22, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(15);
+            doc.setFont(undefined, 'bold');
+            doc.text(__('trip_reconciliation') || 'Trip Reconciliation', 14, 14);
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(9);
+            doc.text('#' + this.$route.params.id, pageW - 14, 14, { align: 'right' });
+            doc.setTextColor(0, 0, 0);
+
+            // Person / type / date + status summary table
+            autoTable(doc, {
+                startY: 28,
+                theme: 'plain',
+                styles: { fontSize: 9, cellPadding: 1 },
+                body: [
+                    [{ content: __('type'), styles: { fontStyle: 'bold' } }, typeLabel,
+                     { content: __('date'), styles: { fontStyle: 'bold' } }, this.settlement.date],
+                    [{ content: __('name'), styles: { fontStyle: 'bold' } }, personName,
+                     { content: __('status'), styles: { fontStyle: 'bold' } }, this.settlement.status_text],
+                ],
+            });
+
+            // Reconciliation totals
+            autoTable(doc, {
+                startY: doc.lastAutoTable.finalY + 4,
+                head: [[__('total_expected'), __('digital_verified'), __('cash_expected')]],
+                body: [[
+                    money(this.totals.total_expected),
+                    money(this.totals.digital_verified),
+                    money(this.totals.cash_expected),
+                ]],
+                styles: { fontSize: 10, halign: 'center', cellPadding: 3 },
+                headStyles: { fillColor: [233, 236, 239], textColor: [52, 58, 64], fontStyle: 'bold' },
+                bodyStyles: { fontStyle: 'bold' },
+            });
+
+            // Order / payment detail table
+            autoTable(doc, {
+                startY: doc.lastAutoTable.finalY + 6,
+                head: [['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']],
+                body: this.flatRows.map(r => [
+                    r.ordersId, r.loadingSlipNo || '-', r.retailerName,
+                    money(r.finalTotal), r.method || '-', money(r.amount), r.paymentStatus || '-',
+                ]),
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [52, 58, 64] },
+                alternateRowStyles: { fillColor: [248, 249, 250] },
+                columnStyles: { 2: { cellWidth: 40 } },
+            });
+
+            doc.save('settlement-' + this.tripType + '-' + this.$route.params.id + '.pdf');
         },
         fmt(val) {
             if (val == null) return '0.00';
@@ -541,6 +617,8 @@ export default {
 
 <style scoped>
 .bg-purple { background-color: #7c3aed !important; color: #fff !important; }
+
+.trip-header, .trip-header .card-body { overflow: visible; }
 
 .driver-avatar {
     width: 48px; height: 48px; border-radius: 50%;
