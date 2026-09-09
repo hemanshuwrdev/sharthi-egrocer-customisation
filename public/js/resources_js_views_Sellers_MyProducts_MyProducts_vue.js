@@ -1695,7 +1695,8 @@ var render = function () {
                   ]),
                 ]),
                 _vm._v(" "),
-                _vm.slabTarget.secondary_unit_value
+                _vm.slabTarget.secondary_unit_value &&
+                !_vm.slabTarget.allow_loose_qty
                   ? _c(
                       "div",
                       { staticClass: "alert alert-info py-2 px-3 mb-3" },

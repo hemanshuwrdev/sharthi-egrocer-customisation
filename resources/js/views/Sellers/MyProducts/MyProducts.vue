@@ -194,7 +194,7 @@
                     <strong>{{ slabTarget.master_product_name }}</strong>
                     <span class="text-muted">— {{ __('sku') }}: {{ slabTarget.sku || '—' }}</span>
                 </p>
-                <div v-if="slabTarget.secondary_unit_value" class="alert alert-info py-2 px-3 mb-3">
+                <div v-if="slabTarget.secondary_unit_value && !slabTarget.allow_loose_qty" class="alert alert-info py-2 px-3 mb-3">
                     <i class="fa fa-info-circle"></i>
                     {{ __('slab_moq_hint').replace(':moq', slabTarget.secondary_unit_value) }}
                 </div>
