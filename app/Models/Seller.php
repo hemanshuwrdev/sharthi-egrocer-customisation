@@ -71,6 +71,10 @@ class Seller extends Model
     {
         return $this->belongsTo(City::class, 'city_id', 'id');
     }
+    public function areas()
+    {
+        return $this->belongsToMany(Area::class, 'distributor_areas', 'seller_id', 'area_id');
+    }
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'sellers', 'id', 'categories');

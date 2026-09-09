@@ -5,9 +5,11 @@ namespace App\Http\Controllers\API;
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\Area;
 use App\Models\Brand;
 use App\Models\BrandDistributorMapping;
 use App\Models\City;
+use App\Models\DistributorArea;
 use App\Models\OrderItem;
 use App\Models\Role;
 use App\Models\Seller;
@@ -112,6 +114,7 @@ class SellerApiController extends Controller
             'password' => 'min:6|required_with:confirm_password|same:confirm_password',
             'store_name' => 'required',
             'brand_zone_mappings' => 'required',
+            'area_ids' => 'nullable',
             'commission' => 'required',
             'national_id_card' => 'required|mimes:jpeg,jpg,png,gif,pdf',
             'address_proof' => 'required|mimes:jpeg,jpg,png,gif,pdf',
@@ -142,6 +145,11 @@ class SellerApiController extends Controller
             }
         }
         $unionCityIds = collect($mappings)->pluck('city_ids')->flatten()->unique()->values()->all();
+
+        $areaIds = $this->parseAreaIds($request->area_ids);
+        if ($areaIds && Area::whereIn('id', $areaIds)->count() !== count($areaIds)) {
+            return CommonHelper::responseError('One or more selected areas were not found');
+        }
 
         DB::beginTransaction();
         try {
@@ -244,6 +252,7 @@ class SellerApiController extends Controller
             $record->save();
 
             $this->syncBrandZoneMappings($record, $mappings);
+            $this->syncDistributorAreas($record, $areaIds);
 
             // Save translations - can accept single language_id or multiple translations array (JSON string)
             if ($request->has('translations')) {
@@ -317,6 +326,8 @@ class SellerApiController extends Controller
         // brand tags directly without a second lookup.
         $seller->brands = Brand::whereIn('id', $seller->brand_ids)->get(['id', 'name', 'image']);
 
+        $seller->area_ids = DistributorArea::where('seller_id', $seller->id)->pluck('area_id');
+
         Seller::setOptimizedResponse(false);
 
         return CommonHelper::responseWithData($seller);
@@ -347,6 +358,7 @@ class SellerApiController extends Controller
             'confirm_password' => 'same:password',
             'store_name' => 'required',
             'brand_zone_mappings' => $isSellerCaller ? 'nullable' : 'required',
+            'area_ids' => 'nullable',
             'commission' => 'required',
             'latitude' => 'required',
             'longitude' => 'required',
@@ -372,6 +384,7 @@ class SellerApiController extends Controller
 
                 $mappings = [];
                 $unionCityIds = null;
+                $areaIds = [];
                 if (!$isSellerCaller) {
                     $mappings = $this->parseBrandZoneMappings($request->brand_zone_mappings);
                     if (empty($mappings)) {
@@ -384,6 +397,11 @@ class SellerApiController extends Controller
                         }
                     }
                     $unionCityIds = collect($mappings)->pluck('city_ids')->flatten()->unique()->values()->all();
+
+                    $areaIds = $this->parseAreaIds($request->area_ids);
+                    if ($areaIds && Area::whereIn('id', $areaIds)->count() !== count($areaIds)) {
+                        return CommonHelper::responseError('One or more selected areas were not found');
+                    }
                 }
 
                 $oldStatus = $record->status;
@@ -494,6 +512,7 @@ class SellerApiController extends Controller
 
                 if (!$isSellerCaller) {
                     $this->syncBrandZoneMappings($record, $mappings);
+                    $this->syncDistributorAreas($record, $areaIds);
                 }
 
                 // Save/update translations - can accept single language_id or multiple translations array (JSON string)
@@ -726,6 +745,40 @@ class SellerApiController extends Controller
                     'city_id' => $cityId,
                 ]);
             }
+        }
+    }
+
+    /**
+     * Parse the 'area_ids' request field (JSON string or array) into a clean,
+     * deduped array of positive integer Area IDs.
+     */
+    private function parseAreaIds($raw)
+    {
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : [];
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        return collect($raw)->map(fn($id) => (int) $id)->filter(fn($id) => $id > 0)->unique()->values()->all();
+    }
+
+    /**
+     * Distributor <-> Area territory assignment, independent of brand.
+     */
+    private function syncDistributorAreas(Seller $seller, array $areaIds)
+    {
+        DistributorArea::where('seller_id', $seller->id)
+            ->whereNotIn('area_id', $areaIds ?: [0])
+            ->delete();
+
+        foreach ($areaIds as $areaId) {
+            DistributorArea::firstOrCreate([
+                'seller_id' => $seller->id,
+                'area_id' => $areaId,
+            ]);
         }
     }
 }

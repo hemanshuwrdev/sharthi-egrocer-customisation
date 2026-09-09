@@ -617,6 +617,36 @@
                                                 </div>
                                                 <!-- ── END Service Zones & Cities Card (read-only) ── -->
 
+                                                <!-- ── Assigned Areas Card ── -->
+                                                <div class="card" v-if="!isSellerRole">
+                                                    <div class="card-header">
+                                                        <h4 class="mb-0">{{ __('assigned_areas') }}</h4>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <Select2 v-model="area_ids" :placeholder="__('select_areas')"
+                                                            :options="areas_options" :settings="{ multiple: 'multiple' }" />
+                                                    </div>
+                                                </div>
+                                                <!-- ── END Assigned Areas Card ── -->
+
+                                                <!-- ── Assigned Areas Card (read-only, distributor's own profile) ── -->
+                                                <div class="card" v-else>
+                                                    <div class="card-header">
+                                                        <h4 class="mb-0">{{ __('assigned_areas') }}</h4>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div v-if="assignedAreas.length">
+                                                            <span v-for="area in assignedAreas" :key="area.id"
+                                                                class="badge bg-secondary me-1 mb-1 p-2">
+                                                                {{ area.name }}<template v-if="area.pincode"> - {{ area.pincode }}</template>
+                                                            </span>
+                                                        </div>
+                                                        <p v-else class="form-control-static">{{ __('no_areas_assigned') }}</p>
+                                                        <small class="text-muted d-block mt-1">{{ __('area_assignment_is_managed_by_admin') }}</small>
+                                                    </div>
+                                                </div>
+                                                <!-- ── END Assigned Areas Card (read-only) ── -->
+
                                                 <!-- ── Store Location Card ── -->
                                                 <div class="card">
                                                     <div class="card-header">
@@ -1107,6 +1137,8 @@ export default {
             },
             city: "",
             cities: [],
+            areas: [],
+            area_ids: [],
 
             name: "",
             email: "",
@@ -1274,6 +1306,7 @@ export default {
         street: function () { if (!this.id) this.debouncedSave(); },
         city_id: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         brand_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
+        area_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         state: function () { if (!this.id) this.debouncedSave(); },
         upi_id: function () { if (!this.id) this.debouncedSave(); },
         upi_mobile: function () { if (!this.id) this.debouncedSave(); },
@@ -1300,6 +1333,7 @@ export default {
         this.getBrands();
         this.getZones();
         this.getCities();
+        this.getAreas();
         this.getCountries();
         this.getSellerCommission();
         this.getStoreSettings();
@@ -1360,6 +1394,23 @@ export default {
             return this.cities.map(city => ({
                 id: city.id,
                 text: (city.name || '') + '-' + (city.zone || '')
+            }));
+        },
+        assignedAreas: function () {
+            if (!Array.isArray(this.area_ids) || this.area_ids.length === 0) {
+                return [];
+            }
+            const selected = this.area_ids.map(String);
+            return this.areas.filter(area => selected.includes(String(area.id)));
+        },
+        areas_options: function () {
+            if (!Array.isArray(this.areas) || this.areas.length === 0) {
+                return [];
+            }
+            return this.areas.map(area => ({
+                id: area.id,
+                text: (area.name || '') + (area.pincode ? ' (' + area.pincode + ')' : '') +
+                    (area.district ? ' - ' + area.district : '') + (area.state ? ', ' + area.state : '')
             }));
         },
         google: gmapApi,
@@ -1504,6 +1555,17 @@ export default {
                     } else {
                         this.showError(__('something_went_wrong'));
                     }
+                });
+        },
+        getAreas() {
+            axios.get(this.$apiUrl + '/areas')
+                .then((response) => {
+                    let data = response.data;
+                    const raw = data.data;
+                    const list = (raw && raw.areas) ? raw.areas : raw;
+                    this.areas = Array.isArray(list) ? list : (list && typeof list === 'object' ? Object.values(list) : []);
+                }).catch(() => {
+                    this.areas = [];
                 });
         },
         handleCountryDropdownOutsideClick(event) {
@@ -2012,7 +2074,7 @@ export default {
             if (this.$refs['my-form']) this.$refs['my-form'].reset();
             Object.assign(this, {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
-                store_name: "", street: "", pincode_id: "", city_id: [], brand_ids: [], brandZoneRows: [],
+                store_name: "", street: "", pincode_id: "", city_id: [], brand_ids: [], brandZoneRows: [], area_ids: [],
                 state: "", remark: "", bank_name: "", account_number: "", bank_ifsc_code: "", account_name: "", upi_id: "", upi_mobile: "", upi_name: "",
                 commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
@@ -2041,7 +2103,7 @@ export default {
                     email: this.email, mobile: this.mobile, store_url: this.store_url,
                     store_name: defaultTranslation ? defaultTranslation.store_name : this.store_name,
                     street: this.street, pincode_id: this.pincode_id,
-                    city_id: this.city_id, brand_ids: this.brand_ids, state: this.state,
+                    city_id: this.city_id, brand_ids: this.brand_ids, area_ids: this.area_ids, state: this.state,
                     remark: this.remark, bank_name: this.bank_name, account_number: this.account_number, bank_ifsc_code: this.bank_ifsc_code, account_name: this.account_name, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
                     upi_name: this.upi_name, commission: this.commission,
                     tax_name: this.tax_name, tax_number: this.tax_number, pan_number: this.pan_number,
@@ -2205,6 +2267,7 @@ export default {
                         this.city_id = emptyIfNull(this.record.city_id) ? this.record.city_id.split(",") : [];
                         this.brand_ids = Array.isArray(this.record.brand_ids) ? this.record.brand_ids.map(String) : [];
                         this.loadBrandZoneMappings();
+                        this.area_ids = Array.isArray(this.record.area_ids) ? this.record.area_ids.map(String) : [];
                         this.state = emptyIfNull(this.record.state);
                         this.remark = emptyIfNull(this.record.remark);
                         this.bank_name = emptyIfNull(this.record.bank_name);
@@ -2422,6 +2485,7 @@ export default {
                     formData.append('brand_zone_mappings', JSON.stringify(
                         this.brandZoneRows.map(r => ({ brand_id: r.brand_id, city_ids: r.city_ids }))
                     ));
+                    formData.append('area_ids', JSON.stringify(this.area_ids));
                 }
                 formData.append('state', this.state);
                 formData.append('remark', this.remark);
