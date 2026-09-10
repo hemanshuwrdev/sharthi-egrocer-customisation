@@ -1726,14 +1726,16 @@ class CommonHelper
     public static function buildUnitWisePriceSet(array $prices, $secondaryUnitValue, $outerUnitName = null, $innerUnitName = null)
     {
         $step = (float) ($secondaryUnitValue ?? 0);
-        $divide = fn($price) => ($price !== null && $step > 0) ? round(((float) $price) / $step, 2) : ($price !== null ? round((float) $price, 2) : null);
+        // $price is entered by the seller as the price of ONE outer-pack (base) unit —
+        // an inner-pack (box) of $step base units costs $step times that, not a fraction of it.
+        $multiply = fn($price) => ($price !== null && $step > 0) ? round(((float) $price) * $step, 2) : ($price !== null ? round((float) $price, 2) : null);
         $round = fn($price) => $price !== null ? round((float) $price, 2) : null;
 
         $outer = ['qty' => 1, 'unit' => $outerUnitName];
         $inner = ['qty' => $step > 0 ? $step : 1, 'unit' => $innerUnitName];
         foreach ($prices as $key => $price) {
             $outer[$key] = $round($price);
-            $inner[$key] = $divide($price);
+            $inner[$key] = $multiply($price);
         }
 
         return ['outer_pack' => $outer, 'inner_pack' => $inner];

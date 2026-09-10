@@ -101,8 +101,12 @@
                                     </template>
 
                                     <template #cell(selling_price)="row">
-                                        <input type="number" min="0" step="0.01"
-                                            class="form-control form-control-sm" v-model.number="row.item.selling_price" />
+                                        <div class="d-flex align-items-center gap-1">
+                                            <input type="number" min="0" step="0.01"
+                                                class="form-control form-control-sm" v-model.number="row.item.selling_price" />
+                                            <i v-if="innerPackPriceHint(row.item)" class="fa fa-info-circle text-muted"
+                                                v-b-tooltip.hover :title="innerPackPriceHint(row.item)"></i>
+                                        </div>
                                     </template>
 
                                     <template #cell(stock)="row">
@@ -301,6 +305,18 @@ export default {
         perPage() { this.getRecords(); },
     },
     methods: {
+        innerPackPriceHint(item) {
+            const step = parseFloat(item.secondary_unit_value) || 0;
+            const price = parseFloat(item.selling_price) || 0;
+            if (step <= 1 || !item.selling_price) {
+                return '';
+            }
+            const innerPrice = (price * step).toFixed(2);
+            const currency = this.$currency ? this.$currency + ' ' : '';
+            return __('inner_pack_price_hint') + ': ' + currency + innerPrice +
+                (item.secondary_unit ? ' / ' + item.secondary_unit : '') +
+                ' (' + step + (item.unit ? ' ' + item.unit : '') + ')';
+        },
         onFilterChange() {
             clearTimeout(this.filterDebounce);
             this.filterDebounce = setTimeout(() => this.getRecords(), 250);

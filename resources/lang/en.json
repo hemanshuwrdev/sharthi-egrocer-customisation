@@ -1824,6 +1824,7 @@
     "activated_only": "Activated only",
     "no_brands_assigned_yet": "No brands assigned yet. Please contact the super admin to get brands assigned to your account.",
     "selling_price": "Selling Price",
+    "inner_pack_price_hint": "Inner pack price",
     "mrp": "MRP",
     "slabs": "Slabs",
     "slab_prices": "Slab Prices",

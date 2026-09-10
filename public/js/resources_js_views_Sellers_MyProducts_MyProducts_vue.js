@@ -264,6 +264,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -392,6 +396,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
   },
   methods: {
+    innerPackPriceHint: function innerPackPriceHint(item) {
+      var step = parseFloat(item.secondary_unit_value) || 0;
+      var price = parseFloat(item.selling_price) || 0;
+      if (step <= 1 || !item.selling_price) {
+        return '';
+      }
+      var innerPrice = (price * step).toFixed(2);
+      var currency = this.$currency ? this.$currency + ' ' : '';
+      return __('inner_pack_price_hint') + ': ' + currency + innerPrice + (item.secondary_unit ? ' / ' + item.secondary_unit : '') + ' (' + step + (item.unit ? ' ' + item.unit : '') + ')';
+    },
     onFilterChange: function onFilterChange() {
       var _this = this;
       clearTimeout(this.filterDebounce);
@@ -1219,35 +1233,57 @@ var render = function () {
                   key: "cell(selling_price)",
                   fn: function (row) {
                     return [
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model.number",
-                            value: row.item.selling_price,
-                            expression: "row.item.selling_price",
-                            modifiers: { number: true },
-                          },
-                        ],
-                        staticClass: "form-control form-control-sm",
-                        attrs: { type: "number", min: "0", step: "0.01" },
-                        domProps: { value: row.item.selling_price },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.$set(
-                              row.item,
-                              "selling_price",
-                              _vm._n($event.target.value)
-                            )
-                          },
-                          blur: function ($event) {
-                            return _vm.$forceUpdate()
-                          },
-                        },
-                      }),
+                      _c(
+                        "div",
+                        { staticClass: "d-flex align-items-center gap-1" },
+                        [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model.number",
+                                value: row.item.selling_price,
+                                expression: "row.item.selling_price",
+                                modifiers: { number: true },
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "number", min: "0", step: "0.01" },
+                            domProps: { value: row.item.selling_price },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(
+                                  row.item,
+                                  "selling_price",
+                                  _vm._n($event.target.value)
+                                )
+                              },
+                              blur: function ($event) {
+                                return _vm.$forceUpdate()
+                              },
+                            },
+                          }),
+                          _vm._v(" "),
+                          _vm.innerPackPriceHint(row.item)
+                            ? _c("i", {
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.hover",
+                                    modifiers: { hover: true },
+                                  },
+                                ],
+                                staticClass: "fa fa-info-circle text-muted",
+                                attrs: {
+                                  title: _vm.innerPackPriceHint(row.item),
+                                },
+                              })
+                            : _vm._e(),
+                        ]
+                      ),
                     ]
                   },
                 },
