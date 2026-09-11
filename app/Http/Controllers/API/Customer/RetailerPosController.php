@@ -126,7 +126,6 @@ class RetailerPosController extends Controller
                 'unit'                 => $r->unit ? $r->unit->name : null,
                 'secondary_unit'       => $r->secondaryUnit ? $r->secondaryUnit->name : null,
                 'secondary_unit_value' => $r->secondary_unit_value,
-                'inner_pack_value'     => $r->inner_pack_value,
                 // Stepper fields — salesman app configures qty widget using these
                 'qty_step'             => (float) ($r->secondary_unit_value ?? 1) ?: 1,
                 'min_qty'              => (float) ($r->secondary_unit_value ?? 1) ?: 1,

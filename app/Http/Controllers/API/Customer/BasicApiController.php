@@ -342,7 +342,6 @@ class BasicApiController extends Controller
                 'unit'                 => $first->unit ? $first->unit->name : null,
                 'secondary_unit'       => $first->secondaryUnit ? $first->secondaryUnit->name : null,
                 'secondary_unit_value' => $first->secondary_unit_value,
-                'inner_pack_value'     => $first->inner_pack_value,
                 'qty_step'             => (float) ($first->secondary_unit_value ?? 1) ?: 1,
                 'min_qty'              => (float) ($first->secondary_unit_value ?? 1) ?: 1,
                 'weight'               => $first->weight,

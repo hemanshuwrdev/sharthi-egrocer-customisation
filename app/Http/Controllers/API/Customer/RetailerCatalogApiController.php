@@ -261,7 +261,6 @@ class RetailerCatalogApiController extends Controller
                 'unit' => $first->unit ? $first->unit->name : null,
                 'secondary_unit' => $first->secondaryUnit ? $first->secondaryUnit->name : null,
                 'secondary_unit_value' => $first->secondary_unit_value,
-                'inner_pack_value' => $first->inner_pack_value,
                 // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
                 // per-distributor — see each entry in `offers` (and `best_offer`).
                 'weight' => $first->weight,
@@ -431,7 +430,6 @@ class RetailerCatalogApiController extends Controller
             'unit' => $variant->unit ? $variant->unit->name : null,
             'secondary_unit' => $variant->secondaryUnit ? $variant->secondaryUnit->name : null,
             'secondary_unit_value' => $variant->secondary_unit_value,
-            'inner_pack_value' => $variant->inner_pack_value,
             // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
             // per-distributor — see each entry in `offers` (and `best_offer`).
             'weight' => $variant->weight,

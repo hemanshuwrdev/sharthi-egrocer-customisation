@@ -17,7 +17,6 @@ class MasterProductVariant extends Model
         'sku',
         'unit_id',
         'secondary_unit_id',
-        'inner_pack_value',
         'secondary_unit_value',
         'allow_loose_qty',
         'max_qty_mode',
