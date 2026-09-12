@@ -267,7 +267,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
 
 
 
@@ -304,7 +303,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         "class": 'text-center'
       }, {
         key: 'unit',
-        label: __('unit'),
+        label: __('per_unit'),
         visible: true,
         "class": 'text-center'
       }, {
@@ -1161,17 +1160,9 @@ var render = function () {
                   key: "cell(unit)",
                   fn: function (row) {
                     return [
-                      row.item.weight
-                        ? _c("span", [_vm._v(_vm._s(row.item.weight))])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      row.item.unit
-                        ? _c("span", [_vm._v(" " + _vm._s(row.item.unit))])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      !row.item.weight && !row.item.unit
-                        ? _c("span", [_vm._v("—")])
-                        : _vm._e(),
+                      row.item.secondary_unit
+                        ? _c("span", [_vm._v(_vm._s(row.item.secondary_unit))])
+                        : _c("span", [_vm._v("—")]),
                     ]
                   },
                 },

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Language;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -92,7 +93,6 @@ class MasterProductApiController extends Controller
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.weight' => 'nullable|numeric|min:0',
-            'variants.*.weight_unit_id' => 'nullable|exists:units,id',
             'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
         if ($validator->fails()) {
@@ -155,7 +155,7 @@ class MasterProductApiController extends Controller
                     $variant->secondary_unit_id = $v['secondary_unit_id'] ?? null;
                     $variant->secondary_unit_value = $v['secondary_unit_value'] ?? null;
                     $variant->weight = $v['weight'] ?? null;
-                    $variant->weight_unit_id = $v['weight_unit_id'] ?? null;
+                    $variant->weight_unit_id = $this->kgUnitId();
                     $variant->status = isset($v['status']) ? $v['status'] : 1;
 
                     if ($request->hasFile("variants.$idx.image")) {
@@ -199,7 +199,6 @@ class MasterProductApiController extends Controller
             'variants.*.secondary_unit_id' => 'nullable|exists:units,id',
             'variants.*.secondary_unit_value' => 'nullable|numeric|min:0',
             'variants.*.weight' => 'nullable|numeric|min:0',
-            'variants.*.weight_unit_id' => 'nullable|exists:units,id',
             'variants.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
         ]);
         if ($validator->fails()) {
@@ -303,7 +302,7 @@ class MasterProductApiController extends Controller
                     $variant->secondary_unit_id = $v['secondary_unit_id'] ?? null;
                     $variant->secondary_unit_value = $v['secondary_unit_value'] ?? null;
                     $variant->weight = $v['weight'] ?? null;
-                    $variant->weight_unit_id = $v['weight_unit_id'] ?? null;
+                    $variant->weight_unit_id = $this->kgUnitId();
                     if (array_key_exists('status', $v)) {
                         $variant->status = $v['status'];
                     } elseif (!$variant->exists) {
@@ -478,5 +477,14 @@ class MasterProductApiController extends Controller
             'schema_markup' => $defaultTr['schema_markup'] ?? $request->input('schema_markup'),
             'meta_description' => $defaultTr['meta_description'] ?? $request->input('meta_description'),
         ];
+    }
+
+    /**
+     * Weight is always in Kg — admin no longer picks a weight unit, so resolve
+     * it server-side instead of trusting request input.
+     */
+    private function kgUnitId()
+    {
+        return Unit::where('short_code', 'KG')->orWhere('name', 'Kilogram')->value('id');
     }
 }

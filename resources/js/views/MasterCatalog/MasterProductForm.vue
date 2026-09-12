@@ -286,8 +286,9 @@
                                     <th>{{ __('outer_pack_unit') }}</th>
                                     <th>{{ __('inner_pack_unit') }}</th>
                                     <th>{{ __('inner_pack_value') }}</th>
-                                    <th>{{ __('weight') }}</th>
-                                    <th>{{ __('weight_unit') }}</th>
+                                    <th>{{ __('weight') }} (Kg)
+                                        <i class="fa fa-info-circle text-muted" v-b-tooltip.hover :title="__('weight_is_per_inner_pack_hint')"></i>
+                                    </th>
                                     <th>{{ __('image') }}</th>
                                     <th>{{ __('status') }}</th>
                                     <th v-if="product.type === 'variable'" style="width:60px;">{{ __('actions') }}</th>
@@ -317,12 +318,6 @@
                                     <td>
                                         <input type="number" class="form-control form-control-sm" step="0.001"
                                             v-model.number="v.weight" />
-                                    </td>
-                                    <td>
-                                        <select class="form-control form-control-sm" v-model="v.weight_unit_id">
-                                            <option :value="null">--</option>
-                                            <option v-for="u in units" :key="u.id" :value="u.id">{{ u.name }}</option>
-                                        </select>
                                     </td>
                                     <td>
                                         <input type="file" class="form-control form-control-sm" accept="image/*"
@@ -645,7 +640,6 @@ export default {
                         secondary_unit_id: v.secondary_unit_id,
                         secondary_unit_value: v.secondary_unit_value,
                         weight: v.weight,
-                        weight_unit_id: v.weight_unit_id,
                         image: v.image,
                         status: v.status,
                         _file: null,
@@ -767,7 +761,6 @@ export default {
                 secondary_unit_id: null,
                 secondary_unit_value: null,
                 weight: null,
-                weight_unit_id: null,
                 image: null,
                 status: 1,
                 _file: null,
@@ -936,7 +929,6 @@ export default {
                 if (v.secondary_unit_id) fd.append(`variants[${idx}][secondary_unit_id]`, v.secondary_unit_id);
                 if (v.secondary_unit_value != null) fd.append(`variants[${idx}][secondary_unit_value]`, v.secondary_unit_value);
                 if (v.weight != null) fd.append(`variants[${idx}][weight]`, v.weight);
-                if (v.weight_unit_id) fd.append(`variants[${idx}][weight_unit_id]`, v.weight_unit_id);
                 fd.append(`variants[${idx}][status]`, v.status);
                 if (v._file) fd.append(`variants[${idx}][image]`, v._file);
             });

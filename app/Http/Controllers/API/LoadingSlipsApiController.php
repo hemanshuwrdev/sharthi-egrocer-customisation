@@ -626,7 +626,13 @@ class LoadingSlipsApiController extends Controller
                 // Master catalog system
                 $variant = \App\Models\MasterProductVariant::find($item->master_product_variant_id);
                 if ($variant) {
+                    // variant->weight is the weight of ONE Inner Pack (box of secondary_unit_value
+                    // outer-pack units) — divide down to a per-outer-unit weight before multiplying
+                    // by order quantity below. Order quantity is always denominated in outer-pack
+                    // units (loose or not), so this one formula covers both cases.
+                    $secondaryUnitValue = (float) ($variant->secondary_unit_value ?? 0);
                     $weight = (float)($variant->weight ?? 0);
+                    $weight = $secondaryUnitValue > 0 ? $weight / $secondaryUnitValue : $weight;
                     $unit = Unit::find($variant->unit_id);
 
                     if ($unit) {

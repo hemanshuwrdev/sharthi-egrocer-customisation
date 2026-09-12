@@ -83,9 +83,8 @@
                                     </template>
 
                                     <template #cell(unit)="row">
-                                        <span v-if="row.item.weight">{{ row.item.weight }}</span>
-                                        <span v-if="row.item.unit"> {{ row.item.unit }}</span>
-                                        <span v-if="!row.item.weight && !row.item.unit">—</span>
+                                        <span v-if="row.item.secondary_unit">{{ row.item.secondary_unit }}</span>
+                                        <span v-else>—</span>
                                     </template>
 
                                     <template #cell(secondary_unit)="row">
@@ -259,7 +258,7 @@ export default {
                 { key: 'name', label: __('name'), visible: true, class: 'text-start' },
                 { key: 'brand', label: __('brand'), visible: true, class: 'text-center' },
                 { key: 'sku', label: __('sku'), visible: false, class: 'text-center' },
-                { key: 'unit', label: __('unit'), visible: true, class: 'text-center' },
+                { key: 'unit', label: __('per_unit'), visible: true, class: 'text-center' },
                 { key: 'secondary_unit', label: __('secondary_unit'), visible: false, class: 'text-center' },
                 { key: 'mrp', label: __('mrp') + (this.$currency ? ' (' + this.$currency + ')' : ''), visible: true, class: 'text-center' },
                 { key: 'selling_price', label: __('selling_price') + (this.$currency ? ' (' + this.$currency + ')' : ''), visible: true, class: 'text-center' },
