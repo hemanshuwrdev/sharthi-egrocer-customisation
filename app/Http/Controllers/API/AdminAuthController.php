@@ -151,6 +151,34 @@ class AdminAuthController extends Controller
             return CommonHelper::responseError('your_account_is_blocked_please_contact_to_administrator_for_activate');
         }
 
+        // Seller subscription warning: configurable free trial from signup (Settings
+        // -> "distributor_trial_days"). Once it's over without an active distributor
+        // subscription assigned, the seller can still log in and use the panel — the
+        // real enforcement is on the customer-facing side (their products stop being
+        // shown to shoppers). Here we just surface a warning + available plans.
+        $subscriptionWarning = null;
+        $subscriptionPlans = [];
+        if ($user->role_id == Role::$roleSeller && isset($user->seller)) {
+            $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
+            $trialEndsAt = \Carbon\Carbon::parse($user->seller->created_at)->addDays($trialDays);
+            if (now()->greaterThan($trialEndsAt)) {
+                $hasActiveSubscription = \App\Models\DistributorSubscription::where('seller_id', $user->seller->id)
+                    ->where('status', 'active')
+                    ->where(function ($q) {
+                        $q->whereNull('end_date')->orWhere('end_date', '>=', now()->toDateString());
+                    })
+                    ->exists();
+
+                if (!$hasActiveSubscription) {
+                    $subscriptionWarning = __('your_free_trial_has_ended_please_subscribe_to_continue');
+                    $subscriptionPlans = \App\Models\DistributorSubscriptionPlan::where('publish', 1)
+                        ->where('status', 1)
+                        ->orderBy('price', 'ASC')
+                        ->get();
+                }
+            }
+        }
+
         //If delivery boy
         if ($user->role_id == Role::$roleDeliveryBoy && isset($user->deliveryBoy) && $user->deliveryBoy->status == DeliveryBoy::$statusRegistered) {
             return CommonHelper::responseError('your_request_under_review_you_will_get_notification_after_get_approval');
@@ -221,7 +249,12 @@ class AdminAuthController extends Controller
                 $userArray['salesman']['name'] = $user->salesman->getAttributeValue('name') ?? '';
             }
         }
-        $res = ['user' => $userArray, 'access_token' => $accessToken];
+        $res = [
+            'user' => $userArray,
+            'access_token' => $accessToken,
+            'subscription_warning' => $subscriptionWarning,
+            'subscription_plans' => $subscriptionPlans,
+        ];
         return CommonHelper::responseWithData($res);
     }
 

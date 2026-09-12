@@ -44,7 +44,7 @@ class ShopApiController extends Controller
         // Sarthi: sections must only show products from brand+seller pairs actually
         // mapped to this city — same source of truth as RetailerCatalogApiController::listProducts.
         $mappings   = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->get(['brand_id', 'seller_id']);
-        $seller_ids = $mappings->pluck('seller_id')->unique()->values();
+        $seller_ids = CommonHelper::filterEligibleSellerIds($mappings->pluck('seller_id')->unique()->values());
         $brand_ids  = $mappings->pluck('brand_id')->unique()->values();
 
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : 0;

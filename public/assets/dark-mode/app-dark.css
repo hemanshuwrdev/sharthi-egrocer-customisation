@@ -406,6 +406,21 @@ body.theme-dark [type="search"] {
 body.theme-dark ::-webkit-search-decoration {
     -webkit-appearance: none;
 }
+/* List-page search bars (icon + input): dark mode's [type="search"] reset above
+   re-enables native search-field chrome (padding, cancel button) that light mode
+   suppresses via .form-control{appearance:none} — restore icon spacing and hide
+   the native cancel button so it matches light mode. */
+body.theme-dark .list-search .form-control {
+    padding-left: 34px;
+}
+body.theme-dark .list-search input[type="search"] {
+    -webkit-appearance: none;
+    appearance: none;
+}
+body.theme-dark .list-search input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    display: none;
+}
 body.theme-dark ::-webkit-color-swatch-wrapper {
     padding: 0;
 }
@@ -7383,28 +7398,26 @@ body.theme-dark .sidebar-wrapper .sidebar-toggler.x {
     top: 0.25rem;
 }
 body.theme-dark .sidebar-wrapper .menu {
-    font-weight: 600;
-    /*margin-top: 1rem;*/
-    padding: 0 2rem;
+    padding: 0 0.35rem;
 }
 body.theme-dark .sidebar-wrapper .menu .sidebar-title {
     color: #9899ac;
-    font-size: 1rem;
+    font-size: 0.75rem;
     font-weight: 600;
     list-style: none;
-    margin: 1.5rem 0 1rem;
-    padding: 0 1rem;
+    margin: 1.25rem 0 0.5rem;
+    padding: 0 0.5rem;
 }
 body.theme-dark .sidebar-wrapper .menu .sidebar-link {
     align-items: center;
     border-radius: 0.5rem;
     color: #9899ac;
-    display: block;
     display: flex;
-    font-size: 1rem;
-    padding: 0.7rem 1rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.6rem 0.5rem;
     text-decoration: none;
-    transition: all 0.5s;
+    transition: all 0.3s ease;
 }
 body.theme-dark .sidebar-wrapper .menu .sidebar-link i,
 body.theme-dark .sidebar-wrapper .menu .sidebar-link svg {
@@ -7414,14 +7427,13 @@ body.theme-dark .sidebar-wrapper .menu .sidebar-link i:before {
     vertical-align: top;
 }
 body.theme-dark .sidebar-wrapper .menu .sidebar-link span {
-    margin-left: 1rem;
+    margin-left: 0.6rem;
 }
 body.theme-dark .sidebar-wrapper .menu .sidebar-link:hover {
     background-color: #282839;
 }
 body.theme-dark .sidebar-wrapper .menu .sidebar-item {
     list-style: none;
-    margin-top: 0.5rem;
     position: relative;
 }
 body.theme-dark
@@ -7491,16 +7503,16 @@ body.theme-dark .sidebar-wrapper .menu .submenu .submenu-item.active > a {
 }
 body.theme-dark .sidebar-wrapper .menu .submenu .submenu-item a {
     color: #9899ac;
-    display: block;
+    display: inline-block;
     font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    padding: 0.7rem 1rem;
-    transition: all 0.3s;
+    font-weight: 400;
+    letter-spacing: normal;
+    padding: 0.2rem 0;
+    transition: color 0.2s ease, margin-left 0.2s ease;
 }
 body.theme-dark .sidebar-wrapper .menu .submenu .submenu-item a:hover {
     color: #fff;
-    margin-left: 0.3rem;
+    margin-left: 0.2rem;
 }
 body.theme-dark .sidebar-backdrop {
     background-color: rgba(0, 0, 0, 0.5);

@@ -113,6 +113,7 @@ class StoreSettingsApiController extends Controller
             "count_seller_section_in_homepage" => "",
             "count_country_section_in_homepage" => "",
             "one_seller_cart" => "",
+            "distributor_trial_days" => "",
             "self_pickup_mode" => "",
             "door_step_mode" => "",
             "playstore_url" => "",
@@ -640,7 +641,7 @@ class StoreSettingsApiController extends Controller
      */
     public function save_seller_setting(Request $request)
     {
-        $seller_variables = ['one_seller_cart', 'seller_commission', 'self_pickup_mode'];
+        $seller_variables = ['one_seller_cart', 'seller_commission', 'self_pickup_mode', 'distributor_trial_days'];
 
         foreach ($request->all() as $key => $value) {
             if (in_array($key, $seller_variables)) {

@@ -1098,6 +1098,66 @@ class SarthiCustomisation extends Migration
                 }
             });
         }
+
+        // ── Distributor subscription plans: superadmin-defined plans (price, tax,
+        //    booking/commission config) that get assigned to individual distributors.
+        //    Separate from the customer-facing eGrocer-MAX subscription_plans table.
+        if (!Schema::hasTable('distributor_subscription_plans')) {
+            Schema::create('distributor_subscription_plans', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->enum('duration_type', ['limited', 'unlimited'])->default('unlimited');
+                $table->unsignedInteger('duration_days')->nullable();
+                $table->decimal('price', 10, 2)->default(0);
+                $table->decimal('discounted_price', 10, 2)->nullable();
+                $table->enum('tax_type', ['inclusive', 'exclusive'])->default('inclusive');
+                $table->unsignedBigInteger('tax_id')->nullable();
+                $table->enum('booking_type', ['limited', 'unlimited'])->default('unlimited');
+                $table->unsignedInteger('booking_limit')->nullable();
+                $table->boolean('commission_enabled')->default(0);
+                $table->decimal('commission_threshold', 12, 2)->nullable();
+                $table->decimal('commission_percentage', 5, 2)->nullable();
+                $table->boolean('publish')->default(1);
+                $table->boolean('status')->default(1);
+                $table->timestamps();
+                $table->softDeletes();
+
+                $table->foreign('tax_id')->references('id')->on('taxes')->nullOnDelete();
+            });
+        }
+        if (Schema::hasTable('distributor_subscription_plans') && !Schema::hasColumn('distributor_subscription_plans', 'features')) {
+            Schema::table('distributor_subscription_plans', function (Blueprint $table) {
+                $table->json('features')->nullable()->after('description');
+            });
+        }
+
+        // Configurable free-trial length (days) before a distributor must have an
+        // active subscription assigned to keep logging in. Admin-editable via Settings.
+        if (!DB::table('settings')->where('variable', 'distributor_trial_days')->exists()) {
+            DB::table('settings')->insert(['variable' => 'distributor_trial_days', 'value' => '90']);
+        }
+
+        // ── Assignment of a distributor_subscription_plans row to a specific seller
+        //    (distributor). One active assignment per seller at a time in practice,
+        //    but history is kept (status tracks active/expired/cancelled).
+        if (!Schema::hasTable('distributor_subscriptions')) {
+            Schema::create('distributor_subscriptions', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('seller_id');
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->string('plan_name');
+                $table->date('start_date');
+                $table->date('end_date')->nullable();
+                $table->enum('status', ['active', 'expired', 'cancelled'])->default('active');
+                $table->unsignedBigInteger('assigned_by')->nullable();
+                $table->timestamps();
+
+                $table->foreign('seller_id')->references('id')->on('sellers')->cascadeOnDelete();
+                $table->foreign('plan_id')->references('id')->on('distributor_subscription_plans')->nullOnDelete();
+                $table->foreign('assigned_by')->references('id')->on('admins')->nullOnDelete();
+            });
+        }
     }
 
     /**
@@ -1107,6 +1167,8 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('distributor_subscriptions');
+        Schema::dropIfExists('distributor_subscription_plans');
         Schema::dropIfExists('activity_log');
 
         if (Schema::hasTable('categories') && Schema::hasColumn('categories', 'hsn')) {

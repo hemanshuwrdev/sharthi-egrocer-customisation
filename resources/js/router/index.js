@@ -193,6 +193,9 @@ const Faqs = () => import("../views/Faqs/Faqs");
 
 //Activity Logs
 const ActivityLogs = () => import("../views/ActivityLogs/ActivityLogs");
+
+//Distributor Subscription Plans
+const DistributorSubscriptionPlans = () => import("../views/DistributorPlans/DistributorSubscriptionPlans");
 // ProductInfo for  Sold Out Products
 const ProductInfo = () => import("../views/Dashboard/ProductInfo");
 
@@ -1444,6 +1447,16 @@ function configRoutes() {
                         permission: 'order_list',
                         role: adminRoles,
                         title: 'Activity Logs'
+                    },
+                },
+                {
+                    path: "distributor_subscription_plans",
+                    name: "DistributorSubscriptionPlans",
+                    component: DistributorSubscriptionPlans,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Subscription Plan'
                     },
                 },
                 {

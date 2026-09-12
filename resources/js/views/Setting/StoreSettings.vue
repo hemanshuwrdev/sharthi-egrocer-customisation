@@ -1283,6 +1283,16 @@
                                                                 placeholder="Seller Commission" step="0.1" min="0"
                                                                 max="100">
                                                         </div>
+                                                        <div class="form-group col-md-6">
+                                                            <label for="distributor_trial_days">{{ __('distributor_trial_days')
+                                                                }}<span class="text text-primary font-size-13">( {{
+                                                                    __('distributor_trial_days_description') }}
+                                                                    )</span></label>
+                                                            <input type="number" class="form-control"
+                                                                name="distributor_trial_days" id="distributor_trial_days"
+                                                                v-model="store_settings.distributor_trial_days"
+                                                                placeholder="90" step="1" min="0">
+                                                        </div>
                                                         <div class="form-group col-md-6"
                                                             v-if="store_settings.one_seller_cart == 1">
                                                             <label for="self_pickup_mode">{{ __('self_pickup_mode')
@@ -2718,7 +2728,7 @@ export default {
             let formData = new FormData();
 
             // Add only seller settings
-            const sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode'];
+            const sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode', 'distributor_trial_days'];
 
             sellerFields.forEach(field => {
                 if (this.store_settings[field] !== undefined) {

@@ -466,6 +466,11 @@ __webpack_require__.r(__webpack_exports__);
           permission: 'manage_privacy_policy_seller_app'
         }]
       }, {
+        name: __('subscription_plan'),
+        icon: 'credit-card',
+        url: '/distributor_subscription_plans',
+        role: true
+      }, {
         type: 'title',
         name: __('marketing')
       }, {

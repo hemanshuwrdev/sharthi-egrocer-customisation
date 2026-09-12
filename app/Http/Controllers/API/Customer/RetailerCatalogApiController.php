@@ -69,7 +69,7 @@ class RetailerCatalogApiController extends Controller
         }
 
         $brandIds = $mappings->pluck('brand_id')->unique()->values();
-        $sellerIds = $mappings->pluck('seller_id')->unique()->values();
+        $sellerIds = CommonHelper::filterEligibleSellerIds($mappings->pluck('seller_id')->unique()->values());
         $allowedPairs = $mappings->map(fn($m) => $m->brand_id . '_' . $m->seller_id)->unique()->flip();
 
         $brandOverlap = Brand::whereIn('id', $brandIds)
@@ -357,9 +357,11 @@ class RetailerCatalogApiController extends Controller
             return CommonHelper::responseError('product_not_available_in_your_area');
         }
 
-        $sellerIds = BrandDistributorMapping::where('brand_id', $brandId)
-            ->whereIn('city_id', $cityIds)
-            ->pluck('seller_id');
+        $sellerIds = CommonHelper::filterEligibleSellerIds(
+            BrandDistributorMapping::where('brand_id', $brandId)
+                ->whereIn('city_id', $cityIds)
+                ->pluck('seller_id')
+        );
 
         if ($sellerIds->isEmpty()) {
             return CommonHelper::responseError('product_not_available_in_your_area');

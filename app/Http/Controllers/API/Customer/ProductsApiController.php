@@ -763,6 +763,22 @@ class ProductsApiController extends Controller
             ->leftJoin('product_tag as pt', 'p.id', '=', 'pt.product_id')
             ->leftJoin('tags as t', 'pt.tag_id', '=', 't.id')
             ->where('s.status', 1)
+            // Subscription visibility gate: seller must still be in their free trial
+            // (Setting: distributor_trial_days, from s.created_at) or have an active
+            // distributor_subscriptions row — see CommonHelper::filterEligibleSellerIds.
+            ->where(function ($q) {
+                $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
+                $q->whereRaw('DATE_ADD(s.created_at, INTERVAL ? DAY) >= NOW()', [$trialDays])
+                    ->orWhereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('distributor_subscriptions as ds')
+                            ->whereColumn('ds.seller_id', 's.id')
+                            ->where('ds.status', 'active')
+                            ->where(function ($q2) {
+                                $q2->whereNull('ds.end_date')->orWhereRaw('ds.end_date >= CURDATE()');
+                            });
+                    });
+            })
             ->where('p.is_approved', 1)
             ->where(function ($query) use ($product_id, $product_slug, $product_barcode) {
                 if (isset($product_id) && $product_id != null) {

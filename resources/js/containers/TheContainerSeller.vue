@@ -79,6 +79,36 @@
                 </b-button>
             </template>
         </b-modal>
+
+        <!-- Subscription Warning Modal -->
+        <b-modal id="subscription-warning-modal" :title="__('subscription_plan')" size="lg" hide-footer centered>
+            <div class="alert alert-warning py-2 px-3 mb-3">
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                {{ __('your_free_trial_has_ended_please_subscribe_to_continue') }}
+            </div>
+            <div class="row" v-if="subscriptionPlans.length">
+                <div class="col-md-6 mb-3" v-for="plan in subscriptionPlans" :key="plan.id">
+                    <div class="card h-100 border">
+                        <div class="card-body">
+                            <h5 class="card-title font-weight-bold">{{ plan.name }}</h5>
+                            <p class="text-muted small mb-2">{{ plan.description }}</p>
+                            <p class="mb-1">
+                                <span class="h4 font-weight-bold">{{ $currency }} {{ plan.discounted_price || plan.price }}</span>
+                                <s v-if="plan.discounted_price" class="text-muted ms-2">{{ $currency }} {{ plan.price }}</s>
+                            </p>
+                            <p class="small text-muted mb-0">
+                                {{ plan.duration_type === 'limited' ? plan.duration_days + ' ' + __('days') : __('unlimited') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p v-else class="text-muted text-center">{{ __('no_records_to_show') }}</p>
+            <p class="text-center text-muted small mt-2">{{ __('contact_admin_to_subscribe') }}</p>
+            <div class="text-center mt-3">
+                <b-button variant="secondary" @click="contactAdminForSubscription">{{ __('ok') }}</b-button>
+            </div>
+        </b-modal>
     </div>
 </template>
 
@@ -103,6 +133,7 @@ export default {
         // this.updateCurrency(window.localStorage.getItem('currency'));
         this.checkPermissions();
         this.checkSellerStatus();
+        this.checkSubscriptionStatus();
     },
     watch: {
         '$route': 'checkPermissions'
@@ -205,6 +236,8 @@ export default {
             lang: 'en',
             statusCheckInterval: null,
             remark: '',
+            subscriptionPlans: [],
+            subscriptionTrialEndsAt: '',
             sidebarItems: [
                 {
                     name: __('dashboard'),
@@ -536,6 +569,30 @@ export default {
             Auth.logout();
             // Redirect to login page
             this.$router.push({ path: '/seller/login' });
+        },
+        checkSubscriptionStatus() {
+            if (window.sessionStorage.getItem('subscriptionModalShown')) {
+                return;
+            }
+            axios.get(this.$sellerApiUrl + '/subscription_status')
+                .then((response) => {
+                    if (response.data.status === 1) {
+                        const data = response.data.data;
+                        if (!data.in_trial && !data.has_active_subscription) {
+                            this.subscriptionTrialEndsAt = data.trial_ends_at;
+                            axios.get(this.$sellerApiUrl + '/subscription_plans')
+                                .then((res) => {
+                                    this.subscriptionPlans = (res.data.data && res.data.data.records) || [];
+                                    this.$bvModal.show('subscription-warning-modal');
+                                    window.sessionStorage.setItem('subscriptionModalShown', '1');
+                                });
+                        }
+                    }
+                })
+                .catch(() => {});
+        },
+        contactAdminForSubscription() {
+            this.$bvModal.hide('subscription-warning-modal');
         }
 
     }

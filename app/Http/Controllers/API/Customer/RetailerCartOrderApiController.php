@@ -281,9 +281,11 @@ class RetailerCartOrderApiController extends Controller
         $brandId = $variant->masterProduct->brand_id;
         $overlapAllowed = $variant->masterProduct->brand && (int) $variant->masterProduct->brand->is_overlap_allowed === 1;
 
-        $sellerIds = BrandDistributorMapping::where('brand_id', $brandId)
-            ->whereIn('city_id', $cityIds)
-            ->pluck('seller_id');
+        $sellerIds = CommonHelper::filterEligibleSellerIds(
+            BrandDistributorMapping::where('brand_id', $brandId)
+                ->whereIn('city_id', $cityIds)
+                ->pluck('seller_id')
+        );
 
         if ($sellerIds->isEmpty()) {
             return ['ok' => false, 'error' => 'product_not_available_in_your_area', 'seller_id' => null];

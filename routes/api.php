@@ -437,6 +437,18 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [\App\Http\Controllers\API\WishlistsApiController::class, 'index']);
     });
 
+    Route::group(['prefix' => 'distributor_subscription_plans'], function () {
+        Route::get('/', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'getList']);
+        Route::post('save', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'save']);
+        Route::post('update/{id}', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'update']);
+        Route::post('update_status/{id}', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'updateStatus']);
+        Route::post('delete/{id}', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'delete']);
+        Route::post('assign', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'assign']);
+        Route::get('assignments', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'assignments']);
+        Route::post('assignments/{id}/cancel', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'cancelAssignment']);
+        Route::get('sellers', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'sellersList']);
+    });
+
     Route::group(['prefix' => 'activity_logs'], function () {
         Route::get('/', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'getList']);
         Route::get('filters', [\App\Http\Controllers\API\ActivityLogsApiController::class, 'filters']);
@@ -600,6 +612,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('add_fcm_token', [\App\Http\Controllers\API\AdminAuthController::class, 'addFcmToken'])->name('seller.add_fcm_token');
         Route::post('update_fcm_token', [\App\Http\Controllers\API\AdminAuthController::class, 'updateFcmToken'])->name('seller.update_fcm_token');
         Route::post('logout', [\App\Http\Controllers\API\AdminAuthController::class, 'logout'])->name('seller.logout');
+        Route::get('subscription_plans', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'publishedList']);
+        Route::get('subscription_status', [\App\Http\Controllers\API\DistributorSubscriptionPlansApiController::class, 'myStatus']);
         // Point of Sale Routes
         Route::group(['prefix' => 'pos'], function () {
             Route::get('users', [\App\Http\Controllers\API\SellerPosController::class, 'getUsersList']);

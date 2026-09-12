@@ -602,6 +602,26 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -727,6 +747,22 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         label: __('date').toUpperCase(),
         sortable: true,
         thClass: 'text-start border-0 fw-semibold text-muted bg-light',
+        tdClass: 'text-start align-middle py-3'
+      }],
+      subscriptionFields: [{
+        key: 'distributor',
+        label: __('distributor').toUpperCase(),
+        thClass: 'text-start border-0 fw-semibold text-muted',
+        tdClass: 'text-start align-middle fw-bold py-3'
+      }, {
+        key: 'status',
+        label: __('status').toUpperCase(),
+        thClass: 'text-start border-0 fw-semibold text-muted',
+        tdClass: 'text-start align-middle py-3'
+      }, {
+        key: 'detail',
+        label: __('trial_ended_or_plan_ends').toUpperCase(),
+        thClass: 'text-start border-0 fw-semibold text-muted',
         tdClass: 'text-start align-middle py-3'
       }],
       pageOptions: this.$pageOptions,
@@ -880,6 +916,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     };
   },
   computed: {
+    subscriptionRows: function subscriptionRows() {
+      return this.record.subscription_widget && this.record.subscription_widget.rows || [];
+    },
     greetingKey: function greetingKey() {
       var hour = new Date().getHours();
       if (hour < 12) return 'good_morning';
@@ -908,6 +947,20 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
     this.setSellerWalletTransaction();
   },
   methods: {
+    subscriptionBadgeClass: function subscriptionBadgeClass(status) {
+      return {
+        active: 'bg-success',
+        expiring_soon: 'bg-warning text-dark',
+        at_risk: 'bg-danger'
+      }[status] || 'bg-secondary';
+    },
+    subscriptionStatusLabel: function subscriptionStatusLabel(status) {
+      return {
+        active: __('active'),
+        expiring_soon: __('expiring_soon'),
+        at_risk: __('at_risk')
+      }[status] || status;
+    },
     barChart: function barChart() {
       var _this = this;
       axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/orders/weekly_sales').then(function (response) {
@@ -2815,6 +2868,80 @@ var render = function () {
                       },
                       expression: "categoryCurrentPage",
                     },
+                  }),
+                ],
+                1
+              ),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 mb-4" }, [
+            _c("div", { staticClass: "list-surface h-100" }, [
+              _c(
+                "div",
+                {
+                  staticClass:
+                    "card-header d-flex justify-content-between align-items-center",
+                },
+                [
+                  _c("h4", { staticClass: "card-title me-1" }, [
+                    _vm._v(_vm._s(_vm.__("distributor_subscriptions"))),
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "router-link",
+                    {
+                      staticClass: "small",
+                      attrs: { to: "/distributor_subscription_plans" },
+                    },
+                    [_vm._v(_vm._s(_vm.__("view_all")))]
+                  ),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "table-responsive" },
+                [
+                  _c("b-table", {
+                    attrs: {
+                      items: _vm.subscriptionRows,
+                      fields: _vm.subscriptionFields,
+                      bordered: true,
+                      "show-empty": "",
+                      small: "",
+                      "empty-text": _vm.__("no_records_to_show"),
+                    },
+                    scopedSlots: _vm._u([
+                      {
+                        key: "cell(status)",
+                        fn: function (row) {
+                          return [
+                            _c(
+                              "span",
+                              {
+                                staticClass: "badge",
+                                class: _vm.subscriptionBadgeClass(
+                                  row.item.status
+                                ),
+                              },
+                              [
+                                _vm._v(
+                                  "\n                                        " +
+                                    _vm._s(
+                                      _vm.subscriptionStatusLabel(
+                                        row.item.status
+                                      )
+                                    ) +
+                                    "\n                                    "
+                                ),
+                              ]
+                            ),
+                          ]
+                        },
+                      },
+                    ]),
                   }),
                 ],
                 1

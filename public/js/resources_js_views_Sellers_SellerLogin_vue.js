@@ -72,6 +72,35 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -86,7 +115,10 @@ __webpack_require__.r(__webpack_exports__);
       },
       showPassword: false,
       loggedUser: _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].user,
-      setting: ""
+      setting: "",
+      showSubscriptionModal: false,
+      subscriptionMessage: '',
+      subscriptionPlans: []
     };
   },
   mounted: function mounted() {
@@ -106,6 +138,11 @@ __webpack_require__.r(__webpack_exports__);
         if (data.status === 1) {
           _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].login(data.data.access_token, data.data.user);
           _this.$router.push('/seller');
+          if (data.data.subscription_warning) {
+            vm.subscriptionMessage = data.data.subscription_warning;
+            vm.subscriptionPlans = data.data.subscription_plans || [];
+            vm.showSubscriptionModal = true;
+          }
         } else {
           vm.showError(data.message);
         }
@@ -524,7 +561,122 @@ var render = function () {
           ),
         ]),
       ]),
-    ]
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            title: _vm.__("subscription_plan"),
+            size: "lg",
+            "hide-footer": "",
+            centered: "",
+          },
+          model: {
+            value: _vm.showSubscriptionModal,
+            callback: function ($$v) {
+              _vm.showSubscriptionModal = $$v
+            },
+            expression: "showSubscriptionModal",
+          },
+        },
+        [
+          _c("div", { staticClass: "alert alert-warning py-2 px-3 mb-3" }, [
+            _c("i", { staticClass: "fa fa-exclamation-triangle me-1" }),
+            _vm._v(
+              "\n            " + _vm._s(_vm.subscriptionMessage) + "\n        "
+            ),
+          ]),
+          _vm._v(" "),
+          _vm.subscriptionPlans.length
+            ? _c(
+                "div",
+                { staticClass: "row" },
+                _vm._l(_vm.subscriptionPlans, function (plan) {
+                  return _c(
+                    "div",
+                    { key: plan.id, staticClass: "col-md-6 mb-3" },
+                    [
+                      _c("div", { staticClass: "card h-100 border" }, [
+                        _c("div", { staticClass: "card-body" }, [
+                          _c(
+                            "h5",
+                            { staticClass: "card-title font-weight-bold" },
+                            [_vm._v(_vm._s(plan.name))]
+                          ),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "text-muted small mb-2" }, [
+                            _vm._v(_vm._s(plan.description)),
+                          ]),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "mb-1" }, [
+                            _c("span", { staticClass: "h4 font-weight-bold" }, [
+                              _vm._v(
+                                _vm._s(_vm.$currency) +
+                                  " " +
+                                  _vm._s(plan.discounted_price || plan.price)
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            plan.discounted_price
+                              ? _c("s", { staticClass: "text-muted ms-2" }, [
+                                  _vm._v(
+                                    _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(plan.price)
+                                  ),
+                                ])
+                              : _vm._e(),
+                          ]),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "small text-muted mb-0" }, [
+                            _vm._v(
+                              "\n                            " +
+                                _vm._s(
+                                  plan.duration_type === "limited"
+                                    ? plan.duration_days + " " + _vm.__("days")
+                                    : _vm.__("unlimited")
+                                ) +
+                                "\n                        "
+                            ),
+                          ]),
+                        ]),
+                      ]),
+                    ]
+                  )
+                }),
+                0
+              )
+            : _c("p", { staticClass: "text-muted text-center" }, [
+                _vm._v(_vm._s(_vm.__("no_records_to_show"))),
+              ]),
+          _vm._v(" "),
+          _c("p", { staticClass: "text-center text-muted small mt-2" }, [
+            _vm._v(_vm._s(_vm.__("contact_admin_to_subscribe"))),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "text-center mt-3" },
+            [
+              _c(
+                "b-button",
+                {
+                  attrs: { variant: "secondary" },
+                  on: {
+                    click: function ($event) {
+                      _vm.showSubscriptionModal = false
+                    },
+                  },
+                },
+                [_vm._v(_vm._s(_vm.__("ok")))]
+              ),
+            ],
+            1
+          ),
+        ]
+      ),
+    ],
+    1
   )
 }
 var staticRenderFns = [

@@ -54,6 +54,35 @@
                 </div>
             </div>
         </div>
+
+        <b-modal v-model="showSubscriptionModal" :title="__('subscription_plan')" size="lg" hide-footer centered>
+            <div class="alert alert-warning py-2 px-3 mb-3">
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                {{ subscriptionMessage }}
+            </div>
+            <div class="row" v-if="subscriptionPlans.length">
+                <div class="col-md-6 mb-3" v-for="plan in subscriptionPlans" :key="plan.id">
+                    <div class="card h-100 border">
+                        <div class="card-body">
+                            <h5 class="card-title font-weight-bold">{{ plan.name }}</h5>
+                            <p class="text-muted small mb-2">{{ plan.description }}</p>
+                            <p class="mb-1">
+                                <span class="h4 font-weight-bold">{{ $currency }} {{ plan.discounted_price || plan.price }}</span>
+                                <s v-if="plan.discounted_price" class="text-muted ms-2">{{ $currency }} {{ plan.price }}</s>
+                            </p>
+                            <p class="small text-muted mb-0">
+                                {{ plan.duration_type === 'limited' ? plan.duration_days + ' ' + __('days') : __('unlimited') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p v-else class="text-muted text-center">{{ __('no_records_to_show') }}</p>
+            <p class="text-center text-muted small mt-2">{{ __('contact_admin_to_subscribe') }}</p>
+            <div class="text-center mt-3">
+                <b-button variant="secondary" @click="showSubscriptionModal = false">{{ __('ok') }}</b-button>
+            </div>
+        </b-modal>
     </div>
 </template>
 <script>
@@ -71,7 +100,10 @@ export default {
             },
             showPassword: false,
             loggedUser: Auth.user,
-            setting:""
+            setting:"",
+            showSubscriptionModal: false,
+            subscriptionMessage: '',
+            subscriptionPlans: [],
         };
     },
     mounted() {
@@ -92,6 +124,11 @@ export default {
                 if (data.status === 1) {
                     Auth.login(data.data.access_token, data.data.user);
                     this.$router.push('/seller');
+                    if (data.data.subscription_warning) {
+                        vm.subscriptionMessage = data.data.subscription_warning;
+                        vm.subscriptionPlans = data.data.subscription_plans || [];
+                        vm.showSubscriptionModal = true;
+                    }
                 } else {
                     vm.showError(data.message);
                 }

@@ -561,6 +561,26 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-12 mb-4">
+                        <div class="list-surface h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h4 class="card-title me-1">{{ __('distributor_subscriptions') }}</h4>
+                                <router-link to="/distributor_subscription_plans" class="small">{{ __('view_all') }}</router-link>
+                            </div>
+
+                            <div class="table-responsive">
+                                <b-table :items="subscriptionRows" :fields="subscriptionFields" :bordered="true"
+                                    show-empty small :empty-text="__('no_records_to_show')">
+                                    <template #cell(status)="row">
+                                        <span class="badge" :class="subscriptionBadgeClass(row.item.status)">
+                                            {{ subscriptionStatusLabel(row.item.status) }}
+                                        </span>
+                                    </template>
+                                </b-table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
@@ -618,6 +638,12 @@ export default {
                 { key: 'active_status', label: __('status').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
                 { key: 'remaining_final', label: __('amount').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' },
                 { key: 'created_at', label: __('date').toUpperCase(), sortable: true, thClass: 'text-start border-0 fw-semibold text-muted bg-light', tdClass: 'text-start align-middle py-3' }
+            ],
+
+            subscriptionFields: [
+                { key: 'distributor', label: __('distributor').toUpperCase(), thClass: 'text-start border-0 fw-semibold text-muted', tdClass: 'text-start align-middle fw-bold py-3' },
+                { key: 'status', label: __('status').toUpperCase(), thClass: 'text-start border-0 fw-semibold text-muted', tdClass: 'text-start align-middle py-3' },
+                { key: 'detail', label: __('trial_ended_or_plan_ends').toUpperCase(), thClass: 'text-start border-0 fw-semibold text-muted', tdClass: 'text-start align-middle py-3' }
             ],
 
             pageOptions: this.$pageOptions,
@@ -786,6 +812,9 @@ export default {
         };
     },
     computed: {
+        subscriptionRows() {
+            return (this.record.subscription_widget && this.record.subscription_widget.rows) || [];
+        },
         greetingKey() {
             const hour = new Date().getHours();
             if (hour < 12) return 'good_morning';
@@ -815,6 +844,12 @@ export default {
         this.setSellerWalletTransaction();
     },
     methods: {
+        subscriptionBadgeClass(status) {
+            return { active: 'bg-success', expiring_soon: 'bg-warning text-dark', at_risk: 'bg-danger' }[status] || 'bg-secondary';
+        },
+        subscriptionStatusLabel(status) {
+            return { active: __('active'), expiring_soon: __('expiring_soon'), at_risk: __('at_risk') }[status] || status;
+        },
         barChart() {
             axios.get(this.$apiUrl + '/orders/weekly_sales').then((response) => {
                 this.graphOrders = response.data.data;

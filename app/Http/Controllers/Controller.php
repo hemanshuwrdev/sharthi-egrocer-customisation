@@ -255,6 +255,67 @@ class Controller extends BaseController
 
         $data['status_order_count'] = CommonHelper::getStatusOrderCount();
 
+        // Distributor subscription widget: active plans, distributors past trial
+        // with no plan assigned (their products are currently hidden from
+        // customers — see CommonHelper::filterEligibleSellerIds), and plans
+        // expiring within the next 7 days.
+        $trialDays = (int) (Setting::get_value('distributor_trial_days') ?: 0);
+        $activeSubscriptionSellerIds = \App\Models\DistributorSubscription::where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', now()->toDateString());
+            })
+            ->pluck('seller_id')
+            ->unique();
+
+        $sellersPastTrial = Seller::where('status', 1)
+            ->whereRaw('DATE_ADD(created_at, INTERVAL ? DAY) < NOW()', [$trialDays])
+            ->pluck('id');
+        $atRiskSellerIds = $sellersPastTrial->diff($activeSubscriptionSellerIds)->values();
+
+        $expiringSoon = \App\Models\DistributorSubscription::with('seller:id,name,store_name')
+            ->where('status', 'active')
+            ->whereNotNull('end_date')
+            ->whereBetween('end_date', [now()->toDateString(), now()->addDays(7)->toDateString()])
+            ->orderBy('end_date', 'ASC')
+            ->get();
+
+        $atRiskSellers = Seller::whereIn('id', $atRiskSellerIds)->get(['id', 'name', 'store_name', 'created_at']);
+
+        $expiringSoonIds = $expiringSoon->pluck('id');
+        $activeAssignments = \App\Models\DistributorSubscription::with('seller:id,name,store_name')
+            ->where('status', 'active')
+            ->whereNotIn('id', $expiringSoonIds)
+            ->orderBy('end_date', 'ASC')
+            ->get();
+
+        $data['subscription_widget'] = [
+            'active_subscriptions' => $activeSubscriptionSellerIds->count(),
+            'distributors_at_risk' => $atRiskSellerIds->count(),
+            'expiring_in_7_days' => $expiringSoon->count(),
+            'rows' => $activeAssignments->map(function ($row) {
+                return [
+                    'seller_id' => $row->seller_id,
+                    'distributor' => $row->seller ? ($row->seller->store_name ?: $row->seller->name) : '-',
+                    'status' => 'active',
+                    'detail' => $row->end_date ? \Carbon\Carbon::parse($row->end_date)->format('d M Y') : __('unlimited'),
+                ];
+            })->concat($expiringSoon->map(function ($row) {
+                return [
+                    'seller_id' => $row->seller_id,
+                    'distributor' => $row->seller ? ($row->seller->store_name ?: $row->seller->name) : '-',
+                    'status' => 'expiring_soon',
+                    'detail' => \Carbon\Carbon::parse($row->end_date)->format('d M Y'),
+                ];
+            }))->concat($atRiskSellers->map(function ($seller) use ($trialDays) {
+                return [
+                    'seller_id' => $seller->id,
+                    'distributor' => $seller->store_name ?: $seller->name,
+                    'status' => 'at_risk',
+                    'detail' => \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays)->format('d M Y'),
+                ];
+            }))->values(),
+        ];
+
         return CommonHelper::responseWithData($data);
     }
     public function doLanguageChange(Request $request)

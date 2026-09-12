@@ -422,6 +422,12 @@ export default {
                         },
                     ],
                 },
+                {
+                    name: __('subscription_plan'),
+                    icon: 'credit-card',
+                    url: '/distributor_subscription_plans',
+                    role: true,
+                },
                 { type: 'title', name: __('marketing') },
                 {
                     name: __('home_sliders'),

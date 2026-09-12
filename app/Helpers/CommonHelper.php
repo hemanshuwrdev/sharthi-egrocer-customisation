@@ -836,7 +836,42 @@ class CommonHelper
         });
 
         $sellerIds = $query->pluck('id');
-        return $sellerIds;
+        return self::filterEligibleSellerIds($sellerIds);
+    }
+
+    /**
+     * Customer-facing product visibility gate: a seller (distributor) whose free
+     * trial (Setting: distributor_trial_days, from seller.created_at) has ended
+     * and who has no active distributor_subscriptions row is dropped from every
+     * seller_id list used to pull products/offers for shoppers. Login is
+     * unaffected — this is the sole enforcement point for subscription status.
+     */
+    public static function filterEligibleSellerIds($sellerIds)
+    {
+        $sellerIds = collect($sellerIds)->filter()->unique()->values();
+        if ($sellerIds->isEmpty()) {
+            return $sellerIds;
+        }
+
+        $trialDays = (int) (Setting::get_value('distributor_trial_days') ?: 0);
+
+        $sellers = Seller::whereIn('id', $sellerIds)->get(['id', 'created_at']);
+
+        $activeSubscriptionSellerIds = \App\Models\DistributorSubscription::whereIn('seller_id', $sellerIds)
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', now()->toDateString());
+            })
+            ->pluck('seller_id')
+            ->unique();
+
+        return $sellers->filter(function ($seller) use ($trialDays, $activeSubscriptionSellerIds) {
+            $trialEndsAt = \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays);
+            if (now()->lessThanOrEqualTo($trialEndsAt)) {
+                return true;
+            }
+            return $activeSubscriptionSellerIds->contains($seller->id);
+        })->pluck('id')->values();
     }
     public static function getProductByVariantId($arr)
     {

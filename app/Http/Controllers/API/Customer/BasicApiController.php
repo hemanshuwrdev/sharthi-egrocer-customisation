@@ -245,7 +245,7 @@ class BasicApiController extends Controller
 
         $mappings  = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->get(['brand_id', 'seller_id']);
         $brandIds  = $mappings->pluck('brand_id')->unique()->values();
-        $sellerIds = $mappings->pluck('seller_id')->unique()->values();
+        $sellerIds = CommonHelper::filterEligibleSellerIds($mappings->pluck('seller_id')->unique()->values());
         $allowedPairs = $mappings->map(fn($m) => $m->brand_id . '_' . $m->seller_id)->unique()->flip();
 
         $sellers     = \App\Models\Seller::whereIn('id', $sellerIds)->get(['id', 'name', 'logo'])->keyBy('id');
