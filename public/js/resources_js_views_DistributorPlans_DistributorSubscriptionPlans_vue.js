@@ -201,6 +201,9 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -220,7 +223,8 @@ __webpack_require__.r(__webpack_exports__);
       assignModalOpen: false,
       planFields: [{
         key: 'id',
-        label: __('id')
+        label: __('id'),
+        "class": 'text-center'
       }, {
         key: 'name',
         label: __('name')
@@ -240,7 +244,8 @@ __webpack_require__.r(__webpack_exports__);
       }],
       assignmentFields: [{
         key: 'id',
-        label: __('id')
+        label: __('id'),
+        "class": 'text-center'
       }, {
         key: 'seller',
         label: __('distributor')
@@ -717,25 +722,23 @@ var render = function () {
                         key: "cell(status)",
                         fn: function (row) {
                           return [
-                            _c("b-form-checkbox", {
-                              attrs: {
-                                switch: "",
-                                value: true,
-                                "unchecked-value": false,
-                              },
-                              on: {
-                                change: function ($event) {
-                                  return _vm.toggleStatus(row.item)
-                                },
-                              },
-                              model: {
-                                value: row.item.status,
-                                callback: function ($$v) {
-                                  _vm.$set(row.item, "status", $$v)
-                                },
-                                expression: "row.item.status",
-                              },
-                            }),
+                            _c(
+                              "div",
+                              { staticClass: "form-check form-switch" },
+                              [
+                                _c("input", {
+                                  staticClass: "form-check-input",
+                                  attrs: { type: "checkbox", role: "switch" },
+                                  domProps: { checked: row.item.status },
+                                  on: {
+                                    change: function ($event) {
+                                      row.item.status = $event.target.checked
+                                      _vm.toggleStatus(row.item)
+                                    },
+                                  },
+                                }),
+                              ]
+                            ),
                           ]
                         },
                       },
@@ -775,7 +778,7 @@ var render = function () {
                                       modifiers: { hover: true },
                                     },
                                   ],
-                                  staticClass: "list-action-btn is-edit",
+                                  staticClass: "list-action-btn is-assign",
                                   attrs: {
                                     title: _vm.__("assign_to_distributor"),
                                   },
@@ -815,7 +818,7 @@ var render = function () {
                     ],
                     null,
                     false,
-                    2652590330
+                    3622983001
                   ),
                 }),
               ],

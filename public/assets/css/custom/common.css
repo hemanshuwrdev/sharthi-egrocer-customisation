@@ -2932,6 +2932,7 @@ body.theme-dark {
 
 .list-action-btn.is-edit,
 .list-action-btn.is-view,
+.list-action-btn.is-assign,
 .list-action-btn.is-delete {
     color: var(--app-muted) !important;
 }
@@ -2942,6 +2943,10 @@ body.theme-dark {
 
 .list-action-btn.is-edit:hover {
     color: #37a279 !important;
+}
+
+.list-action-btn.is-assign:hover {
+    color: #2c7be5 !important;
 }
 
 .list-action-btn.is-delete:hover {
@@ -2957,12 +2962,14 @@ body.theme-dark {
    place — no need to touch each file's <i class="fa fa-..."> markup. */
 .list-action-btn.is-edit i,
 .list-action-btn.is-view i,
+.list-action-btn.is-assign i,
 .list-action-btn.is-delete i {
     display: none !important;
 }
 
 .list-action-btn.is-edit::after,
 .list-action-btn.is-view::after,
+.list-action-btn.is-assign::after,
 .list-action-btn.is-delete::after {
     content: '';
     display: inline-block;
@@ -2990,6 +2997,11 @@ body.theme-dark {
 .list-action-btn.is-delete::after {
     -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/><path d='M3 6h18'/><path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg>");
     mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/><path d='M3 6h18'/><path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg>");
+}
+
+.list-action-btn.is-assign::after {
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><line x1='19' x2='19' y1='8' y2='14'/><line x1='22' x2='16' y1='11' y2='11'/></svg>");
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><line x1='19' x2='19' y1='8' y2='14'/><line x1='22' x2='16' y1='11' y2='11'/></svg>");
 }
 
 /* ---- Footer / pagination ---- */

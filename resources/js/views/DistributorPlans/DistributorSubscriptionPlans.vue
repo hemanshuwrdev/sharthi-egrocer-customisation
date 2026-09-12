@@ -43,12 +43,15 @@
                         {{ row.item.duration_type === 'limited' ? row.item.duration_days + ' ' + __('days') : __('unlimited') }}
                     </template>
                     <template #cell(status)="row">
-                        <b-form-checkbox switch v-model="row.item.status" :value="true" :unchecked-value="false" @change="toggleStatus(row.item)"></b-form-checkbox>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                :checked="row.item.status" @change="row.item.status = $event.target.checked; toggleStatus(row.item)">
+                        </div>
                     </template>
                     <template #cell(actions)="row">
                         <div class="list-actions">
                             <button class="list-action-btn is-edit" @click="openEditModal(row.item)" v-b-tooltip.hover :title="__('edit')"><i class="fa fa-pencil-alt"></i></button>
-                            <button class="list-action-btn is-edit" @click="openAssignModal(row.item)" v-b-tooltip.hover :title="__('assign_to_distributor')"><i class="fa fa-user-plus"></i></button>
+                            <button class="list-action-btn is-assign" @click="openAssignModal(row.item)" v-b-tooltip.hover :title="__('assign_to_distributor')"><i class="fa fa-user-plus"></i></button>
                             <button class="list-action-btn is-delete" @click="deletePlan(row.item.id)" v-b-tooltip.hover :title="__('delete')"><i class="fa fa-trash"></i></button>
                         </div>
                     </template>
@@ -205,7 +208,7 @@ export default {
             planModalOpen: false,
             assignModalOpen: false,
             planFields: [
-                { key: 'id', label: __('id') },
+                { key: 'id', label: __('id'), class: 'text-center' },
                 { key: 'name', label: __('name') },
                 { key: 'duration', label: __('duration') },
                 { key: 'price', label: __('price') },
@@ -213,7 +216,7 @@ export default {
                 { key: 'actions', label: __('actions'), class: 'text-center' },
             ],
             assignmentFields: [
-                { key: 'id', label: __('id') },
+                { key: 'id', label: __('id'), class: 'text-center' },
                 { key: 'seller', label: __('distributor') },
                 { key: 'plan_name', label: __('name') },
                 { key: 'start_date', label: __('start_date') },
