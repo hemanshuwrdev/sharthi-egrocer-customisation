@@ -1912,11 +1912,14 @@ class CommonHelper
      *
      * When $step > 0 (MOQ configured), slabs must additionally:
      * - start at exactly the MOQ (lowest min_qty === $step)
-     * - have min_qty/max_qty aligned to multiples of the step, so every
-     *   slab actually contains an orderable quantity (order qty must be a
-     *   multiple of the step — see MasterCatalogOrderHelper::validateSecondaryQty)
-     * - be contiguous with no gaps/overlaps (next.min_qty === prev.max_qty + 1)
      * - only allow an open-ended (null) max_qty on the last slab
+     * - leave no orderable quantity unpriced or double-priced. Order qty must
+     *   be a multiple of $step (see MasterCatalogOrderHelper::validateSecondaryQty),
+     *   so boundaries don't need to land exactly on a step multiple themselves —
+     *   e.g. with step=20, slabs "20-100" then "101-200" are fine even though 101
+     *   isn't a multiple of 20, because no orderable quantity (100, 120, 140...)
+     *   is skipped or covered twice. We only require: no overlap, and the next
+     *   orderable quantity after one slab's max falls inside the next slab.
      */
     public static function validateSlabRanges($slabs, $step = 0)
     {
@@ -1950,28 +1953,37 @@ class CommonHelper
             return $a['min_qty'] <=> $b['min_qty'];
         });
 
-        $epsilon = 0.0001;
         if ($step > 0 && !empty($clean)) {
             if ($clean[0]['min_qty'] != $step) {
                 return 'The first slab must start at the minimum order quantity (' . (int) $step . ')';
             }
             foreach ($clean as $idx => $row) {
-                if (fmod($row['min_qty'], $step) > $epsilon) {
-                    return 'Slab min_qty must be a multiple of the minimum order quantity (' . (int) $step . ')';
-                }
                 $isLast = $idx === count($clean) - 1;
                 if ($row['max_qty'] === null && !$isLast) {
                     return 'Only the last slab can have an open-ended max_qty';
-                }
-                if ($row['max_qty'] !== null && fmod($row['max_qty'] + 1, $step) > $epsilon) {
-                    return 'Slab max_qty must align with the minimum order quantity step (' . (int) $step . ')';
                 }
             }
         }
 
         for ($i = 1; $i < count($clean); $i++) {
             $prevMax = $clean[$i - 1]['max_qty'];
-            if ($prevMax === null || $prevMax + 1 !== $clean[$i]['min_qty']) {
+            $curMin  = $clean[$i]['min_qty'];
+            $curMax  = $clean[$i]['max_qty'];
+
+            if ($prevMax === null || $curMin <= $prevMax) {
+                return 'Slab ranges must be contiguous with no gaps or overlaps';
+            }
+
+            if ($step > 0) {
+                // The next orderable quantity after the previous slab's max must
+                // fall inside this slab — otherwise it's an orderable amount that
+                // no slab prices.
+                $nextReachable = ceil(($prevMax + 1) / $step) * $step;
+                $inRange = $nextReachable >= $curMin && ($curMax === null || $nextReachable <= $curMax);
+                if (!$inRange) {
+                    return 'Slab ranges must be contiguous with no gaps or overlaps';
+                }
+            } elseif ($prevMax + 1 !== $curMin) {
                 return 'Slab ranges must be contiguous with no gaps or overlaps';
             }
         }

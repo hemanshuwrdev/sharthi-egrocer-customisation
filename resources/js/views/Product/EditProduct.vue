@@ -1871,25 +1871,34 @@ export default {
                 }
                 for (let i = 0; i < sorted.length; i++) {
                     const r = sorted[i];
-                    if (r.min_qty % step !== 0) {
-                        this.$set(input, 'validationErrorSlab', __('slab_min_qty_must_be_multiple_of_moq').replace(':moq', step));
-                        return false;
-                    }
                     const isLast = i === sorted.length - 1;
                     const hasMax = r.max_qty !== null && r.max_qty !== '';
                     if (!hasMax && !isLast) {
                         this.$set(input, 'validationErrorSlab', __('only_last_slab_can_be_open_ended'));
                         return false;
                     }
-                    if (hasMax && (r.max_qty + 1) % step !== 0) {
-                        this.$set(input, 'validationErrorSlab', __('slab_max_qty_must_align_with_moq').replace(':moq', step));
-                        return false;
-                    }
                 }
             }
             for (let i = 1; i < sorted.length; i++) {
                 const prevMax = sorted[i - 1].max_qty;
-                if (prevMax === null || prevMax === '' || (step > 0 ? prevMax + 1 !== sorted[i].min_qty : prevMax >= sorted[i].min_qty)) {
+                const curMin = sorted[i].min_qty;
+                const curMaxRaw = sorted[i].max_qty;
+                const curMax = (curMaxRaw === null || curMaxRaw === '') ? null : curMaxRaw;
+                if (prevMax === null || prevMax === '' || curMin <= prevMax) {
+                    this.$set(input, 'validationErrorSlab', __('slab_ranges_must_be_contiguous'));
+                    return false;
+                }
+                if (step > 0) {
+                    // The next orderable quantity after the previous slab's max must
+                    // fall inside this slab — otherwise it's an orderable amount that
+                    // no slab prices.
+                    const nextReachable = Math.ceil((prevMax + 1) / step) * step;
+                    const inRange = nextReachable >= curMin && (curMax === null || nextReachable <= curMax);
+                    if (!inRange) {
+                        this.$set(input, 'validationErrorSlab', __('slab_ranges_must_be_contiguous'));
+                        return false;
+                    }
+                } else if (prevMax + 1 !== curMin) {
                     this.$set(input, 'validationErrorSlab', __('slab_ranges_must_be_contiguous'));
                     return false;
                 }

@@ -546,33 +546,44 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _iterator.f();
       }
       var step = this.slabTarget.allow_loose_qty ? 0 : parseFloat(this.slabTarget.secondary_unit_value) || 0;
+      var sorted = this.slabDraft.slice().sort(function (a, b) {
+        return a.min_qty - b.min_qty;
+      });
       if (step > 0) {
-        var sorted = this.slabDraft.slice().sort(function (a, b) {
-          return a.min_qty - b.min_qty;
-        });
         if (sorted[0].min_qty !== step) {
           this.showError(__('slab_must_start_at_moq').replace(':moq', step));
           return;
         }
         for (var i = 0; i < sorted.length; i++) {
           var s = sorted[i];
-          if (s.min_qty % step !== 0) {
-            this.showError(__('slab_min_qty_must_be_multiple_of_moq').replace(':moq', step));
-            return;
-          }
           var isLast = i === sorted.length - 1;
           if (!s.max_qty && !isLast) {
             this.showError(__('only_last_slab_can_be_open_ended'));
             return;
           }
-          if (s.max_qty && (s.max_qty + 1) % step !== 0) {
-            this.showError(__('slab_max_qty_must_align_with_moq').replace(':moq', step));
-            return;
-          }
-          if (i > 0 && sorted[i - 1].max_qty + 1 !== s.min_qty) {
+        }
+      }
+      for (var _i = 1; _i < sorted.length; _i++) {
+        var prevMax = sorted[_i - 1].max_qty;
+        var curMin = sorted[_i].min_qty;
+        var curMax = sorted[_i].max_qty;
+        if (prevMax === null || curMin <= prevMax) {
+          this.showError(__('slab_ranges_must_be_contiguous'));
+          return;
+        }
+        if (step > 0) {
+          // The next orderable quantity after the previous slab's max must
+          // fall inside this slab — otherwise it's an orderable amount that
+          // no slab prices.
+          var nextReachable = Math.ceil((prevMax + 1) / step) * step;
+          var inRange = nextReachable >= curMin && (curMax === null || nextReachable <= curMax);
+          if (!inRange) {
             this.showError(__('slab_ranges_must_be_contiguous'));
             return;
           }
+        } else if (prevMax + 1 !== curMin) {
+          this.showError(__('slab_ranges_must_be_contiguous'));
+          return;
         }
       }
       this.slabSaving = true;
