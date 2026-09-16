@@ -81,6 +81,7 @@ class MasterProductApiController extends Controller
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             'tax_id' => 'nullable|exists:taxes,id',
+            'tax_category_id' => 'nullable|exists:tax_categories,id',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
             'other_images' => 'nullable|array',
             'other_images.*' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
@@ -116,6 +117,7 @@ class MasterProductApiController extends Controller
                 $product->brand_id = $request->brand_id;
                 $product->category_id = $request->category_id;
                 $product->tax_id = $request->tax_id;
+                $product->tax_category_id = $request->tax_category_id ?: null;
                 $product->hsn = $request->hsn;
                 $product->description = $defaults['description'];
                 $product->meta_title = $defaults['meta_title'];
@@ -187,6 +189,7 @@ class MasterProductApiController extends Controller
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             'tax_id' => 'nullable|exists:taxes,id',
+            'tax_category_id' => 'nullable|exists:tax_categories,id',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
             'other_images' => 'nullable|array',
             'other_images.*' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
@@ -221,6 +224,7 @@ class MasterProductApiController extends Controller
                 $product->brand_id = $request->brand_id;
                 $product->category_id = $request->category_id;
                 $product->tax_id = $request->tax_id;
+                $product->tax_category_id = $request->tax_category_id ?: null;
                 $product->hsn = $request->hsn;
                 $product->description = $defaults['description'];
                 $product->meta_title = $defaults['meta_title'];

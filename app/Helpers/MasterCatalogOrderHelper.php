@@ -6,8 +6,10 @@ use App\Models\BrandDistributorMapping;
 use App\Models\MasterProductVariant;
 use App\Models\OrderItem;
 use App\Models\OrderStatusList;
+use App\Models\Seller;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
+use App\Models\TaxRule;
 
 /**
  * Sarthi master catalog order helpers — used by POS, retailer cart, retailer order placement.
@@ -31,7 +33,7 @@ class MasterCatalogOrderHelper
      *          'step' => float, 'secondary_unit' => string|null,
      *          'min_secondary_qty' => int, 'min_qty' => float ]
      */
-    public static function resolveLine(int $sellerId, int $masterProductVariantId, float $qty, ?int $userId = null): array
+    public static function resolveLine(int $sellerId, int $masterProductVariantId, float $qty, ?int $userId = null, ?int $buyerUserId = null): array
     {
         $variant = MasterProductVariant::with(['masterProduct.tax', 'secondaryUnit'])->find($masterProductVariantId);
         if (!$variant || !$variant->masterProduct) {
@@ -97,6 +99,22 @@ class MasterCatalogOrderHelper
         // value and adds it straight to the per-unit price/discounted_price it returns —
         // so tax_amount_per_unit here must stay per-unit, never multiplied by qty.
         $taxPercentage = (float) ($variant->masterProduct->tax->percentage ?? 0);
+
+        // Prefer a matching tax_rule: country from the buyer's own registered
+        // address, same/different-state (place of supply) from comparing the
+        // distributor's seller.state against the buyer's address state. Falls
+        // back to the flat tax above whenever any of that is unresolvable.
+        $buyerAddress = self::resolveBuyerAddress($buyerUserId ?? $userId);
+        if ($buyerAddress) {
+            $countryId = CommonHelper::resolveCountryIdForAddress($buyerAddress);
+            $distributor = Seller::find($sellerId);
+            $isSameRegion = CommonHelper::isSameRegion($distributor->state ?? null, $buyerAddress->state ?? null);
+            $resolvedTaxPercentage = TaxRule::resolvePercentage($countryId, $variant->masterProduct->tax_category_id ?? null, $isSameRegion);
+            if ($resolvedTaxPercentage !== null) {
+                $taxPercentage = $resolvedTaxPercentage;
+            }
+        }
+
         $taxAmountPerUnit = $taxPercentage > 0 ? round($unitPrice * $taxPercentage / 100, 2) : 0;
 
         // Stepper metadata (used by mobile app to render the quantity stepper widget).
@@ -289,6 +307,16 @@ class MasterCatalogOrderHelper
         }
 
         return ['ok' => true, 'error' => null, 'seller_id' => (int) $sp->seller_id, 'overlap_allowed' => true];
+    }
+
+    /**
+     * The buyer's own default address, for tax-rule country/state resolution.
+     * Retailers' addresses live in user_addresses the same as regular
+     * customers (see the area_id migration note in sarthi_customisation.php).
+     */
+    private static function resolveBuyerAddress(?int $buyerUserId)
+    {
+        return $buyerUserId ? CommonHelper::resolveDefaultAddressForUser($buyerUserId) : null;
     }
 
     private static function fail(string $err): array

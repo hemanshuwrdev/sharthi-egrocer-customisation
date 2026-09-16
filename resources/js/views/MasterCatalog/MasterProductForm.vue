@@ -124,6 +124,16 @@
                                             </div>
 
                                             <div class="col-md-6 mb-3">
+                                                <label>{{ __('tax_category') }}</label>
+                                                <select class="form-control form-select" v-model="product.tax_category_id">
+                                                    <option :value="null">{{ __('select_tax_category') }}</option>
+                                                    <option v-for="tc in taxCategories" :key="tc.id" :value="tc.id">
+                                                        {{ tc.name }}
+                                                    </option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
                                                 <label>{{ __('hsn_code') }}</label>
                                                 <input type="text" class="form-control" v-model="product.hsn" />
                                             </div>
@@ -430,6 +440,7 @@ export default {
                 brand_id: null,
                 category_id: null,
                 tax_id: null,
+                tax_category_id: null,
                 hsn: '',
                 type: 'single',
                 status: 1,
@@ -452,6 +463,7 @@ export default {
             brands: [],
             categories: [],
             taxes: [],
+            taxCategories: [],
             units: [],
 
             // Parent company picker
@@ -598,6 +610,9 @@ export default {
             axios.get(this.$apiUrl + '/products/taxes').then(r => {
                 this.taxes = r.data.data || [];
             }).catch(() => {});
+            axios.get(this.$apiUrl + '/tax-categories', { params: { limit: 0, status: 1 } }).then(r => {
+                this.taxCategories = r.data.data || [];
+            }).catch(() => {});
             axios.get(this.$apiUrl + '/units/get').then(r => {
                 this.units = r.data.data || [];
             }).catch(() => {});
@@ -613,6 +628,7 @@ export default {
                     brand_id: p.brand_id,
                     category_id: p.category_id,
                     tax_id: p.tax_id,
+                    tax_category_id: p.tax_category_id || null,
                     hsn: p.hsn,
                     type: p.type || 'single',
                     status: p.status,
@@ -897,6 +913,7 @@ export default {
             if (this.product.brand_id) fd.append('brand_id', this.product.brand_id);
             if (this.product.category_id) fd.append('category_id', this.product.category_id);
             if (this.product.tax_id) fd.append('tax_id', this.product.tax_id);
+            if (this.product.tax_category_id) fd.append('tax_category_id', this.product.tax_category_id);
             if (this.product.hsn) fd.append('hsn', this.product.hsn);
             fd.append('type', this.product.type);
             fd.append('status', this.product.status);

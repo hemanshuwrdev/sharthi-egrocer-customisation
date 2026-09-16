@@ -40,6 +40,11 @@ __webpack_require__.r(__webpack_exports__);
         url: '/store_settings',
         permission: 'manage_store_settings'
       }, {
+        title: __('tax_settings'),
+        icon: 'calculator',
+        url: '/tax_settings',
+        permission: 'manage_store_settings'
+      }, {
         title: __('additional_charge'),
         icon: 'credit-card',
         url: '/additional_charges',

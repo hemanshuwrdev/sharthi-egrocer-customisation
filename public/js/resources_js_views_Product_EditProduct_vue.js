@@ -1125,6 +1125,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 // import InputTag from 'vue-input-tag';
@@ -1162,6 +1174,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       tagSuggestions: [],
       brand: null,
       tax_id: 0,
+      tax_category_id: '',
+      taxCategories: [],
       type: 'packet',
       category_id: '',
       product_type: '',
@@ -1404,6 +1418,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     this.fetchActiveLanguages().then(function () {
       _this6.getSellers();
       _this6.getTaxes();
+      _this6.getTaxCategories();
       _this6.getUnits();
       _this6.getBrands();
       _this6.getCountries();
@@ -2188,73 +2203,84 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _this23.taxes = data.data;
       });
     },
-    getUnits: function getUnits() {
+    getTaxCategories: function getTaxCategories() {
       var _this24 = this;
+      axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/tax-categories', {
+        params: {
+          limit: 0,
+          status: 1
+        }
+      }).then(function (response) {
+        _this24.taxCategories = response.data.data;
+      });
+    },
+    getUnits: function getUnits() {
+      var _this25 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/units/get').then(function (response) {
-        _this24.isLoading = false;
+        _this25.isLoading = false;
         var data = response.data;
-        _this24.units = data.data;
+        _this25.units = data.data;
       });
     },
     getBrands: function getBrands() {
-      var _this25 = this;
+      var _this26 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/products/brands/get').then(function (response) {
-        _this25.isLoading = false;
+        _this26.isLoading = false;
         var data = response.data;
-        _this25.brands = data.data;
-        if (_this25.cachedData && _this25.cachedData.brand) {
-          var foundBrand = _this25.brands.find(function (b) {
-            return b.id === _this25.cachedData.brand.id;
+        _this26.brands = data.data;
+        if (_this26.cachedData && _this26.cachedData.brand) {
+          var foundBrand = _this26.brands.find(function (b) {
+            return b.id === _this26.cachedData.brand.id;
           }) || null;
           // Update brand with translated name
-          _this25.$nextTick(function () {
-            if (foundBrand && _this25.translatedBrands && _this25.translatedBrands.length > 0) {
-              var translatedBrand = _this25.translatedBrands.find(function (b) {
+          _this26.$nextTick(function () {
+            if (foundBrand && _this26.translatedBrands && _this26.translatedBrands.length > 0) {
+              var translatedBrand = _this26.translatedBrands.find(function (b) {
                 return b.id === foundBrand.id;
               });
               if (translatedBrand) {
-                _this25.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
+                _this26.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
                   name: translatedBrand.name,
                   title: translatedBrand.title
                 });
               } else {
-                _this25.brand = foundBrand;
+                _this26.brand = foundBrand;
               }
             } else {
-              _this25.brand = foundBrand;
+              _this26.brand = foundBrand;
             }
           });
         }
       });
     },
     getCountries: function getCountries() {
-      var _this26 = this;
+      var _this27 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/countries/active').then(function (response) {
-        _this26.isLoading = false;
+        _this27.isLoading = false;
         var data = response.data;
-        _this26.countries = data.data;
-        if (_this26.cachedData && _this26.cachedData.made_in) {
-          _this26.made_in = _this26.countries.find(function (c) {
-            return c.id === _this26.cachedData.made_in.id;
+        _this27.countries = data.data;
+        if (_this27.cachedData && _this27.cachedData.made_in) {
+          _this27.made_in = _this27.countries.find(function (c) {
+            return c.id === _this27.cachedData.made_in.id;
           }) || null;
         }
       });
     },
     getTags: function getTags() {
-      var _this27 = this;
+      var _this28 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/products/tags').then(function (response) {
-        _this27.isLoading = false;
+        _this28.isLoading = false;
         var data = response.data;
-        _this27.tags = data.data;
+        _this28.tags = data.data;
 
         // After tags are loaded, convert tag names to IDs for Select2 (if translations are already loaded)
-        if (_this27.id && _this27.languages.length > 0) {
-          _this27.$nextTick(function () {
-            _this27.convertTagNamesToIds();
+        if (_this28.id && _this28.languages.length > 0) {
+          _this28.$nextTick(function () {
+            _this28.convertTagNamesToIds();
           });
         }
       });
@@ -2280,26 +2306,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return status.status || '';
     },
     getOrderStatus: function getOrderStatus() {
-      var _this28 = this;
+      var _this29 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
-        _this28.isLoading = false;
+        _this29.isLoading = false;
         var data = response.data;
         var statusesToRemoveIds = [6, 7, 8];
-        _this28.order_status = data.data.filter(function (status) {
+        _this29.order_status = data.data.filter(function (status) {
           return !statusesToRemoveIds.includes(status.id);
         });
       });
     },
     getTextGenKey: function getTextGenKey() {
-      var _this29 = this;
+      var _this30 = this;
       // Get the text generation API key from store settings
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/store_settings').then(function (response) {
         var data = response.data.data;
         if (data.store_settings) {
           data.store_settings.forEach(function (item) {
             if (item.variable === 'text_gen_key') {
-              _this29.textGenKey = item.value;
+              _this30.textGenKey = item.value;
             }
           });
         }
@@ -2364,105 +2390,106 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return true;
     },
     getProduct: function getProduct() {
-      var _this30 = this;
+      var _this31 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/products/edit/' + this.id).then(function (response) {
         var data = response.data;
         if (data.status === 1) {
-          var _this30$record$indica;
-          _this30.record = data.data;
-          _this30.name = _this30.record.name;
-          _this30.slug = _this30.record.slug;
-          _this30.barcode = _this30.record.barcode;
-          if (_this30.clone) {
-            _this30.name = '';
-            _this30.slug = '';
-            _this30.barcode = '';
+          var _this31$record$indica;
+          _this31.record = data.data;
+          _this31.name = _this31.record.name;
+          _this31.slug = _this31.record.slug;
+          _this31.barcode = _this31.record.barcode;
+          if (_this31.clone) {
+            _this31.name = '';
+            _this31.slug = '';
+            _this31.barcode = '';
           }
-          _this30.seller_id = _this30.record.seller_id;
-          _this30.getSellerCategories();
-          _this30.getSeller();
-          _this30.tag_ids = _this30.record.tags.map(function (item) {
+          _this31.seller_id = _this31.record.seller_id;
+          _this31.getSellerCategories();
+          _this31.getSeller();
+          _this31.tag_ids = _this31.record.tags.map(function (item) {
             return item.id;
           });
-          _this30.tax_id = _this30.record.tax_id;
-          var foundBrand = _this30.brands.find(function (item) {
-            return item.id === _this30.record.brand_id;
+          _this31.tax_id = _this31.record.tax_id;
+          _this31.tax_category_id = _this31.record.tax_category_id || '';
+          var foundBrand = _this31.brands.find(function (item) {
+            return item.id === _this31.record.brand_id;
           });
           // Update brand with translated name after brands are loaded
-          _this30.$nextTick(function () {
-            if (foundBrand && _this30.translatedBrands && _this30.translatedBrands.length > 0) {
-              var translatedBrand = _this30.translatedBrands.find(function (b) {
+          _this31.$nextTick(function () {
+            if (foundBrand && _this31.translatedBrands && _this31.translatedBrands.length > 0) {
+              var translatedBrand = _this31.translatedBrands.find(function (b) {
                 return b.id === foundBrand.id;
               });
               if (translatedBrand) {
-                _this30.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
+                _this31.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
                   name: translatedBrand.name,
                   title: translatedBrand.title
                 });
               } else {
-                _this30.brand = foundBrand;
+                _this31.brand = foundBrand;
               }
             } else {
-              _this30.brand = foundBrand;
+              _this31.brand = foundBrand;
             }
           });
-          _this30.type = _this30.record.type;
-          _this30.category_id = _this30.record.category_id;
-          _this30.product_type = (_this30$record$indica = _this30.record.indicator) !== null && _this30$record$indica !== void 0 ? _this30$record$indica : "";
-          _this30.manufacturer = _this30.record.manufacturer != null && _this30.record.manufacturer !== "null" ? _this30.record.manufacturer : "";
+          _this31.type = _this31.record.type;
+          _this31.category_id = _this31.record.category_id;
+          _this31.product_type = (_this31$record$indica = _this31.record.indicator) !== null && _this31$record$indica !== void 0 ? _this31$record$indica : "";
+          _this31.manufacturer = _this31.record.manufacturer != null && _this31.record.manufacturer !== "null" ? _this31.record.manufacturer : "";
 
           // Load translations
-          _this30.loadTranslations();
-          _this30.made_in = _this30.countries.find(function (item) {
-            return item.id == _this30.record.made_in;
+          _this31.loadTranslations();
+          _this31.made_in = _this31.countries.find(function (item) {
+            return item.id == _this31.record.made_in;
           });
-          _this30.tax_included_in_price = _this30.record.tax_included_in_price;
-          _this30.return_status = _this30.record.return_status;
-          _this30.return_days = _this30.record.return_days;
-          _this30.cancelable_status = _this30.record.cancelable_status;
-          _this30.till_status = _this30.record.till_status;
-          _this30.cod_allowed_status = _this30.record.cod_allowed;
-          _this30.max_allowed_quantity = _this30.record.total_allowed_quantity;
-          _this30.description = _this30.record.description;
-          _this30.is_approved = _this30.record.is_approved;
-          _this30.status = _this30.record.status;
-          _this30.is_unlimited_stock = _this30.record.is_unlimited_stock;
-          _this30.main_image_path = _this30.$storageUrl + _this30.record.image;
-          _this30.other_images = _this30.record.images;
-          _this30.fssai_lic_no = _this30.record.fssai_lic_no;
-          _this30.image = _this30.record.image;
-          _this30.meta_title = _this30.record.meta_title;
-          _this30.meta_keywords = _this30.record.meta_keywords;
-          _this30.schema_markup = _this30.record.schema_markup;
-          _this30.meta_description = _this30.record.meta_description;
+          _this31.tax_included_in_price = _this31.record.tax_included_in_price;
+          _this31.return_status = _this31.record.return_status;
+          _this31.return_days = _this31.record.return_days;
+          _this31.cancelable_status = _this31.record.cancelable_status;
+          _this31.till_status = _this31.record.till_status;
+          _this31.cod_allowed_status = _this31.record.cod_allowed;
+          _this31.max_allowed_quantity = _this31.record.total_allowed_quantity;
+          _this31.description = _this31.record.description;
+          _this31.is_approved = _this31.record.is_approved;
+          _this31.status = _this31.record.status;
+          _this31.is_unlimited_stock = _this31.record.is_unlimited_stock;
+          _this31.main_image_path = _this31.$storageUrl + _this31.record.image;
+          _this31.other_images = _this31.record.images;
+          _this31.fssai_lic_no = _this31.record.fssai_lic_no;
+          _this31.image = _this31.record.image;
+          _this31.meta_title = _this31.record.meta_title;
+          _this31.meta_keywords = _this31.record.meta_keywords;
+          _this31.schema_markup = _this31.record.schema_markup;
+          _this31.meta_description = _this31.record.meta_description;
 
           // Set default language translation from main record
-          if (_this30.defaultLanguageId && _this30.translations[_this30.defaultLanguageId]) {
-            _this30.translations[_this30.defaultLanguageId].name = _this30.name;
+          if (_this31.defaultLanguageId && _this31.translations[_this31.defaultLanguageId]) {
+            _this31.translations[_this31.defaultLanguageId].name = _this31.name;
             // Convert tag_ids to tag names for translation
-            if (Array.isArray(_this30.tag_ids) && _this30.tag_ids.length > 0) {
-              var tagNames = _this30.tag_ids.map(function (tagId) {
-                var tag = _this30.tags.find(function (t) {
+            if (Array.isArray(_this31.tag_ids) && _this31.tag_ids.length > 0) {
+              var tagNames = _this31.tag_ids.map(function (tagId) {
+                var tag = _this31.tags.find(function (t) {
                   return t.id == tagId;
                 });
                 return tag ? tag.name : tagId;
               });
-              _this30.translations[_this30.defaultLanguageId].tags = tagNames.join(',');
+              _this31.translations[_this31.defaultLanguageId].tags = tagNames.join(',');
             } else {
-              _this30.translations[_this30.defaultLanguageId].tags = '';
+              _this31.translations[_this31.defaultLanguageId].tags = '';
             }
-            _this30.translations[_this30.defaultLanguageId].manufacturer = _this30.manufacturer;
-            _this30.translations[_this30.defaultLanguageId].description = _this30.description;
-            _this30.translations[_this30.defaultLanguageId].meta_title = _this30.meta_title;
-            _this30.translations[_this30.defaultLanguageId].meta_keywords = _this30.meta_keywords;
-            _this30.translations[_this30.defaultLanguageId].schema_markup = _this30.schema_markup;
-            _this30.translations[_this30.defaultLanguageId].meta_description = _this30.meta_description;
+            _this31.translations[_this31.defaultLanguageId].manufacturer = _this31.manufacturer;
+            _this31.translations[_this31.defaultLanguageId].description = _this31.description;
+            _this31.translations[_this31.defaultLanguageId].meta_title = _this31.meta_title;
+            _this31.translations[_this31.defaultLanguageId].meta_keywords = _this31.meta_keywords;
+            _this31.translations[_this31.defaultLanguageId].schema_markup = _this31.schema_markup;
+            _this31.translations[_this31.defaultLanguageId].meta_description = _this31.meta_description;
           }
-          var vm = _this30;
-          if (_this30.type == 'packet') {
-            _this30.inputs = [];
-            _this30.record.variants.forEach(function (item) {
+          var vm = _this31;
+          if (_this31.type == 'packet') {
+            _this31.inputs = [];
+            _this31.record.variants.forEach(function (item) {
               var variantData = {
                 'id': item.id ? item.id : "",
                 'packet_measurement': item.measurement,
@@ -2487,12 +2514,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               vm.inputs.push(variantData);
             });
           }
-          if (_this30.type == 'loose') {
+          if (_this31.type == 'loose') {
             var loose_stock = 0;
             var loose_stock_unit_id = 0;
             var status = 0;
-            _this30.inputs = [];
-            _this30.record.variants.forEach(function (item) {
+            _this31.inputs = [];
+            _this31.record.variants.forEach(function (item) {
               var _item$custom_title;
               var variantData = {
                 'id': item.id ? item.id : "",
@@ -2519,27 +2546,27 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               loose_stock_unit_id = item.stock_unit_id;
               status = item.status;
             });
-            _this30.loose_stock = loose_stock;
-            _this30.loose_stock_unit_id = loose_stock_unit_id;
-            _this30.status = status;
+            _this31.loose_stock = loose_stock;
+            _this31.loose_stock_unit_id = loose_stock_unit_id;
+            _this31.status = status;
           }
         } else {
-          _this30.showError(data.message);
+          _this31.showError(data.message);
           setTimeout(function () {
-            _this30.$router.back();
+            _this31.$router.back();
           }, 1000);
         }
       })["catch"](function (error) {
-        _this30.isLoading = false;
+        _this31.isLoading = false;
         if (error.message) {
-          _this30.showError(error.message);
+          _this31.showError(error.message);
         } else {
-          _this30.showError("Something went wrong!");
+          _this31.showError("Something went wrong!");
         }
       });
     },
     saveRecord: function saveRecord() {
-      var _this31 = this;
+      var _this32 = this;
       // Validate brand selection
       if (!this.brand || !this.brand.id || this.brand.id == 0) {
         this.showError(__('please_select_brand'));
@@ -2603,7 +2630,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         var tagNames = this.tag_ids.map(function (tagId) {
           // If it's a number, find the tag name from tags array
           if (typeof tagId === 'number' || typeof tagId === 'string' && !isNaN(tagId)) {
-            var tag = _this31.tags.find(function (t) {
+            var tag = _this32.tags.find(function (t) {
               return t.id == tagId;
             });
             return tag ? tag.name : tagId;
@@ -2619,7 +2646,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         });
         var _tagNames = tagIdsArray.map(function (tagId) {
           if (!isNaN(tagId)) {
-            var tag = _this31.tags.find(function (t) {
+            var tag = _this32.tags.find(function (t) {
               return t.id == tagId;
             });
             return tag ? tag.name : tagId;
@@ -2630,6 +2657,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
       formData.append('tags', tagsString);
       formData.append('tax_id', this.tax_id);
+      formData.append('tax_category_id', this.tax_category_id || '');
       formData.append('brand_id', this.brand ? this.brand.id : 0);
       formData.append('description', defaultTranslation.description || '');
       formData.append('type', this.type);
@@ -2730,28 +2758,28 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       // Sync tags for all languages before saving (ensure translation.tags is up to date)
       this.languages.forEach(function (language) {
-        if (_this31.translations[language.id]) {
-          _this31.handleTagChange(language.id);
+        if (_this32.translations[language.id]) {
+          _this32.handleTagChange(language.id);
         }
       });
 
       // Prepare translations array
       var allTranslations = [];
       this.languages.forEach(function (language) {
-        var translation = _this31.translations[language.id];
+        var translation = _this32.translations[language.id];
         // Convert tag IDs to tag names for translation (for all languages)
         var tagsValue = translation.tags || '';
 
         // Get tag IDs for this language
         var tagIds = [];
         if (language.is_default) {
-          tagIds = Array.isArray(_this31.tag_ids) ? _this31.tag_ids : _this31.tag_ids ? String(_this31.tag_ids).split(',').map(function (t) {
+          tagIds = Array.isArray(_this32.tag_ids) ? _this32.tag_ids : _this32.tag_ids ? String(_this32.tag_ids).split(',').map(function (t) {
             return t.trim();
           }).filter(function (t) {
             return t;
           }) : [];
         } else {
-          var langTagIds = _this31.tagIdsByLanguage[language.id];
+          var langTagIds = _this32.tagIdsByLanguage[language.id];
           if (langTagIds) {
             tagIds = Array.isArray(langTagIds) ? langTagIds : String(langTagIds).split(',').map(function (t) {
               return t.trim();
@@ -2767,7 +2795,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           var _tagNames2 = tagIds.map(function (tagId) {
             // If it's a number, find the tag name from tags array
             if (typeof tagId === 'number' || typeof tagId === 'string' && !isNaN(tagId)) {
-              var tag = _this31.tags.find(function (t) {
+              var tag = _this32.tags.find(function (t) {
                 return t.id == tagId;
               });
               return tag ? tag.name : tagId;
@@ -2783,7 +2811,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
         // For default language, use manufacturer from main field
         if (language.is_default) {
-          translation.manufacturer = _this31.manufacturer || '';
+          translation.manufacturer = _this32.manufacturer || '';
         }
         allTranslations.push({
           language_id: language.id,
@@ -2811,9 +2839,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }).then(function (res) {
         var data = res.data;
         if (data.status === 1) {
-          _this31.skipCache = true;
+          _this32.skipCache = true;
           localStorage.removeItem('product_form_cache');
-          _this31.showMessage("success", data.message);
+          _this32.showMessage("success", data.message);
           setTimeout(function () {
             var _vm$loggedUser, _vm$loggedUser$role;
             vm.$swal.close();
@@ -2834,11 +2862,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       })["catch"](function (error) {
         vm.isLoading = false;
-        _this31.showError("Something went wrong!");
+        _this32.showError("Something went wrong!");
       });
     },
     deleteImage: function deleteImage(index, id, productImage) {
-      var _this32 = this;
+      var _this33 = this;
       var key = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : "";
       this.$swal.fire({
         title: "Are you Sure?",
@@ -2851,14 +2879,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         cancelButtonColor: '#d33'
       }).then(function (result) {
         if (result.value) {
-          _this32.deleteImageIds.push(id);
+          _this33.deleteImageIds.push(id);
           if (productImage) {
-            _this32.other_images.splice(index, 1);
+            _this33.other_images.splice(index, 1);
           } else {
-            if (_this32.type === 'packet') {
-              _this32.inputs[key].images.splice(index, 1);
+            if (_this33.type === 'packet') {
+              _this33.inputs[key].images.splice(index, 1);
             } else {
-              _this32.inputs[key].loose_images.splice(index, 1);
+              _this33.inputs[key].loose_images.splice(index, 1);
             }
           }
         }
@@ -2874,6 +2902,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           seller_id: this.seller_id,
           tag_ids: this.tag_ids,
           tax_id: this.tax_id,
+          tax_category_id: this.tax_category_id || null,
           brand: this.brand ? {
             id: this.brand.id
           } : null,
@@ -2914,7 +2943,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       } catch (e) {}
     },
     restoreCache: function restoreCache() {
-      var _this33 = this;
+      var _this34 = this;
       try {
         var cached = localStorage.getItem('product_form_cache');
         if (!cached) return;
@@ -2926,7 +2955,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.cachedData = data;
         Object.keys(data).forEach(function (key) {
           if (key === 'timestamp' || key === 'brand' || key === 'made_in' || key === 'translations' || key === 'tagIdsByLanguage') return;
-          if (_this33.hasOwnProperty(key)) _this33[key] = data[key] !== undefined ? data[key] : _this33[key];
+          if (_this34.hasOwnProperty(key)) _this34[key] = data[key] !== undefined ? data[key] : _this34[key];
         });
 
         // Restore per-language translation data.
@@ -2936,14 +2965,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         if (data.translations && this.languages && this.languages.length > 0) {
           this.languages.forEach(function (language) {
             if (data.translations[language.id]) {
-              _this33.$set(_this33.translations, language.id, _objectSpread(_objectSpread({}, _this33.translations[language.id]), data.translations[language.id]));
+              _this34.$set(_this34.translations, language.id, _objectSpread(_objectSpread({}, _this34.translations[language.id]), data.translations[language.id]));
             }
           });
         }
         // Restore per-language tag ID selections.
         if (data.tagIdsByLanguage && this.languages && this.languages.length > 0) {
           Object.keys(data.tagIdsByLanguage).forEach(function (languageId) {
-            _this33.$set(_this33.tagIdsByLanguage, languageId, data.tagIdsByLanguage[languageId]);
+            _this34.$set(_this34.tagIdsByLanguage, languageId, data.tagIdsByLanguage[languageId]);
           });
         }
         if (data.brand && this.brands && this.brands.length) {
@@ -2952,20 +2981,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }) || null;
           // Update brand with translated name
           this.$nextTick(function () {
-            if (foundBrand && _this33.translatedBrands && _this33.translatedBrands.length > 0) {
-              var translatedBrand = _this33.translatedBrands.find(function (b) {
+            if (foundBrand && _this34.translatedBrands && _this34.translatedBrands.length > 0) {
+              var translatedBrand = _this34.translatedBrands.find(function (b) {
                 return b.id === foundBrand.id;
               });
               if (translatedBrand) {
-                _this33.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
+                _this34.brand = _objectSpread(_objectSpread({}, foundBrand), {}, {
                   name: translatedBrand.name,
                   title: translatedBrand.title
                 });
               } else {
-                _this33.brand = foundBrand;
+                _this34.brand = foundBrand;
               }
             } else {
-              _this33.brand = foundBrand;
+              _this34.brand = foundBrand;
             }
           });
         }
@@ -2976,8 +3005,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
         if (this.seller_id) {
           this.$nextTick(function () {
-            _this33.getSellerCategories();
-            _this33.getSeller();
+            _this34.getSellerCategories();
+            _this34.getSeller();
           });
         }
       } catch (e) {
@@ -2992,6 +3021,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         seller_id: 0,
         tag_ids: '',
         tax_id: 0,
+        tax_category_id: '',
         brand: null,
         description: '',
         type: 'packet',
@@ -3046,21 +3076,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       localStorage.removeItem('product_form_cache');
     },
     debouncedSave: function debouncedSave() {
-      var _this34 = this;
+      var _this35 = this;
       if (this.cacheTimer) clearTimeout(this.cacheTimer);
       this.cacheTimer = setTimeout(function () {
-        return _this34.saveCache();
+        return _this35.saveCache();
       }, 500);
     }
   },
   watch: {
     // Watch currentLanguageId to update selected brand name when language changes
     currentLanguageId: function currentLanguageId(newVal, oldVal) {
-      var _this35 = this;
+      var _this36 = this;
       if (newVal && this.brand && this.translatedBrands && this.translatedBrands.length > 0) {
         // Find the translated brand from translatedBrands
         var translatedBrand = this.translatedBrands.find(function (b) {
-          return b.id === _this35.brand.id;
+          return b.id === _this36.brand.id;
         });
         if (translatedBrand) {
           // Update the brand object with translated name
@@ -3074,11 +3104,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     // Watch translatedBrands to update selected brand when brands are loaded or language changes
     translatedBrands: {
       handler: function handler(newVal) {
-        var _this36 = this;
+        var _this37 = this;
         if (newVal && newVal.length > 0 && this.brand && this.brand.id) {
           // Find the translated brand from translatedBrands
           var translatedBrand = newVal.find(function (b) {
-            return b.id === _this36.brand.id;
+            return b.id === _this37.brand.id;
           });
           if (translatedBrand) {
             // Update the brand object with translated name
@@ -3093,12 +3123,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     // Watch activeLanguageTab to ensure Select2 updates when switching tabs
     activeLanguageTab: function activeLanguageTab(newTab, oldTab) {
-      var _this37 = this;
+      var _this38 = this;
       // Force Select2 to update when switching language tabs
       this.$nextTick(function () {
         // Trigger conversion again to ensure tagIdsByLanguage is set
-        if (_this37.tags && _this37.tags.length > 0 && _this37.languages.length > 0) {
-          _this37.convertTagNamesToIds();
+        if (_this38.tags && _this38.tags.length > 0 && _this38.languages.length > 0) {
+          _this38.convertTagNamesToIds();
         }
       });
     },
@@ -4620,6 +4650,142 @@ var render = function () {
                                                                           tax.percentage
                                                                         ) +
                                                                         " %)"
+                                                                    ),
+                                                                  ]
+                                                                )
+                                                              }
+                                                            ),
+                                                          ],
+                                                          2
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "col-md-6 mb-3",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "label",
+                                                          {
+                                                            staticClass:
+                                                              "control-label",
+                                                            attrs: {
+                                                              for: "tax_category_id",
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "tax_category"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "select",
+                                                          {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  _vm.tax_category_id,
+                                                                expression:
+                                                                  "tax_category_id",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control form-select",
+                                                            attrs: {
+                                                              id: "tax_category_id",
+                                                              name: "tax_category_id",
+                                                              disabled:
+                                                                _vm.isSellerRole,
+                                                            },
+                                                            on: {
+                                                              change: function (
+                                                                $event
+                                                              ) {
+                                                                var $$selectedVal =
+                                                                  Array.prototype.filter
+                                                                    .call(
+                                                                      $event
+                                                                        .target
+                                                                        .options,
+                                                                      function (
+                                                                        o
+                                                                      ) {
+                                                                        return o.selected
+                                                                      }
+                                                                    )
+                                                                    .map(
+                                                                      function (
+                                                                        o
+                                                                      ) {
+                                                                        var val =
+                                                                          "_value" in
+                                                                          o
+                                                                            ? o._value
+                                                                            : o.value
+                                                                        return val
+                                                                      }
+                                                                    )
+                                                                _vm.tax_category_id =
+                                                                  $event.target
+                                                                    .multiple
+                                                                    ? $$selectedVal
+                                                                    : $$selectedVal[0]
+                                                              },
+                                                            },
+                                                          },
+                                                          [
+                                                            _c(
+                                                              "option",
+                                                              {
+                                                                attrs: {
+                                                                  value: "",
+                                                                },
+                                                              },
+                                                              [
+                                                                _vm._v(
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "select_tax_category"
+                                                                    )
+                                                                  )
+                                                                ),
+                                                              ]
+                                                            ),
+                                                            _vm._v(" "),
+                                                            _vm._l(
+                                                              _vm.taxCategories,
+                                                              function (
+                                                                category
+                                                              ) {
+                                                                return _c(
+                                                                  "option",
+                                                                  {
+                                                                    key: category.id,
+                                                                    domProps: {
+                                                                      value:
+                                                                        category.id,
+                                                                    },
+                                                                  },
+                                                                  [
+                                                                    _vm._v(
+                                                                      "\n                                                                " +
+                                                                        _vm._s(
+                                                                          category.name
+                                                                        ) +
+                                                                        "\n                                                            "
                                                                     ),
                                                                   ]
                                                                 )

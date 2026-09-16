@@ -35,7 +35,6 @@ const EditProduct = () => import("../views/Product/EditProduct");
 const CloneProduct = () => import("../views/Product/EditProduct");
 const ApproveRequests = () => import("../views/Product/ApproveRequests");
 const ViewProduct = () => import("../views/Product/ViewProduct");
-const Taxes = () => import("../views/Product/Taxes/Taxes");
 const Media = () => import("../views/Product/Media");
 const ProductOrder = () => import("../views/Product/ProductOrder");
 const ProductRatings = () => import("../views/Product/ProductRatings");
@@ -99,6 +98,7 @@ const PrivacyPolicySeller = () => import("../views/Setting/PrivacyPolicySeller")
 const PrivacyPolicySalesman = () => import("../views/Setting/PrivacyPolicySalesman");
 
 const FirebaseSettings = () => import("../views/Setting/FirebaseSettings");
+const TaxSettings = () => import("../views/Setting/TaxSettings/TaxSettings");
 const NotificationTemplates = () => import("../views/Setting/NotificationTemplates/NotificationTemplates");
 const SmsSettings = () => import("../views/Setting/SmsSettings");
 const SmsTemplates = () => import("../views/Setting/SmsTemplates/SmsTemplates");
@@ -667,17 +667,6 @@ function configRoutes() {
                     },
                 },
                 {
-                    path: "taxes",
-                    name: "Taxes",
-                    component: Taxes,
-                    meta: {
-                        permission: 'order_list',
-                        role: adminRoles,
-                        title: 'Taxes'
-
-                    },
-                },
-                {
                     path: "brands",
                     name: "Brands",
                     component: Brands,
@@ -984,6 +973,16 @@ function configRoutes() {
                         permission: 'order_list',
                         role: adminRoles,
                         title: 'SMS Settings'
+                    },
+                },
+                {
+                    path: "tax_settings",
+                    name: "TaxSettings",
+                    component: TaxSettings,
+                    meta: {
+                        permission: 'manage_store_settings',
+                        role: adminRoles,
+                        title: 'Tax Settings'
                     },
                 },
                 {

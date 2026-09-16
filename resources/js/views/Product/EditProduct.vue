@@ -159,6 +159,18 @@
                                                                     ({{ tax.percentage }} %)</option>
                                                             </select>
                                                         </div>
+                                                        <div class="col-md-6 mb-3">
+                                                            <label for="tax_category_id" class="control-label">{{ __('tax_category')
+                                                                }}</label>
+                                                            <select id="tax_category_id" name="tax_category_id"
+                                                                class="form-control form-select" v-model="tax_category_id"
+                                                                :disabled="isSellerRole">
+                                                                <option value="">{{ __('select_tax_category') }}</option>
+                                                                <option v-for="category in taxCategories" :key="category.id" :value="category.id">
+                                                                    {{ category.name }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
                                                         <div class="col-md-6">
                                                             <div class="form-group mb-3">
                                                                 <label>{{ __('brands') }} <i class="text-danger">*</i></label>
@@ -1123,6 +1135,8 @@ export default {
             tagSuggestions: [],
             brand: null,
             tax_id: 0,
+            tax_category_id: '',
+            taxCategories: [],
             type: 'packet',
             category_id: '',
             product_type: '',
@@ -1380,6 +1394,7 @@ export default {
         this.fetchActiveLanguages().then(() => {
             this.getSellers();
             this.getTaxes();
+            this.getTaxCategories();
             this.getUnits();
             this.getBrands();
             this.getCountries();
@@ -2134,6 +2149,12 @@ export default {
                     this.taxes = data.data
                 });
         },
+        getTaxCategories() {
+            axios.get(this.$apiUrl + '/tax-categories', { params: { limit: 0, status: 1 } })
+                .then((response) => {
+                    this.taxCategories = response.data.data;
+                });
+        },
         getUnits() {
             this.isLoading = true
             axios.get(this.$apiUrl + '/units/get')
@@ -2325,6 +2346,7 @@ export default {
                         this.tag_ids = this.record.tags.map(item => item.id);
 
                         this.tax_id = this.record.tax_id;
+                        this.tax_category_id = this.record.tax_category_id || '';
 
                         const foundBrand = this.brands.find((item) => {
                             return item.id === this.record.brand_id;
@@ -2556,6 +2578,7 @@ export default {
             }
             formData.append('tags', tagsString);
             formData.append('tax_id', this.tax_id);
+            formData.append('tax_category_id', this.tax_category_id || '');
             formData.append('brand_id', this.brand ? this.brand.id : 0);
             formData.append('description', defaultTranslation.description || '');
             formData.append('type', this.type);
@@ -2800,7 +2823,7 @@ export default {
             try {
                 const data = {
                     name: this.name, slug: this.slug, seller_id: this.seller_id, tag_ids: this.tag_ids,
-                    tax_id: this.tax_id, brand: this.brand ? { id: this.brand.id } : null,
+                    tax_id: this.tax_id, tax_category_id: this.tax_category_id || null, brand: this.brand ? { id: this.brand.id } : null,
                     description: this.description, type: this.type, is_unlimited_stock: this.is_unlimited_stock,
                     fssai_lic_no: this.fssai_lic_no, barcode: this.barcode, meta_title: this.meta_title,
                     meta_keywords: this.meta_keywords, schema_markup: this.schema_markup,
@@ -2889,7 +2912,7 @@ export default {
         clearForm: function () {
             if (this.$refs['my-form']) this.$refs['my-form'].reset();
             Object.assign(this, {
-                name: '', slug: '', seller_id: 0, tag_ids: '', tax_id: 0, brand: null,
+                name: '', slug: '', seller_id: 0, tag_ids: '', tax_id: 0, tax_category_id: '', brand: null,
                 description: '', type: 'packet', is_unlimited_stock: 0, fssai_lic_no: '',
                 barcode: '', meta_title: '', meta_keywords: '', schema_markup: '',
                 meta_description: '', category_id: '', product_type: '', manufacturer: '',

@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Models\Cart;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\TaxRule;
 use Illuminate\Support\Facades\DB;
 
 class ProductHelper
@@ -104,43 +105,43 @@ class ProductHelper
         return $cart->exists();
     }
 
-    public static function getTaxableAmount($product_variant_id)
+    public static function getTaxableAmount($product_variant_id, ?int $countryId = null)
     {
         if (DB::table('product_variants')->where('id', $product_variant_id)->exists()) {
-            $sql = "SELECT 
+            $sql = "SELECT
                                 pv.id,
                                 pv.discounted_price,
                                 t.percentage,
-                                pv.price,
-                                CASE 
-                                    WHEN pv.discounted_price != 0 THEN pv.discounted_price + (pv.discounted_price * t.percentage) / 100
-                                    ELSE pv.price + (pv.price * t.percentage) / 100 
-                                END AS taxable_amount,
-                                CASE 
-                                    WHEN pv.discounted_price != 0 THEN pv.discounted_price + (pv.discounted_price * t.percentage) / 100
-                                    ELSE pv.discounted_price 
-                                END AS taxable_discounted_price,
-                                CASE 
-                                    WHEN pv.price != 0 THEN pv.price + (pv.price * t.percentage) / 100
-                                    ELSE pv.price 
-                                END AS taxable_price
-                            FROM product_variants pv 
-                            LEFT JOIN products p ON pv.product_id = p.id 
-                            LEFT JOIN taxes t ON t.id = p.tax_id 
+                                p.tax_category_id,
+                                pv.price
+                            FROM product_variants pv
+                            LEFT JOIN products p ON pv.product_id = p.id
+                            LEFT JOIN taxes t ON t.id = p.tax_id
                             WHERE pv.id = :product_variant_id";
 
             $result = DB::select($sql, ['product_variant_id' => $product_variant_id]);
 
             $result = !empty($result) ? $result[0] : array();
 
-            if (empty($result->percentage) && $result->discounted_price != 0) {
-                $result->taxable_amount = $result->discounted_price;
-            } else if (empty($result->percentage && $result->price != 0)) {
-                $result->taxable_amount = $result->price;
-            } else if (!(empty($result->percentage)) && $result->discounted_price != 0) {
-                $result->taxable_amount = $result->discounted_price + $result->discounted_price * ($result->percentage / 100);
-            } else if (!(empty($result->percentage)) && $result->price != 0) {
-                $result->taxable_amount = $result->price + $result->price * ($result->percentage / 100);
+            if (!empty($result) && $countryId) {
+                $override = TaxRule::resolvePercentage($countryId, $result->tax_category_id ?? null);
+                if ($override !== null) {
+                    $result->percentage = $override;
+                }
+            }
+
+            if (!empty($result)) {
+                $percentage = (float) ($result->percentage ?? 0);
+                $result->percentage = $percentage;
+                $result->taxable_amount = $result->discounted_price != 0
+                    ? $result->discounted_price + ($result->discounted_price * $percentage) / 100
+                    : $result->price + ($result->price * $percentage) / 100;
+                $result->taxable_discounted_price = $result->discounted_price != 0
+                    ? $result->discounted_price + ($result->discounted_price * $percentage) / 100
+                    : $result->discounted_price;
+                $result->taxable_price = $result->price != 0
+                    ? $result->price + ($result->price * $percentage) / 100
+                    : $result->price;
             }
 
             return $result;

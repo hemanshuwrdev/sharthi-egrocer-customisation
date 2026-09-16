@@ -292,6 +292,20 @@ Route::middleware('auth:api')->group(function () {
         Route::post('delete', [\App\Http\Controllers\API\AdditionalChargesApiController::class, 'delete'])->name('additional_charges.delete');
     });
 
+    Route::group(['prefix' => 'tax-categories'], function () {
+        Route::get('/', [\App\Http\Controllers\API\TaxCategoriesApiController::class, 'getTaxCategories']);
+        Route::post('save', [\App\Http\Controllers\API\TaxCategoriesApiController::class, 'save'])->name('tax_categories.save');
+        Route::post('update', [\App\Http\Controllers\API\TaxCategoriesApiController::class, 'update'])->name('tax_categories.update');
+        Route::post('delete', [\App\Http\Controllers\API\TaxCategoriesApiController::class, 'delete'])->name('tax_categories.delete');
+    });
+
+    Route::group(['prefix' => 'tax-rules'], function () {
+        Route::get('/', [\App\Http\Controllers\API\TaxRulesApiController::class, 'getTaxRules']);
+        Route::post('save', [\App\Http\Controllers\API\TaxRulesApiController::class, 'save'])->name('tax_rules.save');
+        Route::post('update', [\App\Http\Controllers\API\TaxRulesApiController::class, 'update'])->name('tax_rules.update');
+        Route::post('delete', [\App\Http\Controllers\API\TaxRulesApiController::class, 'delete'])->name('tax_rules.delete');
+    });
+
     Route::group(['prefix' => 'mail_settings'], function () {
         Route::get('/', [\App\Http\Controllers\API\MailSettingsApiController::class, 'index']);
         Route::post('save', [\App\Http\Controllers\API\MailSettingsApiController::class, 'save'])->name('mail_settings.save');

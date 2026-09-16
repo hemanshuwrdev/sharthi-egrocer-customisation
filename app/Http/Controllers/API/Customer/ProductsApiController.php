@@ -22,6 +22,7 @@ use App\Models\Section;
 use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\Tax;
+use App\Models\TaxRule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -56,6 +57,8 @@ class ProductsApiController extends Controller
         }
 
         try {
+            $customerId = $request->user('api-customers') ? $request->user('api-customers')->id : null;
+            $countryId = $customerId ? CommonHelper::resolveCountryIdForUser($customerId) : null;
             $productRatingSetting = (int) (Setting::get_value('product_rating') ?? 0);
             $isProductRatingEnabled = $productRatingSetting === 1;
             $fewQuantityAlertThreshold = (int) (Setting::get_value('few_quantity_left_alert') ?? 0);
@@ -379,6 +382,7 @@ class ProductsApiController extends Controller
                 'cities.max_deliverable_distance',
                 'cities.boundary_points',
                 'tx.percentage as tax_percentage',
+                'p.tax_category_id',
                 DB::raw("GROUP_CONCAT(t.name) as tag_names")
             )
                 ->from('products as p')
@@ -545,6 +549,10 @@ class ProductsApiController extends Controller
 
             $i = 0;
             foreach ($products as $row) {
+                $resolvedTaxRate = TaxRule::resolvePercentage($countryId, $row->tax_category_id ?? null);
+                if ($resolvedTaxRate !== null) {
+                    $row->tax_percentage = $resolvedTaxRate;
+                }
                 $taxRate = $row->tax_percentage; // % tax
 
                 // Load variants with unit (translations will be resolved automatically via accessor)
@@ -1097,6 +1105,7 @@ class ProductsApiController extends Controller
         }
 
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : '';
+        $countryId = $user_id ? CommonHelper::resolveCountryIdForUser($user_id) : null;
 
         $limit = $request->get('limit', 10);
         $offset = $request->get('offset', 0);
@@ -1160,6 +1169,10 @@ class ProductsApiController extends Controller
                 $tax1 = Tax::find($row['tax_id']);
                 $row['tax_title'] = (!empty($tax1['title'])) ? $tax1['title'] : "";
                 $row['tax_percentage'] = (!empty($tax1['percentage'])) ? $tax1['percentage'] : "0";
+            }
+            $resolvedTaxRate = TaxRule::resolvePercentage($countryId, $row['tax_category_id'] ?? null);
+            if ($resolvedTaxRate !== null) {
+                $row['tax_percentage'] = $resolvedTaxRate;
             }
             $row['image'] = asset('storage/' . $row['image']);
             $product[$i] = $row;

@@ -1187,6 +1187,51 @@ class SarthiCustomisation extends Migration
                 }
             });
         }
+
+        // ── Tax Settings: Tax Categories (admin label + stable code, e.g. GST)
+        //    and Tax Rules (per-country/category rate made of one or more components,
+        //    e.g. CGST 9% + SGST 9%).
+        if (!Schema::hasTable('tax_categories')) {
+            Schema::create('tax_categories', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('code')->unique();
+                $table->text('description')->nullable();
+                $table->boolean('status')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('tax_rules')) {
+            Schema::create('tax_rules', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('country_id');
+                $table->unsignedBigInteger('tax_category_id')->nullable();
+                $table->enum('place_of_supply', ['any', 'same_region', 'different_region'])->default('any');
+                $table->json('components');
+                $table->decimal('total_rate', 5, 2)->default(0);
+                $table->boolean('status')->default(1);
+                $table->timestamps();
+
+                $table->foreign('country_id')->references('id')->on('countries')->cascadeOnDelete();
+                $table->foreign('tax_category_id')->references('id')->on('tax_categories')->cascadeOnDelete();
+                $table->index(['country_id', 'tax_category_id'], 'idx_tax_rule_country_category');
+            });
+        }
+
+        if (Schema::hasTable('products') && !Schema::hasColumn('products', 'tax_category_id')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->unsignedBigInteger('tax_category_id')->nullable()->after('tax_id');
+                $table->foreign('tax_category_id')->references('id')->on('tax_categories')->nullOnDelete();
+            });
+        }
+
+        if (Schema::hasTable('master_products') && !Schema::hasColumn('master_products', 'tax_category_id')) {
+            Schema::table('master_products', function (Blueprint $table) {
+                $table->unsignedBigInteger('tax_category_id')->nullable()->after('tax_id');
+                $table->foreign('tax_category_id')->references('id')->on('tax_categories')->nullOnDelete();
+            });
+        }
     }
 
     /**
@@ -1196,6 +1241,21 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('master_products') && Schema::hasColumn('master_products', 'tax_category_id')) {
+            Schema::table('master_products', function (Blueprint $table) {
+                $table->dropForeign(['tax_category_id']);
+                $table->dropColumn('tax_category_id');
+            });
+        }
+        if (Schema::hasTable('products') && Schema::hasColumn('products', 'tax_category_id')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->dropForeign(['tax_category_id']);
+                $table->dropColumn('tax_category_id');
+            });
+        }
+        Schema::dropIfExists('tax_rules');
+        Schema::dropIfExists('tax_categories');
+
         if (Schema::hasColumn('master_product_variants', 'inner_pack_value') || Schema::hasColumn('master_product_variants', 'weight_unit_id')) {
             Schema::table('master_product_variants', function (Blueprint $table) {
                 if (Schema::hasColumn('master_product_variants', 'inner_pack_value')) {

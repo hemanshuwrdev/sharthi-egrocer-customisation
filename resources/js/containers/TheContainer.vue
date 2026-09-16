@@ -355,12 +355,6 @@ export default {
                             permission: 'units',
                         },
                         {
-                            name: __('taxes'),
-                            icon: 'grid-fill',
-                            url: '/taxes',
-                            permission: 'taxes',
-                        },
-                        {
                             name: __('brands'),
                             icon: 'grid-fill',
                             url: '/brands',

@@ -9,6 +9,7 @@ use App\Models\Brand;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\City;
+use App\Models\Country;
 use App\Models\DeliveryBoy;
 use App\Models\Favorite;
 use App\Models\FundTransfer;
@@ -29,6 +30,7 @@ use App\Models\Section;
 use App\Services\LanguageService;
 use App\Models\Seller;
 use App\Models\Setting;
+use App\Models\TaxRule;
 use App\Models\Unit;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
@@ -883,6 +885,7 @@ class CommonHelper
                 "p.seller_id",
                 "p.name as product_name",
                 "p.is_unlimited_stock",
+                "p.tax_category_id",
                 DB::raw("(SELECT t.title FROM taxes t WHERE t.id = p.tax_id) as tax_title"),
                 DB::raw("(SELECT t.percentage FROM taxes t WHERE t.id = p.tax_id) as tax_percentage"),
                 DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name")
@@ -1815,14 +1818,73 @@ class CommonHelper
     }
 
     /**
+     * Resolve a country_id from an address's free-text `country` column by
+     * matching it against countries.name (case-insensitive). There's no FK
+     * here, so this is a best-effort lookup — returns null if nothing matches,
+     * and callers should fall back to the flat tax in that case.
+     */
+    public static function resolveCountryIdForAddress($address): ?int
+    {
+        if (!$address || empty($address->country)) {
+            return null;
+        }
+
+        static $map = null;
+        if ($map === null) {
+            $map = [];
+            foreach (Country::pluck('id', 'name') as $name => $id) {
+                $map[strtolower(trim($name))] = $id;
+            }
+        }
+
+        return $map[strtolower(trim($address->country))] ?? null;
+    }
+
+    /**
+     * Resolve a country_id from a user's default address, for tax-rule lookup.
+     */
+    public static function resolveCountryIdForUser($userId): ?int
+    {
+        return self::resolveCountryIdForAddress(self::resolveDefaultAddressForUser($userId));
+    }
+
+    /**
+     * A user's default address (falling back to their first address), or null.
+     */
+    public static function resolveDefaultAddressForUser($userId): ?UserAddress
+    {
+        if (!$userId) {
+            return null;
+        }
+
+        return UserAddress::where('user_id', $userId)->where('is_default', 1)->first()
+            ?? UserAddress::where('user_id', $userId)->first();
+    }
+
+    /**
+     * Real same-state/different-state comparison (classic intra-state vs
+     * inter-state GST place of supply) — case-insensitive, trimmed. Returns
+     * null when either state is unknown, so callers can fall back gracefully
+     * instead of guessing.
+     */
+    public static function isSameRegion($stateA, $stateB): ?bool
+    {
+        if (empty($stateA) || empty($stateB)) {
+            return null;
+        }
+
+        return strtolower(trim($stateA)) === strtolower(trim($stateB));
+    }
+
+    /**
      * Slab-aware version of ProductHelper::getTaxableAmount.
      * Returns an object with the same shape (taxable_amount, taxable_price,
      * taxable_discounted_price, percentage, price, discounted_price) so it
      * can be a drop-in replacement at call sites.
      */
-    public static function getSlabTaxableAmount($variant_id, $qty)
+    public static function getSlabTaxableAmount($variant_id, $qty, ?int $countryId = null)
     {
-        $base = ProductHelper::getTaxableAmount($variant_id);
+        $base = ProductHelper::getTaxableAmount($variant_id, $countryId);
         if (empty($base)) {
             return $base;
         }
@@ -2017,7 +2079,7 @@ class CommonHelper
         return array('save_price' => $save_price, 'total_amount' => $total_amount);
     }
 
-    public static function calculateOrderTotalTax($item_details, $quantityArray)
+    public static function calculateOrderTotalTax($item_details, $quantityArray, ?int $countryId = null)
     {
         $order_total_tax_amt = 0;
         $order_total_tax_per = 0;
@@ -2026,6 +2088,10 @@ class CommonHelper
             $discounted_price = (empty($item->discounted_price) || $item->discounted_price == "") ? 0 : $item->discounted_price;
             $quantity = (int) $quantityArray[$key];
             $tax_percentage = (empty($item->tax_percentage) || ($item->tax_percentage == "")) ? 0 : $item->tax_percentage;
+            $resolvedTaxPercentage = TaxRule::resolvePercentage($countryId, $item->tax_category_id ?? null);
+            if ($resolvedTaxPercentage !== null) {
+                $tax_percentage = $resolvedTaxPercentage;
+            }
 
             $variant_id = $item->id ?? $item->product_variant_id ?? null;
             $slabUnit = $variant_id ? self::getSlabUnitPrice($variant_id, $quantity) : null;

@@ -404,11 +404,6 @@ __webpack_require__.r(__webpack_exports__);
           url: '/units',
           permission: 'units'
         }, {
-          name: __('taxes'),
-          icon: 'grid-fill',
-          url: '/taxes',
-          permission: 'taxes'
-        }, {
           name: __('brands'),
           icon: 'grid-fill',
           url: '/brands',

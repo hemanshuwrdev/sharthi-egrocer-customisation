@@ -429,6 +429,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -447,6 +457,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         brand_id: null,
         category_id: null,
         tax_id: null,
+        tax_category_id: null,
         hsn: '',
         type: 'single',
         status: 1
@@ -467,6 +478,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       brands: [],
       categories: [],
       taxes: [],
+      taxCategories: [],
       units: [],
       // Parent company picker
       pcQuery: '',
@@ -622,6 +634,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       axios.get(this.$apiUrl + '/products/taxes').then(function (r) {
         _this6.taxes = r.data.data || [];
       })["catch"](function () {});
+      axios.get(this.$apiUrl + '/tax-categories', {
+        params: {
+          limit: 0,
+          status: 1
+        }
+      }).then(function (r) {
+        _this6.taxCategories = r.data.data || [];
+      })["catch"](function () {});
       axios.get(this.$apiUrl + '/units/get').then(function (r) {
         _this6.units = r.data.data || [];
       })["catch"](function () {});
@@ -638,6 +658,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           brand_id: p.brand_id,
           category_id: p.category_id,
           tax_id: p.tax_id,
+          tax_category_id: p.tax_category_id || null,
           hsn: p.hsn,
           type: p.type || 'single',
           status: p.status
@@ -923,6 +944,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (this.product.brand_id) fd.append('brand_id', this.product.brand_id);
       if (this.product.category_id) fd.append('category_id', this.product.category_id);
       if (this.product.tax_id) fd.append('tax_id', this.product.tax_id);
+      if (this.product.tax_category_id) fd.append('tax_category_id', this.product.tax_category_id);
       if (this.product.hsn) fd.append('hsn', this.product.hsn);
       fd.append('type', this.product.type);
       fd.append('status', this.product.status);
@@ -1846,6 +1868,112 @@ var render = function () {
                                                                   t.percentage
                                                                 ) +
                                                                 "%)\n                                                "
+                                                            ),
+                                                          ]
+                                                        )
+                                                      }
+                                                    ),
+                                                  ],
+                                                  2
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "div",
+                                              { staticClass: "col-md-6 mb-3" },
+                                              [
+                                                _c("label", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__("tax_category")
+                                                    )
+                                                  ),
+                                                ]),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "select",
+                                                  {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          _vm.product
+                                                            .tax_category_id,
+                                                        expression:
+                                                          "product.tax_category_id",
+                                                      },
+                                                    ],
+                                                    staticClass:
+                                                      "form-control form-select",
+                                                    on: {
+                                                      change: function (
+                                                        $event
+                                                      ) {
+                                                        var $$selectedVal =
+                                                          Array.prototype.filter
+                                                            .call(
+                                                              $event.target
+                                                                .options,
+                                                              function (o) {
+                                                                return o.selected
+                                                              }
+                                                            )
+                                                            .map(function (o) {
+                                                              var val =
+                                                                "_value" in o
+                                                                  ? o._value
+                                                                  : o.value
+                                                              return val
+                                                            })
+                                                        _vm.$set(
+                                                          _vm.product,
+                                                          "tax_category_id",
+                                                          $event.target.multiple
+                                                            ? $$selectedVal
+                                                            : $$selectedVal[0]
+                                                        )
+                                                      },
+                                                    },
+                                                  },
+                                                  [
+                                                    _c(
+                                                      "option",
+                                                      {
+                                                        domProps: {
+                                                          value: null,
+                                                        },
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            _vm.__(
+                                                              "select_tax_category"
+                                                            )
+                                                          )
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _vm._l(
+                                                      _vm.taxCategories,
+                                                      function (tc) {
+                                                        return _c(
+                                                          "option",
+                                                          {
+                                                            key: tc.id,
+                                                            domProps: {
+                                                              value: tc.id,
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                                                    " +
+                                                                _vm._s(
+                                                                  tc.name
+                                                                ) +
+                                                                "\n                                                "
                                                             ),
                                                           ]
                                                         )

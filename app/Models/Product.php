@@ -27,6 +27,7 @@ class Product extends Model
         'brand_id',
         'return_days',
         'tax_id',
+        'tax_category_id',
         'fssai_lic_no',
         'barcode',
         'meta_title',
@@ -46,6 +47,10 @@ class Product extends Model
 
     public function tax(){
         return $this->belongsTo(Tax::class,'tax_id','id');
+    }
+
+    public function taxCategory(){
+        return $this->belongsTo(TaxCategory::class,'tax_category_id','id');
     }
 
     public function madeInCountry(){

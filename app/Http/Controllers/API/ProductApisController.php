@@ -777,6 +777,7 @@ class ProductApisController extends Controller
             $product->slug = $count ? "{$slug}-{$count}" : $slug;
             $product->row_order = $row_order;
             $product->tax_id = $request->tax_id ?? "";
+            $product->tax_category_id = $request->tax_category_id ?: null;
             $product->brand_id = $request->brand_id ?? "";
             $product->seller_id = $request->seller_id;
             $product->tags = $request->tags ?? "";
@@ -1207,6 +1208,7 @@ class ProductApisController extends Controller
 
             $product->row_order = $row_order;
             $product->tax_id = $request->tax_id;
+            $product->tax_category_id = $request->tax_category_id ?: null;
             $product->brand_id = $request->brand_id;
             if (!$isSeller) {
                 $product->seller_id = $request->seller_id;

@@ -23,6 +23,7 @@ export default {
         return {
             items: [
                 { title: __('store_settings'), icon: 'grid-fill', url: '/store_settings', permission: 'manage_store_settings' },
+                { title: __('tax_settings'), icon: 'calculator', url: '/tax_settings', permission: 'manage_store_settings' },
                 { title: __('additional_charge'), icon: 'credit-card', url: '/additional_charges', permission: 'additional_charges_list' },
                 { title: __('contact_us'), icon: 'mail', url: '/contact_us', permission: 'manage_contact_us' },
                 { title: __('about_us'), icon: 'info', url: '/about_us', permission: 'manage_about_us' },

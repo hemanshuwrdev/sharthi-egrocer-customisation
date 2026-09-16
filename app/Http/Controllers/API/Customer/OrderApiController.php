@@ -24,6 +24,7 @@ use App\Models\User;
 use App\Models\LiveTracking;
 use App\Models\PromoCode;
 use App\Models\Product;
+use App\Models\TaxRule;
 use App\Models\Unit;
 use App\Models\ReturnRequest;
 use Carbon\Carbon;
@@ -153,9 +154,12 @@ class OrderApiController extends Controller
             $area_id = 0;
             $pickup_address = '';
 
+            $orderCountryId = null;
+
             if ($order_type == 'doorstep') {
                 $user_address = CommonHelper::getUserAddress($request->address_id);
                 if (!empty($user_address)) {
+                    $orderCountryId = CommonHelper::resolveCountryIdForAddress($user_address);
                     // Only append "/alternate_mobile" when alternate_mobile is set, to avoid trailing "/"
                     $mobilePart = $user_address->mobile;
                     if (!empty($user_address->alternate_mobile)) {
@@ -293,7 +297,7 @@ class OrderApiController extends Controller
 
             $item_details = CommonHelper::getProductByVariantId($item_arr);
 
-            $totalTax = CommonHelper::calculateOrderTotalTax($item_details, $quantity_arr);
+            $totalTax = CommonHelper::calculateOrderTotalTax($item_details, $quantity_arr, $orderCountryId);
             $order_total_tax_amt = $totalTax['order_total_tax_amt'];
             $order_total_tax_per = $totalTax['order_total_tax_per'];
 
@@ -435,6 +439,10 @@ class OrderApiController extends Controller
                     $tax_title = $item->tax_title;
                     $seller_id = (!empty($item->seller_id)) ? $item->seller_id : "";
                     $tax_percentage = (empty($item->tax_percentage) || $item->tax_percentage == "") ? 0 : $item->tax_percentage;
+                    $resolvedTaxPercentage = TaxRule::resolvePercentage($orderCountryId, $item->tax_category_id ?? null);
+                    if ($resolvedTaxPercentage !== null) {
+                        $tax_percentage = $resolvedTaxPercentage;
+                    }
 
                     $matchedSlab = CommonHelper::getMatchingSlab($product_variant_id, $quantity);
                     if ($matchedSlab) {

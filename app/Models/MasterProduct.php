@@ -20,6 +20,7 @@ class MasterProduct extends Model
         'brand_id',
         'category_id',
         'tax_id',
+        'tax_category_id',
         'hsn',
         'image',
         'other_images',

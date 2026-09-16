@@ -47,6 +47,7 @@ class CartApiController extends Controller
 
         $type = $request->get('type', '');
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : '';
+        $countryId = CommonHelper::resolveCountryIdForUser($user_id);
 
         $variant_ids = explode(",", $request->variant_ids);
 
@@ -121,16 +122,16 @@ class CartApiController extends Controller
                 $res[$key]->type = $item->type;
                 $res[$key]->measurement = $item->measurement;
 
-                $taxed = ProductHelper::getTaxableAmount($item->id);
+                $taxed = ProductHelper::getTaxableAmount($item->id, $countryId);
 
                 $res[$key]->discounted_price =  CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $item->discounted_price);
                 $res[$key]->price = CommonHelper::doubleNumber($taxed->taxable_price ?? $item->price);
                 $res[$key]->taxable_amount = CommonHelper::doubleNumber($taxed->taxable_amount);
 
                 $cartQty = (int) ($row->qty ?? 0);
-                $taxPercentage = (float) ($item->tax_percentage ?? 0);
+                $taxPercentage = (float) ($taxed->percentage ?? $item->tax_percentage ?? 0);
                 $res[$key]->slab_prices = CommonHelper::getSlabPricesForApi($item->id, $taxPercentage);
-                $slabTaxed = CommonHelper::getSlabTaxableAmount($item->id, $cartQty);
+                $slabTaxed = CommonHelper::getSlabTaxableAmount($item->id, $cartQty, $countryId);
                 $res[$key]->effective_unit_price = CommonHelper::doubleNumber($slabTaxed->taxable_amount ?? $taxed->taxable_amount);
 
                 $res[$key]->stock = $item->stock;
@@ -206,13 +207,13 @@ class CartApiController extends Controller
                     $result[$key]->type = $item->type;
                     $result[$key]->measurement = $item->measurement;
 
-                    $taxed = ProductHelper::getTaxableAmount($item->id);
+                    $taxed = ProductHelper::getTaxableAmount($item->id, $countryId);
 
                     $result[$key]->discounted_price =  CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $item->discounted_price);
                     $result[$key]->price = CommonHelper::doubleNumber($taxed->taxable_price ?? $item->price);
                     $result[$key]->taxable_amount = CommonHelper::doubleNumber($taxed->taxable_amount);
 
-                    $result[$key]->slab_prices = CommonHelper::getSlabPricesForApi($item->id, (float) ($item->tax_percentage ?? 0));
+                    $result[$key]->slab_prices = CommonHelper::getSlabPricesForApi($item->id, (float) ($taxed->percentage ?? $item->tax_percentage ?? 0));
 
                     $result[$key]->stock = $item->stock;
                     $result[$key]->images = CommonHelper::getImages($rows['id'], $rows->product_variant_id);
@@ -701,6 +702,7 @@ class CartApiController extends Controller
         }
 
         $user_id = auth()->user()->id;
+        $countryId = CommonHelper::resolveCountryIdForUser($user_id);
         $product_id = $request->product_id;
         $variant_id = $request->product_variant_id;
 
