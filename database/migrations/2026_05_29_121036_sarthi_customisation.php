@@ -1158,6 +1158,35 @@ class SarthiCustomisation extends Migration
                 $table->foreign('assigned_by')->references('id')->on('admins')->nullOnDelete();
             });
         }
+
+        // ── Distributor <-> Area assignment (territory the distributor covers),
+        //    independent of brand. Separate from brand_distributor_mappings, which
+        //    maps a brand to a distributor within a city.
+        if (!Schema::hasTable('distributor_areas')) {
+            Schema::create('distributor_areas', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->unsignedBigInteger('seller_id');
+                $table->unsignedBigInteger('area_id');
+                $table->timestamps();
+
+                $table->unique(['seller_id', 'area_id'], 'uniq_distributor_area_seller_area');
+                $table->index('seller_id', 'idx_distributor_area_seller');
+                $table->index('area_id', 'idx_distributor_area_area');
+            });
+        }
+
+        // ── master_product_variants: inner-pack count and a weight unit reference.
+        if (Schema::hasTable('master_product_variants')) {
+            Schema::table('master_product_variants', function (Blueprint $table) {
+                if (!Schema::hasColumn('master_product_variants', 'inner_pack_value')) {
+                    $table->unsignedInteger('inner_pack_value')->nullable()->after('secondary_unit_id')
+                        ->comment('How many outer-pack units are in one inner pack (count, not the secondary_unit_value ratio)');
+                }
+                if (!Schema::hasColumn('master_product_variants', 'weight_unit_id')) {
+                    $table->unsignedBigInteger('weight_unit_id')->nullable()->after('weight');
+                }
+            });
+        }
     }
 
     /**
@@ -1167,6 +1196,17 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasColumn('master_product_variants', 'inner_pack_value') || Schema::hasColumn('master_product_variants', 'weight_unit_id')) {
+            Schema::table('master_product_variants', function (Blueprint $table) {
+                if (Schema::hasColumn('master_product_variants', 'inner_pack_value')) {
+                    $table->dropColumn('inner_pack_value');
+                }
+                if (Schema::hasColumn('master_product_variants', 'weight_unit_id')) {
+                    $table->dropColumn('weight_unit_id');
+                }
+            });
+        }
+        Schema::dropIfExists('distributor_areas');
         Schema::dropIfExists('distributor_subscriptions');
         Schema::dropIfExists('distributor_subscription_plans');
         Schema::dropIfExists('activity_log');
