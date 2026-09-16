@@ -124,43 +124,35 @@
                                     :settings="{ multiple: 'multiple', width: '100%', dropdownParent: '#mymodal' }" />
 
                             </div>
-                            <div class="col-md-6 form-group">
+                            <div class="col-md-12 form-group">
                                 <div class="form-group row">
                                     <div class="col-md-12 col-sm-12">
                                         <label class="required">{{ __('select_style_for_app_section') }}</label><i
                                             class="text-danger">*</i>
                                     </div>
                                 </div>
-                                <div class="form-group row">
-                                    <div class="col-md-3 col-sm-3">
-                                        <label class="radio-img">
-                                            <input type="radio" value="style_1" v-model="section.style_app" required
-                                                class="form-control">
-                                            <img :src="$baseUrl + '/images/app_style/App_Style_1.jpg'" alt="style_1"
-                                                class="style_image">
-                                        </label>
-                                    </div>
-                                    <div class="col-md-3 col-sm-3">
-                                        <label class="radio-img">
-                                            <input type="radio" value="style_2" v-model="section.style_app">
-                                            <img :src="$baseUrl + '/images/app_style/App_Style_2.jpg'" alt="style_2"
-                                                class="style_image">
-                                        </label>
-                                    </div>
-                                    <div class="col-md-3 col-sm-3">
-                                        <label class="radio-img">
-                                            <input type="radio" value="style_3" v-model="section.style_app">
-                                            <img :src="$baseUrl + '/images/app_style/App_Style_3.jpg'" alt="style_3"
-                                                class="style_image">
-                                        </label>
-                                    </div>
-                                    <div class="col-md-3 col-sm-3">
-                                        <label class="radio-img">
-                                            <input type="radio" value="style_4" v-model="section.style_app">
-                                            <img :src="$baseUrl + '/images/app_style/App_Style_4.jpg'" alt="style_4"
-                                                class="style_image">
-                                        </label>
-                                    </div>
+                                <div class="form-group app-style-grid">
+                                    <label class="radio-img">
+                                        <input type="radio" value="style_1" v-model="section.style_app" required
+                                            class="form-control">
+                                        <img :src="$baseUrl + '/images/app_style/App_Style_1.jpg'" alt="style_1"
+                                            class="style_image">
+                                    </label>
+                                    <label class="radio-img">
+                                        <input type="radio" value="style_2" v-model="section.style_app">
+                                        <img :src="$baseUrl + '/images/app_style/App_Style_2.jpg'" alt="style_2"
+                                            class="style_image">
+                                    </label>
+                                    <label class="radio-img">
+                                        <input type="radio" value="style_3" v-model="section.style_app">
+                                        <img :src="$baseUrl + '/images/app_style/App_Style_3.jpg'" alt="style_3"
+                                            class="style_image">
+                                    </label>
+                                    <label class="radio-img">
+                                        <input type="radio" value="style_4" v-model="section.style_app">
+                                        <img :src="$baseUrl + '/images/app_style/App_Style_4.jpg'" alt="style_4"
+                                            class="style_image">
+                                    </label>
                                 </div>
 
                                 <!-- Show file upload input if style_4 is selected -->
@@ -191,7 +183,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6 form-group">
+                            <!-- Web isn't in use right now — hidden until it is. style_web still
+                                 defaults to 'style_1' and is always sent with the form (see data()
+                                 and the FormData append), so hiding this picker is safe. -->
+                            <div class="col-md-6 form-group" v-if="false">
                                 <div class="form-group row">
                                     <div class="col-md-12 col-sm-12">
                                         <label class="required">{{ __('select_style_for_web_section') }}</label><i
@@ -859,5 +854,29 @@ export default {
 <style scoped>
 .select2-search__field input[type=search] {
     width: 5000px !important;
+}
+
+/* The 4 thumbnails grow to evenly fill the row's full width (each capped so
+   they don't get absurdly large on very wide modals), and wrap to a new row
+   only if the container gets too narrow to fit them at their minimum size. */
+.app-style-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.app-style-grid > .radio-img {
+    flex: 1 1 200px;
+    max-width: 320px;
+    /* .radio-img has a fixed height globally; the mockup image scales by
+       width (taller as the box grows), so it must be clipped/contained to
+       the box instead of overflowing onto whatever sits below it. */
+    overflow: hidden;
+}
+
+.app-style-grid > .radio-img > .style_image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 </style>

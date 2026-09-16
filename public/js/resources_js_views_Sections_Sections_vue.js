@@ -326,11 +326,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
-//
-//
-//
-//
-//
 
 
 
@@ -1642,7 +1637,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.select2-search__field input[type=search][data-v-3572115c] {\n    width: 5000px !important;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.select2-search__field input[type=search][data-v-3572115c] {\n    width: 5000px !important;\n}\n\n/* The 4 thumbnails grow to evenly fill the row's full width (each capped so\n   they don't get absurdly large on very wide modals), and wrap to a new row\n   only if the container gets too narrow to fit them at their minimum size. */\n.app-style-grid[data-v-3572115c] {\n    display: flex;\n    flex-wrap: wrap;\n    gap: 16px;\n}\n.app-style-grid > .radio-img[data-v-3572115c] {\n    flex: 1 1 200px;\n    max-width: 320px;\n    /* .radio-img has a fixed height globally; the mockup image scales by\n       width (taller as the box grows), so it must be clipped/contained to\n       the box instead of overflowing onto whatever sits below it. */\n    overflow: hidden;\n}\n.app-style-grid > .radio-img > .style_image[data-v-3572115c] {\n    width: 100%;\n    height: 100%;\n    -o-object-fit: contain;\n       object-fit: contain;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2855,7 +2850,7 @@ var render = function () {
                                     _vm._v(" "),
                                     _c(
                                       "div",
-                                      { staticClass: "col-md-6 form-group" },
+                                      { staticClass: "col-md-12 form-group" },
                                       [
                                         _c(
                                           "div",
@@ -2895,252 +2890,202 @@ var render = function () {
                                         _vm._v(" "),
                                         _c(
                                           "div",
-                                          { staticClass: "form-group row" },
+                                          {
+                                            staticClass:
+                                              "form-group app-style-grid",
+                                          },
                                           [
                                             _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
+                                              "label",
+                                              { staticClass: "radio-img" },
                                               [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_app,
-                                                          expression:
-                                                            "section.style_app",
-                                                        },
-                                                      ],
-                                                      staticClass:
-                                                        "form-control",
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_1",
-                                                        required: "",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_app,
-                                                          "style_1"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_app",
-                                                            "style_1"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/app_style/App_Style_1.jpg",
-                                                        alt: "style_1",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        _vm.section.style_app,
+                                                      expression:
+                                                        "section.style_app",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "radio",
+                                                    value: "style_1",
+                                                    required: "",
+                                                  },
+                                                  domProps: {
+                                                    checked: _vm._q(
+                                                      _vm.section.style_app,
+                                                      "style_1"
+                                                    ),
+                                                  },
+                                                  on: {
+                                                    change: function ($event) {
+                                                      return _vm.$set(
+                                                        _vm.section,
+                                                        "style_app",
+                                                        "style_1"
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                                _vm._v(" "),
+                                                _c("img", {
+                                                  staticClass: "style_image",
+                                                  attrs: {
+                                                    src:
+                                                      _vm.$baseUrl +
+                                                      "/images/app_style/App_Style_1.jpg",
+                                                    alt: "style_1",
+                                                  },
+                                                }),
                                               ]
                                             ),
                                             _vm._v(" "),
                                             _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
+                                              "label",
+                                              { staticClass: "radio-img" },
                                               [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_app,
-                                                          expression:
-                                                            "section.style_app",
-                                                        },
-                                                      ],
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_2",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_app,
-                                                          "style_2"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_app",
-                                                            "style_2"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/app_style/App_Style_2.jpg",
-                                                        alt: "style_2",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        _vm.section.style_app,
+                                                      expression:
+                                                        "section.style_app",
+                                                    },
+                                                  ],
+                                                  attrs: {
+                                                    type: "radio",
+                                                    value: "style_2",
+                                                  },
+                                                  domProps: {
+                                                    checked: _vm._q(
+                                                      _vm.section.style_app,
+                                                      "style_2"
+                                                    ),
+                                                  },
+                                                  on: {
+                                                    change: function ($event) {
+                                                      return _vm.$set(
+                                                        _vm.section,
+                                                        "style_app",
+                                                        "style_2"
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                                _vm._v(" "),
+                                                _c("img", {
+                                                  staticClass: "style_image",
+                                                  attrs: {
+                                                    src:
+                                                      _vm.$baseUrl +
+                                                      "/images/app_style/App_Style_2.jpg",
+                                                    alt: "style_2",
+                                                  },
+                                                }),
                                               ]
                                             ),
                                             _vm._v(" "),
                                             _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
+                                              "label",
+                                              { staticClass: "radio-img" },
                                               [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_app,
-                                                          expression:
-                                                            "section.style_app",
-                                                        },
-                                                      ],
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_3",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_app,
-                                                          "style_3"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_app",
-                                                            "style_3"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/app_style/App_Style_3.jpg",
-                                                        alt: "style_3",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        _vm.section.style_app,
+                                                      expression:
+                                                        "section.style_app",
+                                                    },
+                                                  ],
+                                                  attrs: {
+                                                    type: "radio",
+                                                    value: "style_3",
+                                                  },
+                                                  domProps: {
+                                                    checked: _vm._q(
+                                                      _vm.section.style_app,
+                                                      "style_3"
+                                                    ),
+                                                  },
+                                                  on: {
+                                                    change: function ($event) {
+                                                      return _vm.$set(
+                                                        _vm.section,
+                                                        "style_app",
+                                                        "style_3"
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                                _vm._v(" "),
+                                                _c("img", {
+                                                  staticClass: "style_image",
+                                                  attrs: {
+                                                    src:
+                                                      _vm.$baseUrl +
+                                                      "/images/app_style/App_Style_3.jpg",
+                                                    alt: "style_3",
+                                                  },
+                                                }),
                                               ]
                                             ),
                                             _vm._v(" "),
                                             _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
+                                              "label",
+                                              { staticClass: "radio-img" },
                                               [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_app,
-                                                          expression:
-                                                            "section.style_app",
-                                                        },
-                                                      ],
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_4",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_app,
-                                                          "style_4"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_app",
-                                                            "style_4"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/app_style/App_Style_4.jpg",
-                                                        alt: "style_4",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        _vm.section.style_app,
+                                                      expression:
+                                                        "section.style_app",
+                                                    },
+                                                  ],
+                                                  attrs: {
+                                                    type: "radio",
+                                                    value: "style_4",
+                                                  },
+                                                  domProps: {
+                                                    checked: _vm._q(
+                                                      _vm.section.style_app,
+                                                      "style_4"
+                                                    ),
+                                                  },
+                                                  on: {
+                                                    change: function ($event) {
+                                                      return _vm.$set(
+                                                        _vm.section,
+                                                        "style_app",
+                                                        "style_4"
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                                _vm._v(" "),
+                                                _c("img", {
+                                                  staticClass: "style_image",
+                                                  attrs: {
+                                                    src:
+                                                      _vm.$baseUrl +
+                                                      "/images/app_style/App_Style_4.jpg",
+                                                    alt: "style_4",
+                                                  },
+                                                }),
                                               ]
                                             ),
                                           ]
@@ -3303,476 +3248,9 @@ var render = function () {
                                       ]
                                     ),
                                     _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      { staticClass: "col-md-6 form-group" },
-                                      [
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group row" },
-                                          [
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-12 col-sm-12",
-                                              },
-                                              [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "required" },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.__(
-                                                          "select_style_for_web_section"
-                                                        )
-                                                      )
-                                                    ),
-                                                  ]
-                                                ),
-                                                _c(
-                                                  "i",
-                                                  {
-                                                    staticClass: "text-danger",
-                                                  },
-                                                  [_vm._v("*")]
-                                                ),
-                                              ]
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "div",
-                                          { staticClass: "form-group row" },
-                                          [
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
-                                              [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_web,
-                                                          expression:
-                                                            "section.style_web",
-                                                        },
-                                                      ],
-                                                      staticClass:
-                                                        "form-control",
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_1",
-                                                        required: "",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_web,
-                                                          "style_1"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_web",
-                                                            "style_1"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/web_style/Web_Style_1.jpg",
-                                                        alt: "style_1",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
-                                              [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_web,
-                                                          expression:
-                                                            "section.style_web",
-                                                        },
-                                                      ],
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_2",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_web,
-                                                          "style_2"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_web",
-                                                            "style_2"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/web_style/Web_Style_2.jpg",
-                                                        alt: "style_2",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
-                                              [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_web,
-                                                          expression:
-                                                            "section.style_web",
-                                                        },
-                                                      ],
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_3",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_web,
-                                                          "style_3"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_web",
-                                                            "style_3"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/web_style/Web_Style_3.jpg",
-                                                        alt: "style_3",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass:
-                                                  "col-md-3 col-sm-3",
-                                              },
-                                              [
-                                                _c(
-                                                  "label",
-                                                  { staticClass: "radio-img" },
-                                                  [
-                                                    _c("input", {
-                                                      directives: [
-                                                        {
-                                                          name: "model",
-                                                          rawName: "v-model",
-                                                          value:
-                                                            _vm.section
-                                                              .style_web,
-                                                          expression:
-                                                            "section.style_web",
-                                                        },
-                                                      ],
-                                                      attrs: {
-                                                        type: "radio",
-                                                        value: "style_4",
-                                                      },
-                                                      domProps: {
-                                                        checked: _vm._q(
-                                                          _vm.section.style_web,
-                                                          "style_4"
-                                                        ),
-                                                      },
-                                                      on: {
-                                                        change: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.$set(
-                                                            _vm.section,
-                                                            "style_web",
-                                                            "style_4"
-                                                          )
-                                                        },
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c("img", {
-                                                      staticClass:
-                                                        "style_image",
-                                                      attrs: {
-                                                        src:
-                                                          _vm.$baseUrl +
-                                                          "/images/web_style/Web_Style_4.jpg",
-                                                        alt: "style_4",
-                                                      },
-                                                    }),
-                                                  ]
-                                                ),
-                                              ]
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _vm.section.style_web === "style_4"
-                                          ? _c(
-                                              "div",
-                                              { staticClass: "form-group row" },
-                                              [
-                                                _c(
-                                                  "div",
-                                                  { staticClass: "col-md-12" },
-                                                  [
-                                                    _c(
-                                                      "label",
-                                                      {
-                                                        attrs: {
-                                                          for: "banner_web",
-                                                        },
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          " " +
-                                                            _vm._s(
-                                                              _vm.__(
-                                                                "banner_image"
-                                                              )
-                                                            )
-                                                        ),
-                                                        _c(
-                                                          "i",
-                                                          {
-                                                            staticClass:
-                                                              "text-danger",
-                                                          },
-                                                          [_vm._v("*")]
-                                                        ),
-                                                      ]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _vm.section.error_web
-                                                      ? _c(
-                                                          "span",
-                                                          {
-                                                            staticClass:
-                                                              "error",
-                                                          },
-                                                          [
-                                                            _vm._v(
-                                                              _vm._s(
-                                                                _vm.section
-                                                                  .error_web
-                                                              )
-                                                            ),
-                                                          ]
-                                                        )
-                                                      : _vm._e(),
-                                                    _vm._v(" "),
-                                                    _c("input", {
-                                                      ref:
-                                                        "file_banner_web_" +
-                                                        lang.id,
-                                                      refInFor: true,
-                                                      staticClass: "file-input",
-                                                      attrs: {
-                                                        type: "file",
-                                                        name: "banner_web",
-                                                        accept: "image/*",
-                                                        id: "banner_web",
-                                                      },
-                                                      on: {
-                                                        change:
-                                                          _vm.handleFileUploadBannerWeb,
-                                                      },
-                                                    }),
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass:
-                                                          "file-input-div bg-gray-100 mt-2",
-                                                        on: {
-                                                          click: function (
-                                                            $event
-                                                          ) {
-                                                            return _vm.triggerBannerWebUpload(
-                                                              lang.id
-                                                            )
-                                                          },
-                                                          drop: _vm.dropFileWeb,
-                                                          dragover:
-                                                            _vm.$dragoverFile,
-                                                          dragleave:
-                                                            _vm.$dragleaveFile,
-                                                        },
-                                                      },
-                                                      [
-                                                        _vm.section
-                                                          .banner_web &&
-                                                        _vm.section.banner_web
-                                                          .name !== ""
-                                                          ? [
-                                                              _c("label", [
-                                                                _vm._v(
-                                                                  " " +
-                                                                    _vm._s(
-                                                                      _vm.__(
-                                                                        "selected_file_name"
-                                                                      )
-                                                                    ) +
-                                                                    " " +
-                                                                    _vm._s(
-                                                                      _vm
-                                                                        .section
-                                                                        .banner_web
-                                                                        .name
-                                                                    )
-                                                                ),
-                                                              ]),
-                                                            ]
-                                                          : [
-                                                              _c("label", [
-                                                                _c("i", {
-                                                                  staticClass:
-                                                                    "fa fa-cloud-upload-alt fa-2x",
-                                                                }),
-                                                              ]),
-                                                              _vm._v(" "),
-                                                              _c("label", [
-                                                                _vm._v(
-                                                                  _vm._s(
-                                                                    _vm.__(
-                                                                      "drop_files_here_or_click_to_upload"
-                                                                    )
-                                                                  )
-                                                                ),
-                                                              ]),
-                                                            ],
-                                                      ],
-                                                      2
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _vm.section.banner_web_url
-                                                      ? _c(
-                                                          "div",
-                                                          {
-                                                            staticClass:
-                                                              "row mt-2",
-                                                          },
-                                                          [
-                                                            _c(
-                                                              "div",
-                                                              {
-                                                                staticClass:
-                                                                  "col-md-2",
-                                                              },
-                                                              [
-                                                                _c("img", {
-                                                                  staticClass:
-                                                                    "custom-image",
-                                                                  attrs: {
-                                                                    src: _vm
-                                                                      .section
-                                                                      .banner_web_url,
-                                                                    title:
-                                                                      "Banner Web Image",
-                                                                    alt: "Banner Web Image",
-                                                                  },
-                                                                }),
-                                                              ]
-                                                            ),
-                                                          ]
-                                                        )
-                                                      : _vm._e(),
-                                                  ]
-                                                ),
-                                              ]
-                                            )
-                                          : _vm._e(),
-                                      ]
-                                    ),
+                                     false
+                                      ? 0
+                                      : _vm._e(),
                                   ]),
                                 ])
                               : _vm._e(),
