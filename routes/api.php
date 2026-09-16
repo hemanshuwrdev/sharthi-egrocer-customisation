@@ -671,6 +671,8 @@ Route::middleware('auth:api')->group(function () {
         });
         Route::get('order-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getOrderSettings']);
         Route::post('order-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveOrderSettings']);
+        Route::get('invoice-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getInvoiceSettings']);
+        Route::post('invoice-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveInvoiceSettings']);
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
         Route::group(['prefix' => 'delivery_boys'], function () {
             Route::get('/', [\App\Http\Controllers\SellerController::class, 'getDeliveryBoys']);

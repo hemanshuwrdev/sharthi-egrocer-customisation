@@ -3014,19 +3014,87 @@ class CommonHelper
         return array("order" => $order, "order_items" => $order_items);
     }
 
+    /**
+     * Format a distributor-configured sequence number: {prefix}{padded number}{suffix}.
+     * Padding is 4 digits minimum and grows naturally past 9999 without truncating.
+     */
+    public static function formatDistributorSequenceNumber($prefix, $number, $suffix)
+    {
+        return ($prefix ?? '') . str_pad((string) $number, 4, '0', STR_PAD_LEFT) . ($suffix ?? '');
+    }
+
+    /**
+     * Resolve (assigning if needed) this order's distributor-formatted invoice number.
+     * Every order belongs to exactly one seller — checkout (RetailerCartOrderApiController
+     * ::placeOrder) groups the cart by seller_id and creates one Order per seller — so the
+     * seller is looked up directly from the order's items, no "who's viewing" guesswork.
+     * Assigned once on first call and stored on orders.invoice_number; every later call
+     * just returns the stored value. Returns null if the order has no seller (e.g. no
+     * items), so callers can fall back to the generic INV/{year}/{id} format.
+     */
+    public static function resolveDistributorInvoiceNumber($orderId)
+    {
+        $existing = \App\Models\Order::where('id', $orderId)->value('invoice_number');
+        if ($existing) {
+            return $existing;
+        }
+
+        $sellerId = \App\Models\OrderItem::where('order_id', $orderId)->value('seller_id');
+        if (!$sellerId) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($orderId, $sellerId) {
+            $locked = \App\Models\Seller::where('id', $sellerId)->lockForUpdate()->first();
+            if (!$locked) {
+                return null;
+            }
+
+            // Re-check inside the lock — another concurrent request may have just assigned it.
+            $existing = \App\Models\Order::where('id', $orderId)->value('invoice_number');
+            if ($existing) {
+                return $existing;
+            }
+
+            $number = self::formatDistributorSequenceNumber($locked->invoice_prefix, $locked->invoice_next_number, $locked->invoice_suffix);
+
+            \App\Models\Order::where('id', $orderId)->update(['invoice_number' => $number]);
+            $locked->invoice_next_number = $locked->invoice_next_number + 1;
+            $locked->save();
+
+            return $number;
+        });
+    }
+
+    /**
+     * Resolve the next loading-slip number for $seller and consume it. Unlike invoice
+     * numbers, a slip number is assigned once at creation time, never re-derived.
+     */
+    public static function nextLoadingSlipNumber($seller)
+    {
+        return DB::transaction(function () use ($seller) {
+            $locked = \App\Models\Seller::where('id', $seller->id)->lockForUpdate()->first();
+            $number = self::formatDistributorSequenceNumber($locked->invoice_prefix, $locked->loading_slip_next_number, $locked->invoice_suffix);
+            $locked->loading_slip_next_number = $locked->loading_slip_next_number + 1;
+            $locked->save();
+            return $number;
+        });
+    }
+
     public static function generateOrderInvoice($data)
     {
         $invoice = view('invoice', $data)->render();
         return $invoice;
     }
 
-    public static function downloadOrderInvoice($order_id)
+    public static function downloadOrderInvoice($order_id, $distributorInvoiceNumber = null)
     {
         try {
             $data = CommonHelper::getOrderDetails($order_id, true);
             if (!$data["order"]) {
                 return CommonHelper::responseError("Order Not found!");
             }
+            $data['distributor_invoice_number'] = $distributorInvoiceNumber;
             $invoice = view('invoiceMpdf', $data)->render();
 
             $tempDir = storage_path('app/mpdf');

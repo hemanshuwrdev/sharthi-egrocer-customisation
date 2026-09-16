@@ -331,6 +331,7 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError("Order Not found!");
         }
         CommonHelper::AdditionalChargesArray($data['order']);
+        $data['distributor_invoice_number'] = CommonHelper::resolveDistributorInvoiceNumber($request->order_id);
         $invoice = CommonHelper::generateOrderInvoice($data);
         return CommonHelper::responseWithData($invoice);
     }
@@ -341,7 +342,8 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError("Order Not found!");
         }
         CommonHelper::AdditionalChargesArray($data['order']);
-        return CommonHelper::downloadOrderInvoice($request->order_id);
+        $distributorInvoiceNumber = CommonHelper::resolveDistributorInvoiceNumber($request->order_id);
+        return CommonHelper::downloadOrderInvoice($request->order_id, $distributorInvoiceNumber);
     }
 
     public function delete(Request $request)

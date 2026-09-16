@@ -285,10 +285,9 @@ class LoadingSlipsApiController extends Controller
 
         DB::beginTransaction();
         try {
-            // Generate slip number
-            $lastSlip = LoadingSlip::orderBy('id', 'DESC')->first();
-            $nextId = $lastSlip ? $lastSlip->id + 1 : 10001;
-            $slipNo = 'LS-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
+            // Generate slip number — distributor's own prefix/number/suffix sequence,
+            // independent from their order-invoice numbering (a slip bundles many orders).
+            $slipNo = CommonHelper::nextLoadingSlipNumber(auth()->user()->seller);
 
             $slip = LoadingSlip::create([
                 'slip_no' => $slipNo,

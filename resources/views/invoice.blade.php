@@ -117,7 +117,7 @@
                 <table align="right" style="border: none; border-collapse: collapse; font-size: 12px; font-weight: bold; color: #111; padding: 0; margin: 0;">
                     <tr>
                         <td align="left" style="color: #555; padding: 2px 5px; border: none;">Invoice ID:</td>
-                        <td align="right" style="padding: 2px 5px; border: none;">INV/{{ date('Y', strtotime($order->orders_created_at ?? $order->created_at)) }}/{{ str_pad($order->order_id, 6, '0', STR_PAD_LEFT) }}</td>
+                        <td align="right" style="padding: 2px 5px; border: none;">{{ $distributor_invoice_number ?? ('INV/' . date('Y', strtotime($order->orders_created_at ?? $order->created_at)) . '/' . str_pad($order->order_id, 6, '0', STR_PAD_LEFT)) }}</td>
                     </tr>
                     <tr>
                         <td align="left" style="color: #555; padding: 2px 5px; border: none;">Invoice Date:</td>

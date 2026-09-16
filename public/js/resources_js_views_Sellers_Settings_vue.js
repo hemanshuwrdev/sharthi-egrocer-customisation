@@ -143,6 +143,43 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -170,13 +207,24 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       isOrderLoading: false,
       order_cutoff_time: "",
       isPaymentLoading: false,
-      paymentMethods: []
+      paymentMethods: [],
+      isInvoiceLoading: false,
+      invoice_prefix: "",
+      invoice_suffix: "",
+      invoice_next_number: 1
     };
   },
   created: function created() {
     this.getSettings();
     this.getOrderSettings();
     this.getPaymentMethods();
+    this.getInvoiceSettings();
+  },
+  computed: {
+    invoiceNumberPreview: function invoiceNumberPreview() {
+      var padded = String(this.invoice_next_number || 1).padStart(4, '0');
+      return "".concat(this.invoice_prefix || '').concat(padded).concat(this.invoice_suffix || '');
+    }
   },
   methods: {
     // ================= LOAD SETTINGS =================
@@ -289,6 +337,38 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       })["catch"](function () {
         _this6.showError('Failed to save order settings');
         _this6.isOrderLoading = false;
+      });
+    },
+    // ================= INVOICE SETTINGS =================
+    getInvoiceSettings: function getInvoiceSettings() {
+      var _this7 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/invoice-settings').then(function (res) {
+        if (res.data.status && res.data.data) {
+          _this7.invoice_prefix = res.data.data.invoice_prefix || "";
+          _this7.invoice_suffix = res.data.data.invoice_suffix || "";
+          _this7.invoice_next_number = res.data.data.invoice_next_number || 1;
+        }
+      })["catch"](function () {
+        _this7.showError('Failed to load invoice settings');
+      });
+    },
+    saveInvoiceSettings: function saveInvoiceSettings() {
+      var _this8 = this;
+      this.isInvoiceLoading = true;
+      var formData = new FormData();
+      formData.append('invoice_prefix', this.invoice_prefix || '');
+      formData.append('invoice_suffix', this.invoice_suffix || '');
+      formData.append('invoice_next_number', this.invoice_next_number || 1);
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/invoice-settings/save', formData).then(function (res) {
+        if (res.data.status) {
+          _this8.showMessage('success', __(res.data.message));
+        } else {
+          _this8.showError(res.data.message || 'Failed to save');
+        }
+        _this8.isInvoiceLoading = false;
+      })["catch"](function () {
+        _this8.showError('Failed to save invoice settings');
+        _this8.isInvoiceLoading = false;
       });
     }
   }
@@ -774,6 +854,152 @@ var render = function () {
                     "\n                    "
                 ),
                 _vm.isOrderLoading
+                  ? _c("b-spinner", { attrs: { small: "" } })
+                  : _vm._e(),
+              ],
+              1
+            ),
+          ],
+          1
+        ),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "card mt-4" }, [
+        _c("div", { staticClass: "card-header" }, [
+          _c("h4", [_vm._v(_vm._s(_vm.__("invoice_settings")))]),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "card-body" }, [
+          _c("p", { staticClass: "text-muted font-size-13" }, [
+            _vm._v(_vm._s(_vm.__("invoice_settings_hint"))),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "form-group col-md-4" }, [
+              _c("label", { attrs: { for: "invoice_prefix" } }, [
+                _vm._v(_vm._s(_vm.__("invoice_prefix"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.invoice_prefix,
+                    expression: "invoice_prefix",
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "text",
+                  id: "invoice_prefix",
+                  placeholder: _vm.__("optional"),
+                },
+                domProps: { value: _vm.invoice_prefix },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.invoice_prefix = $event.target.value
+                  },
+                },
+              }),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "form-group col-md-4" }, [
+              _c("label", { attrs: { for: "invoice_next_number" } }, [
+                _vm._v(_vm._s(_vm.__("invoice_number"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model.number",
+                    value: _vm.invoice_next_number,
+                    expression: "invoice_next_number",
+                    modifiers: { number: true },
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "number",
+                  min: "1",
+                  id: "invoice_next_number",
+                  placeholder: "1",
+                },
+                domProps: { value: _vm.invoice_next_number },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.invoice_next_number = _vm._n($event.target.value)
+                  },
+                  blur: function ($event) {
+                    return _vm.$forceUpdate()
+                  },
+                },
+              }),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "form-group col-md-4" }, [
+              _c("label", { attrs: { for: "invoice_suffix" } }, [
+                _vm._v(_vm._s(_vm.__("invoice_suffix"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.invoice_suffix,
+                    expression: "invoice_suffix",
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "text",
+                  id: "invoice_suffix",
+                  placeholder: _vm.__("optional"),
+                },
+                domProps: { value: _vm.invoice_suffix },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.invoice_suffix = $event.target.value
+                  },
+                },
+              }),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c("p", { staticClass: "text-muted font-size-13 mb-0" }, [
+            _vm._v("\n                    " + _vm._s(_vm.__("preview")) + ": "),
+            _c("strong", [_vm._v(_vm._s(_vm.invoiceNumberPreview))]),
+          ]),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "card-footer" },
+          [
+            _c(
+              "b-button",
+              {
+                attrs: { variant: "primary", disabled: _vm.isInvoiceLoading },
+                on: { click: _vm.saveInvoiceSettings },
+              },
+              [
+                _vm._v(
+                  "\n                    " +
+                    _vm._s(_vm.__("save")) +
+                    "\n                    "
+                ),
+                _vm.isInvoiceLoading
                   ? _c("b-spinner", { attrs: { small: "" } })
                   : _vm._e(),
               ],

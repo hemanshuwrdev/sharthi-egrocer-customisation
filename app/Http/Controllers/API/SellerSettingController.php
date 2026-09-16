@@ -71,4 +71,42 @@ class SellerSettingController extends Controller
             return CommonHelper::responseError($e->getMessage());
         }
     }
+
+    /**
+     * Invoice numbering: {prefix}{number}{suffix}. Prefix/suffix are optional; number
+     * is the next value this distributor's order invoices will be assigned (loading
+     * slips run on their own independent counter, sharing only the prefix/suffix style).
+     */
+    public function getInvoiceSettings()
+    {
+        $seller = auth()->user()->seller;
+        return CommonHelper::responseWithData([
+            'invoice_prefix' => $seller->invoice_prefix,
+            'invoice_suffix' => $seller->invoice_suffix,
+            'invoice_next_number' => $seller->invoice_next_number,
+        ]);
+    }
+
+    public function saveInvoiceSettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'invoice_prefix' => 'nullable|string|max:20',
+            'invoice_suffix' => 'nullable|string|max:20',
+            'invoice_next_number' => 'required|integer|min:1',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        try {
+            $seller = auth()->user()->seller;
+            $seller->invoice_prefix = $request->invoice_prefix ?: null;
+            $seller->invoice_suffix = $request->invoice_suffix ?: null;
+            $seller->invoice_next_number = $request->invoice_next_number;
+            $seller->save();
+            return CommonHelper::responseSuccess('invoice_settings_saved_successfully');
+        } catch (\Exception $e) {
+            return CommonHelper::responseError($e->getMessage());
+        }
+    }
 }
