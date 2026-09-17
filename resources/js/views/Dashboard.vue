@@ -2,7 +2,7 @@
     <div>
         <div class="page-heading d-flex justify-content-between align-items-center mb-4 text-start">
             <div class="text-start w-100">
-                <h3 class="mb-0 fw-bold header-title text-start" style="color: #2b3674; font-size: 1.75rem; letter-spacing: -0.5px; text-align: left !important;">{{ __('welcome') }}, {{ adminName }}</h3>
+                <h3 class="mb-0 fw-bold header-title text-start" style="color: var(--app-ink); font-size: 1.75rem; letter-spacing: -0.5px; text-align: left !important;">{{ __('welcome') }}, {{ adminName }}</h3>
                 <p class="mb-0 header-subtitle text-start" style="color: #05cd99; font-weight: 500; font-size: 0.95rem; text-align: left !important;">{{ __(greetingKey) }} &bull; {{ currentDate }}</p>
             </div>
         </div>
@@ -12,7 +12,7 @@
                     <div class="col-12">
                         <div class="row align-items-start metric-card-wrapper">
                             <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
-                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link :to="{ name: 'MasterProducts' }" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #4285F4; color: white; border-radius: 12px !important;">
@@ -20,14 +20,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('products') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.product_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2; text-align: left !important;">{{ record.product_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
-                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/users" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #10b981; color: white; border-radius: 12px !important;">
@@ -35,14 +35,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('customers') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.customer_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2; text-align: left !important;">{{ record.customer_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
-                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/sellers" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #f59e0b; color: white; border-radius: 12px !important;">
@@ -50,14 +50,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('sellers') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.seller_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2; text-align: left !important;">{{ record.seller_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
-                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/manage_categories" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #ef4444; color: white; border-radius: 12px !important;">
@@ -65,14 +65,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('categories') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.category_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2; text-align: left !important;">{{ record.category_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
-                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/brands" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #8b5cf6; color: white; border-radius: 12px !important;">
@@ -80,14 +80,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('brands') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.brand_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2; text-align: left !important;">{{ record.brand_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-6 col-lg-2 col-xl-2">
-                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card shadow-sm border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/cities" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #06b6d4; color: white; border-radius: 12px !important;">
@@ -95,7 +95,7 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('city') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2; text-align: left !important;">{{ record.city_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2; text-align: left !important;">{{ record.city_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
@@ -105,9 +105,9 @@
                     </div>
 
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4 mb-4">
-                        <div class="card shadow-sm border h-100" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                        <div class="card shadow-sm border h-100" style="border-radius: 12px; border-color: var(--app-border) !important;">
                             <div class="card-body p-4">
-                                <h4 class="mb-0 fw-bold header-title text-start" style="color: #2b3674; font-size: 1.15rem; letter-spacing: -0.5px; text-align: left !important;">{{ __('product_category_count') }}</h4>
+                                <h4 class="mb-0 fw-bold header-title text-start" style="color: var(--app-ink); font-size: 1.15rem; letter-spacing: -0.5px; text-align: left !important;">{{ __('product_category_count') }}</h4>
                                 <p class="text-muted small fw-semibold text-start mb-4" style="font-size: 13px; text-align: left !important;">{{ __('this_year') }}</p>
                                 <div v-if="series2 && series2.length" class="d-flex justify-content-center">
                                     <apexcharts width="100%" type="donut" :options="options2" :series="series2"></apexcharts>
@@ -333,7 +333,7 @@
                     <!-- Sarthi: Latest Orders table hidden on admin dashboard, orders are distributor-managed 
 
                     <div class="col-12" v-if="$can('order_list')">
-                        <div class="card shadow-sm border" style="border-radius: 12px; border-color: #E5E7EB !important; overflow: hidden;">
+                        <div class="card shadow-sm border" style="border-radius: 12px; border-color: var(--app-border) !important; overflow: hidden;">
                             <div class="card-header bg-white border-0 py-4">
                                 <h4 class="recent-orders-card-title mb-0">Recent Orders</h4>
                             </div>
@@ -412,7 +412,7 @@
                                         </template>
 
                                         <template #cell(user_name)="row">
-                                            <div class="fw-bold" style="color: #2b3674;">{{ row.item.user_name }}</div>
+                                            <div class="fw-bold" style="color: var(--app-ink);">{{ row.item.user_name }}</div>
                                             <div class="small text-muted">{{ row.item.mobile | mobileMask }}</div>
                                         </template>
 

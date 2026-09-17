@@ -1799,7 +1799,7 @@ var render = function () {
             {
               staticClass: "mb-0 fw-bold header-title text-start",
               staticStyle: {
-                color: "#2b3674",
+                color: "var(--app-ink)",
                 "font-size": "1.75rem",
                 "letter-spacing": "-0.5px",
                 "text-align": "left !important",
@@ -1849,7 +1849,7 @@ var render = function () {
                         staticClass: "card shadow-sm border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1906,7 +1906,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                           "text-align": "left !important",
                                         },
@@ -1939,7 +1939,7 @@ var render = function () {
                         staticClass: "card shadow-sm border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1996,7 +1996,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                           "text-align": "left !important",
                                         },
@@ -2029,7 +2029,7 @@ var render = function () {
                         staticClass: "card shadow-sm border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -2086,7 +2086,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                           "text-align": "left !important",
                                         },
@@ -2119,7 +2119,7 @@ var render = function () {
                         staticClass: "card shadow-sm border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -2180,7 +2180,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                           "text-align": "left !important",
                                         },
@@ -2213,7 +2213,7 @@ var render = function () {
                         staticClass: "card shadow-sm border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -2274,7 +2274,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                           "text-align": "left !important",
                                         },
@@ -2307,7 +2307,7 @@ var render = function () {
                         staticClass: "card shadow-sm border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -2364,7 +2364,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                           "text-align": "left !important",
                                         },
@@ -2397,7 +2397,7 @@ var render = function () {
                 staticClass: "card shadow-sm border h-100",
                 staticStyle: {
                   "border-radius": "12px",
-                  "border-color": "#E5E7EB !important",
+                  "border-color": "var(--app-border) !important",
                 },
               },
               [
@@ -2407,7 +2407,7 @@ var render = function () {
                     {
                       staticClass: "mb-0 fw-bold header-title text-start",
                       staticStyle: {
-                        color: "#2b3674",
+                        color: "var(--app-ink)",
                         "font-size": "1.15rem",
                         "letter-spacing": "-0.5px",
                         "text-align": "left !important",

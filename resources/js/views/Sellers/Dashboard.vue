@@ -22,7 +22,7 @@
                     <div class="col-12">
                         <div class="row align-items-start metric-card-wrapper">
                             <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
-                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/seller/orders" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #4285F4; color: white; border-radius: 12px !important;">
@@ -30,14 +30,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('orders') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.order_count }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2;">{{ record.order_count }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
-                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/seller/manage_products" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #f59e0b; color: white; border-radius: 12px !important;">
@@ -45,14 +45,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('products') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.product_count }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2;">{{ record.product_count }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
-                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/seller/categories" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #06b6d4; color: white; border-radius: 12px !important;">
@@ -60,7 +60,7 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('category') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.category_count }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2;">{{ record.category_count }}</div>
                                             </div>
                                         </div>
                                     </router-link>
@@ -68,7 +68,7 @@
                             </div>
 
                             <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
-                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <router-link to="/seller/delivery_boys" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #10b981; color: white; border-radius: 12px !important;">
@@ -76,14 +76,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('delivery_boys') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.driver_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2;">{{ record.driver_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </router-link>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
-                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <a href="#" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #8b5cf6; color: white; border-radius: 12px !important;">
@@ -91,14 +91,14 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('salesman') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.salesman_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2;">{{ record.salesman_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </a>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-6 col-md-4 col-lg-2 col-xl-2">
-                                <div class="card border mb-4" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                                <div class="card border mb-4" style="border-radius: 12px; border-color: var(--app-border) !important;">
                                     <a href="#" class="text-decoration-none text-dark d-block w-100">
                                         <div class="card-body p-3 d-flex align-items-center">
                                             <div class="rounded d-flex justify-content-center align-items-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #ef4444; color: white; border-radius: 12px !important;">
@@ -106,7 +106,7 @@
                                             </div>
                                             <div class="ms-3 text-start w-100">
                                                 <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ __('retailer') }}</div>
-                                                <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ record.retailer_count || 0 }}</div>
+                                                <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2;">{{ record.retailer_count || 0 }}</div>
                                             </div>
                                         </div>
                                     </a>
@@ -194,7 +194,7 @@
                     <h5 class="w-100">{{ __('order_out_lines') }}</h5>
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3" v-for="status in record.status_order_count"
                         :key="status.status">
-                        <div class="card border mb-0 h-100" style="border-radius: 12px; border-color: #E5E7EB !important;">
+                        <div class="card border mb-0 h-100" style="border-radius: 12px; border-color: var(--app-border) !important;">
                             <div class="card-body p-3 d-flex align-items-center">
                                 <!-- Left Icon -->
                                 <div class="me-3 flex-shrink-0">
@@ -242,7 +242,7 @@
                                 <!-- Right Content -->
                                 <div class="flex-grow-1 text-start">
                                     <div class="text-muted small fw-semibold text-start" style="font-size: 13px;">{{ getStatusDisplayName(status) }}</div>
-                                    <div class="fs-4 fw-bold text-start" style="color: #2b3674; line-height: 1.2;">{{ status.order_count }}</div>
+                                    <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2;">{{ status.order_count }}</div>
                                 </div>
 
                             </div>

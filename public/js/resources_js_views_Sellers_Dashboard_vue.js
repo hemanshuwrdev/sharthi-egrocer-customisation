@@ -1418,7 +1418,7 @@ var render = function () {
                         staticClass: "card border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1476,7 +1476,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                         },
                                       },
@@ -1504,7 +1504,7 @@ var render = function () {
                         staticClass: "card border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1558,7 +1558,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                         },
                                       },
@@ -1586,7 +1586,7 @@ var render = function () {
                         staticClass: "card border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1644,7 +1644,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                         },
                                       },
@@ -1676,7 +1676,7 @@ var render = function () {
                         staticClass: "card border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1730,7 +1730,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                         },
                                       },
@@ -1762,7 +1762,7 @@ var render = function () {
                         staticClass: "card border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1802,7 +1802,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                         },
                                       },
@@ -1833,7 +1833,7 @@ var render = function () {
                         staticClass: "card border mb-4",
                         staticStyle: {
                           "border-radius": "12px",
-                          "border-color": "#E5E7EB !important",
+                          "border-color": "var(--app-border) !important",
                         },
                       },
                       [
@@ -1873,7 +1873,7 @@ var render = function () {
                                       {
                                         staticClass: "fs-4 fw-bold text-start",
                                         staticStyle: {
-                                          color: "#2b3674",
+                                          color: "var(--app-ink)",
                                           "line-height": "1.2",
                                         },
                                       },
@@ -2004,7 +2004,7 @@ var render = function () {
                       staticClass: "card border mb-0 h-100",
                       staticStyle: {
                         "border-radius": "12px",
-                        "border-color": "#E5E7EB !important",
+                        "border-color": "var(--app-border) !important",
                       },
                     },
                     [
@@ -2199,7 +2199,7 @@ var render = function () {
                               {
                                 staticClass: "fs-4 fw-bold text-start",
                                 staticStyle: {
-                                  color: "#2b3674",
+                                  color: "var(--app-ink)",
                                   "line-height": "1.2",
                                 },
                               },

@@ -2761,6 +2761,11 @@ body.theme-dark {
     background: transparent;
 }
 
+.list-surface > .card-body {
+    padding: 1.5rem !important;
+    background: transparent;
+}
+
 .list-surface > .card-header .card-title,
 .list-surface > .card-header h4 {
     color: var(--app-ink);
