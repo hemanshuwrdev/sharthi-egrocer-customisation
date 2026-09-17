@@ -523,6 +523,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       fields: [{
         key: 'id',
         label: __('id'),
+        "class": 'text-center',
         sortable: true,
         sortDirection: 'desc'
       }, {

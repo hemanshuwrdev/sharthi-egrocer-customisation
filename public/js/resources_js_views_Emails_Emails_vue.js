@@ -383,6 +383,7 @@ __webpack_require__.r(__webpack_exports__);
       fields: [{
         key: 'id',
         label: __('id'),
+        "class": 'text-center',
         sortable: true,
         sortDirection: 'desc'
       }, {

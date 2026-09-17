@@ -87,7 +87,7 @@ export default {
     data: function () {
         return {
             fields: [
-                { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
+                { key: 'id', label: __('id'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'name', label: __('name'), sortable: true, class: 'text-center' },
                 { key: 'short_code', label: __('short_code'), sortable: true, class: 'text-center' },
                 { key: 'parent_id', label: __('parent_id'), class: 'text-center' },

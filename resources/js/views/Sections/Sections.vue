@@ -137,7 +137,7 @@ export default {
     data: function () {
         return {
             fields: [
-                { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
+                { key: 'id', label: __('id'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'title', label: __('title'), sortable: true, class: 'text-center' },
                 { key: 'short_description', label: __('short_description'), sortable: true, class: 'text-center' },
                 { key: 'style', label: 'Style', class: 'text-center' },
