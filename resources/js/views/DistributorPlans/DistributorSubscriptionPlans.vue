@@ -147,11 +147,11 @@
                                         <option value="exclusive">{{ __('tax_excluded_from_price') }}</option>
                                     </select>
                                 </div>
-                                <div class="form-group mb-3">
-                                    <label class="font-weight-bold">{{ __('select_tax') }}</label>
-                                    <select v-model="form.tax_id" class="form-control">
+                                <div class="form-group mb-3" v-if="form.tax_type === 'exclusive'">
+                                    <label class="font-weight-bold">{{ __('tax_category') }}</label>
+                                    <select v-model="form.tax_category_id" class="form-control">
                                         <option :value="null">{{ __('none') }}</option>
-                                        <option v-for="t in taxes" :key="t.id" :value="t.id">{{ t.title }} ({{ t.percentage }}%)</option>
+                                        <option v-for="c in taxCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
                                     </select>
                                 </div>
                                 <div class="form-group mb-0">
@@ -198,7 +198,7 @@ export default {
             activeTab: 'plans',
             plans: [],
             assignments: [],
-            taxes: [],
+            taxCategories: [],
             sellers: [],
             isLoading: false,
             isAssignmentsLoading: false,
@@ -230,7 +230,7 @@ export default {
     },
     created() {
         this.fetchPlans();
-        this.fetchTaxes();
+        this.fetchTaxCategories();
         this.fetchSellers();
     },
     methods: {
@@ -244,7 +244,7 @@ export default {
                 price: 0,
                 discounted_price: null,
                 tax_type: 'inclusive',
-                tax_id: null,
+                tax_category_id: null,
                 commission_percentage: null,
                 publish: 1,
                 status: 1,
@@ -270,11 +270,10 @@ export default {
                 })
                 .catch(() => { this.isAssignmentsLoading = false; });
         },
-        fetchTaxes() {
-            axios.get(this.$apiUrl + '/taxes', { params: { limit: 0 } })
+        fetchTaxCategories() {
+            axios.get(this.$apiUrl + '/tax-categories', { params: { limit: 0, status: 1 } })
                 .then(response => {
-                    const data = (response.data && response.data.data) || [];
-                    this.taxes = Array.isArray(data) ? data : (data.records || []);
+                    this.taxCategories = (response.data && response.data.data) || [];
                 })
                 .catch(() => {});
         },
@@ -302,7 +301,7 @@ export default {
                 price: item.price,
                 discounted_price: item.discounted_price,
                 tax_type: item.tax_type,
-                tax_id: item.tax_id,
+                tax_category_id: item.tax_category_id,
                 commission_percentage: item.commission_percentage,
                 publish: item.publish ? 1 : 0,
                 status: item.status ? 1 : 0,

@@ -20,6 +20,7 @@ class DistributorSubscriptionPlan extends Model
         'discounted_price',
         'tax_type',
         'tax_id',
+        'tax_category_id',
         'booking_type',
         'booking_limit',
         'commission_enabled',
@@ -38,6 +39,11 @@ class DistributorSubscriptionPlan extends Model
     public function tax()
     {
         return $this->belongsTo(Tax::class, 'tax_id');
+    }
+
+    public function tax_category()
+    {
+        return $this->belongsTo(TaxCategory::class, 'tax_category_id');
     }
 
     public function assignments()

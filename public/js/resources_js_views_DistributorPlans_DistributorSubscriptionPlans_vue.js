@@ -212,7 +212,7 @@ __webpack_require__.r(__webpack_exports__);
       activeTab: 'plans',
       plans: [],
       assignments: [],
-      taxes: [],
+      taxCategories: [],
       sellers: [],
       isLoading: false,
       isAssignmentsLoading: false,
@@ -276,7 +276,7 @@ __webpack_require__.r(__webpack_exports__);
   },
   created: function created() {
     this.fetchPlans();
-    this.fetchTaxes();
+    this.fetchTaxCategories();
     this.fetchSellers();
   },
   methods: {
@@ -290,7 +290,7 @@ __webpack_require__.r(__webpack_exports__);
         price: 0,
         discounted_price: null,
         tax_type: 'inclusive',
-        tax_id: null,
+        tax_category_id: null,
         commission_percentage: null,
         publish: 1,
         status: 1
@@ -318,15 +318,15 @@ __webpack_require__.r(__webpack_exports__);
         _this2.isAssignmentsLoading = false;
       });
     },
-    fetchTaxes: function fetchTaxes() {
+    fetchTaxCategories: function fetchTaxCategories() {
       var _this3 = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/taxes', {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/tax-categories', {
         params: {
-          limit: 0
+          limit: 0,
+          status: 1
         }
       }).then(function (response) {
-        var data = response.data && response.data.data || [];
-        _this3.taxes = Array.isArray(data) ? data : data.records || [];
+        _this3.taxCategories = response.data && response.data.data || [];
       })["catch"](function () {});
     },
     fetchSellers: function fetchSellers() {
@@ -352,7 +352,7 @@ __webpack_require__.r(__webpack_exports__);
         price: item.price,
         discounted_price: item.discounted_price,
         tax_type: item.tax_type,
-        tax_id: item.tax_id,
+        tax_category_id: item.tax_category_id,
         commission_percentage: item.commission_percentage,
         publish: item.publish ? 1 : 0,
         status: item.status ? 1 : 0
@@ -1324,66 +1324,65 @@ var render = function () {
                         ),
                       ]),
                       _vm._v(" "),
-                      _c("div", { staticClass: "form-group mb-3" }, [
-                        _c("label", { staticClass: "font-weight-bold" }, [
-                          _vm._v(_vm._s(_vm.__("select_tax"))),
-                        ]),
-                        _vm._v(" "),
-                        _c(
-                          "select",
-                          {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.form.tax_id,
-                                expression: "form.tax_id",
-                              },
-                            ],
-                            staticClass: "form-control",
-                            on: {
-                              change: function ($event) {
-                                var $$selectedVal = Array.prototype.filter
-                                  .call($event.target.options, function (o) {
-                                    return o.selected
-                                  })
-                                  .map(function (o) {
-                                    var val = "_value" in o ? o._value : o.value
-                                    return val
-                                  })
-                                _vm.$set(
-                                  _vm.form,
-                                  "tax_id",
-                                  $event.target.multiple
-                                    ? $$selectedVal
-                                    : $$selectedVal[0]
-                                )
-                              },
-                            },
-                          },
-                          [
-                            _c("option", { domProps: { value: null } }, [
-                              _vm._v(_vm._s(_vm.__("none"))),
+                      _vm.form.tax_type === "exclusive"
+                        ? _c("div", { staticClass: "form-group mb-3" }, [
+                            _c("label", { staticClass: "font-weight-bold" }, [
+                              _vm._v(_vm._s(_vm.__("tax_category"))),
                             ]),
                             _vm._v(" "),
-                            _vm._l(_vm.taxes, function (t) {
-                              return _c(
-                                "option",
-                                { key: t.id, domProps: { value: t.id } },
-                                [
-                                  _vm._v(
-                                    _vm._s(t.title) +
-                                      " (" +
-                                      _vm._s(t.percentage) +
-                                      "%)"
-                                  ),
-                                ]
-                              )
-                            }),
-                          ],
-                          2
-                        ),
-                      ]),
+                            _c(
+                              "select",
+                              {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.form.tax_category_id,
+                                    expression: "form.tax_category_id",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                on: {
+                                  change: function ($event) {
+                                    var $$selectedVal = Array.prototype.filter
+                                      .call(
+                                        $event.target.options,
+                                        function (o) {
+                                          return o.selected
+                                        }
+                                      )
+                                      .map(function (o) {
+                                        var val =
+                                          "_value" in o ? o._value : o.value
+                                        return val
+                                      })
+                                    _vm.$set(
+                                      _vm.form,
+                                      "tax_category_id",
+                                      $event.target.multiple
+                                        ? $$selectedVal
+                                        : $$selectedVal[0]
+                                    )
+                                  },
+                                },
+                              },
+                              [
+                                _c("option", { domProps: { value: null } }, [
+                                  _vm._v(_vm._s(_vm.__("none"))),
+                                ]),
+                                _vm._v(" "),
+                                _vm._l(_vm.taxCategories, function (c) {
+                                  return _c(
+                                    "option",
+                                    { key: c.id, domProps: { value: c.id } },
+                                    [_vm._v(_vm._s(c.name))]
+                                  )
+                                }),
+                              ],
+                              2
+                            ),
+                          ])
+                        : _vm._e(),
                       _vm._v(" "),
                       _c("div", { staticClass: "form-group mb-0" }, [
                         _c("label", { staticClass: "font-weight-bold" }, [

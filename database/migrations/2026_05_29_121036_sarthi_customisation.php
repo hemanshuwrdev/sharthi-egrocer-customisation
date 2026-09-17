@@ -1232,6 +1232,13 @@ class SarthiCustomisation extends Migration
                 $table->foreign('tax_category_id')->references('id')->on('tax_categories')->nullOnDelete();
             });
         }
+
+        if (Schema::hasTable('distributor_subscription_plans') && !Schema::hasColumn('distributor_subscription_plans', 'tax_category_id')) {
+            Schema::table('distributor_subscription_plans', function (Blueprint $table) {
+                $table->unsignedBigInteger('tax_category_id')->nullable()->after('tax_id');
+                $table->foreign('tax_category_id')->references('id')->on('tax_categories')->nullOnDelete();
+            });
+        }
     }
 
     /**
@@ -1241,6 +1248,12 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('distributor_subscription_plans') && Schema::hasColumn('distributor_subscription_plans', 'tax_category_id')) {
+            Schema::table('distributor_subscription_plans', function (Blueprint $table) {
+                $table->dropForeign(['tax_category_id']);
+                $table->dropColumn('tax_category_id');
+            });
+        }
         if (Schema::hasTable('master_products') && Schema::hasColumn('master_products', 'tax_category_id')) {
             Schema::table('master_products', function (Blueprint $table) {
                 $table->dropForeign(['tax_category_id']);

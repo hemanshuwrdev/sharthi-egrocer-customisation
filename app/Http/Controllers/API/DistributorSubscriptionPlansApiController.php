@@ -14,7 +14,7 @@ class DistributorSubscriptionPlansApiController extends Controller
 {
     public function getList()
     {
-        $records = DistributorSubscriptionPlan::with('tax')->orderBy('id', 'DESC')->get();
+        $records = DistributorSubscriptionPlan::with(['tax', 'tax_category'])->orderBy('id', 'DESC')->get();
 
         return CommonHelper::responseWithData(['records' => $records]);
     }
@@ -139,7 +139,7 @@ class DistributorSubscriptionPlansApiController extends Controller
 
     public function publishedList()
     {
-        $records = DistributorSubscriptionPlan::with('tax')
+        $records = DistributorSubscriptionPlan::with(['tax', 'tax_category'])
             ->where('publish', 1)
             ->where('status', 1)
             ->orderBy('price', 'ASC')
@@ -184,7 +184,7 @@ class DistributorSubscriptionPlansApiController extends Controller
             'price' => 'required|numeric|min:0',
             'discounted_price' => 'nullable|numeric|min:0|lt:price',
             'tax_type' => 'required|in:inclusive,exclusive',
-            'tax_id' => 'nullable|exists:taxes,id',
+            'tax_category_id' => 'nullable|exists:tax_categories,id',
             'commission_percentage' => 'nullable|numeric|min:0|max:100',
             'publish' => 'nullable|boolean',
         ];
@@ -200,7 +200,8 @@ class DistributorSubscriptionPlansApiController extends Controller
             'price' => $request->price,
             'discounted_price' => $request->discounted_price,
             'tax_type' => $request->tax_type,
-            'tax_id' => $request->tax_id,
+            // 'tax_id' left alone — superseded by tax_category_id (Tax Settings), no longer set from this form.
+            'tax_category_id' => $request->tax_category_id,
             'booking_type' => 'unlimited',
             'booking_limit' => null,
             'commission_enabled' => $request->filled('commission_percentage') && $request->commission_percentage > 0,
