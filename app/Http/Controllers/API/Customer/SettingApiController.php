@@ -34,7 +34,7 @@ class SettingApiController extends Controller
             "system_timezone",
             "default_city_id",
             "max_cart_items_count",
-            "min_order_amount",
+            // "min_order_amount", // not enforced anywhere in the live order flow — kept, not deleted.
             "area_wise_delivery_charge",
             "min_amount",
             "delivery_charge",

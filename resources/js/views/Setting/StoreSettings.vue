@@ -449,6 +449,9 @@
                                                                 __('maximum_items_user_can_add_to_cart_at_once')
                                                                 }})</span>
                                                         </div>
+                                                        <!-- Minimum Order Amount — not enforced anywhere in the live order flow
+                                                             (only read by the dead/unrouted Customer\OrderApiController::placeOrder),
+                                                             so hidden here to avoid implying it does something. Kept, not deleted.
                                                         <div class="form-group col-md-6">
                                                             <label for="min_order_amount"> {{ __('minimum_order_amount')
                                                                 }}</label>
@@ -459,6 +462,7 @@
                                                                 min='1' />
                                                             <span class="text text-primary font-size-13"> ( {{ __('below_this_user_will_not_allowed_to_place_order') }} )</span>
                                                         </div>
+                                                        -->
                                                         <div class="form-group col-md-6">
                                                             <label for="low_stock_limit">{{ __('low_stock_limit')
                                                                 }}</label>

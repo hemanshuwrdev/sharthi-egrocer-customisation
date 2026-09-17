@@ -1664,6 +1664,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -5557,84 +5561,6 @@ var render = function () {
                                                 )
                                               ) +
                                               ")"
-                                          ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "form-group col-md-6" },
-                                    [
-                                      _c(
-                                        "label",
-                                        { attrs: { for: "min_order_amount" } },
-                                        [
-                                          _vm._v(
-                                            " " +
-                                              _vm._s(
-                                                _vm.__("minimum_order_amount")
-                                              )
-                                          ),
-                                        ]
-                                      ),
-                                      _vm._v(" "),
-                                      _c("input", {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value:
-                                              _vm.store_settings
-                                                .min_order_amount,
-                                            expression:
-                                              "store_settings.min_order_amount",
-                                          },
-                                        ],
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "number",
-                                          required: "",
-                                          name: "min_order_amount",
-                                          id: "min_order_amount",
-                                          placeholder:
-                                            "Minimum total amount to place order",
-                                          min: "1",
-                                        },
-                                        domProps: {
-                                          value:
-                                            _vm.store_settings.min_order_amount,
-                                        },
-                                        on: {
-                                          input: function ($event) {
-                                            if ($event.target.composing) {
-                                              return
-                                            }
-                                            _vm.$set(
-                                              _vm.store_settings,
-                                              "min_order_amount",
-                                              $event.target.value
-                                            )
-                                          },
-                                        },
-                                      }),
-                                      _vm._v(" "),
-                                      _c(
-                                        "span",
-                                        {
-                                          staticClass:
-                                            "text text-primary font-size-13",
-                                        },
-                                        [
-                                          _vm._v(
-                                            " ( " +
-                                              _vm._s(
-                                                _vm.__(
-                                                  "below_this_user_will_not_allowed_to_place_order"
-                                                )
-                                              ) +
-                                              " )"
                                           ),
                                         ]
                                       ),

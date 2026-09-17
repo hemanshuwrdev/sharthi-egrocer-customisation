@@ -49,7 +49,7 @@ class StoreSettingsApiController extends Controller
             "default_city_id" => 0,
 
             "max_cart_items_count" => "",
-            "min_order_amount" => "",
+            // "min_order_amount" => "", // not enforced anywhere in the live order flow — kept, not deleted.
             "low_stock_limit" => "",
             "product_rating" => 0,
             "few_quantity_left_alert" => "",
@@ -389,7 +389,7 @@ class StoreSettingsApiController extends Controller
     {
         $other_variables = [
             'max_cart_items_count',
-            'min_order_amount',
+            // 'min_order_amount', // not enforced anywhere in the live order flow — kept, not deleted.
             'low_stock_limit',
             'product_rating',
             'few_quantity_left_alert',
