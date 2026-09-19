@@ -35,9 +35,9 @@ class SettingApiController extends Controller
             "default_city_id",
             "max_cart_items_count",
             // "min_order_amount", // not enforced anywhere in the live order flow — kept, not deleted.
-            "area_wise_delivery_charge",
+            // "area_wise_delivery_charge", // delivery charge disabled — client does not want it
             "min_amount",
-            "delivery_charge",
+            // "delivery_charge", // delivery charge disabled — client does not want it
             "is_refer_earn_on",
             "min_refer_earn_order_amount",
             "refer_earn_bonus",

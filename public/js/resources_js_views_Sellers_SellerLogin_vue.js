@@ -118,7 +118,8 @@ __webpack_require__.r(__webpack_exports__);
       setting: "",
       showSubscriptionModal: false,
       subscriptionMessage: '',
-      subscriptionPlans: []
+      subscriptionPlans: [],
+      isDistributorHost: window.location.hostname.startsWith('distributor.')
     };
   },
   mounted: function mounted() {
@@ -532,19 +533,21 @@ var render = function () {
                 ]
               ),
               _vm._v(" "),
-              _c(
-                "router-link",
-                {
-                  staticClass:
-                    "btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn",
-                  attrs: { to: "/login" },
-                },
-                [
-                  _vm._v(
-                    "\n                        Admin Panel\n                    "
-                  ),
-                ]
-              ),
+              !_vm.isDistributorHost
+                ? _c(
+                    "router-link",
+                    {
+                      staticClass:
+                        "btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn",
+                      attrs: { to: "/login" },
+                    },
+                    [
+                      _vm._v(
+                        "\n                        Admin Panel\n                    "
+                      ),
+                    ]
+                  )
+                : _vm._e(),
               _vm._v(" "),
               _c("div", { staticClass: "auth-copyright" }, [
                 _c(

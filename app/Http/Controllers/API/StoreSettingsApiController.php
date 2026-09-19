@@ -63,9 +63,9 @@ class StoreSettingsApiController extends Controller
             "delivery_boy_bonus_min_amount" => 0,
             "delivery_boy_bonus_max_amount" => 0,
 
-            "area_wise_delivery_charge" => 0,
+            // "area_wise_delivery_charge" => 0, // delivery charge disabled — client does not want it
             "min_amount" => "",
-            "delivery_charge" => "",
+            // "delivery_charge" => "", // delivery charge disabled — client does not want it
             "is_refer_earn_on" => 0,
             "min_refer_earn_order_amount" => "",
             "refer_earn_bonus" => "",
@@ -113,7 +113,7 @@ class StoreSettingsApiController extends Controller
             "count_seller_section_in_homepage" => "",
             "count_country_section_in_homepage" => "",
             "one_seller_cart" => "",
-            "distributor_trial_days" => "",
+            // "distributor_trial_days" => "", // free trial removed
             "self_pickup_mode" => "",
             "door_step_mode" => "",
             "playstore_url" => "",
@@ -641,7 +641,8 @@ class StoreSettingsApiController extends Controller
      */
     public function save_seller_setting(Request $request)
     {
-        $seller_variables = ['one_seller_cart', 'seller_commission', 'self_pickup_mode', 'distributor_trial_days'];
+        // 'distributor_trial_days' removed — free trial no longer used.
+        $seller_variables = ['one_seller_cart', 'seller_commission', 'self_pickup_mode'/*, 'distributor_trial_days'*/];
 
         foreach ($request->all() as $key => $value) {
             if (in_array($key, $seller_variables)) {

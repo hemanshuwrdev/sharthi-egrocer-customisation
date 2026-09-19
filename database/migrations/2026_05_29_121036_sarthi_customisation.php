@@ -1132,11 +1132,13 @@ class SarthiCustomisation extends Migration
             });
         }
 
-        // Configurable free-trial length (days) before a distributor must have an
-        // active subscription assigned to keep logging in. Admin-editable via Settings.
-        if (!DB::table('settings')->where('variable', 'distributor_trial_days')->exists()) {
-            DB::table('settings')->insert(['variable' => 'distributor_trial_days', 'value' => '90']);
-        }
+        // Free trial removed — trials are given per distributor via a free Subscription Plan,
+        // so the global 90-day default is no longer seeded.
+        // // Configurable free-trial length (days) before a distributor must have an
+        // // active subscription assigned to keep logging in. Admin-editable via Settings.
+        // if (!DB::table('settings')->where('variable', 'distributor_trial_days')->exists()) {
+        //     DB::table('settings')->insert(['variable' => 'distributor_trial_days', 'value' => '90']);
+        // }
 
         // ── Assignment of a distributor_subscription_plans row to a specific seller
         //    (distributor). One active assignment per seller at a time in practice,

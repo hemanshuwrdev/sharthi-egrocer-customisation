@@ -48,9 +48,11 @@
                             <span v-else class="bi bi-arrow-right"></span>
                         </button>
 
-                        <hr>
-                        <router-link to="/seller/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-2">
-                            Distributor Panel</router-link>
+                        <template v-if="!isDistributorHost">
+                            <hr>
+                            <router-link to="/seller/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-2">
+                                Distributor Panel</router-link>
+                        </template>
                         <!-- <router-link to="/delivery_boy/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-2">
                             Driver Panel</router-link> -->
 
@@ -116,6 +118,7 @@ export default {
             showSubscriptionModal: false,
             subscriptionMessage: '',
             subscriptionPlans: [],
+            isDistributorHost: window.location.hostname.startsWith('distributor.'),
         };
     },
 

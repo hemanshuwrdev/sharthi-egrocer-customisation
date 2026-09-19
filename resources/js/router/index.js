@@ -286,6 +286,18 @@ var roleName = "Super Admin";
 var appName = window.appName;
 
 router.beforeEach((to, from, next) => {
+    // Sarthi: distributor.* subdomain and the main admin domain must not cross-expose
+    // each other's login screen — force each host onto its own login route.
+    var isDistributorHost = window.location.hostname.startsWith('distributor.');
+    if (isDistributorHost && to.name === 'login') {
+        next({ path: '/seller/login' });
+        return;
+    }
+    if (!isDistributorHost && to.name === 'seller_login') {
+        next({ path: '/login' });
+        return;
+    }
+
     //if (to.matched.some(record => record.meta.requiresAuth) ) {
     if (isInstalled) {
         if (to.name == 'install') {

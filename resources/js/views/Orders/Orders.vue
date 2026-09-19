@@ -235,7 +235,7 @@ export default {
                 { key: 'seller_name', label: __('seller'), sortable: false, class: 'text-center' },
                 { key: 'mobile', label: __('mobile'), sortable: false, class: 'text-center' },
                 { key: 'total', label: __('total') + '(' + this.$currency + ')', sortable: false, class: 'text-center' },
-                { key: 'delivery_charge', label: __('dcharges') + '(' + this.$currency + ')', sortable: false, class: 'text-center' },
+                // { key: 'delivery_charge', label: __('dcharges') + '(' + this.$currency + ')', sortable: false, class: 'text-center' }, // delivery charge disabled
                 { key: 'additional_charges', label: __('a_charges') + '(' + this.$currency + ')', sortable: false, class: 'text-center' },
                 { key: 'wallet_balance', label: __('wallet_used') + '(' + this.$currency + ')', sortable: false, class: 'text-center' },
                 { key: 'remaining_final', label: __('ftotal') + '(' + this.$currency + ')', sortable: false, class: 'text-center' },

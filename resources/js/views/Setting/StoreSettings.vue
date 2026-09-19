@@ -1287,6 +1287,8 @@
                                                                 placeholder="Seller Commission" step="0.1" min="0"
                                                                 max="100">
                                                         </div>
+                                                        <!-- Global free-trial field hidden: trials are now given per distributor
+                                                             via Subscription Plan (free plan). The stored value is left as-is.
                                                         <div class="form-group col-md-6">
                                                             <label for="distributor_trial_days">{{ __('distributor_trial_days')
                                                                 }}<span class="text text-primary font-size-13">( {{
@@ -1297,6 +1299,7 @@
                                                                 v-model="store_settings.distributor_trial_days"
                                                                 placeholder="90" step="1" min="0">
                                                         </div>
+                                                        -->
                                                         <div class="form-group col-md-6"
                                                             v-if="store_settings.one_seller_cart == 1">
                                                             <label for="self_pickup_mode">{{ __('self_pickup_mode')
@@ -2732,7 +2735,8 @@ export default {
             let formData = new FormData();
 
             // Add only seller settings
-            const sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode', 'distributor_trial_days'];
+            // 'distributor_trial_days' no longer sent from this form (field hidden); DB value stays untouched.
+            const sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode'/*, 'distributor_trial_days'*/];
 
             sellerFields.forEach(field => {
                 if (this.store_settings[field] !== undefined) {

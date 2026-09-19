@@ -236,26 +236,27 @@ class RetailerCartOrderApiController extends Controller
         $deliveryCharge = 0;
         $deliveryChargeDetails = [];
 
-        if ($request->get('is_checkout') == 1 && $request->get('is_self_pickup') != 1) {
-            $latitude  = $request->get('latitude');
-            $longitude = $request->get('longitude');
-
-            if ($latitude && $longitude) {
-                $sellerIds  = array_keys($groups);
-                $subTotal   = $groupsOut->sum('sub_total');
-                $isFreeDelivery = $request->get('is_free_delivery', 0);
-
-                if ($isFreeDelivery == 1) {
-                    $deliveryCharge = 0;
-                } else {
-                    $deliveryData = CommonHelper::getAllDeliveryCharge($latitude, $longitude, $sellerIds, $subTotal);
-                    if (!empty($deliveryData['status']) && $deliveryData['status'] == 1) {
-                        $deliveryCharge        = $deliveryData['data']['total_delivery_charge'] ?? 0;
-                        $deliveryChargeDetails = $deliveryData['data']['sellers_info'] ?? [];
-                    }
-                }
-            }
-        }
+        // Delivery charge disabled (client does not want it) — stays 0.
+        // if ($request->get('is_checkout') == 1 && $request->get('is_self_pickup') != 1) {
+        //     $latitude  = $request->get('latitude');
+        //     $longitude = $request->get('longitude');
+        //
+        //     if ($latitude && $longitude) {
+        //         $sellerIds  = array_keys($groups);
+        //         $subTotal   = $groupsOut->sum('sub_total');
+        //         $isFreeDelivery = $request->get('is_free_delivery', 0);
+        //
+        //         if ($isFreeDelivery == 1) {
+        //             $deliveryCharge = 0;
+        //         } else {
+        //             $deliveryData = CommonHelper::getAllDeliveryCharge($latitude, $longitude, $sellerIds, $subTotal);
+        //             if (!empty($deliveryData['status']) && $deliveryData['status'] == 1) {
+        //                 $deliveryCharge        = $deliveryData['data']['total_delivery_charge'] ?? 0;
+        //                 $deliveryChargeDetails = $deliveryData['data']['sellers_info'] ?? [];
+        //             }
+        //         }
+        //     }
+        // }
 
         $grandTotal = round($grand + $deliveryCharge, 2);
 
@@ -492,6 +493,7 @@ class RetailerCartOrderApiController extends Controller
             'delivery_time' => 'nullable|string',
             'address_id' => 'nullable|integer',
             'order_note' => 'nullable|string',
+            'is_free_delivery' => 'nullable',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -557,6 +559,18 @@ class RetailerCartOrderApiController extends Controller
                         ? CommonHelper::computeDeliveryDate(now(), (int) $sellerId)
                         : null;
 
+                    // Mirrors the getCart() checkout-preview calc (same helper, same inputs) —
+                    // previously hardcoded to 0 here, so placed orders silently dropped the
+                    // delivery charge the app had just shown the retailer at checkout.
+                    // Delivery charge disabled (client does not want it) — stays 0.
+                    $deliveryCharge = 0;
+                    // if ($request->get('is_free_delivery', 0) != 1 && $request->latitude && $request->longitude) {
+                    //     $deliveryData = CommonHelper::getAllDeliveryCharge($request->latitude, $request->longitude, [$sellerId], $sellerTotal);
+                    //     if (!empty($deliveryData['status']) && $deliveryData['status'] == 1) {
+                    //         $deliveryCharge = (float) ($deliveryData['data']['total_delivery_charge'] ?? 0);
+                    //     }
+                    // }
+
                     $orderId = DB::table('orders')->insertGetId([
                         'user_id' => $user->id,
                         'orders_id' => $ordersId,
@@ -564,7 +578,7 @@ class RetailerCartOrderApiController extends Controller
                         'order_note' => $request->order_note,
                         'total' => $sellerTotal,
                         'remaining_total' => $sellerTotal,
-                        'delivery_charge' => 0,
+                        'delivery_charge' => $deliveryCharge,
                         'tax_amount' => $sellerTaxTotal,
                         'tax_percentage' => $sellerTaxPercentage,
                         'wallet_balance' => 0,
@@ -572,8 +586,8 @@ class RetailerCartOrderApiController extends Controller
                         'promo_discount' => 0,
                         'scheme_id' => $scheme['scheme_id'] ?? null,
                         'scheme_discount' => $schemeDiscount,
-                        'final_total' => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
-                        'remaining_final' => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
+                        'final_total' => $sellerTotal - $schemeDiscount + $sellerTaxTotal + $deliveryCharge,
+                        'remaining_final' => $sellerTotal - $schemeDiscount + $sellerTaxTotal + $deliveryCharge,
                         'payment_method' => $request->payment_method ?? 'COD',
                         'address' => $request->address,
                         'latitude' => $request->latitude,
@@ -689,7 +703,8 @@ class RetailerCartOrderApiController extends Controller
                         'order_id' => $orderId,
                         'orders_id' => $ordersId,
                         'seller_id' => (int) $sellerId,
-                        'final_total' => $sellerTotal - $schemeDiscount,
+                        'delivery_charge' => $deliveryCharge,
+                        'final_total' => $sellerTotal - $schemeDiscount + $sellerTaxTotal + $deliveryCharge,
                         'scheme' => $scheme ? [
                             'scheme_id' => $scheme['scheme_id'],
                             'name' => $scheme['name'],

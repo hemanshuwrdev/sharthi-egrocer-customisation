@@ -153,10 +153,12 @@
                                             <th class="th-width">{{ __('promo_code') }}</th>
                                             <td>{{ order.promo_code }}</td>
                                         </tr>
+                                        <!-- Delivery charge disabled (client does not want it)
                                         <tr>
                                             <th class="th-width">{{ __('delivery_charge') }} ({{ $currency }})</th>
                                             <td>{{ order.delivery_charge }}</td>
                                         </tr>
+                                        -->
                                         <tr v-if="getAdditionalChargesTotal(order.additional_charges) > 0">
                                             <th class="th-width">{{ __('additional_charges') }} ({{ $currency }})</th>
                                             <td>{{ getAdditionalChargesTotal(order.additional_charges) }}</td>

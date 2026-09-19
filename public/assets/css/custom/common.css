@@ -3853,3 +3853,8 @@ body.theme-dark .dashboard-counter .card:hover {
 .list-surface-tabs > .tab-content > .tab-pane {
     padding-top: 0;
 }
+
+/* Keep toast notifications above modals and their backdrops */
+.v-toast {
+    z-index: 100000 !important;
+}

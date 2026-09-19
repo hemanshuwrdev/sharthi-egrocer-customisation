@@ -855,7 +855,9 @@ class CommonHelper
             return $sellerIds;
         }
 
-        $trialDays = (int) (Setting::get_value('distributor_trial_days') ?: 0);
+        // Free trial removed (trials are given per distributor via a free Subscription Plan) —
+        // eligibility = active subscription only.
+        // $trialDays = (int) (Setting::get_value('distributor_trial_days') ?: 0);
 
         $sellers = Seller::whereIn('id', $sellerIds)->get(['id', 'created_at']);
 
@@ -867,11 +869,11 @@ class CommonHelper
             ->pluck('seller_id')
             ->unique();
 
-        return $sellers->filter(function ($seller) use ($trialDays, $activeSubscriptionSellerIds) {
-            $trialEndsAt = \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays);
-            if (now()->lessThanOrEqualTo($trialEndsAt)) {
-                return true;
-            }
+        return $sellers->filter(function ($seller) use ($activeSubscriptionSellerIds) {
+            // $trialEndsAt = \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays);
+            // if (now()->lessThanOrEqualTo($trialEndsAt)) {
+            //     return true;
+            // }
             return $activeSubscriptionSellerIds->contains($seller->id);
         })->pluck('id')->values();
     }

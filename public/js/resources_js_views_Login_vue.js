@@ -110,6 +110,8 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 
 
@@ -129,7 +131,8 @@ __webpack_require__.r(__webpack_exports__);
       copyrightDetails: window.copyrightDetails,
       showSubscriptionModal: false,
       subscriptionMessage: '',
-      subscriptionPlans: []
+      subscriptionPlans: [],
+      isDistributorHost: window.location.hostname.startsWith('distributor.')
     };
   },
   mounted: function mounted() {
@@ -547,19 +550,27 @@ var render = function () {
                   1
                 ),
                 _vm._v(" "),
-                _c("hr"),
-                _vm._v(" "),
-                _c(
-                  "router-link",
-                  {
-                    staticClass:
-                      "btn btn-primary btn-block btn-lg shadow-lg mt-2",
-                    attrs: { to: "/seller/login" },
-                  },
-                  [_vm._v("\n                        Distributor Panel")]
-                ),
+                !_vm.isDistributorHost
+                  ? [
+                      _c("hr"),
+                      _vm._v(" "),
+                      _c(
+                        "router-link",
+                        {
+                          staticClass:
+                            "btn btn-primary btn-block btn-lg shadow-lg mt-2",
+                          attrs: { to: "/seller/login" },
+                        },
+                        [
+                          _vm._v(
+                            "\n                            Distributor Panel"
+                          ),
+                        ]
+                      ),
+                    ]
+                  : _vm._e(),
               ],
-              1
+              2
             ),
             _vm._v(" "),
             _c("div", { staticClass: "auth-copyright" }, [

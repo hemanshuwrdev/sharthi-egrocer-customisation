@@ -157,8 +157,9 @@ class DistributorSubscriptionPlansApiController extends Controller
             return CommonHelper::responseError('record_not_found');
         }
 
-        $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
-        $trialEndsAt = \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays);
+        // Free trial removed.
+        // $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
+        // $trialEndsAt = \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays);
 
         $activeSubscription = DistributorSubscription::with('plan')
             ->where('seller_id', $seller->id)
@@ -169,8 +170,8 @@ class DistributorSubscriptionPlansApiController extends Controller
             ->first();
 
         return CommonHelper::responseWithData([
-            'trial_ends_at' => $trialEndsAt->toDateString(),
-            'in_trial' => now()->lessThanOrEqualTo($trialEndsAt),
+            // 'trial_ends_at' => $trialEndsAt->toDateString(),
+            // 'in_trial' => now()->lessThanOrEqualTo($trialEndsAt),
             'has_active_subscription' => (bool) $activeSubscription,
             'active_subscription' => $activeSubscription,
         ]);

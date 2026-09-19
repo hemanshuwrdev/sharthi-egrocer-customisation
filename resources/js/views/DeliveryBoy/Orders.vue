@@ -138,8 +138,10 @@
                 <b-row>
                     <div class="col-md-4 text-success h6">{{ __('total_amount') }} :- {{ $currency }} {{
                         total_amount }}</div>
+                    <!-- Delivery charge disabled (client does not want it)
                     <div class="col-md-4 text-success h6">{{ __('total_dchrg') }} :- {{ $currency }} {{
                         delivery_charge }}</div>
+                    -->
                     <div class="col-md-4 text-success h6">{{ __('total_final_amount') }} :- {{ $currency }}
                         {{ remaining_final }}</div>
                 </b-row>
@@ -178,7 +180,7 @@ export default {
                 { key: 'user_name', label: __('user'), sortable: true, class: 'text-center' },
                 { key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center' },
                 { key: 'total', label: __('total') + ' (' + this.$currency + ')', sortable: true, class: 'text-center' },
-                { key: 'delivery_charge', label: __('dcharges') + ' (' + this.$currency + ')', sortable: true, class: 'text-center' },
+                // { key: 'delivery_charge', label: __('dcharges') + ' (' + this.$currency + ')', sortable: true, class: 'text-center' }, // delivery charge disabled
 
                 { key: 'wallet_balance', label: __('wallet_used') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
                 { key: 'remaining_final', label: __('ftotal') + ' (' + this.$currency + ')', sortable: true, class: 'text-center' },

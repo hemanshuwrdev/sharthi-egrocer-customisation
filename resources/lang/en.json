@@ -611,6 +611,7 @@
     "distributor_trial_days": "Distributor Free Trial (Days)",
     "distributor_trial_days_description": "days from signup before an active subscription is required to log in",
     "your_free_trial_has_ended_please_subscribe_to_continue": "Your free trial has ended. Please subscribe to continue using the app.",
+    "no_active_subscription_please_subscribe_to_continue": "You have no active subscription. Please subscribe to continue using the app.",
     "features": "Features",
     "select_features": "Select Features",
     "logistics": "Logistics",

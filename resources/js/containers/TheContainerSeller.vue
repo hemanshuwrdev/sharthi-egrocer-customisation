@@ -84,7 +84,8 @@
         <b-modal id="subscription-warning-modal" :title="__('subscription_plan')" size="lg" hide-footer centered>
             <div class="alert alert-warning py-2 px-3 mb-3">
                 <i class="fa fa-exclamation-triangle me-1"></i>
-                {{ __('your_free_trial_has_ended_please_subscribe_to_continue') }}
+                <!-- {{ __('your_free_trial_has_ended_please_subscribe_to_continue') }} -->
+                {{ __('no_active_subscription_please_subscribe_to_continue') }}
             </div>
             <div class="row" v-if="subscriptionPlans.length">
                 <div class="col-md-6 mb-3" v-for="plan in subscriptionPlans" :key="plan.id">
@@ -578,8 +579,9 @@ export default {
                 .then((response) => {
                     if (response.data.status === 1) {
                         const data = response.data.data;
-                        if (!data.in_trial && !data.has_active_subscription) {
-                            this.subscriptionTrialEndsAt = data.trial_ends_at;
+                        // if (!data.in_trial && !data.has_active_subscription) {
+                        //     this.subscriptionTrialEndsAt = data.trial_ends_at;
+                        if (!data.has_active_subscription) {
                             axios.get(this.$sellerApiUrl + '/subscription_plans')
                                 .then((res) => {
                                     this.subscriptionPlans = (res.data.data && res.data.data.records) || [];

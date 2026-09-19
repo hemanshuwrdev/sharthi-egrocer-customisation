@@ -235,7 +235,7 @@ export default {
                 {key: 'user_name', label: __('user'), sortable: true, class: 'text-center'},
                 {key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center'},
                 {key: 'total', label: __('total'), sortable: true, class: 'text-center'},
-                {key: 'delivery_charge', label: __('dcharges'), sortable: true, class: 'text-center'},
+                // {key: 'delivery_charge', label: __('dcharges'), sortable: true, class: 'text-center'}, // delivery charge disabled
                 {key: 'remaining_final', label: __('ftotal'), sortable: true, class: 'text-center'},
                 {key: 'payment_method', label: __('p_method'), sortable: true, class: 'text-center'},
                 {key: 'delivery_time', label: __('d_time'), sortable: true, class: 'text-center'},

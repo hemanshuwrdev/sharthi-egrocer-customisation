@@ -159,9 +159,11 @@ class AdminAuthController extends Controller
         $subscriptionWarning = null;
         $subscriptionPlans = [];
         if ($user->role_id == Role::$roleSeller && isset($user->seller)) {
-            $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
-            $trialEndsAt = \Carbon\Carbon::parse($user->seller->created_at)->addDays($trialDays);
-            if (now()->greaterThan($trialEndsAt)) {
+            // Free trial removed — warning shows whenever there is no active plan.
+            // $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
+            // $trialEndsAt = \Carbon\Carbon::parse($user->seller->created_at)->addDays($trialDays);
+            // if (now()->greaterThan($trialEndsAt)) {
+            if (true) {
                 $hasActiveSubscription = \App\Models\DistributorSubscription::where('seller_id', $user->seller->id)
                     ->where('status', 'active')
                     ->where(function ($q) {
@@ -170,7 +172,8 @@ class AdminAuthController extends Controller
                     ->exists();
 
                 if (!$hasActiveSubscription) {
-                    $subscriptionWarning = __('your_free_trial_has_ended_please_subscribe_to_continue');
+                    // $subscriptionWarning = __('your_free_trial_has_ended_please_subscribe_to_continue');
+                    $subscriptionWarning = __('no_active_subscription_please_subscribe_to_continue');
                     $subscriptionPlans = \App\Models\DistributorSubscriptionPlan::where('publish', 1)
                         ->where('status', 1)
                         ->orderBy('price', 'ASC')

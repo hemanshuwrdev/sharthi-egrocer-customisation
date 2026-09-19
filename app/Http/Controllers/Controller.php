@@ -259,7 +259,8 @@ class Controller extends BaseController
         // with no plan assigned (their products are currently hidden from
         // customers — see CommonHelper::filterEligibleSellerIds), and plans
         // expiring within the next 7 days.
-        $trialDays = (int) (Setting::get_value('distributor_trial_days') ?: 0);
+        // Free trial removed — at risk = active distributor with no active plan.
+        // $trialDays = (int) (Setting::get_value('distributor_trial_days') ?: 0);
         $activeSubscriptionSellerIds = \App\Models\DistributorSubscription::where('status', 'active')
             ->where(function ($q) {
                 $q->whereNull('end_date')->orWhere('end_date', '>=', now()->toDateString());
@@ -268,7 +269,7 @@ class Controller extends BaseController
             ->unique();
 
         $sellersPastTrial = Seller::where('status', 1)
-            ->whereRaw('DATE_ADD(created_at, INTERVAL ? DAY) < NOW()', [$trialDays])
+            // ->whereRaw('DATE_ADD(created_at, INTERVAL ? DAY) < NOW()', [$trialDays])
             ->pluck('id');
         $atRiskSellerIds = $sellersPastTrial->diff($activeSubscriptionSellerIds)->values();
 
@@ -306,12 +307,13 @@ class Controller extends BaseController
                     'status' => 'expiring_soon',
                     'detail' => \Carbon\Carbon::parse($row->end_date)->format('d M Y'),
                 ];
-            }))->concat($atRiskSellers->map(function ($seller) use ($trialDays) {
+            }))->concat($atRiskSellers->map(function ($seller) {
                 return [
                     'seller_id' => $seller->id,
                     'distributor' => $seller->store_name ?: $seller->name,
                     'status' => 'at_risk',
-                    'detail' => \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays)->format('d M Y'),
+                    // 'detail' => \Carbon\Carbon::parse($seller->created_at)->addDays($trialDays)->format('d M Y'),
+                    'detail' => '-',
                 ];
             }))->values(),
         ];

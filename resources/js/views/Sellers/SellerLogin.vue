@@ -44,7 +44,7 @@
                     </form>
 
 
-                        <router-link to="/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn">
+                        <router-link v-if="!isDistributorHost" to="/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn">
                             Admin Panel
                         </router-link>
 
@@ -104,6 +104,7 @@ export default {
             showSubscriptionModal: false,
             subscriptionMessage: '',
             subscriptionPlans: [],
+            isDistributorHost: window.location.hostname.startsWith('distributor.'),
         };
     },
     mounted() {

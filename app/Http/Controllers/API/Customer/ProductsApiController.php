@@ -780,9 +780,11 @@ class ProductsApiController extends Controller
             // (Setting: distributor_trial_days, from s.created_at) or have an active
             // distributor_subscriptions row — see CommonHelper::filterEligibleSellerIds.
             ->where(function ($q) {
-                $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
-                $q->whereRaw('DATE_ADD(s.created_at, INTERVAL ? DAY) >= NOW()', [$trialDays])
-                    ->orWhereExists(function ($sub) {
+                // Free trial removed — active subscription only.
+                // $trialDays = (int) (\App\Models\Setting::get_value('distributor_trial_days') ?: 0);
+                // $q->whereRaw('DATE_ADD(s.created_at, INTERVAL ? DAY) >= NOW()', [$trialDays])
+                //     ->orWhereExists(function ($sub) {
+                $q->whereExists(function ($sub) {
                         $sub->select(DB::raw(1))
                             ->from('distributor_subscriptions as ds')
                             ->whereColumn('ds.seller_id', 's.id')
