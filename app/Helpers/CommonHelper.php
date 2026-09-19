@@ -886,8 +886,9 @@ class CommonHelper
                 "p.name as product_name",
                 "p.is_unlimited_stock",
                 "p.tax_category_id",
-                DB::raw("(SELECT t.title FROM taxes t WHERE t.id = p.tax_id) as tax_title"),
-                DB::raw("(SELECT t.percentage FROM taxes t WHERE t.id = p.tax_id) as tax_percentage"),
+                // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                DB::raw("'' as tax_title"),
+                DB::raw("0 as tax_percentage"),
                 DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name")
             )
                 ->from("product_variants as pv")
@@ -1372,10 +1373,11 @@ class CommonHelper
             $productsList = [];
             foreach ($masterProducts as $row) {
                 // Tax percentage for this master product
+                // legacy tax_id path disabled — use tax_category_id/TaxRule instead
                 $taxPercentage = 0.0;
-                if ($row->tax_id) {
-                    $taxPercentage = (float) DB::table('taxes')->where('id', $row->tax_id)->value('percentage');
-                }
+                // if ($row->tax_id) {
+                //     $taxPercentage = (float) DB::table('taxes')->where('id', $row->tax_id)->value('percentage');
+                // }
 
                 // Seller products (variants) available from our sellers
                 $sellerVariants = DB::table('seller_products as sp')
@@ -1415,7 +1417,7 @@ class CommonHelper
                     'slug'             => $row->slug,
                     'category_id'      => $row->category_id,
                     'brand_id'         => $row->brand_id,
-                    'tax_id'           => $row->tax_id,
+                    // 'tax_id' => $row->tax_id, // legacy tax_id path disabled — use tax_category_id/TaxRule instead
                     'type'             => $row->type,
                     'hsn'              => $row->hsn ?? null,
                     'image_url'        => $row->image ? asset('storage/' . $row->image) : null,

@@ -85,7 +85,8 @@ class ProductsApiController extends Controller
                     ->leftJoin('product_variants as pv', 'pv.product_id', '=', 'p.id')
                     ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
                     ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
-                    ->leftJoin('taxes as tx', 'p.tax_id', '=', 'tx.id')
+                    // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                    // ->leftJoin('taxes as tx', 'p.tax_id', '=', 'tx.id')
                     ->where('p.is_approved', 1)
                     ->where('p.status', 1)
                     ->where('c.status', 1)
@@ -110,19 +111,22 @@ class ProductsApiController extends Controller
                     });
                 }
 
+                // legacy tax_id path disabled — use tax_category_id/TaxRule instead; tax
+                // component of this aggregate price range defaults to 0 (no per-row
+                // TaxRule resolution available in this aggregate MIN/MAX query).
                 $productResult = $productResultQuery->selectRaw('
                         MIN(
                             IF(
                                 pv.discounted_price > 0 AND pv.discounted_price != 0,
-                                pv.discounted_price * (1 + COALESCE(tx.percentage, 0) / 100),
-                                pv.price * (1 + COALESCE(tx.percentage, 0) / 100)
+                                pv.discounted_price * (1 + 0 / 100),
+                                pv.price * (1 + 0 / 100)
                             )
                         ) as min_price_with_tax,
                         MAX(
                             IF(
                                 pv.discounted_price > 0 AND pv.discounted_price != 0,
-                                pv.discounted_price * (1 + COALESCE(tx.percentage, 0) / 100),
-                                pv.price * (1 + COALESCE(tx.percentage, 0) / 100)
+                                pv.discounted_price * (1 + 0 / 100),
+                                pv.price * (1 + 0 / 100)
                             )
                         ) as max_price_with_tax
                     ')
@@ -381,7 +385,8 @@ class ProductsApiController extends Controller
                 's.latitude',
                 'cities.max_deliverable_distance',
                 'cities.boundary_points',
-                'tx.percentage as tax_percentage',
+                // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                DB::raw('0 as tax_percentage'),
                 'p.tax_category_id',
                 DB::raw("GROUP_CONCAT(t.name) as tag_names")
             )
@@ -393,7 +398,7 @@ class ProductsApiController extends Controller
                 ->Join("product_variants as pv", "pv.product_id", "=", "p.id")
                 ->leftJoin('product_tag as pt', 'p.id', '=', 'pt.product_id')
                 ->leftJoin('tags as t', 'pt.tag_id', '=', 't.id')
-                ->leftJoin('taxes as tx', 'p.tax_id', '=', 'tx.id')
+                // ->leftJoin('taxes as tx', 'p.tax_id', '=', 'tx.id')
                 ->where('p.is_approved', 1)
                 ->where('p.status', 1)
                 ->where('c.status', 1)
@@ -1162,14 +1167,17 @@ class ProductsApiController extends Controller
             for ($j = 0; $j < count($otherImages); $j++) {
                 $row['other_images'][$j] = asset('storage/' . $row['other_images'][$j]['image']);
             }
-            if ($row['tax_id'] == 0) {
-                $row['tax_title'] = "";
-                $row['tax_percentage'] = "0";
-            } else {
-                $tax1 = Tax::find($row['tax_id']);
-                $row['tax_title'] = (!empty($tax1['title'])) ? $tax1['title'] : "";
-                $row['tax_percentage'] = (!empty($tax1['percentage'])) ? $tax1['percentage'] : "0";
-            }
+            // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+            // if ($row['tax_id'] == 0) {
+            //     $row['tax_title'] = "";
+            //     $row['tax_percentage'] = "0";
+            // } else {
+            //     $tax1 = Tax::find($row['tax_id']);
+            //     $row['tax_title'] = (!empty($tax1['title'])) ? $tax1['title'] : "";
+            //     $row['tax_percentage'] = (!empty($tax1['percentage'])) ? $tax1['percentage'] : "0";
+            // }
+            $row['tax_title'] = "";
+            $row['tax_percentage'] = "0";
             $resolvedTaxRate = TaxRule::resolvePercentage($countryId, $row['tax_category_id'] ?? null);
             if ($resolvedTaxRate !== null) {
                 $row['tax_percentage'] = $resolvedTaxRate;

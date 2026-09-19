@@ -439,6 +439,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -1763,111 +1765,6 @@ var render = function () {
                                                               "\n                                                    " +
                                                                 _vm._s(c.name) +
                                                                 "\n                                                "
-                                                            ),
-                                                          ]
-                                                        )
-                                                      }
-                                                    ),
-                                                  ],
-                                                  2
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "div",
-                                              { staticClass: "col-md-6 mb-3" },
-                                              [
-                                                _c("label", [
-                                                  _vm._v(_vm._s(_vm.__("tax"))),
-                                                ]),
-                                                _vm._v(" "),
-                                                _c(
-                                                  "select",
-                                                  {
-                                                    directives: [
-                                                      {
-                                                        name: "model",
-                                                        rawName: "v-model",
-                                                        value:
-                                                          _vm.product.tax_id,
-                                                        expression:
-                                                          "product.tax_id",
-                                                      },
-                                                    ],
-                                                    staticClass:
-                                                      "form-control form-select",
-                                                    on: {
-                                                      change: function (
-                                                        $event
-                                                      ) {
-                                                        var $$selectedVal =
-                                                          Array.prototype.filter
-                                                            .call(
-                                                              $event.target
-                                                                .options,
-                                                              function (o) {
-                                                                return o.selected
-                                                              }
-                                                            )
-                                                            .map(function (o) {
-                                                              var val =
-                                                                "_value" in o
-                                                                  ? o._value
-                                                                  : o.value
-                                                              return val
-                                                            })
-                                                        _vm.$set(
-                                                          _vm.product,
-                                                          "tax_id",
-                                                          $event.target.multiple
-                                                            ? $$selectedVal
-                                                            : $$selectedVal[0]
-                                                        )
-                                                      },
-                                                    },
-                                                  },
-                                                  [
-                                                    _c(
-                                                      "option",
-                                                      {
-                                                        domProps: {
-                                                          value: null,
-                                                        },
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          "-- " +
-                                                            _vm._s(
-                                                              _vm.__("select")
-                                                            ) +
-                                                            " --"
-                                                        ),
-                                                      ]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _vm._l(
-                                                      _vm.taxes,
-                                                      function (t) {
-                                                        return _c(
-                                                          "option",
-                                                          {
-                                                            key: t.id,
-                                                            domProps: {
-                                                              value: t.id,
-                                                            },
-                                                          },
-                                                          [
-                                                            _vm._v(
-                                                              "\n                                                    " +
-                                                                _vm._s(
-                                                                  t.title
-                                                                ) +
-                                                                " (" +
-                                                                _vm._s(
-                                                                  t.percentage
-                                                                ) +
-                                                                "%)\n                                                "
                                                             ),
                                                           ]
                                                         )

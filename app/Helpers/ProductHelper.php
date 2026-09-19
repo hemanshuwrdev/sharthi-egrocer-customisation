@@ -108,15 +108,17 @@ class ProductHelper
     public static function getTaxableAmount($product_variant_id, ?int $countryId = null)
     {
         if (DB::table('product_variants')->where('id', $product_variant_id)->exists()) {
+            // legacy tax_id path disabled — use tax_category_id/TaxRule instead;
+            // "percentage" now defaults to 0 and is only ever set via the TaxRule
+            // override below.
             $sql = "SELECT
                                 pv.id,
                                 pv.discounted_price,
-                                t.percentage,
+                                0 AS percentage,
                                 p.tax_category_id,
                                 pv.price
                             FROM product_variants pv
                             LEFT JOIN products p ON pv.product_id = p.id
-                            LEFT JOIN taxes t ON t.id = p.tax_id
                             WHERE pv.id = :product_variant_id";
 
             $result = DB::select($sql, ['product_variant_id' => $product_variant_id]);

@@ -45,6 +45,7 @@ class Product extends Model
         return $this->belongsTo(Seller::class,'seller_id','id');
     }
 
+    // legacy tax_id path disabled — use tax_category_id/TaxRule instead (no longer read anywhere live)
     public function tax(){
         return $this->belongsTo(Tax::class,'tax_id','id');
     }

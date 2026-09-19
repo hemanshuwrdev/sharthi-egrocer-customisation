@@ -147,6 +147,7 @@
                                                                 </select>
                                                             </div>
                                                         </template>
+                                                        <!-- Old flat Tax dropdown removed from UI, replaced by Tax Category below
                                                         <div class="col-md-6 mb-3">
                                                             <label for="tax_id" class="control-label">{{ __('tax')
                                                                 }}</label>
@@ -159,6 +160,7 @@
                                                                     ({{ tax.percentage }} %)</option>
                                                             </select>
                                                         </div>
+                                                        -->
                                                         <div class="col-md-6 mb-3">
                                                             <label for="tax_category_id" class="control-label">{{ __('tax_category')
                                                                 }}</label>

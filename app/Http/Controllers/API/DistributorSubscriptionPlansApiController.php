@@ -14,7 +14,8 @@ class DistributorSubscriptionPlansApiController extends Controller
 {
     public function getList()
     {
-        $records = DistributorSubscriptionPlan::with(['tax', 'tax_category'])->orderBy('id', 'DESC')->get();
+        // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+        $records = DistributorSubscriptionPlan::with(['tax_category'])->orderBy('id', 'DESC')->get();
 
         return CommonHelper::responseWithData(['records' => $records]);
     }
@@ -139,7 +140,8 @@ class DistributorSubscriptionPlansApiController extends Controller
 
     public function publishedList()
     {
-        $records = DistributorSubscriptionPlan::with(['tax', 'tax_category'])
+        // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+        $records = DistributorSubscriptionPlan::with(['tax_category'])
             ->where('publish', 1)
             ->where('status', 1)
             ->orderBy('price', 'ASC')

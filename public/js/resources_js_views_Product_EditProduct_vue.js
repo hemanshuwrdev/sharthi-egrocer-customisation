@@ -1137,6 +1137,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
 
 
 // import InputTag from 'vue-input-tag';
@@ -4525,141 +4527,6 @@ var render = function () {
                                                             ]
                                                           ),
                                                         ],
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "div",
-                                                      {
-                                                        staticClass:
-                                                          "col-md-6 mb-3",
-                                                      },
-                                                      [
-                                                        _c(
-                                                          "label",
-                                                          {
-                                                            staticClass:
-                                                              "control-label",
-                                                            attrs: {
-                                                              for: "tax_id",
-                                                            },
-                                                          },
-                                                          [
-                                                            _vm._v(
-                                                              _vm._s(
-                                                                _vm.__("tax")
-                                                              )
-                                                            ),
-                                                          ]
-                                                        ),
-                                                        _vm._v(" "),
-                                                        _c(
-                                                          "select",
-                                                          {
-                                                            directives: [
-                                                              {
-                                                                name: "model",
-                                                                rawName:
-                                                                  "v-model",
-                                                                value:
-                                                                  _vm.tax_id,
-                                                                expression:
-                                                                  "tax_id",
-                                                              },
-                                                            ],
-                                                            staticClass:
-                                                              "form-control form-select",
-                                                            attrs: {
-                                                              id: "tax_id",
-                                                              name: "tax_id",
-                                                              disabled:
-                                                                _vm.isSellerRole,
-                                                            },
-                                                            on: {
-                                                              change: function (
-                                                                $event
-                                                              ) {
-                                                                var $$selectedVal =
-                                                                  Array.prototype.filter
-                                                                    .call(
-                                                                      $event
-                                                                        .target
-                                                                        .options,
-                                                                      function (
-                                                                        o
-                                                                      ) {
-                                                                        return o.selected
-                                                                      }
-                                                                    )
-                                                                    .map(
-                                                                      function (
-                                                                        o
-                                                                      ) {
-                                                                        var val =
-                                                                          "_value" in
-                                                                          o
-                                                                            ? o._value
-                                                                            : o.value
-                                                                        return val
-                                                                      }
-                                                                    )
-                                                                _vm.tax_id =
-                                                                  $event.target
-                                                                    .multiple
-                                                                    ? $$selectedVal
-                                                                    : $$selectedVal[0]
-                                                              },
-                                                            },
-                                                          },
-                                                          [
-                                                            _c(
-                                                              "option",
-                                                              {
-                                                                attrs: {
-                                                                  value: "0",
-                                                                },
-                                                              },
-                                                              [
-                                                                _vm._v(
-                                                                  _vm._s(
-                                                                    _vm.__(
-                                                                      "select_tax"
-                                                                    )
-                                                                  )
-                                                                ),
-                                                              ]
-                                                            ),
-                                                            _vm._v(" "),
-                                                            _vm._l(
-                                                              _vm.translatedTaxes,
-                                                              function (tax) {
-                                                                return _c(
-                                                                  "option",
-                                                                  {
-                                                                    domProps: {
-                                                                      value:
-                                                                        tax.id,
-                                                                    },
-                                                                  },
-                                                                  [
-                                                                    _vm._v(
-                                                                      "\n                                                                " +
-                                                                        _vm._s(
-                                                                          tax.title
-                                                                        ) +
-                                                                        "\n                                                                (" +
-                                                                        _vm._s(
-                                                                          tax.percentage
-                                                                        ) +
-                                                                        " %)"
-                                                                    ),
-                                                                  ]
-                                                                )
-                                                              }
-                                                            ),
-                                                          ],
-                                                          2
-                                                        ),
-                                                      ]
-                                                    ),
                                                     _vm._v(" "),
                                                     _c(
                                                       "div",

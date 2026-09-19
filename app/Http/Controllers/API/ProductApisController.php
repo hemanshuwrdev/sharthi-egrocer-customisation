@@ -143,7 +143,7 @@ class ProductApisController extends Controller
             'p.name',
             'p.seller_id',
             'p.status',
-            'p.tax_id',
+            // 'p.tax_id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
             'p.image',
             's.name as seller_name',
             's.id as seller_id',
@@ -606,7 +606,7 @@ class ProductApisController extends Controller
                 'mp.name',
                 'mp.slug',
                 'mp.image',
-                'mp.tax_id',
+                // 'mp.tax_id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
                 'mp.brand_id',
                 'mp.category_id',
                 'mp.hsn',
@@ -776,7 +776,8 @@ class ProductApisController extends Controller
             $product->name = $request->name;
             $product->slug = $count ? "{$slug}-{$count}" : $slug;
             $product->row_order = $row_order;
-            $product->tax_id = $request->tax_id ?? "";
+            // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+            // $product->tax_id = $request->tax_id ?? "";
             $product->tax_category_id = $request->tax_category_id ?: null;
             $product->brand_id = $request->brand_id ?? "";
             $product->seller_id = $request->seller_id;
@@ -1207,7 +1208,8 @@ class ProductApisController extends Controller
             $product->name = $request->name;
 
             $product->row_order = $row_order;
-            $product->tax_id = $request->tax_id;
+            // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+            // $product->tax_id = $request->tax_id;
             $product->tax_category_id = $request->tax_category_id ?: null;
             $product->brand_id = $request->brand_id;
             if (!$isSeller) {
@@ -1832,7 +1834,7 @@ class ProductApisController extends Controller
                 'mp.id as product_id',
                 'mp.name',
                 'mp.image',
-                'mp.tax_id',
+                // 'mp.tax_id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
                 'mp.brand_id',
                 'mpv.id as product_variant_id',
                 'mpv.sku',

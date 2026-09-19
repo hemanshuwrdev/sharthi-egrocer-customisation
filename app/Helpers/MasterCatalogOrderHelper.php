@@ -98,7 +98,9 @@ class MasterCatalogOrderHelper
         // top. customer/orders' getOrders() reads order_items.tax_amount as a PER-UNIT
         // value and adds it straight to the per-unit price/discounted_price it returns —
         // so tax_amount_per_unit here must stay per-unit, never multiplied by qty.
-        $taxPercentage = (float) ($variant->masterProduct->tax->percentage ?? 0);
+        // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+        // $taxPercentage = (float) ($variant->masterProduct->tax->percentage ?? 0);
+        $taxPercentage = 0;
 
         // Prefer a matching tax_rule: country from the buyer's own registered
         // address, same/different-state (place of supply) from comparing the

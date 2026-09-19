@@ -36,6 +36,7 @@ class DistributorSubscriptionPlan extends Model
         'status' => 'boolean',
     ];
 
+    // legacy tax_id path disabled — use tax_category_id/TaxRule instead (no longer eager-loaded/used)
     public function tax()
     {
         return $this->belongsTo(Tax::class, 'tax_id');

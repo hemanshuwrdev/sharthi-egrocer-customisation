@@ -113,6 +113,7 @@
                                                 </select>
                                             </div>
 
+                                            <!-- Old flat Tax dropdown removed from UI, replaced by Tax Category below
                                             <div class="col-md-6 mb-3">
                                                 <label>{{ __('tax') }}</label>
                                                 <select class="form-control form-select" v-model="product.tax_id">
@@ -122,6 +123,7 @@
                                                     </option>
                                                 </select>
                                             </div>
+                                            -->
 
                                             <div class="col-md-6 mb-3">
                                                 <label>{{ __('tax_category') }}</label>

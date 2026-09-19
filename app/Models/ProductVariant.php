@@ -65,7 +65,9 @@ class ProductVariant extends Model
 
     public function getFinalPriceWithTaxAttribute()
     {
-        $taxPercentage = $this->product->tax?->percentage ?? 0;
+        // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+        // $taxPercentage = $this->product->tax?->percentage ?? 0;
+        $taxPercentage = 0;
 
         $basePrice = ($this->attributes['discounted_price'] > 0 && $this->attributes['discounted_price'] !== null)
             ? $this->attributes['discounted_price']

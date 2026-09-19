@@ -106,13 +106,14 @@ class CartApiController extends Controller
                     'products.slug',
                     'products.image',
                     'products.total_allowed_quantity',
-                    DB::raw('(CASE WHEN taxes.percentage != "0" THEN taxes.percentage ELSE "0" END) AS tax_percentage'),
-                    DB::raw('(CASE WHEN taxes.title != "" THEN taxes.title ELSE "" END) AS tax_title'),
+                    // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                    DB::raw('0 AS tax_percentage'),
+                    DB::raw('"" AS tax_title'),
                     'product_variants.measurement',
                     DB::raw('(select short_code from units where units.id = product_variants.stock_unit_id) AS stock_unit_name')
                 )
                     ->Join('products', 'product_variants.product_id', '=', 'products.id')
-                    ->leftJoin('taxes', 'products.tax_id', '=', 'taxes.id')
+                    // ->leftJoin('taxes', 'products.tax_id', '=', 'taxes.id')
                     ->where('product_variants.id', $row->product_variant_id)
                     ->groupBy('product_variants.id')
                     ->orderBy('created_at', 'DESC')
@@ -191,13 +192,14 @@ class CartApiController extends Controller
                         'products.slug',
                         'products.image',
                         'products.total_allowed_quantity',
-                        DB::raw('(CASE WHEN taxes.percentage != "0" THEN taxes.percentage ELSE "0" END) AS tax_percentage'),
-                        DB::raw('(CASE WHEN taxes.title != "" THEN taxes.title ELSE "" END) AS tax_title'),
+                        // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                        DB::raw('0 AS tax_percentage'),
+                        DB::raw('"" AS tax_title'),
                         'product_variants.measurement',
                         DB::raw('(select short_code from units where units.id = product_variants.stock_unit_id) AS stock_unit_name')
                     )
                         ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
-                        ->leftJoin('taxes', 'products.tax_id', '=', 'taxes.id')
+                        // ->leftJoin('taxes', 'products.tax_id', '=', 'taxes.id')
                         ->where('product_variants.id', '=', $rows->product_variant_id)
                         ->groupBy('product_variants.id')
                         ->orderBy('created_at', 'DESC')
@@ -784,13 +786,14 @@ class CartApiController extends Controller
                                     'products.slug',
                                     'products.image',
                                     'products.total_allowed_quantity',
-                                    DB::raw('(CASE WHEN taxes.percentage != "0" THEN taxes.percentage ELSE "0" END) AS tax_percentage'),
-                                    DB::raw('(CASE WHEN taxes.title != "" THEN taxes.title ELSE "" END) AS tax_title'),
+                                    // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                                    DB::raw('0 AS tax_percentage'),
+                                    DB::raw('"" AS tax_title'),
                                     'product_variants.measurement',
                                     DB::raw('(select short_code from units where units.id = product_variants.stock_unit_id) AS stock_unit_name')
                                 )
                                 ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
-                                ->leftJoin('taxes', 'products.tax_id', '=', 'taxes.id')
+                                // ->leftJoin('taxes', 'products.tax_id', '=', 'taxes.id')
                                 ->where('product_variants.id', '=', $rows->product_variant_id)
                                 ->groupBy('product_variants.id')
                                 ->orderBy('created_at', 'DESC')

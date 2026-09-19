@@ -80,7 +80,7 @@ class MasterProductApiController extends Controller
             'brand_id' => 'required|exists:brands,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
-            'tax_id' => 'nullable|exists:taxes,id',
+            // 'tax_id' => 'nullable|exists:taxes,id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
             'tax_category_id' => 'nullable|exists:tax_categories,id',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
             'other_images' => 'nullable|array',
@@ -116,7 +116,8 @@ class MasterProductApiController extends Controller
                 $product->parent_company_id = $request->parent_company_id;
                 $product->brand_id = $request->brand_id;
                 $product->category_id = $request->category_id;
-                $product->tax_id = $request->tax_id;
+                // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                // $product->tax_id = $request->tax_id;
                 $product->tax_category_id = $request->tax_category_id ?: null;
                 $product->hsn = $request->hsn;
                 $product->description = $defaults['description'];
@@ -188,7 +189,7 @@ class MasterProductApiController extends Controller
             'brand_id' => 'required|exists:brands,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
-            'tax_id' => 'nullable|exists:taxes,id',
+            // 'tax_id' => 'nullable|exists:taxes,id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
             'tax_category_id' => 'nullable|exists:tax_categories,id',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
             'other_images' => 'nullable|array',
@@ -223,7 +224,8 @@ class MasterProductApiController extends Controller
                 $product->parent_company_id = $request->parent_company_id;
                 $product->brand_id = $request->brand_id;
                 $product->category_id = $request->category_id;
-                $product->tax_id = $request->tax_id;
+                // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+                // $product->tax_id = $request->tax_id;
                 $product->tax_category_id = $request->tax_category_id ?: null;
                 $product->hsn = $request->hsn;
                 $product->description = $defaults['description'];
