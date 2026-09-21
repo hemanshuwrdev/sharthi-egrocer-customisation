@@ -632,7 +632,8 @@ class LoadingSlipsApiController extends Controller
                     $secondaryUnitValue = (float) ($variant->secondary_unit_value ?? 0);
                     $weight = (float)($variant->weight ?? 0);
                     $weight = $secondaryUnitValue > 0 ? $weight / $secondaryUnitValue : $weight;
-                    $unit = Unit::find($variant->unit_id);
+                    // weight is stored in weight_unit_id; unit_id is the selling unit (Nos/Pcs)
+                    $unit = Unit::find($variant->weight_unit_id ?: $variant->unit_id);
 
                     if ($unit) {
                         $code = strtolower(trim($unit->short_code));
