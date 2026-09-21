@@ -741,7 +741,10 @@ class BasicApiController extends Controller
         }
 
         $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
-        $sellerIds = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->pluck('seller_id')->unique();
+        // Only distributors with an active subscription plan are visible to retailers.
+        $sellerIds = CommonHelper::filterEligibleSellerIds(
+            \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->pluck('seller_id')->unique()
+        );
 
         $sellers = Seller::select(
                 'sellers.id', 'sellers.name', 'sellers.store_name', 'sellers.logo',
