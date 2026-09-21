@@ -1042,28 +1042,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -3686,100 +3664,9 @@ var render = function () {
                                     onClose: _vm.handleClose,
                                   },
                                 }),
-                                _vm._v(" "),
-                                _c("br"),
-                                _c("br"),
                               ],
                               1
                             )
-                          : _vm._e(),
-                        _vm._v(" "),
-                        row.item.style_web
-                          ? _c("div", [
-                              _c("strong", [
-                                _vm._v(_vm._s(_vm.__("Web Style:"))),
-                              ]),
-                              _vm._v(" "),
-                              row.item.style_web === "style_1"
-                                ? _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/images/web_style/Web_Style_1.jpg",
-                                      alt: "Web Style 1",
-                                      height: "70",
-                                    },
-                                    on: {
-                                      click: function ($event) {
-                                        return _vm.openLightbox(
-                                          _vm.$baseUrl +
-                                            "/images/web_style/Web_Style_1.jpg"
-                                        )
-                                      },
-                                    },
-                                  })
-                                : _vm._e(),
-                              _vm._v(" "),
-                              row.item.style_web === "style_2"
-                                ? _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/images/web_style/Web_Style_1.jpg",
-                                      alt: "Web Style 2",
-                                      height: "70",
-                                    },
-                                    on: {
-                                      click: function ($event) {
-                                        return _vm.openLightbox(
-                                          _vm.$baseUrl +
-                                            "/images/web_style/Web_Style_2.jpg"
-                                        )
-                                      },
-                                    },
-                                  })
-                                : _vm._e(),
-                              _vm._v(" "),
-                              row.item.style_web === "style_3"
-                                ? _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/images/web_style/Web_Style_1.jpg",
-                                      alt: "Web Style 3",
-                                      height: "70",
-                                    },
-                                    on: {
-                                      click: function ($event) {
-                                        return _vm.openLightbox(
-                                          _vm.$baseUrl +
-                                            "/images/web_style/Web_Style_3.jpg"
-                                        )
-                                      },
-                                    },
-                                  })
-                                : _vm._e(),
-                              _vm._v(" "),
-                              row.item.style_web === "style_4"
-                                ? _c("img", {
-                                    attrs: {
-                                      src:
-                                        _vm.$baseUrl +
-                                        "/images/web_style/Web_Style_1.jpg",
-                                      alt: "Web Style 4",
-                                      width: "70",
-                                    },
-                                    on: {
-                                      click: function ($event) {
-                                        return _vm.openLightbox(
-                                          _vm.$baseUrl +
-                                            "/images/web_style/Web_Style_4.jpg"
-                                        )
-                                      },
-                                    },
-                                  })
-                                : _vm._e(),
-                            ])
                           : _vm._e(),
                       ]),
                     ]

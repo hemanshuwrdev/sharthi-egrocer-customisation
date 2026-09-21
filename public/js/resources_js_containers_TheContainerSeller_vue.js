@@ -132,6 +132,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 
 
@@ -592,8 +593,9 @@ __webpack_require__.r(__webpack_exports__);
       axios__WEBPACK_IMPORTED_MODULE_5___default().get(this.$sellerApiUrl + '/subscription_status').then(function (response) {
         if (response.data.status === 1) {
           var data = response.data.data;
-          if (!data.in_trial && !data.has_active_subscription) {
-            _this5.subscriptionTrialEndsAt = data.trial_ends_at;
+          // if (!data.in_trial && !data.has_active_subscription) {
+          //     this.subscriptionTrialEndsAt = data.trial_ends_at;
+          if (!data.has_active_subscription) {
             axios__WEBPACK_IMPORTED_MODULE_5___default().get(_this5.$sellerApiUrl + '/subscription_plans').then(function (res) {
               _this5.subscriptionPlans = res.data.data && res.data.data.records || [];
               _this5.$bvModal.show('subscription-warning-modal');
@@ -2259,12 +2261,11 @@ var render = function () {
         [
           _c("div", { staticClass: "alert alert-warning py-2 px-3 mb-3" }, [
             _c("i", { staticClass: "fa fa-exclamation-triangle me-1" }),
+            _vm._v(" "),
             _vm._v(
               "\n            " +
                 _vm._s(
-                  _vm.__(
-                    "your_free_trial_has_ended_please_subscribe_to_continue"
-                  )
+                  _vm.__("no_active_subscription_please_subscribe_to_continue")
                 ) +
                 "\n        "
             ),

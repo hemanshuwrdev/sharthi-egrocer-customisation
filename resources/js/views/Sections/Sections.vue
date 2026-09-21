@@ -58,28 +58,6 @@
 
                                 <FsLightbox :toggler="toggler" :sources="lightboxSources"
                                     :onClose="handleClose"> </FsLightbox>
-                                <br /><br />
-                            </div>
-
-                            <!-- Web Style -->
-                            <div v-if="row.item.style_web">
-                                <strong>{{ __('Web Style:') }}</strong>
-                                <img v-if="row.item.style_web === 'style_1'"
-                                    :src="$baseUrl + '/images/web_style/Web_Style_1.jpg'" alt="Web Style 1"
-                                    height="70"
-                                    @click="openLightbox($baseUrl + '/images/web_style/Web_Style_1.jpg')" />
-                                <img v-if="row.item.style_web === 'style_2'"
-                                    :src="$baseUrl + '/images/web_style/Web_Style_1.jpg'" alt="Web Style 2"
-                                    height="70"
-                                    @click="openLightbox($baseUrl + '/images/web_style/Web_Style_2.jpg')" />
-                                <img v-if="row.item.style_web === 'style_3'"
-                                    :src="$baseUrl + '/images/web_style/Web_Style_1.jpg'" alt="Web Style 3"
-                                    height="70"
-                                    @click="openLightbox($baseUrl + '/images/web_style/Web_Style_3.jpg')" />
-                                <img v-if="row.item.style_web === 'style_4'"
-                                    :src="$baseUrl + '/images/web_style/Web_Style_1.jpg'" alt="Web Style 4"
-                                    width="70"
-                                    @click="openLightbox($baseUrl + '/images/web_style/Web_Style_4.jpg')" />
                             </div>
                         </div>
                     </template>

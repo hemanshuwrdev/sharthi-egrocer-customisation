@@ -283,12 +283,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         label: __('total') + '(' + this.$currency + ')',
         sortable: false,
         "class": 'text-center'
-      }, {
-        key: 'delivery_charge',
-        label: __('dcharges') + '(' + this.$currency + ')',
-        sortable: false,
-        "class": 'text-center'
-      }, {
+      },
+      // { key: 'delivery_charge', label: __('dcharges') + '(' + this.$currency + ')', sortable: false, class: 'text-center' }, // delivery charge disabled
+      {
         key: 'additional_charges',
         label: __('a_charges') + '(' + this.$currency + ')',
         sortable: false,

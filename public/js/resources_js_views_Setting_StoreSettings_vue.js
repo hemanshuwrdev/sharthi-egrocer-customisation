@@ -1668,6 +1668,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
 
 
 
@@ -2689,7 +2692,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var formData = new FormData();
 
       // Add only seller settings
-      var sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode', 'distributor_trial_days'];
+      // 'distributor_trial_days' no longer sent from this form (field hidden); DB value stays untouched.
+      var sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode' /*, 'distributor_trial_days'*/];
       sellerFields.forEach(function (field) {
         if (_this13.store_settings[field] !== undefined) {
           formData.append(field, _this13.store_settings[field]);
@@ -10933,86 +10937,6 @@ var render = function () {
                                               _vm.$set(
                                                 _vm.store_settings,
                                                 "seller_commission",
-                                                $event.target.value
-                                              )
-                                            },
-                                          },
-                                        }),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      { staticClass: "form-group col-md-6" },
-                                      [
-                                        _c(
-                                          "label",
-                                          {
-                                            attrs: {
-                                              for: "distributor_trial_days",
-                                            },
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.__("distributor_trial_days")
-                                              )
-                                            ),
-                                            _c(
-                                              "span",
-                                              {
-                                                staticClass:
-                                                  "text text-primary font-size-13",
-                                              },
-                                              [
-                                                _vm._v(
-                                                  "( " +
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "distributor_trial_days_description"
-                                                      )
-                                                    ) +
-                                                    "\n                                                                )"
-                                                ),
-                                              ]
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c("input", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value:
-                                                _vm.store_settings
-                                                  .distributor_trial_days,
-                                              expression:
-                                                "store_settings.distributor_trial_days",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            type: "number",
-                                            name: "distributor_trial_days",
-                                            id: "distributor_trial_days",
-                                            placeholder: "90",
-                                            step: "1",
-                                            min: "0",
-                                          },
-                                          domProps: {
-                                            value:
-                                              _vm.store_settings
-                                                .distributor_trial_days,
-                                          },
-                                          on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.store_settings,
-                                                "distributor_trial_days",
                                                 $event.target.value
                                               )
                                             },

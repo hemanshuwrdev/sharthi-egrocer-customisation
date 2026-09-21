@@ -337,6 +337,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
 
 
 
@@ -380,12 +382,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         label: __('total') + '(' + this.$currency + ')',
         sortable: true,
         "class": 'text-center'
-      }, {
-        key: 'delivery_charge',
-        label: __('dcharges') + '(' + this.$currency + ')',
-        sortable: true,
-        "class": 'text-center'
-      }, {
+      },
+      // { key: 'delivery_charge', label: __('dcharges') + '(' + this.$currency + ')', sortable: true, class: 'text-center' }, // delivery charge disabled
+      {
         key: 'wallet_balance',
         label: __('wallet_used') + '(' + this.$currency + ')',
         sortable: true,
@@ -1812,20 +1811,6 @@ var render = function () {
                             _vm._s(_vm.$currency) +
                             " " +
                             _vm._s(_vm.total_amount)
-                        ),
-                      ]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      { staticClass: "col-md-4 text-success h6 mb-0" },
-                      [
-                        _vm._v(
-                          _vm._s(_vm.__("total_dchrg")) +
-                            " :- " +
-                            _vm._s(_vm.$currency) +
-                            " " +
-                            _vm._s(_vm.delivery_charge)
                         ),
                       ]
                     ),

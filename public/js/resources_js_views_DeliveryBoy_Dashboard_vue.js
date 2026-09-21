@@ -279,12 +279,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
         label: __('total'),
         sortable: true,
         "class": 'text-center'
-      }, {
-        key: 'delivery_charge',
-        label: __('dcharges'),
-        sortable: true,
-        "class": 'text-center'
-      }, {
+      },
+      // {key: 'delivery_charge', label: __('dcharges'), sortable: true, class: 'text-center'}, // delivery charge disabled
+      {
         key: 'remaining_final',
         label: __('ftotal'),
         sortable: true,
