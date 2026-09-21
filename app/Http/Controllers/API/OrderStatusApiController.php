@@ -41,13 +41,21 @@ class OrderStatusApiController extends Controller
                 OrderStatusList::$cancelled,
             ]);
         }
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        if (($backtrace[1]['class'] ?? null) === 'App\\Http\\Controllers\\DeliveryBoyController') {
+            $excludeIds = array_merge($excludeIds, [
+                OrderStatusList::$paymentPending,
+                OrderStatusList::$received,
+                OrderStatusList::$processed,
+                OrderStatusList::$shipped,
+            ]);
+        }
         $orderStatuses = OrderStatusList::whereNotIn('id', $excludeIds)->orderBy('id', 'ASC')->get();
 
         $returnStatuses = [];
         $isDeliveryBoyRoute = false;
         $isSellerRoute = false;
 
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         if (isset($backtrace[1]['class'])) {
             $callerClass = $backtrace[1]['class'];
             $isDeliveryBoyRoute = $callerClass === 'App\\Http\\Controllers\\DeliveryBoyController';
