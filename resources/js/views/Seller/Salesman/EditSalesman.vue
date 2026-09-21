@@ -81,6 +81,13 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
+                                        <label for="allow_price_edit">{{ __('allow_price_edit') }}</label><br>
+                                        <input type="checkbox" v-model="record.allow_price_edit" id="allow_price_edit" class="form-check-input mt-2">
+                                        <label for="allow_price_edit" class="form-check-label mt-2 ml-2">{{ __('yes') }}</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                         <label for="allow_payment_collection">{{ __('allow_payment_collection') }}</label><br>
                                         <input type="checkbox" v-model="record.allow_payment_collection" id="allow_payment_collection" class="form-check-input mt-2">
                                         <label for="allow_payment_collection" class="form-check-label mt-2 ml-2">{{ __('yes') }}</label>
@@ -128,6 +135,7 @@ export default {
                 password: '',
                 brands: [],
                 allow_payment_collection: false,
+                allow_price_edit: false,
                 discount: null,
                 status: 1
             },
@@ -190,6 +198,7 @@ export default {
                         this.record = data.data;
                         this.record.password = '';
                         this.record.allow_payment_collection = data.data.allow_payment_collection == 1 ? true : false;
+                        this.record.allow_price_edit = data.data.allow_price_edit == 1 ? true : false;
                         if (this.record.brands) {
                             let parsedBrands = typeof this.record.brands === 'string' ? JSON.parse(this.record.brands) : this.record.brands;
                             let brandIds = parsedBrands.map(b => b.toString());
@@ -226,6 +235,7 @@ export default {
                 formData.append('brands[' + index + ']', brand.id || brand);
             });
             formData.append('allow_payment_collection', this.record.allow_payment_collection ? 1 : 0);
+            formData.append('allow_price_edit', this.record.allow_price_edit ? 1 : 0);
             if (this.record.discount !== null && this.record.discount !== '') {
                 formData.append('discount', this.record.discount);
             }

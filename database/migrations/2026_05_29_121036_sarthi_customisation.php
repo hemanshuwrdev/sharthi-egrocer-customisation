@@ -436,6 +436,12 @@ class SarthiCustomisation extends Migration
             });
         }
 
+        if (Schema::hasTable('salesmen') && !Schema::hasColumn('salesmen', 'allow_price_edit')) {
+            Schema::table('salesmen', function (Blueprint $table) {
+                $table->boolean('allow_price_edit')->default(false)->comment('Salesman may override line unit price in placeOrder');
+            });
+        }
+
         Schema::table('salesmen', function (Blueprint $table) {
             if (!Schema::hasColumn('salesmen', 'country_code')) {
                 $table->string('country_code', 6)->default('+91')->after('mobile');

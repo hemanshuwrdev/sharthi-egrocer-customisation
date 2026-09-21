@@ -1030,6 +1030,9 @@ class SalesmanAppApiController extends Controller
             'address_id'       => 'nullable|integer',
             'delivery_time'    => 'nullable|string',
             'order_note'       => 'nullable|string',
+            'item_prices'              => 'nullable|array',
+            'item_prices.*.cart_id'    => 'required_with:item_prices|integer',
+            'item_prices.*.unit_price' => 'required_with:item_prices|numeric|min:0',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -1038,6 +1041,17 @@ class SalesmanAppApiController extends Controller
         $retailer = $this->ensureOwnedActiveRetailer($salesman, $request->retailer_id);
         if (!$retailer) {
             return CommonHelper::responseError('retailer_not_owned_or_not_active');
+        }
+
+        // Price override: only for salesmen with allow_price_edit. Map of cart row id => unit price.
+        $priceOverrides = [];
+        if ($request->filled('item_prices')) {
+            if (!$salesman->allow_price_edit) {
+                return CommonHelper::responseError('price_edit_not_allowed');
+            }
+            foreach ($request->item_prices as $p) {
+                $priceOverrides[(int) $p['cart_id']] = (float) $p['unit_price'];
+            }
         }
 
         // Discount cap: distributor sets salesmen.discount (percentage).
@@ -1064,7 +1078,14 @@ class SalesmanAppApiController extends Controller
             if (!$line['ok']) {
                 return CommonHelper::responseError($line['error']);
             }
+            if (isset($priceOverrides[$row->id])) {
+                $line['unit_price'] = $priceOverrides[$row->id];
+                $line['slab'] = null;
+            }
             $resolved[$row->id] = $line;
+        }
+        if (array_diff_key($priceOverrides, $items->keyBy('id')->all())) {
+            return CommonHelper::responseError('invalid_cart_id_in_item_prices');
         }
 
         // Resolve address/coords with retailer profile fallback.

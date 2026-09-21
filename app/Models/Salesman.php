@@ -15,12 +15,13 @@ class Salesman extends Model
 
     protected $fillable = [
         'admin_id', 'name', 'mobile', 'email', 'seller_id',
-        'brands', 'allow_payment_collection', 'discount', 'status',
+        'brands', 'allow_payment_collection', 'allow_price_edit', 'discount', 'status',
     ];
 
     protected $casts = [
         'brands' => 'array',
         'allow_payment_collection' => 'boolean',
+        'allow_price_edit' => 'boolean',
         'discount' => 'float',
         'status' => 'integer',
     ];

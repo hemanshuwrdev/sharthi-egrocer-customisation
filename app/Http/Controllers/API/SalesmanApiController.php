@@ -81,6 +81,7 @@ class SalesmanApiController extends Controller
             $salesman->seller_id = $seller_id;
             $salesman->brands = $request->brands;
             $salesman->allow_payment_collection = $request->allow_payment_collection ? 1 : 0;
+            $salesman->allow_price_edit = $request->allow_price_edit ? 1 : 0;
             $salesman->discount = $request->discount;
             $salesman->status = $request->status ?? 1;
             $salesman->save();
@@ -186,6 +187,7 @@ class SalesmanApiController extends Controller
             $salesman->email = $request->email;
             $salesman->brands = $request->brands;
             $salesman->allow_payment_collection = $request->allow_payment_collection ? 1 : 0;
+            $salesman->allow_price_edit = $request->allow_price_edit ? 1 : 0;
             $salesman->discount = $request->discount;
             $salesman->status = $request->status ?? 1;
             $salesman->save();

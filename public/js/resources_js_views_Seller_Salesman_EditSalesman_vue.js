@@ -133,6 +133,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -151,6 +158,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         password: '',
         brands: [],
         allow_payment_collection: false,
+        allow_price_edit: false,
         discount: null,
         status: 1
       },
@@ -234,6 +242,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           _this3.record = data.data;
           _this3.record.password = '';
           _this3.record.allow_payment_collection = data.data.allow_payment_collection == 1 ? true : false;
+          _this3.record.allow_price_edit = data.data.allow_price_edit == 1 ? true : false;
           if (_this3.record.brands) {
             var parsedBrands = typeof _this3.record.brands === 'string' ? JSON.parse(_this3.record.brands) : _this3.record.brands;
             var brandIds = parsedBrands.map(function (b) {
@@ -275,6 +284,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         formData.append('brands[' + index + ']', brand.id || brand);
       });
       formData.append('allow_payment_collection', this.record.allow_payment_collection ? 1 : 0);
+      formData.append('allow_price_edit', this.record.allow_price_edit ? 1 : 0);
       if (this.record.discount !== null && this.record.discount !== '') {
         formData.append('discount', this.record.discount);
       }
@@ -872,6 +882,70 @@ var render = function () {
                       ],
                       1
                     ),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-md-6" }, [
+                    _c("div", { staticClass: "form-group" }, [
+                      _c("label", { attrs: { for: "allow_price_edit" } }, [
+                        _vm._v(_vm._s(_vm.__("allow_price_edit"))),
+                      ]),
+                      _c("br"),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.record.allow_price_edit,
+                            expression: "record.allow_price_edit",
+                          },
+                        ],
+                        staticClass: "form-check-input mt-2",
+                        attrs: { type: "checkbox", id: "allow_price_edit" },
+                        domProps: {
+                          checked: Array.isArray(_vm.record.allow_price_edit)
+                            ? _vm._i(_vm.record.allow_price_edit, null) > -1
+                            : _vm.record.allow_price_edit,
+                        },
+                        on: {
+                          change: function ($event) {
+                            var $$a = _vm.record.allow_price_edit,
+                              $$el = $event.target,
+                              $$c = $$el.checked ? true : false
+                            if (Array.isArray($$a)) {
+                              var $$v = null,
+                                $$i = _vm._i($$a, $$v)
+                              if ($$el.checked) {
+                                $$i < 0 &&
+                                  _vm.$set(
+                                    _vm.record,
+                                    "allow_price_edit",
+                                    $$a.concat([$$v])
+                                  )
+                              } else {
+                                $$i > -1 &&
+                                  _vm.$set(
+                                    _vm.record,
+                                    "allow_price_edit",
+                                    $$a.slice(0, $$i).concat($$a.slice($$i + 1))
+                                  )
+                              }
+                            } else {
+                              _vm.$set(_vm.record, "allow_price_edit", $$c)
+                            }
+                          },
+                        },
+                      }),
+                      _vm._v(" "),
+                      _c(
+                        "label",
+                        {
+                          staticClass: "form-check-label mt-2 ml-2",
+                          attrs: { for: "allow_price_edit" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("yes")))]
+                      ),
+                    ]),
                   ]),
                   _vm._v(" "),
                   _c("div", { staticClass: "col-md-6" }, [
