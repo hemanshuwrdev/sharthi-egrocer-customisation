@@ -100,6 +100,10 @@ class SchemeEngine
                 }
 
                 $currentQty   = (float) ($qtyByProduct[(int) $scheme->buy_seller_product_id] ?? 0);
+                // Only surface if the scheme's buy product is in the cart
+                if ($currentQty <= 0) {
+                    continue;
+                }
                 $rawQtyNeeded = (float) $scheme->buy_qty - $currentQty;
                 if ($rawQtyNeeded <= 0) {
                     continue;
