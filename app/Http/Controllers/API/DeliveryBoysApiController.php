@@ -53,7 +53,7 @@ class DeliveryBoysApiController extends Controller
     public function getDeliveryBoy(Request $request)
     {
         $query = DeliveryBoy::withAllTranslations()
-            ->with(['admin', 'city'])
+            ->with(['admin', 'city', 'cities:cities.id,cities.name'])
             ->orderBy('id', 'DESC');
 
         // Distributors must only see their own drivers, not every driver on the
@@ -68,7 +68,7 @@ class DeliveryBoysApiController extends Controller
         }
 
         if ($request->filled('city_id')) {
-            $query->where('city_id', $request->city_id)
+            $query->servingCities([(int) $request->city_id])
                 ->where('status', 1);
         }
 
@@ -96,14 +96,15 @@ class DeliveryBoysApiController extends Controller
     public function edit($id)
     {
         $deliveryBoy = DeliveryBoy::withAllTranslations()
-            ->with(['admin.deliveryBoy', 'city:id,name', 'translations'])
+            ->with(['admin.deliveryBoy', 'city:id,name', 'cities:cities.id,cities.name', 'translations'])
             ->where('id', $id)->first();
         if (!$deliveryBoy || !$this->canAccessDeliveryBoy($deliveryBoy)) {
             return CommonHelper::responseError('delivery_boy_not_found');
         }
 
         // Add city information to the admin's deliveryBoy object as an array
-        if ($deliveryBoy->city && $deliveryBoy->admin && $deliveryBoy->admin->deliveryBoy) {
+        // (cities relation already loaded above; fall back to the legacy single city)
+        if ($deliveryBoy->cities->isEmpty() && $deliveryBoy->city && $deliveryBoy->admin && $deliveryBoy->admin->deliveryBoy) {
             $deliveryBoy->admin->deliveryBoy->cities = [$deliveryBoy->city];
         }
 
@@ -130,7 +131,9 @@ class DeliveryBoysApiController extends Controller
                 'bank_name' => 'nullable',
                 'bank_account_number' => 'nullable',
                 'account_name' => 'nullable',
-                'city_id' => 'required',
+                'city_ids' => 'required_without:city_id|array|min:1',
+                'city_ids.*' => 'integer|exists:cities,id',
+                'city_id' => 'required_without:city_ids',
                 'driving_license' => 'nullable|file',
                 'national_identity_card' => 'nullable|file',
                 'bonus_percentage' => 'nullable|numeric'
@@ -145,6 +148,9 @@ class DeliveryBoysApiController extends Controller
         if ($request->language_id != $defaultLanguage->id) {
             return CommonHelper::responseError('default_language_required_first');
         }
+
+        $cityIds = $this->requestCityIds($request);
+        $primaryCityId = $cityIds[0] ?? $request->city_id;
 
         DB::beginTransaction();
         try {
@@ -171,7 +177,7 @@ class DeliveryBoysApiController extends Controller
                 'country_code' => $request->country_code ?? '+91',
                 'license_no' => $request->license_no,
                 'dob'       => $request->dob,
-                'city_id'   => $request->city_id,
+                'city_id'   => $primaryCityId,
                 'bonus_type' => $request->bonus_type ?? 0,
                 'bonus_percentage' => $request->bonus_percentage ?? 0,
                 'bonus_min_amount' => $request->bonus_min_amount ?? 0,
@@ -196,6 +202,7 @@ class DeliveryBoysApiController extends Controller
             }
 
             $deliveryBoy->save(); // save files
+            $zoneOverlaps = $this->syncZones($deliveryBoy, $cityIds);
 
             /* Save Translation */
             $deliveryBoy->saveTranslation($request->language_id, [
@@ -215,6 +222,7 @@ class DeliveryBoysApiController extends Controller
             return CommonHelper::responseWithData([
                 'id' => $deliveryBoy->id,
                 'message' => __('delivery_boy_saved_successfully'),
+                'zone_overlaps' => $zoneOverlaps,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -268,7 +276,10 @@ class DeliveryBoysApiController extends Controller
             $deliveryBoy->country_code = $request->country_code ?? $deliveryBoy->country_code;
             $deliveryBoy->license_no = $request->license_no ?? $deliveryBoy->license_no;
             $deliveryBoy->dob    = $request->dob ?? $deliveryBoy->dob;
-            $deliveryBoy->city_id = $request->city_id ?? $deliveryBoy->city_id;
+            $cityIds = $this->requestCityIds($request);
+            if (!empty($cityIds)) {
+                $deliveryBoy->city_id = $cityIds[0];
+            }
             $deliveryBoy->status = $request->status ?? $deliveryBoy->status;
             // Remark field - always update (can be empty string)
             $deliveryBoy->remark = $request->input('remark', '');
@@ -302,6 +313,7 @@ class DeliveryBoysApiController extends Controller
             }
 
             $deliveryBoy->save();
+            $zoneOverlaps = !empty($cityIds) ? $this->syncZones($deliveryBoy, $cityIds) : [];
 
             // Update Admin password when password is provided
             if ($request->filled('password')) {
@@ -329,7 +341,40 @@ class DeliveryBoysApiController extends Controller
         return CommonHelper::responseWithData([
             'delivery_boy' => $deliveryBoy,
             'message' => __('delivery_boy_updated_successfully'),
+            'zone_overlaps' => $zoneOverlaps ?? [],
         ]);
+    }
+
+    /** Unique int zone ids from city_ids[] (or legacy single city_id). */
+    private function requestCityIds(Request $request): array
+    {
+        $ids = $request->has('city_ids') ? (array) $request->city_ids : array_filter([$request->city_id]);
+        return array_values(array_unique(array_map('intval', array_filter($ids))));
+    }
+
+    /**
+     * Replace the driver's zones and return zones already served by another active
+     * driver of the same distributor (warning only, not blocking).
+     */
+    private function syncZones(DeliveryBoy $deliveryBoy, array $cityIds): array
+    {
+        $deliveryBoy->cities()->sync($cityIds);
+
+        $others = DeliveryBoy::where('id', '!=', $deliveryBoy->id)
+            ->where('status', 1)
+            ->where('seller_id', $deliveryBoy->seller_id)
+            ->servingCities($cityIds)
+            ->with('cities:cities.id')
+            ->get(['id', 'name', 'city_id']);
+
+        $overlaps = [];
+        foreach ($others as $other) {
+            $theirs = $other->cities->pluck('id')->push($other->city_id)->filter()->unique();
+            foreach (array_intersect($cityIds, $theirs->all()) as $cid) {
+                $overlaps[] = ['city_id' => (int) $cid, 'delivery_boy_id' => $other->id, 'delivery_boy_name' => $other->name];
+            }
+        }
+        return $overlaps;
     }
 
     public function updateStatus(Request $request)

@@ -478,10 +478,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
-//
-//
-//
-//
 
 
 
@@ -509,7 +505,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       showPassword: false,
       showConfirmPassword: false,
       record: null,
-      city: "",
+      selectedCities: [],
       cities: [],
       id: null,
       bonusSettings: null,
@@ -530,6 +526,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         bank_account_number: "",
         account_name: "",
         city_id: "",
+        city_ids: [],
         address: "",
         other_payment_information: "",
         driving_license: "",
@@ -788,23 +785,33 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var _this5 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/cities').then(function (response) {
-        var _this5$record;
         _this5.isLoading = false;
         var data = response.data;
         // API returns data.data = { total, cities }; ensure we always set an array for multiselect
         var raw = data.data;
         var list = raw && raw.cities ? raw.cities : raw;
         _this5.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
-        if (_this5.deliveryBoys.id && (_this5$record = _this5.record) !== null && _this5$record !== void 0 && _this5$record.city_id && Array.isArray(_this5.cities)) {
-          var matched = _this5.cities.filter(function (item) {
-            return item.id === _this5.record.city_id;
-          });
-          _this5.city = matched.length ? matched[0] : null;
+        if (_this5.deliveryBoys.id && _this5.record) {
+          _this5.applyRecordCities();
         }
       });
     },
     setCityId: function setCityId() {
-      this.deliveryBoys.city_id = this.city && this.city.id != null ? this.city.id : '';
+      var _this$deliveryBoys$ci;
+      this.deliveryBoys.city_ids = this.selectedCities.map(function (c) {
+        return c.id;
+      });
+      this.deliveryBoys.city_id = (_this$deliveryBoys$ci = this.deliveryBoys.city_ids[0]) !== null && _this$deliveryBoys$ci !== void 0 ? _this$deliveryBoys$ci : '';
+    },
+    applyRecordCities: function applyRecordCities() {
+      var _this$record, _this$record2;
+      var ids = (_this$record = this.record) !== null && _this$record !== void 0 && _this$record.cities && this.record.cities.length ? this.record.cities.map(function (c) {
+        return c.id;
+      }) : (_this$record2 = this.record) !== null && _this$record2 !== void 0 && _this$record2.city_id ? [this.record.city_id] : [];
+      this.selectedCities = (this.cities || []).filter(function (item) {
+        return ids.includes(item.id);
+      });
+      this.setCityId();
     },
     getDeliveryBoy: function getDeliveryBoy() {
       var _this6 = this;
@@ -812,7 +819,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         _this6.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
-          var _this6$record, _this6$record2, _this6$record3, _this6$record4, _this6$record5, _this6$record6, _this6$record7, _this6$record8, _this6$record9, _this6$record10, _this6$record11, _this6$record12, _this6$record13, _this6$record14;
+          var _this6$record, _this6$record2, _this6$record3, _this6$record4, _this6$record5, _this6$record6, _this6$record7, _this6$record8, _this6$record9, _this6$record10, _this6$record11, _this6$record12, _this6$record13;
           _this6.record = data.data;
           _this6.translations = {};
           if (!_this6.languages.length) return;
@@ -855,15 +862,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           _this6.deliveryBoys.bank_name = emptyIfNull((_this6$record9 = _this6.record) === null || _this6$record9 === void 0 ? void 0 : _this6$record9.bank_name);
           _this6.deliveryBoys.bank_account_number = emptyIfNull((_this6$record10 = _this6.record) === null || _this6$record10 === void 0 ? void 0 : _this6$record10.bank_account_number);
           _this6.deliveryBoys.account_name = emptyIfNull((_this6$record11 = _this6.record) === null || _this6$record11 === void 0 ? void 0 : _this6$record11.account_name);
-          if (Array.isArray(_this6.cities)) {
-            var matched = _this6.cities.find(function (item) {
-              return item.id === _this6.record.city_id;
-            });
-            _this6.city = matched || null;
-          }
-          _this6.deliveryBoys.city_id = emptyIfNull((_this6$record12 = _this6.record) === null || _this6$record12 === void 0 ? void 0 : _this6$record12.city_id);
-          _this6.deliveryBoys.address = emptyIfNull((_this6$record13 = _this6.record) === null || _this6$record13 === void 0 ? void 0 : _this6$record13.address);
-          _this6.deliveryBoys.other_payment_information = emptyIfNull((_this6$record14 = _this6.record) === null || _this6$record14 === void 0 ? void 0 : _this6$record14.other_payment_information);
+          _this6.applyRecordCities();
+          _this6.deliveryBoys.address = emptyIfNull((_this6$record12 = _this6.record) === null || _this6$record12 === void 0 ? void 0 : _this6$record12.address);
+          _this6.deliveryBoys.other_payment_information = emptyIfNull((_this6$record13 = _this6.record) === null || _this6$record13 === void 0 ? void 0 : _this6$record13.other_payment_information);
           _this6.deliveryBoys.driving_license = "";
           _this6.deliveryBoys.driving_license_url = _this6.record ? _this6.$storageUrl + _this6.record.driving_license : "";
           _this6.deliveryBoys.national_identity_card = "";
@@ -965,6 +966,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 fd.append('bank_account_number', _this7.deliveryBoys.bank_account_number);
                 fd.append('account_name', _this7.deliveryBoys.account_name);
                 fd.append('city_id', _this7.deliveryBoys.city_id);
+                (_this7.deliveryBoys.city_ids || []).forEach(function (id, i) {
+                  return fd.append('city_ids[' + i + ']', id);
+                });
                 fd.append('status', _this7.deliveryBoys.status);
                 fd.append('remark', (_this7$deliveryBoys$r = _this7.deliveryBoys.remark) !== null && _this7$deliveryBoys$r !== void 0 ? _this7$deliveryBoys$r : '');
                 fd.append('bonus_type', _this7.deliveryBoys.bonus_type);
@@ -989,73 +993,73 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                   fd.append('national_identity_card', _this7.deliveryBoys.national_identity_card);
                 }
                 url = isEdit ? _this7.$apiUrl + '/delivery_boys/update' : _this7.$apiUrl + '/delivery_boys/save';
-                _context.next = 49;
+                _context.next = 50;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, fd);
-              case 49:
+              case 50:
                 response = _context.sent;
                 if (!(!response.data || response.data.status !== 1)) {
-                  _context.next = 52;
+                  _context.next = 53;
                   break;
                 }
                 throw new Error(((_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || __('something_went_wrong'));
-              case 52:
+              case 53:
                 if (!isEdit) {
                   _this7.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 }
 
                 // Save non-default language translations
                 _iterator = _createForOfIteratorHelper(_this7.languages);
-                _context.prev = 54;
+                _context.prev = 55;
                 _iterator.s();
-              case 56:
+              case 57:
                 if ((_step = _iterator.n()).done) {
-                  _context.next = 76;
+                  _context.next = 77;
                   break;
                 }
                 lang = _step.value;
                 if (!lang.is_default) {
-                  _context.next = 60;
+                  _context.next = 61;
                   break;
                 }
-                return _context.abrupt("continue", 74);
-              case 60:
+                return _context.abrupt("continue", 75);
+              case 61:
                 t = _this7.translations[lang.id];
                 if (!(!t || !t.name && !t.address && !t.other_payment_information)) {
-                  _context.next = 63;
+                  _context.next = 64;
                   break;
                 }
-                return _context.abrupt("continue", 74);
-              case 63:
+                return _context.abrupt("continue", 75);
+              case 64:
                 tfd = new FormData();
                 tfd.append('id', _this7.deliveryBoys.id);
                 tfd.append('language_id', lang.id);
                 tfd.append('name', (_t$name = t.name) !== null && _t$name !== void 0 ? _t$name : '');
                 tfd.append('address', (_t$address = t.address) !== null && _t$address !== void 0 ? _t$address : '');
                 tfd.append('other_payment_information', (_t$other_payment_info = t.other_payment_information) !== null && _t$other_payment_info !== void 0 ? _t$other_payment_info : '');
-                _context.next = 71;
+                _context.next = 72;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this7.$apiUrl + '/delivery_boys/update', tfd);
-              case 71:
+              case 72:
                 tRes = _context.sent;
                 if (!(!tRes.data || tRes.data.status !== 1)) {
-                  _context.next = 74;
+                  _context.next = 75;
                   break;
                 }
                 throw new Error(((_tRes$data = tRes.data) === null || _tRes$data === void 0 ? void 0 : _tRes$data.message) || __('something_went_wrong'));
-              case 74:
-                _context.next = 56;
+              case 75:
+                _context.next = 57;
                 break;
-              case 76:
-                _context.next = 81;
+              case 77:
+                _context.next = 82;
                 break;
-              case 78:
-                _context.prev = 78;
-                _context.t0 = _context["catch"](54);
+              case 79:
+                _context.prev = 79;
+                _context.t0 = _context["catch"](55);
                 _iterator.e(_context.t0);
-              case 81:
-                _context.prev = 81;
+              case 82:
+                _context.prev = 82;
                 _iterator.f();
-                return _context.finish(81);
-              case 84:
+                return _context.finish(82);
+              case 85:
                 _this7.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
                 if (!_this7.login_user || _this7.login_user.role_id !== 4) {
                   if (_this7.$route.path.includes('/seller')) {
@@ -1068,22 +1072,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                     });
                   }
                 }
-                _context.next = 91;
+                _context.next = 92;
                 break;
-              case 88:
-                _context.prev = 88;
+              case 89:
+                _context.prev = 89;
                 _context.t1 = _context["catch"](19);
                 _this7.showError(_context.t1.message || (_context.t1 === null || _context.t1 === void 0 ? void 0 : (_error$response = _context.t1.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong') || 'Something went wrong.');
-              case 91:
-                _context.prev = 91;
+              case 92:
+                _context.prev = 92;
                 _this7.isLoading = false;
-                return _context.finish(91);
-              case 94:
+                return _context.finish(92);
+              case 95:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[19, 88, 91, 94], [54, 78, 81, 84]]);
+        }, _callee, null, [[19, 89, 92, 95], [55, 79, 82, 85]]);
       }))();
     }
   }
@@ -2368,44 +2372,21 @@ var render = function () {
                                   _c("multiselect", {
                                     attrs: {
                                       options: _vm.cities,
+                                      multiple: true,
+                                      "close-on-select": false,
                                       placeholder: _vm.__(
                                         "select_or_search_city"
                                       ),
                                       label: "name",
-                                      "track-by": "name",
+                                      "track-by": "id",
                                       id: "city_name",
-                                      required: "",
                                     },
-                                    on: { close: _vm.setCityId },
+                                    on: {
+                                      close: _vm.setCityId,
+                                      remove: _vm.setCityId,
+                                    },
                                     scopedSlots: _vm._u(
                                       [
-                                        {
-                                          key: "singleLabel",
-                                          fn: function (props) {
-                                            return [
-                                              _c(
-                                                "span",
-                                                { staticClass: "option__desc" },
-                                                [
-                                                  _c(
-                                                    "span",
-                                                    {
-                                                      staticClass:
-                                                        "option__title",
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          props.option.name
-                                                        )
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              ),
-                                            ]
-                                          },
-                                        },
                                         {
                                           key: "option",
                                           fn: function (props) {
@@ -2437,14 +2418,14 @@ var render = function () {
                                       ],
                                       null,
                                       false,
-                                      3487758553
+                                      4052974533
                                     ),
                                     model: {
-                                      value: _vm.city,
+                                      value: _vm.selectedCities,
                                       callback: function ($$v) {
-                                        _vm.city = $$v
+                                        _vm.selectedCities = $$v
                                       },
-                                      expression: "city",
+                                      expression: "selectedCities",
                                     },
                                   }),
                                 ],

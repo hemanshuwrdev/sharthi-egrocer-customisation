@@ -681,6 +681,18 @@ class SarthiCustomisation extends Migration
             }
         });
 
+        // 11.c.2 Driver <-> zone (city) many-to-many. delivery_boys.city_id stays as the primary zone.
+        if (!Schema::hasTable('delivery_boy_cities')) {
+            Schema::create('delivery_boy_cities', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('delivery_boy_id');
+                $table->unsignedBigInteger('city_id');
+                $table->unique(['delivery_boy_id', 'city_id'], 'uniq_dbc_driver_city');
+                $table->index('city_id', 'idx_dbc_city');
+            });
+            DB::statement('INSERT INTO delivery_boy_cities (delivery_boy_id, city_id) SELECT id, city_id FROM delivery_boys WHERE city_id IS NOT NULL AND city_id > 0');
+        }
+
         // 11.d Driver payment collection records (one row per collection event per order)
         if (!Schema::hasTable('order_payments')) {
             Schema::create('order_payments', function (Blueprint $table) {

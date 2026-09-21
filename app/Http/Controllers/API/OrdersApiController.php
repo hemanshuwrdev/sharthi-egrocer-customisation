@@ -1320,7 +1320,7 @@ class OrdersApiController extends Controller
 
         $query = DeliveryBoy::where('status', 1);
         if ($cityId !== null) {
-            $query->where('city_id', $cityId);
+            $query->servingCities([$cityId]);
         }
         $deliveryBoys = $query->with('translations')->orderBy('id', 'DESC')->get();
 

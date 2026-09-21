@@ -189,14 +189,10 @@
                                             <div class="form-group">
                                                 <label for="city_name">{{ __('select_or_search_city') }}<span
                                                         class="text-danger text-xs">*</span></label>
-                                                <multiselect v-model="city" :options="cities" @close="setCityId"
-                                                    :placeholder="__('select_or_search_city')" label="name" track-by="name"
-                                                    id="city_name" required>
-                                                    <template slot="singleLabel" slot-scope="props">
-                                                        <span class="option__desc">
-                                                            <span class="option__title">{{ props.option.name }}</span>
-                                                        </span>
-                                                    </template>
+                                                <multiselect v-model="selectedCities" :options="cities" @close="setCityId" @remove="setCityId"
+                                                    :multiple="true" :close-on-select="false"
+                                                    :placeholder="__('select_or_search_city')" label="name" track-by="id"
+                                                    id="city_name">
                                                     <template slot="option" slot-scope="props">
                                                         <div class="option__desc">
                                                             <span class="option__title">{{
@@ -479,7 +475,7 @@ export default {
             showPassword: false,
             showConfirmPassword: false,
             record: null,
-            city: "",
+            selectedCities: [],
             cities: [],
             id: null,
             bonusSettings: null,
@@ -500,6 +496,7 @@ export default {
                 bank_account_number: "",
                 account_name: "",
                 city_id: "",
+                city_ids: [],
                 address: "",
                 other_payment_information: "",
 
@@ -793,14 +790,21 @@ export default {
                     const list = (raw && raw.cities) ? raw.cities : raw;
                     this.cities = Array.isArray(list) ? list : (list && typeof list === 'object' ? Object.values(list) : []);
 
-                    if (this.deliveryBoys.id && this.record?.city_id && Array.isArray(this.cities)) {
-                        const matched = this.cities.filter((item) => item.id === this.record.city_id);
-                        this.city = matched.length ? matched[0] : null;
+                    if (this.deliveryBoys.id && this.record) {
+                        this.applyRecordCities();
                     }
                 });
         },
         setCityId() {
-            this.deliveryBoys.city_id = (this.city && this.city.id != null) ? this.city.id : '';
+            this.deliveryBoys.city_ids = this.selectedCities.map((c) => c.id);
+            this.deliveryBoys.city_id = this.deliveryBoys.city_ids[0] ?? '';
+        },
+        applyRecordCities() {
+            const ids = (this.record?.cities && this.record.cities.length)
+                ? this.record.cities.map((c) => c.id)
+                : (this.record?.city_id ? [this.record.city_id] : []);
+            this.selectedCities = (this.cities || []).filter((item) => ids.includes(item.id));
+            this.setCityId();
         },
 
         getDeliveryBoy() {
@@ -850,11 +854,7 @@ export default {
                         this.deliveryBoys.bank_account_number = emptyIfNull(this.record?.bank_account_number);
                         this.deliveryBoys.account_name = emptyIfNull(this.record?.account_name);
 
-                        if (Array.isArray(this.cities)) {
-                            const matched = this.cities.find((item) => item.id === this.record.city_id);
-                            this.city = matched || null;
-                        }
-                        this.deliveryBoys.city_id = emptyIfNull(this.record?.city_id);
+                        this.applyRecordCities();
 
                         this.deliveryBoys.address = emptyIfNull(this.record?.address);
                         this.deliveryBoys.other_payment_information = emptyIfNull(this.record?.other_payment_information);
@@ -951,6 +951,7 @@ export default {
                 fd.append('bank_account_number', this.deliveryBoys.bank_account_number);
                 fd.append('account_name', this.deliveryBoys.account_name);
                 fd.append('city_id', this.deliveryBoys.city_id);
+                (this.deliveryBoys.city_ids || []).forEach((id, i) => fd.append('city_ids[' + i + ']', id));
                 fd.append('status', this.deliveryBoys.status);
                 fd.append('remark', this.deliveryBoys.remark ?? '');
                 fd.append('bonus_type', this.deliveryBoys.bonus_type);

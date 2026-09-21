@@ -104,6 +104,20 @@ class DeliveryBoy extends Model
         return $this->belongsTo(City::class, 'city_id', 'id');
     }
 
+    public function cities()
+    {
+        return $this->belongsToMany(City::class, 'delivery_boy_cities', 'delivery_boy_id', 'city_id');
+    }
+
+    /** Drivers serving any of the given zones (pivot, or legacy primary city_id). */
+    public function scopeServingCities($query, array $cityIds)
+    {
+        return $query->where(function ($q) use ($cityIds) {
+            $q->whereIn('city_id', $cityIds)
+              ->orWhereHas('cities', fn ($c) => $c->whereIn('cities.id', $cityIds));
+        });
+    }
+
     public function getDrivingLicenseUrlAttribute()
     {
         if ($this->driving_license) {

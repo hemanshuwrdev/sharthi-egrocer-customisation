@@ -1378,7 +1378,7 @@ class SellerController extends BaseController
         if ($request->order_id) {
             $cityIds = array_filter(array_map('trim', explode(',', $city_id)));
             if (!empty($cityIds)) {
-                $deliveryBoys->whereIn('city_id', $cityIds);
+                $deliveryBoys->servingCities($cityIds);
             }
         }
 
