@@ -58,6 +58,19 @@ class SalesmanAppApiController extends Controller
     }
 
     /**
+     * Area IDs (pincode areas) assigned to the salesman's distributor via distributor_areas.
+     * Empty = distributor has no areas configured, so listing falls back to city scope only.
+     */
+    private function territoryAreaIds(int $sellerId): array
+    {
+        return \App\Models\DistributorArea::where('seller_id', $sellerId)
+            ->pluck('area_id')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * GET /api/salesman/settings  (public — no auth)
      * App bootstrap settings for the salesman mobile app.
      */
@@ -160,6 +173,7 @@ class SalesmanAppApiController extends Controller
             ->where('users.verification_status', 'pending')
             ->whereNull('users.salesman_id')
             ->whereIn('retailer_profiles.city_id', $cityIds)
+            ->when($areaIds = $this->territoryAreaIds((int) $salesman->seller_id), fn ($q) => $q->whereIn('retailer_profiles.area_id', $areaIds))
             ->orderByDesc('users.created_at')
             ->get();
 
@@ -565,6 +579,15 @@ class SalesmanAppApiController extends Controller
                           ->where('users.verification_status', 'pending');
                   });
             });
+
+        // Distributor's assigned areas narrow the list; own retailers always stay visible.
+        $areaIds = $this->territoryAreaIds((int) $salesman->seller_id);
+        if (!empty($areaIds)) {
+            $query->where(function ($q) use ($areaIds, $salesman) {
+                $q->whereIn('retailer_profiles.area_id', $areaIds)
+                  ->orWhere('users.salesman_id', $salesman->id);
+            });
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
