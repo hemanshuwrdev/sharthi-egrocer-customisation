@@ -128,6 +128,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
 
 
 
@@ -150,6 +153,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       translateSuccessMessage: '',
       loadingEmpty: false,
       loadingOverwrite: false,
+      policyUrls: {
+        privacy_policy: 'customer-privacy-policy',
+        returns_and_exchanges_policy: 'customer-returns-and-exchanges-policy',
+        shipping_policy: 'customer-shipping-policy',
+        cancellation_policy: 'customer-cancellation-policy',
+        terms_conditions: 'customer-terms-conditions'
+      },
       policyLabels: {
         privacy_policy: __('privacy_policy'),
         returns_and_exchanges_policy: __('return_exchange_policy'),
@@ -952,6 +962,37 @@ var render = function () {
                                                   )
                                                 : _vm._e(),
                                             ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "a",
+                                              {
+                                                directives: [
+                                                  {
+                                                    name: "b-tooltip",
+                                                    rawName:
+                                                      "v-b-tooltip.hover",
+                                                    modifiers: { hover: true },
+                                                  },
+                                                ],
+                                                staticClass:
+                                                  "btn btn-sm btn-primary",
+                                                attrs: {
+                                                  href:
+                                                    _vm.$baseUrl +
+                                                    "/" +
+                                                    _vm.policyUrls[variable] +
+                                                    "?lang=" +
+                                                    language.code,
+                                                  title: label,
+                                                  target: "_blank",
+                                                },
+                                              },
+                                              [
+                                                _c("i", {
+                                                  staticClass: "fa fa-eye",
+                                                }),
+                                              ]
+                                            ),
                                           ]
                                         ),
                                         _vm._v(" "),

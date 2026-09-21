@@ -79,6 +79,9 @@
                                                     {{ label }}
                                                     <i class="text-danger" v-if="language.is_default">*</i>
                                                 </label>
+                                                <a :href="$baseUrl + '/' + policyUrls[variable] + '?lang=' + language.code"
+                                                    v-b-tooltip.hover :title="label" target="_blank"
+                                                    class="btn btn-sm btn-primary"><i class="fa fa-eye"></i></a>
                                             </div>
 
                                             <editor v-model="translations[language.id][variable]"
@@ -131,6 +134,14 @@ export default {
             translateSuccessMessage: '',
             loadingEmpty: false,
             loadingOverwrite: false,
+
+            policyUrls: {
+                privacy_policy: 'customer-privacy-policy',
+                returns_and_exchanges_policy: 'customer-returns-and-exchanges-policy',
+                shipping_policy: 'customer-shipping-policy',
+                cancellation_policy: 'customer-cancellation-policy',
+                terms_conditions: 'customer-terms-conditions'
+            },
 
             policyLabels: {
                 privacy_policy: __('privacy_policy'),
