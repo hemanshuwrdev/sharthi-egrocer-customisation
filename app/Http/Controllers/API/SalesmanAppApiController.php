@@ -1074,7 +1074,7 @@ class SalesmanAppApiController extends Controller
         // Pre-resolve every line before any write.
         $resolved = [];
         foreach ($items as $row) {
-            $line = MasterCatalogOrderHelper::resolveLine((int) $row->seller_id, (int) $row->master_product_variant_id, (float) $row->qty);
+            $line = MasterCatalogOrderHelper::resolveLine((int) $row->seller_id, (int) $row->master_product_variant_id, (float) $row->qty, null, $retailer->id);
             if (!$line['ok']) {
                 return CommonHelper::responseError($line['error']);
             }
@@ -1115,11 +1115,15 @@ class SalesmanAppApiController extends Controller
             DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $lat, $lng, $areaId, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerSubtotal = 0;
+                    $sellerTaxAmount = 0;
+                    $sellerTaxPercentageSum = 0;
                     $schemeLines = [];
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];
                         $lineTotal = $r['unit_price'] * (float) $row->qty;
                         $sellerSubtotal += $lineTotal;
+                        $sellerTaxAmount += $r['tax_amount_per_unit'] * (float) $row->qty;
+                        $sellerTaxPercentageSum += $r['tax_percentage'];
                         $schemeLines[] = [
                             'seller_product_id' => $r['seller_product']->id,
                             'qty' => (float) $row->qty,
@@ -1132,7 +1136,7 @@ class SalesmanAppApiController extends Controller
                     $schemeDiscount = $scheme['scheme_discount'] ?? 0;
 
                     $salesmanDiscountAmount = round(($sellerSubtotal - $schemeDiscount) * ($discountPc / 100), 2);
-                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount);
+                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount + $sellerTaxAmount);
 
                     $ordersId = 'OD' . date('YmdHis') . rand(10, 99);
                     $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
@@ -1147,8 +1151,8 @@ class SalesmanAppApiController extends Controller
                         'order_note'              => $request->order_note,
                         'total'                   => $sellerSubtotal,
                         'delivery_charge'         => 0,
-                        'tax_amount'              => 0,
-                        'tax_percentage'          => 0,
+                        'tax_amount'              => $sellerTaxAmount,
+                        'tax_percentage'          => $sellerTaxPercentageSum,
                         'wallet_balance'          => 0,
                         'discount'                => $salesmanDiscountAmount,
                         'salesman_discount'       => $salesmanDiscountAmount,
@@ -1199,8 +1203,8 @@ class SalesmanAppApiController extends Controller
                             'quantity'                  => $row->qty,
                             'price'                     => $unitPrice,
                             'discounted_price'          => $r['base_price'],
-                            'tax_amount'                => 0,
-                            'tax_percentage'            => 0,
+                            'tax_amount'                => $r['tax_amount_per_unit'],
+                            'tax_percentage'            => $r['tax_percentage'],
                             'discount'                  => 0,
                             'sub_total'                 => $subTotal,
                             'status'                    => json_encode([['received', date('Y-m-d H:i:s')]]),
