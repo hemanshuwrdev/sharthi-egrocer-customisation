@@ -41,6 +41,29 @@ class DeliveryBoysApiController extends Controller
         return (int) $deliveryBoy->seller_id === (int) $seller->id;
     }
 
+    /**
+     * A driver linked to an active (not completed/cancelled) loading slip, or
+     * with an order currently out for delivery, can't be deleted.
+     */
+    private function deliveryBoyDeletionBlockReason(int $deliveryBoyId): ?string
+    {
+        $hasActiveLoadingSlip = \App\Models\LoadingSlip::where('driver_id', $deliveryBoyId)
+            ->whereIn('status', [0, 1]) // Created, Dispatched
+            ->exists();
+        if ($hasActiveLoadingSlip) {
+            return 'delivery_boy_has_active_loading_slip';
+        }
+
+        $hasActiveOrder = Order::where('delivery_boy_id', $deliveryBoyId)
+            ->where('active_status', OrderStatusList::$outForDelivery)
+            ->exists();
+        if ($hasActiveOrder) {
+            return 'delivery_boy_has_assigned_order';
+        }
+
+        return null;
+    }
+
     public function getDeliveryBoyBonusSettings()
     {
         $bonus = CommonHelper::getDeliveryBoyBonusSettings();
@@ -87,6 +110,9 @@ class DeliveryBoysApiController extends Controller
             if ($rawDob !== null && $rawDob !== '') {
                 $row['dob'] = CommonHelper::formatDate($rawDob);
             }
+            $blockReason = $this->deliveryBoyDeletionBlockReason($db->id);
+            $row['is_deletable'] = $blockReason === null;
+            $row['delete_block_reason'] = $blockReason ? __($blockReason) : null;
             return $row;
         });
 
@@ -413,6 +439,11 @@ class DeliveryBoysApiController extends Controller
         $deliveryBoy = DeliveryBoy::find($request->id);
 
         if ($deliveryBoy && $this->canAccessDeliveryBoy($deliveryBoy)) {
+            $blockReason = $this->deliveryBoyDeletionBlockReason($deliveryBoy->id);
+            if ($blockReason) {
+                return CommonHelper::responseError(__($blockReason));
+            }
+
             $deliveryBoy->delete();
             CommonHelper::releaseMobile(\App\Models\MobileRegistry::ROLE_DELIVERY_BOY, $deliveryBoy->id);
         }

@@ -11,27 +11,31 @@
         </div>
 
         <div class="list-surface">
-            <div class="list-toolbar">
-                <div class="form-group mb-0">
-                    <h6 for="filterStatus" class="box-title">{{ __('status') }}</h6>
-                    <select id="filterStatus" name="filterStatus" v-model="filterStatus"
-                        @change="getDeliveryBoys()" class="form-control form-select">
-                        <option value="">{{ __('all') }}</option>
-                        <option value="1">{{ __('active') }}</option>
-                        <option value="2">{{ __('not_approved') }}</option>
-                        <option value="3">{{ __('deactive') }}</option>
-                        <option value="4">{{ __('blocked') }}</option>
-                    </select>
+            <div class="list-toolbar has-filters">
+                <div class="list-toolbar-start">
+                    <div class="list-filter">
+                        <span class="list-filter-label" for="filterStatus">{{ __('status') }}</span>
+                        <select id="filterStatus" name="filterStatus" v-model="filterStatus"
+                            @change="getDeliveryBoys()" class="form-control form-select">
+                            <option value="">{{ __('all') }}</option>
+                            <option value="1">{{ __('active') }}</option>
+                            <option value="2">{{ __('not_approved') }}</option>
+                            <option value="3">{{ __('deactive') }}</option>
+                            <option value="4">{{ __('blocked') }}</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="list-search">
-                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
-                    <b-form-input id="filter-input" v-model="filter" type="search"
-                        :placeholder="__('search')" @input="getDeliveryBoys()"></b-form-input>
+                <div class="list-toolbar-end">
+                    <div class="list-search">
+                        <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                        <b-form-input id="filter-input" v-model="filter" type="search"
+                            :placeholder="__('search')" @input="getDeliveryBoys()"></b-form-input>
+                    </div>
+                    <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
+                        @click="getDeliveryBoys()">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
-                    @click="getDeliveryBoys()">
-                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                </button>
             </div>
             <div class="table-responsive">
                             <b-table :items="translatedDeliveryBoys" :fields="fields" :current-page="currentPage"
@@ -118,8 +122,11 @@
                                         </router-link>
 
                                         <button class="list-action-btn is-delete"
+                                            :class="{ 'is-disabled': row.item.is_deletable === false }"
                                             @click="deleteDeliveryBoys(row.index, row.item.id)"
-                                            v-if="$route.path.includes('/seller')" v-b-tooltip.hover :title="__('delete')"><i
+                                            v-if="$route.path.includes('/seller')"
+                                            v-b-tooltip.hover.left="{ boundary: 'viewport', customClass: 'text-nowrap-tooltip' }"
+                                            :title="row.item.is_deletable === false ? row.item.delete_block_reason : __('delete')"><i
                                                 class="fa fa-trash"></i></button>
                                     </div>
                                 </template>
@@ -292,6 +299,10 @@ export default {
                 });
         },
         deleteDeliveryBoys(index, id) {
+            if (this.deliveryBoys[index] && this.deliveryBoys[index].is_deletable === false) {
+                this.showMessage('error', this.deliveryBoys[index].delete_block_reason);
+                return
+            }
             this.$swal.fire({
                 title: __('are_you_sure'),
                 text: __('you_want_be_able_to_revert_this'),
@@ -311,8 +322,12 @@ export default {
                     axios.post(this.$apiUrl + '/delivery_boys/delete', postData)
                         .then((response) => {
                             this.isLoading = false
-                            this.deliveryBoys.splice(index, 1)
-                            this.showMessage('success', response.data.message);
+                            if (response.data.status === 1) {
+                                this.deliveryBoys.splice(index, 1)
+                                this.showMessage('success', response.data.message);
+                            } else {
+                                this.showMessage('error', response.data.message);
+                            }
                         });
                 }
             });
@@ -326,3 +341,20 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+.list-action-btn.is-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+</style>
+
+<style>
+/* Delete-blocked tooltip: not scoped, since bootstrap-vue teleports tooltips to <body>. */
+.text-nowrap-tooltip .tooltip-inner {
+    max-width: 260px;
+    white-space: normal;
+    text-align: left;
+}
+</style>

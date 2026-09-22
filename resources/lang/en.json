@@ -1258,6 +1258,8 @@
     "customers_status_updated_successfully": "Customers Status Updated Successfully!",
     "customer_record_not_found": "Customer Record not found!",
     "delivery_boy_not_found": "Driver Not Found!",
+    "delivery_boy_has_active_loading_slip": "Driver can't be deleted: assigned to an active loading slip.",
+    "delivery_boy_has_assigned_order": "Driver can't be deleted: has an order out for delivery.",
     "delivery_boy_status_updated_successfully": "Driver Status Updated Successfully!",
     "delivery_boy_id_is_required": "Driver ID is required.",
     "email_saved_successfully": "Email Saved Successfully!",
