@@ -404,7 +404,11 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError("Order Not found!");
         }
 
-        if ($order->loading_slip_id && optional($order->loadingSlip)->status != 1) {
+        if (optional(auth()->user())->role_id == Role::$roleDeliveryBoy) {
+            if (!$order->loading_slip_id || optional($order->loadingSlip)->status != 1) {
+                return CommonHelper::responseError("Loading slip must be dispatched first.");
+            }
+        } elseif ($order->loading_slip_id && optional($order->loadingSlip)->status != 1) {
             return CommonHelper::responseError("Loading slip must be dispatched first.");
         }
 
