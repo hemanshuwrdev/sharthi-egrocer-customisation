@@ -1,7 +1,7 @@
 <template>
     <div class="list-page">
         <div class="page-head">
-            <h3 class="page-head-title">{{ __('customers') }}</h3>
+            <h3 class="page-head-title">{{ __('retailers') }}</h3>
         </div>
 
         <div class="list-surface">
@@ -37,6 +37,9 @@
                         {{ row.item.mobile | mobileMask }}
                     </template>
 
+                    <!-- Sarthi: retailers only ever log in via phone OTP (no Google/Apple/email sign-in),
+                         so the login-type icon column is disabled. Kept for reference. -->
+                    <!--
                     <template #cell(type)="row">
                         <img :src="$baseUrl + '/images/phone.svg'" height="40" alt="phone"
                             v-if="row.item.type == 'phone' || (!row.item.type && row.item.mobile && !row.item.email)" />
@@ -47,6 +50,7 @@
                         <img :src="$baseUrl + '/images/email.svg'" height="40" alt="email"
                             v-if="row.item.type == 'email' || (!row.item.type && row.item.email)" />
                     </template>
+                    -->
 
                     <template #cell(status)="row">
                         <span v-if="row.item.status == 1" class="badge bg-success">{{ __('active') }}</span>
@@ -95,7 +99,9 @@ export default {
                 { key: 'mobile', label: __('mobile_no'), sortable: true, class: 'text-center' },
                 { key: 'balance', label: __('balance'), sortable: true, class: 'text-center' },
                 { key: 'status', label: __('status'), sortable: true, class: 'text-center' },
-                { key: 'type', label: __('type'), sortable: true, class: 'text-center' },
+                // Sarthi: retailers only ever log in via phone OTP, so the login-type
+                // column is disabled. Kept for reference.
+                // { key: 'type', label: __('type'), sortable: true, class: 'text-center' },
                 { key: 'created_at', label: __('date_time'), sortable: true, class: 'text-center' },
                 { key: 'actions', label: __('actions'), class: 'text-center' }
             ],

@@ -831,14 +831,14 @@ export default {
                         }
                     ]
                 },
-                { type: 'title', name: __('customers') },
+                { type: 'title', name: __('retailers') },
                 {
-                    name: __('customers'),
+                    name: __('retailers'),
                     icon: 'male',
                     permission: null,
                     submenu: [
                         {
-                            name: __('customers'),
+                            name: __('retailers'),
                             icon: 'grid-fill',
                             url: '/users',
                             permission: 'customer_list',

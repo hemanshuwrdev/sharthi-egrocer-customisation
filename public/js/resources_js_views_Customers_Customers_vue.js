@@ -95,6 +95,10 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -130,12 +134,11 @@ __webpack_require__.r(__webpack_exports__);
         label: __('status'),
         sortable: true,
         "class": 'text-center'
-      }, {
-        key: 'type',
-        label: __('type'),
-        sortable: true,
-        "class": 'text-center'
-      }, {
+      },
+      // Sarthi: retailers only ever log in via phone OTP, so the login-type
+      // column is disabled. Kept for reference.
+      // { key: 'type', label: __('type'), sortable: true, class: 'text-center' },
+      {
         key: 'created_at',
         label: __('date_time'),
         sortable: true,
@@ -330,7 +333,7 @@ var render = function () {
   return _c("div", { staticClass: "list-page" }, [
     _c("div", { staticClass: "page-head" }, [
       _c("h3", { staticClass: "page-head-title" }, [
-        _vm._v(_vm._s(_vm.__("customers"))),
+        _vm._v(_vm._s(_vm.__("retailers"))),
       ]),
     ]),
     _vm._v(" "),
@@ -473,54 +476,6 @@ var render = function () {
                           _vm._s(_vm._f("mobileMask")(row.item.mobile)) +
                           "\n                "
                       ),
-                    ]
-                  },
-                },
-                {
-                  key: "cell(type)",
-                  fn: function (row) {
-                    return [
-                      row.item.type == "phone" ||
-                      (!row.item.type && row.item.mobile && !row.item.email)
-                        ? _c("img", {
-                            attrs: {
-                              src: _vm.$baseUrl + "/images/phone.svg",
-                              height: "40",
-                              alt: "phone",
-                            },
-                          })
-                        : _vm._e(),
-                      _vm._v(" "),
-                      row.item.type == "google"
-                        ? _c("img", {
-                            attrs: {
-                              src: _vm.$baseUrl + "/images/google.svg",
-                              height: "40",
-                              alt: "google",
-                            },
-                          })
-                        : _vm._e(),
-                      _vm._v(" "),
-                      row.item.type == "apple"
-                        ? _c("img", {
-                            attrs: {
-                              src: _vm.$baseUrl + "/images/apple.svg",
-                              height: "40",
-                              alt: "apple",
-                            },
-                          })
-                        : _vm._e(),
-                      _vm._v(" "),
-                      row.item.type == "email" ||
-                      (!row.item.type && row.item.email)
-                        ? _c("img", {
-                            attrs: {
-                              src: _vm.$baseUrl + "/images/email.svg",
-                              height: "40",
-                              alt: "email",
-                            },
-                          })
-                        : _vm._e(),
                     ]
                   },
                 },
