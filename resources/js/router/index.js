@@ -244,7 +244,7 @@ const SellerManageStock = () => import("../views/Product/ManageStock");
 const SellerMedia = () => import("../views/Product/Media");
 const SellerSettings = () => import('../views/Settings');
 const SellerProfile = () => import("../views/Seller/EditSeller");
-const SellerPointOfSale = () => import("../views/Sellers/PointOfSale");
+// const SellerPointOfSale = () => import("../views/Sellers/PointOfSale");
 const SellerPosReports = () => import("../views/Sellers/PosReport");
 const SellerPrintSettings = () => import("../views/Sellers/Settings");
 
@@ -2185,6 +2185,7 @@ function configRoutes() {
                         title: 'Return Requests'
                     },
                 },
+                /*
                 {
                     path: "point_of_sale",
                     name: "SellerPointOfSale",
@@ -2195,6 +2196,7 @@ function configRoutes() {
                         title: 'Point of Sale'
                     },
                 },
+                */
                 {
                     path: "profile",
                     name: "SellerProfile",

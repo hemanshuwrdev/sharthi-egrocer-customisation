@@ -507,7 +507,7 @@
         <thead>
             <tr>
                 <th style="width: 60px;" class="center">Sr No</th>
-                <th>Name of Party</th>
+                <th>Shop Name</th>
                 <th style="width: 120px;" class="center">Bill No.</th>
                 <th style="width: 150px;" class="right">Bill Amount</th>
             </tr>

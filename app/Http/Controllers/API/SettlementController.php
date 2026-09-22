@@ -135,11 +135,15 @@ class SettlementController extends Controller
 
         $data = array_map(function ($m) use ($seller, $adminEnabled) {
             $adminOn = in_array($m, $adminEnabled, true);
-            return [
+            $row = [
                 'method'      => $m,
                 'is_enabled'  => $adminOn && (int) ($seller->{'payment_method_' . $m} ?? 0) === 1,
                 'is_editable' => $adminOn, // false = admin disabled, shown greyed-out
             ];
+            if ($m === 'cash') {
+                $row['discount_percent'] = (float) ($seller->cash_discount_percent ?? 0);
+            }
+            return $row;
         }, self::METHODS);
 
         return CommonHelper::responseWithData(['methods' => array_values($data)]);
@@ -147,7 +151,7 @@ class SettlementController extends Controller
 
     /**
      * POST /seller/payment_methods/save
-     * Body: { cash: 0|1, upi: 0|1, cheque: 0|1, signature: 0|1 }
+     * Body: { cash: 0|1, upi: 0|1, cheque: 0|1, signature: 0|1, cash_discount_percent?: 0-100 }
      * Silently ignores values for methods admin has disabled.
      */
     public function sellerSavePaymentMethods(Request $request)
@@ -158,10 +162,11 @@ class SettlementController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'cash'      => 'required|in:0,1',
-            'upi'       => 'required|in:0,1',
-            'cheque'    => 'required|in:0,1',
-            'signature' => 'required|in:0,1',
+            'cash'                  => 'required|in:0,1',
+            'upi'                   => 'required|in:0,1',
+            'cheque'                => 'required|in:0,1',
+            'signature'             => 'required|in:0,1',
+            'cash_discount_percent' => 'nullable|numeric|min:0|max:100',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -174,6 +179,7 @@ class SettlementController extends Controller
             $value = in_array($method, $adminEnabled, true) ? (int) $request->input($method, 0) : 0;
             $seller->{'payment_method_' . $method} = $value;
         }
+        $seller->cash_discount_percent = $request->filled('cash_discount_percent') ? $request->cash_discount_percent : 0;
         $seller->save();
 
         return CommonHelper::responseSuccess('payment_methods_saved');
@@ -748,7 +754,7 @@ class SettlementController extends Controller
         if (!$seller) return CommonHelper::responseError('salesman_not_linked_to_distributor');
 
         $allMeta = [
-            'cash'   => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null],
+            'cash'   => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
             'upi'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
             'cheque' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
         ];

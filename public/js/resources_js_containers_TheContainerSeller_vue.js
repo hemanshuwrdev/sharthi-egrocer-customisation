@@ -351,12 +351,15 @@ __webpack_require__.r(__webpack_exports__);
         icon: 'retweet',
         url: '/seller/return_requests',
         permission: 'return_request_list'
-      }, {
-        name: __('point_of_sale'),
-        icon: 'calculator',
-        url: '/seller/point_of_sale',
-        permission: 'product_list'
       },
+      /*
+      {
+          name: __('point_of_sale'),
+          icon: 'calculator',
+          url: '/seller/point_of_sale',
+          permission: 'product_list',
+      },
+      */
       /*
       {
           name: __('withdrawal_requests'),

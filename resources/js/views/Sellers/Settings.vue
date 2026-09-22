@@ -82,6 +82,16 @@
                                 >
                             </div>
                             <small v-if="!method.is_editable" class="text-danger">{{ __('Disabled by admin') }}</small>
+                            <div v-if="method.method === 'cash'" class="mt-2">
+                                <label class="font-size-13 text-muted">{{ __('Cash discount %') }}</label>
+                                <input type="number" min="0" max="100" step="0.01"
+                                    class="form-control form-control-sm"
+                                    v-model="method.discount_percent"
+                                    :disabled="!method.is_editable || !method.is_enabled"
+                                    :placeholder="__('e.g. 2')"
+                                >
+                                <small class="text-muted">{{ __('Knocked off final_total when the retailer pays cash, so cash is always the cheapest option.') }}</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -289,7 +299,8 @@ export default {
                     if (res.data.status && res.data.data) {
                         this.paymentMethods = res.data.data.methods.map(m => ({
                             ...m,
-                            is_enabled: m.is_enabled ? 1 : 0
+                            is_enabled: m.is_enabled ? 1 : 0,
+                            discount_percent: m.discount_percent ?? 0
                         }));
                     }
                 })
@@ -301,6 +312,9 @@ export default {
             let formData = new FormData();
             this.paymentMethods.forEach(m => {
                 formData.append(m.method, m.is_editable ? m.is_enabled : 0);
+                if (m.method === 'cash') {
+                    formData.append('cash_discount_percent', m.discount_percent || 0);
+                }
             });
             axios.post(this.$sellerApiUrl + '/payment_methods/save', formData)
                 .then(res => {

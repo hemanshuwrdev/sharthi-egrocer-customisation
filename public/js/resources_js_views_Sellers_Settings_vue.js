@@ -180,6 +180,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -296,8 +306,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/payment_methods').then(function (res) {
         if (res.data.status && res.data.data) {
           _this4.paymentMethods = res.data.data.methods.map(function (m) {
+            var _m$discount_percent;
             return _objectSpread(_objectSpread({}, m), {}, {
-              is_enabled: m.is_enabled ? 1 : 0
+              is_enabled: m.is_enabled ? 1 : 0,
+              discount_percent: (_m$discount_percent = m.discount_percent) !== null && _m$discount_percent !== void 0 ? _m$discount_percent : 0
             });
           });
         }
@@ -309,6 +321,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var formData = new FormData();
       this.paymentMethods.forEach(function (m) {
         formData.append(m.method, m.is_editable ? m.is_enabled : 0);
+        if (m.method === 'cash') {
+          formData.append('cash_discount_percent', m.discount_percent || 0);
+        }
       });
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/payment_methods/save', formData).then(function (res) {
         if (res.data.status) {
@@ -748,6 +763,59 @@ var render = function () {
                   !method.is_editable
                     ? _c("small", { staticClass: "text-danger" }, [
                         _vm._v(_vm._s(_vm.__("Disabled by admin"))),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  method.method === "cash"
+                    ? _c("div", { staticClass: "mt-2" }, [
+                        _c(
+                          "label",
+                          { staticClass: "font-size-13 text-muted" },
+                          [_vm._v(_vm._s(_vm.__("Cash discount %")))]
+                        ),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: method.discount_percent,
+                              expression: "method.discount_percent",
+                            },
+                          ],
+                          staticClass: "form-control form-control-sm",
+                          attrs: {
+                            type: "number",
+                            min: "0",
+                            max: "100",
+                            step: "0.01",
+                            disabled: !method.is_editable || !method.is_enabled,
+                            placeholder: _vm.__("e.g. 2"),
+                          },
+                          domProps: { value: method.discount_percent },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(
+                                method,
+                                "discount_percent",
+                                $event.target.value
+                              )
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c("small", { staticClass: "text-muted" }, [
+                          _vm._v(
+                            _vm._s(
+                              _vm.__(
+                                "Knocked off final_total when the retailer pays cash, so cash is always the cheapest option."
+                              )
+                            )
+                          ),
+                        ]),
                       ])
                     : _vm._e(),
                 ]

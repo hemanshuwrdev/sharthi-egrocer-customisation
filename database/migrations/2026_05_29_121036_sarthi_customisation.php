@@ -670,6 +670,17 @@ class SarthiCustomisation extends Migration
             if (!Schema::hasColumn('sellers', 'payment_method_signature')) {
                 $table->tinyInteger('payment_method_signature')->default(1)->after('payment_method_cheque');
             }
+            if (!Schema::hasColumn('sellers', 'cash_discount_percent')) {
+                $table->decimal('cash_discount_percent', 5, 2)->default(0)->after('payment_method_signature')
+                      ->comment('Distributor-set % off final_total when the order is paid/collected in cash, to steer customers away from other collection methods');
+            }
+        });
+
+        // 11.b.2 Cash discount actually applied on an order (audit trail, mirrors salesman_discount)
+        Schema::table('orders', function (Blueprint $table) {
+            if (!Schema::hasColumn('orders', 'cash_discount_amount')) {
+                $table->decimal('cash_discount_amount', 10, 2)->default(0)->after('salesman_discount');
+            }
         });
 
         // 11.c Link delivery_boy to distributor (seller) so we can resolve their payment settings

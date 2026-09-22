@@ -939,7 +939,7 @@ class SalesmanAppApiController extends Controller
         // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
         // $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
         $sellers = \App\Models\Seller::whereIn('id', array_keys($groups))
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'cash_discount_percent'])
             ->keyBy('id');
 
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
@@ -955,6 +955,15 @@ class SalesmanAppApiController extends Controller
 
             $seller = $sellers[$sellerId] ?? null;
             $group['seller_name']           = $seller->name ?? null;
+
+            // Cash-vs-other-methods price preview (excludes any salesman discount%
+            // and tax, which are only known/applied at place-order time).
+            $cashDiscountPercent = (float) ($seller->cash_discount_percent ?? 0);
+            $group['cash_discount_percent'] = $cashDiscountPercent;
+            $group['payment_price_preview'] = [
+                'cash'  => round($group['final_total'] * (1 - $cashDiscountPercent / 100), 2),
+                'other' => round($group['final_total'], 2),
+            ];
             // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
             // $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
             // $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
@@ -1109,10 +1118,11 @@ class SalesmanAppApiController extends Controller
         $areaId = $areaId ?: 0;
 
         $bySeller = $items->groupBy('seller_id');
+        $cashDiscountBySeller = \App\Models\Seller::whereIn('id', $bySeller->keys())->pluck('cash_discount_percent', 'id');
         $createdOrders = [];
 
         try {
-            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $lat, $lng, $areaId, &$createdOrders) {
+            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $lat, $lng, $areaId, $cashDiscountBySeller, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerSubtotal = 0;
                     $sellerTaxAmount = 0;
@@ -1136,7 +1146,15 @@ class SalesmanAppApiController extends Controller
                     $schemeDiscount = $scheme['scheme_discount'] ?? 0;
 
                     $salesmanDiscountAmount = round(($sellerSubtotal - $schemeDiscount) * ($discountPc / 100), 2);
-                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount + $sellerTaxAmount);
+
+                    // Cash-vs-other-methods incentive: distributor-set % off, only when this
+                    // order is actually being paid/collected in cash.
+                    $paymentMethod = (string) ($request->payment_method ?? 'COD');
+                    $isCashPayment = in_array(strtolower($paymentMethod), ['cod', 'cash'], true);
+                    $cashDiscountPercent = $isCashPayment ? (float) ($cashDiscountBySeller[$sellerId] ?? 0) : 0;
+                    $cashDiscountAmount = round(max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount) * ($cashDiscountPercent / 100), 2);
+
+                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount - $cashDiscountAmount + $sellerTaxAmount);
 
                     $ordersId = 'OD' . date('YmdHis') . rand(10, 99);
                     $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
@@ -1156,6 +1174,7 @@ class SalesmanAppApiController extends Controller
                         'wallet_balance'          => 0,
                         'discount'                => $salesmanDiscountAmount,
                         'salesman_discount'       => $salesmanDiscountAmount,
+                        'cash_discount_amount'    => $cashDiscountAmount,
                         'promo_discount'          => 0,
                         'scheme_id'               => $scheme['scheme_id'] ?? null,
                         'scheme_discount'         => $schemeDiscount,
@@ -1256,6 +1275,8 @@ class SalesmanAppApiController extends Controller
                         'seller_id'   => (int) $sellerId,
                         'final_total' => $finalTotal,
                         'salesman_discount' => $salesmanDiscountAmount,
+                        'cash_discount_amount' => $cashDiscountAmount,
+                        'cash_discount_percent' => $cashDiscountPercent,
                         'scheme' => $scheme ? [
                             'scheme_id' => $scheme['scheme_id'],
                             'name' => $scheme['name'],
