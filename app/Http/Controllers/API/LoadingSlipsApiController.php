@@ -60,11 +60,22 @@ class LoadingSlipsApiController extends Controller
         $areaId = $request->input('area_id', '');
         $isRescheduled = $request->input('is_rescheduled', '');
 
-        $query = Order::select('orders.*', 'users.name as user_name', 'cities.zone as city_zone', 'areas.name as area_name')
+        $query = Order::select(
+                'orders.*',
+                DB::raw('COALESCE(rp.shop_name, rp.party_name, users.name) as user_name'),
+                'cities.zone as city_zone',
+                // area_id isn't always stamped on the order itself (older orders, or the
+                // salesman-placed flow) — fall back to the delivery address's area, then
+                // the retailer's own profile area, so the loading slip screen isn't blank.
+                DB::raw('COALESCE(areas.name, ua_areas.name, rp_areas.name) as area_name')
+            )
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
             ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
             ->leftJoin('areas', 'orders.area_id', '=', 'areas.id')
+            ->leftJoin('areas as ua_areas', 'user_addresses.area_id', '=', 'ua_areas.id')
+            ->leftJoin('areas as rp_areas', 'rp.area_id', '=', 'rp_areas.id')
             ->whereNull('orders.loading_slip_id')
             ->where('orders.order_type', 'doorstep')
             ->whereIn('orders.active_status', [
