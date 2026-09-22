@@ -1159,7 +1159,10 @@ class SalesmanAppApiController extends Controller
                     $cashDiscountPercent = $isCashPayment ? (float) ($cashDiscountBySeller[$sellerId] ?? 0) : 0;
                     $cashDiscountAmount = round(max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount) * ($cashDiscountPercent / 100), 2);
 
-                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount - $cashDiscountAmount + $sellerTaxAmount);
+                    // Inclusive pricing: sellerSubtotal (unit_price*qty) already contains
+                    // tax, so it is NOT added again here — $sellerTaxAmount is only the
+                    // backed-out portion kept for the billing-summary breakdown.
+                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount - $cashDiscountAmount);
 
                     $ordersId = 'OD' . date('YmdHis') . rand(10, 99);
                     $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')

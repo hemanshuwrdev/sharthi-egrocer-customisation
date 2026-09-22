@@ -184,6 +184,9 @@ class RetailerCartOrderApiController extends Controller
                 'sub_total'        => $subtotal,
                 'tax_percentage'   => $line['tax_percentage'],
                 'tax_amount'       => round($line['tax_amount_per_unit'] * (float) $row->qty, 2),
+                // Inclusive pricing: sub_total already contains tax. actual_price is the
+                // pre-tax price backed out of it, for the billing-summary breakdown only.
+                'actual_price'     => round($line['actual_price_per_unit'] * (float) $row->qty, 2),
                 // Stepper metadata — app configures qty widget per item
                 'step'             => $line['step'],           // e.g. 20
                 'secondary_unit'   => $line['secondary_unit'], // e.g. "Box"
@@ -191,6 +194,7 @@ class RetailerCartOrderApiController extends Controller
             ];
             $groups[$row->seller_id]['sub_total'] = ($groups[$row->seller_id]['sub_total'] ?? 0) + $subtotal;
             $groups[$row->seller_id]['tax_amount'] = ($groups[$row->seller_id]['tax_amount'] ?? 0) + ($line['tax_amount_per_unit'] * (float) $row->qty);
+            $groups[$row->seller_id]['actual_price'] = ($groups[$row->seller_id]['actual_price'] ?? 0) + ($line['actual_price_per_unit'] * (float) $row->qty);
             $groups[$row->seller_id]['scheme_lines'][] = [
                 'seller_product_id' => $line['seller_product']->id,
                 'qty' => (float) $row->qty,
@@ -214,7 +218,10 @@ class RetailerCartOrderApiController extends Controller
             $group['applied_scheme']  = $scheme;
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
             $group['tax_amount']      = round($group['tax_amount'] ?? 0, 2);
-            $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'] + $group['tax_amount'];
+            $group['actual_price']    = round($group['actual_price'] ?? 0, 2);
+            // Inclusive pricing: sub_total already contains tax, so it is NOT added
+            // again here — tax_amount/actual_price are only the billing-summary breakdown.
+            $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
             $group['nearest_scheme']  = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $appliedId);
 
             $seller = $sellers[$sellerId] ?? null;
@@ -539,6 +546,8 @@ class RetailerCartOrderApiController extends Controller
                         $r = $resolved[$row->id];
                         $lineTotal = $r['unit_price'] * (float) $row->qty;
                         $sellerTotal += $lineTotal;
+                        // Inclusive pricing: lineTotal already contains tax. tax_amount_per_unit
+                        // is backed out of it below, for the billing breakdown only — never added.
                         $sellerTaxTotal += $r['tax_amount_per_unit'] * (float) $row->qty;
                         $schemeLines[] = [
                             'seller_product_id' => $r['seller_product']->id,
@@ -585,8 +594,10 @@ class RetailerCartOrderApiController extends Controller
                         'promo_discount' => 0,
                         'scheme_id' => $scheme['scheme_id'] ?? null,
                         'scheme_discount' => $schemeDiscount,
-                        'final_total' => $sellerTotal - $schemeDiscount + $sellerTaxTotal + $deliveryCharge,
-                        'remaining_final' => $sellerTotal - $schemeDiscount + $sellerTaxTotal + $deliveryCharge,
+                        // Inclusive pricing: sellerTotal already contains tax (sellerTaxTotal
+                        // is backed out of it above for the tax_amount column, not additive).
+                        'final_total' => $sellerTotal - $schemeDiscount + $deliveryCharge,
+                        'remaining_final' => $sellerTotal - $schemeDiscount + $deliveryCharge,
                         'payment_method' => $request->payment_method ?? 'COD',
                         'address' => $request->address,
                         'latitude' => $request->latitude,

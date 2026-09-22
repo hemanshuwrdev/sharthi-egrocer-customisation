@@ -2993,6 +2993,12 @@ class CommonHelper
         // Add tax_amount to price and discounted_price for each order item
         foreach ($order_items as $item) {
             $tax_amount = (float) ($item->tax_amount ?? 0);
+            if (!empty($item->master_product_variant_id)) {
+                // added on top of an already-inclusive price.
+                $item->actual_price = (float) self::doubleNumber($item->price - $tax_amount);
+                continue;
+            }
+            // Legacy single-seller products flow: price is tax-exclusive, add tax for display.
             $item->price = (float) self::doubleNumber($item->price + $tax_amount);
             $item->discounted_price = (float) self::doubleNumber(
                 ($item->discounted_price != 0 ? $item->discounted_price + $tax_amount : 0)

@@ -2050,12 +2050,21 @@ class OrderApiController extends Controller
                 $items[$subkey]->made_in = $item->country_made_in ?? "";
                 $items[$subkey]->created_at = $item->created_at;
 
-                // Add tax_amount to price and discounted_price
                 $tax_amount = (float) ($item->tax_amount ?? 0);
-                $items[$subkey]->price = (float) CommonHelper::doubleNumber($item->price + $tax_amount);
-                $items[$subkey]->discounted_price = (float) CommonHelper::doubleNumber(
-                    ($item->discounted_price != 0 ? $item->discounted_price + $tax_amount : 0)
-                );
+                if (!empty($item->master_product_variant_id)) {
+                    // Sarthi master-catalog line: price is already tax-INCLUSIVE (the
+                    // distributor enters it that way) — tax_amount is only the backed-out
+                    // portion for the billing-summary breakdown, never added on top.
+                    $items[$subkey]->price = (float) CommonHelper::doubleNumber($item->price);
+                    $items[$subkey]->discounted_price = (float) CommonHelper::doubleNumber($item->discounted_price ?? 0);
+                    $items[$subkey]->actual_price = (float) CommonHelper::doubleNumber($item->price - $tax_amount);
+                } else {
+                    // Legacy single-seller products flow: price is tax-exclusive, add tax for display.
+                    $items[$subkey]->price = (float) CommonHelper::doubleNumber($item->price + $tax_amount);
+                    $items[$subkey]->discounted_price = (float) CommonHelper::doubleNumber(
+                        ($item->discounted_price != 0 ? $item->discounted_price + $tax_amount : 0)
+                    );
+                }
 
                 $items[$subkey]->effective_price = (float) CommonHelper::doubleNumber(
                     ($item->discounted_price !== null && $item->discounted_price != 0)

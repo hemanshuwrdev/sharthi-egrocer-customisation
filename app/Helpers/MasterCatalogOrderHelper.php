@@ -93,12 +93,8 @@ class MasterCatalogOrderHelper
 
         $unitPrice = $matched ? (float) $matched->price : $base;
 
-        // Matches the legacy checkout convention (ProductHelper::getTaxableAmount,
-        // OrderApiController::placeOrder): unit_price is tax-EXCLUSIVE; tax is added on
-        // top. customer/orders' getOrders() reads order_items.tax_amount as a PER-UNIT
-        // value and adds it straight to the per-unit price/discounted_price it returns —
-        // so tax_amount_per_unit here must stay per-unit, never multiplied by qty.
-        // legacy tax_id path disabled — use tax_category_id/TaxRule instead
+        
+       
         // $taxPercentage = (float) ($variant->masterProduct->tax->percentage ?? 0);
         $taxPercentage = 0;
 
@@ -117,7 +113,10 @@ class MasterCatalogOrderHelper
             }
         }
 
-        $taxAmountPerUnit = $taxPercentage > 0 ? round($unitPrice * $taxPercentage / 100, 2) : 0;
+        // Inclusive back-calculation: unitPrice already contains tax, so the tax
+        // portion is unitPrice minus what unitPrice would be pre-tax, not an addition.
+        $taxAmountPerUnit   = $taxPercentage > 0 ? round($unitPrice - ($unitPrice / (1 + $taxPercentage / 100)), 2) : 0;
+        $actualPricePerUnit = round($unitPrice - $taxAmountPerUnit, 2);
 
         // Stepper metadata (used by mobile app to render the quantity stepper widget).
         // Loose-enabled products: any qty is orderable, so the app should render a plain
@@ -141,6 +140,7 @@ class MasterCatalogOrderHelper
             'base_price'     => $base,
             'tax_percentage' => $taxPercentage,
             'tax_amount_per_unit' => $taxAmountPerUnit,
+            'actual_price_per_unit' => $actualPricePerUnit, // pre-tax price, backed out of unit_price, for display only
             'slab'           => $matched ? [
                 'min_qty' => (int) $matched->min_qty,
                 'max_qty' => $matched->max_qty !== null ? (int) $matched->max_qty : null,
@@ -332,6 +332,7 @@ class MasterCatalogOrderHelper
             'base_price'        => 0,
             'tax_percentage'    => 0,
             'tax_amount_per_unit' => 0,
+            'actual_price_per_unit' => 0,
             'slab'              => null,
             'step'              => 1,
             'secondary_unit'    => null,
