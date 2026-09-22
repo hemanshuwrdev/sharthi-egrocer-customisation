@@ -321,6 +321,22 @@ class OrdersApiController extends Controller
         }
 
         $data["deliveryBoys"] = $this->getDeliveryBoysWithTranslations($data["order"]->city_id);
+
+        // Cash-vs-other-methods price preview, so the driver app can show the customer
+        // "pay cash: X, pay UPI: Y" before collectPayment() actually books the discount.
+        $sellerId = $data["order"]->seller_id ?? null;
+        if ($sellerId) {
+            $cashDiscountPercent = (float) (Seller::find($sellerId)->cash_discount_percent ?? 0);
+            $alreadyCollected    = (float) OrderPayment::where('order_id', $id)->sum('amount');
+            $outstanding         = max(0, (float) $data["order"]->final_total - $alreadyCollected);
+            $data['payment_price_preview'] = [
+                'cash_discount_percent' => $cashDiscountPercent,
+                'outstanding_amount'    => round($outstanding, 2),
+                'cash'                  => round($outstanding * (1 - $cashDiscountPercent / 100), 2),
+                'other'                 => round($outstanding, 2),
+            ];
+        }
+
         return CommonHelper::responseWithData($data);
     }
 

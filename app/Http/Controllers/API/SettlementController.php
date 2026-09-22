@@ -304,7 +304,7 @@ class SettlementController extends Controller
         $enabled = array_values($this->sellerEnabledMethods($seller));
 
         $meta = [
-            'cash'      => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null],
+            'cash'      => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
             'upi'       => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
             'cheque'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
             'signature' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Customer signature'],
@@ -367,6 +367,27 @@ class SettlementController extends Controller
             return CommonHelper::responseError('payment_method_already_collected_for_this_order');
         }
 
+        // Cash-vs-other-methods incentive: applied once, at the point cash is actually
+        // collected — order.final_total was fixed at placement without knowing which
+        // collection method the customer would pick, so the discount books here instead.
+        $cashDiscountAmount = 0;
+        if ($method === 'cash' && (float) ($order->cash_discount_amount ?? 0) === 0.0) {
+            $cashDiscountPercent = (float) ($seller->cash_discount_percent ?? 0);
+            if ($cashDiscountPercent > 0) {
+                $alreadyCollected = (float) OrderPayment::where('order_id', $order->id)->sum('amount');
+                $outstanding = max(0, (float) $order->final_total - $alreadyCollected);
+                $cashDiscountAmount = round($outstanding * ($cashDiscountPercent / 100), 2);
+                if ($cashDiscountAmount > 0) {
+                    $order->final_total = max(0, (float) $order->final_total - $cashDiscountAmount);
+                    if ($order->remaining_final !== null) {
+                        $order->remaining_final = max(0, (float) $order->remaining_final - $cashDiscountAmount);
+                    }
+                    $order->cash_discount_amount = $cashDiscountAmount;
+                    $order->save();
+                }
+            }
+        }
+
         // Handle proof photo upload
         $proofPath = null;
         if ($request->hasFile('proof_photo')) {
@@ -407,9 +428,11 @@ class SettlementController extends Controller
         }
 
         return CommonHelper::responseWithData([
-            'payment_id' => $payment->id,
-            'status'     => 'pending',
-            'message'    => 'payment_collected_pending_verification',
+            'payment_id'           => $payment->id,
+            'status'               => 'pending',
+            'cash_discount_amount' => $cashDiscountAmount,
+            'order_final_total'    => (float) $order->final_total,
+            'message'              => 'payment_collected_pending_verification',
         ]);
     }
 
