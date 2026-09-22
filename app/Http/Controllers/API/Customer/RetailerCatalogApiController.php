@@ -113,6 +113,15 @@ class RetailerCatalogApiController extends Controller
             });
         }
 
+        // Barcode scan: exact match, deliberately not scoped to one distributor —
+        // barcode is not unique across master_product_variants (each distributor may
+        // have added their own catalog entry for the same physical product), so a
+        // scan surfaces every matching variant's seller offers.
+        $barcode = trim((string) $request->input('barcode', ''));
+        if ($barcode !== '') {
+            $query->where('master_product_variants.barcode', $barcode);
+        }
+
         // category_ids: comma-separated — expand to include all descendant sub-categories
         $categoryIds = array_values(array_filter(array_map('intval', explode(',', (string) $request->input('category_ids', $request->input('category_id', ''))))));
         if (!empty($categoryIds)) {

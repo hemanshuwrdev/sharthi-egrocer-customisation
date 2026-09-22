@@ -431,6 +431,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -666,6 +670,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               _key: Math.random().toString(36).slice(2),
               id: v.id,
               sku: v.sku,
+              barcode: v.barcode,
               unit_id: v.unit_id,
               secondary_unit_id: v.secondary_unit_id,
               secondary_unit_value: v.secondary_unit_value,
@@ -775,6 +780,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _key: Math.random().toString(36).slice(2),
         id: null,
         sku: '',
+        barcode: '',
         unit_id: null,
         secondary_unit_id: null,
         secondary_unit_value: null,
@@ -956,6 +962,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         if (v.id) fd.append("variants[".concat(idx, "][id]"), v.id);
         if (v._delete) fd.append("variants[".concat(idx, "][_delete]"), 1);
         fd.append("variants[".concat(idx, "][sku]"), v.sku || '');
+        fd.append("variants[".concat(idx, "][barcode]"), v.barcode || '');
         if (v.unit_id) fd.append("variants[".concat(idx, "][unit_id]"), v.unit_id);
         if (v.secondary_unit_id) fd.append("variants[".concat(idx, "][secondary_unit_id]"), v.secondary_unit_id);
         if (v.secondary_unit_value != null) fd.append("variants[".concat(idx, "][secondary_unit_value]"), v.secondary_unit_value);
@@ -2510,6 +2517,8 @@ var render = function () {
                     _c("tr", [
                       _c("th", [_vm._v(_vm._s(_vm.__("sku")))]),
                       _vm._v(" "),
+                      _c("th", [_vm._v(_vm._s(_vm.__("barcode")))]),
+                      _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("outer_pack_unit")))]),
                       _vm._v(" "),
                       _c("th", [_vm._v(_vm._s(_vm.__("inner_pack_unit")))]),
@@ -2571,6 +2580,30 @@ var render = function () {
                                   return
                                 }
                                 _vm.$set(v, "sku", $event.target.value)
+                              },
+                            },
+                          }),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: v.barcode,
+                                expression: "v.barcode",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "text" },
+                            domProps: { value: v.barcode },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(v, "barcode", $event.target.value)
                               },
                             },
                           }),

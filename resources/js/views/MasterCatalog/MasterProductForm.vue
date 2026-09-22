@@ -283,6 +283,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>{{ __('sku') }}</th>
+                                    <th>{{ __('barcode') }}</th>
                                     <th>{{ __('outer_pack_unit') }}</th>
                                     <th>{{ __('inner_pack_unit') }}</th>
                                     <th>{{ __('inner_pack_value') }}</th>
@@ -298,6 +299,9 @@
                                 <tr v-for="v in visibleVariants" :key="v._key">
                                     <td>
                                         <input type="text" class="form-control form-control-sm" v-model="v.sku" />
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" v-model="v.barcode" />
                                     </td>
                                     <td>
                                         <select class="form-control form-control-sm" v-model="v.unit_id">
@@ -636,6 +640,7 @@ export default {
                         _key: Math.random().toString(36).slice(2),
                         id: v.id,
                         sku: v.sku,
+                        barcode: v.barcode,
                         unit_id: v.unit_id,
                         secondary_unit_id: v.secondary_unit_id,
                         secondary_unit_value: v.secondary_unit_value,
@@ -757,6 +762,7 @@ export default {
                 _key: Math.random().toString(36).slice(2),
                 id: null,
                 sku: '',
+                barcode: '',
                 unit_id: null,
                 secondary_unit_id: null,
                 secondary_unit_value: null,
@@ -925,6 +931,7 @@ export default {
                 if (v.id) fd.append(`variants[${idx}][id]`, v.id);
                 if (v._delete) fd.append(`variants[${idx}][_delete]`, 1);
                 fd.append(`variants[${idx}][sku]`, v.sku || '');
+                fd.append(`variants[${idx}][barcode]`, v.barcode || '');
                 if (v.unit_id) fd.append(`variants[${idx}][unit_id]`, v.unit_id);
                 if (v.secondary_unit_id) fd.append(`variants[${idx}][secondary_unit_id]`, v.secondary_unit_id);
                 if (v.secondary_unit_value != null) fd.append(`variants[${idx}][secondary_unit_value]`, v.secondary_unit_value);

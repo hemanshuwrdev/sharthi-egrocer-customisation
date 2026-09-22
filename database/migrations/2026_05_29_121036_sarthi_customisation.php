@@ -321,6 +321,14 @@ class SarthiCustomisation extends Migration
             });
         }
 
+    
+        Schema::table('master_product_variants', function (Blueprint $table) {
+            if (!Schema::hasColumn('master_product_variants', 'barcode')) {
+                $table->string('barcode')->nullable()->after('sku');
+                $table->index('barcode', 'idx_mpv_barcode');
+            }
+        });
+
         // Master Catalog Variants: allow loose (piece-level) selling, bypassing the
         // secondary-unit (box) multiple requirement for specific products.
         Schema::table('master_product_variants', function (Blueprint $table) {

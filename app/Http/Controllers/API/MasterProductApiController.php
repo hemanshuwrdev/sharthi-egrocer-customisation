@@ -151,6 +151,7 @@ class MasterProductApiController extends Controller
                     $variant = new MasterProductVariant();
                     $variant->master_product_id = $product->id;
                     $variant->sku = $v['sku'] ?? null;
+                    $variant->barcode = $v['barcode'] ?? null;
                     $variant->unit_id = $v['unit_id'] ?? null;
                     $variant->secondary_unit_id = $v['secondary_unit_id'] ?? null;
                     $variant->secondary_unit_value = $v['secondary_unit_value'] ?? null;
@@ -296,6 +297,7 @@ class MasterProductApiController extends Controller
 
                     $variant->master_product_id = $product->id;
                     $variant->sku = $v['sku'] ?? null;
+                    $variant->barcode = $v['barcode'] ?? null;
                     if (array_key_exists('unit_id', $v)) {
                         $variant->unit_id = $v['unit_id'] ?: null;
                     }

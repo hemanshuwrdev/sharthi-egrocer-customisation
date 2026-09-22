@@ -15,6 +15,7 @@ class MasterProductVariant extends Model
     protected $fillable = [
         'master_product_id',
         'sku',
+        'barcode',
         'unit_id',
         'secondary_unit_id',
         'secondary_unit_value',

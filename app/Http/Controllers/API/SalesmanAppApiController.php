@@ -701,6 +701,11 @@ class SalesmanAppApiController extends Controller
                   ->orWhere('master_products.hsn', 'like', "%{$filter}%");
             });
         }
+        // Barcode scan: exact match. Already scoped to the salesman's own distributor
+        // above (seller_id join), so no cross-distributor concern here.
+        if ($request->filled('barcode')) {
+            $query->where('master_product_variants.barcode', trim((string) $request->barcode));
+        }
         if ($request->filled('brand_id')) {
             $query->where('master_products.brand_id', (int) $request->brand_id);
         }
