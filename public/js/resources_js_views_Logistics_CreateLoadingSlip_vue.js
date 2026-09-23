@@ -209,6 +209,8 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -871,7 +873,8 @@ var render = function () {
                               "tr",
                               {
                                 key: order.id,
-                                staticClass: "transition-all cursor-pointer",
+                                staticClass:
+                                  "transition-all cursor-pointer align-middle",
                                 on: {
                                   click: function ($event) {
                                     return _vm.toggleOrderSelection(order)
@@ -960,39 +963,46 @@ var render = function () {
                                 _c("td", [
                                   _c(
                                     "div",
-                                    {
-                                      staticClass:
-                                        "d-flex align-items-center mb-0",
-                                    },
+                                    { staticClass: "d-flex flex-column" },
                                     [
                                       _c(
-                                        "span",
+                                        "div",
                                         {
-                                          staticClass: "font-weight-bold mr-2",
+                                          staticClass:
+                                            "d-flex align-items-center mb-0",
                                         },
-                                        [_vm._v(_vm._s(order.user_name))]
-                                      ),
-                                      _vm._v(" "),
-                                      order.is_rescheduled
-                                        ? _c(
+                                        [
+                                          _c(
                                             "span",
                                             {
                                               staticClass:
-                                                "badge bg-soft-warning text-warning font-weight-bold",
+                                                "font-weight-bold mr-2",
                                             },
-                                            [_vm._v("Rescheduled")]
-                                          )
-                                        : _vm._e(),
+                                            [_vm._v(_vm._s(order.user_name))]
+                                          ),
+                                          _vm._v(" "),
+                                          order.is_rescheduled
+                                            ? _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "badge bg-soft-warning text-warning font-weight-bold",
+                                                },
+                                                [_vm._v("Rescheduled")]
+                                              )
+                                            : _vm._e(),
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c(
+                                        "small",
+                                        {
+                                          staticClass:
+                                            "text-muted text-truncate d-block max-w-250",
+                                        },
+                                        [_vm._v(_vm._s(order.address))]
+                                      ),
                                     ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "small",
-                                    {
-                                      staticClass:
-                                        "text-muted text-truncate d-inline-block max-w-250",
-                                    },
-                                    [_vm._v(_vm._s(order.address))]
                                   ),
                                 ]),
                                 _vm._v(" "),

@@ -66,7 +66,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="order in orders" :key="order.id" class="transition-all cursor-pointer" @click="toggleOrderSelection(order)">
+                                    <tr v-for="order in orders" :key="order.id" class="transition-all cursor-pointer align-middle" @click="toggleOrderSelection(order)">
                                         <td class="py-3 pl-4" @click.stop>
                                             <div class="form-check mb-0">
                                                 <input v-model="selectedOrderIds" :value="order.id" class="form-check-input" type="checkbox" @change="calculateWeightSum">
@@ -74,11 +74,13 @@
                                         </td>
                                         <td class="font-weight-bold">#{{ order.id }}</td>
                                         <td>
-                                            <div class="d-flex align-items-center mb-0">
-                                                <span class="font-weight-bold mr-2">{{ order.user_name }}</span>
-                                                <span v-if="order.is_rescheduled" class="badge bg-soft-warning text-warning font-weight-bold">Rescheduled</span>
+                                            <div class="d-flex flex-column">
+                                                <div class="d-flex align-items-center mb-0">
+                                                    <span class="font-weight-bold mr-2">{{ order.user_name }}</span>
+                                                    <span v-if="order.is_rescheduled" class="badge bg-soft-warning text-warning font-weight-bold">Rescheduled</span>
+                                                </div>
+                                                <small class="text-muted text-truncate d-block max-w-250">{{ order.address }}</small>
                                             </div>
-                                            <small class="text-muted text-truncate d-inline-block max-w-250">{{ order.address }}</small>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge bg-soft-primary font-weight-bold">{{ formatZone(order.city_zone || 'Default') }}</span>
