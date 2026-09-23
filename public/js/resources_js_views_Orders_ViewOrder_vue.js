@@ -439,10 +439,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
 
 
 
@@ -481,48 +477,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     isDeliveryBoyRoute: function isDeliveryBoyRoute() {
       // Use this.$route to access the current route
       return this.$route.path.startsWith('/delivery_boy/');
-    },
-    invoiceRoute: function invoiceRoute() {
-      // Define route configurations based on user roles
-      var routeConfig = null;
-      switch (this.login_user.role.name) {
-        case 'Seller':
-          routeConfig = {
-            name: 'SellerInvoiceOrder',
-            params: {
-              id: this.order.order_id
-            }
-          };
-          break;
-        case 'Delivery Boy':
-          routeConfig = {
-            name: 'DeliveryBoyInvoiceOrder',
-            params: {
-              id: this.order.order_id
-            }
-          };
-          break;
-        case 'Admin':
-          routeConfig = {
-            name: 'InvoiceOrder',
-            params: {
-              id: this.order.order_id
-            }
-          };
-          break;
-        case 'Super Admin':
-          routeConfig = {
-            name: 'InvoiceOrder',
-            params: {
-              id: this.order.order_id
-            }
-          };
-          break;
-        default:
-          // Handle any other roles or cases
-          break;
-      }
-      return routeConfig;
     },
     viewProductRoute: function viewProductRoute() {
       // Define route configurations based on user roles
@@ -629,7 +583,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
         _this.isLoading = false;
         var data = response.data;
-        var statusesToRemoveIds = [7, 8];
+        var statusesToRemoveIds = [1, 4, 7, 8];
         _this.statuses = data.data.filter(function (status) {
           return !statusesToRemoveIds.includes(status.id);
         });
@@ -1365,82 +1319,51 @@ var render = function () {
                   _c("div", { staticClass: "card-header" }, [
                     _c("h4", [_vm._v(_vm._s(_vm.__("billing_details")))]),
                     _vm._v(" "),
-                    _c(
-                      "span",
-                      { staticClass: "pull-right" },
-                      [
-                        _c(
-                          "button",
-                          {
-                            directives: [
-                              {
-                                name: "b-tooltip",
-                                rawName: "v-b-tooltip.hover",
-                                modifiers: { hover: true },
+                    _c("span", { staticClass: "pull-right" }, [
+                      _vm.order.active_status == _vm.$delivered ||
+                      _vm.order.active_status == 6
+                        ? _c(
+                            "button",
+                            {
+                              directives: [
+                                {
+                                  name: "b-tooltip",
+                                  rawName: "v-b-tooltip.hover",
+                                  modifiers: { hover: true },
+                                },
+                              ],
+                              staticClass: "btn btn-secondary btn-sm",
+                              attrs: {
+                                title: _vm.__("download_invoice"),
+                                disabled: _vm.isLoading,
                               },
-                            ],
-                            staticClass: "btn btn-secondary btn-sm",
-                            attrs: {
-                              title: _vm.__("download_invoice"),
-                              disabled: _vm.isLoading,
+                              on: { click: _vm.downloadInvoice },
                             },
-                            on: { click: _vm.downloadInvoice },
-                          },
-                          [
-                            _vm.isLoading
-                              ? [
-                                  _c("b-spinner", {
-                                    attrs: { small: "", label: "Spinning" },
-                                  }),
-                                  _vm._v(
-                                    " " +
-                                      _vm._s(_vm.__("downloading")) +
-                                      "...\n                                "
-                                  ),
-                                ]
-                              : [
-                                  _c("i", { staticClass: "fa fa-download" }),
-                                  _vm._v(
-                                    " " +
-                                      _vm._s(_vm.__("download_invoice")) +
-                                      "\n                                "
-                                  ),
-                                ],
-                          ],
-                          2
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "router-link",
-                          {
-                            directives: [
-                              {
-                                name: "b-tooltip",
-                                rawName: "v-b-tooltip.hover",
-                                modifiers: { hover: true },
-                              },
+                            [
+                              _vm.isLoading
+                                ? [
+                                    _c("b-spinner", {
+                                      attrs: { small: "", label: "Spinning" },
+                                    }),
+                                    _vm._v(
+                                      " " +
+                                        _vm._s(_vm.__("downloading")) +
+                                        "...\n                                "
+                                    ),
+                                  ]
+                                : [
+                                    _c("i", { staticClass: "fa fa-download" }),
+                                    _vm._v(
+                                      " " +
+                                        _vm._s(_vm.__("download_invoice")) +
+                                        "\n                                "
+                                    ),
+                                  ],
                             ],
-                            staticClass: "btn btn-primary btn-sm",
-                            attrs: {
-                              to: _vm.invoiceRoute,
-                              title: _vm.__("generate_invoice"),
-                            },
-                          },
-                          [
-                            _c("i", {
-                              staticClass: "fa fa-file",
-                              attrs: { "aria-hidden": "true" },
-                            }),
-                            _vm._v(
-                              " " +
-                                _vm._s(_vm.__("generate_invoice")) +
-                                "\n                            "
-                            ),
-                          ]
-                        ),
-                      ],
-                      1
-                    ),
+                            2
+                          )
+                        : _vm._e(),
+                    ]),
                   ]),
                   _vm._v(" "),
                   _c("div", { staticClass: "card-body" }, [

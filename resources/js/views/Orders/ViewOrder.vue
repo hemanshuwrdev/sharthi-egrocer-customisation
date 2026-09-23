@@ -179,7 +179,8 @@
                             <h4>{{ __('billing_details') }}</h4>
                             <span class="pull-right">
 
-                                <button @click="downloadInvoice" v-b-tooltip.hover :title="__('download_invoice')"
+                                <button v-if="order.active_status == $delivered || order.active_status == 6"
+                                    @click="downloadInvoice" v-b-tooltip.hover :title="__('download_invoice')"
                                     class="btn btn-secondary btn-sm" :disabled="isLoading">
                                     <template v-if="isLoading">
                                         <b-spinner small label="Spinning"></b-spinner> {{ __('downloading') }}...
@@ -188,11 +189,6 @@
                                         <i class="fa fa-download"></i> {{ __('download_invoice') }}
                                     </template>
                                 </button>
-
-                                <router-link :to="invoiceRoute" v-b-tooltip.hover :title="__('generate_invoice')"
-                                    class="btn btn-primary btn-sm">
-                                    <i class="fa fa-file" aria-hidden="true"></i> {{ __('generate_invoice') }}
-                                </router-link>
                             </span>
                         </div>
                         <div class="card-body">
@@ -468,41 +464,6 @@ export default {
             // Use this.$route to access the current route
             return this.$route.path.startsWith('/delivery_boy/');
         },
-        invoiceRoute() {
-            // Define route configurations based on user roles
-            let routeConfig = null;
-            switch (this.login_user.role.name) {
-                case 'Seller':
-                    routeConfig = {
-                        name: 'SellerInvoiceOrder',
-                        params: { id: this.order.order_id },
-                    };
-                    break;
-                case 'Delivery Boy':
-                    routeConfig = {
-                        name: 'DeliveryBoyInvoiceOrder',
-                        params: { id: this.order.order_id },
-                    };
-                    break;
-                case 'Admin':
-                    routeConfig = {
-                        name: 'InvoiceOrder',
-                        params: { id: this.order.order_id },
-                    };
-                    break;
-                case 'Super Admin':
-                    routeConfig = {
-                        name: 'InvoiceOrder',
-                        params: { id: this.order.order_id },
-                    };
-                    break;
-                default:
-                    // Handle any other roles or cases
-                    break;
-            }
-
-            return routeConfig;
-        },
         viewProductRoute() {
             // Define route configurations based on user roles
             if (this.item.master_product_id) {
@@ -596,7 +557,7 @@ export default {
 
                 this.isLoading = false
                 let data = response.data;
-                const statusesToRemoveIds = [7, 8];
+                const statusesToRemoveIds = [1, 4, 7, 8];
                 this.statuses = data.data.filter(status => !statusesToRemoveIds.includes(status.id));
             }).catch(error => {
                 vm.isLoading = false;

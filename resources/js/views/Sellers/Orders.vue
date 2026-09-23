@@ -98,6 +98,11 @@
                                                     @click="openEditOrderItems(row.item)">
                                                     <i class="fa fa-pencil-alt"></i>
                                                 </b-button>
+                                                <router-link
+                                                    v-if="row.item.active_status == $delivered || row.item.active_status == 6"
+                                                    :to="{ name: 'SellerInvoiceOrder', params: { id: row.item.id } }"
+                                                    v-b-tooltip.hover :title="__('generate_invoice')"
+                                                    class="list-action-btn is-invoice"><i class="fa fa-file"></i></router-link>
                                             </div>
                                         </template>
 
@@ -589,7 +594,9 @@ export default {
             let vm = this;
             axios.get(this.$apiUrl + '/order_statuses').then((response) => {
                 this.isLoading = false
-                this.statuses = response.data.data;
+                // Payment Pending (id 1) never applies to Sarthi's COD-only distributor flow;
+                // Shipped (id 4) is unused in this flow too
+                this.statuses = response.data.data.filter(status => status.id != 1 && status.id != 4);
             }).catch(error => {
                 vm.isLoading = false;
                 if (error.request.statusText) {

@@ -339,6 +339,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
 
 
 
@@ -745,7 +750,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
         _this3.isLoading = false;
-        _this3.statuses = response.data.data;
+        // Payment Pending (id 1) never applies to Sarthi's COD-only distributor flow;
+        // Shipped (id 4) is unused in this flow too
+        _this3.statuses = response.data.data.filter(function (status) {
+          return status.id != 1 && status.id != 4;
+        });
       })["catch"](function (error) {
         vm.isLoading = false;
         if (error.request.statusText) {
@@ -1605,6 +1614,36 @@ var render = function () {
                                           [
                                             _c("i", {
                                               staticClass: "fa fa-pencil-alt",
+                                            }),
+                                          ]
+                                        )
+                                      : _vm._e(),
+                                    _vm._v(" "),
+                                    row.item.active_status == _vm.$delivered ||
+                                    row.item.active_status == 6
+                                      ? _c(
+                                          "router-link",
+                                          {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "list-action-btn is-invoice",
+                                            attrs: {
+                                              to: {
+                                                name: "SellerInvoiceOrder",
+                                                params: { id: row.item.id },
+                                              },
+                                              title: _vm.__("generate_invoice"),
+                                            },
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-file",
                                             }),
                                           ]
                                         )

@@ -2938,12 +2938,17 @@ body.theme-dark {
 .list-action-btn.is-edit,
 .list-action-btn.is-view,
 .list-action-btn.is-assign,
-.list-action-btn.is-delete {
+.list-action-btn.is-delete,
+.list-action-btn.is-invoice {
     color: var(--app-muted) !important;
 }
 
 .list-action-btn.is-view:hover {
     color: var(--app-ink) !important;
+}
+
+.list-action-btn.is-invoice:hover {
+    color: #37a279 !important;
 }
 
 .list-action-btn.is-edit:hover {
@@ -2968,14 +2973,16 @@ body.theme-dark {
 .list-action-btn.is-edit i,
 .list-action-btn.is-view i,
 .list-action-btn.is-assign i,
-.list-action-btn.is-delete i {
+.list-action-btn.is-delete i,
+.list-action-btn.is-invoice i {
     display: none !important;
 }
 
 .list-action-btn.is-edit::after,
 .list-action-btn.is-view::after,
 .list-action-btn.is-assign::after,
-.list-action-btn.is-delete::after {
+.list-action-btn.is-delete::after,
+.list-action-btn.is-invoice::after {
     content: '';
     display: inline-block;
     width: 15px;
@@ -3007,6 +3014,11 @@ body.theme-dark {
 .list-action-btn.is-assign::after {
     -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><line x1='19' x2='19' y1='8' y2='14'/><line x1='22' x2='16' y1='11' y2='11'/></svg>");
     mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><line x1='19' x2='19' y1='8' y2='14'/><line x1='22' x2='16' y1='11' y2='11'/></svg>");
+}
+
+.list-action-btn.is-invoice::after {
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z'/><path d='M14 2v4a2 2 0 0 0 2 2h4'/><path d='M10 9H8'/><path d='M16 13H8'/><path d='M16 17H8'/></svg>");
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z'/><path d='M14 2v4a2 2 0 0 0 2 2h4'/><path d='M10 9H8'/><path d='M16 13H8'/><path d='M16 17H8'/></svg>");
 }
 
 /* ---- Footer / pagination ---- */
