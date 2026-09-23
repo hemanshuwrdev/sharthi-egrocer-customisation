@@ -335,15 +335,17 @@
                                 <td align="left" style="color: #555;">Taxable Amount</td>
                                 <td align="right" style="font-weight: 500;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>
                             </tr>
-                            <tr>
-                                <td align="left" style="color: #555;">Total Discount</td>
-                                <td align="right" style="font-weight: 500;">
-                                    @php
-                                        $totalDiscount = $order->discount + $order->promo_discount;
-                                    @endphp
-                                    {{ $currency }}{{ number_format($totalDiscount, 2) }}
-                                </td>
-                            </tr>
+                            @php
+                                $totalDiscount = $order->discount + $order->promo_discount;
+                            @endphp
+                            @if ($totalDiscount > 0)
+                                <tr>
+                                    <td align="left" style="color: #555;">Total Discount</td>
+                                    <td align="right" style="font-weight: 500;">
+                                        {{ $currency }}{{ number_format($totalDiscount, 2) }}
+                                    </td>
+                                </tr>
+                            @endif
                             <tr>
                                 <td align="left" style="color: #555;">Net Taxable Amount</td>
                                 <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>

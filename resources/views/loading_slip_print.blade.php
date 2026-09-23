@@ -759,6 +759,7 @@
                         <!-- Total row -->
                         <tr style="font-weight: bold; background-color: #f2f2f2;">
                             <td>Total</td>
+                            <td></td>
                             <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
                             <td></td>
                             <td></td>
@@ -773,12 +774,17 @@
                 <!-- Totals Area -->
                 <div class="udaan-totals-area">
                     <table class="udaan-totals-table">
-                        <tr>
-                            <td style="text-align: left; color: #555;">Total Discount</td>
-                            <td style="text-align: right; font-weight: 500;">
-                                ₹{{ number_format(($order->total * $order->discount) / 100 + $order->promo_discount, 2) }}
-                            </td>
-                        </tr>
+                        @php
+                            $totalDiscount = ($order->total * $order->discount) / 100 + $order->promo_discount;
+                        @endphp
+                        @if ($totalDiscount > 0)
+                            <tr>
+                                <td style="text-align: left; color: #555;">Total Discount</td>
+                                <td style="text-align: right; font-weight: 500;">
+                                    ₹{{ number_format($totalDiscount, 2) }}
+                                </td>
+                            </tr>
+                        @endif
                         <tr>
                             <td style="text-align: left; color: #555;">Net Taxable Amount</td>
                             <td style="text-align: right; font-weight: bold;">₹{{ number_format($totalNetTaxable, 2) }}
