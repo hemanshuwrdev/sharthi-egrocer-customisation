@@ -420,6 +420,9 @@ class LoadingSlipsApiController extends Controller
         }
 
         $slip = LoadingSlip::find($request->id);
+        if (!$slip) {
+            return CommonHelper::responseError('Loading slip not found.');
+        }
         if ($slip->status != 0) {
             return CommonHelper::responseError('Only newly created loading slips can be dispatched.');
         }
@@ -451,20 +454,35 @@ class LoadingSlipsApiController extends Controller
                 ];
                 CommonHelper::setOrderStatus($orderStatus);
 
-                // Dispatch notification to Delivery Boy
+                // Dispatch notification to Delivery Boy — a push-notification failure
+                // (bad FCM token, template lookup, etc.) must never abort the dispatch
+                // itself, so it's caught separately. \Throwable, not \Exception — a
+                // TypeError/Error here would otherwise escape both catches below and
+                // surface as a raw, unhelpful 500.
                 try {
                     CommonHelper::sendNotificationOrderAssignDeliveryBoy($order);
-                } catch (\Exception $ne) {
-                    Log::error("FCM dispatch notification error: " . $ne->getMessage());
+                } catch (\Throwable $ne) {
+                    try {
+                        Log::error("FCM dispatch notification error: " . $ne->getMessage());
+                    } catch (\Throwable $logErr) {
+                        // Logging itself failed (misconfigured channel) — don't let that
+                        // crash the request on top of the original notification error.
+                    }
                 }
             }
 
             DB::commit();
             return CommonHelper::responseSuccess('Loading slip dispatched and out-for-delivery successfully.');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Error dispatching loading slip: " . $e->getMessage());
-            return CommonHelper::responseError('Something went wrong during dispatch.');
+            try {
+                Log::error("Error dispatching loading slip: " . $e->getMessage());
+            } catch (\Throwable $logErr) {
+                // ignore — see comment above
+            }
+            // Surface the real reason instead of a generic message — this endpoint was
+            // returning an unhelpful raw 500 with no indication of what actually failed.
+            return CommonHelper::responseError('Something went wrong during dispatch: ' . $e->getMessage());
         }
     }
 
