@@ -202,7 +202,8 @@
             <table class="udaan-table">
                 <thead>
                     <tr>
-                        <th style="width: 35%;">Description</th>
+                        <th style="width: 30%;">Description</th>
+                        <th style="width: 60px; text-align: center;">HSN</th>
                         <th style="width: 45px; text-align: center;">Qty</th>
                         <th style="width: 70px; text-align: right;">Rate</th>
                         <th style="width: 60px; text-align: right;">Disc. Rate</th>
@@ -288,8 +289,8 @@
                                 @if ($boxQty)
                                     <span style="color: #df2029; font-weight: bold; margin-left: 10px; font-size: 10px;">({{ $boxQty }})</span>
                                 @endif
-                                <br><span style="color: #555; font-size: 8px;">Variant: {{ $item->variant_name }} | HSN: {{ $hsn }}</span>
                             </td>
+                            <td style="text-align: center;">{{ $hsn }}</td>
                             <td style="text-align: center; font-weight: bold;">
                                 {{ number_format($item->quantity, 1) }}
                             </td>
@@ -312,6 +313,7 @@
                     <!-- Total row -->
                     <tr style="font-weight: bold; background-color: #f2f2f2;">
                         <td>Total</td>
+                        <td></td>
                         <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
                         <td></td>
                         <td></td>
