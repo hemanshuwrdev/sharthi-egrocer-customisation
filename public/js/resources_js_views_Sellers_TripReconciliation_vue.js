@@ -384,6 +384,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 
 
@@ -446,6 +452,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
             orderId: order.id,
             ordersId: order.orders_id,
             loadingSlipNo: order.loading_slip_no,
+            invoiceNumber: order.invoice_number,
             retailerName: retailerName,
             retailerMobile: retailerMobile,
             finalTotal: order.final_total,
@@ -466,6 +473,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
               orderId: order.id,
               ordersId: order.orders_id,
               loadingSlipNo: order.loading_slip_no,
+              invoiceNumber: order.invoice_number,
               retailerName: retailerName,
               retailerMobile: retailerMobile,
               finalTotal: order.final_total,
@@ -516,8 +524,23 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           var payment = (order.payments || []).find(function (p) {
             return p.id === paymentId;
           });
-          if (payment) {
+          if (payment && payment.status !== 'verified') {
             this.$set(payment, 'status', 'verified');
+            // Optimistic totals bump — load() will overwrite this with the
+            // authoritative server value shortly after, but without this an
+            // export/print triggered before that reload finishes reads stale
+            // (unverified) totals even though the row already shows "verified".
+            var amount = parseFloat(payment.amount || 0);
+            var round2 = function round2(v) {
+              return parseFloat((v || 0).toFixed(2));
+            };
+            if (['upi', 'cheque', 'signature'].includes(payment.method)) {
+              this.totals.digital_verified = round2(this.totals.digital_verified + amount);
+              this.totals.unverified_digital = Math.max(0, (this.totals.unverified_digital || 0) - 1);
+              if (payment.method === 'upi') this.totals.verified_upi = round2(this.totals.verified_upi + amount);
+              if (payment.method === 'cheque') this.totals.verified_cheque = round2(this.totals.verified_cheque + amount);
+              if (payment.method === 'signature') this.totals.verified_signature = round2(this.totals.verified_signature + amount);
+            }
             break;
           }
         }
@@ -581,8 +604,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     exportReportCsv: function exportReportCsv() {
-      var rows = [['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']].concat(_toConsumableArray(this.flatRows.map(function (r) {
-        return [r.ordersId, r.loadingSlipNo || '-', r.retailerName, r.finalTotal, r.method || '-', r.amount, r.paymentStatus || '-'];
+      var rows = [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']].concat(_toConsumableArray(this.flatRows.map(function (r) {
+        return [r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName, r.finalTotal, r.method || '-', r.amount, r.paymentStatus || '-'];
       })));
       var csv = rows.map(function (r) {
         return r.join(',');
@@ -672,29 +695,167 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         }
       });
 
-      // Order / payment detail table
+      // Shortfall / return calculation — up top, right under the totals, so it's the
+      // first thing a distributor sees when checking whether a trip closed clean.
+      var shortfall = this.totals.shortfall !== null && this.totals.shortfall !== undefined ? this.totals.shortfall : this.overallShortfall;
+      var totalReturns = this.totals.total_returns || 0;
       (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
-        startY: doc.lastAutoTable.finalY + 6,
-        head: [['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']],
-        body: this.flatRows.map(function (r) {
-          return [r.ordersId, r.loadingSlipNo || '-', r.retailerName, money(r.finalTotal), r.method || '-', money(r.amount), r.paymentStatus || '-'];
-        }),
+        startY: doc.lastAutoTable.finalY + 3,
+        theme: 'plain',
         styles: {
-          fontSize: 8,
-          cellPadding: 2
+          fontSize: 10,
+          cellPadding: 2,
+          fontStyle: 'bold'
         },
-        headStyles: {
-          fillColor: [52, 58, 64]
-        },
-        alternateRowStyles: {
-          fillColor: [248, 249, 250]
-        },
+        body: [[{
+          content: __('shortfall') + ':',
+          styles: {
+            halign: 'right'
+          }
+        }, {
+          content: money(shortfall),
+          styles: {
+            textColor: shortfall > 0 ? [220, 53, 69] : [22, 163, 74]
+          }
+        }], [{
+          content: (__('total_returns') || 'Total Returns') + ':',
+          styles: {
+            halign: 'right'
+          }
+        }, {
+          content: money(totalReturns),
+          styles: {
+            textColor: totalReturns > 0 ? [234, 88, 12] : [0, 0, 0]
+          }
+        }]],
         columnStyles: {
-          2: {
+          0: {
+            cellWidth: pageW - 14 - 40 - 14
+          },
+          1: {
             cellWidth: 40
           }
         }
       });
+
+      // Order / payment detail — one table PER payment method, not mixed together.
+      var methodGroups = [{
+        key: 'cash',
+        label: __('cash_payments'),
+        total: this.totals.total_cash
+      }, {
+        key: 'upi',
+        label: __('upi_payments'),
+        total: this.totals.total_upi
+      }, {
+        key: 'cheque',
+        label: __('cheque_payments'),
+        total: this.totals.total_cheque
+      }, {
+        key: 'signature',
+        label: __('signature_payments'),
+        total: this.totals.total_signature
+      }];
+      methodGroups.forEach(function (group) {
+        var rows = _this4.flatRows.filter(function (r) {
+          return r.method === group.key;
+        });
+        if (rows.length === 0) return;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(group.label + ' — ' + money(group.total), 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Collected', 'Status']],
+          body: rows.map(function (r) {
+            return [r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName, money(r.finalTotal), money(r.amount), r.paymentStatus || '-'];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [52, 58, 64]
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250]
+          },
+          columnStyles: {
+            3: {
+              cellWidth: 40
+            }
+          }
+        });
+      });
+
+      // Orders with no payment recorded at all — kept out of the method tables above.
+      var noPaymentRows = this.flatRows.filter(function (r) {
+        return r.isEmpty;
+      });
+      if (noPaymentRows.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(__('no_payment_collected') || 'No Payment Collected', 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value']],
+          body: noPaymentRows.map(function (r) {
+            return [r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName, money(r.finalTotal)];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [52, 58, 64]
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250]
+          },
+          columnStyles: {
+            3: {
+              cellWidth: 40
+            }
+          }
+        });
+      }
+
+      // Returns — approved return requests against orders in this trip. Refund is
+      // wallet-credited, not cash the driver hands back, so it's a separate table.
+      var returnRows = [];
+      this.orders.forEach(function (order) {
+        (order.returns || []).forEach(function (r) {
+          returnRows.push([order.orders_id, order.retailer ? order.retailer.name : '-', r.product_name, money(r.refund_amount)]);
+        });
+      });
+      if (returnRows.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text((__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0), 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Order #', 'Retailer', 'Product', 'Refund Amount']],
+          body: returnRows,
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [234, 88, 12]
+          },
+          alternateRowStyles: {
+            fillColor: [255, 247, 237]
+          },
+          columnStyles: {
+            2: {
+              cellWidth: 50
+            }
+          }
+        });
+      }
       doc.save('settlement-' + this.tripType + '-' + this.$route.params.id + '.pdf');
     },
     fmt: function fmt(val) {
@@ -6742,6 +6903,10 @@ var render = function () {
                                 _vm._v(_vm._s(_vm.__("loading_slip"))),
                               ]),
                               _vm._v(" "),
+                              _c("th", { staticStyle: { width: "120px" } }, [
+                                _vm._v(_vm._s(_vm.__("invoice_no"))),
+                              ]),
+                              _vm._v(" "),
                               _c("th", [_vm._v(_vm._s(_vm.__("retailer")))]),
                               _vm._v(" "),
                               _c(
@@ -6840,6 +7005,29 @@ var render = function () {
                                                   ),
                                                 ]
                                               )
+                                            : _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "text-muted small",
+                                                },
+                                                [_vm._v("—")]
+                                              ),
+                                        ]
+                                      )
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  row.isFirst
+                                    ? _c(
+                                        "td",
+                                        { attrs: { rowspan: row.rowspan } },
+                                        [
+                                          row.invoiceNumber
+                                            ? _c("span", [
+                                                _vm._v(
+                                                  _vm._s(row.invoiceNumber)
+                                                ),
+                                              ])
                                             : _c(
                                                 "span",
                                                 {

@@ -206,6 +206,7 @@
                                     <tr>
                                         <th class="ps-3" style="width:90px">{{ __('order') }} #</th>
                                         <th style="width:110px">{{ __('loading_slip') }}</th>
+                                        <th style="width:120px">{{ __('invoice_no') }}</th>
                                         <th>{{ __('retailer') }}</th>
                                         <th class="text-end" style="width:110px">{{ __('order_value') }}</th>
                                         <th class="text-end" style="width:100px">{{ __('shortfall') }}</th>
@@ -224,6 +225,11 @@
                                         <!-- Loading slip # -->
                                         <td v-if="row.isFirst" :rowspan="row.rowspan">
                                             <span v-if="row.loadingSlipNo" class="badge bg-secondary">{{ row.loadingSlipNo }}</span>
+                                            <span v-else class="text-muted small">—</span>
+                                        </td>
+                                        <!-- Invoice # -->
+                                        <td v-if="row.isFirst" :rowspan="row.rowspan">
+                                            <span v-if="row.invoiceNumber">{{ row.invoiceNumber }}</span>
                                             <span v-else class="text-muted small">—</span>
                                         </td>
                                         <!-- Retailer -->
@@ -408,6 +414,7 @@ export default {
                     rows.push({
                         orderId: order.id, ordersId: order.orders_id,
                         loadingSlipNo: order.loading_slip_no,
+                        invoiceNumber: order.invoice_number,
                         retailerName, retailerMobile,
                         finalTotal: order.final_total,
                         isEmpty: true, isFirst: true, isLast: true, rowspan: 1,
@@ -419,6 +426,7 @@ export default {
                         rows.push({
                             orderId: order.id, ordersId: order.orders_id,
                             loadingSlipNo: order.loading_slip_no,
+                            invoiceNumber: order.invoice_number,
                             retailerName, retailerMobile,
                             finalTotal: order.final_total,
                             isEmpty: false,
@@ -454,8 +462,21 @@ export default {
         markPaymentVerifiedLocally(paymentId) {
             for (const order of this.orders) {
                 const payment = (order.payments || []).find(p => p.id === paymentId);
-                if (payment) {
+                if (payment && payment.status !== 'verified') {
                     this.$set(payment, 'status', 'verified');
+                    // Optimistic totals bump — load() will overwrite this with the
+                    // authoritative server value shortly after, but without this an
+                    // export/print triggered before that reload finishes reads stale
+                    // (unverified) totals even though the row already shows "verified".
+                    const amount = parseFloat(payment.amount || 0);
+                    const round2 = (v) => parseFloat((v || 0).toFixed(2));
+                    if (['upi', 'cheque', 'signature'].includes(payment.method)) {
+                        this.totals.digital_verified = round2(this.totals.digital_verified + amount);
+                        this.totals.unverified_digital = Math.max(0, (this.totals.unverified_digital || 0) - 1);
+                        if (payment.method === 'upi') this.totals.verified_upi = round2(this.totals.verified_upi + amount);
+                        if (payment.method === 'cheque') this.totals.verified_cheque = round2(this.totals.verified_cheque + amount);
+                        if (payment.method === 'signature') this.totals.verified_signature = round2(this.totals.verified_signature + amount);
+                    }
                     break;
                 }
             }
@@ -509,9 +530,9 @@ export default {
         },
         exportReportCsv() {
             const rows = [
-                ['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status'],
+                ['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status'],
                 ...this.flatRows.map(r => [
-                    r.ordersId, r.loadingSlipNo || '-', r.retailerName,
+                    r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName,
                     r.finalTotal, r.method || '-', r.amount, r.paymentStatus || '-',
                 ]),
             ];
@@ -570,19 +591,102 @@ export default {
                 bodyStyles: { fontStyle: 'bold' },
             });
 
-            // Order / payment detail table
+            // Shortfall / return calculation — up top, right under the totals, so it's the
+            // first thing a distributor sees when checking whether a trip closed clean.
+            const shortfall = this.totals.shortfall !== null && this.totals.shortfall !== undefined
+                ? this.totals.shortfall
+                : this.overallShortfall;
+            const totalReturns = this.totals.total_returns || 0;
             autoTable(doc, {
-                startY: doc.lastAutoTable.finalY + 6,
-                head: [['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']],
-                body: this.flatRows.map(r => [
-                    r.ordersId, r.loadingSlipNo || '-', r.retailerName,
-                    money(r.finalTotal), r.method || '-', money(r.amount), r.paymentStatus || '-',
-                ]),
-                styles: { fontSize: 8, cellPadding: 2 },
-                headStyles: { fillColor: [52, 58, 64] },
-                alternateRowStyles: { fillColor: [248, 249, 250] },
-                columnStyles: { 2: { cellWidth: 40 } },
+                startY: doc.lastAutoTable.finalY + 3,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 2, fontStyle: 'bold' },
+                body: [
+                    [
+                        { content: __('shortfall') + ':', styles: { halign: 'right' } },
+                        { content: money(shortfall), styles: { textColor: shortfall > 0 ? [220, 53, 69] : [22, 163, 74] } },
+                    ],
+                    [
+                        { content: (__('total_returns') || 'Total Returns') + ':', styles: { halign: 'right' } },
+                        { content: money(totalReturns), styles: { textColor: totalReturns > 0 ? [234, 88, 12] : [0, 0, 0] } },
+                    ],
+                ],
+                columnStyles: { 0: { cellWidth: pageW - 14 - 40 - 14 }, 1: { cellWidth: 40 } },
             });
+
+            // Order / payment detail — one table PER payment method, not mixed together.
+            const methodGroups = [
+                { key: 'cash',      label: __('cash_payments'),      total: this.totals.total_cash },
+                { key: 'upi',       label: __('upi_payments'),       total: this.totals.total_upi },
+                { key: 'cheque',    label: __('cheque_payments'),    total: this.totals.total_cheque },
+                { key: 'signature', label: __('signature_payments'), total: this.totals.total_signature },
+            ];
+            methodGroups.forEach(group => {
+                const rows = this.flatRows.filter(r => r.method === group.key);
+                if (rows.length === 0) return;
+
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text(group.label + ' — ' + money(group.total), 14, doc.lastAutoTable.finalY + 10);
+                doc.setFont(undefined, 'normal');
+
+                autoTable(doc, {
+                    startY: doc.lastAutoTable.finalY + 13,
+                    head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Collected', 'Status']],
+                    body: rows.map(r => [
+                        r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName,
+                        money(r.finalTotal), money(r.amount), r.paymentStatus || '-',
+                    ]),
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [52, 58, 64] },
+                    alternateRowStyles: { fillColor: [248, 249, 250] },
+                    columnStyles: { 3: { cellWidth: 40 } },
+                });
+            });
+
+            // Orders with no payment recorded at all — kept out of the method tables above.
+            const noPaymentRows = this.flatRows.filter(r => r.isEmpty);
+            if (noPaymentRows.length) {
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text(__('no_payment_collected') || 'No Payment Collected', 14, doc.lastAutoTable.finalY + 10);
+                doc.setFont(undefined, 'normal');
+
+                autoTable(doc, {
+                    startY: doc.lastAutoTable.finalY + 13,
+                    head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value']],
+                    body: noPaymentRows.map(r => [r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName, money(r.finalTotal)]),
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [52, 58, 64] },
+                    alternateRowStyles: { fillColor: [248, 249, 250] },
+                    columnStyles: { 3: { cellWidth: 40 } },
+                });
+            }
+
+            // Returns — approved return requests against orders in this trip. Refund is
+            // wallet-credited, not cash the driver hands back, so it's a separate table.
+            const returnRows = [];
+            this.orders.forEach(order => {
+                (order.returns || []).forEach(r => {
+                    returnRows.push([order.orders_id, order.retailer ? order.retailer.name : '-', r.product_name, money(r.refund_amount)]);
+                });
+            });
+            if (returnRows.length) {
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text((__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0), 14, doc.lastAutoTable.finalY + 10);
+                doc.setFont(undefined, 'normal');
+
+                autoTable(doc, {
+                    startY: doc.lastAutoTable.finalY + 13,
+                    head: [['Order #', 'Retailer', 'Product', 'Refund Amount']],
+                    body: returnRows,
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [234, 88, 12] },
+                    alternateRowStyles: { fillColor: [255, 247, 237] },
+                    columnStyles: { 2: { cellWidth: 50 } },
+                });
+            }
 
             doc.save('settlement-' + this.tripType + '-' + this.$route.params.id + '.pdf');
         },

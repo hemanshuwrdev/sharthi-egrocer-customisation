@@ -8,7 +8,10 @@ use App\Models\DeliveryBoy;
 use App\Models\DriverSettlement;
 use App\Models\LoadingSlip;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderPayment;
+use App\Models\ReturnRequest;
+use App\Models\ReturnStatusList;
 use App\Models\Salesman;
 use App\Models\SalesmanSettlement;
 use App\Models\Seller;
@@ -1145,6 +1148,17 @@ class SettlementController extends Controller
         $orders     = Order::with(['user:id,name,mobile', 'loadingSlip:id,slip_no'])->whereIn('id', $orderIds)->get();
         $paymentMap = $payments->groupBy('order_id');
 
+        // Approved returns against orders in this trip — refund is wallet-credited
+        // (CommonHelper::calculateRefundAmountForOrderItem at approval time), not cash
+        // handed back by the driver, so it's shown separately from the cash/digital
+        // collection math above rather than folded into it.
+        $returnRequests = ReturnRequest::with('orderItem:id,order_id,product_name,refund_amount')
+            ->whereIn('order_id', $orderIds)
+            ->where('status', ReturnStatusList::$rApproved)
+            ->get();
+        $returnMap    = $returnRequests->groupBy('order_id');
+        $totalReturns = round($returnRequests->sum(fn ($r) => (float) ($r->orderItem->refund_amount ?? 0)), 2);
+
         $totalExpected        = round($orders->sum('final_total'), 2);
         $digitalVerified      = round($payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2);
         // Cash expected = actual cash the driver collected (not total_expected minus digital_verified,
@@ -1231,8 +1245,13 @@ class SettlementController extends Controller
                 'final_total'     => $o->final_total,
                 'active_status'   => $o->active_status,
                 'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
+                'invoice_number'  => $o->invoice_number,
                 'retailer'        => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
                 'payments'        => $paymentMap->get($o->id, collect())->values(),
+                'returns'         => $returnMap->get($o->id, collect())->map(fn ($r) => [
+                    'product_name'  => $r->orderItem->product_name ?? '-',
+                    'refund_amount' => (float) ($r->orderItem->refund_amount ?? 0),
+                ])->values(),
             ]),
             'totals'         => [
                 'total_expected'    => $totalExpected,
@@ -1250,6 +1269,7 @@ class SettlementController extends Controller
                 'verified_cheque'   => round($payments->where('method', 'cheque')->where('status', 'verified')->sum('amount'), 2),
                 'verified_signature'=> round($payments->where('method', 'signature')->where('status', 'verified')->sum('amount'), 2),
                 'unverified_digital'=> $unverifiedDigital,
+                'total_returns'     => $totalReturns,
             ],
             'can_close'      => $canClose,
             'close_blockers' => $blockers,
