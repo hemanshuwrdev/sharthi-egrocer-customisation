@@ -9,6 +9,7 @@ use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -44,10 +45,17 @@ class SellerProductApiController extends Controller
             return CommonHelper::responseWithData([], 0);
         }
 
-        $limit = (int) $request->input('per_page', 25);
-        $page = max((int) $request->input('page', 1), 1);
-        $offset = ($page - 1) * $limit;
+        // Accept both the admin panel's page/per_page and the mobile app's limit/offset.
+        $limit = (int) $request->input('limit', $request->input('per_page', 25));
+        if ($request->filled('offset')) {
+            $offset = (int) $request->input('offset');
+        } else {
+            $page = max((int) $request->input('page', 1), 1);
+            $offset = ($page - 1) * $limit;
+        }
         $filter = trim((string) $request->input('filter', ''));
+        $type   = trim((string) $request->input('type', ''));
+        $sort   = trim((string) $request->input('sort', ''));
 
         $query = MasterProductVariant::query()
             ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'unit', 'secondaryUnit'])
@@ -93,10 +101,30 @@ class SellerProductApiController extends Controller
             $query->where('master_products.id', $request->master_product_id);
         }
 
+        // Dashboard tiles: same sold_out/low_stock convention as the legacy
+        // ProductApisController::getProducts, scoped to this seller's own stock.
+        if ($type === 'sold_out') {
+            $query->where('seller_products.stock', '<=', 0)
+                  ->where('seller_products.status', 0);
+        } elseif ($type === 'low_stock') {
+            $lowStockLimit = Setting::where('variable', 'low_stock_limit')->value('value');
+            if ($lowStockLimit !== null && $lowStockLimit !== '') {
+                $query->where('seller_products.stock', '>', 0)
+                      ->where('seller_products.stock', '<=', (float) $lowStockLimit)
+                      ->where('seller_products.status', 1);
+            } else {
+                // No threshold configured — nothing can be "low stock" by definition.
+                $query->whereRaw('1 = 0');
+            }
+        }
+
         $total = (clone $query)->count();
 
-        $rows = $query->orderBy('master_products.name')
-            ->orderBy('master_product_variants.id')
+        $orderedQuery = $sort === 'new'
+            ? $query->orderBy('master_product_variants.id', 'desc')
+            : $query->orderBy('master_products.name')->orderBy('master_product_variants.id');
+
+        $rows = $orderedQuery
             ->skip($offset)
             ->take($limit)
             ->get();
