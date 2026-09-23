@@ -279,11 +279,13 @@ export default {
                             icon: 'grid-fill',
                             url: '/seller/units',
                         },
+                        /*
                         {
                             name: __('media'),
                             icon: 'grid-fill',
                             url: '/seller/media'
                         },
+                        */
                         {
                             name: __('taxes'),
                             icon: 'grid-fill',
@@ -443,12 +445,14 @@ export default {
                             url: '/seller/sales_reports',
                             permission: 'sales_reports',
                         },
+                        /*
                         {
                             name: __('pos_reports'),
                             icon: 'grid-fill',
                             url: '/seller/pos_reports',
                             permission: 'product_sales_reports',
                         },
+                        */
                         {
                             name: __('orders_export'),
                             icon: 'grid-fill',

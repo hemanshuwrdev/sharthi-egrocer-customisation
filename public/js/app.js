@@ -3550,9 +3550,7 @@ var ApproveRequests = function ApproveRequests() {
 var ViewProduct = function ViewProduct() {
   return __webpack_require__.e(/*! import() */ "resources_js_views_Product_ViewProduct_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Product/ViewProduct */ "./resources/js/views/Product/ViewProduct.vue"));
 };
-var Media = function Media() {
-  return __webpack_require__.e(/*! import() */ "resources_js_views_Product_Media_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Product/Media */ "./resources/js/views/Product/Media.vue"));
-};
+// const Media = () => import("../views/Product/Media");
 var ProductOrder = function ProductOrder() {
   return __webpack_require__.e(/*! import() */ "resources_js_views_Product_ProductOrder_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Product/ProductOrder */ "./resources/js/views/Product/ProductOrder.vue"));
 };
@@ -3979,9 +3977,7 @@ var SellerCloneProduct = function SellerCloneProduct() {
 var SellerManageStock = function SellerManageStock() {
   return __webpack_require__.e(/*! import() */ "resources_js_views_Product_ManageStock_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Product/ManageStock */ "./resources/js/views/Product/ManageStock.vue"));
 };
-var SellerMedia = function SellerMedia() {
-  return __webpack_require__.e(/*! import() */ "resources_js_views_Product_Media_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Product/Media */ "./resources/js/views/Product/Media.vue"));
-};
+// const SellerMedia = () => import("../views/Product/Media");
 var SellerSettings = function SellerSettings() {
   return __webpack_require__.e(/*! import() */ "resources_js_views_Settings_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Settings */ "./resources/js/views/Settings.vue"));
 };
@@ -3989,9 +3985,7 @@ var SellerProfile = function SellerProfile() {
   return __webpack_require__.e(/*! import() */ "resources_js_views_Seller_EditSeller_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Seller/EditSeller */ "./resources/js/views/Seller/EditSeller.vue"));
 };
 // const SellerPointOfSale = () => import("../views/Sellers/PointOfSale");
-var SellerPosReports = function SellerPosReports() {
-  return __webpack_require__.e(/*! import() */ "resources_js_views_Sellers_PosReport_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Sellers/PosReport */ "./resources/js/views/Sellers/PosReport.vue"));
-};
+// const SellerPosReports = () => import("../views/Sellers/PosReport");
 var SellerPrintSettings = function SellerPrintSettings() {
   return __webpack_require__.e(/*! import() */ "resources_js_views_Sellers_Settings_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../views/Sellers/Settings */ "./resources/js/views/Sellers/Settings.vue"));
 };
@@ -5111,16 +5105,20 @@ function configRoutes() {
         role: adminRoles,
         title: 'Subscription Plan'
       }
-    }, {
-      path: "media",
-      name: "Media",
-      component: Media,
-      meta: {
-        permission: 'order_list',
-        role: adminRoles,
-        title: 'Media'
-      }
-    }, {
+    },
+    /*
+    {
+        path: "media",
+        name: "Media",
+        component: Media,
+        meta: {
+            permission: 'order_list',
+            role: adminRoles,
+            title: 'Media'
+         },
+    },
+    */
+    {
       path: "/settings",
       name: "Settings",
       component: Settings,
@@ -5595,16 +5593,20 @@ function configRoutes() {
         role: sellerRoles,
         title: 'Units'
       }
-    }, {
-      path: "/seller/media",
-      name: "seller_media",
-      component: SellerMedia,
-      meta: {
-        permission: 'order_list',
-        role: sellerRoles,
-        title: 'Media'
-      }
-    }, {
+    },
+    /*
+    {
+        path: "/seller/media",
+        name: "seller_media",
+        component: SellerMedia,
+        meta: {
+            permission: 'order_list',
+            role: sellerRoles,
+            title: 'Media'
+        },
+    },
+    */
+    {
       path: "/seller/taxes",
       name: "seller_taxes",
       component: SellerTaxes,
@@ -5696,16 +5698,20 @@ function configRoutes() {
         role: sellerRoles,
         title: 'Trip Reconciliation'
       }
-    }, {
-      path: "pos_reports",
-      name: "SellerPosReports",
-      component: SellerPosReports,
-      meta: {
-        permission: 'order_list',
-        role: sellerRoles,
-        title: 'POS Reports'
-      }
-    }, {
+    },
+    /*
+    {
+        path: "pos_reports",
+        name: "SellerPosReports",
+        component: SellerPosReports,
+        meta: {
+            permission: 'order_list',
+            role: sellerRoles,
+            title: 'POS Reports'
+        }
+    },
+    */
+    {
       path: "settings",
       name: "Settings_setting",
       component: SellerSettings,
@@ -153790,7 +153796,7 @@ try {
 /******/ 		// This function allow to reference async chunks
 /******/ 		__webpack_require__.u = (chunkId) => {
 /******/ 			// return url for filenames not based on template
-/******/ 			if ({"resources_js_views_Install_vue":1,"resources_js_views_Login_vue":1,"resources_js_views_ForgotPassword_vue":1,"resources_js_views_ResetPassword_vue":1,"resources_js_containers_TheContainer_vue":1,"resources_js_containers_TheContainerSeller_vue":1,"resources_js_containers_TheContainerDeliveryBoy_vue":1,"resources_js_views_Settings_vue":1,"resources_js_views_Dashboard_vue":1,"resources_js_views_Orders_Orders_vue":1,"resources_js_views_Orders_ViewOrder_vue":1,"resources_js_views_Orders_InvoiceOrder_vue":1,"resources_js_views_Orders_SelfPickupOrders_vue":1,"resources_js_views_Orders_ViewSelfPickupOrder_vue":1,"resources_js_views_NotificationPanel_vue":1,"resources_js_views_Category_ManageCategories_vue":1,"resources_js_views_Category_CategoriesOrder_vue":1,"resources_js_views_Product_Products_vue":1,"resources_js_views_Product_EditProduct_vue":1,"resources_js_views_Product_ApproveRequests_vue":1,"resources_js_views_Product_ViewProduct_vue":1,"resources_js_views_Product_Media_vue":1,"resources_js_views_Product_ProductOrder_vue":1,"resources_js_views_Product_ProductRatings_vue":1,"resources_js_views_Product_BulkUpload_vue":1,"resources_js_views_Product_BulkUpdate_vue":1,"resources_js_views_Product_Brands_Brands_vue":1,"resources_js_views_Product_ManageStock_vue":1,"resources_js_views_MasterCatalog_MasterProducts_vue":1,"resources_js_views_MasterCatalog_MasterProductForm_vue":1,"resources_js_views_MasterCatalog_BrandMappings_vue":1,"resources_js_views_Seller_Sellers_vue":1,"resources_js_views_Seller_RegisteredSellers_vue":1,"resources_js_views_Seller_EditSeller_vue":1,"resources_js_views_Seller_WalletTransactions_SellerWalletTransactions_vue":1,"resources_js_views_Logistics_ManageVehicles_vue":1,"resources_js_views_Logistics_CreateLoadingSlip_vue":1,"resources_js_views_Logistics_ManageLoadingSlips_vue":1,"resources_js_views_Logistics_ViewLoadingSlip_vue":1,"resources_js_views_HomeSliders_HomeSliders_vue":1,"resources_js_views_PromoCode_PromoCode_vue":1,"resources_js_views_Setting_TimeSlots_TimeSlots_vue":1,"resources_js_views_Setting_StoreSettings_vue":1,"resources_js_views_Setting_SystemSettingsHub_vue":1,"resources_js_views_Product_Units_Units_vue":1,"resources_js_views_Setting_PaymentMethods_vue":1,"resources_js_views_Setting_AdditionalCharges_vue":1,"resources_js_views_Setting_ContactUs_vue":1,"resources_js_views_Setting_AboutUs_vue":1,"resources_js_views_Setting_PrivacyPolicy_vue":1,"resources_js_views_Setting_PrivacyPolicyDeliveryBoy_vue":1,"resources_js_views_Setting_PrivacyPolicySeller_vue":1,"resources_js_views_Setting_PrivacyPolicySalesman_vue":1,"resources_js_views_Setting_FirebaseSettings_vue":1,"resources_js_views_Setting_TaxSettings_TaxSettings_vue":1,"resources_js_views_Setting_NotificationTemplates_NotificationTemplates_vue":1,"resources_js_views_Setting_SmsSettings_vue":1,"resources_js_views_Setting_SmsTemplates_SmsTemplates_vue":1,"resources_js_views_Setting_SeoSettings_SeoSettings_vue":1,"resources_js_views_Notifications_Notifications_vue":1,"resources_js_views_Emails_Emails_vue":1,"resources_js_views_Emails_EmailTemplates_vue":1,"resources_js_views_Sections_Sections_vue":1,"resources_js_views_Offers_Offers_vue":1,"resources_js_views_Offers_PopupOffer_vue":1,"resources_js_views_DeliveryBoys_DeliveryBoys_vue":1,"resources_js_views_DeliveryBoys_EditDeliveryBoy_vue":1,"resources_js_views_DeliveryBoys_RegisteredDeliveryBoys_vue":1,"resources_js_views_DeliveryBoys_FundTransfers_FundTransfers_vue":1,"resources_js_views_DeliveryBoys_CashCollection_CashCollection_vue":1,"resources_js_views_WebSetings_GeneralWebSettings_vue":1,"resources_js_views_Blogs_BlogCategories_vue":1,"resources_js_views_Blogs_Blogs_vue":1,"resources_js_views_Subscriptions_Subscriptions_vue":1,"resources_js_views_Subscriptions_SubscriptionsFaqs_vue":1,"resources_js_views_WebSetings_SocialMedia_SocialMedia_vue":1,"resources_js_views_Customers_Customers_vue":1,"resources_js_views_Customers_WalletTransactions_WalletTransactions_vue":1,"resources_js_views_Customers_Transactions_vue":1,"resources_js_views_Customers_Wishlists_vue":1,"resources_js_views_Customers_ProductRequests_vue":1,"resources_js_views_WithdrawalRequests_WithdrawalRequests_vue":1,"resources_js_views_ReturnRequests_ReturnRequests_vue":1,"resources_js_views_Reports_SalesReports_vue":1,"resources_js_views_Reports_PosReports_vue":1,"resources_js_views_Reports_ProductSalesReports_vue":1,"resources_js_views_Reports_CommissionReports_vue":1,"resources_js_views_Reports_CommissionBilling_vue":1,"resources_js_views_Reports_CommissionBillingDetail_vue":1,"resources_js_views_SystemUsers_SystemUsers_vue":1,"resources_js_views_Role_Role_vue":1,"resources_js_views_errors_404_vue":1,"resources_js_views_errors_403_vue":1,"resources_js_views_errors_500_vue":1,"resources_js_views_Setting_PurchaseCode_vue":1,"resources_js_views_Setting_SystemUpdater_vue":1,"resources_js_views_City_City_vue":1,"resources_js_views_City_EditCity_vue":1,"resources_js_views_Area_Area_vue":1,"resources_js_views_Area_EditArea_vue":1,"resources_js_views_Faqs_Faqs_vue":1,"resources_js_views_ActivityLogs_ActivityLogs_vue":1,"resources_js_views_DistributorPlans_DistributorSubscriptionPlans_vue":1,"resources_js_views_Dashboard_ProductInfo_vue":1,"resources_js_views_Languages_Languages_vue":1,"resources_js_views_Countries_Countries_vue":1,"resources_js_views_Sellers_SellerDetails_vue":1,"resources_js_views_Sellers_SellerLogin_vue":1,"resources_js_views_Sellers_Dashboard_vue":1,"resources_js_views_Sellers_ProductInfo_vue":1,"resources_js_views_Sellers_Orders_vue":1,"resources_js_views_Sellers_Categories_vue":1,"resources_js_views_Sellers_WithdrawalRequests_WithdrawalRequests_vue":1,"resources_js_views_Sellers_ProductSalesReports_vue":1,"resources_js_views_Sellers_SalesReports_vue":1,"resources_js_views_Sellers_OrdersExport_vue":1,"resources_js_views_Sellers_CommissionBilling_vue":1,"resources_js_views_Sellers_TripsList_vue":1,"resources_js_views_Sellers_TripReconciliation_vue":1,"resources_js_views_Sellers_Taxes_vue":1,"resources_js_views_Sellers_Brands_vue":1,"resources_js_views_Sellers_Units_vue":1,"resources_js_views_Sellers_MyProducts_MyProducts_vue":1,"resources_js_views_Seller_Salesman_Salesman_vue":1,"resources_js_views_Seller_Salesman_EditSalesman_vue":1,"resources_js_views_Seller_Schemes_Schemes_vue":1,"resources_js_views_Seller_Schemes_EditScheme_vue":1,"resources_js_views_Sellers_PosReport_vue":1,"resources_js_views_Sellers_Settings_vue":1,"resources_js_views_DeliveryBoy_DeliveryBoyRegister_vue":1,"resources_js_views_DeliveryBoy_DeliveryBoyDetails_vue":1,"resources_js_views_DeliveryBoy_DeliveryBoyLogin_vue":1,"resources_js_views_DeliveryBoy_Dashboard_vue":1,"resources_js_views_DeliveryBoy_Orders_vue":1,"resources_js_views_DeliveryBoy_WithdrawalRequests_WithdrawalRequests_vue":1,"resources_js_views_DeliveryBoy_FundTransfers_vue":1,"resources_js_views_DeliveryBoy_CashCollection_vue":1,"resources_js_views_DeliveryBoy_ProductSalesReports_vue":1,"resources_js_views_DeliveryBoy_SalesReports_vue":1,"resources_js_views_DeliveryBoys_Salary_DeliveryBoySalary_vue":1,"node_modules_html2canvas_dist_html2canvas_js":1,"node_modules_dompurify_dist_purify_es_mjs":1,"node_modules_canvg_lib_index_es_js":1}[chunkId]) return "js/" + chunkId + ".js";
+/******/ 			if ({"resources_js_views_Install_vue":1,"resources_js_views_Login_vue":1,"resources_js_views_ForgotPassword_vue":1,"resources_js_views_ResetPassword_vue":1,"resources_js_containers_TheContainer_vue":1,"resources_js_containers_TheContainerSeller_vue":1,"resources_js_containers_TheContainerDeliveryBoy_vue":1,"resources_js_views_Settings_vue":1,"resources_js_views_Dashboard_vue":1,"resources_js_views_Orders_Orders_vue":1,"resources_js_views_Orders_ViewOrder_vue":1,"resources_js_views_Orders_InvoiceOrder_vue":1,"resources_js_views_Orders_SelfPickupOrders_vue":1,"resources_js_views_Orders_ViewSelfPickupOrder_vue":1,"resources_js_views_NotificationPanel_vue":1,"resources_js_views_Category_ManageCategories_vue":1,"resources_js_views_Category_CategoriesOrder_vue":1,"resources_js_views_Product_Products_vue":1,"resources_js_views_Product_EditProduct_vue":1,"resources_js_views_Product_ApproveRequests_vue":1,"resources_js_views_Product_ViewProduct_vue":1,"resources_js_views_Product_ProductOrder_vue":1,"resources_js_views_Product_ProductRatings_vue":1,"resources_js_views_Product_BulkUpload_vue":1,"resources_js_views_Product_BulkUpdate_vue":1,"resources_js_views_Product_Brands_Brands_vue":1,"resources_js_views_Product_ManageStock_vue":1,"resources_js_views_MasterCatalog_MasterProducts_vue":1,"resources_js_views_MasterCatalog_MasterProductForm_vue":1,"resources_js_views_MasterCatalog_BrandMappings_vue":1,"resources_js_views_Seller_Sellers_vue":1,"resources_js_views_Seller_RegisteredSellers_vue":1,"resources_js_views_Seller_EditSeller_vue":1,"resources_js_views_Seller_WalletTransactions_SellerWalletTransactions_vue":1,"resources_js_views_Logistics_ManageVehicles_vue":1,"resources_js_views_Logistics_CreateLoadingSlip_vue":1,"resources_js_views_Logistics_ManageLoadingSlips_vue":1,"resources_js_views_Logistics_ViewLoadingSlip_vue":1,"resources_js_views_HomeSliders_HomeSliders_vue":1,"resources_js_views_PromoCode_PromoCode_vue":1,"resources_js_views_Setting_TimeSlots_TimeSlots_vue":1,"resources_js_views_Setting_StoreSettings_vue":1,"resources_js_views_Setting_SystemSettingsHub_vue":1,"resources_js_views_Product_Units_Units_vue":1,"resources_js_views_Setting_PaymentMethods_vue":1,"resources_js_views_Setting_AdditionalCharges_vue":1,"resources_js_views_Setting_ContactUs_vue":1,"resources_js_views_Setting_AboutUs_vue":1,"resources_js_views_Setting_PrivacyPolicy_vue":1,"resources_js_views_Setting_PrivacyPolicyDeliveryBoy_vue":1,"resources_js_views_Setting_PrivacyPolicySeller_vue":1,"resources_js_views_Setting_PrivacyPolicySalesman_vue":1,"resources_js_views_Setting_FirebaseSettings_vue":1,"resources_js_views_Setting_TaxSettings_TaxSettings_vue":1,"resources_js_views_Setting_NotificationTemplates_NotificationTemplates_vue":1,"resources_js_views_Setting_SmsSettings_vue":1,"resources_js_views_Setting_SmsTemplates_SmsTemplates_vue":1,"resources_js_views_Setting_SeoSettings_SeoSettings_vue":1,"resources_js_views_Notifications_Notifications_vue":1,"resources_js_views_Emails_Emails_vue":1,"resources_js_views_Emails_EmailTemplates_vue":1,"resources_js_views_Sections_Sections_vue":1,"resources_js_views_Offers_Offers_vue":1,"resources_js_views_Offers_PopupOffer_vue":1,"resources_js_views_DeliveryBoys_DeliveryBoys_vue":1,"resources_js_views_DeliveryBoys_EditDeliveryBoy_vue":1,"resources_js_views_DeliveryBoys_RegisteredDeliveryBoys_vue":1,"resources_js_views_DeliveryBoys_FundTransfers_FundTransfers_vue":1,"resources_js_views_DeliveryBoys_CashCollection_CashCollection_vue":1,"resources_js_views_WebSetings_GeneralWebSettings_vue":1,"resources_js_views_Blogs_BlogCategories_vue":1,"resources_js_views_Blogs_Blogs_vue":1,"resources_js_views_Subscriptions_Subscriptions_vue":1,"resources_js_views_Subscriptions_SubscriptionsFaqs_vue":1,"resources_js_views_WebSetings_SocialMedia_SocialMedia_vue":1,"resources_js_views_Customers_Customers_vue":1,"resources_js_views_Customers_WalletTransactions_WalletTransactions_vue":1,"resources_js_views_Customers_Transactions_vue":1,"resources_js_views_Customers_Wishlists_vue":1,"resources_js_views_Customers_ProductRequests_vue":1,"resources_js_views_WithdrawalRequests_WithdrawalRequests_vue":1,"resources_js_views_ReturnRequests_ReturnRequests_vue":1,"resources_js_views_Reports_SalesReports_vue":1,"resources_js_views_Reports_PosReports_vue":1,"resources_js_views_Reports_ProductSalesReports_vue":1,"resources_js_views_Reports_CommissionReports_vue":1,"resources_js_views_Reports_CommissionBilling_vue":1,"resources_js_views_Reports_CommissionBillingDetail_vue":1,"resources_js_views_SystemUsers_SystemUsers_vue":1,"resources_js_views_Role_Role_vue":1,"resources_js_views_errors_404_vue":1,"resources_js_views_errors_403_vue":1,"resources_js_views_errors_500_vue":1,"resources_js_views_Setting_PurchaseCode_vue":1,"resources_js_views_Setting_SystemUpdater_vue":1,"resources_js_views_City_City_vue":1,"resources_js_views_City_EditCity_vue":1,"resources_js_views_Area_Area_vue":1,"resources_js_views_Area_EditArea_vue":1,"resources_js_views_Faqs_Faqs_vue":1,"resources_js_views_ActivityLogs_ActivityLogs_vue":1,"resources_js_views_DistributorPlans_DistributorSubscriptionPlans_vue":1,"resources_js_views_Dashboard_ProductInfo_vue":1,"resources_js_views_Languages_Languages_vue":1,"resources_js_views_Countries_Countries_vue":1,"resources_js_views_Sellers_SellerDetails_vue":1,"resources_js_views_Sellers_SellerLogin_vue":1,"resources_js_views_Sellers_Dashboard_vue":1,"resources_js_views_Sellers_ProductInfo_vue":1,"resources_js_views_Sellers_Orders_vue":1,"resources_js_views_Sellers_Categories_vue":1,"resources_js_views_Sellers_WithdrawalRequests_WithdrawalRequests_vue":1,"resources_js_views_Sellers_ProductSalesReports_vue":1,"resources_js_views_Sellers_SalesReports_vue":1,"resources_js_views_Sellers_OrdersExport_vue":1,"resources_js_views_Sellers_CommissionBilling_vue":1,"resources_js_views_Sellers_TripsList_vue":1,"resources_js_views_Sellers_TripReconciliation_vue":1,"resources_js_views_Sellers_Taxes_vue":1,"resources_js_views_Sellers_Brands_vue":1,"resources_js_views_Sellers_Units_vue":1,"resources_js_views_Sellers_MyProducts_MyProducts_vue":1,"resources_js_views_Seller_Salesman_Salesman_vue":1,"resources_js_views_Seller_Salesman_EditSalesman_vue":1,"resources_js_views_Seller_Schemes_Schemes_vue":1,"resources_js_views_Seller_Schemes_EditScheme_vue":1,"resources_js_views_Sellers_Settings_vue":1,"resources_js_views_DeliveryBoy_DeliveryBoyRegister_vue":1,"resources_js_views_DeliveryBoy_DeliveryBoyDetails_vue":1,"resources_js_views_DeliveryBoy_DeliveryBoyLogin_vue":1,"resources_js_views_DeliveryBoy_Dashboard_vue":1,"resources_js_views_DeliveryBoy_Orders_vue":1,"resources_js_views_DeliveryBoy_WithdrawalRequests_WithdrawalRequests_vue":1,"resources_js_views_DeliveryBoy_FundTransfers_vue":1,"resources_js_views_DeliveryBoy_CashCollection_vue":1,"resources_js_views_DeliveryBoy_ProductSalesReports_vue":1,"resources_js_views_DeliveryBoy_SalesReports_vue":1,"resources_js_views_DeliveryBoys_Salary_DeliveryBoySalary_vue":1,"node_modules_html2canvas_dist_html2canvas_js":1,"node_modules_dompurify_dist_purify_es_mjs":1,"node_modules_canvg_lib_index_es_js":1}[chunkId]) return "js/" + chunkId + ".js";
 /******/ 			// return url for filenames based on template
 /******/ 			return undefined;
 /******/ 		};

@@ -360,12 +360,14 @@ export default {
                             url: '/brands',
                             permission: 'brands',
                         },
+                        /*
                         {
                             name: __('media'),
                             icon: 'grid-fill',
                             url: '/media',
                             permission: 'manage_media',
                         },
+                        */
                     ]
                 },
                 /*

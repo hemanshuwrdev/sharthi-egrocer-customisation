@@ -35,7 +35,7 @@ const EditProduct = () => import("../views/Product/EditProduct");
 const CloneProduct = () => import("../views/Product/EditProduct");
 const ApproveRequests = () => import("../views/Product/ApproveRequests");
 const ViewProduct = () => import("../views/Product/ViewProduct");
-const Media = () => import("../views/Product/Media");
+// const Media = () => import("../views/Product/Media");
 const ProductOrder = () => import("../views/Product/ProductOrder");
 const ProductRatings = () => import("../views/Product/ProductRatings");
 const BulkUpload = () => import("../views/Product/BulkUpload");
@@ -241,11 +241,11 @@ const SellerViewProduct = () => import("../views/Product/ViewProduct");
 const SellerProductRatings = () => import("../views/Product/ProductRatings");
 const SellerCloneProduct = () => import("../views/Product/EditProduct");
 const SellerManageStock = () => import("../views/Product/ManageStock");
-const SellerMedia = () => import("../views/Product/Media");
+// const SellerMedia = () => import("../views/Product/Media");
 const SellerSettings = () => import('../views/Settings');
 const SellerProfile = () => import("../views/Seller/EditSeller");
 // const SellerPointOfSale = () => import("../views/Sellers/PointOfSale");
-const SellerPosReports = () => import("../views/Sellers/PosReport");
+// const SellerPosReports = () => import("../views/Sellers/PosReport");
 const SellerPrintSettings = () => import("../views/Sellers/Settings");
 
 /***********************************************************/
@@ -1470,6 +1470,7 @@ function configRoutes() {
                         title: 'Subscription Plan'
                     },
                 },
+                /*
                 {
                     path: "media",
                     name: "Media",
@@ -1481,6 +1482,7 @@ function configRoutes() {
 
                     },
                 },
+                */
                 {
 
                     path: "/settings",
@@ -2029,6 +2031,7 @@ function configRoutes() {
                         title: 'Units'
                     },
                 },
+                /*
                 {
                     path: "/seller/media",
                     name: "seller_media",
@@ -2039,6 +2042,7 @@ function configRoutes() {
                         title: 'Media'
                     },
                 },
+                */
                 {
                     path: "/seller/taxes",
                     name: "seller_taxes",
@@ -2141,6 +2145,7 @@ function configRoutes() {
                         title: 'Trip Reconciliation'
                     }
                 },
+                /*
                 {
                     path: "pos_reports",
                     name: "SellerPosReports",
@@ -2151,6 +2156,7 @@ function configRoutes() {
                         title: 'POS Reports'
                     }
                 },
+                */
                 {
                     path: "settings",
                     name: "Settings_setting",

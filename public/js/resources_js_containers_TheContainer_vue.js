@@ -408,12 +408,15 @@ __webpack_require__.r(__webpack_exports__);
           icon: 'grid-fill',
           url: '/brands',
           permission: 'brands'
-        }, {
-          name: __('media'),
-          icon: 'grid-fill',
-          url: '/media',
-          permission: 'manage_media'
-        }]
+        }
+        /*
+        {
+            name: __('media'),
+            icon: 'grid-fill',
+            url: '/media',
+            permission: 'manage_media',
+        },
+        */]
       },
       /*
       {
