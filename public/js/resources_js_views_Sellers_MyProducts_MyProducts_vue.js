@@ -267,6 +267,28 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -291,11 +313,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         label: __('name'),
         visible: true,
         "class": 'text-start'
-      }, {
-        key: 'brand',
-        label: __('brand'),
-        visible: true,
-        "class": 'text-center'
       }, {
         key: 'sku',
         label: __('sku'),
@@ -339,6 +356,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         thStyle: {
           minWidth: '165px',
           width: '165px'
+        }
+      }, {
+        key: 'cancelable_status',
+        label: __('cancelable'),
+        visible: true,
+        "class": 'text-center'
+      }, {
+        key: 'return_status',
+        label: __('returnable'),
+        visible: true,
+        "class": 'text-center',
+        thStyle: {
+          minWidth: '150px'
         }
       }, {
         key: 'slab_count',
@@ -470,7 +500,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         status: row.status,
         allow_loose_qty: row.allow_loose_qty ? 1 : 0,
         max_qty_mode: row.max_qty_mode || '',
-        max_qty_value: row.max_qty_mode && row.max_qty_value != null ? row.max_qty_value : ''
+        max_qty_value: row.max_qty_mode && row.max_qty_value != null ? row.max_qty_value : '',
+        cancelable_status: row.cancelable_status ? 1 : 0,
+        return_status: row.return_status ? 1 : 0,
+        return_days: row.return_status && row.return_days ? row.return_days : 1
       }).then(function (res) {
         row._saving = false;
         if (res.data.status) {
@@ -1131,6 +1164,17 @@ var render = function () {
                         _vm._v(_vm._s(row.item.master_product_name)),
                       ]),
                       _vm._v(" "),
+                      row.item.brand
+                        ? _c(
+                            "span",
+                            {
+                              staticClass:
+                                "badge bg-light text-dark border ms-1",
+                            },
+                            [_vm._v(_vm._s(row.item.brand))]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
                       row.item.parent_company
                         ? _c("div", { staticClass: "text-muted small" }, [
                             _vm._v(
@@ -1140,18 +1184,6 @@ var render = function () {
                             ),
                           ])
                         : _vm._e(),
-                    ]
-                  },
-                },
-                {
-                  key: "cell(brand)",
-                  fn: function (row) {
-                    return [
-                      _vm._v(
-                        "\n                                    " +
-                          _vm._s(row.item.brand || "—") +
-                          "\n                                "
-                      ),
                     ]
                   },
                 },
@@ -1387,6 +1419,194 @@ var render = function () {
                               },
                             },
                           }),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(cancelable_status)",
+                  fn: function (row) {
+                    return [
+                      _c(
+                        "div",
+                        {
+                          staticClass:
+                            "form-check form-switch d-flex justify-content-center",
+                        },
+                        [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: row.item.cancelable_status,
+                                expression: "row.item.cancelable_status",
+                              },
+                            ],
+                            staticClass: "form-check-input",
+                            attrs: {
+                              type: "checkbox",
+                              role: "switch",
+                              title: _vm.__("cancelable_hint"),
+                            },
+                            domProps: {
+                              checked: Array.isArray(row.item.cancelable_status)
+                                ? _vm._i(row.item.cancelable_status, null) > -1
+                                : row.item.cancelable_status,
+                            },
+                            on: {
+                              change: function ($event) {
+                                var $$a = row.item.cancelable_status,
+                                  $$el = $event.target,
+                                  $$c = $$el.checked ? true : false
+                                if (Array.isArray($$a)) {
+                                  var $$v = null,
+                                    $$i = _vm._i($$a, $$v)
+                                  if ($$el.checked) {
+                                    $$i < 0 &&
+                                      _vm.$set(
+                                        row.item,
+                                        "cancelable_status",
+                                        $$a.concat([$$v])
+                                      )
+                                  } else {
+                                    $$i > -1 &&
+                                      _vm.$set(
+                                        row.item,
+                                        "cancelable_status",
+                                        $$a
+                                          .slice(0, $$i)
+                                          .concat($$a.slice($$i + 1))
+                                      )
+                                  }
+                                } else {
+                                  _vm.$set(row.item, "cancelable_status", $$c)
+                                }
+                              },
+                            },
+                          }),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(return_status)",
+                  fn: function (row) {
+                    return [
+                      _c(
+                        "div",
+                        {
+                          staticClass:
+                            "d-flex flex-column align-items-center gap-1",
+                        },
+                        [
+                          _c("div", { staticClass: "form-check form-switch" }, [
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: row.item.return_status,
+                                  expression: "row.item.return_status",
+                                },
+                              ],
+                              staticClass: "form-check-input",
+                              attrs: {
+                                type: "checkbox",
+                                role: "switch",
+                                title: _vm.__("returnable_hint"),
+                              },
+                              domProps: {
+                                checked: Array.isArray(row.item.return_status)
+                                  ? _vm._i(row.item.return_status, null) > -1
+                                  : row.item.return_status,
+                              },
+                              on: {
+                                change: function ($event) {
+                                  var $$a = row.item.return_status,
+                                    $$el = $event.target,
+                                    $$c = $$el.checked ? true : false
+                                  if (Array.isArray($$a)) {
+                                    var $$v = null,
+                                      $$i = _vm._i($$a, $$v)
+                                    if ($$el.checked) {
+                                      $$i < 0 &&
+                                        _vm.$set(
+                                          row.item,
+                                          "return_status",
+                                          $$a.concat([$$v])
+                                        )
+                                    } else {
+                                      $$i > -1 &&
+                                        _vm.$set(
+                                          row.item,
+                                          "return_status",
+                                          $$a
+                                            .slice(0, $$i)
+                                            .concat($$a.slice($$i + 1))
+                                        )
+                                    }
+                                  } else {
+                                    _vm.$set(row.item, "return_status", $$c)
+                                  }
+                                },
+                              },
+                            }),
+                          ]),
+                          _vm._v(" "),
+                          row.item.return_status
+                            ? _c(
+                                "div",
+                                {
+                                  staticClass:
+                                    "d-flex align-items-center gap-1",
+                                },
+                                [
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model.number",
+                                        value: row.item.return_days,
+                                        expression: "row.item.return_days",
+                                        modifiers: { number: true },
+                                      },
+                                    ],
+                                    staticClass: "form-control form-control-sm",
+                                    staticStyle: { width: "70px" },
+                                    attrs: {
+                                      type: "number",
+                                      min: "1",
+                                      step: "1",
+                                    },
+                                    domProps: { value: row.item.return_days },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          row.item,
+                                          "return_days",
+                                          _vm._n($event.target.value)
+                                        )
+                                      },
+                                      blur: function ($event) {
+                                        return _vm.$forceUpdate()
+                                      },
+                                    },
+                                  }),
+                                  _vm._v(" "),
+                                  _c(
+                                    "span",
+                                    { staticClass: "text-muted small" },
+                                    [_vm._v(_vm._s(_vm.__("days")))]
+                                  ),
+                                ]
+                              )
+                            : _vm._e(),
                         ]
                       ),
                     ]

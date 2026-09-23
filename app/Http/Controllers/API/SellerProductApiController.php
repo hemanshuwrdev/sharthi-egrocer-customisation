@@ -69,7 +69,10 @@ class SellerProductApiController extends Controller
                 'seller_products.status as sp_status',
                 'seller_products.allow_loose_qty as sp_allow_loose_qty',
                 'seller_products.max_qty_mode as sp_max_qty_mode',
-                'seller_products.max_qty_value as sp_max_qty_value'
+                'seller_products.max_qty_value as sp_max_qty_value',
+                'seller_products.cancelable_status as sp_cancelable_status',
+                'seller_products.return_status as sp_return_status',
+                'seller_products.return_days as sp_return_days'
             );
 
         if ($filter !== '') {
@@ -121,6 +124,9 @@ class SellerProductApiController extends Controller
                 'allow_loose_qty' => (bool) $v->sp_allow_loose_qty,
                 'max_qty_mode' => $v->sp_max_qty_mode,
                 'max_qty_value' => $v->sp_max_qty_value,
+                'cancelable_status' => (bool) $v->sp_cancelable_status,
+                'return_status' => (bool) $v->sp_return_status,
+                'return_days' => $v->sp_return_days !== null ? (int) $v->sp_return_days : 1,
                 'weight' => $v->weight,
                 'image' => $v->image ?: ($mp ? $mp->image : null),
 
@@ -160,6 +166,9 @@ class SellerProductApiController extends Controller
             'allow_loose_qty' => 'nullable|boolean',
             'max_qty_mode' => 'nullable|in:per_order,per_day',
             'max_qty_value' => 'nullable|integer|min:1',
+            'cancelable_status' => 'nullable|boolean',
+            'return_status' => 'nullable|boolean',
+            'return_days' => 'nullable|integer|min:1',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -188,6 +197,9 @@ class SellerProductApiController extends Controller
         if ($request->has('allow_loose_qty')) $sp->allow_loose_qty = (bool) $request->allow_loose_qty;
         if ($request->has('max_qty_mode')) $sp->max_qty_mode = $request->max_qty_mode ?: null;
         if ($request->has('max_qty_value')) $sp->max_qty_value = $request->max_qty_value ?: null;
+        if ($request->has('cancelable_status')) $sp->cancelable_status = (bool) $request->cancelable_status;
+        if ($request->has('return_status')) $sp->return_status = (bool) $request->return_status;
+        if ($request->has('return_days')) $sp->return_days = $request->return_days ?: 1;
 
         $sp->save();
 

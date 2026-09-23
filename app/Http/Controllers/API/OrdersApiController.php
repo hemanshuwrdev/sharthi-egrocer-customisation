@@ -1173,6 +1173,12 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError('order_is_already_delivered');
         }
 
+        // Once a loading slip has been generated for this order, it's already staged
+        // for dispatch physically — cancellation is only allowed before that.
+        if (!empty($order->loading_slip_id)) {
+            return CommonHelper::responseError('order_cannot_be_cancelled_after_loading_slip_generated');
+        }
+
         if (empty($order_item)) {
             return CommonHelper::responseError('order_item_not_found');
         }

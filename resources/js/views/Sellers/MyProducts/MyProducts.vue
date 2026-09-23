@@ -69,14 +69,12 @@
 
                                     <template #cell(name)="row">
                                         <strong>{{ row.item.master_product_name }}</strong>
+                                        <span v-if="row.item.brand" class="badge bg-light text-dark border ms-1">{{ row.item.brand }}</span>
                                         <div class="text-muted small" v-if="row.item.parent_company">
                                             {{ row.item.parent_company }}
                                         </div>
                                     </template>
 
-                                    <template #cell(brand)="row">
-                                        {{ row.item.brand || '—' }}
-                                    </template>
 
                                     <template #cell(sku)="row">
                                         {{ row.item.sku || '—' }}
@@ -118,6 +116,30 @@
                                             <input class="form-check-input" type="checkbox" role="switch"
                                                 v-model="row.item.allow_loose_qty"
                                                 :title="__('allow_loose_qty_hint')" />
+                                        </div>
+                                    </template>
+
+                                    <template #cell(cancelable_status)="row">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                v-model="row.item.cancelable_status"
+                                                :title="__('cancelable_hint')" />
+                                        </div>
+                                    </template>
+
+                                    <template #cell(return_status)="row">
+                                        <div class="d-flex flex-column align-items-center gap-1">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch"
+                                                    v-model="row.item.return_status"
+                                                    :title="__('returnable_hint')" />
+                                            </div>
+                                            <div v-if="row.item.return_status" class="d-flex align-items-center gap-1">
+                                                <input type="number" min="1" step="1"
+                                                    class="form-control form-control-sm" style="width:70px"
+                                                    v-model.number="row.item.return_days" />
+                                                <span class="text-muted small">{{ __('days') }}</span>
+                                            </div>
                                         </div>
                                     </template>
 
@@ -256,7 +278,6 @@ export default {
                 { key: 'product_variant_id', label: __('id'), visible: true, class: 'text-center' },
                 { key: 'image', label: __('image'), visible: true, class: 'text-center' },
                 { key: 'name', label: __('name'), visible: true, class: 'text-start' },
-                { key: 'brand', label: __('brand'), visible: true, class: 'text-center' },
                 { key: 'sku', label: __('sku'), visible: false, class: 'text-center' },
                 { key: 'unit', label: __('per_unit'), visible: true, class: 'text-center' },
                 { key: 'secondary_unit', label: __('secondary_unit'), visible: false, class: 'text-center' },
@@ -265,6 +286,8 @@ export default {
                 { key: 'stock', label: __('stock'), visible: true, class: 'text-center' },
                 { key: 'allow_loose_qty', label: __('allow_loose_qty'), visible: false, class: 'text-center' },
                 { key: 'max_qty', label: __('max_allowed_qty'), visible: false, class: 'text-center', thStyle: { minWidth: '165px', width: '165px' } },
+                { key: 'cancelable_status', label: __('cancelable'), visible: true, class: 'text-center' },
+                { key: 'return_status', label: __('returnable'), visible: true, class: 'text-center', thStyle: { minWidth: '150px' } },
                 { key: 'slab_count', label: __('slabs'), visible: true, class: 'text-center' },
                 { key: 'status', label: __('status'), visible: true, class: 'text-center' },
                 { key: 'actions', label: __('actions'), visible: true, class: 'text-center' },
@@ -368,6 +391,9 @@ export default {
                 allow_loose_qty: row.allow_loose_qty ? 1 : 0,
                 max_qty_mode: row.max_qty_mode || '',
                 max_qty_value: row.max_qty_mode && row.max_qty_value != null ? row.max_qty_value : '',
+                cancelable_status: row.cancelable_status ? 1 : 0,
+                return_status: row.return_status ? 1 : 0,
+                return_days: row.return_status && row.return_days ? row.return_days : 1,
             }).then(res => {
                 row._saving = false;
                 if (res.data.status) {

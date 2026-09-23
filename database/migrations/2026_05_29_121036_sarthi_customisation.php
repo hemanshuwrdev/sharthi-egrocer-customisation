@@ -1290,6 +1290,27 @@ class SarthiCustomisation extends Migration
                     ->comment('Minimum cart total required for a retailer to place an order with this distributor.');
             }
         });
+
+        // 15. Per-distributor cancelable / returnable policy, mirroring the legacy
+        // products.cancelable_status/return_status/return_days columns but scoped to
+        // seller_products so each distributor sets their own policy for a shared
+        // master-catalog variant (same pattern as allow_loose_qty above).
+        if (Schema::hasTable('seller_products')) {
+            Schema::table('seller_products', function (Blueprint $table) {
+                if (!Schema::hasColumn('seller_products', 'cancelable_status')) {
+                    $table->boolean('cancelable_status')->default(0)->after('max_qty_value')
+                        ->comment('1 = retailer can cancel an order containing this item');
+                }
+                if (!Schema::hasColumn('seller_products', 'return_status')) {
+                    $table->boolean('return_status')->default(0)->after('cancelable_status')
+                        ->comment('1 = retailer can request a return for this item');
+                }
+                if (!Schema::hasColumn('seller_products', 'return_days')) {
+                    $table->unsignedInteger('return_days')->default(1)->after('return_status')
+                        ->comment('Days after delivery a return can be requested');
+                }
+            });
+        }
     }
 
     /**
@@ -1299,6 +1320,11 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('seller_products') && Schema::hasColumn('seller_products', 'cancelable_status')) {
+            Schema::table('seller_products', function (Blueprint $table) {
+                $table->dropColumn(['cancelable_status', 'return_status', 'return_days']);
+            });
+        }
         if (Schema::hasTable('sellers') && Schema::hasColumn('sellers', 'min_order_amount')) {
             Schema::table('sellers', function (Blueprint $table) {
                 $table->dropColumn('min_order_amount');
