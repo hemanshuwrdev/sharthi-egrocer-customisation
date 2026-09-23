@@ -573,6 +573,10 @@ class SarthiCustomisation extends Migration
             if (!Schema::hasColumn('order_items', 'damage_photo')) {
                 $table->string('damage_photo')->nullable()->after('delivered_quantity');
             }
+            if (!Schema::hasColumn('order_items', 'shortfall_reason')) {
+                $table->string('shortfall_reason', 40)->nullable()->after('damage_photo')
+                    ->comment('Why delivered_quantity < quantity — see DeliveryBoysApiController::SHORTFALL_REASONS');
+            }
         });
 
         // 10. Scheme Engine: distributor-owned offers (Buy X Get Y + group slab discount, auto-apply best)

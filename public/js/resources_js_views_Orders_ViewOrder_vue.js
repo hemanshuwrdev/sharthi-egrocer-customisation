@@ -430,6 +430,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1713,262 +1726,359 @@ var render = function () {
                               )
                             : _vm._e(),
                           _vm._v(" "),
-                          _c("div", { staticClass: "card-body" }, [
-                            _c("b", [_vm._v(_vm._s(_vm.__("name")) + " :- ")]),
-                            _vm._v(
-                              _vm._s(
-                                item.product_name +
-                                  " (" +
-                                  item.variant_name +
-                                  ")"
-                              ) + "\n                                "
-                            ),
-                            _c("br"),
-                            _vm._v(" "),
-                            _c("b", [
-                              _vm._v(_vm._s(_vm.__("quantity")) + " :- "),
-                            ]),
-                            _vm._v(
-                              _vm._s(item.quantity) +
-                                "\n                                "
-                            ),
-                            _c("br"),
-                            _vm._v(" "),
-                            _c("b", [
-                              _vm._v(_vm._s(_vm.__("variant")) + " :- "),
-                            ]),
-                            _vm._v(
-                              _vm._s(item.variant_name) +
-                                "\n                                "
-                            ),
-                            _c("br"),
-                            _vm._v(" "),
-                            _c("b", [
+                          _c(
+                            "div",
+                            { staticClass: "card-body" },
+                            [
+                              _c("b", [
+                                _vm._v(_vm._s(_vm.__("name")) + " :- "),
+                              ]),
                               _vm._v(
-                                _vm._s(_vm.__("subtotal")) +
-                                  " (" +
-                                  _vm._s(_vm.$currency) +
-                                  " ) :- "
+                                _vm._s(
+                                  item.product_name +
+                                    " (" +
+                                    item.variant_name +
+                                    ")"
+                                ) + "\n                                "
                               ),
-                            ]),
-                            _vm._v(
-                              _vm._s(item.sub_total) +
-                                "\n                                "
-                            ),
-                            _c("br"),
-                            _vm._v(" "),
-                            _c("b", [
-                              _vm._v(_vm._s(_vm.__("status")) + " :- "),
-                            ]),
-                            _vm._v(
-                              _vm._s(
-                                _vm.getDisplayName(
-                                  item.status_name_translation
-                                ) || item.status_name
-                              ) + "\n                                "
-                            ),
-                            _c("br"),
-                            _vm._v(" "),
-                            item.active_status == 7
-                              ? _c("span", [
-                                  _c("b", [
-                                    _vm._v(_vm._s(_vm.__("reason")) + " :- "),
-                                  ]),
-                                  _vm._v(_vm._s(item.cancellation_reason)),
-                                ])
-                              : _vm._e(),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "row mt-3" }, [
-                              _c(
-                                "div",
-                                { staticClass: "col-6" },
-                                [
-                                  _c(
-                                    "b-button",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "b-tooltip",
-                                          rawName: "v-b-tooltip.hover",
-                                          modifiers: { hover: true },
-                                        },
-                                      ],
-                                      staticClass: "btn btn-block btn-primary",
-                                      attrs: { title: "View Item Details" },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.sendInfo(item)
+                              _c("br"),
+                              _vm._v(" "),
+                              _c("b", [
+                                _vm._v(_vm._s(_vm.__("quantity")) + " :- "),
+                              ]),
+                              _vm._v(
+                                _vm._s(item.quantity) +
+                                  "\n                                "
+                              ),
+                              _c("br"),
+                              _vm._v(" "),
+                              _c("b", [
+                                _vm._v(_vm._s(_vm.__("variant")) + " :- "),
+                              ]),
+                              _vm._v(
+                                _vm._s(item.variant_name) +
+                                  "\n                                "
+                              ),
+                              _c("br"),
+                              _vm._v(" "),
+                              _c("b", [
+                                _vm._v(
+                                  _vm._s(_vm.__("subtotal")) +
+                                    " (" +
+                                    _vm._s(_vm.$currency) +
+                                    " ) :- "
+                                ),
+                              ]),
+                              _vm._v(
+                                _vm._s(item.sub_total) +
+                                  "\n                                "
+                              ),
+                              _c("br"),
+                              _vm._v(" "),
+                              _c("b", [
+                                _vm._v(_vm._s(_vm.__("status")) + " :- "),
+                              ]),
+                              _vm._v(
+                                _vm._s(
+                                  _vm.getDisplayName(
+                                    item.status_name_translation
+                                  ) || item.status_name
+                                ) + "\n                                "
+                              ),
+                              _c("br"),
+                              _vm._v(" "),
+                              item.active_status == 7
+                                ? _c("span", [
+                                    _c("b", [
+                                      _vm._v(_vm._s(_vm.__("reason")) + " :- "),
+                                    ]),
+                                    _vm._v(_vm._s(item.cancellation_reason)),
+                                  ])
+                                : _vm._e(),
+                              _vm._v(" "),
+                              item.shortfall_reason ||
+                              (item.delivered_quantity !== null &&
+                                item.delivered_quantity < item.quantity)
+                                ? [
+                                    _c("br"),
+                                    _vm._v(" "),
+                                    _c("b", [
+                                      _vm._v(
+                                        _vm._s(_vm.__("delivered_quantity")) +
+                                          " :- "
+                                      ),
+                                    ]),
+                                    _vm._v(
+                                      _vm._s(item.delivered_quantity) +
+                                        "\n                                    "
+                                    ),
+                                    _c("br"),
+                                    _vm._v(" "),
+                                    item.shortfall_reason
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "text-danger" },
+                                          [
+                                            _c("b", [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.__("shortfall_reason")
+                                                ) + " :- "
+                                              ),
+                                            ]),
+                                            _vm._v(
+                                              _vm._s(
+                                                _vm.__(item.shortfall_reason)
+                                              ) +
+                                                "\n                                    "
+                                            ),
+                                          ]
+                                        )
+                                      : _vm._e(),
+                                    _vm._v(" "),
+                                    item.damage_photo ? _c("br") : _vm._e(),
+                                    _vm._v(" "),
+                                    item.damage_photo
+                                      ? _c(
+                                          "a",
+                                          {
+                                            attrs: {
+                                              href:
+                                                _vm.$storageUrl +
+                                                item.damage_photo,
+                                              target: "_blank",
+                                            },
+                                          },
+                                          [
+                                            _vm._v(
+                                              "\n                                        " +
+                                                _vm._s(
+                                                  _vm.__("view_damage_photo")
+                                                ) +
+                                                "\n                                    "
+                                            ),
+                                          ]
+                                        )
+                                      : _vm._e(),
+                                  ]
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "row mt-3" }, [
+                                _c(
+                                  "div",
+                                  { staticClass: "col-6" },
+                                  [
+                                    _c(
+                                      "b-button",
+                                      {
+                                        directives: [
+                                          {
+                                            name: "b-tooltip",
+                                            rawName: "v-b-tooltip.hover",
+                                            modifiers: { hover: true },
+                                          },
+                                        ],
+                                        staticClass:
+                                          "btn btn-block btn-primary",
+                                        attrs: { title: "View Item Details" },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.sendInfo(item)
+                                          },
                                         },
                                       },
-                                    },
-                                    [
-                                      _vm._v(
-                                        "\n                                            " +
-                                          _vm._s(_vm.__("view_item_details")) +
-                                          "\n                                        "
-                                      ),
-                                    ]
-                                  ),
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _vm.isSellerRoute && item.master_product_id
-                                ? _c(
-                                    "div",
-                                    { staticClass: "col-6" },
-                                    [
-                                      _c(
-                                        "router-link",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
-                                            },
-                                          ],
-                                          staticClass:
-                                            "btn btn-block btn-light-primary",
-                                          attrs: {
-                                            to: {
-                                              name: "SellerMyProducts",
-                                              query: {
-                                                master_product_id:
-                                                  item.master_product_id,
+                                      [
+                                        _vm._v(
+                                          "\n                                            " +
+                                            _vm._s(
+                                              _vm.__("view_item_details")
+                                            ) +
+                                            "\n                                        "
+                                        ),
+                                      ]
+                                    ),
+                                  ],
+                                  1
+                                ),
+                                _vm._v(" "),
+                                _vm.isSellerRoute && item.master_product_id
+                                  ? _c(
+                                      "div",
+                                      { staticClass: "col-6" },
+                                      [
+                                        _c(
+                                          "router-link",
+                                          {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
                                               },
-                                            },
-                                            title: "View Product",
-                                          },
-                                        },
-                                        [_vm._v(_vm._s(_vm.__("view_product")))]
-                                      ),
-                                    ],
-                                    1
-                                  )
-                                : _vm.isSellerRoute
-                                ? _c(
-                                    "div",
-                                    { staticClass: "col-6" },
-                                    [
-                                      _c(
-                                        "router-link",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
-                                            },
-                                          ],
-                                          staticClass:
-                                            "btn btn-block btn-light-primary",
-                                          attrs: {
-                                            to: {
-                                              name: "SellerViewProduct",
-                                              params: { id: item.product_id },
-                                            },
-                                            title: "View Product",
-                                          },
-                                        },
-                                        [_vm._v(_vm._s(_vm.__("view_product")))]
-                                      ),
-                                    ],
-                                    1
-                                  )
-                                : _vm.isDeliveryBoyRoute
-                                ? _c(
-                                    "div",
-                                    { staticClass: "col-6" },
-                                    [
-                                      _c(
-                                        "router-link",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
-                                            },
-                                          ],
-                                          staticClass:
-                                            "btn btn-block btn-light-primary",
-                                          attrs: {
-                                            to: {
-                                              name: "DeliveryBoyViewProduct",
-                                              params: { id: item.product_id },
-                                            },
-                                            title: "View Product",
-                                          },
-                                        },
-                                        [_vm._v(_vm._s(_vm.__("view_product")))]
-                                      ),
-                                    ],
-                                    1
-                                  )
-                                : item.master_product_id
-                                ? _c(
-                                    "div",
-                                    { staticClass: "col-6" },
-                                    [
-                                      _c(
-                                        "router-link",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
-                                            },
-                                          ],
-                                          staticClass:
-                                            "btn btn-block btn-light-primary",
-                                          attrs: {
-                                            to: {
-                                              name: "EditMasterProduct",
-                                              params: {
-                                                id: item.master_product_id,
+                                            ],
+                                            staticClass:
+                                              "btn btn-block btn-light-primary",
+                                            attrs: {
+                                              to: {
+                                                name: "SellerMyProducts",
+                                                query: {
+                                                  master_product_id:
+                                                    item.master_product_id,
+                                                },
                                               },
+                                              title: "View Product",
                                             },
-                                            title: "View Product",
                                           },
-                                        },
-                                        [_vm._v(_vm._s(_vm.__("view_product")))]
-                                      ),
-                                    ],
-                                    1
-                                  )
-                                : _c(
-                                    "div",
-                                    { staticClass: "col-6" },
-                                    [
-                                      _c(
-                                        "router-link",
-                                        {
-                                          directives: [
-                                            {
-                                              name: "b-tooltip",
-                                              rawName: "v-b-tooltip.hover",
-                                              modifiers: { hover: true },
+                                          [
+                                            _vm._v(
+                                              _vm._s(_vm.__("view_product"))
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    )
+                                  : _vm.isSellerRoute
+                                  ? _c(
+                                      "div",
+                                      { staticClass: "col-6" },
+                                      [
+                                        _c(
+                                          "router-link",
+                                          {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "btn btn-block btn-light-primary",
+                                            attrs: {
+                                              to: {
+                                                name: "SellerViewProduct",
+                                                params: { id: item.product_id },
+                                              },
+                                              title: "View Product",
                                             },
-                                          ],
-                                          staticClass:
-                                            "btn btn-block btn-light-primary",
-                                          attrs: {
-                                            to: {
-                                              name: "ViewProduct",
-                                              params: { id: item.product_id },
-                                            },
-                                            title: "View Product",
                                           },
-                                        },
-                                        [_vm._v(_vm._s(_vm.__("view_product")))]
-                                      ),
-                                    ],
-                                    1
-                                  ),
-                            ]),
-                          ]),
+                                          [
+                                            _vm._v(
+                                              _vm._s(_vm.__("view_product"))
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    )
+                                  : _vm.isDeliveryBoyRoute
+                                  ? _c(
+                                      "div",
+                                      { staticClass: "col-6" },
+                                      [
+                                        _c(
+                                          "router-link",
+                                          {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "btn btn-block btn-light-primary",
+                                            attrs: {
+                                              to: {
+                                                name: "DeliveryBoyViewProduct",
+                                                params: { id: item.product_id },
+                                              },
+                                              title: "View Product",
+                                            },
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(_vm.__("view_product"))
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    )
+                                  : item.master_product_id
+                                  ? _c(
+                                      "div",
+                                      { staticClass: "col-6" },
+                                      [
+                                        _c(
+                                          "router-link",
+                                          {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "btn btn-block btn-light-primary",
+                                            attrs: {
+                                              to: {
+                                                name: "EditMasterProduct",
+                                                params: {
+                                                  id: item.master_product_id,
+                                                },
+                                              },
+                                              title: "View Product",
+                                            },
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(_vm.__("view_product"))
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    )
+                                  : _c(
+                                      "div",
+                                      { staticClass: "col-6" },
+                                      [
+                                        _c(
+                                          "router-link",
+                                          {
+                                            directives: [
+                                              {
+                                                name: "b-tooltip",
+                                                rawName: "v-b-tooltip.hover",
+                                                modifiers: { hover: true },
+                                              },
+                                            ],
+                                            staticClass:
+                                              "btn btn-block btn-light-primary",
+                                            attrs: {
+                                              to: {
+                                                name: "ViewProduct",
+                                                params: { id: item.product_id },
+                                              },
+                                              title: "View Product",
+                                            },
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(_vm.__("view_product"))
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    ),
+                              ]),
+                            ],
+                            2
+                          ),
                         ]),
                       ]
                     )

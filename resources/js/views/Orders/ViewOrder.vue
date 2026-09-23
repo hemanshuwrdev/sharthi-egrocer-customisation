@@ -306,6 +306,19 @@
                                         item.cancellation_reason
                                     }}</span>
 
+                                    <template v-if="item.shortfall_reason || (item.delivered_quantity !== null && item.delivered_quantity < item.quantity)">
+                                        <br>
+                                        <b>{{ __('delivered_quantity') }} :- </b>{{ item.delivered_quantity }}
+                                        <br>
+                                        <span v-if="item.shortfall_reason" class="text-danger">
+                                            <b>{{ __('shortfall_reason') }} :- </b>{{ __(item.shortfall_reason) }}
+                                        </span>
+                                        <br v-if="item.damage_photo">
+                                        <a v-if="item.damage_photo" :href="$storageUrl + item.damage_photo" target="_blank">
+                                            {{ __('view_damage_photo') }}
+                                        </a>
+                                    </template>
+
                                     <div class="row mt-3">
                                         <div class="col-6">
                                             <b-button v-b-tooltip.hover title="View Item Details"

@@ -21,6 +21,15 @@ use Illuminate\Support\Facades\Validator;
 
 class DeliveryBoysApiController extends Controller
 {
+    // Per-item reason for delivered_quantity < quantity, set on markPartialDelivery.
+    public const SHORTFALL_REASONS = [
+        'product_damaged',
+        'product_shortage',
+        'product_not_available',
+        'rejected_by_retailer',
+        'qty_mismatch_packing_issue',
+    ];
+
     protected $languageService;
 
     public function __construct(LanguageService $languageService)
@@ -741,6 +750,7 @@ class DeliveryBoysApiController extends Controller
             'items'                      => 'required|array|min:1',
             'items.*.order_item_id'      => 'required|integer|exists:order_items,id',
             'items.*.delivered_qty'      => 'required|numeric|min:0',
+            'items.*.reason'             => 'nullable|in:' . implode(',', self::SHORTFALL_REASONS),
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -759,6 +769,15 @@ class DeliveryBoysApiController extends Controller
             return CommonHelper::responseError('order_must_be_out_for_delivery');
         }
 
+        // A shortfall (delivered_qty < ordered qty) must carry a reason — otherwise
+        // the driver could silently under-deliver with no record of why.
+        foreach ($request->items as $itemData) {
+            $orderItem = OrderItem::where('id', $itemData['order_item_id'])->where('order_id', $order->id)->first();
+            if ($orderItem && (float) $itemData['delivered_qty'] < (float) $orderItem->quantity && empty($itemData['reason'])) {
+                return CommonHelper::responseError('reason_required_for_shortfall_item_' . $orderItem->id);
+            }
+        }
+
         DB::transaction(function () use ($request, $order) {
             foreach ($request->items as $idx => $itemData) {
                 $orderItem = OrderItem::where('id', $itemData['order_item_id'])
@@ -767,6 +786,7 @@ class DeliveryBoysApiController extends Controller
                 if (!$orderItem) continue;
 
                 $orderItem->delivered_quantity = (float) $itemData['delivered_qty'];
+                $orderItem->shortfall_reason = $itemData['reason'] ?? null;
 
                 // Handle damage photo upload if provided
                 if (!empty($request->file("items.{$idx}.damage_photo"))) {
@@ -797,5 +817,16 @@ class DeliveryBoysApiController extends Controller
         });
 
         return CommonHelper::responseSuccess('order_marked_as_partial_delivery');
+    }
+
+    /**
+     * GET /delivery_boy/order/shortfall_reasons
+     * Static picklist for the partial_deliver reason field — app dev renders this as a
+     * dropdown, sends the `key` back as items[].reason.
+     */
+    public function shortfallReasons()
+    {
+        $reasons = array_map(fn ($key) => ['key' => $key, 'label' => __($key)], self::SHORTFALL_REASONS);
+        return CommonHelper::responseWithData(['reasons' => $reasons]);
     }
 }
