@@ -856,7 +856,8 @@ Route::middleware('auth:api')->group(function () {
 
         // Sarthi: delivery outcome
         Route::post('order/not_delivered',    [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'markNotDelivered'])->name('delivery_boy.order.not_delivered');
-        Route::post('order/partial_deliver',  [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'markPartialDelivery'])->name('delivery_boy.order.partial_deliver');
+        // Partial delivery itself goes through orders/update_status with status_id=13 —
+        // see OrdersApiController::updateStatus. This is just the reason picklist for it.
         Route::get('order/shortfall_reasons', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'shortfallReasons'])->name('delivery_boy.order.shortfall_reasons');
     });
 

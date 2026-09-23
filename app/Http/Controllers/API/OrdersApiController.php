@@ -516,6 +516,7 @@ class OrdersApiController extends Controller
                 'items'                 => 'required|array|min:1',
                 'items.*.order_item_id' => 'required|integer|exists:order_items,id',
                 'items.*.delivered_qty' => 'required|numeric|min:0',
+                'items.*.reason'        => 'nullable|in:' . implode(',', \App\Http\Controllers\API\DeliveryBoysApiController::SHORTFALL_REASONS),
             ]);
             if ($partialValidator->fails()) {
                 return CommonHelper::responseError($partialValidator->errors()->first());
@@ -523,6 +524,15 @@ class OrdersApiController extends Controller
 
             if ($order->active_status != OrderStatusList::$outForDelivery) {
                 return CommonHelper::responseError('order_must_be_out_for_delivery');
+            }
+
+            // A shortfall (delivered_qty < ordered qty) must carry a reason — otherwise
+            // the driver could silently under-deliver with no record of why.
+            foreach ($request->items as $itemData) {
+                $checkItem = \App\Models\OrderItem::where('id', $itemData['order_item_id'])->where('order_id', $order->id)->first();
+                if ($checkItem && (float) $itemData['delivered_qty'] < (float) $checkItem->quantity && empty($itemData['reason'])) {
+                    return CommonHelper::responseError('reason_required_for_shortfall_item_' . $checkItem->id);
+                }
             }
 
             // Delivery boy guard
@@ -541,6 +551,7 @@ class OrdersApiController extends Controller
                     if (!$orderItem) continue;
 
                     $orderItem->delivered_quantity = (float) $itemData['delivered_qty'];
+                    $orderItem->shortfall_reason = $itemData['reason'] ?? null;
 
                     if (!empty($request->file("items.{$idx}.damage_photo"))) {
                         $photo = $request->file("items.{$idx}.damage_photo");
