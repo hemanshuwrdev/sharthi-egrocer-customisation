@@ -48,6 +48,7 @@ class SellerSettingController extends Controller
         $seller = auth()->user()->seller;
         return CommonHelper::responseWithData([
             'order_cutoff_time' => $seller->order_cutoff_time,
+            'min_order_amount' => $seller->min_order_amount,
         ]);
     }
 
@@ -55,6 +56,7 @@ class SellerSettingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'order_cutoff_time' => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
+            'min_order_amount' => ['nullable', 'numeric', 'min:0'],
         ], [
             'order_cutoff_time.regex' => 'Cutoff time must be in HH:MM 24-hour format.',
         ]);
@@ -65,6 +67,7 @@ class SellerSettingController extends Controller
         try {
             $seller = auth()->user()->seller;
             $seller->order_cutoff_time = $request->order_cutoff_time ?: null;
+            $seller->min_order_amount = $request->min_order_amount !== null && $request->min_order_amount !== '' ? $request->min_order_amount : null;
             $seller->save();
             return CommonHelper::responseSuccess('order_settings_saved_successfully');
         } catch (\Exception $e) {

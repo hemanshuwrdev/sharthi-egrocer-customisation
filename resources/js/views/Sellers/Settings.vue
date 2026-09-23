@@ -120,6 +120,16 @@
                                 __('orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after')
                                 }})</span>
                         </div>
+                        <div class="form-group col-md-6">
+                            <label for="min_order_amount">{{ __('min_order_amount') }}</label>
+                            <input type="number" min="0" step="0.01" class="form-control"
+                                id="min_order_amount"
+                                v-model="min_order_amount"
+                                :placeholder="__('optional')" />
+                            <span class="text text-primary font-size-13">({{
+                                __('minimum_cart_total_required_for_a_retailer_to_place_an_order')
+                                }})</span>
+                        </div>
                     </div>
                 </div>
 
@@ -191,6 +201,7 @@ export default {
             ],
             isOrderLoading: false,
             order_cutoff_time: "",
+            min_order_amount: "",
             isPaymentLoading: false,
             paymentMethods: [],
             isInvoiceLoading: false,
@@ -285,6 +296,7 @@ export default {
                 .then(res => {
                     if (res.data.status && res.data.data) {
                         this.order_cutoff_time = res.data.data.order_cutoff_time || "";
+                        this.min_order_amount = res.data.data.min_order_amount ?? "";
                     }
                 })
                 .catch(() => {
@@ -336,6 +348,7 @@ export default {
 
             let formData = new FormData();
             formData.append('order_cutoff_time', this.order_cutoff_time || '');
+            formData.append('min_order_amount', this.min_order_amount || '');
 
             axios.post(this.$sellerApiUrl + '/order-settings/save', formData)
                 .then(res => {

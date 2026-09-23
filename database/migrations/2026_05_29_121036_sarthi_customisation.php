@@ -1282,6 +1282,14 @@ class SarthiCustomisation extends Migration
                 $table->foreign('tax_category_id')->references('id')->on('tax_categories')->nullOnDelete();
             });
         }
+
+        // 14. Per-distributor minimum order amount
+        Schema::table('sellers', function (Blueprint $table) {
+            if (!Schema::hasColumn('sellers', 'min_order_amount')) {
+                $table->decimal('min_order_amount', 10, 2)->nullable()->after('order_cutoff_time')
+                    ->comment('Minimum cart total required for a retailer to place an order with this distributor.');
+            }
+        });
     }
 
     /**
@@ -1291,6 +1299,11 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('sellers') && Schema::hasColumn('sellers', 'min_order_amount')) {
+            Schema::table('sellers', function (Blueprint $table) {
+                $table->dropColumn('min_order_amount');
+            });
+        }
         if (Schema::hasTable('distributor_subscription_plans') && Schema::hasColumn('distributor_subscription_plans', 'tax_category_id')) {
             Schema::table('distributor_subscription_plans', function (Blueprint $table) {
                 $table->dropForeign(['tax_category_id']);

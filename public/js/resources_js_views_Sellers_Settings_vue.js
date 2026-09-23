@@ -190,6 +190,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -216,6 +226,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }],
       isOrderLoading: false,
       order_cutoff_time: "",
+      min_order_amount: "",
       isPaymentLoading: false,
       paymentMethods: [],
       isInvoiceLoading: false,
@@ -294,7 +305,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var _this3 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/order-settings').then(function (res) {
         if (res.data.status && res.data.data) {
+          var _res$data$data$min_or;
           _this3.order_cutoff_time = res.data.data.order_cutoff_time || "";
+          _this3.min_order_amount = (_res$data$data$min_or = res.data.data.min_order_amount) !== null && _res$data$data$min_or !== void 0 ? _res$data$data$min_or : "";
         }
       })["catch"](function () {
         _this3.showError('Failed to load order settings');
@@ -342,6 +355,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.isOrderLoading = true;
       var formData = new FormData();
       formData.append('order_cutoff_time', this.order_cutoff_time || '');
+      formData.append('min_order_amount', this.min_order_amount || '');
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/order-settings/save', formData).then(function (res) {
         if (res.data.status) {
           _this6.showMessage('success', __(res.data.message));
@@ -896,6 +910,52 @@ var render = function () {
                     _vm._s(
                       _vm.__(
                         "orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after"
+                      )
+                    ) +
+                    ")"
+                ),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "form-group col-md-6" }, [
+              _c("label", { attrs: { for: "min_order_amount" } }, [
+                _vm._v(_vm._s(_vm.__("min_order_amount"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.min_order_amount,
+                    expression: "min_order_amount",
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "number",
+                  min: "0",
+                  step: "0.01",
+                  id: "min_order_amount",
+                  placeholder: _vm.__("optional"),
+                },
+                domProps: { value: _vm.min_order_amount },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.min_order_amount = $event.target.value
+                  },
+                },
+              }),
+              _vm._v(" "),
+              _c("span", { staticClass: "text text-primary font-size-13" }, [
+                _vm._v(
+                  "(" +
+                    _vm._s(
+                      _vm.__(
+                        "minimum_cart_total_required_for_a_retailer_to_place_an_order"
                       )
                     ) +
                     ")"
