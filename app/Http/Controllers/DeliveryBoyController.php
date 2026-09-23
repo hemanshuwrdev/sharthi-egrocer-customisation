@@ -361,7 +361,8 @@ class DeliveryBoyController extends BaseController
         // Order items query: no product/variant joins needed (not selected)
         $order_items = Order::select('order_items.*','orders.mobile','orders.total' ,'orders.delivery_charge','orders.discount','orders.promo_code',
             'orders.promo_discount','orders.wallet_balance','orders.final_total','orders.remaining_final','orders.payment_method','orders.address','orders.delivery_time',
-            'users.name as user_name','order_items.status as order_status','sellers.name as seller_name')
+            'users.name as user_name','order_items.status as order_status','sellers.name as seller_name',
+            DB::raw('CASE WHEN order_items.damage_photo IS NOT NULL AND order_items.damage_photo != "" THEN CONCAT("' . asset('storage/') . '", "/", order_items.damage_photo) ELSE NULL END as damage_photo'))
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')

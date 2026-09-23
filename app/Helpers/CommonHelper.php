@@ -2760,6 +2760,7 @@ class CommonHelper
             'products.return_days',
             'master_product_variants.master_product_id',
             DB::raw('CONCAT("' . asset('storage/') . '", "/", products.image) as image'),
+            DB::raw('CASE WHEN order_items.damage_photo IS NOT NULL AND order_items.damage_photo != "" THEN CONCAT("' . asset('storage/') . '", "/", order_items.damage_photo) ELSE NULL END as damage_photo'),
             'os.id as active_status',
             'os.status as status_name'
         )
@@ -2801,6 +2802,7 @@ class CommonHelper
                 'products.return_days',
                 'master_product_variants.master_product_id',
                 DB::raw('CONCAT("' . asset('storage/') . '", "/", products.image) as image'),
+                DB::raw('CASE WHEN order_items.damage_photo IS NOT NULL AND order_items.damage_photo != "" THEN CONCAT("' . asset('storage/') . '", "/", order_items.damage_photo) ELSE NULL END as damage_photo'),
                 'os.id as active_status',
                 'os.status as status_name'
             )
