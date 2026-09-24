@@ -1988,7 +1988,7 @@ var render = function () {
                                           "text-align": "left !important",
                                         },
                                       },
-                                      [_vm._v(_vm._s(_vm.__("customers")))]
+                                      [_vm._v(_vm._s(_vm.__("retailers")))]
                                     ),
                                     _vm._v(" "),
                                     _c(
