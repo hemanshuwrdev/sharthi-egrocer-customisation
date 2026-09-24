@@ -1834,6 +1834,7 @@ class ProductApisController extends Controller
                 'mp.id as product_id',
                 'mp.name',
                 'mp.image',
+                'mpv.image as variant_image',
                 // 'mp.tax_id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
                 'mp.brand_id',
                 'mpv.id as product_variant_id',
@@ -1875,6 +1876,15 @@ class ProductApisController extends Controller
 
         $totalCount = $rawProducts->count();
         $paged = $rawProducts->slice($offset, $limit)->values();
+
+        // The Stock Management table reads item.image_url — this endpoint only ever
+        // returned the raw relative path as `image`, so every row showed a broken image.
+        $paged->transform(function ($row) {
+            $path = $row->variant_image ?: $row->image;
+            $row->image_url = $path ? asset('storage/' . $path) : null;
+            return $row;
+        });
+
         return CommonHelper::responseWithData($paged, $totalCount);
     }
 
