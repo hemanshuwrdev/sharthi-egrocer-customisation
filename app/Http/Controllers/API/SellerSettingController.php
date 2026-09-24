@@ -168,4 +168,71 @@ class SellerSettingController extends Controller
         $seller->save();
         return CommonHelper::responseSuccess('sensitive_password_changed_successfully');
     }
+
+    /**
+     * Forgot-password recovery for the sensitive password: emails a 6-digit OTP
+     * to the seller's registered address. Resetting with it (below) doesn't
+     * require the old password, so this is the only way back in if it's lost.
+     */
+    public function sendSensitivePasswordOtp(Request $request)
+    {
+        $seller = auth()->user()->seller;
+
+        if (empty($seller->email)) {
+            return CommonHelper::responseError('no_email_on_file_contact_admin_to_recover_password');
+        }
+
+        // Sent less than 60s ago (more than 9 of the 10 minutes still left)? Block resend spam.
+        // Not Carbon-cast on the model, so parse explicitly rather than relying on ->copy()/->gt().
+        if ($seller->sensitive_otp_expires_at && now()->lt(\Carbon\Carbon::parse($seller->sensitive_otp_expires_at)->subMinutes(9))) {
+            return CommonHelper::responseError('please_wait_before_requesting_another_code');
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        $seller->sensitive_otp = $otp;
+        $seller->sensitive_otp_expires_at = now()->addMinutes(10);
+        $seller->save();
+
+        try {
+            CommonHelper::sendMail($seller->email, 'Reset Sensitive Password', [
+                'type' => 'sensitive_password_otp',
+                'otp'  => $otp,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('sendSensitivePasswordOtp mail failed: ' . $e->getMessage());
+            return CommonHelper::responseError('failed_to_send_otp_email_check_mail_settings');
+        }
+
+        return CommonHelper::responseSuccess('otp_sent_to_your_registered_email');
+    }
+
+    public function resetSensitivePasswordWithOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'otp'                  => 'required|string',
+            'new_password'         => 'required|string|min:6',
+            'confirm_new_password' => 'required|string|same:new_password',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $seller = auth()->user()->seller;
+
+        if (
+            empty($seller->sensitive_otp) ||
+            $seller->sensitive_otp !== $request->otp ||
+            !$seller->sensitive_otp_expires_at ||
+            now()->gt(\Carbon\Carbon::parse($seller->sensitive_otp_expires_at))
+        ) {
+            return CommonHelper::responseError('otp_is_invalid_or_expired');
+        }
+
+        $seller->sensitive_password = Hash::make($request->new_password);
+        $seller->sensitive_otp = null;
+        $seller->sensitive_otp_expires_at = null;
+        $seller->save();
+
+        return CommonHelper::responseSuccess('sensitive_password_changed_successfully');
+    }
 }

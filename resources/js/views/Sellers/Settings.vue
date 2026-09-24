@@ -214,8 +214,24 @@
                     <template v-else>
                         <div class="row">
                             <div class="form-group col-md-4">
-                                <label>{{ __('Old Password') }}</label>
-                                <input type="password" class="form-control" v-model="sensitiveOldPassword" autocomplete="current-password" />
+                                <template v-if="!sensitiveForgotMode">
+                                    <label>{{ __('Old Password') }}</label>
+                                    <input type="password" class="form-control" v-model="sensitiveOldPassword" autocomplete="current-password" />
+                                    <a href="javascript:void(0)" class="small" @click="startSensitiveForgotMode">{{ __('forgot_password') }}?</a>
+                                </template>
+                                <template v-else>
+                                    <label>{{ __('OTP') }}</label>
+                                    <input type="text" class="form-control" v-model="sensitiveOtp" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+                                    <span class="small">
+                                        <a href="javascript:void(0)" @click="cancelSensitiveForgotMode">{{ __('cancel') }}</a>
+                                        &nbsp;|&nbsp;
+                                        <a href="javascript:void(0)"
+                                            :class="{ 'text-muted': otpResendCooldown > 0 }"
+                                            @click="otpResendCooldown === 0 && sendSensitiveOtp()">
+                                            {{ otpResendCooldown > 0 ? __('resend_code') + ' (' + otpResendCooldown + 's)' : __('resend_code') }}
+                                        </a>
+                                    </span>
+                                </template>
                             </div>
                             <div class="form-group col-md-4">
                                 <label>{{ __('New Password') }}</label>
@@ -230,7 +246,7 @@
                 </div>
                 <div class="card-footer">
                     <b-button variant="primary" :disabled="isSensitiveLoading" @click="saveSensitivePassword">
-                        {{ sensitivePasswordIsSet ? __('change_password') : __('set_password') }}
+                        {{ sensitiveForgotMode ? __('reset_password') : (sensitivePasswordIsSet ? __('change_password') : __('set_password')) }}
                         <b-spinner small v-if="isSensitiveLoading"></b-spinner>
                     </b-button>
                 </div>
@@ -272,6 +288,11 @@ export default {
             sensitiveOldPassword: "",
             sensitiveNewPassword: "",
             sensitiveConfirmPassword: "",
+            sensitiveForgotMode: false,
+            sensitiveOtp: "",
+            isSendingOtp: false,
+            otpResendCooldown: 0,
+            otpCooldownTimer: null,
         }
     },
 
@@ -483,11 +504,59 @@ export default {
                 .catch(() => {});
         },
 
+        startSensitiveForgotMode() {
+            this.sensitiveForgotMode = true;
+            this.sensitiveOldPassword = '';
+            this.sendSensitiveOtp();
+        },
+
+        cancelSensitiveForgotMode() {
+            this.sensitiveForgotMode = false;
+            this.sensitiveOtp = '';
+            if (this.otpCooldownTimer) {
+                clearInterval(this.otpCooldownTimer);
+                this.otpCooldownTimer = null;
+            }
+            this.otpResendCooldown = 0;
+        },
+
+        sendSensitiveOtp() {
+            if (this.isSendingOtp || this.otpResendCooldown > 0) return;
+            this.isSendingOtp = true;
+
+            axios.post(this.$sellerApiUrl + '/sensitive-password/send-otp')
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                        this.otpResendCooldown = 60;
+                        if (this.otpCooldownTimer) clearInterval(this.otpCooldownTimer);
+                        this.otpCooldownTimer = setInterval(() => {
+                            this.otpResendCooldown--;
+                            if (this.otpResendCooldown <= 0) {
+                                clearInterval(this.otpCooldownTimer);
+                                this.otpCooldownTimer = null;
+                            }
+                        }, 1000);
+                    } else {
+                        this.showError(res.data.message || 'Failed to send OTP');
+                    }
+                    this.isSendingOtp = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to send OTP');
+                    this.isSendingOtp = false;
+                });
+        },
+
         saveSensitivePassword() {
             this.isSensitiveLoading = true;
 
             let formData = new FormData();
-            if (this.sensitivePasswordIsSet) {
+            if (this.sensitiveForgotMode) {
+                formData.append('otp', this.sensitiveOtp || '');
+                formData.append('new_password', this.sensitiveNewPassword || '');
+                formData.append('confirm_new_password', this.sensitiveConfirmPassword || '');
+            } else if (this.sensitivePasswordIsSet) {
                 formData.append('old_password', this.sensitiveOldPassword || '');
                 formData.append('new_password', this.sensitiveNewPassword || '');
                 formData.append('confirm_new_password', this.sensitiveConfirmPassword || '');
@@ -496,7 +565,9 @@ export default {
                 formData.append('confirm_password', this.sensitiveConfirmPassword || '');
             }
 
-            axios.post(this.$sellerApiUrl + '/sensitive-password/save', formData)
+            const endpoint = this.sensitiveForgotMode ? '/sensitive-password/reset-with-otp' : '/sensitive-password/save';
+
+            axios.post(this.$sellerApiUrl + endpoint, formData)
                 .then(res => {
                     if (res.data.status) {
                         this.showMessage('success', __(res.data.message));
@@ -504,6 +575,7 @@ export default {
                         this.sensitiveOldPassword = '';
                         this.sensitiveNewPassword = '';
                         this.sensitiveConfirmPassword = '';
+                        this.cancelSensitiveForgotMode();
                     } else {
                         this.showError(res.data.message || 'Failed to save');
                     }

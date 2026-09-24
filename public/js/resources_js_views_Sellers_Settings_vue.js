@@ -258,6 +258,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -296,7 +312,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       sensitivePasswordIsSet: false,
       sensitiveOldPassword: "",
       sensitiveNewPassword: "",
-      sensitiveConfirmPassword: ""
+      sensitiveConfirmPassword: "",
+      sensitiveForgotMode: false,
+      sensitiveOtp: "",
+      isSendingOtp: false,
+      otpResendCooldown: 0,
+      otpCooldownTimer: null
     };
   },
   created: function created() {
@@ -476,11 +497,54 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       })["catch"](function () {});
     },
-    saveSensitivePassword: function saveSensitivePassword() {
+    startSensitiveForgotMode: function startSensitiveForgotMode() {
+      this.sensitiveForgotMode = true;
+      this.sensitiveOldPassword = '';
+      this.sendSensitiveOtp();
+    },
+    cancelSensitiveForgotMode: function cancelSensitiveForgotMode() {
+      this.sensitiveForgotMode = false;
+      this.sensitiveOtp = '';
+      if (this.otpCooldownTimer) {
+        clearInterval(this.otpCooldownTimer);
+        this.otpCooldownTimer = null;
+      }
+      this.otpResendCooldown = 0;
+    },
+    sendSensitiveOtp: function sendSensitiveOtp() {
       var _this10 = this;
+      if (this.isSendingOtp || this.otpResendCooldown > 0) return;
+      this.isSendingOtp = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/sensitive-password/send-otp').then(function (res) {
+        if (res.data.status) {
+          _this10.showMessage('success', __(res.data.message));
+          _this10.otpResendCooldown = 60;
+          if (_this10.otpCooldownTimer) clearInterval(_this10.otpCooldownTimer);
+          _this10.otpCooldownTimer = setInterval(function () {
+            _this10.otpResendCooldown--;
+            if (_this10.otpResendCooldown <= 0) {
+              clearInterval(_this10.otpCooldownTimer);
+              _this10.otpCooldownTimer = null;
+            }
+          }, 1000);
+        } else {
+          _this10.showError(res.data.message || 'Failed to send OTP');
+        }
+        _this10.isSendingOtp = false;
+      })["catch"](function () {
+        _this10.showError('Failed to send OTP');
+        _this10.isSendingOtp = false;
+      });
+    },
+    saveSensitivePassword: function saveSensitivePassword() {
+      var _this11 = this;
       this.isSensitiveLoading = true;
       var formData = new FormData();
-      if (this.sensitivePasswordIsSet) {
+      if (this.sensitiveForgotMode) {
+        formData.append('otp', this.sensitiveOtp || '');
+        formData.append('new_password', this.sensitiveNewPassword || '');
+        formData.append('confirm_new_password', this.sensitiveConfirmPassword || '');
+      } else if (this.sensitivePasswordIsSet) {
         formData.append('old_password', this.sensitiveOldPassword || '');
         formData.append('new_password', this.sensitiveNewPassword || '');
         formData.append('confirm_new_password', this.sensitiveConfirmPassword || '');
@@ -488,20 +552,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         formData.append('password', this.sensitiveNewPassword || '');
         formData.append('confirm_password', this.sensitiveConfirmPassword || '');
       }
-      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/sensitive-password/save', formData).then(function (res) {
+      var endpoint = this.sensitiveForgotMode ? '/sensitive-password/reset-with-otp' : '/sensitive-password/save';
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + endpoint, formData).then(function (res) {
         if (res.data.status) {
-          _this10.showMessage('success', __(res.data.message));
-          _this10.sensitivePasswordIsSet = true;
-          _this10.sensitiveOldPassword = '';
-          _this10.sensitiveNewPassword = '';
-          _this10.sensitiveConfirmPassword = '';
+          _this11.showMessage('success', __(res.data.message));
+          _this11.sensitivePasswordIsSet = true;
+          _this11.sensitiveOldPassword = '';
+          _this11.sensitiveNewPassword = '';
+          _this11.sensitiveConfirmPassword = '';
+          _this11.cancelSensitiveForgotMode();
         } else {
-          _this10.showError(res.data.message || 'Failed to save');
+          _this11.showError(res.data.message || 'Failed to save');
         }
-        _this10.isSensitiveLoading = false;
+        _this11.isSensitiveLoading = false;
       })["catch"](function () {
-        _this10.showError('Failed to save');
-        _this10.isSensitiveLoading = false;
+        _this11.showError('Failed to save');
+        _this11.isSensitiveLoading = false;
       });
     }
   }
@@ -1388,34 +1454,134 @@ var render = function () {
                 ]
               : [
                   _c("div", { staticClass: "row" }, [
-                    _c("div", { staticClass: "form-group col-md-4" }, [
-                      _c("label", [_vm._v(_vm._s(_vm.__("Old Password")))]),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.sensitiveOldPassword,
-                            expression: "sensitiveOldPassword",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "password",
-                          autocomplete: "current-password",
-                        },
-                        domProps: { value: _vm.sensitiveOldPassword },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.sensitiveOldPassword = $event.target.value
-                          },
-                        },
-                      }),
-                    ]),
+                    _c(
+                      "div",
+                      { staticClass: "form-group col-md-4" },
+                      [
+                        !_vm.sensitiveForgotMode
+                          ? [
+                              _c("label", [
+                                _vm._v(_vm._s(_vm.__("Old Password"))),
+                              ]),
+                              _vm._v(" "),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.sensitiveOldPassword,
+                                    expression: "sensitiveOldPassword",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  type: "password",
+                                  autocomplete: "current-password",
+                                },
+                                domProps: { value: _vm.sensitiveOldPassword },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.sensitiveOldPassword =
+                                      $event.target.value
+                                  },
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "a",
+                                {
+                                  staticClass: "small",
+                                  attrs: { href: "javascript:void(0)" },
+                                  on: { click: _vm.startSensitiveForgotMode },
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.__("forgot_password")) + "?"
+                                  ),
+                                ]
+                              ),
+                            ]
+                          : [
+                              _c("label", [_vm._v(_vm._s(_vm.__("OTP")))]),
+                              _vm._v(" "),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.sensitiveOtp,
+                                    expression: "sensitiveOtp",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  type: "text",
+                                  maxlength: "6",
+                                  inputmode: "numeric",
+                                  autocomplete: "one-time-code",
+                                },
+                                domProps: { value: _vm.sensitiveOtp },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.sensitiveOtp = $event.target.value
+                                  },
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c("span", { staticClass: "small" }, [
+                                _c(
+                                  "a",
+                                  {
+                                    attrs: { href: "javascript:void(0)" },
+                                    on: {
+                                      click: _vm.cancelSensitiveForgotMode,
+                                    },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("cancel")))]
+                                ),
+                                _vm._v(
+                                  "\n                                     | \n                                    "
+                                ),
+                                _c(
+                                  "a",
+                                  {
+                                    class: {
+                                      "text-muted": _vm.otpResendCooldown > 0,
+                                    },
+                                    attrs: { href: "javascript:void(0)" },
+                                    on: {
+                                      click: function ($event) {
+                                        _vm.otpResendCooldown === 0 &&
+                                          _vm.sendSensitiveOtp()
+                                      },
+                                    },
+                                  },
+                                  [
+                                    _vm._v(
+                                      "\n                                        " +
+                                        _vm._s(
+                                          _vm.otpResendCooldown > 0
+                                            ? _vm.__("resend_code") +
+                                                " (" +
+                                                _vm.otpResendCooldown +
+                                                "s)"
+                                            : _vm.__("resend_code")
+                                        ) +
+                                        "\n                                    "
+                                    ),
+                                  ]
+                                ),
+                              ]),
+                            ],
+                      ],
+                      2
+                    ),
                     _vm._v(" "),
                     _c("div", { staticClass: "form-group col-md-4" }, [
                       _c("label", [_vm._v(_vm._s(_vm.__("New Password")))]),
@@ -1496,7 +1662,9 @@ var render = function () {
                 _vm._v(
                   "\n                    " +
                     _vm._s(
-                      _vm.sensitivePasswordIsSet
+                      _vm.sensitiveForgotMode
+                        ? _vm.__("reset_password")
+                        : _vm.sensitivePasswordIsSet
                         ? _vm.__("change_password")
                         : _vm.__("set_password")
                     ) +

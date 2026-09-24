@@ -673,6 +673,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('order-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveOrderSettings']);
         Route::get('sensitive-password',      [App\Http\Controllers\API\SellerSettingController::class, 'getSensitivePasswordStatus']);
         Route::post('sensitive-password/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveSensitivePassword']);
+        Route::post('sensitive-password/send-otp', [App\Http\Controllers\API\SellerSettingController::class, 'sendSensitivePasswordOtp']);
+        Route::post('sensitive-password/reset-with-otp', [App\Http\Controllers\API\SellerSettingController::class, 'resetSensitivePasswordWithOtp']);
         Route::get('invoice-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getInvoiceSettings']);
         Route::post('invoice-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveInvoiceSettings']);
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
