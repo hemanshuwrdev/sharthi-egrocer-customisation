@@ -1302,6 +1302,10 @@ class SarthiCustomisation extends Migration
                 $table->decimal('min_order_amount', 10, 2)->nullable()->after('order_cutoff_time')
                     ->comment('Minimum cart total required for a retailer to place an order with this distributor.');
             }
+            if (!Schema::hasColumn('sellers', 'delivery_otp_enabled')) {
+                $table->boolean('delivery_otp_enabled')->default(true)->after('min_order_amount')
+                    ->comment('1 = driver must enter the retailer\'s OTP to mark an order delivered. Not related to login OTP.');
+            }
         });
 
         // 15. Per-distributor cancelable / returnable policy, mirroring the legacy

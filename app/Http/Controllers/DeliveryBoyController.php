@@ -618,6 +618,14 @@ class DeliveryBoyController extends BaseController
             $settings['allPermissions'] = $user->allPermissions;
         }
 
+        // Delivery-confirmation OTP (driver enters retailer's OTP to mark delivered) —
+        // a per-distributor setting, unrelated to phone_auth_otp/login above. Only
+        // resolvable once the driver is logged in and their distributor is known;
+        // defaults to true (required) when no token is passed or the driver has no seller.
+        $deliveryBoy = $user ? ($user->deliveryBoy ?? null) : null;
+        $seller = $deliveryBoy && $deliveryBoy->seller_id ? \App\Models\Seller::find($deliveryBoy->seller_id) : null;
+        $settings['delivery_otp_enabled'] = $seller ? (bool) ($seller->delivery_otp_enabled ?? true) : true;
+
         return CommonHelper::responseWithData($settings);
     }
 

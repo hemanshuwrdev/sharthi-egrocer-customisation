@@ -200,6 +200,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -227,6 +238,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       isOrderLoading: false,
       order_cutoff_time: "",
       min_order_amount: "",
+      delivery_otp_enabled: true,
       isPaymentLoading: false,
       paymentMethods: [],
       isInvoiceLoading: false,
@@ -308,6 +320,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           var _res$data$data$min_or;
           _this3.order_cutoff_time = res.data.data.order_cutoff_time || "";
           _this3.min_order_amount = (_res$data$data$min_or = res.data.data.min_order_amount) !== null && _res$data$data$min_or !== void 0 ? _res$data$data$min_or : "";
+          _this3.delivery_otp_enabled = res.data.data.delivery_otp_enabled !== undefined ? !!res.data.data.delivery_otp_enabled : true;
         }
       })["catch"](function () {
         _this3.showError('Failed to load order settings');
@@ -356,6 +369,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var formData = new FormData();
       formData.append('order_cutoff_time', this.order_cutoff_time || '');
       formData.append('min_order_amount', this.min_order_amount || '');
+      formData.append('delivery_otp_enabled', this.delivery_otp_enabled ? 1 : 0);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/order-settings/save', formData).then(function (res) {
         if (res.data.status) {
           _this6.showMessage('success', __(res.data.message));
@@ -956,6 +970,67 @@ var render = function () {
                     _vm._s(
                       _vm.__(
                         "minimum_cart_total_required_for_a_retailer_to_place_an_order"
+                      )
+                    ) +
+                    ")"
+                ),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "form-group col-md-6" }, [
+              _c("label", { attrs: { for: "delivery_otp_enabled" } }, [
+                _vm._v(_vm._s(_vm.__("delivery_otp_enabled"))),
+              ]),
+              _c("br"),
+              _vm._v(" "),
+              _c("div", { staticClass: "form-check form-switch" }, [
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.delivery_otp_enabled,
+                      expression: "delivery_otp_enabled",
+                    },
+                  ],
+                  staticClass: "form-check-input",
+                  attrs: { type: "checkbox", id: "delivery_otp_enabled" },
+                  domProps: {
+                    checked: Array.isArray(_vm.delivery_otp_enabled)
+                      ? _vm._i(_vm.delivery_otp_enabled, null) > -1
+                      : _vm.delivery_otp_enabled,
+                  },
+                  on: {
+                    change: function ($event) {
+                      var $$a = _vm.delivery_otp_enabled,
+                        $$el = $event.target,
+                        $$c = $$el.checked ? true : false
+                      if (Array.isArray($$a)) {
+                        var $$v = null,
+                          $$i = _vm._i($$a, $$v)
+                        if ($$el.checked) {
+                          $$i < 0 &&
+                            (_vm.delivery_otp_enabled = $$a.concat([$$v]))
+                        } else {
+                          $$i > -1 &&
+                            (_vm.delivery_otp_enabled = $$a
+                              .slice(0, $$i)
+                              .concat($$a.slice($$i + 1)))
+                        }
+                      } else {
+                        _vm.delivery_otp_enabled = $$c
+                      }
+                    },
+                  },
+                }),
+              ]),
+              _vm._v(" "),
+              _c("span", { staticClass: "text text-primary font-size-13" }, [
+                _vm._v(
+                  "(" +
+                    _vm._s(
+                      _vm.__(
+                        "driver_must_enter_the_retailers_otp_to_mark_an_order_delivered_not_the_login_otp"
                       )
                     ) +
                     ")"

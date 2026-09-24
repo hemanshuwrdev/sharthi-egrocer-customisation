@@ -601,10 +601,17 @@ class OrdersApiController extends Controller
             return CommonHelper::responseSuccess(__('order_marked_as_partial_delivery'));
         }
 
-        // Handle delivered inline when status_id = 6 — require OTP + per-item delivered qty
+        // Handle delivered inline when status_id = 6 — require OTP (unless the distributor
+        // has turned it off) + per-item delivered qty
         if ((int)$request->status_id === OrderStatusList::$delivered) {
+            // This is the delivery-confirmation OTP the driver enters at drop-off — a
+            // per-distributor setting, unrelated to login OTP.
+            $sellerId = \App\Models\OrderItem::where('order_id', $order->id)->value('seller_id');
+            $seller = $sellerId ? \App\Models\Seller::find($sellerId) : null;
+            $otpRequired = $seller ? (bool) ($seller->delivery_otp_enabled ?? true) : true;
+
             $deliveredValidator = Validator::make($request->all(), [
-                'otp'                   => 'required|string',
+                'otp'                   => $otpRequired ? 'required|string' : 'nullable|string',
                 'items'                 => 'required|array|min:1',
                 'items.*.order_item_id' => 'required|integer|exists:order_items,id',
                 'items.*.delivered_qty' => 'required|numeric|min:0',
@@ -614,8 +621,9 @@ class OrdersApiController extends Controller
                 return CommonHelper::responseError($deliveredValidator->errors()->first());
             }
 
-            // Verify OTP against order
-            if ($order->otp != $request->otp) {
+            // Verify OTP against order — skipped entirely when this distributor has
+            // disabled delivery OTP verification.
+            if ($otpRequired && $order->otp != $request->otp) {
                 return CommonHelper::responseError('invalid_otp');
             }
 

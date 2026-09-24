@@ -975,6 +975,8 @@
     "discount_inclusive": "Discount Inclusive",
     "discount_exclusive": "Discount Exclusive",
     "discount_tax_option_hint": "Discount Inclusive: discount applies to the Net Taxable Amount first (before tax), so tax is effectively recalculated on the smaller amount. Discount Exclusive: discount applies directly to the final (tax-included) Total Amount — tax stays unaffected.",
+    "delivery_otp_enabled": "Delivery OTP Verification",
+    "driver_must_enter_the_retailers_otp_to_mark_an_order_delivered_not_the_login_otp": "Driver must enter the retailer's OTP to mark an order delivered. Not the login OTP.",
     "shortfall": "Shortfall",
     "total_returns": "Total Returns",
     "returns": "Returns",
