@@ -9,6 +9,7 @@ use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -44,10 +45,17 @@ class SellerProductApiController extends Controller
             return CommonHelper::responseWithData([], 0);
         }
 
-        $limit = (int) $request->input('per_page', 25);
-        $page = max((int) $request->input('page', 1), 1);
-        $offset = ($page - 1) * $limit;
+        // Accept both the admin panel's page/per_page and the mobile app's limit/offset.
+        $limit = (int) $request->input('limit', $request->input('per_page', 25));
+        if ($request->filled('offset')) {
+            $offset = (int) $request->input('offset');
+        } else {
+            $page = max((int) $request->input('page', 1), 1);
+            $offset = ($page - 1) * $limit;
+        }
         $filter = trim((string) $request->input('filter', ''));
+        $type   = trim((string) $request->input('type', ''));
+        $sort   = trim((string) $request->input('sort', ''));
 
         $query = MasterProductVariant::query()
             ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'unit', 'secondaryUnit'])
@@ -70,7 +78,10 @@ class SellerProductApiController extends Controller
                 'seller_products.allow_loose_qty as sp_allow_loose_qty',
                 'seller_products.min_qty as sp_min_qty',
                 'seller_products.max_qty_mode as sp_max_qty_mode',
-                'seller_products.max_qty_value as sp_max_qty_value'
+                'seller_products.max_qty_value as sp_max_qty_value',
+                'seller_products.cancelable_status as sp_cancelable_status',
+                'seller_products.return_status as sp_return_status',
+                'seller_products.return_days as sp_return_days'
             );
 
         if ($filter !== '') {
@@ -91,10 +102,30 @@ class SellerProductApiController extends Controller
             $query->where('master_products.id', $request->master_product_id);
         }
 
+        // Dashboard tiles: same sold_out/low_stock convention as the legacy
+        // ProductApisController::getProducts, scoped to this seller's own stock.
+        if ($type === 'sold_out') {
+            $query->where('seller_products.stock', '<=', 0)
+                  ->where('seller_products.status', 0);
+        } elseif ($type === 'low_stock') {
+            $lowStockLimit = Setting::where('variable', 'low_stock_limit')->value('value');
+            if ($lowStockLimit !== null && $lowStockLimit !== '') {
+                $query->where('seller_products.stock', '>', 0)
+                      ->where('seller_products.stock', '<=', (float) $lowStockLimit)
+                      ->where('seller_products.status', 1);
+            } else {
+                // No threshold configured — nothing can be "low stock" by definition.
+                $query->whereRaw('1 = 0');
+            }
+        }
+
         $total = (clone $query)->count();
 
-        $rows = $query->orderBy('master_products.name')
-            ->orderBy('master_product_variants.id')
+        $orderedQuery = $sort === 'new'
+            ? $query->orderBy('master_product_variants.id', 'desc')
+            : $query->orderBy('master_products.name')->orderBy('master_product_variants.id');
+
+        $rows = $orderedQuery
             ->skip($offset)
             ->take($limit)
             ->get();
@@ -123,6 +154,9 @@ class SellerProductApiController extends Controller
                 'min_qty' => $v->sp_min_qty !== null ? (int) $v->sp_min_qty : null,
                 'max_qty_mode' => $v->sp_max_qty_mode,
                 'max_qty_value' => $v->sp_max_qty_value,
+                'cancelable_status' => (bool) $v->sp_cancelable_status,
+                'return_status' => (bool) $v->sp_return_status,
+                'return_days' => $v->sp_return_days !== null ? (int) $v->sp_return_days : 1,
                 'weight' => $v->weight,
                 'image' => $v->image ?: ($mp ? $mp->image : null),
 
@@ -163,6 +197,9 @@ class SellerProductApiController extends Controller
             'min_qty' => 'nullable|integer|min:1',
             'max_qty_mode' => 'nullable|in:per_order,per_day',
             'max_qty_value' => 'nullable|integer|min:1',
+            'cancelable_status' => 'nullable|boolean',
+            'return_status' => 'nullable|boolean',
+            'return_days' => 'nullable|integer|min:1',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -192,6 +229,9 @@ class SellerProductApiController extends Controller
         if ($request->has('min_qty')) $sp->min_qty = $request->min_qty ? (int) $request->min_qty : null;
         if ($request->has('max_qty_mode')) $sp->max_qty_mode = $request->max_qty_mode ?: null;
         if ($request->has('max_qty_value')) $sp->max_qty_value = $request->max_qty_value ?: null;
+        if ($request->has('cancelable_status')) $sp->cancelable_status = (bool) $request->cancelable_status;
+        if ($request->has('return_status')) $sp->return_status = (bool) $request->return_status;
+        if ($request->has('return_days')) $sp->return_days = $request->return_days ?: 1;
 
         $sp->save();
 

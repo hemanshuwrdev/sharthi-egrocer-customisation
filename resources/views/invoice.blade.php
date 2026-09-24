@@ -209,7 +209,8 @@
     <table class="udaan-table">
         <thead>
             <tr>
-                <th style="width: 35%;">Description</th>
+                <th style="width: 30%;">Description</th>
+                <th style="width: 60px; text-align: center;">HSN</th>
                 <th style="width: 45px; text-align: center;">Qty</th>
                 <th style="width: 70px; text-align: right;">Rate</th>
                 <th style="width: 60px; text-align: right;">Disc. Rate</th>
@@ -295,8 +296,8 @@
                         @if ($boxQty)
                             <span style="color: #df2029; font-weight: bold; margin-left: 10px; font-size: 10px;">({{ $boxQty }})</span>
                         @endif
-                        <br><span style="color: #555; font-size: 9px;">Variant: {{ $item->variant_name }} | HSN: {{ $hsn }}</span>
                     </td>
+                    <td style="text-align: center;">{{ $hsn }}</td>
                     <td style="text-align: center; font-weight: bold;">
                         {{ number_format($item->quantity, 1) }}
                     </td>
@@ -319,6 +320,7 @@
             <!-- Total row -->
             <tr style="font-weight: bold; background-color: #f2f2f2;">
                 <td>Total</td>
+                <td></td>
                 <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
                 <td></td>
                 <td></td>
@@ -340,15 +342,20 @@
                         <td align="left" style="color: #555;">Taxable Amount</td>
                         <td align="right" style="font-weight: 500;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>
                     </tr>
-                    <tr>
-                        <td align="left" style="color: #555;">Total Discount</td>
-                        <td align="right" style="font-weight: 500;">
-                            @php
-                                $totalDiscount = $order->discount + $order->promo_discount;
-                            @endphp
-                            {{ $currency }}{{ number_format($totalDiscount, 2) }}
-                        </td>
-                    </tr>
+                    @php
+                        // scheme_discount was missing here before — final_total already had
+                        // it subtracted at order-creation time, so only this displayed total
+                        // was under-reporting, not the amount actually charged.
+                        $totalDiscount = $order->discount + $order->promo_discount + ($order->scheme_discount ?? 0);
+                    @endphp
+                    @if ($totalDiscount > 0)
+                        <tr>
+                            <td align="left" style="color: #555;">Total Discount</td>
+                            <td align="right" style="font-weight: 500;">
+                                {{ $currency }}{{ number_format($totalDiscount, 2) }}
+                            </td>
+                        </tr>
+                    @endif
                     <tr>
                         <td align="left" style="color: #555;">Net Taxable Amount</td>
                         <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>

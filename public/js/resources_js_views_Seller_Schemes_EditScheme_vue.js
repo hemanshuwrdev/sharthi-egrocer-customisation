@@ -17,9 +17,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue-multiselect */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.js");
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_2__);
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -192,7 +204,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         slabs: [{
           min_value: null,
           discount_type: 'percentage',
-          discount_value: null
+          discount_value: null,
+          tax_option: 'inclusive'
         }],
         start_date: '',
         end_date: '',
@@ -261,10 +274,15 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           _this2.record.products = _this2.availableProducts.filter(function (p) {
             return (r.product_ids || []).includes(p.id);
           });
-          _this2.record.slabs = r.slabs && r.slabs.length ? r.slabs : [{
+          _this2.record.slabs = r.slabs && r.slabs.length ? r.slabs.map(function (s) {
+            return _objectSpread({
+              tax_option: 'inclusive'
+            }, s);
+          }) : [{
             min_value: null,
             discount_type: 'percentage',
-            discount_value: null
+            discount_value: null,
+            tax_option: 'inclusive'
           }];
         }
       })["catch"](function () {
@@ -276,7 +294,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       this.record.slabs.push({
         min_value: null,
         discount_type: 'percentage',
-        discount_value: null
+        discount_value: null,
+        tax_option: 'inclusive'
       });
     },
     removeSlab: function removeSlab(index) {
@@ -328,6 +347,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           formData.append('slabs[' + index + '][min_value]', s.min_value);
           formData.append('slabs[' + index + '][discount_type]', s.discount_type);
           formData.append('slabs[' + index + '][discount_value]', s.discount_value);
+          formData.append('slabs[' + index + '][tax_option]', s.tax_option || 'inclusive');
         });
       }
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (response) {
@@ -883,7 +903,7 @@ var render = function () {
                                         staticClass: "row mb-2 align-items-end",
                                       },
                                       [
-                                        _c("div", { staticClass: "col-md-4" }, [
+                                        _c("div", { staticClass: "col-md-3" }, [
                                           _c(
                                             "label",
                                             { staticClass: "small" },
@@ -941,7 +961,7 @@ var render = function () {
                                           }),
                                         ]),
                                         _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-3" }, [
+                                        _c("div", { staticClass: "col-md-2" }, [
                                           _c(
                                             "label",
                                             { staticClass: "small" },
@@ -1017,7 +1037,7 @@ var render = function () {
                                           ),
                                         ]),
                                         _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-3" }, [
+                                        _c("div", { staticClass: "col-md-2" }, [
                                           _c(
                                             "label",
                                             { staticClass: "small" },
@@ -1085,6 +1105,112 @@ var render = function () {
                                                 ]
                                               )
                                             : _vm._e(),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-md-3" }, [
+                                          _c(
+                                            "label",
+                                            {
+                                              directives: [
+                                                {
+                                                  name: "b-tooltip",
+                                                  rawName: "v-b-tooltip.hover",
+                                                  modifiers: { hover: true },
+                                                },
+                                              ],
+                                              staticClass: "small",
+                                              attrs: {
+                                                title: _vm.__(
+                                                  "discount_tax_option_hint"
+                                                ),
+                                              },
+                                            },
+                                            [
+                                              _vm._v(
+                                                "\n                                                    " +
+                                                  _vm._s(
+                                                    _vm.__(
+                                                      "discount_tax_option"
+                                                    )
+                                                  ) +
+                                                  "\n                                                "
+                                              ),
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "select",
+                                            {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: slab.tax_option,
+                                                  expression: "slab.tax_option",
+                                                },
+                                              ],
+                                              staticClass: "form-control",
+                                              on: {
+                                                change: function ($event) {
+                                                  var $$selectedVal =
+                                                    Array.prototype.filter
+                                                      .call(
+                                                        $event.target.options,
+                                                        function (o) {
+                                                          return o.selected
+                                                        }
+                                                      )
+                                                      .map(function (o) {
+                                                        var val =
+                                                          "_value" in o
+                                                            ? o._value
+                                                            : o.value
+                                                        return val
+                                                      })
+                                                  _vm.$set(
+                                                    slab,
+                                                    "tax_option",
+                                                    $event.target.multiple
+                                                      ? $$selectedVal
+                                                      : $$selectedVal[0]
+                                                  )
+                                                },
+                                              },
+                                            },
+                                            [
+                                              _c(
+                                                "option",
+                                                {
+                                                  attrs: { value: "inclusive" },
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "discount_inclusive"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                              _vm._v(" "),
+                                              _c(
+                                                "option",
+                                                {
+                                                  attrs: { value: "exclusive" },
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "discount_exclusive"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          ),
                                         ]),
                                         _vm._v(" "),
                                         _c("div", { staticClass: "col-md-2" }, [

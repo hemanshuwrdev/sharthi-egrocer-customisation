@@ -34,7 +34,7 @@
                                                 <i class="fa fa-users fs-4"></i>
                                             </div>
                                             <div class="ms-3 text-start w-100">
-                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('customers') }}</div>
+                                                <div class="text-muted small fw-semibold text-start" style="font-size: 13px; text-align: left !important;">{{ __('retailers') }}</div>
                                                 <div class="fs-4 fw-bold text-start" style="color: var(--app-ink); line-height: 1.2; text-align: left !important;">{{ record.customer_count || 0 }}</div>
                                             </div>
                                         </div>

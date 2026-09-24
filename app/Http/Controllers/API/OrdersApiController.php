@@ -601,26 +601,44 @@ class OrdersApiController extends Controller
             return CommonHelper::responseSuccess(__('order_marked_as_partial_delivery'));
         }
 
-        // Handle delivered inline when status_id = 6 — require OTP + per-item delivered qty
+        // Handle delivered inline when status_id = 6 — require OTP (unless the distributor
+        // has turned it off) + per-item delivered qty
         if ((int)$request->status_id === OrderStatusList::$delivered) {
+            // This is the delivery-confirmation OTP the driver enters at drop-off — a
+            // per-distributor setting, unrelated to login OTP.
+            $sellerId = \App\Models\OrderItem::where('order_id', $order->id)->value('seller_id');
+            $seller = $sellerId ? \App\Models\Seller::find($sellerId) : null;
+            $otpRequired = $seller ? (bool) ($seller->delivery_otp_enabled ?? true) : true;
+
             $deliveredValidator = Validator::make($request->all(), [
-                'otp'                   => 'required|string',
+                'otp'                   => $otpRequired ? 'required|string' : 'nullable|string',
                 'items'                 => 'required|array|min:1',
                 'items.*.order_item_id' => 'required|integer|exists:order_items,id',
                 'items.*.delivered_qty' => 'required|numeric|min:0',
+                'items.*.reason'        => 'nullable|in:' . implode(',', \App\Http\Controllers\API\DeliveryBoysApiController::SHORTFALL_REASONS),
             ]);
             if ($deliveredValidator->fails()) {
                 return CommonHelper::responseError($deliveredValidator->errors()->first());
             }
 
-            // Verify OTP against order
-            if ($order->otp != $request->otp) {
+            // Verify OTP against order — skipped entirely when this distributor has
+            // disabled delivery OTP verification.
+            if ($otpRequired && $order->otp != $request->otp) {
                 return CommonHelper::responseError('invalid_otp');
             }
 
             // Payment must be collected before marking delivered
             if (!OrderPayment::where('order_id', $order->id)->exists()) {
                 return CommonHelper::responseError('payment_must_be_collected_before_delivery');
+            }
+
+            // A shortfall (delivered_qty < ordered qty) must carry a reason — otherwise
+            // the driver could silently under-deliver with no record of why.
+            foreach ($request->items as $itemData) {
+                $checkItem = \App\Models\OrderItem::where('id', $itemData['order_item_id'])->where('order_id', $order->id)->first();
+                if ($checkItem && (float) $itemData['delivered_qty'] < (float) $checkItem->quantity && empty($itemData['reason'])) {
+                    return CommonHelper::responseError('reason_required_for_shortfall_item_' . $checkItem->id);
+                }
             }
         }
 
@@ -670,6 +688,26 @@ class OrdersApiController extends Controller
 
                 $order->active_status = $request->status_id;
                 $order->save();
+
+                // Persist per-item delivered qty / shortfall reason / damage photo
+                // (validated above) — without this, update_status(delivered) only
+                // flips the order's status and these columns stay null forever.
+                if ($request->status_id == OrderStatusList::$delivered && $request->has('items')) {
+                    foreach ($request->items as $idx => $itemData) {
+                        $orderItem = \App\Models\OrderItem::where('id', $itemData['order_item_id'])
+                            ->where('order_id', $order->id)->first();
+                        if (!$orderItem) continue;
+
+                        $orderItem->delivered_quantity = (float) $itemData['delivered_qty'];
+                        $orderItem->shortfall_reason = $itemData['reason'] ?? null;
+
+                        if (!empty($request->file("items.{$idx}.damage_photo"))) {
+                            $photo = $request->file("items.{$idx}.damage_photo");
+                            $orderItem->damage_photo = $photo->store('damage_photos', 'public');
+                        }
+                        $orderItem->save();
+                    }
+                }
 
                 if ($request->status_id == OrderStatusList::$delivered) {
                     $order = Order::with('user', 'items.productVariant.product')->find($request->order_id);
@@ -1143,6 +1181,12 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError('order_is_already_delivered');
         }
 
+        // Once a loading slip has been generated for this order, it's already staged
+        // for dispatch physically — cancellation is only allowed before that.
+        if (!empty($order->loading_slip_id)) {
+            return CommonHelper::responseError('order_cannot_be_cancelled_after_loading_slip_generated');
+        }
+
         if (empty($order_item)) {
             return CommonHelper::responseError('order_item_not_found');
         }
@@ -1240,14 +1284,22 @@ class OrdersApiController extends Controller
 
             $refundable = max(0, round($refundable, 2));
 
-            // Update order totals
+            // Update order totals. total/final_total are the order's actual value and
+            // must shrink on cancellation too — Loading Slip / Invoice read these directly,
+            // not remaining_total/remaining_final, and were previously left stale (still
+            // showing the pre-cancellation amount) since only the remaining_* pair here
+            // used to be touched.
             if ($isLastItem) {
+                $order->total = 0;
+                $order->final_total = $non_refundable_charges_total + floatval($order->delivery_charge);
                 $order->remaining_total = 0;
                 $order->remaining_final = $non_refundable_charges_total + floatval($order->delivery_charge);
                 $order->wallet_balance = 0;
             } else {
-                $order->remaining_total = max(0, floatval($order->remaining_total) - $itemSubTotal);
+                $order->total = max(0, floatval($order->total) - $itemSubTotal);
                 $nonWalletRefund = $refundable - $walletRefund;
+                $order->final_total = max(0, floatval($order->final_total) - $nonWalletRefund);
+                $order->remaining_total = max(0, floatval($order->remaining_total) - $itemSubTotal);
                 $order->remaining_final = max(0, floatval($order->remaining_final) - $nonWalletRefund);
             }
 
@@ -1265,10 +1317,19 @@ class OrdersApiController extends Controller
             $order_item->canceled_at = now();
             $order_item->save();
 
-            $product_variant = ProductVariant::where('id', $order_item->product_variant_id)->first();
-            if ($product_variant) {
-                $product_variant->stock += $order_item->quantity;
-                $product_variant->save();
+            // Restore stock — master-catalog order_items always have product_variant_id=0
+            // (they use seller_product_id/master_product_variant_id instead), so the
+            // legacy ProductVariant lookup below silently found nothing and never
+            // restored stock for them.
+            if (!empty($order_item->seller_product_id)) {
+                \App\Models\SellerProduct::where('id', $order_item->seller_product_id)
+                    ->increment('stock', $order_item->quantity);
+            } else {
+                $product_variant = ProductVariant::where('id', $order_item->product_variant_id)->first();
+                if ($product_variant) {
+                    $product_variant->stock += $order_item->quantity;
+                    $product_variant->save();
+                }
             }
 
             if (isset($order->promo_code) && $order->promo_code != null && isset($order->promo_discount) && $order->promo_discount != null) {

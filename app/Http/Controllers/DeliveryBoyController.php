@@ -390,7 +390,8 @@ class DeliveryBoyController extends BaseController
         // Order items query: no product/variant joins needed (not selected)
         $order_items = Order::select('order_items.*','orders.mobile','orders.total' ,'orders.delivery_charge','orders.discount','orders.promo_code',
             'orders.promo_discount','orders.wallet_balance','orders.final_total','orders.remaining_final','orders.payment_method','orders.address','orders.delivery_time',
-            'users.name as user_name','order_items.status as order_status','sellers.name as seller_name')
+            'users.name as user_name','order_items.status as order_status','sellers.name as seller_name',
+            DB::raw('CASE WHEN order_items.damage_photo IS NOT NULL AND order_items.damage_photo != "" THEN CONCAT("' . asset('storage/') . '", "/", order_items.damage_photo) ELSE NULL END as damage_photo'))
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
@@ -645,6 +646,14 @@ class DeliveryBoyController extends BaseController
         if ($user) {
             $settings['allPermissions'] = $user->allPermissions;
         }
+
+        // Delivery-confirmation OTP (driver enters retailer's OTP to mark delivered) —
+        // a per-distributor setting, unrelated to phone_auth_otp/login above. Only
+        // resolvable once the driver is logged in and their distributor is known;
+        // defaults to true (required) when no token is passed or the driver has no seller.
+        $deliveryBoy = $user ? ($user->deliveryBoy ?? null) : null;
+        $seller = $deliveryBoy && $deliveryBoy->seller_id ? \App\Models\Seller::find($deliveryBoy->seller_id) : null;
+        $settings['delivery_otp_enabled'] = $seller ? (bool) ($seller->delivery_otp_enabled ?? true) : true;
 
         return CommonHelper::responseWithData($settings);
     }

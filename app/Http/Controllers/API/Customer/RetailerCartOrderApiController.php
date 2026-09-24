@@ -199,13 +199,14 @@ class RetailerCartOrderApiController extends Controller
                 'seller_product_id' => $line['seller_product']->id,
                 'qty' => (float) $row->qty,
                 'line_total' => $subtotal,
+                'actual_line_total' => $line['actual_price_per_unit'] * (float) $row->qty,
             ];
         }
 
         // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
         // $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
         $sellers = \App\Models\Seller::whereIn('id', array_keys($groups))
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'min_order_amount'])
             ->keyBy('id');
 
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
@@ -226,6 +227,12 @@ class RetailerCartOrderApiController extends Controller
 
             $seller = $sellers[$sellerId] ?? null;
             $group['seller_name']           = $seller->name ?? null;
+
+            // Per-distributor minimum order amount — checked against final_total (what
+            // the retailer actually pays this distributor). The app already has
+            // final_total in this same group, so it derives met/short/by-how-much itself
+            // from min_order_amount alone; nothing precomputed needed here.
+            $group['min_order_amount'] = $seller ? (float) ($seller->min_order_amount ?? 0) : 0;
             // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
             // $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
             // $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);
@@ -534,10 +541,12 @@ class RetailerCartOrderApiController extends Controller
         }
 
         $bySeller = $items->groupBy('seller_id');
+        $minOrderAmountBySeller = Seller::whereIn('id', $bySeller->keys())->pluck('min_order_amount', 'id');
+        $sellerNamesForMinCheck = Seller::whereIn('id', $bySeller->keys())->pluck('name', 'id');
         $createdOrders = [];
 
         try {
-            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $user, &$createdOrders) {
+            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $user, $minOrderAmountBySeller, $sellerNamesForMinCheck, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerTotal = 0;
                     $sellerTaxTotal = 0;
@@ -553,6 +562,7 @@ class RetailerCartOrderApiController extends Controller
                             'seller_product_id' => $r['seller_product']->id,
                             'qty' => (float) $row->qty,
                             'line_total' => $lineTotal,
+                            'actual_line_total' => $r['actual_price_per_unit'] * (float) $row->qty,
                         ];
                     }
                     $sellerTaxTotal = round($sellerTaxTotal, 2);
@@ -579,6 +589,17 @@ class RetailerCartOrderApiController extends Controller
                     //     }
                     // }
 
+                    $finalTotal = $sellerTotal - $schemeDiscount + $deliveryCharge;
+
+                    // Per-distributor minimum order amount — enforced here as the final
+                    // authority (getCart() already surfaces this to the app beforehand so
+                    // it isn't a surprise at this last step).
+                    $minOrderAmount = (float) ($minOrderAmountBySeller[$sellerId] ?? 0);
+                    if ($minOrderAmount > 0 && $finalTotal < $minOrderAmount) {
+                        $sellerName = $sellerNamesForMinCheck[$sellerId] ?? 'this distributor';
+                        throw new \Exception("Minimum order amount for {$sellerName} is " . number_format($minOrderAmount, 2) . ".");
+                    }
+
                     $orderId = DB::table('orders')->insertGetId([
                         'user_id' => $user->id,
                         'orders_id' => $ordersId,
@@ -596,8 +617,8 @@ class RetailerCartOrderApiController extends Controller
                         'scheme_discount' => $schemeDiscount,
                         // Inclusive pricing: sellerTotal already contains tax (sellerTaxTotal
                         // is backed out of it above for the tax_amount column, not additive).
-                        'final_total' => $sellerTotal - $schemeDiscount + $deliveryCharge,
-                        'remaining_final' => $sellerTotal - $schemeDiscount + $deliveryCharge,
+                        'final_total' => $finalTotal,
+                        'remaining_final' => $finalTotal,
                         'payment_method' => $request->payment_method ?? 'COD',
                         'address' => $request->address,
                         'latitude' => $request->latitude,
@@ -714,7 +735,7 @@ class RetailerCartOrderApiController extends Controller
                         'orders_id' => $ordersId,
                         'seller_id' => (int) $sellerId,
                         'delivery_charge' => $deliveryCharge,
-                        'final_total' => $sellerTotal - $schemeDiscount + $sellerTaxTotal + $deliveryCharge,
+                        'final_total' => $finalTotal,
                         'scheme' => $scheme ? [
                             'scheme_id' => $scheme['scheme_id'],
                             'name' => $scheme['name'],

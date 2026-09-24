@@ -749,7 +749,7 @@ class BasicApiController extends Controller
         );
 
         $sellers = Seller::select(
-                'sellers.id', 'sellers.name', 'sellers.store_name', 'sellers.logo',
+                'sellers.id', 'sellers.name', 'sellers.store_name', 'sellers.logo', 'sellers.min_order_amount',
                 DB::raw("ROUND(6371 * acos(cos(radians(" . $request->latitude . "))
                                 * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $request->longitude . "))
                                 + sin(radians(" . $request->latitude . ")) * sin(radians(sellers.latitude))), 2) AS distance"),

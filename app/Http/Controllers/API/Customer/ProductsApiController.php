@@ -1522,6 +1522,16 @@ class ProductsApiController extends Controller
                                 'stock' => $sp ? (float) $sp->stock : 0,
                                 'seller_id' => $sp ? $sp->seller_id : null,
                                 'seller_product_id' => $sp ? $sp->id : null,
+                                // Stepper metadata — was missing here, unlike every other
+                                // product listing endpoint. Same convention as
+                                // MasterCatalogOrderHelper::resolveLine(): loose-enabled
+                                // products step 1-at-a-time, everything else steps by the
+                                // secondary unit (box) size.
+                                'allow_loose_qty' => $sp ? (bool) $sp->allow_loose_qty : false,
+                                'qty_step' => ($sp && $sp->allow_loose_qty) ? 1 : (int) (($v->secondary_unit_value ?? 1) > 0 ? $v->secondary_unit_value : 1),
+                                'min_qty' => ($sp && $sp->allow_loose_qty) ? 1 : (int) (($v->secondary_unit_value ?? 1) > 0 ? $v->secondary_unit_value : 1),
+                                'max_qty_mode' => $sp ? $sp->max_qty_mode : null,
+                                'max_qty_value' => $sp && $sp->max_qty_value !== null ? (int) $sp->max_qty_value : null,
                             ];
                         })->values(),
                     ];

@@ -626,6 +626,19 @@ class SarthiCustomisation extends Migration
             });
         }
 
+        // Scheme discount tax option — is discount_value applied before or after tax?
+        // 'inclusive': discount_value is a pre-tax figure — applies to the Net Taxable
+        //   Amount first, so tax is effectively recomputed on the smaller base (GST-style
+        //   "discount before tax"). Flat is grossed up by the basket's average tax rate
+        //   before being subtracted from the inclusive total.
+        // 'exclusive': discount_value applies directly to the already tax-inclusive
+        //   basket total (Total Amt) — tax itself is unaffected.
+        Schema::table('scheme_slabs', function (Blueprint $table) {
+            if (!Schema::hasColumn('scheme_slabs', 'tax_option')) {
+                $table->enum('tax_option', ['inclusive', 'exclusive'])->default('inclusive')->after('discount_value');
+            }
+        });
+
         // 10.d-pre. Migrate existing 'group_discount' records to 'group_discount_price' and expand enum
         if (Schema::hasTable('schemes')) {
             // Step 1: expand enum to include all old + new values so the UPDATE below is valid
@@ -1289,7 +1302,32 @@ class SarthiCustomisation extends Migration
                 $table->decimal('min_order_amount', 10, 2)->nullable()->after('order_cutoff_time')
                     ->comment('Minimum cart total required for a retailer to place an order with this distributor.');
             }
+            if (!Schema::hasColumn('sellers', 'delivery_otp_enabled')) {
+                $table->boolean('delivery_otp_enabled')->default(true)->after('min_order_amount')
+                    ->comment('1 = driver must enter the retailer\'s OTP to mark an order delivered. Not related to login OTP.');
+            }
         });
+
+        // 15. Per-distributor cancelable / returnable policy, mirroring the legacy
+        // products.cancelable_status/return_status/return_days columns but scoped to
+        // seller_products so each distributor sets their own policy for a shared
+        // master-catalog variant (same pattern as allow_loose_qty above).
+        if (Schema::hasTable('seller_products')) {
+            Schema::table('seller_products', function (Blueprint $table) {
+                if (!Schema::hasColumn('seller_products', 'cancelable_status')) {
+                    $table->boolean('cancelable_status')->default(0)->after('max_qty_value')
+                        ->comment('1 = retailer can cancel an order containing this item');
+                }
+                if (!Schema::hasColumn('seller_products', 'return_status')) {
+                    $table->boolean('return_status')->default(0)->after('cancelable_status')
+                        ->comment('1 = retailer can request a return for this item');
+                }
+                if (!Schema::hasColumn('seller_products', 'return_days')) {
+                    $table->unsignedInteger('return_days')->default(1)->after('return_status')
+                        ->comment('Days after delivery a return can be requested');
+                }
+            });
+        }
     }
 
     /**
@@ -1299,6 +1337,11 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('seller_products') && Schema::hasColumn('seller_products', 'cancelable_status')) {
+            Schema::table('seller_products', function (Blueprint $table) {
+                $table->dropColumn(['cancelable_status', 'return_status', 'return_days']);
+            });
+        }
         if (Schema::hasTable('sellers') && Schema::hasColumn('sellers', 'min_order_amount')) {
             Schema::table('sellers', function (Blueprint $table) {
                 $table->dropColumn('min_order_amount');

@@ -7,6 +7,12 @@ use App\Models\SupportedLanguage;
 
 class LanguageService
 {
+    private static ?Language $defaultLanguageCache = null;
+    private static bool $defaultLanguageCached = false;
+
+    /** @var \Illuminate\Support\Collection|null */
+    private static $activeLanguagesCache = null;
+
     public function getLanguageByCode(string $code): ?Language
     {
         // Get supported language by code
@@ -32,10 +38,15 @@ class LanguageService
 
     public function getDefaultLanguage(): ?Language
     {
-        return Language::select(['id', 'supported_language_id', 'system_type', 'is_default', 'display_name'])->where('system_type', 4)
-            ->where('is_default', 1)
-            ->where('status', 1)
-            ->first();
+        if (!self::$defaultLanguageCached) {
+            self::$defaultLanguageCache = Language::select(['id', 'supported_language_id', 'system_type', 'is_default', 'display_name'])->where('system_type', 4)
+                ->where('is_default', 1)
+                ->where('status', 1)
+                ->first();
+            self::$defaultLanguageCached = true;
+        }
+
+        return self::$defaultLanguageCache;
     }
 
     public function getLanguageCode(int $languageId): ?string
@@ -54,20 +65,24 @@ class LanguageService
 
     public function getActiveLanguages()
     {
-        return Language::leftJoin('supported_languages', 'supported_languages.id', 'languages.supported_language_id')
-            ->where('languages.system_type', 4)
-            ->where('languages.status', 1)
-            ->orderBy('languages.is_default', 'DESC')
-            ->orderBy('supported_languages.name', 'ASC')
-            ->get([
-                'languages.id',
-                'languages.supported_language_id',
-                'languages.system_type',
-                'languages.is_default',
-                'languages.display_name',
-                'supported_languages.name',
-                'supported_languages.code'
-            ]);
+        if (self::$activeLanguagesCache === null) {
+            self::$activeLanguagesCache = Language::leftJoin('supported_languages', 'supported_languages.id', 'languages.supported_language_id')
+                ->where('languages.system_type', 4)
+                ->where('languages.status', 1)
+                ->orderBy('languages.is_default', 'DESC')
+                ->orderBy('supported_languages.name', 'ASC')
+                ->get([
+                    'languages.id',
+                    'languages.supported_language_id',
+                    'languages.system_type',
+                    'languages.is_default',
+                    'languages.display_name',
+                    'supported_languages.name',
+                    'supported_languages.code'
+                ]);
+        }
+
+        return self::$activeLanguagesCache;
     }
 
     public static function getCurrentId(): ?int

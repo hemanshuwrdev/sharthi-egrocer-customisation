@@ -258,12 +258,14 @@ export default {
                 //     url: '/seller/self_pickup_orders',
                 //     permission: 'self_pickup_order_list'
                 // },
+                /*
                 {
                     name: __('categories'),
                     icon: 'bullseye',
                     url: '/seller/categories',
                     permission: 'category_list',
                 },
+                */
                 {
                     name: __('products'),
                     icon: 'package',

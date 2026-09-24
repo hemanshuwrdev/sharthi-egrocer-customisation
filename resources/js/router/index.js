@@ -216,7 +216,7 @@ const SellerOrders = () => import("../views/Sellers/Orders");
 const SellerViewOrder = () => import("../views/Orders/ViewOrder");
 const SellerInvoiceOrder = () => import("../views/Orders/InvoiceOrder");
 
-const SellerCategories = () => import("../views/Sellers/Categories");
+// const SellerCategories = () => import("../views/Sellers/Categories");
 const SellerReturnRequests = () => import("../views/ReturnRequests/ReturnRequests");
 const SellerWithdrawalRequests = () => import("../views/Sellers/WithdrawalRequests/WithdrawalRequests");
 const SellerProductSalesReports = () => import("../views/Sellers/ProductSalesReports");
@@ -1921,6 +1921,7 @@ function configRoutes() {
 
                     },
                 },
+                /*
                 {
                     path: "categories",
                     name: "SellerCategories",
@@ -1931,6 +1932,7 @@ function configRoutes() {
                         title: 'Categories'
                     },
                 },
+                */
 
                 {
                     path: "manage_products",

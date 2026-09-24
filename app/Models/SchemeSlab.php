@@ -17,6 +17,7 @@ class SchemeSlab extends Model
         'min_value',
         'discount_type',
         'discount_value',
+        'tax_option',
     ];
 
     protected $casts = [

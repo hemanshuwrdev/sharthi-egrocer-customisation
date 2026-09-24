@@ -660,6 +660,7 @@
                     <thead>
                         <tr>
                             <th>Description</th>
+                            <th style="width: 60px; text-align: center;">HSN</th>
                             <th style="width: 45px; text-align: center;">Qty</th>
                             <th style="width: 70px; text-align: right;">Rate</th>
                             <th style="width: 60px; text-align: right;">Disc. Rate</th>
@@ -695,6 +696,15 @@
                                     }
                                 }
 
+                                $hsn = '';
+                                if (!empty($item->master_product_variant_id)) {
+                                    $hsn = \DB::table('master_products as mp')
+                                        ->join('master_product_variants as mpv', 'mp.id', '=', 'mpv.master_product_id')
+                                        ->where('mpv.id', $item->master_product_variant_id)
+                                        ->value('mp.hsn');
+                                }
+                                $hsn = $hsn ?: 'N/A';
+
                                 // Tax calculations (assume 5% inclusive GST if database doesn't define it)
                                 $taxPct = $item->tax_percentage > 0 ? $item->tax_percentage : 5;
                                 $cgstPct = $taxPct / 2;
@@ -725,9 +735,8 @@
                                         <span
                                             style="color: #df2029; font-weight: bold; margin-left: 10px; font-size: 10px;">({{ $boxQty }})</span>
                                     @endif
-                                    <br><span style="color: #555; font-size: 8px;">Variant: {{ $item->variant_name }} |
-                                        HSN: 110610</span>
                                 </td>
+                                <td style="text-align: center;">{{ $hsn }}</td>
                                 <td style="text-align: center; font-weight: bold;">
                                     {{ number_format($item->quantity, 1) }}</td>
                                 <td style="text-align: right;">₹{{ number_format($rate, 2) }}</td>
@@ -750,6 +759,7 @@
                         <!-- Total row -->
                         <tr style="font-weight: bold; background-color: #f2f2f2;">
                             <td>Total</td>
+                            <td></td>
                             <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
                             <td></td>
                             <td></td>
@@ -764,17 +774,20 @@
                 <!-- Totals Area -->
                 <div class="udaan-totals-area">
                     <table class="udaan-totals-table">
-                        <tr>
-                            <td style="text-align: left; color: #555;">Taxable Amount</td>
-                            <td style="text-align: right; font-weight: 500;">₹{{ number_format($totalNetTaxable, 2) }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="text-align: left; color: #555;">Total Discount</td>
-                            <td style="text-align: right; font-weight: 500;">
-                                ₹{{ number_format(($order->total * $order->discount) / 100 + $order->promo_discount, 2) }}
-                            </td>
-                        </tr>
+                        @php
+                            // discount was being treated as a % of total here — it's actually
+                            // a flat ₹ amount, and scheme_discount was missing entirely, so a
+                            // scheme discount never showed on this particular print view.
+                            $totalDiscount = $order->discount + $order->promo_discount + ($order->scheme_discount ?? 0);
+                        @endphp
+                        @if ($totalDiscount > 0)
+                            <tr>
+                                <td style="text-align: left; color: #555;">Total Discount</td>
+                                <td style="text-align: right; font-weight: 500;">
+                                    ₹{{ number_format($totalDiscount, 2) }}
+                                </td>
+                            </tr>
+                        @endif
                         <tr>
                             <td style="text-align: left; color: #555;">Net Taxable Amount</td>
                             <td style="text-align: right; font-weight: bold;">₹{{ number_format($totalNetTaxable, 2) }}

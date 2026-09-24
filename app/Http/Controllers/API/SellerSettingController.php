@@ -50,6 +50,8 @@ class SellerSettingController extends Controller
         return CommonHelper::responseWithData([
             'order_cutoff_time' => $seller->order_cutoff_time,
             'min_order_amount' => $seller->min_order_amount,
+            // Driver's delivery-confirmation OTP — not the login OTP.
+            'delivery_otp_enabled' => (bool) ($seller->delivery_otp_enabled ?? true),
         ]);
     }
 
@@ -58,6 +60,7 @@ class SellerSettingController extends Controller
         $validator = Validator::make($request->all(), [
             'order_cutoff_time' => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
             'min_order_amount' => ['nullable', 'numeric', 'min:0'],
+            'delivery_otp_enabled' => ['nullable', 'boolean'],
         ], [
             'order_cutoff_time.regex' => 'Cutoff time must be in HH:MM 24-hour format.',
         ]);
@@ -69,6 +72,7 @@ class SellerSettingController extends Controller
             $seller = auth()->user()->seller;
             $seller->order_cutoff_time = $request->order_cutoff_time ?: null;
             $seller->min_order_amount = $request->min_order_amount !== null && $request->min_order_amount !== '' ? $request->min_order_amount : null;
+            $seller->delivery_otp_enabled = $request->has('delivery_otp_enabled') ? (bool) $request->delivery_otp_enabled : true;
             $seller->save();
             return CommonHelper::responseSuccess('order_settings_saved_successfully');
         } catch (\Exception $e) {

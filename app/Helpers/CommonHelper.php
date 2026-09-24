@@ -2757,10 +2757,19 @@ class CommonHelper
             'order_items.status as order_status',
             'sellers.name as seller_name',
             'products.id as product_id',
-            'products.return_status',
-            'products.return_days',
+            DB::raw('COALESCE(products.return_status, seller_products.return_status) as return_status'),
+            DB::raw('COALESCE(products.return_days, seller_products.return_days) as return_days'),
+            DB::raw('COALESCE(products.cancelable_status, seller_products.cancelable_status) as cancelable_status'),
             'master_product_variants.master_product_id',
-            DB::raw('CONCAT("' . asset('storage/') . '", "/", products.image) as image'),
+            // Legacy products.image first, falling back to the master-catalog variant's
+            // own image, then the master product's image — master-catalog order_items
+            // have no products row at all, so image was always NULL for them before this.
+            DB::raw('COALESCE(
+                CONCAT("' . asset('storage/') . '", "/", products.image),
+                CONCAT("' . asset('storage/') . '", "/", master_product_variants.image),
+                CONCAT("' . asset('storage/') . '", "/", master_products.image)
+            ) as image'),
+            DB::raw('CASE WHEN order_items.damage_photo IS NOT NULL AND order_items.damage_photo != "" THEN CONCAT("' . asset('storage/') . '", "/", order_items.damage_photo) ELSE NULL END as damage_photo'),
             'os.id as active_status',
             'os.status as status_name'
         )
@@ -2769,6 +2778,8 @@ class CommonHelper
             ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
             ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
             ->leftJoin('master_product_variants', 'order_items.master_product_variant_id', '=', 'master_product_variants.id')
+            ->leftJoin('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->leftJoin('seller_products', 'order_items.seller_product_id', '=', 'seller_products.id')
             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
             ->leftJoin('order_status_lists as os', 'order_items.active_status', '=', 'os.id')
             ->where('orders.id', $order_id);
@@ -2798,10 +2809,16 @@ class CommonHelper
                 'order_items.status as order_status',
                 'sellers.name as seller_name',
                 'products.id as product_id',
-                'products.return_status',
-                'products.return_days',
+                DB::raw('COALESCE(products.return_status, seller_products.return_status) as return_status'),
+                DB::raw('COALESCE(products.return_days, seller_products.return_days) as return_days'),
+                DB::raw('COALESCE(products.cancelable_status, seller_products.cancelable_status) as cancelable_status'),
                 'master_product_variants.master_product_id',
-                DB::raw('CONCAT("' . asset('storage/') . '", "/", products.image) as image'),
+                DB::raw('COALESCE(
+                    CONCAT("' . asset('storage/') . '", "/", products.image),
+                    CONCAT("' . asset('storage/') . '", "/", master_product_variants.image),
+                    CONCAT("' . asset('storage/') . '", "/", master_products.image)
+                ) as image'),
+                DB::raw('CASE WHEN order_items.damage_photo IS NOT NULL AND order_items.damage_photo != "" THEN CONCAT("' . asset('storage/') . '", "/", order_items.damage_photo) ELSE NULL END as damage_photo'),
                 'os.id as active_status',
                 'os.status as status_name'
             )
@@ -2810,6 +2827,8 @@ class CommonHelper
                 ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
                 ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
                 ->leftJoin('master_product_variants', 'order_items.master_product_variant_id', '=', 'master_product_variants.id')
+                ->leftJoin('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+                ->leftJoin('seller_products', 'order_items.seller_product_id', '=', 'seller_products.id')
                 ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
                 ->leftJoin('order_status_lists as os', 'order_items.active_status', '=', 'os.id')
                 ->where('orders.id', $order_id)

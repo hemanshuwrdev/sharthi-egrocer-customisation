@@ -82,21 +82,21 @@
                                         <div class="form-group">
                                             <label>{{ __('discount_slabs') }}</label>
                                             <div class="row mb-2 align-items-end" v-for="(slab, index) in record.slabs" :key="index">
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <label class="small">
                                                         <span v-if="record.type === 'group_discount_qty'">{{ __('minimum_units') }}</span>
                                                         <span v-else>{{ __('minimum_basket_value') }} (₹)</span>
                                                     </label>
                                                     <input type="number" step="1" min="1" v-model="slab.min_value" class="form-control" required>
                                                 </div>
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <label class="small">{{ __('discount_type') }}</label>
                                                     <select class="form-control" v-model="slab.discount_type" required>
                                                         <option value="percentage">{{ __('percentage') }}</option>
                                                         <option value="flat">{{ __('flat') }}</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <label class="small">{{ __('discount_value') }}</label>
                                                     <input type="number" step="0.01" min="0.01"
                                                         :max="slab.discount_type === 'percentage' ? 100 : null"
@@ -104,6 +104,15 @@
                                                     <small v-if="slab.discount_type === 'percentage' && slab.discount_value > 100" class="text-danger">
                                                         {{ __('percentage_discount_cannot_exceed_100') }}
                                                     </small>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="small" v-b-tooltip.hover :title="__('discount_tax_option_hint')">
+                                                        {{ __('discount_tax_option') }}
+                                                    </label>
+                                                    <select class="form-control" v-model="slab.tax_option">
+                                                        <option value="inclusive">{{ __('discount_inclusive') }}</option>
+                                                        <option value="exclusive">{{ __('discount_exclusive') }}</option>
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-2">
                                                     <button type="button" class="btn btn-danger btn-sm" @click="removeSlab(index)" :disabled="record.slabs.length === 1">
@@ -166,7 +175,7 @@ export default {
                 free_product: null,
                 free_qty: null,
                 products: [],
-                slabs: [{ min_value: null, discount_type: 'percentage', discount_value: null }],
+                slabs: [{ min_value: null, discount_type: 'percentage', discount_value: null, tax_option: 'inclusive' }],
                 start_date: '',
                 end_date: '',
                 status: 1
@@ -211,8 +220,8 @@ export default {
                         this.record.free_product = this.availableProducts.find(p => p.id == r.free_seller_product_id) || null;
                         this.record.products = this.availableProducts.filter(p => (r.product_ids || []).includes(p.id));
                         this.record.slabs = (r.slabs && r.slabs.length)
-                            ? r.slabs
-                            : [{ min_value: null, discount_type: 'percentage', discount_value: null }];
+                            ? r.slabs.map(s => ({ tax_option: 'inclusive', ...s }))
+                            : [{ min_value: null, discount_type: 'percentage', discount_value: null, tax_option: 'inclusive' }];
                     }
                 }).catch(() => {
                     this.isLoading = false;
@@ -220,7 +229,7 @@ export default {
                 });
         },
         addSlab() {
-            this.record.slabs.push({ min_value: null, discount_type: 'percentage', discount_value: null });
+            this.record.slabs.push({ min_value: null, discount_type: 'percentage', discount_value: null, tax_option: 'inclusive' });
         },
         removeSlab(index) {
             this.record.slabs.splice(index, 1);
@@ -268,6 +277,7 @@ export default {
                     formData.append('slabs[' + index + '][min_value]', s.min_value);
                     formData.append('slabs[' + index + '][discount_type]', s.discount_type);
                     formData.append('slabs[' + index + '][discount_value]', s.discount_value);
+                    formData.append('slabs[' + index + '][tax_option]', s.tax_option || 'inclusive');
                 });
             }
 

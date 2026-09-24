@@ -20,6 +20,8 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToAr
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+//
 //
 //
 //
@@ -788,27 +790,13 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         var retailerName = order.retailer ? order.retailer.name : '-';
         var retailerMobile = order.retailer ? order.retailer.mobile : '';
         payments.forEach(function (p) {
-          var _p$received_amount2;
-          rows.push({
+          var _p$received_amount2, _rows$push;
+          rows.push((_rows$push = {
             orderId: order.id,
             ordersId: order.orders_id,
             invoiceNumber: order.invoice_number,
-            loadingSlipNo: order.loading_slip_no,
-            retailerName: retailerName,
-            retailerMobile: retailerMobile,
-            finalTotal: order.final_total,
-            orderShortfall: orderShortfall,
-            paymentId: p.id,
-            method: p.method,
-            amount: p.amount,
-            receivedAmount: (_p$received_amount2 = p.received_amount) !== null && _p$received_amount2 !== void 0 ? _p$received_amount2 : p.amount,
-            proofPhoto: p.proof_photo,
-            paymentStatus: p.status,
-            // cheque_date comes back as an ISO datetime string (date cast) — trim
-            // to YYYY-MM-DD for the native <input type="date">.
-            chequeDate: p.cheque_date ? String(p.cheque_date).substring(0, 10) : '',
-            chequeNumber: p.cheque_number || ''
-          });
+            loadingSlipNo: order.loading_slip_no
+          }, _defineProperty(_rows$push, "invoiceNumber", order.invoice_number), _defineProperty(_rows$push, "retailerName", retailerName), _defineProperty(_rows$push, "retailerMobile", retailerMobile), _defineProperty(_rows$push, "finalTotal", order.final_total), _defineProperty(_rows$push, "orderShortfall", orderShortfall), _defineProperty(_rows$push, "paymentId", p.id), _defineProperty(_rows$push, "method", p.method), _defineProperty(_rows$push, "amount", p.amount), _defineProperty(_rows$push, "receivedAmount", (_p$received_amount2 = p.received_amount) !== null && _p$received_amount2 !== void 0 ? _p$received_amount2 : p.amount), _defineProperty(_rows$push, "proofPhoto", p.proof_photo), _defineProperty(_rows$push, "paymentStatus", p.status), _defineProperty(_rows$push, "chequeDate", p.cheque_date ? String(p.cheque_date).substring(0, 10) : ''), _defineProperty(_rows$push, "chequeNumber", p.cheque_number || ''), _rows$push));
         });
       });
       return rows;
@@ -864,8 +852,23 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           var payment = (order.payments || []).find(function (p) {
             return p.id === paymentId;
           });
-          if (payment) {
+          if (payment && payment.status !== 'verified') {
             this.$set(payment, 'status', 'verified');
+            // Optimistic totals bump — load() will overwrite this with the
+            // authoritative server value shortly after, but without this an
+            // export/print triggered before that reload finishes reads stale
+            // (unverified) totals even though the row already shows "verified".
+            var amount = parseFloat(payment.amount || 0);
+            var round2 = function round2(v) {
+              return parseFloat((v || 0).toFixed(2));
+            };
+            if (['upi', 'cheque', 'signature'].includes(payment.method)) {
+              this.totals.digital_verified = round2(this.totals.digital_verified + amount);
+              this.totals.unverified_digital = Math.max(0, (this.totals.unverified_digital || 0) - 1);
+              if (payment.method === 'upi') this.totals.verified_upi = round2(this.totals.verified_upi + amount);
+              if (payment.method === 'cheque') this.totals.verified_cheque = round2(this.totals.verified_cheque + amount);
+              if (payment.method === 'signature') this.totals.verified_signature = round2(this.totals.verified_signature + amount);
+            }
             break;
           }
         }
@@ -1274,29 +1277,169 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         }
       });
 
-      // Order / payment detail table
+      // Shortfall / return calculation — up top, right under the totals, so it's the
+      // first thing a distributor sees when checking whether a trip closed clean.
+      var shortfall = this.totals.shortfall !== null && this.totals.shortfall !== undefined ? this.totals.shortfall : this.overallShortfall;
+      var totalReturns = this.totals.total_returns || 0;
       (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
-        startY: doc.lastAutoTable.finalY + 6,
-        head: [['Invoice #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']],
-        body: this.flatRows.map(function (r) {
-          return [r.invoiceNumber || '#' + r.ordersId, r.loadingSlipNo || '-', r.retailerName, money(r.finalTotal), r.method || '-', money(r.amount), r.paymentStatus || '-'];
-        }),
+        startY: doc.lastAutoTable.finalY + 3,
+        theme: 'plain',
         styles: {
-          fontSize: 8,
-          cellPadding: 2
+          fontSize: 10,
+          cellPadding: 2,
+          fontStyle: 'bold'
         },
-        headStyles: {
-          fillColor: [52, 58, 64]
-        },
-        alternateRowStyles: {
-          fillColor: [248, 249, 250]
-        },
+        body: [[{
+          content: __('shortfall') + ':',
+          styles: {
+            halign: 'right'
+          }
+        }, {
+          content: money(shortfall),
+          styles: {
+            textColor: shortfall > 0 ? [220, 53, 69] : [22, 163, 74]
+          }
+        }], [{
+          content: (__('total_returns') || 'Total Returns') + ':',
+          styles: {
+            halign: 'right'
+          }
+        }, {
+          content: money(totalReturns),
+          styles: {
+            textColor: totalReturns > 0 ? [234, 88, 12] : [0, 0, 0]
+          }
+        }]],
         columnStyles: {
-          2: {
+          0: {
+            cellWidth: pageW - 14 - 40 - 14
+          },
+          1: {
             cellWidth: 40
           }
         }
       });
+
+      // Order / payment detail — one table PER payment method, not mixed together.
+      var methodGroups = [{
+        key: 'cash',
+        label: __('cash_payments'),
+        total: this.totals.total_cash
+      }, {
+        key: 'upi',
+        label: __('upi_payments'),
+        total: this.totals.total_upi
+      }, {
+        key: 'cheque',
+        label: __('cheque_payments'),
+        total: this.totals.total_cheque
+      }, {
+        key: 'signature',
+        label: __('signature_payments'),
+        total: this.totals.total_signature
+      }];
+      methodGroups.forEach(function (group) {
+        var rows = _this11.flatRows.filter(function (r) {
+          return r.method === group.key;
+        });
+        if (rows.length === 0) return;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(group.label + ' — ' + money(group.total), 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Collected', 'Status']],
+          body: rows.map(function (r) {
+            return [r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName, money(r.finalTotal), money(r.amount), r.paymentStatus || '-'];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [52, 58, 64]
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250]
+          },
+          columnStyles: {
+            3: {
+              cellWidth: 40
+            }
+          }
+        });
+      });
+
+      // Orders with no payment recorded at all — flatRows skips these entirely (it's
+      // flat per-payment, nothing to key an "empty" row off), so pull them straight
+      // from this.orders instead, which always has every order regardless.
+      var noPaymentRows = this.orders.filter(function (o) {
+        return (o.payments || []).length === 0;
+      });
+      if (noPaymentRows.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(__('no_payment_collected') || 'No Payment Collected', 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value']],
+          body: noPaymentRows.map(function (o) {
+            return [o.orders_id, o.loading_slip_no || '-', o.invoice_number || '-', o.retailer ? o.retailer.name : '-', money(o.final_total)];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [52, 58, 64]
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250]
+          },
+          columnStyles: {
+            3: {
+              cellWidth: 40
+            }
+          }
+        });
+      }
+
+      // Returns — approved return requests against orders in this trip. Refund is
+      // wallet-credited, not cash the driver hands back, so it's a separate table.
+      var returnRows = [];
+      this.orders.forEach(function (order) {
+        (order.returns || []).forEach(function (r) {
+          returnRows.push([order.orders_id, order.retailer ? order.retailer.name : '-', r.product_name, money(r.refund_amount)]);
+        });
+      });
+      if (returnRows.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text((__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0), 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Order #', 'Retailer', 'Product', 'Refund Amount']],
+          body: returnRows,
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [234, 88, 12]
+          },
+          alternateRowStyles: {
+            fillColor: [255, 247, 237]
+          },
+          columnStyles: {
+            2: {
+              cellWidth: 50
+            }
+          }
+        });
+      }
       doc.save('settlement-' + this.tripType + '-' + this.$route.params.id + '.pdf');
     },
     fmt: function fmt(val) {
@@ -7523,6 +7666,10 @@ var render = function () {
                                 _vm._v(" "),
                                 _c("th", { staticStyle: { width: "110px" } }, [
                                   _vm._v(_vm._s(_vm.__("loading_slip"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "120px" } }, [
+                                  _vm._v(_vm._s(_vm.__("invoice_no"))),
                                 ]),
                                 _vm._v(" "),
                                 _c("th", [_vm._v(_vm._s(_vm.__("retailer")))]),

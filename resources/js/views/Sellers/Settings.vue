@@ -130,6 +130,17 @@
                                 __('minimum_cart_total_required_for_a_retailer_to_place_an_order')
                                 }})</span>
                         </div>
+                        <div class="form-group col-md-6">
+                            <label for="delivery_otp_enabled">{{ __('delivery_otp_enabled') }}</label><br>
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input"
+                                    id="delivery_otp_enabled"
+                                    v-model="delivery_otp_enabled" />
+                            </div>
+                            <span class="text text-primary font-size-13">({{
+                                __('driver_must_enter_the_retailers_otp_to_mark_an_order_delivered_not_the_login_otp')
+                                }})</span>
+                        </div>
                     </div>
                 </div>
 
@@ -249,6 +260,7 @@ export default {
             isOrderLoading: false,
             order_cutoff_time: "",
             min_order_amount: "",
+            delivery_otp_enabled: true,
             isPaymentLoading: false,
             paymentMethods: [],
             isInvoiceLoading: false,
@@ -350,6 +362,9 @@ export default {
                     if (res.data.status && res.data.data) {
                         this.order_cutoff_time = res.data.data.order_cutoff_time || "";
                         this.min_order_amount = res.data.data.min_order_amount ?? "";
+                        this.delivery_otp_enabled = res.data.data.delivery_otp_enabled !== undefined
+                            ? !!res.data.data.delivery_otp_enabled
+                            : true;
                     }
                 })
                 .catch(() => {
@@ -402,6 +417,7 @@ export default {
             let formData = new FormData();
             formData.append('order_cutoff_time', this.order_cutoff_time || '');
             formData.append('min_order_amount', this.min_order_amount || '');
+            formData.append('delivery_otp_enabled', this.delivery_otp_enabled ? 1 : 0);
 
             axios.post(this.$sellerApiUrl + '/order-settings/save', formData)
                 .then(res => {

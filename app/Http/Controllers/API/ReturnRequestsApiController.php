@@ -475,8 +475,8 @@ class ReturnRequestsApiController extends Controller
             'order_items.status as order_status',
             'sellers.name as seller_name',
             'products.id as product_id',
-            'products.return_status',
-            'products.return_days',
+            DB::raw('COALESCE(products.return_status, seller_products.return_status) as return_status'),
+            DB::raw('COALESCE(products.return_days, seller_products.return_days) as return_days'),
             DB::raw('CONCAT("' . asset('storage/') . '", "/", products.image) as image'),
             'os.id as active_status',
             'os.status as status_name'
@@ -485,6 +485,7 @@ class ReturnRequestsApiController extends Controller
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
             ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
+            ->leftJoin('seller_products', 'order_items.seller_product_id', '=', 'seller_products.id')
             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
             ->leftJoin('order_status_lists as os', 'order_items.active_status', '=', 'os.id')
             ->where('orders.id', $returnRequest->order_id)

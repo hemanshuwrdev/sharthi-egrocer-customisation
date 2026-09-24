@@ -1566,6 +1566,12 @@ class OrderApiController extends Controller
                 return CommonHelper::responseSuccess("Order Status Updated Successfully");
                 /*Send Notification*/
             } else if ($postStatus == OrderStatusList::$cancelled) {
+                // Once a loading slip has been generated for this order, it's already
+                // staged for dispatch physically — cancellation is only allowed before that.
+                if (!empty($order->loading_slip_id)) {
+                    return CommonHelper::responseError(__('order_cannot_be_cancelled_after_loading_slip_generated'));
+                }
+
                 DB::beginTransaction();
 
                 // Count total items and how many are still not cancelled (before we save this one).
@@ -1619,9 +1625,15 @@ class OrderApiController extends Controller
                             CommonHelper::addWalletTransaction($order->id, $order_item->id, $order->user_id, 'credit', $refundable, 'wallet_order_item_cancelled');
                         }
 
-                        // Update order - only non-refundable charges and delivery remain
+                        // Update order - only non-refundable charges and delivery remain.
+                        // total/final_total must mirror remaining_total/remaining_final —
+                        // Loading Slip and Invoice read total/final_total directly and were
+                        // left stale (still the pre-cancellation amount) when only the
+                        // remaining_* pair used to be updated here.
                         $order->remaining_total = 0;
                         $order->remaining_final = $non_refundable_charges_total + floatval($order->delivery_charge);
+                        $order->total = $order->remaining_total;
+                        $order->final_total = $order->remaining_final;
                         $order->wallet_balance = 0;
                         $order->save();
                     } else {
@@ -1676,6 +1688,8 @@ class OrderApiController extends Controller
                             + $non_refundable_charges_total
                             + $order->delivery_charge
                             - $order->promo_discount;
+                        $order->total = $order->remaining_total;
+                        $order->final_total = $order->remaining_final;
                         $order->save();
                     }
                 } else {
@@ -1693,6 +1707,8 @@ class OrderApiController extends Controller
                             // Update order - COD fully cancelled, customer never paid so nothing to keep
                             $order->remaining_total = 0;
                             $order->remaining_final = 0;
+                            $order->total = 0;
+                            $order->final_total = 0;
                             $order->wallet_balance = 0;
                         } else {
                             // For multiple items - calculate proportional wallet refund
@@ -1716,6 +1732,8 @@ class OrderApiController extends Controller
                             // Update order - partial cancel, keep non-refundable charges for remaining items
                             $order->remaining_total = floatval($order->remaining_total) - floatval($order_item->sub_total);
                             $order->remaining_final = floatval($order->remaining_total) + $non_refundable_charges_total;
+                            $order->total = $order->remaining_total;
+                            $order->final_total = $order->remaining_final;
                             $order->wallet_balance = $order->wallet_balance - $wallet_refund;
                         }
                         $order->save();
@@ -1724,6 +1742,8 @@ class OrderApiController extends Controller
                         $isLastItem = ($itemNum == 1 || $lastItemNum == 1);
                         $order->remaining_total = $isLastItem ? 0 : floatval($order->remaining_total) - floatval($order_item->sub_total);
                         $order->remaining_final = $isLastItem ? 0 : floatval($order->remaining_total) + $non_refundable_charges_total;
+                        $order->total = $order->remaining_total;
+                        $order->final_total = $order->remaining_final;
                         $order->save();
                     }
                 }
@@ -1731,15 +1751,22 @@ class OrderApiController extends Controller
                 $order_item->cancellation_reason = $request->cancellation_reason;
                 $order_item->canceled_at = now();
                 $order_item->save();
-                // Find the product variant by id
-                $product_variant_id = $order_item->product_variant_id;
-                $product_variant = ProductVariant::where('id', $product_variant_id)->first();
+                // Restore stock — master-catalog order_items always have
+                // product_variant_id=0, so the legacy ProductVariant lookup below silently
+                // found nothing and never restored stock for them.
+                if (!empty($order_item->seller_product_id)) {
+                    \App\Models\SellerProduct::where('id', $order_item->seller_product_id)
+                        ->increment('stock', $order_item->quantity);
+                } else {
+                    $product_variant_id = $order_item->product_variant_id;
+                    $product_variant = ProductVariant::where('id', $product_variant_id)->first();
 
-                if ($product_variant) {
-                    // Update the stock value
-                    $new_stock_value = $product_variant->stock + $order_item->quantity;
-                    $product_variant->stock = $new_stock_value; // Set the new stock value
-                    $product_variant->save(); // Save the changes to the database
+                    if ($product_variant) {
+                        // Update the stock value
+                        $new_stock_value = $product_variant->stock + $order_item->quantity;
+                        $product_variant->stock = $new_stock_value; // Set the new stock value
+                        $product_variant->save(); // Save the changes to the database
+                    }
                 }
                 if (isset($order->promo_code) && $order->promo_code != null && isset($order->promo_discount) && $order->promo_discount != null) {
                     $promo_code = explode("(", $order->promo_code);
@@ -2014,10 +2041,10 @@ class OrderApiController extends Controller
                 'p.image',
                 'p.manufacturer',
                 'p.made_in',
-                'p.return_status',
-                'p.return_days',
-                'p.cancelable_status',
-                'p.till_status',
+                DB::raw('COALESCE(p.return_status, sp.return_status) as return_status'),
+                DB::raw('COALESCE(p.return_days, sp.return_days) as return_days'),
+                DB::raw('COALESCE(p.cancelable_status, sp.cancelable_status) as cancelable_status'),
+                DB::raw('COALESCE(p.till_status, IF(sp.cancelable_status = 1, ' . OrderStatusList::$outForDelivery . ', NULL)) as till_status'),
                 'v.measurement',
                 'v.stock_unit_id',
                 DB::raw('(select short_code from units as u where u.id = v.stock_unit_id) as unit'),
@@ -2037,6 +2064,7 @@ class OrderApiController extends Controller
                 ->leftJoin('products as p', 'v.product_id', '=', 'p.id')
                 ->leftJoin('master_product_variants as mpv', 'oi.master_product_variant_id', '=', 'mpv.id')
                 ->leftJoin('master_products as mp', 'mpv.master_product_id', '=', 'mp.id')
+                ->leftJoin('seller_products as sp', 'oi.seller_product_id', '=', 'sp.id')
                 ->leftJoin('sellers as s', 'oi.seller_id', '=', 's.id')
                 ->leftJoin("countries as co", "p.made_in", "=", "co.id")
                 ->where('oi.order_id', '=', $row['id'])
@@ -2073,7 +2101,11 @@ class OrderApiController extends Controller
                 );
                 $cancelableStatusList = array(OrderStatusList::$received, OrderStatusList::$processed, OrderStatusList::$shipped, OrderStatusList::$outForDelivery);
 
-                if (($item->cancelable_status == 1) && intval($row->active_status) <= intval($item->till_status) && in_array($row->active_status, $cancelableStatusList)) {
+                // Once a loading slip has been generated for this order, it's staged for
+                // dispatch physically and can no longer be cancelled — hide the button.
+                if (!empty($row->loading_slip_id)) {
+                    $items[$subkey]->cancelable_status = 0;
+                } elseif (($item->cancelable_status == 1) && intval($row->active_status) <= intval($item->till_status) && in_array($row->active_status, $cancelableStatusList)) {
                     $items[$subkey]->cancelable_status = 1;
                 } else {
                     $items[$subkey]->cancelable_status = 0;

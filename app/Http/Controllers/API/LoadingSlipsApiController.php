@@ -360,7 +360,9 @@ class LoadingSlipsApiController extends Controller
         // Group items by variant to check total required quantity
         $variantQuantities = [];
         foreach ($orders as $order) {
-            $items = OrderItem::where('order_id', $order->id)->get();
+            $items = OrderItem::where('order_id', $order->id)
+                ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+                ->get();
             foreach ($items as $item) {
                 if ($item->master_product_variant_id) {
                     $key = 'master_' . $item->master_product_variant_id;
@@ -433,7 +435,9 @@ class LoadingSlipsApiController extends Controller
             $computedWeight = self::calculateOrderWeight($order->id);
             $totalWeight += $computedWeight;
 
-            $totalItems += OrderItem::where('order_id', $order->id)->sum('quantity');
+            $totalItems += OrderItem::where('order_id', $order->id)
+                ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+                ->sum('quantity');
         }
 
         // Weight Capacity Check
@@ -542,7 +546,9 @@ class LoadingSlipsApiController extends Controller
             ->get();
 
         foreach ($orders as $order) {
-            $order->items = OrderItem::where('order_id', $order->id)->get();
+            $order->items = OrderItem::where('order_id', $order->id)
+                ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+                ->get();
             $order->is_rescheduled = DB::table('order_statuses')
                 ->where('order_id', $order->id)
                 ->where('status', 'Rescheduled')
@@ -759,6 +765,7 @@ class LoadingSlipsApiController extends Controller
             ->leftJoin('units as u1', 'pv.stock_unit_id', '=', 'u1.id')
             ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
             ->whereIn('order_items.order_id', $orders->pluck('id'))
+            ->whereNotIn('order_items.active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
             ->groupBy(
                 'order_items.product_variant_id',
                 'order_items.product_name',
@@ -784,6 +791,7 @@ class LoadingSlipsApiController extends Controller
                 ->leftJoin('units as u1', 'pv.stock_unit_id', '=', 'u1.id')
                 ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
                 ->where('order_items.order_id', $order->id)
+                ->whereNotIn('order_items.active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
                 ->get();
 
             $order->is_rescheduled = DB::table('order_statuses')
@@ -851,7 +859,9 @@ class LoadingSlipsApiController extends Controller
     // Helper method to calculate exact order weight in kg
     public static function calculateOrderWeight($orderId)
     {
-        $items = OrderItem::where('order_id', $orderId)->get();
+        $items = OrderItem::where('order_id', $orderId)
+            ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+            ->get();
         $totalWeight = 0;
 
         foreach ($items as $item) {
