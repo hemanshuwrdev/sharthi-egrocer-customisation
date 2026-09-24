@@ -101,6 +101,7 @@ class RetailerCatalogApiController extends Controller
                 'seller_products.discounted_price as sp_discounted_price',
                 'seller_products.stock as sp_stock',
                 'seller_products.allow_loose_qty as sp_allow_loose_qty',
+                'seller_products.min_qty as sp_min_qty',
                 'seller_products.max_qty_mode as sp_max_qty_mode',
                 'seller_products.max_qty_value as sp_max_qty_value'
             );
@@ -238,7 +239,7 @@ class RetailerCatalogApiController extends Controller
                     // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
                     // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
                     'qty_step'         => $r->sp_allow_loose_qty ? 1 : ((float) ($r->secondary_unit_value ?? 1) ?: 1),
-                    'min_qty'          => $r->sp_allow_loose_qty ? 1 : ((float) ($r->secondary_unit_value ?? 1) ?: 1),
+                    'min_qty'          => $r->sp_min_qty ? (float) $r->sp_min_qty : ($r->sp_allow_loose_qty ? 1 : ((float) ($r->secondary_unit_value ?? 1) ?: 1)),
                     'max_qty_mode'     => $r->sp_max_qty_mode,
                     'max_qty_value'    => $r->sp_max_qty_value,
                     'slab_prices'      => isset($slabsBySp[$r->sp_id])
@@ -412,7 +413,7 @@ class RetailerCatalogApiController extends Controller
                 // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
                 // Loose-enabled products: step/min_qty collapse to 1 (any qty is orderable).
                 'qty_step'       => $sp->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
-                'min_qty'        => $sp->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1),
+                'min_qty'        => $sp->min_qty ? (float) $sp->min_qty : ($sp->allow_loose_qty ? 1 : ((float) ($variant->secondary_unit_value ?? 1) ?: 1)),
                 'max_qty_mode'   => $sp->max_qty_mode,
                 'max_qty_value'  => $sp->max_qty_value,
                 'slab_prices' => $sp->slabPrices->map(fn($s) => [

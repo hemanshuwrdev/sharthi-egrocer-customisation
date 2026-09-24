@@ -1,60 +1,72 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="page-title">
-                <div class="row">
-                    <div class="col-12 col-md-6 order-md-1 order-last">
-                        <h3>{{ __('trip_reconciliation') }}</h3>
-                        <p class="text-subtitle text-muted">{{ __('all_trips') }}</p>
-                    </div>
-                    <div class="col-12 col-md-6 order-md-2 order-first">
-                        <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item">
-                                    <router-link to="/seller/dashboard">{{ __('dashboard') }}</router-link>
-                                </li>
-                                <li class="breadcrumb-item active">{{ __('trip_reconciliation') }}</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ __('trip_reconciliation') }}</h3>
+        </div>
 
-            <section class="section">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <h4 class="card-title mb-0">{{ __('all_trips') }}</h4>
-                        <div class="d-flex gap-2 align-items-center flex-wrap">
-                            <!-- Type filter tabs -->
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button
-                                    v-for="t in typeOptions" :key="t.value"
-                                    type="button"
-                                    class="btn"
-                                    :class="typeFilter === t.value ? 'btn-primary' : 'btn-outline-secondary'"
-                                    @click="setType(t.value)">
-                                    {{ t.label }}
-                                </button>
-                            </div>
-                            <input
-                                type="text"
-                                v-model="filter"
-                                @input="load"
-                                class="form-control form-control-sm"
-                                :placeholder="__('search') + ' ' + __('driver') + ' / ' + __('salesman')"
-                                style="min-width:200px">
-                            <button class="btn btn-sm btn-outline-secondary" @click="load">
-                                <i class="fa fa-refresh"></i>
+        <div class="list-surface">
+            <div class="list-toolbar has-filters">
+                <div class="list-toolbar-start">
+                    <div class="list-filter">
+                        <span class="list-filter-label">{{ __('type') }}</span>
+                        <div class="btn-group btn-group-sm trip-type-toggle" role="group">
+                            <button
+                                v-for="t in typeOptions" :key="t.value"
+                                type="button"
+                                class="btn"
+                                :class="typeFilter === t.value ? 'btn-primary' : 'btn-outline-secondary'"
+                                @click="setType(t.value)">
+                                {{ t.label }}
                             </button>
                         </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div v-if="loading" class="text-center py-5"><b-spinner></b-spinner></div>
-                        <div v-else-if="rows.length === 0" class="text-center text-muted py-5">
-                            <i class="fa fa-users fa-2x mb-2 d-block"></i>
-                            {{ __('no_data_found') }}
+
+                    <div class="list-filter">
+                        <span class="list-filter-label">{{ __('status') }}</span>
+                        <select v-model="statusFilter" @change="applyFilters" class="form-control form-select">
+                            <option value="all">{{ __('all_statuses') }}</option>
+                            <option value="open">{{ __('open') }}</option>
+                            <option value="locked">{{ __('locked') }}</option>
+                            <option value="reconciled">{{ __('reconciled') }}</option>
+                            <option value="needs_rereconcile">{{ __('Needs Re-Reconcile') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="list-filter">
+                        <span class="list-filter-label">{{ __('Date Range') }}</span>
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <date-range-picker :autoApply="false" :showDropdowns="true" v-model="dateRange"
+                                :maxDate="maxDate" @update="applyFilters" :locale-data="dateRangePickerLocale"
+                                :ranges="dateRangePickerRanges" :append-to-body="true" opens="right"></date-range-picker>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" @click="setQuickRange('today')">{{ __('today') }}</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" @click="setQuickRange('last7')">{{ __('Last 7 Days') }}</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" @click="setQuickRange('this_month')">{{ __('this_month') }}</button>
                         </div>
-                        <div v-else class="table-responsive">
+                    </div>
+
+                    <button v-if="hasActiveFilters" type="button" class="btn btn-sm btn-outline-danger" @click="clearFilters">
+                        <i class="fa fa-times me-1" aria-hidden="true"></i>{{ __('Clear Filters') }}
+                    </button>
+                </div>
+
+                <div class="list-toolbar-end">
+                    <div class="list-search">
+                        <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                        <b-form-input v-model="filter" type="search" @input="load"
+                            :placeholder="__('search') + ' ' + __('driver') + ' / ' + __('salesman')"></b-form-input>
+                    </div>
+                    <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="load">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="loading" class="text-center py-5"><b-spinner></b-spinner></div>
+            <div v-else-if="rows.length === 0" class="text-center text-muted py-5">
+                <i class="fa fa-users fa-2x mb-2 d-block"></i>
+                {{ __('no_data_found') }}
+            </div>
+            <div v-else class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
@@ -115,25 +127,28 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                    <div class="card-footer py-2" v-if="total > perPage">
-                        <b-pagination
-                            v-model="page"
-                            :total-rows="total"
-                            :per-page="perPage"
-                            align="right"
-                            class="mb-0"
-                            @input="load">
-                        </b-pagination>
-                    </div>
-                </div>
-            </section>
+            <div class="list-footer" v-if="total > perPage">
+                <div></div>
+                <b-pagination
+                    v-model="page"
+                    :total-rows="total"
+                    :per-page="perPage"
+                    class="list-pagination mb-0"
+                    @input="load">
+                </b-pagination>
+            </div>
         </div>
     </div>
 </template>
 
 <script>
+import moment from 'moment';
+import DateRangePicker from 'vue2-daterange-picker';
+import DateRangePickerMixin from '../../mixins/DateRangePickerMixin';
+
 export default {
+    mixins: [DateRangePickerMixin],
+    components: { DateRangePicker },
     name: 'SellerTripsList',
     data() {
         return {
@@ -142,8 +157,11 @@ export default {
             total:      0,
             page:       1,
             perPage:    15,
-            filter:     '',
-            typeFilter: 'all',
+            filter:       '',
+            typeFilter:   'all',
+            statusFilter: 'all',
+            dateRange:    { startDate: null, endDate: null },
+            maxDate:      new Date(),
             typeOptions: [
                 { value: 'all',      label: 'All' },
                 { value: 'driver',   label: 'Driver' },
@@ -154,16 +172,58 @@ export default {
     created() {
         this.load();
     },
+    computed: {
+        hasActiveFilters() {
+            return !!(this.filter || this.dateRange.startDate || this.dateRange.endDate || this.statusFilter !== 'all' || this.typeFilter !== 'all');
+        },
+    },
     methods: {
         setType(t) {
             this.typeFilter = t;
             this.page = 1;
             this.load();
         },
+        applyFilters() {
+            this.page = 1;
+            this.load();
+        },
+        setQuickRange(key) {
+            const ranges = {
+                today: this.getTodayRange(),
+                last7: this.getLast7DaysRange(),
+                this_month: this.getThisMonthRange(),
+            };
+            const [start, end] = ranges[key];
+            this.dateRange = { startDate: start, endDate: end };
+            this.applyFilters();
+        },
+        getLast7DaysRange() {
+            const end = new Date();
+            end.setHours(23, 59, 59, 999);
+            const start = new Date();
+            start.setDate(start.getDate() - 6);
+            start.setHours(0, 0, 0, 0);
+            return [start, end];
+        },
+        clearFilters() {
+            this.filter = '';
+            this.statusFilter = 'all';
+            this.typeFilter = 'all';
+            this.dateRange = { startDate: null, endDate: null };
+            this.page = 1;
+            this.load();
+        },
         load() {
             this.loading = true;
+            const fromDate = (this.dateRange.startDate && moment(this.dateRange.startDate).isValid())
+                ? moment(this.dateRange.startDate).format('YYYY-MM-DD') : undefined;
+            const toDate = (this.dateRange.endDate && moment(this.dateRange.endDate).isValid())
+                ? moment(this.dateRange.endDate).format('YYYY-MM-DD') : undefined;
             axios.get(this.$apiUrl + '/seller/trips', {
-                params: { page: this.page, filter: this.filter, type: this.typeFilter },
+                params: {
+                    page: this.page, filter: this.filter, type: this.typeFilter,
+                    status: this.statusFilter, from_date: fromDate, to_date: toDate,
+                },
             }).then(res => {
                 const d      = res.data.data;
                 this.rows    = d.data || [];
@@ -176,10 +236,10 @@ export default {
             return parseFloat(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         settlementStatusClass(s) {
-            return { open: 'bg-warning text-dark', locked: 'bg-info', reconciled: 'bg-success' }[s] || 'bg-secondary';
+            return { open: 'bg-warning text-dark', locked: 'bg-info', reconciled: 'bg-success', needs_rereconcile: 'bg-danger' }[s] || 'bg-secondary';
         },
         settlementStatusIcon(s) {
-            return { open: 'fa fa-clock-o', locked: 'fa fa-lock', reconciled: 'fa fa-check-circle' }[s] || 'fa fa-circle';
+            return { open: 'fa fa-clock-o', locked: 'fa fa-lock', reconciled: 'fa fa-check-circle', needs_rereconcile: 'fa fa-exclamation-triangle' }[s] || 'fa fa-circle';
         },
         reconLabel(s) {
             return {
@@ -210,6 +270,15 @@ export default {
 </script>
 
 <style scoped>
+@import "../../../../node_modules/vue2-daterange-picker/dist/vue2-daterange-picker.css";
+
+.trip-type-toggle .btn:first-child { border-top-left-radius: 50rem; border-bottom-left-radius: 50rem; }
+.trip-type-toggle .btn:last-child  { border-top-right-radius: 50rem; border-bottom-right-radius: 50rem; }
+
+.vue-daterange-picker {
+    min-width: 220px;
+}
+
 .bg-purple { background-color: #7c3aed !important; color: #fff !important; }
 
 .recon-pill {

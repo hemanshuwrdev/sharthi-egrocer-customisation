@@ -16,8 +16,8 @@ class LanguageSeeder extends Seeder
         $displayName = 'English';
         
         $systemTypeFiles = [
-            1 => 'customer.json',  // Customer App
-            2 => 'partner.json',   // Seller and delivery boy App
+            1 => 'customer.json',  // Retailer App
+            2 => 'partner.json',   // Distributor App
             3 => 'web.json',       // Website
             4 => 'panel.json'      // Admin panel
         ];

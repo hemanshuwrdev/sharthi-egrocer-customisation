@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class SellerSettingController extends Controller
@@ -111,5 +112,56 @@ class SellerSettingController extends Controller
         } catch (\Exception $e) {
             return CommonHelper::responseError($e->getMessage());
         }
+    }
+
+    /**
+     * Sensitive-operations password: a second password (distinct from the login
+     * password) that gates risky corrections like editing a driver's recorded
+     * payment method. Only the seller who already knows it can rotate it, so
+     * staff with panel login access but not this password can't take it over.
+     */
+    public function getSensitivePasswordStatus()
+    {
+        $seller = auth()->user()->seller;
+        return CommonHelper::responseWithData([
+            'is_set' => !empty($seller->sensitive_password),
+        ]);
+    }
+
+    public function saveSensitivePassword(Request $request)
+    {
+        $seller = auth()->user()->seller;
+        $isSet  = !empty($seller->sensitive_password);
+
+        if (!$isSet) {
+            $validator = Validator::make($request->all(), [
+                'password'         => 'required|string|min:6',
+                'confirm_password' => 'required|string|same:password',
+            ]);
+            if ($validator->fails()) {
+                return CommonHelper::responseError($validator->errors()->first());
+            }
+
+            $seller->sensitive_password = Hash::make($request->password);
+            $seller->save();
+            return CommonHelper::responseSuccess('sensitive_password_set_successfully');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'old_password'          => 'required|string',
+            'new_password'          => 'required|string|min:6',
+            'confirm_new_password'  => 'required|string|same:new_password',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        if (!Hash::check($request->old_password, $seller->sensitive_password)) {
+            return CommonHelper::responseError('old_password_is_incorrect');
+        }
+
+        $seller->sensitive_password = Hash::make($request->new_password);
+        $seller->save();
+        return CommonHelper::responseSuccess('sensitive_password_changed_successfully');
     }
 }

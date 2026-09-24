@@ -8,6 +8,7 @@ use App\Models\BrandDistributorMapping;
 use App\Models\City;
 use App\Models\DeliveryBoy;
 use App\Models\LoadingSlip;
+use App\Models\MasterProductVariant;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusList;
@@ -29,7 +30,10 @@ class LoadingSlipsApiController extends Controller
         $offset = ($page - 1) * $limit;
         $filter = $request->input('filter', '');
 
-        $query = LoadingSlip::with(['vehicle', 'driver'])->orderBy('id', 'DESC');
+        // Cancelled slips are kept in the DB for the audit trail (never deleted — see
+        // cancel()) but a cancelled slip has no further action to take on it, so it's
+        // excluded from this list by default. Still reachable directly via view().
+        $query = LoadingSlip::with(['vehicle', 'driver'])->where('status', '!=', 3)->orderBy('id', 'DESC');
 
         if (auth()->user() && auth()->user()->seller) {
             $query->where('created_by', auth()->user()->id);
@@ -119,6 +123,19 @@ class LoadingSlipsApiController extends Controller
             $query->where('orders.area_id', $areaId);
         }
 
+        // Product filter: an order matches if it contains ANY of the selected products
+        // (union, not intersection) — selecting 2 products surfaces every order that has
+        // at least one of them, not just orders containing both.
+        $productIds = array_filter((array) $request->input('product_ids', []));
+        if (!empty($productIds)) {
+            $query->whereExists(function ($q) use ($productIds) {
+                $q->select(DB::raw(1))
+                  ->from('order_items')
+                  ->whereColumn('order_items.order_id', 'orders.id')
+                  ->whereIn('order_items.seller_product_id', $productIds);
+            });
+        }
+
         // Add is_rescheduled flag via subquery — avoids N+1 per order
         $query->addSelect(DB::raw(
             'EXISTS(SELECT 1 FROM order_statuses WHERE order_statuses.order_id = orders.id AND order_statuses.status = "Rescheduled") as is_rescheduled'
@@ -142,6 +159,139 @@ class LoadingSlipsApiController extends Controller
         }
 
         return CommonHelper::responseWithData($orders);
+    }
+
+    /**
+     * GET /loading_slips/products
+     * Lightweight {id, text} list (id = seller_product_id) for the product multiselect
+     * filter on the create-slip screen — feeds getOrdersForAssignment()'s product_ids param.
+     */
+    public function getFilterProducts()
+    {
+        if (!auth()->user() || !auth()->user()->seller) {
+            return CommonHelper::responseError('Only distributors (sellers) can view this.');
+        }
+        $sellerId = auth()->user()->seller->id;
+
+        $products = SellerProduct::with('masterProductVariant.masterProduct')
+            ->where('seller_id', $sellerId)
+            ->where('status', 1)
+            ->get()
+            ->map(fn ($sp) => [
+                'id'   => $sp->id,
+                'text' => trim(($sp->masterProductVariant->masterProduct->name ?? '') . ' — ' . ($sp->masterProductVariant->sku ?? '')),
+            ])
+            ->values();
+
+        return CommonHelper::responseWithData($products);
+    }
+
+    /**
+     * POST /loading_slips/order_items_summary
+     * Body: order_ids[] — pure display data for the pre-generate review modal on the
+     * create-slip screen: one table's worth of rows per order, each product's quantity
+     * broken into boxes + loose pieces using the same secondary_unit_value math
+     * calculateOrderWeight() already uses below. Deliberately has nothing to do with
+     * SellerProduct.stock or save()'s stock-shortage check — this is not a validation/
+     * blocking step, just a number-crunched summary for the distributor to eyeball
+     * against physical stock themselves.
+     */
+    public function getOrderItemsSummary(Request $request)
+    {
+        if (!auth()->user() || !auth()->user()->seller) {
+            return CommonHelper::responseError('Only distributors (sellers) can view this.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'order_ids'   => 'required|array|min:1',
+            'order_ids.*' => 'integer',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $sellerId = auth()->user()->seller->id;
+
+        $orders = Order::select('orders.id', 'orders.orders_id', DB::raw('COALESCE(rp.shop_name, rp.party_name, users.name) as retailer_name'))
+            ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
+            ->whereIn('orders.id', $request->order_ids)
+            ->orderBy('orders.id')
+            ->get();
+
+        $items = OrderItem::whereIn('order_id', $request->order_ids)
+            ->where('seller_id', $sellerId)
+            ->get()
+            ->groupBy('order_id');
+
+        $variantIds = $items->flatten()->pluck('master_product_variant_id')->filter()->unique();
+        $variants = MasterProductVariant::with(['unit', 'secondaryUnit'])
+            ->whereIn('id', $variantIds)
+            ->get()
+            ->keyBy('id');
+
+        $summary = $orders->map(function ($order) use ($items, $variants) {
+            $rows = [];
+            foreach ($items->get($order->id, collect()) as $item) {
+                $key = $item->master_product_variant_id
+                    ? 'master_' . $item->master_product_variant_id
+                    : 'legacy_' . $item->product_variant_id;
+
+                if (!isset($rows[$key])) {
+                    $rows[$key] = [
+                        'name'       => trim($item->product_name . ($item->variant_name ? ' (' . $item->variant_name . ')' : '')),
+                        'qty'        => 0,
+                        // box_unit = the bulk grouping (e.g. "Box") — confusingly this is the
+                        // *secondary* unit / "Inner Pack Unit" in this app's own Master Catalog
+                        // terminology. piece_unit = the individual sellable unit (e.g. "Pcs"/"Kg"),
+                        // which is the *primary* unit / "Outer Pack Unit". Named for clarity here
+                        // instead of reusing that inverted outer/inner wording.
+                        'box_unit'   => null,
+                        'piece_unit' => null,
+                        'pack_size'  => null,
+                    ];
+
+                    $variant = $item->master_product_variant_id ? $variants->get($item->master_product_variant_id) : null;
+                    if ($variant && (float) $variant->secondary_unit_value > 0) {
+                        $rows[$key]['pack_size']  = (float) $variant->secondary_unit_value;
+                        $rows[$key]['box_unit']   = $variant->secondaryUnit->name ?? null;
+                        $rows[$key]['piece_unit'] = $variant->unit->name ?? null;
+                    }
+                }
+
+                $rows[$key]['qty'] += (float) $item->quantity;
+            }
+
+            $rows = collect($rows)->map(function ($row, $key) {
+                $qty = (int) round($row['qty']);
+                if ($row['pack_size'] > 0) {
+                    $packSize = (int) round($row['pack_size']);
+                    $row['boxes'] = intdiv($qty, $packSize);
+                    $row['loose'] = $qty % $packSize;
+                } else {
+                    $row['boxes'] = null;
+                    $row['loose'] = null;
+                }
+                $row['qty'] = $qty;
+                // key + pack_size (raw, not the per-order boxes/loose) are kept so the
+                // frontend can group these rows by product across orders and correctly
+                // recompute boxes/loose for the *aggregate* quantity — summing each
+                // order's own boxes/loose would give a wrong total (e.g. four orders of
+                // "0 boxes + 25 loose" at pack size 50 is actually "2 boxes + 0 loose"
+                // once combined, not "0 boxes + 100 loose").
+                $row['key'] = $key;
+                return $row;
+            })->values();
+
+            return [
+                'order_id'      => $order->id,
+                'orders_id'     => $order->orders_id,
+                'retailer_name' => $order->retailer_name ?: '-',
+                'items'         => $rows,
+            ];
+        })->values();
+
+        return CommonHelper::responseWithData($summary);
     }
 
     public function getZones()
@@ -483,6 +633,63 @@ class LoadingSlipsApiController extends Controller
             // Surface the real reason instead of a generic message — this endpoint was
             // returning an unhelpful raw 500 with no indication of what actually failed.
             return CommonHelper::responseError('Something went wrong during dispatch: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * POST /loading_slips/cancel
+     * Body: id — only while status=0 (not yet dispatched, so nothing has physically left
+     * the warehouse). Fully releases every assigned order back to unassigned — clearing
+     * loading_slip_id/delivery_boy_id/bonus fields exactly as save() set them — so they're
+     * immediately eligible again via getOrdersForAssignment() for a fresh loading slip.
+     * We never delete the slip itself; it's kept, marked Cancelled, for the audit trail.
+     */
+    public function cancel(Request $request)
+    {
+        if (!auth()->user() || !auth()->user()->seller) {
+            return CommonHelper::responseError('Only distributors (sellers) can cancel a loading slip.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|exists:loading_slips,id',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $slip = LoadingSlip::find($request->id);
+        if (!$slip) {
+            return CommonHelper::responseError('Loading slip not found.');
+        }
+        if ($slip->created_by != auth()->user()->id) {
+            return CommonHelper::responseError('Access denied to this loading slip.');
+        }
+        if ($slip->status != 0) {
+            return CommonHelper::responseError('Only a not-yet-dispatched loading slip can be cancelled.');
+        }
+
+        DB::beginTransaction();
+        try {
+            Order::where('loading_slip_id', $slip->id)->update([
+                'loading_slip_id' => null,
+                'delivery_boy_id' => null,
+                'delivery_boy_bonus_details' => null,
+                'delivery_boy_bonus_amount' => null,
+            ]);
+
+            $slip->status = 3; // Cancelled
+            $slip->save();
+
+            DB::commit();
+            return CommonHelper::responseSuccess('Loading slip cancelled — orders are available to add to a new slip.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            try {
+                Log::error("Error cancelling loading slip: " . $e->getMessage());
+            } catch (\Throwable $logErr) {
+                // ignore
+            }
+            return CommonHelper::responseError('Something went wrong while cancelling: ' . $e->getMessage());
         }
     }
 

@@ -384,6 +384,327 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -411,7 +732,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         unverified_digital: 0
       },
       closing: false,
-      verifyingId: null
+      verifyingId: null,
+      methodOptions: ['cash', 'upi', 'cheque', 'signature'],
+      methodEditUnlocked: false,
+      unlockModalShow: false,
+      unlockPassword: '',
+      unlockError: '',
+      unlocking: false,
+      // Cheque-details modal — opens when a row's method is changed to "cheque",
+      // since date+number must be captured before the change is saved.
+      chequeModalShow: false,
+      chequeModalPaymentId: null,
+      chequeModalPreviousMethod: null,
+      chequeModalDate: '',
+      chequeModalNumber: '',
+      chequeModalError: '',
+      chequeModalSaving: false
     };
   },
   computed: {
@@ -425,65 +761,77 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       return this.settlement && this.settlement.status === 'needs_rereconcile';
     },
     overallShortfall: function overallShortfall() {
-      return parseFloat((this.totals.total_expected - this.totals.total_collected).toFixed(2));
+      return parseFloat((this.totals.total_expected - this.totalReceivedAmount).toFixed(2));
+    },
+    totalReceivedAmount: function totalReceivedAmount() {
+      return this.flatRows.reduce(function (s, row) {
+        return s + parseFloat(row.receivedAmount || 0);
+      }, 0);
     },
     canCloseNow: function canCloseNow() {
       return this.totals.unverified_digital === 0;
     },
+    // One row per payment, order-level fields (Order #, Retailer, Order Value,
+    // Shortfall) repeated on every row — each of the 4 method tables below just
+    // filters this by method, so an order with no payments recorded at all (no
+    // method to categorize it under) is skipped entirely.
     flatRows: function flatRows() {
       var rows = [];
       this.orders.forEach(function (order) {
         var payments = order.payments || [];
-        var collected = payments.reduce(function (s, p) {
-          return s + parseFloat(p.amount || 0);
+        if (payments.length === 0) return;
+        var received = payments.reduce(function (s, p) {
+          var _p$received_amount;
+          return s + parseFloat(((_p$received_amount = p.received_amount) !== null && _p$received_amount !== void 0 ? _p$received_amount : p.amount) || 0);
         }, 0);
-        var orderShortfall = parseFloat((order.final_total - collected).toFixed(2));
+        var orderShortfall = parseFloat((order.final_total - received).toFixed(2));
         var retailerName = order.retailer ? order.retailer.name : '-';
         var retailerMobile = order.retailer ? order.retailer.mobile : '';
-        var rowspan = payments.length || 1;
-        if (payments.length === 0) {
+        payments.forEach(function (p) {
+          var _p$received_amount2;
           rows.push({
             orderId: order.id,
             ordersId: order.orders_id,
+            invoiceNumber: order.invoice_number,
             loadingSlipNo: order.loading_slip_no,
             retailerName: retailerName,
             retailerMobile: retailerMobile,
             finalTotal: order.final_total,
-            isEmpty: true,
-            isFirst: true,
-            isLast: true,
-            rowspan: 1,
             orderShortfall: orderShortfall,
-            paymentId: null,
-            method: null,
-            amount: 0,
-            proofPhoto: null,
-            paymentStatus: null
+            paymentId: p.id,
+            method: p.method,
+            amount: p.amount,
+            receivedAmount: (_p$received_amount2 = p.received_amount) !== null && _p$received_amount2 !== void 0 ? _p$received_amount2 : p.amount,
+            proofPhoto: p.proof_photo,
+            paymentStatus: p.status,
+            // cheque_date comes back as an ISO datetime string (date cast) — trim
+            // to YYYY-MM-DD for the native <input type="date">.
+            chequeDate: p.cheque_date ? String(p.cheque_date).substring(0, 10) : '',
+            chequeNumber: p.cheque_number || ''
           });
-        } else {
-          payments.forEach(function (p, pi) {
-            rows.push({
-              orderId: order.id,
-              ordersId: order.orders_id,
-              loadingSlipNo: order.loading_slip_no,
-              retailerName: retailerName,
-              retailerMobile: retailerMobile,
-              finalTotal: order.final_total,
-              isEmpty: false,
-              isFirst: pi === 0,
-              isLast: pi === payments.length - 1,
-              rowspan: rowspan,
-              orderShortfall: orderShortfall,
-              paymentId: p.id,
-              method: p.method,
-              amount: p.amount,
-              proofPhoto: p.proof_photo,
-              paymentStatus: p.status
-            });
-          });
-        }
+        });
       });
       return rows;
+    },
+    cashRows: function cashRows() {
+      return this.flatRows.filter(function (r) {
+        return r.method === 'cash';
+      });
+    },
+    upiRows: function upiRows() {
+      return this.flatRows.filter(function (r) {
+        return r.method === 'upi';
+      });
+    },
+    chequeRows: function chequeRows() {
+      return this.flatRows.filter(function (r) {
+        return r.method === 'cheque';
+      });
+    },
+    signatureRows: function signatureRows() {
+      return this.flatRows.filter(function (r) {
+        return r.method === 'signature';
+      });
     }
   },
   created: function created() {
@@ -535,7 +883,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }).then(function () {
         _this2.verifyingId = null;
         _this2.markPaymentVerifiedLocally(paymentId);
-        _this2.$toasted.success(__('payment_verified'));
+        _this2.$toast.success(__('payment_verified'));
         _this2.load();
       })["catch"](function (err) {
         var _err$response, _err$response$data;
@@ -546,12 +894,266 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           _this2.markPaymentVerifiedLocally(paymentId);
           _this2.load();
         } else {
-          _this2.$toasted.error(msg || __('something_went_wrong'));
+          _this2.$toast.error(msg || __('something_went_wrong'));
         }
       });
     },
-    closeTrip: function closeTrip() {
+    updateReceivedAmountLocally: function updateReceivedAmountLocally(paymentId, value) {
+      if (paymentId == null) return;
+      var _iterator2 = _createForOfIteratorHelper(this.orders),
+        _step2;
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var order = _step2.value;
+          var payment = (order.payments || []).find(function (p) {
+            return p.id === paymentId;
+          });
+          if (payment) {
+            this.$set(payment, 'received_amount', value === '' ? null : parseFloat(value));
+            break;
+          }
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
+    },
+    saveReceivedAmount: function saveReceivedAmount(paymentId, value) {
       var _this3 = this;
+      if (paymentId == null || this.isClosed) return;
+      var amount = parseFloat(value);
+      if (isNaN(amount) || amount < 0) return;
+      axios.post(this.$apiUrl + '/seller/payments/received', {
+        payment_id: paymentId,
+        received_amount: amount
+      }).then(function (res) {
+        if (!res.data.status) {
+          _this3.$toast.error(res.data.message || __('something_went_wrong'));
+          _this3.load();
+        }
+      })["catch"](function (err) {
+        var _err$response2, _err$response2$data;
+        _this3.$toast.error(((_err$response2 = err.response) === null || _err$response2 === void 0 ? void 0 : (_err$response2$data = _err$response2.data) === null || _err$response2$data === void 0 ? void 0 : _err$response2$data.message) || __('something_went_wrong'));
+      });
+    },
+    openUnlockModal: function openUnlockModal() {
+      var _this4 = this;
+      this.unlockPassword = '';
+      this.unlockError = '';
+      this.unlockModalShow = true;
+      this.$nextTick(function () {
+        return _this4.$refs.unlockPasswordInput && _this4.$refs.unlockPasswordInput.focus();
+      });
+    },
+    submitUnlock: function submitUnlock() {
+      var _this5 = this;
+      if (!this.unlockPassword) return;
+      this.unlocking = true;
+      this.unlockError = '';
+      axios.post(this.$apiUrl + '/seller/sensitive/verify', {
+        password: this.unlockPassword
+      }).then(function (res) {
+        _this5.unlocking = false;
+        if (res.data.status) {
+          _this5.methodEditUnlocked = true;
+          _this5.unlockModalShow = false;
+          _this5.unlockPassword = '';
+          return;
+        }
+        _this5.setUnlockError(res.data.message);
+      })["catch"](function (err) {
+        var _err$response3, _err$response3$data;
+        _this5.unlocking = false;
+        _this5.setUnlockError((_err$response3 = err.response) === null || _err$response3 === void 0 ? void 0 : (_err$response3$data = _err$response3.data) === null || _err$response3$data === void 0 ? void 0 : _err$response3$data.message);
+      });
+    },
+    setUnlockError: function setUnlockError(msg) {
+      if (msg === 'sensitive_password_not_set') {
+        this.unlockError = __('Set a sensitive operations password in Settings first.');
+      } else if (msg === 'incorrect_password') {
+        this.unlockError = __('Incorrect password.');
+      } else {
+        this.unlockError = msg || __('something_went_wrong');
+      }
+    },
+    updateMethodLocally: function updateMethodLocally(paymentId, value) {
+      var _iterator3 = _createForOfIteratorHelper(this.orders),
+        _step3;
+      try {
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var order = _step3.value;
+          var payment = (order.payments || []).find(function (p) {
+            return p.id === paymentId;
+          });
+          if (payment) {
+            this.$set(payment, 'method', value);
+            break;
+          }
+        }
+      } catch (err) {
+        _iterator3.e(err);
+      } finally {
+        _iterator3.f();
+      }
+    },
+    changePaymentMethod: function changePaymentMethod(paymentId, value) {
+      var _this$flatRows$find,
+        _this6 = this;
+      if (paymentId == null || !this.methodEditUnlocked) return;
+      var previous = (_this$flatRows$find = this.flatRows.find(function (r) {
+        return r.paymentId === paymentId;
+      })) === null || _this$flatRows$find === void 0 ? void 0 : _this$flatRows$find.method;
+      if (value === 'cheque') {
+        // Cheque needs date + number before it can be saved — collect them via
+        // the modal instead of saving immediately.
+        this.chequeModalPaymentId = paymentId;
+        this.chequeModalPreviousMethod = previous;
+        this.chequeModalDate = '';
+        this.chequeModalNumber = '';
+        this.chequeModalError = '';
+        this.updateMethodLocally(paymentId, 'cheque'); // reflect the pick in the dropdown while the modal is open
+        this.chequeModalShow = true;
+        this.$nextTick(function () {
+          return _this6.$refs.chequeModalDateInput && _this6.$refs.chequeModalDateInput.focus();
+        });
+        return;
+      }
+      this.updateMethodLocally(paymentId, value);
+      this.saveMethodChange(paymentId, value, previous);
+    },
+    saveMethodChange: function saveMethodChange(paymentId, value, previous) {
+      var _this7 = this;
+      return axios.post(this.$apiUrl + '/seller/payments/update-method', {
+        payment_id: paymentId,
+        method: value
+      }).then(function (res) {
+        if (res.data.status) {
+          _this7.$toast.success(__('method_updated'));
+          _this7.load();
+          return true;
+        }
+        if (previous) _this7.updateMethodLocally(paymentId, previous);
+        if (res.data.message === 'sensitive_unlock_required') {
+          _this7.methodEditUnlocked = false;
+          _this7.$toast.error(__('Editing session expired — click Edit to unlock again.'));
+        } else {
+          _this7.$toast.error(res.data.message || __('something_went_wrong'));
+        }
+        return false;
+      })["catch"](function (err) {
+        var _err$response4, _err$response4$data;
+        if (previous) _this7.updateMethodLocally(paymentId, previous);
+        _this7.$toast.error(((_err$response4 = err.response) === null || _err$response4 === void 0 ? void 0 : (_err$response4$data = _err$response4.data) === null || _err$response4$data === void 0 ? void 0 : _err$response4$data.message) || __('something_went_wrong'));
+        return false;
+      });
+    },
+    cancelChequeModal: function cancelChequeModal() {
+      if (this.chequeModalPaymentId != null && this.chequeModalPreviousMethod) {
+        this.updateMethodLocally(this.chequeModalPaymentId, this.chequeModalPreviousMethod);
+      }
+      this.chequeModalShow = false;
+    },
+    submitChequeModal: function submitChequeModal() {
+      var _this8 = this;
+      if (!this.chequeModalDate || !this.chequeModalNumber) return;
+      this.chequeModalSaving = true;
+      this.chequeModalError = '';
+      var paymentId = this.chequeModalPaymentId;
+      axios.post(this.$apiUrl + '/seller/payments/update-method', {
+        payment_id: paymentId,
+        method: 'cheque',
+        cheque_date: this.chequeModalDate,
+        cheque_number: this.chequeModalNumber
+      }).then(function (res) {
+        _this8.chequeModalSaving = false;
+        if (res.data.status) {
+          _this8.$toast.success(__('method_updated'));
+          _this8.chequeModalShow = false;
+          _this8.load();
+          return;
+        }
+        if (_this8.chequeModalPreviousMethod) _this8.updateMethodLocally(paymentId, _this8.chequeModalPreviousMethod);
+        if (res.data.message === 'sensitive_unlock_required') {
+          _this8.methodEditUnlocked = false;
+          _this8.chequeModalShow = false;
+          _this8.$toast.error(__('Editing session expired — click Edit to unlock again.'));
+        } else {
+          _this8.chequeModalError = res.data.message || __('something_went_wrong');
+        }
+      })["catch"](function (err) {
+        var _err$response5, _err$response5$data;
+        _this8.chequeModalSaving = false;
+        if (_this8.chequeModalPreviousMethod) _this8.updateMethodLocally(paymentId, _this8.chequeModalPreviousMethod);
+        _this8.chequeModalError = ((_err$response5 = err.response) === null || _err$response5 === void 0 ? void 0 : (_err$response5$data = _err$response5.data) === null || _err$response5$data === void 0 ? void 0 : _err$response5$data.message) || __('something_went_wrong');
+      });
+    },
+    updateChequeDateLocally: function updateChequeDateLocally(paymentId, value) {
+      var _iterator4 = _createForOfIteratorHelper(this.orders),
+        _step4;
+      try {
+        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+          var order = _step4.value;
+          var payment = (order.payments || []).find(function (p) {
+            return p.id === paymentId;
+          });
+          if (payment) {
+            this.$set(payment, 'cheque_date', value);
+            break;
+          }
+        }
+      } catch (err) {
+        _iterator4.e(err);
+      } finally {
+        _iterator4.f();
+      }
+    },
+    updateChequeNumberLocally: function updateChequeNumberLocally(paymentId, value) {
+      var _iterator5 = _createForOfIteratorHelper(this.orders),
+        _step5;
+      try {
+        for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+          var order = _step5.value;
+          var payment = (order.payments || []).find(function (p) {
+            return p.id === paymentId;
+          });
+          if (payment) {
+            this.$set(payment, 'cheque_number', value);
+            break;
+          }
+        }
+      } catch (err) {
+        _iterator5.e(err);
+      } finally {
+        _iterator5.f();
+      }
+    },
+    // Inline correction of date/number on a row that's already cheque — no modal
+    // needed here, mirrors how receivedAmount is edited inline elsewhere on this page.
+    saveChequeDetails: function saveChequeDetails(paymentId) {
+      var _this9 = this;
+      if (paymentId == null || this.isClosed) return;
+      var row = this.flatRows.find(function (r) {
+        return r.paymentId === paymentId;
+      });
+      if (!row || !row.chequeDate || !row.chequeNumber) return;
+      axios.post(this.$apiUrl + '/seller/payments/update-method', {
+        payment_id: paymentId,
+        method: 'cheque',
+        cheque_date: row.chequeDate,
+        cheque_number: row.chequeNumber
+      }).then(function (res) {
+        if (!res.data.status) {
+          _this9.$toast.error(res.data.message || __('something_went_wrong'));
+          _this9.load();
+        }
+      })["catch"](function (err) {
+        var _err$response6, _err$response6$data;
+        _this9.$toast.error(((_err$response6 = err.response) === null || _err$response6 === void 0 ? void 0 : (_err$response6$data = _err$response6.data) === null || _err$response6$data === void 0 ? void 0 : _err$response6$data.message) || __('something_went_wrong'));
+      });
+    },
+    closeTrip: function closeTrip() {
+      var _this10 = this;
       if (!this.canCloseNow) return;
       this.$bvModal.msgBoxConfirm(__('verify_close_trip') + '?', {
         okVariant: 'primary',
@@ -559,17 +1161,17 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         cancelTitle: __('cancel')
       }).then(function (ok) {
         if (!ok) return;
-        _this3.closing = true;
-        axios.post(_this3.$apiUrl + '/seller/trips/' + _this3.$route.params.id + '/close', {
-          type: _this3.tripType
+        _this10.closing = true;
+        axios.post(_this10.$apiUrl + '/seller/trips/' + _this10.$route.params.id + '/close', {
+          type: _this10.tripType
         }).then(function () {
-          _this3.closing = false;
-          _this3.$toasted.success(__('trip_closed'));
-          _this3.load();
+          _this10.closing = false;
+          _this10.$toast.success(__('trip_closed'));
+          _this10.load();
         })["catch"](function (err) {
-          var _err$response2, _err$response2$data;
-          _this3.closing = false;
-          _this3.$toasted.error(((_err$response2 = err.response) === null || _err$response2 === void 0 ? void 0 : (_err$response2$data = _err$response2.data) === null || _err$response2$data === void 0 ? void 0 : _err$response2$data.message) || __('something_went_wrong'));
+          var _err$response7, _err$response7$data;
+          _this10.closing = false;
+          _this10.$toast.error(((_err$response7 = err.response) === null || _err$response7 === void 0 ? void 0 : (_err$response7$data = _err$response7.data) === null || _err$response7$data === void 0 ? void 0 : _err$response7$data.message) || __('something_went_wrong'));
         });
       });
     },
@@ -581,8 +1183,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     exportReportCsv: function exportReportCsv() {
-      var rows = [['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']].concat(_toConsumableArray(this.flatRows.map(function (r) {
-        return [r.ordersId, r.loadingSlipNo || '-', r.retailerName, r.finalTotal, r.method || '-', r.amount, r.paymentStatus || '-'];
+      var rows = [['Invoice #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']].concat(_toConsumableArray(this.flatRows.map(function (r) {
+        return [r.invoiceNumber || '#' + r.ordersId, r.loadingSlipNo || '-', r.retailerName, r.finalTotal, r.method || '-', r.amount, r.paymentStatus || '-'];
       })));
       var csv = rows.map(function (r) {
         return r.join(',');
@@ -598,11 +1200,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       URL.revokeObjectURL(url);
     },
     exportReportPdf: function exportReportPdf() {
-      var _this4 = this;
+      var _this11 = this;
       var doc = new jspdf__WEBPACK_IMPORTED_MODULE_0__.jsPDF();
       var pageW = doc.internal.pageSize.getWidth();
       var money = function money(val) {
-        return 'Rs. ' + _this4.fmt(val);
+        return 'Rs. ' + _this11.fmt(val);
       };
       var personName = this.settlement.person ? this.settlement.person.name : '-';
       var typeLabel = this.tripType === 'salesman' ? __('salesman') : __('driver');
@@ -675,9 +1277,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       // Order / payment detail table
       (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_1__["default"])(doc, {
         startY: doc.lastAutoTable.finalY + 6,
-        head: [['Order #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']],
+        head: [['Invoice #', 'Loading Slip', 'Retailer', 'Order Value', 'Method', 'Collected', 'Status']],
         body: this.flatRows.map(function (r) {
-          return [r.ordersId, r.loadingSlipNo || '-', r.retailerName, money(r.finalTotal), r.method || '-', money(r.amount), r.paymentStatus || '-'];
+          return [r.invoiceNumber || '#' + r.ordersId, r.loadingSlipNo || '-', r.retailerName, money(r.finalTotal), r.method || '-', money(r.amount), r.paymentStatus || '-'];
         }),
         styles: {
           fontSize: 8,
@@ -703,6 +1305,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
+    },
+    methodTotal: function methodTotal(rows, field) {
+      return rows.reduce(function (s, r) {
+        return s + parseFloat(r[field] || 0);
+      }, 0);
     },
     methodIcon: function methodIcon(m) {
       return {
@@ -6171,1230 +6778,2908 @@ var render = function () {
               ),
             ]),
           ])
-        : _c("section", { staticClass: "section" }, [
-            _c("div", { staticClass: "card mb-4 trip-header" }, [
-              _c(
-                "div",
-                {
-                  staticClass:
-                    "card-body d-flex flex-wrap justify-content-between align-items-center gap-3",
-                },
-                [
-                  _c(
-                    "div",
-                    { staticClass: "d-flex align-items-center gap-3" },
-                    [
-                      _c(
-                        "div",
-                        {
-                          staticClass: "driver-avatar",
-                          class:
-                            _vm.tripType === "salesman"
-                              ? "driver-avatar--purple"
-                              : "",
-                        },
-                        [
-                          _c("i", {
+        : _c(
+            "section",
+            { staticClass: "section" },
+            [
+              _c("div", { staticClass: "card mb-4 trip-header" }, [
+                _c(
+                  "div",
+                  {
+                    staticClass:
+                      "card-body d-flex flex-wrap justify-content-between align-items-center gap-3",
+                  },
+                  [
+                    _c(
+                      "div",
+                      { staticClass: "d-flex align-items-center gap-3" },
+                      [
+                        _c(
+                          "div",
+                          {
+                            staticClass: "driver-avatar",
                             class:
                               _vm.tripType === "salesman"
-                                ? "fa fa-user-tie"
-                                : "fa fa-truck",
-                          }),
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _c("div", [
-                        _c("div", { staticClass: "fw-bold fs-5" }, [
-                          _vm._v(
-                            _vm._s(
-                              _vm.settlement.person
-                                ? _vm.settlement.person.name
-                                : "-"
-                            )
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "text-muted small" }, [
-                          _c(
-                            "span",
-                            {
-                              staticClass: "badge me-1",
+                                ? "driver-avatar--purple"
+                                : "",
+                          },
+                          [
+                            _c("i", {
                               class:
                                 _vm.tripType === "salesman"
-                                  ? "bg-purple"
-                                  : "bg-info",
-                            },
-                            [
-                              _vm._v(
-                                "\n                                    " +
-                                  _vm._s(
-                                    _vm.tripType === "salesman"
-                                      ? _vm.__("salesman")
-                                      : _vm.__("driver")
-                                  ) +
-                                  "\n                                "
-                              ),
-                            ]
-                          ),
-                          _vm._v(
-                            "\n                                " +
-                              _vm._s(_vm.settlement.date) +
-                              "\n                                 ·  " +
-                              _vm._s(_vm.__("total_orders")) +
-                              ": " +
-                              _vm._s(_vm.orders.length) +
-                              "\n                            "
-                          ),
-                        ]),
-                      ]),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "div",
-                    { staticClass: "d-flex align-items-center gap-2" },
-                    [
-                      _c(
-                        "span",
-                        {
-                          staticClass: "trip-badge",
-                          class: _vm.statusBadgeClass(_vm.settlement.status),
-                        },
-                        [
-                          _c("i", {
-                            staticClass: "me-1",
-                            class: _vm.statusIcon(_vm.settlement.status),
-                          }),
-                          _vm._v(
-                            "\n                            " +
-                              _vm._s(_vm.settlement.status_text) +
-                              "\n                        "
-                          ),
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-dropdown",
-                        {
-                          staticClass: "export-dropdown",
-                          attrs: {
-                            variant: "outline-secondary",
-                            size: "sm",
-                            right: "",
-                            boundary: "window",
-                          },
-                          scopedSlots: _vm._u([
-                            {
-                              key: "button-content",
-                              fn: function () {
-                                return [
-                                  _c("i", {
-                                    staticClass: "fa fa-download me-1",
-                                  }),
-                                  _vm._v(
-                                    _vm._s(_vm.__("export_report")) +
-                                      "\n                            "
-                                  ),
-                                ]
-                              },
-                              proxy: true,
-                            },
-                          ]),
-                        },
-                        [
-                          _vm._v(" "),
-                          _c(
-                            "b-dropdown-item",
-                            {
-                              attrs: { href: "#" },
-                              on: {
-                                click: function ($event) {
-                                  $event.preventDefault()
-                                  return _vm.exportReport("csv")
-                                },
-                              },
-                            },
-                            [_vm._v(_vm._s(_vm.__("export_as_csv")))]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-dropdown-item",
-                            {
-                              attrs: { href: "#" },
-                              on: {
-                                click: function ($event) {
-                                  $event.preventDefault()
-                                  return _vm.exportReport("pdf")
-                                },
-                              },
-                            },
-                            [_vm._v(_vm._s(_vm.__("export_as_pdf")))]
-                          ),
-                        ],
-                        1
-                      ),
-                    ],
-                    1
-                  ),
-                ]
-              ),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "row" }, [
-              _c("div", { staticClass: "col-lg-8 mb-4" }, [
-                _c("div", { staticClass: "card h-100" }, [
-                  _c(
-                    "div",
-                    {
-                      staticClass:
-                        "card-header d-flex justify-content-between align-items-center",
-                    },
-                    [
-                      _c("h5", { staticClass: "card-title mb-0" }, [
-                        _vm._v(_vm._s(_vm.__("collection_reconciliation"))),
-                      ]),
-                      _vm._v(" "),
-                      _vm.settlement.reconciliation_status !== "unreconciled"
-                        ? _c("span", { staticClass: "small" }, [
+                                  ? "fa fa-user-tie"
+                                  : "fa fa-truck",
+                            }),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c("div", [
+                          _c("div", { staticClass: "fw-bold fs-5" }, [
                             _vm._v(
-                              "\n                                " +
-                                _vm._s(_vm.__("reconciliation_status")) +
-                                ":\n                                "
+                              _vm._s(
+                                _vm.settlement.person
+                                  ? _vm.settlement.person.name
+                                  : "-"
+                              )
                             ),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "text-muted small" }, [
                             _c(
                               "span",
                               {
-                                staticClass: "fw-semibold",
-                                class: _vm.reconStatusClass(
-                                  _vm.settlement.reconciliation_status
-                                ),
+                                staticClass: "badge me-1",
+                                class:
+                                  _vm.tripType === "salesman"
+                                    ? "bg-purple"
+                                    : "bg-info",
                               },
                               [
-                                _c("i", {
-                                  staticClass: "me-1",
-                                  class: _vm.reconStatusIcon(
-                                    _vm.settlement.reconciliation_status
-                                  ),
-                                }),
                                 _vm._v(
                                   "\n                                    " +
                                     _vm._s(
-                                      _vm.reconStatusLabel(
-                                        _vm.settlement.reconciliation_status
-                                      )
+                                      _vm.tripType === "salesman"
+                                        ? _vm.__("salesman")
+                                        : _vm.__("driver")
                                     ) +
                                     "\n                                "
                                 ),
                               ]
                             ),
-                          ])
-                        : _vm._e(),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "card-body" }, [
-                    _vm.needsRereconcile
-                      ? _c(
-                          "div",
+                            _vm._v(
+                              "\n                                " +
+                                _vm._s(_vm.settlement.date) +
+                                "\n                                 ·  " +
+                                _vm._s(_vm.__("total_orders")) +
+                                ": " +
+                                _vm._s(_vm.orders.length) +
+                                "\n                            "
+                            ),
+                          ]),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      { staticClass: "d-flex align-items-center gap-2" },
+                      [
+                        _c(
+                          "span",
                           {
-                            staticClass: "alert alert-warning py-2 small mb-3",
+                            staticClass: "trip-badge",
+                            class: _vm.statusBadgeClass(_vm.settlement.status),
                           },
                           [
                             _c("i", {
-                              staticClass: "fa fa-exclamation-triangle me-1",
+                              staticClass: "me-1",
+                              class: _vm.statusIcon(_vm.settlement.status),
                             }),
                             _vm._v(
-                              "\n                                New payments collected after reconciliation — please verify and re-reconcile.\n                            "
+                              "\n                            " +
+                                _vm._s(_vm.settlement.status_text) +
+                                "\n                        "
                             ),
                           ]
-                        )
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "recon-tiles mb-4" }, [
-                      _c("div", { staticClass: "recon-tile" }, [
-                        _c("div", { staticClass: "recon-tile__label" }, [
-                          _vm._v(_vm._s(_vm.__("total_expected"))),
-                        ]),
+                        ),
                         _vm._v(" "),
-                        _c("div", { staticClass: "recon-tile__value" }, [
-                          _vm._v(
-                            _vm._s(_vm.$currency) +
-                              " " +
-                              _vm._s(_vm.fmt(_vm.totals.total_expected))
-                          ),
-                        ]),
+                        _vm.methodEditUnlocked
+                          ? _c(
+                              "span",
+                              { staticClass: "text-success small fw-semibold" },
+                              [
+                                _c("i", { staticClass: "fa fa-unlock me-1" }),
+                                _vm._v(
+                                  _vm._s(_vm.__("editing_enabled")) +
+                                    "\n                        "
+                                ),
+                              ]
+                            )
+                          : _c(
+                              "b-button",
+                              {
+                                attrs: {
+                                  variant: "outline-danger",
+                                  size: "sm",
+                                },
+                                on: { click: _vm.openUnlockModal },
+                              },
+                              [
+                                _c("i", { staticClass: "fa fa-lock me-1" }),
+                                _vm._v(
+                                  _vm._s(_vm.__("edit")) +
+                                    "\n                        "
+                                ),
+                              ]
+                            ),
+                        _vm._v(" "),
+                        _vm.isClosed
+                          ? _c(
+                              "b-dropdown",
+                              {
+                                staticClass: "export-dropdown",
+                                attrs: {
+                                  variant: "outline-secondary",
+                                  size: "sm",
+                                  right: "",
+                                  boundary: "window",
+                                },
+                                scopedSlots: _vm._u(
+                                  [
+                                    {
+                                      key: "button-content",
+                                      fn: function () {
+                                        return [
+                                          _c("i", {
+                                            staticClass: "fa fa-download me-1",
+                                          }),
+                                          _vm._v(
+                                            _vm._s(_vm.__("export_report")) +
+                                              "\n                            "
+                                          ),
+                                        ]
+                                      },
+                                      proxy: true,
+                                    },
+                                  ],
+                                  null,
+                                  false,
+                                  2572286684
+                                ),
+                              },
+                              [
+                                _vm._v(" "),
+                                _c(
+                                  "b-dropdown-item",
+                                  {
+                                    attrs: { href: "#" },
+                                    on: {
+                                      click: function ($event) {
+                                        $event.preventDefault()
+                                        return _vm.exportReport("csv")
+                                      },
+                                    },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("export_as_csv")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "b-dropdown-item",
+                                  {
+                                    attrs: { href: "#" },
+                                    on: {
+                                      click: function ($event) {
+                                        $event.preventDefault()
+                                        return _vm.exportReport("pdf")
+                                      },
+                                    },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("export_as_pdf")))]
+                                ),
+                              ],
+                              1
+                            )
+                          : _vm._e(),
+                      ],
+                      1
+                    ),
+                  ]
+                ),
+              ]),
+              _vm._v(" "),
+              _c(
+                "b-modal",
+                {
+                  attrs: {
+                    title: _vm.__("Enter Sensitive Operations Password"),
+                    "hide-footer": "",
+                    "no-close-on-backdrop": "",
+                  },
+                  model: {
+                    value: _vm.unlockModalShow,
+                    callback: function ($$v) {
+                      _vm.unlockModalShow = $$v
+                    },
+                    expression: "unlockModalShow",
+                  },
+                },
+                [
+                  _c(
+                    "form",
+                    {
+                      on: {
+                        submit: function ($event) {
+                          $event.preventDefault()
+                          return _vm.submitUnlock.apply(null, arguments)
+                        },
+                      },
+                    },
+                    [
+                      _c("div", { staticClass: "form-group" }, [
+                        _c("label", [_vm._v(_vm._s(_vm.__("Password")))]),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.unlockPassword,
+                              expression: "unlockPassword",
+                            },
+                          ],
+                          ref: "unlockPasswordInput",
+                          staticClass: "form-control",
+                          attrs: {
+                            type: "password",
+                            autocomplete: "current-password",
+                          },
+                          domProps: { value: _vm.unlockPassword },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.unlockPassword = $event.target.value
+                            },
+                          },
+                        }),
                       ]),
+                      _vm._v(" "),
+                      _vm.unlockError
+                        ? _c("div", { staticClass: "text-danger small mb-2" }, [
+                            _vm._v(_vm._s(_vm.unlockError)),
+                          ])
+                        : _vm._e(),
                       _vm._v(" "),
                       _c(
                         "div",
-                        { staticClass: "recon-tile recon-tile--blue" },
+                        { staticClass: "text-end" },
                         [
-                          _c("div", { staticClass: "recon-tile__label" }, [
-                            _vm._v(_vm._s(_vm.__("digital_verified"))),
-                          ]),
+                          _c(
+                            "b-button",
+                            {
+                              staticClass: "me-2",
+                              attrs: { variant: "secondary" },
+                              on: {
+                                click: function ($event) {
+                                  _vm.unlockModalShow = false
+                                },
+                              },
+                            },
+                            [_vm._v(_vm._s(_vm.__("cancel")))]
+                          ),
                           _vm._v(" "),
                           _c(
-                            "div",
+                            "b-button",
                             {
-                              staticClass:
-                                "recon-tile__value recon-tile__value--blue",
+                              attrs: {
+                                variant: "primary",
+                                type: "submit",
+                                disabled: _vm.unlocking,
+                              },
                             },
                             [
                               _vm._v(
-                                _vm._s(_vm.$currency) +
-                                  " " +
-                                  _vm._s(_vm.fmt(_vm.totals.digital_verified))
+                                "\n                            " +
+                                  _vm._s(_vm.__("confirm")) +
+                                  "\n                            "
+                              ),
+                              _vm.unlocking
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ]
+                  ),
+                ]
+              ),
+              _vm._v(" "),
+              _c("div", { staticClass: "row" }, [
+                _c("div", { staticClass: "col-lg-8 mb-4" }, [
+                  _c("div", { staticClass: "card h-100" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "card-header d-flex justify-content-between align-items-center",
+                      },
+                      [
+                        _c("h5", { staticClass: "card-title mb-0" }, [
+                          _vm._v(_vm._s(_vm.__("collection_reconciliation"))),
+                        ]),
+                        _vm._v(" "),
+                        _vm.settlement.reconciliation_status !== "unreconciled"
+                          ? _c("span", { staticClass: "small" }, [
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.__("reconciliation_status")) +
+                                  ":\n                                "
+                              ),
+                              _c(
+                                "span",
+                                {
+                                  staticClass: "fw-semibold",
+                                  class: _vm.reconStatusClass(
+                                    _vm.settlement.reconciliation_status
+                                  ),
+                                },
+                                [
+                                  _c("i", {
+                                    staticClass: "me-1",
+                                    class: _vm.reconStatusIcon(
+                                      _vm.settlement.reconciliation_status
+                                    ),
+                                  }),
+                                  _vm._v(
+                                    "\n                                    " +
+                                      _vm._s(
+                                        _vm.reconStatusLabel(
+                                          _vm.settlement.reconciliation_status
+                                        )
+                                      ) +
+                                      "\n                                "
+                                  ),
+                                ]
+                              ),
+                            ])
+                          : _vm._e(),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "card-body" }, [
+                      _vm.needsRereconcile
+                        ? _c(
+                            "div",
+                            {
+                              staticClass:
+                                "alert alert-warning py-2 small mb-3",
+                            },
+                            [
+                              _c("i", {
+                                staticClass: "fa fa-exclamation-triangle me-1",
+                              }),
+                              _vm._v(
+                                "\n                                New payments collected after reconciliation — please verify and re-reconcile.\n                            "
                               ),
                             ]
-                          ),
-                        ]
-                      ),
+                          )
+                        : _vm._e(),
                       _vm._v(" "),
-                      _c("div", { staticClass: "recon-tile recon-tile--red" }, [
-                        _c("div", { staticClass: "recon-tile__label" }, [
-                          _vm._v(_vm._s(_vm.__("cash_expected"))),
+                      _c("div", { staticClass: "recon-tiles mb-4" }, [
+                        _c("div", { staticClass: "recon-tile" }, [
+                          _c("div", { staticClass: "recon-tile__label" }, [
+                            _vm._v(_vm._s(_vm.__("total_expected"))),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "recon-tile__value" }, [
+                            _vm._v(
+                              _vm._s(_vm.$currency) +
+                                " " +
+                                _vm._s(_vm.fmt(_vm.totals.total_expected))
+                            ),
+                          ]),
                         ]),
                         _vm._v(" "),
                         _c(
                           "div",
-                          {
-                            staticClass:
-                              "recon-tile__value recon-tile__value--red",
-                          },
+                          { staticClass: "recon-tile recon-tile--blue" },
                           [
+                            _c("div", { staticClass: "recon-tile__label" }, [
+                              _vm._v(_vm._s(_vm.__("digital_verified"))),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "recon-tile__value recon-tile__value--blue",
+                              },
+                              [
+                                _vm._v(
+                                  _vm._s(_vm.$currency) +
+                                    " " +
+                                    _vm._s(_vm.fmt(_vm.totals.digital_verified))
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "recon-tile recon-tile--red" },
+                          [
+                            _c("div", { staticClass: "recon-tile__label" }, [
+                              _vm._v(_vm._s(_vm.__("cash_expected"))),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "recon-tile__value recon-tile__value--red",
+                              },
+                              [
+                                _vm._v(
+                                  _vm._s(_vm.$currency) +
+                                    " " +
+                                    _vm._s(_vm.fmt(_vm.totals.cash_expected))
+                                ),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _vm.totals.unverified_digital > 0 && !_vm.isClosed
+                        ? _c(
+                            "div",
+                            {
+                              staticClass: "alert alert-danger py-2 small mb-0",
+                            },
+                            [
+                              _c("i", { staticClass: "fa fa-lock me-1" }),
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.totals.unverified_digital) +
+                                  " " +
+                                  _vm._s(
+                                    _vm.__("digital_payment_pending_verify")
+                                  ) +
+                                  "\n                            "
+                              ),
+                            ]
+                          )
+                        : _vm._e(),
+                    ]),
+                  ]),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-lg-4 mb-4" }, [
+                  _c("div", { staticClass: "card h-100" }, [
+                    _c("div", { staticClass: "card-header" }, [
+                      _c("h5", { staticClass: "card-title mb-0" }, [
+                        _vm._v(_vm._s(_vm.__("payment_summary"))),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "card-body p-0" }, [
+                      _vm.totals.total_cash > 0
+                        ? _c("div", { staticClass: "analytics-row" }, [
+                            _vm._m(0),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "analytics-row__body" }, [
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__label" },
+                                [_vm._v(_vm._s(_vm.__("cash")))]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__value" },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(_vm.fmt(_vm.totals.total_cash))
+                                  ),
+                                ]
+                              ),
+                            ]),
+                          ])
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.totals.total_upi > 0
+                        ? _c("div", { staticClass: "analytics-row" }, [
+                            _vm._m(1),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "analytics-row__body" }, [
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__label" },
+                                [_vm._v(_vm._s(_vm.__("upi")))]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__value" },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(_vm.fmt(_vm.totals.total_upi))
+                                  ),
+                                ]
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "analytics-row__badge" }, [
+                              _c(
+                                "span",
+                                {
+                                  staticClass: "small fw-semibold",
+                                  class:
+                                    _vm.totals.verified_upi >=
+                                    _vm.totals.total_upi
+                                      ? "text-success"
+                                      : "text-warning",
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                        " +
+                                      _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(_vm.fmt(_vm.totals.verified_upi)) +
+                                      " " +
+                                      _vm._s(_vm.__("verified")) +
+                                      "\n                                    "
+                                  ),
+                                ]
+                              ),
+                            ]),
+                          ])
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.totals.total_cheque > 0
+                        ? _c("div", { staticClass: "analytics-row" }, [
+                            _vm._m(2),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "analytics-row__body" }, [
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__label" },
+                                [_vm._v(_vm._s(_vm.__("cheque")))]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__value" },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(_vm.fmt(_vm.totals.total_cheque))
+                                  ),
+                                ]
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "analytics-row__badge" }, [
+                              _c(
+                                "span",
+                                {
+                                  staticClass: "small fw-semibold",
+                                  class:
+                                    _vm.totals.verified_cheque >=
+                                    _vm.totals.total_cheque
+                                      ? "text-success"
+                                      : "text-warning",
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                        " +
+                                      _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(
+                                        _vm.fmt(_vm.totals.verified_cheque)
+                                      ) +
+                                      " " +
+                                      _vm._s(_vm.__("verified")) +
+                                      "\n                                    "
+                                  ),
+                                ]
+                              ),
+                            ]),
+                          ])
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.totals.total_signature > 0
+                        ? _c("div", { staticClass: "analytics-row" }, [
+                            _vm._m(3),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "analytics-row__body" }, [
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__label" },
+                                [_vm._v(_vm._s(_vm.__("signature")))]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "analytics-row__value" },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(
+                                        _vm.fmt(_vm.totals.total_signature)
+                                      )
+                                  ),
+                                ]
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "analytics-row__badge" }, [
+                              _c(
+                                "span",
+                                {
+                                  staticClass: "small fw-semibold",
+                                  class:
+                                    _vm.totals.verified_signature >=
+                                    _vm.totals.total_signature
+                                      ? "text-success"
+                                      : "text-warning",
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                        " +
+                                      _vm._s(_vm.$currency) +
+                                      " " +
+                                      _vm._s(
+                                        _vm.fmt(_vm.totals.verified_signature)
+                                      ) +
+                                      " " +
+                                      _vm._s(_vm.__("verified")) +
+                                      "\n                                    "
+                                  ),
+                                ]
+                              ),
+                            ]),
+                          ])
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "analytics-row" }, [
+                        _vm._m(4),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "analytics-row__body" }, [
+                          _c("div", { staticClass: "analytics-row__label" }, [
+                            _vm._v(_vm._s(_vm.__("total_expected"))),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "analytics-row__value" }, [
                             _vm._v(
                               _vm._s(_vm.$currency) +
                                 " " +
-                                _vm._s(_vm.fmt(_vm.totals.cash_expected))
+                                _vm._s(_vm.fmt(_vm.totals.total_expected))
+                            ),
+                          ]),
+                        ]),
+                      ]),
+                    ]),
+                  ]),
+                ]),
+              ]),
+              _vm._v(" "),
+              _vm.cashRows.length > 0
+                ? _c("div", { staticClass: "card" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "card-header d-flex justify-content-between align-items-center",
+                      },
+                      [
+                        _c("h5", { staticClass: "card-title mb-0" }, [
+                          _c("i", {
+                            staticClass: "fa fa-money me-2 text-success",
+                          }),
+                          _vm._v(_vm._s(_vm.__("Cash Settlement"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "text-muted small" }, [
+                          _vm._v(
+                            _vm._s(_vm.cashRows.length) +
+                              " " +
+                              _vm._s(_vm.__("entries"))
+                          ),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "card-body p-0" }, [
+                      _c("div", { staticClass: "table-responsive" }, [
+                        _c(
+                          "table",
+                          {
+                            staticClass:
+                              "table table-bordered align-middle mb-0",
+                          },
+                          [
+                            _c("thead", { staticClass: "table-light" }, [
+                              _c("tr", [
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "ps-3",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("invoice")) + " #")]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "110px" } }, [
+                                  _vm._v(_vm._s(_vm.__("loading_slip"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("th", [_vm._v(_vm._s(_vm.__("retailer")))]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("order_value")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("shortfall")))]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "120px" } }, [
+                                  _vm._v(_vm._s(_vm.__("method"))),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("collected")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("received")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "70px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("proof")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("status")))]
+                                ),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "tbody",
+                              _vm._l(_vm.cashRows, function (row) {
+                                return _c("tr", { key: row.paymentId }, [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass:
+                                        "ps-3 fw-semibold text-primary",
+                                    },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          row.invoiceNumber ||
+                                            "#" + row.ordersId
+                                        )
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    row.loadingSlipNo
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "badge bg-secondary" },
+                                          [_vm._v(_vm._s(row.loadingSlipNo))]
+                                        )
+                                      : _c(
+                                          "span",
+                                          { staticClass: "text-muted small" },
+                                          [_vm._v("—")]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c("div", { staticClass: "fw-semibold" }, [
+                                      _vm._v(_vm._s(row.retailerName)),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      { staticClass: "text-muted small" },
+                                      [_vm._v(_vm._s(row.retailerMobile))]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-bold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.finalTotal))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "text-end",
+                                      class:
+                                        row.orderShortfall > 0.005
+                                          ? "text-danger fw-bold small"
+                                          : row.orderShortfall < -0.005
+                                          ? "text-primary fw-bold small"
+                                          : "text-success fw-bold small",
+                                    },
+                                    [
+                                      row.orderShortfall > 0.005
+                                        ? [
+                                            _vm._v(
+                                              "- " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(row.orderShortfall)
+                                                )
+                                            ),
+                                          ]
+                                        : row.orderShortfall < -0.005
+                                        ? [
+                                            _vm._v(
+                                              "+ " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(
+                                                    Math.abs(row.orderShortfall)
+                                                  )
+                                                )
+                                            ),
+                                          ]
+                                        : [
+                                            _vm._v(
+                                              _vm._s(_vm.$currency) + " 0"
+                                            ),
+                                          ],
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _vm.methodEditUnlocked
+                                      ? _c(
+                                          "select",
+                                          {
+                                            staticClass:
+                                              "form-select form-select-sm",
+                                            domProps: { value: row.method },
+                                            on: {
+                                              change: function ($event) {
+                                                return _vm.changePaymentMethod(
+                                                  row.paymentId,
+                                                  $event.target.value
+                                                )
+                                              },
+                                            },
+                                          },
+                                          _vm._l(
+                                            _vm.methodOptions,
+                                            function (m) {
+                                              return _c(
+                                                "option",
+                                                {
+                                                  key: m,
+                                                  domProps: { value: m },
+                                                },
+                                                [_vm._v(_vm._s(m))]
+                                              )
+                                            }
+                                          ),
+                                          0
+                                        )
+                                      : _c(
+                                          "span",
+                                          {
+                                            staticClass: "badge",
+                                            class: _vm.methodBadgeClass(
+                                              row.method
+                                            ),
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "me-1",
+                                              class: _vm.methodIcon(row.method),
+                                            }),
+                                            _vm._v(
+                                              _vm._s(row.method) +
+                                                "\n                                        "
+                                            ),
+                                          ]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-semibold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.amount))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                        staticStyle: {
+                                          "max-width": "130px",
+                                          "margin-left": "auto",
+                                        },
+                                      },
+                                      [
+                                        _c(
+                                          "span",
+                                          { staticClass: "input-group-text" },
+                                          [_vm._v(_vm._s(_vm.$currency))]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          staticClass: "form-control text-end",
+                                          attrs: {
+                                            type: "number",
+                                            step: "0.01",
+                                            disabled: _vm.isClosed,
+                                          },
+                                          domProps: {
+                                            value: row.receivedAmount,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              return _vm.updateReceivedAmountLocally(
+                                                row.paymentId,
+                                                $event.target.value
+                                              )
+                                            },
+                                            blur: function ($event) {
+                                              return _vm.saveReceivedAmount(
+                                                row.paymentId,
+                                                row.receivedAmount
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _vm._m(5, true),
+                                  _vm._v(" "),
+                                  _vm._m(6, true),
+                                ])
+                              }),
+                              0
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "tfoot",
+                              { staticClass: "table-light fw-bold" },
+                              [
+                                _c("tr", [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "ps-3 text-end",
+                                      attrs: { colspan: "6" },
+                                    },
+                                    [_vm._v(_vm._s(_vm.__("total")))]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.cashRows,
+                                              "amount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.cashRows,
+                                              "receivedAmount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { attrs: { colspan: "2" } }),
+                                ]),
+                              ]
                             ),
                           ]
                         ),
                       ]),
                     ]),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.upiRows.length > 0
+                ? _c("div", { staticClass: "card" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "card-header d-flex justify-content-between align-items-center",
+                      },
+                      [
+                        _c("h5", { staticClass: "card-title mb-0" }, [
+                          _c("i", {
+                            staticClass: "fa fa-mobile me-2 text-primary",
+                          }),
+                          _vm._v(_vm._s(_vm.__("UPI / Bank"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "text-muted small" }, [
+                          _vm._v(
+                            _vm._s(_vm.upiRows.length) +
+                              " " +
+                              _vm._s(_vm.__("entries"))
+                          ),
+                        ]),
+                      ]
+                    ),
                     _vm._v(" "),
-                    _vm.totals.unverified_digital > 0 && !_vm.isClosed
-                      ? _c(
-                          "div",
-                          { staticClass: "alert alert-danger py-2 small mb-0" },
+                    _c("div", { staticClass: "card-body p-0" }, [
+                      _c("div", { staticClass: "table-responsive" }, [
+                        _c(
+                          "table",
+                          {
+                            staticClass:
+                              "table table-bordered align-middle mb-0",
+                          },
                           [
-                            _c("i", { staticClass: "fa fa-lock me-1" }),
-                            _vm._v(
-                              "\n                                " +
-                                _vm._s(_vm.totals.unverified_digital) +
-                                " " +
-                                _vm._s(
-                                  _vm.__("digital_payment_pending_verify")
-                                ) +
-                                "\n                            "
+                            _c("thead", { staticClass: "table-light" }, [
+                              _c("tr", [
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "ps-3",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("invoice")) + " #")]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "110px" } }, [
+                                  _vm._v(_vm._s(_vm.__("loading_slip"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("th", [_vm._v(_vm._s(_vm.__("retailer")))]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("order_value")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("shortfall")))]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "120px" } }, [
+                                  _vm._v(_vm._s(_vm.__("method"))),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("collected")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("received")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "70px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("proof")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("status")))]
+                                ),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "tbody",
+                              _vm._l(_vm.upiRows, function (row) {
+                                return _c("tr", { key: row.paymentId }, [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass:
+                                        "ps-3 fw-semibold text-primary",
+                                    },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          row.invoiceNumber ||
+                                            "#" + row.ordersId
+                                        )
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    row.loadingSlipNo
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "badge bg-secondary" },
+                                          [_vm._v(_vm._s(row.loadingSlipNo))]
+                                        )
+                                      : _c(
+                                          "span",
+                                          { staticClass: "text-muted small" },
+                                          [_vm._v("—")]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c("div", { staticClass: "fw-semibold" }, [
+                                      _vm._v(_vm._s(row.retailerName)),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      { staticClass: "text-muted small" },
+                                      [_vm._v(_vm._s(row.retailerMobile))]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-bold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.finalTotal))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "text-end",
+                                      class:
+                                        row.orderShortfall > 0.005
+                                          ? "text-danger fw-bold small"
+                                          : row.orderShortfall < -0.005
+                                          ? "text-primary fw-bold small"
+                                          : "text-success fw-bold small",
+                                    },
+                                    [
+                                      row.orderShortfall > 0.005
+                                        ? [
+                                            _vm._v(
+                                              "- " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(row.orderShortfall)
+                                                )
+                                            ),
+                                          ]
+                                        : row.orderShortfall < -0.005
+                                        ? [
+                                            _vm._v(
+                                              "+ " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(
+                                                    Math.abs(row.orderShortfall)
+                                                  )
+                                                )
+                                            ),
+                                          ]
+                                        : [
+                                            _vm._v(
+                                              _vm._s(_vm.$currency) + " 0"
+                                            ),
+                                          ],
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _vm.methodEditUnlocked
+                                      ? _c(
+                                          "select",
+                                          {
+                                            staticClass:
+                                              "form-select form-select-sm",
+                                            domProps: { value: row.method },
+                                            on: {
+                                              change: function ($event) {
+                                                return _vm.changePaymentMethod(
+                                                  row.paymentId,
+                                                  $event.target.value
+                                                )
+                                              },
+                                            },
+                                          },
+                                          _vm._l(
+                                            _vm.methodOptions,
+                                            function (m) {
+                                              return _c(
+                                                "option",
+                                                {
+                                                  key: m,
+                                                  domProps: { value: m },
+                                                },
+                                                [_vm._v(_vm._s(m))]
+                                              )
+                                            }
+                                          ),
+                                          0
+                                        )
+                                      : _c(
+                                          "span",
+                                          {
+                                            staticClass: "badge",
+                                            class: _vm.methodBadgeClass(
+                                              row.method
+                                            ),
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "me-1",
+                                              class: _vm.methodIcon(row.method),
+                                            }),
+                                            _vm._v(
+                                              _vm._s(row.method) +
+                                                "\n                                        "
+                                            ),
+                                          ]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-semibold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.amount))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                        staticStyle: {
+                                          "max-width": "130px",
+                                          "margin-left": "auto",
+                                        },
+                                      },
+                                      [
+                                        _c(
+                                          "span",
+                                          { staticClass: "input-group-text" },
+                                          [_vm._v(_vm._s(_vm.$currency))]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          staticClass: "form-control text-end",
+                                          attrs: {
+                                            type: "number",
+                                            step: "0.01",
+                                            disabled: _vm.isClosed,
+                                          },
+                                          domProps: {
+                                            value: row.receivedAmount,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              return _vm.updateReceivedAmountLocally(
+                                                row.paymentId,
+                                                $event.target.value
+                                              )
+                                            },
+                                            blur: function ($event) {
+                                              return _vm.saveReceivedAmount(
+                                                row.paymentId,
+                                                row.receivedAmount
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    row.proofPhoto
+                                      ? _c(
+                                          "a",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-outline-info",
+                                            attrs: {
+                                              href:
+                                                "/storage/" + row.proofPhoto,
+                                              target: "_blank",
+                                            },
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-image",
+                                            }),
+                                          ]
+                                        )
+                                      : _c(
+                                          "span",
+                                          { staticClass: "text-muted small" },
+                                          [_vm._v("—")]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    row.paymentStatus === "verified"
+                                      ? _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "text-success small fw-semibold",
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-check-circle",
+                                            }),
+                                            _vm._v(
+                                              " " +
+                                                _vm._s(_vm.__("verified")) +
+                                                "\n                                        "
+                                            ),
+                                          ]
+                                        )
+                                      : _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-outline-success",
+                                            attrs: {
+                                              disabled:
+                                                _vm.isClosed ||
+                                                _vm.verifyingId ===
+                                                  row.paymentId,
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.verifyPayment(
+                                                  row.paymentId
+                                                )
+                                              },
+                                            },
+                                          },
+                                          [
+                                            _vm.verifyingId === row.paymentId
+                                              ? _c("b-spinner", {
+                                                  attrs: { small: "" },
+                                                })
+                                              : _c("i", {
+                                                  staticClass: "fa fa-check",
+                                                }),
+                                            _vm._v(
+                                              "\n                                            " +
+                                                _vm._s(_vm.__("verify")) +
+                                                "\n                                        "
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                  ]),
+                                ])
+                              }),
+                              0
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "tfoot",
+                              { staticClass: "table-light fw-bold" },
+                              [
+                                _c("tr", [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "ps-3 text-end",
+                                      attrs: { colspan: "6" },
+                                    },
+                                    [_vm._v(_vm._s(_vm.__("total")))]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.upiRows,
+                                              "amount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.upiRows,
+                                              "receivedAmount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { attrs: { colspan: "2" } }),
+                                ]),
+                              ]
                             ),
                           ]
-                        )
-                      : _vm._e(),
-                  ]),
-                ]),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "col-lg-4 mb-4" }, [
-                _c("div", { staticClass: "card h-100" }, [
-                  _c("div", { staticClass: "card-header" }, [
-                    _c("h5", { staticClass: "card-title mb-0" }, [
-                      _vm._v(_vm._s(_vm.__("payment_summary"))),
+                        ),
+                      ]),
                     ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "card-body p-0" }, [
-                    _vm.totals.total_cash > 0
-                      ? _c("div", { staticClass: "analytics-row" }, [
-                          _vm._m(0),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "analytics-row__body" }, [
-                            _c("div", { staticClass: "analytics-row__label" }, [
-                              _vm._v(_vm._s(_vm.__("cash"))),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.chequeRows.length > 0
+                ? _c("div", { staticClass: "card" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "card-header d-flex justify-content-between align-items-center",
+                      },
+                      [
+                        _c("h5", { staticClass: "card-title mb-0" }, [
+                          _c("i", {
+                            staticClass: "fa fa-file-text me-2 text-info",
+                          }),
+                          _vm._v(_vm._s(_vm.__("Cheque"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "text-muted small" }, [
+                          _vm._v(
+                            _vm._s(_vm.chequeRows.length) +
+                              " " +
+                              _vm._s(_vm.__("entries"))
+                          ),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "card-body p-0" }, [
+                      _c("div", { staticClass: "table-responsive" }, [
+                        _c(
+                          "table",
+                          {
+                            staticClass:
+                              "table table-bordered align-middle mb-0",
+                          },
+                          [
+                            _c("thead", { staticClass: "table-light" }, [
+                              _c("tr", [
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "ps-3",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("invoice")) + " #")]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "110px" } }, [
+                                  _vm._v(_vm._s(_vm.__("loading_slip"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("th", [_vm._v(_vm._s(_vm.__("retailer")))]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("order_value")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("shortfall")))]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "120px" } }, [
+                                  _vm._v(_vm._s(_vm.__("method"))),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("collected")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("received")))]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "150px" } }, [
+                                  _vm._v(_vm._s(_vm.__("Cheque Date"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "140px" } }, [
+                                  _vm._v(_vm._s(_vm.__("Cheque Number"))),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "70px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("proof")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("status")))]
+                                ),
+                              ]),
                             ]),
                             _vm._v(" "),
-                            _c("div", { staticClass: "analytics-row__value" }, [
-                              _vm._v(
-                                _vm._s(_vm.$currency) +
-                                  " " +
-                                  _vm._s(_vm.fmt(_vm.totals.total_cash))
-                              ),
+                            _c(
+                              "tbody",
+                              _vm._l(_vm.chequeRows, function (row) {
+                                return _c("tr", { key: row.paymentId }, [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass:
+                                        "ps-3 fw-semibold text-primary",
+                                    },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          row.invoiceNumber ||
+                                            "#" + row.ordersId
+                                        )
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    row.loadingSlipNo
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "badge bg-secondary" },
+                                          [_vm._v(_vm._s(row.loadingSlipNo))]
+                                        )
+                                      : _c(
+                                          "span",
+                                          { staticClass: "text-muted small" },
+                                          [_vm._v("—")]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c("div", { staticClass: "fw-semibold" }, [
+                                      _vm._v(_vm._s(row.retailerName)),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      { staticClass: "text-muted small" },
+                                      [_vm._v(_vm._s(row.retailerMobile))]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-bold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.finalTotal))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "text-end",
+                                      class:
+                                        row.orderShortfall > 0.005
+                                          ? "text-danger fw-bold small"
+                                          : row.orderShortfall < -0.005
+                                          ? "text-primary fw-bold small"
+                                          : "text-success fw-bold small",
+                                    },
+                                    [
+                                      row.orderShortfall > 0.005
+                                        ? [
+                                            _vm._v(
+                                              "- " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(row.orderShortfall)
+                                                )
+                                            ),
+                                          ]
+                                        : row.orderShortfall < -0.005
+                                        ? [
+                                            _vm._v(
+                                              "+ " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(
+                                                    Math.abs(row.orderShortfall)
+                                                  )
+                                                )
+                                            ),
+                                          ]
+                                        : [
+                                            _vm._v(
+                                              _vm._s(_vm.$currency) + " 0"
+                                            ),
+                                          ],
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _vm.methodEditUnlocked
+                                      ? _c(
+                                          "select",
+                                          {
+                                            staticClass:
+                                              "form-select form-select-sm",
+                                            domProps: { value: row.method },
+                                            on: {
+                                              change: function ($event) {
+                                                return _vm.changePaymentMethod(
+                                                  row.paymentId,
+                                                  $event.target.value
+                                                )
+                                              },
+                                            },
+                                          },
+                                          _vm._l(
+                                            _vm.methodOptions,
+                                            function (m) {
+                                              return _c(
+                                                "option",
+                                                {
+                                                  key: m,
+                                                  domProps: { value: m },
+                                                },
+                                                [_vm._v(_vm._s(m))]
+                                              )
+                                            }
+                                          ),
+                                          0
+                                        )
+                                      : _c(
+                                          "span",
+                                          {
+                                            staticClass: "badge",
+                                            class: _vm.methodBadgeClass(
+                                              row.method
+                                            ),
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "me-1",
+                                              class: _vm.methodIcon(row.method),
+                                            }),
+                                            _vm._v(
+                                              _vm._s(row.method) +
+                                                "\n                                        "
+                                            ),
+                                          ]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-semibold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.amount))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                        staticStyle: {
+                                          "max-width": "130px",
+                                          "margin-left": "auto",
+                                        },
+                                      },
+                                      [
+                                        _c(
+                                          "span",
+                                          { staticClass: "input-group-text" },
+                                          [_vm._v(_vm._s(_vm.$currency))]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          staticClass: "form-control text-end",
+                                          attrs: {
+                                            type: "number",
+                                            step: "0.01",
+                                            disabled: _vm.isClosed,
+                                          },
+                                          domProps: {
+                                            value: row.receivedAmount,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              return _vm.updateReceivedAmountLocally(
+                                                row.paymentId,
+                                                $event.target.value
+                                              )
+                                            },
+                                            blur: function ($event) {
+                                              return _vm.saveReceivedAmount(
+                                                row.paymentId,
+                                                row.receivedAmount
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c("input", {
+                                      staticClass:
+                                        "form-control form-control-sm",
+                                      attrs: {
+                                        type: "date",
+                                        disabled: _vm.isClosed,
+                                      },
+                                      domProps: { value: row.chequeDate },
+                                      on: {
+                                        input: function ($event) {
+                                          return _vm.updateChequeDateLocally(
+                                            row.paymentId,
+                                            $event.target.value
+                                          )
+                                        },
+                                        blur: function ($event) {
+                                          return _vm.saveChequeDetails(
+                                            row.paymentId
+                                          )
+                                        },
+                                      },
+                                    }),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c("input", {
+                                      staticClass:
+                                        "form-control form-control-sm",
+                                      attrs: {
+                                        type: "number",
+                                        min: "0",
+                                        step: "1",
+                                        placeholder: _vm.__("Cheque Number"),
+                                        disabled: _vm.isClosed,
+                                      },
+                                      domProps: { value: row.chequeNumber },
+                                      on: {
+                                        keydown: function ($event) {
+                                          if (
+                                            ["e", "E", "+", "-", "."].includes(
+                                              $event.key
+                                            )
+                                          ) {
+                                            $event.preventDefault()
+                                          }
+                                        },
+                                        input: function ($event) {
+                                          return _vm.updateChequeNumberLocally(
+                                            row.paymentId,
+                                            $event.target.value
+                                          )
+                                        },
+                                        blur: function ($event) {
+                                          return _vm.saveChequeDetails(
+                                            row.paymentId
+                                          )
+                                        },
+                                      },
+                                    }),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    row.proofPhoto
+                                      ? _c(
+                                          "a",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-outline-info",
+                                            attrs: {
+                                              href:
+                                                "/storage/" + row.proofPhoto,
+                                              target: "_blank",
+                                            },
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-image",
+                                            }),
+                                          ]
+                                        )
+                                      : _c(
+                                          "span",
+                                          { staticClass: "text-muted small" },
+                                          [_vm._v("—")]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    row.paymentStatus === "verified"
+                                      ? _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "text-success small fw-semibold",
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-check-circle",
+                                            }),
+                                            _vm._v(
+                                              " " +
+                                                _vm._s(_vm.__("verified")) +
+                                                "\n                                        "
+                                            ),
+                                          ]
+                                        )
+                                      : _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-outline-success",
+                                            attrs: {
+                                              disabled:
+                                                _vm.isClosed ||
+                                                _vm.verifyingId ===
+                                                  row.paymentId,
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.verifyPayment(
+                                                  row.paymentId
+                                                )
+                                              },
+                                            },
+                                          },
+                                          [
+                                            _vm.verifyingId === row.paymentId
+                                              ? _c("b-spinner", {
+                                                  attrs: { small: "" },
+                                                })
+                                              : _c("i", {
+                                                  staticClass: "fa fa-check",
+                                                }),
+                                            _vm._v(
+                                              "\n                                            " +
+                                                _vm._s(_vm.__("verify")) +
+                                                "\n                                        "
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                  ]),
+                                ])
+                              }),
+                              0
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "tfoot",
+                              { staticClass: "table-light fw-bold" },
+                              [
+                                _c("tr", [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "ps-3 text-end",
+                                      attrs: { colspan: "6" },
+                                    },
+                                    [_vm._v(_vm._s(_vm.__("total")))]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.chequeRows,
+                                              "amount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.chequeRows,
+                                              "receivedAmount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { attrs: { colspan: "2" } }),
+                                  _vm._v(" "),
+                                  _c("td", { attrs: { colspan: "2" } }),
+                                ]),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ]),
+                    ]),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.signatureRows.length > 0
+                ? _c("div", { staticClass: "card" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "card-header d-flex justify-content-between align-items-center",
+                      },
+                      [
+                        _c("h5", { staticClass: "card-title mb-0" }, [
+                          _c("i", {
+                            staticClass: "fa fa-pencil me-2 text-warning",
+                          }),
+                          _vm._v(_vm._s(_vm.__("Signature"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "text-muted small" }, [
+                          _vm._v(
+                            _vm._s(_vm.signatureRows.length) +
+                              " " +
+                              _vm._s(_vm.__("entries"))
+                          ),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "card-body p-0" }, [
+                      _c("div", { staticClass: "table-responsive" }, [
+                        _c(
+                          "table",
+                          {
+                            staticClass:
+                              "table table-bordered align-middle mb-0",
+                          },
+                          [
+                            _c("thead", { staticClass: "table-light" }, [
+                              _c("tr", [
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "ps-3",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("invoice")) + " #")]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "110px" } }, [
+                                  _vm._v(_vm._s(_vm.__("loading_slip"))),
+                                ]),
+                                _vm._v(" "),
+                                _c("th", [_vm._v(_vm._s(_vm.__("retailer")))]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("order_value")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("shortfall")))]
+                                ),
+                                _vm._v(" "),
+                                _c("th", { staticStyle: { width: "120px" } }, [
+                                  _vm._v(_vm._s(_vm.__("method"))),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "110px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("collected")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-end",
+                                    staticStyle: { width: "120px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("received")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "70px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("proof")))]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "th",
+                                  {
+                                    staticClass: "text-center",
+                                    staticStyle: { width: "100px" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("status")))]
+                                ),
+                              ]),
                             ]),
-                          ]),
-                        ])
-                      : _vm._e(),
+                            _vm._v(" "),
+                            _c(
+                              "tbody",
+                              _vm._l(_vm.signatureRows, function (row) {
+                                return _c("tr", { key: row.paymentId }, [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass:
+                                        "ps-3 fw-semibold text-primary",
+                                    },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          row.invoiceNumber ||
+                                            "#" + row.ordersId
+                                        )
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    row.loadingSlipNo
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "badge bg-secondary" },
+                                          [_vm._v(_vm._s(row.loadingSlipNo))]
+                                        )
+                                      : _c(
+                                          "span",
+                                          { staticClass: "text-muted small" },
+                                          [_vm._v("—")]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c("div", { staticClass: "fw-semibold" }, [
+                                      _vm._v(_vm._s(row.retailerName)),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      { staticClass: "text-muted small" },
+                                      [_vm._v(_vm._s(row.retailerMobile))]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-bold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.finalTotal))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "text-end",
+                                      class:
+                                        row.orderShortfall > 0.005
+                                          ? "text-danger fw-bold small"
+                                          : row.orderShortfall < -0.005
+                                          ? "text-primary fw-bold small"
+                                          : "text-success fw-bold small",
+                                    },
+                                    [
+                                      row.orderShortfall > 0.005
+                                        ? [
+                                            _vm._v(
+                                              "- " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(row.orderShortfall)
+                                                )
+                                            ),
+                                          ]
+                                        : row.orderShortfall < -0.005
+                                        ? [
+                                            _vm._v(
+                                              "+ " +
+                                                _vm._s(_vm.$currency) +
+                                                " " +
+                                                _vm._s(
+                                                  _vm.fmt(
+                                                    Math.abs(row.orderShortfall)
+                                                  )
+                                                )
+                                            ),
+                                          ]
+                                        : [
+                                            _vm._v(
+                                              _vm._s(_vm.$currency) + " 0"
+                                            ),
+                                          ],
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _vm.methodEditUnlocked
+                                      ? _c(
+                                          "select",
+                                          {
+                                            staticClass:
+                                              "form-select form-select-sm",
+                                            domProps: { value: row.method },
+                                            on: {
+                                              change: function ($event) {
+                                                return _vm.changePaymentMethod(
+                                                  row.paymentId,
+                                                  $event.target.value
+                                                )
+                                              },
+                                            },
+                                          },
+                                          _vm._l(
+                                            _vm.methodOptions,
+                                            function (m) {
+                                              return _c(
+                                                "option",
+                                                {
+                                                  key: m,
+                                                  domProps: { value: m },
+                                                },
+                                                [_vm._v(_vm._s(m))]
+                                              )
+                                            }
+                                          ),
+                                          0
+                                        )
+                                      : _c(
+                                          "span",
+                                          {
+                                            staticClass: "badge",
+                                            class: _vm.methodBadgeClass(
+                                              row.method
+                                            ),
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "me-1",
+                                              class: _vm.methodIcon(row.method),
+                                            }),
+                                            _vm._v(
+                                              _vm._s(row.method) +
+                                                "\n                                        "
+                                            ),
+                                          ]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticClass: "text-end fw-semibold" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$currency) +
+                                          " " +
+                                          _vm._s(_vm.fmt(row.amount))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                        staticStyle: {
+                                          "max-width": "130px",
+                                          "margin-left": "auto",
+                                        },
+                                      },
+                                      [
+                                        _c(
+                                          "span",
+                                          { staticClass: "input-group-text" },
+                                          [_vm._v(_vm._s(_vm.$currency))]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          staticClass: "form-control text-end",
+                                          attrs: {
+                                            type: "number",
+                                            step: "0.01",
+                                            disabled: _vm.isClosed,
+                                          },
+                                          domProps: {
+                                            value: row.receivedAmount,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              return _vm.updateReceivedAmountLocally(
+                                                row.paymentId,
+                                                $event.target.value
+                                              )
+                                            },
+                                            blur: function ($event) {
+                                              return _vm.saveReceivedAmount(
+                                                row.paymentId,
+                                                row.receivedAmount
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    row.proofPhoto
+                                      ? _c(
+                                          "a",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-outline-info",
+                                            attrs: {
+                                              href:
+                                                "/storage/" + row.proofPhoto,
+                                              target: "_blank",
+                                            },
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-image",
+                                            }),
+                                          ]
+                                        )
+                                      : _c(
+                                          "span",
+                                          { staticClass: "text-muted small" },
+                                          [_vm._v("—")]
+                                        ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    row.paymentStatus === "verified"
+                                      ? _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "text-success small fw-semibold",
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-check-circle",
+                                            }),
+                                            _vm._v(
+                                              " " +
+                                                _vm._s(_vm.__("verified")) +
+                                                "\n                                        "
+                                            ),
+                                          ]
+                                        )
+                                      : _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-outline-success",
+                                            attrs: {
+                                              disabled:
+                                                _vm.isClosed ||
+                                                _vm.verifyingId ===
+                                                  row.paymentId,
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.verifyPayment(
+                                                  row.paymentId
+                                                )
+                                              },
+                                            },
+                                          },
+                                          [
+                                            _vm.verifyingId === row.paymentId
+                                              ? _c("b-spinner", {
+                                                  attrs: { small: "" },
+                                                })
+                                              : _c("i", {
+                                                  staticClass: "fa fa-check",
+                                                }),
+                                            _vm._v(
+                                              "\n                                            " +
+                                                _vm._s(_vm.__("verify")) +
+                                                "\n                                        "
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                  ]),
+                                ])
+                              }),
+                              0
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "tfoot",
+                              { staticClass: "table-light fw-bold" },
+                              [
+                                _c("tr", [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass: "ps-3 text-end",
+                                      attrs: { colspan: "6" },
+                                    },
+                                    [_vm._v(_vm._s(_vm.__("total")))]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.signatureRows,
+                                              "amount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-end" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$currency) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.fmt(
+                                            _vm.methodTotal(
+                                              _vm.signatureRows,
+                                              "receivedAmount"
+                                            )
+                                          )
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { attrs: { colspan: "2" } }),
+                                ]),
+                              ]
+                            ),
+                          ]
+                        ),
+                      ]),
+                    ]),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.flatRows.length === 0
+                ? _c("div", { staticClass: "card" }, [
+                    _c(
+                      "div",
+                      { staticClass: "card-body text-center text-muted py-4" },
+                      [
+                        _c("i", {
+                          staticClass: "fa fa-inbox fa-2x mb-2 d-block",
+                        }),
+                        _vm._v(
+                          "\n                    " +
+                            _vm._s(_vm.__("no_data_found")) +
+                            "\n                "
+                        ),
+                      ]
+                    ),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _c(
+                "b-modal",
+                {
+                  attrs: {
+                    title: _vm.__("Enter Cheque Details"),
+                    "hide-footer": "",
+                    "no-close-on-backdrop": "",
+                  },
+                  model: {
+                    value: _vm.chequeModalShow,
+                    callback: function ($$v) {
+                      _vm.chequeModalShow = $$v
+                    },
+                    expression: "chequeModalShow",
+                  },
+                },
+                [
+                  _c(
+                    "form",
+                    {
+                      on: {
+                        submit: function ($event) {
+                          $event.preventDefault()
+                          return _vm.submitChequeModal.apply(null, arguments)
+                        },
+                      },
+                    },
+                    [
+                      _c("div", { staticClass: "form-group mb-3" }, [
+                        _c("label", [_vm._v(_vm._s(_vm.__("Cheque Date")))]),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.chequeModalDate,
+                              expression: "chequeModalDate",
+                            },
+                          ],
+                          ref: "chequeModalDateInput",
+                          staticClass: "form-control",
+                          attrs: { type: "date", required: "" },
+                          domProps: { value: _vm.chequeModalDate },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.chequeModalDate = $event.target.value
+                            },
+                          },
+                        }),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group mb-3" }, [
+                        _c("label", [_vm._v(_vm._s(_vm.__("Cheque Number")))]),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.chequeModalNumber,
+                              expression: "chequeModalNumber",
+                            },
+                          ],
+                          staticClass: "form-control",
+                          attrs: {
+                            type: "number",
+                            min: "0",
+                            step: "1",
+                            required: "",
+                          },
+                          domProps: { value: _vm.chequeModalNumber },
+                          on: {
+                            keydown: function ($event) {
+                              if (
+                                ["e", "E", "+", "-", "."].includes($event.key)
+                              ) {
+                                $event.preventDefault()
+                              }
+                            },
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.chequeModalNumber = $event.target.value
+                            },
+                          },
+                        }),
+                      ]),
+                      _vm._v(" "),
+                      _vm.chequeModalError
+                        ? _c("div", { staticClass: "text-danger small mb-2" }, [
+                            _vm._v(_vm._s(_vm.chequeModalError)),
+                          ])
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "text-end" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              staticClass: "me-2",
+                              attrs: { variant: "secondary" },
+                              on: { click: _vm.cancelChequeModal },
+                            },
+                            [_vm._v(_vm._s(_vm.__("cancel")))]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                type: "submit",
+                                disabled: _vm.chequeModalSaving,
+                              },
+                            },
+                            [
+                              _vm._v(
+                                "\n                            " +
+                                  _vm._s(_vm.__("confirm")) +
+                                  "\n                            "
+                              ),
+                              _vm.chequeModalSaving
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ]
+                  ),
+                ]
+              ),
+              _vm._v(" "),
+              _c("div", { staticClass: "card mt-3" }, [
+                _c(
+                  "div",
+                  {
+                    staticClass:
+                      "card-body d-flex align-items-center gap-4 flex-wrap",
+                  },
+                  [
+                    _c("div", { staticClass: "me-2" }, [
+                      _c("div", { staticClass: "footer-label" }, [
+                        _vm._v(_vm._s(_vm.__("cash"))),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "footer-value text-success" }, [
+                        _vm._v(
+                          _vm._s(_vm.$currency) +
+                            " " +
+                            _vm._s(_vm.fmt(_vm.totals.total_cash))
+                        ),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "footer-divider" }),
                     _vm._v(" "),
                     _vm.totals.total_upi > 0
-                      ? _c("div", { staticClass: "analytics-row" }, [
-                          _vm._m(1),
+                      ? _c("div", { staticClass: "me-2" }, [
+                          _c("div", { staticClass: "footer-label" }, [
+                            _vm._v(_vm._s(_vm.__("upi"))),
+                          ]),
                           _vm._v(" "),
-                          _c("div", { staticClass: "analytics-row__body" }, [
-                            _c("div", { staticClass: "analytics-row__label" }, [
-                              _vm._v(_vm._s(_vm.__("upi"))),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "analytics-row__value" }, [
+                          _c(
+                            "div",
+                            { staticClass: "footer-value text-primary" },
+                            [
                               _vm._v(
                                 _vm._s(_vm.$currency) +
                                   " " +
                                   _vm._s(_vm.fmt(_vm.totals.total_upi))
                               ),
-                            ]),
+                            ]
+                          ),
+                        ])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.totals.total_upi > 0
+                      ? _c("div", { staticClass: "footer-divider" })
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.totals.total_cheque > 0
+                      ? _c("div", { staticClass: "me-2" }, [
+                          _c("div", { staticClass: "footer-label" }, [
+                            _vm._v(_vm._s(_vm.__("cheque"))),
                           ]),
                           _vm._v(" "),
-                          _c("div", { staticClass: "analytics-row__badge" }, [
-                            _c(
-                              "span",
-                              {
-                                staticClass: "small fw-semibold",
-                                class:
-                                  _vm.totals.verified_upi >=
-                                  _vm.totals.total_upi
-                                    ? "text-success"
-                                    : "text-warning",
-                              },
-                              [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(_vm.$currency) +
-                                    " " +
-                                    _vm._s(_vm.fmt(_vm.totals.verified_upi)) +
-                                    " " +
-                                    _vm._s(_vm.__("verified")) +
-                                    "\n                                    "
-                                ),
-                              ]
+                          _c("div", { staticClass: "footer-value text-info" }, [
+                            _vm._v(
+                              _vm._s(_vm.$currency) +
+                                " " +
+                                _vm._s(_vm.fmt(_vm.totals.total_cheque))
                             ),
                           ]),
                         ])
                       : _vm._e(),
                     _vm._v(" "),
                     _vm.totals.total_cheque > 0
-                      ? _c("div", { staticClass: "analytics-row" }, [
-                          _vm._m(2),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "analytics-row__body" }, [
-                            _c("div", { staticClass: "analytics-row__label" }, [
-                              _vm._v(_vm._s(_vm.__("cheque"))),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "analytics-row__value" }, [
-                              _vm._v(
-                                _vm._s(_vm.$currency) +
-                                  " " +
-                                  _vm._s(_vm.fmt(_vm.totals.total_cheque))
-                              ),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "analytics-row__badge" }, [
-                            _c(
-                              "span",
-                              {
-                                staticClass: "small fw-semibold",
-                                class:
-                                  _vm.totals.verified_cheque >=
-                                  _vm.totals.total_cheque
-                                    ? "text-success"
-                                    : "text-warning",
-                              },
-                              [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(_vm.$currency) +
-                                    " " +
-                                    _vm._s(
-                                      _vm.fmt(_vm.totals.verified_cheque)
-                                    ) +
-                                    " " +
-                                    _vm._s(_vm.__("verified")) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            ),
-                          ]),
-                        ])
+                      ? _c("div", { staticClass: "footer-divider" })
                       : _vm._e(),
                     _vm._v(" "),
                     _vm.totals.total_signature > 0
-                      ? _c("div", { staticClass: "analytics-row" }, [
-                          _vm._m(3),
+                      ? _c("div", { staticClass: "me-2" }, [
+                          _c("div", { staticClass: "footer-label" }, [
+                            _vm._v(_vm._s(_vm.__("signature"))),
+                          ]),
                           _vm._v(" "),
-                          _c("div", { staticClass: "analytics-row__body" }, [
-                            _c("div", { staticClass: "analytics-row__label" }, [
-                              _vm._v(_vm._s(_vm.__("signature"))),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "analytics-row__value" }, [
+                          _c(
+                            "div",
+                            { staticClass: "footer-value text-warning" },
+                            [
                               _vm._v(
                                 _vm._s(_vm.$currency) +
                                   " " +
                                   _vm._s(_vm.fmt(_vm.totals.total_signature))
                               ),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "analytics-row__badge" }, [
-                            _c(
-                              "span",
-                              {
-                                staticClass: "small fw-semibold",
-                                class:
-                                  _vm.totals.verified_signature >=
-                                  _vm.totals.total_signature
-                                    ? "text-success"
-                                    : "text-warning",
-                              },
-                              [
-                                _vm._v(
-                                  "\n                                        " +
-                                    _vm._s(_vm.$currency) +
-                                    " " +
-                                    _vm._s(
-                                      _vm.fmt(_vm.totals.verified_signature)
-                                    ) +
-                                    " " +
-                                    _vm._s(_vm.__("verified")) +
-                                    "\n                                    "
-                                ),
-                              ]
-                            ),
-                          ]),
+                            ]
+                          ),
                         ])
                       : _vm._e(),
                     _vm._v(" "),
-                    _c("div", { staticClass: "analytics-row" }, [
-                      _vm._m(4),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "analytics-row__body" }, [
-                        _c("div", { staticClass: "analytics-row__label" }, [
-                          _vm._v(_vm._s(_vm.__("total_expected"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "analytics-row__value" }, [
-                          _vm._v(
-                            _vm._s(_vm.$currency) +
-                              " " +
-                              _vm._s(_vm.fmt(_vm.totals.total_expected))
-                          ),
-                        ]),
+                    _vm.totals.total_signature > 0
+                      ? _c("div", { staticClass: "footer-divider" })
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "me-2" }, [
+                      _c("div", { staticClass: "footer-label" }, [
+                        _vm._v(_vm._s(_vm.__("reconciliation_status"))),
                       ]),
-                    ]),
-                  ]),
-                ]),
-              ]),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "card" }, [
-              _c(
-                "div",
-                {
-                  staticClass:
-                    "card-header d-flex justify-content-between align-items-center",
-                },
-                [
-                  _c("h5", { staticClass: "card-title mb-0" }, [
-                    _vm._v(_vm._s(_vm.__("order_settlement_details"))),
-                  ]),
-                  _vm._v(" "),
-                  _c("span", { staticClass: "text-muted small" }, [
-                    _vm._v(
-                      _vm._s(_vm.__("showing")) +
-                        " " +
-                        _vm._s(_vm.orders.length) +
-                        " " +
-                        _vm._s(_vm.__("orders"))
-                    ),
-                  ]),
-                ]
-              ),
-              _vm._v(" "),
-              _c("div", { staticClass: "card-body p-0" }, [
-                _vm.orders.length === 0
-                  ? _c("div", { staticClass: "text-center text-muted py-4" }, [
-                      _c("i", {
-                        staticClass: "fa fa-inbox fa-2x mb-2 d-block",
-                      }),
-                      _vm._v(
-                        "\n                        " +
-                          _vm._s(_vm.__("no_data_found")) +
-                          "\n                    "
-                      ),
-                    ])
-                  : _c("div", { staticClass: "table-responsive" }, [
-                      _c(
-                        "table",
-                        {
-                          staticClass: "table table-bordered align-middle mb-0",
-                        },
-                        [
-                          _c("thead", { staticClass: "table-light" }, [
-                            _c("tr", [
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "ps-3",
-                                  staticStyle: { width: "90px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("order")) + " #")]
-                              ),
-                              _vm._v(" "),
-                              _c("th", { staticStyle: { width: "110px" } }, [
-                                _vm._v(_vm._s(_vm.__("loading_slip"))),
-                              ]),
-                              _vm._v(" "),
-                              _c("th", [_vm._v(_vm._s(_vm.__("retailer")))]),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-end",
-                                  staticStyle: { width: "110px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("order_value")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-end",
-                                  staticStyle: { width: "100px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("shortfall")))]
-                              ),
-                              _vm._v(" "),
-                              _c("th", { staticStyle: { width: "120px" } }, [
-                                _vm._v(_vm._s(_vm.__("method"))),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-end",
-                                  staticStyle: { width: "110px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("collected")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-center",
-                                  staticStyle: { width: "70px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("proof")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "th",
-                                {
-                                  staticClass: "text-center",
-                                  staticStyle: { width: "100px" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("status")))]
-                              ),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c(
-                            "tbody",
-                            _vm._l(_vm.flatRows, function (row) {
-                              return _c(
-                                "tr",
-                                {
-                                  key: row.paymentId || "empty_" + row.orderId,
-                                },
-                                [
-                                  row.isFirst
-                                    ? _c(
-                                        "td",
-                                        {
-                                          staticClass:
-                                            "ps-3 fw-semibold text-primary",
-                                          attrs: { rowspan: row.rowspan },
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                        #" +
-                                              _vm._s(row.ordersId) +
-                                              "\n                                    "
-                                          ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  row.isFirst
-                                    ? _c(
-                                        "td",
-                                        { attrs: { rowspan: row.rowspan } },
-                                        [
-                                          row.loadingSlipNo
-                                            ? _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "badge bg-secondary",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(row.loadingSlipNo)
-                                                  ),
-                                                ]
-                                              )
-                                            : _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "text-muted small",
-                                                },
-                                                [_vm._v("—")]
-                                              ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  row.isFirst
-                                    ? _c(
-                                        "td",
-                                        { attrs: { rowspan: row.rowspan } },
-                                        [
-                                          _c(
-                                            "div",
-                                            { staticClass: "fw-semibold" },
-                                            [_vm._v(_vm._s(row.retailerName))]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "div",
-                                            { staticClass: "text-muted small" },
-                                            [_vm._v(_vm._s(row.retailerMobile))]
-                                          ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  row.isFirst
-                                    ? _c(
-                                        "td",
-                                        {
-                                          staticClass: "text-end fw-bold",
-                                          attrs: { rowspan: row.rowspan },
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                        " +
-                                              _vm._s(_vm.$currency) +
-                                              " " +
-                                              _vm._s(_vm.fmt(row.finalTotal)) +
-                                              "\n                                    "
-                                          ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  row.isFirst
-                                    ? _c(
-                                        "td",
-                                        {
-                                          staticClass: "text-end",
-                                          attrs: { rowspan: row.rowspan },
-                                        },
-                                        [
-                                          row.orderShortfall > 0.005
-                                            ? _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "text-danger fw-bold small",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "\n                                            - " +
-                                                      _vm._s(_vm.$currency) +
-                                                      " " +
-                                                      _vm._s(
-                                                        _vm.fmt(
-                                                          row.orderShortfall
-                                                        )
-                                                      ) +
-                                                      "\n                                        "
-                                                  ),
-                                                ]
-                                              )
-                                            : row.orderShortfall < -0.005
-                                            ? _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "text-primary fw-bold small",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "\n                                            + " +
-                                                      _vm._s(_vm.$currency) +
-                                                      " " +
-                                                      _vm._s(
-                                                        _vm.fmt(
-                                                          Math.abs(
-                                                            row.orderShortfall
-                                                          )
-                                                        )
-                                                      ) +
-                                                      "\n                                        "
-                                                  ),
-                                                ]
-                                              )
-                                            : _c(
-                                                "span",
-                                                { staticClass: "text-success" },
-                                                [
-                                                  _c("i", {
-                                                    staticClass:
-                                                      "fa fa-check-circle",
-                                                  }),
-                                                ]
-                                              ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  row.isEmpty
-                                    ? _c(
-                                        "td",
-                                        {
-                                          staticClass:
-                                            "text-muted text-center small",
-                                          attrs: { colspan: "4" },
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                        " +
-                                              _vm._s(
-                                                _vm.__("no_payment_recorded")
-                                              ) +
-                                              "\n                                    "
-                                          ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  !row.isEmpty
-                                    ? [
-                                        _c("td", [
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass: "badge",
-                                              class: _vm.methodBadgeClass(
-                                                row.method
-                                              ),
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass: "me-1",
-                                                class: _vm.methodIcon(
-                                                  row.method
-                                                ),
-                                              }),
-                                              _vm._v(
-                                                _vm._s(row.method) +
-                                                  "\n                                            "
-                                              ),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c(
-                                          "td",
-                                          {
-                                            staticClass: "text-end fw-semibold",
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(_vm.$currency) +
-                                                " " +
-                                                _vm._s(_vm.fmt(row.amount))
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "td",
-                                          { staticClass: "text-center" },
-                                          [
-                                            row.proofPhoto &&
-                                            row.method !== "cash"
-                                              ? _c(
-                                                  "a",
-                                                  {
-                                                    staticClass:
-                                                      "btn btn-sm btn-outline-info",
-                                                    attrs: {
-                                                      href:
-                                                        "/storage/" +
-                                                        row.proofPhoto,
-                                                      target: "_blank",
-                                                    },
-                                                  },
-                                                  [
-                                                    _c("i", {
-                                                      staticClass:
-                                                        "fa fa-image",
-                                                    }),
-                                                  ]
-                                                )
-                                              : _c(
-                                                  "span",
-                                                  {
-                                                    staticClass:
-                                                      "text-muted small",
-                                                  },
-                                                  [_vm._v("—")]
-                                                ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "td",
-                                          { staticClass: "text-center" },
-                                          [
-                                            row.method === "cash"
-                                              ? _c(
-                                                  "span",
-                                                  {
-                                                    staticClass:
-                                                      "text-muted small",
-                                                  },
-                                                  [_vm._v("—")]
-                                                )
-                                              : [
-                                                  row.paymentStatus ===
-                                                  "verified"
-                                                    ? _c(
-                                                        "span",
-                                                        {
-                                                          staticClass:
-                                                            "text-success small fw-semibold",
-                                                        },
-                                                        [
-                                                          _c("i", {
-                                                            staticClass:
-                                                              "fa fa-check-circle",
-                                                          }),
-                                                          _vm._v(
-                                                            " " +
-                                                              _vm._s(
-                                                                _vm.__(
-                                                                  "verified"
-                                                                )
-                                                              ) +
-                                                              "\n                                                "
-                                                          ),
-                                                        ]
-                                                      )
-                                                    : _c(
-                                                        "button",
-                                                        {
-                                                          staticClass:
-                                                            "btn btn-sm btn-outline-success",
-                                                          attrs: {
-                                                            disabled:
-                                                              _vm.verifyingId ===
-                                                              row.paymentId,
-                                                          },
-                                                          on: {
-                                                            click: function (
-                                                              $event
-                                                            ) {
-                                                              return _vm.verifyPayment(
-                                                                row.paymentId
-                                                              )
-                                                            },
-                                                          },
-                                                        },
-                                                        [
-                                                          _vm.verifyingId ===
-                                                          row.paymentId
-                                                            ? _c("b-spinner", {
-                                                                attrs: {
-                                                                  small: "",
-                                                                },
-                                                              })
-                                                            : _c("i", {
-                                                                staticClass:
-                                                                  "fa fa-check",
-                                                              }),
-                                                          _vm._v(
-                                                            "\n                                                    " +
-                                                              _vm._s(
-                                                                _vm.__("verify")
-                                                              ) +
-                                                              "\n                                                "
-                                                          ),
-                                                        ],
-                                                        1
-                                                      ),
-                                                ],
-                                          ],
-                                          2
-                                        ),
-                                      ]
-                                    : _vm._e(),
-                                ],
-                                2
-                              )
-                            }),
-                            0
-                          ),
-                          _vm._v(" "),
-                          _c("tfoot", { staticClass: "table-light fw-bold" }, [
-                            _c("tr", [
-                              _c(
-                                "td",
-                                {
-                                  staticClass: "ps-3 text-end",
-                                  attrs: { colspan: "4" },
-                                },
-                                [_vm._v(_vm._s(_vm.__("total")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "td",
-                                {
-                                  staticClass: "text-end",
-                                  class:
-                                    _vm.overallShortfall > 0
-                                      ? "text-danger"
-                                      : _vm.overallShortfall < 0
-                                      ? "text-primary"
-                                      : "text-success",
-                                },
-                                [
-                                  _vm.overallShortfall > 0
-                                    ? [
-                                        _vm._v(
-                                          "- " +
-                                            _vm._s(_vm.$currency) +
-                                            " " +
-                                            _vm._s(
-                                              _vm.fmt(_vm.overallShortfall)
-                                            )
-                                        ),
-                                      ]
-                                    : _vm.overallShortfall < 0
-                                    ? [
-                                        _vm._v(
-                                          "+ " +
-                                            _vm._s(_vm.$currency) +
-                                            " " +
-                                            _vm._s(
-                                              _vm.fmt(
-                                                Math.abs(_vm.overallShortfall)
-                                              )
-                                            )
-                                        ),
-                                      ]
-                                    : [
-                                        _c("i", {
-                                          staticClass: "fa fa-check-circle",
-                                        }),
-                                      ],
-                                ],
-                                2
-                              ),
-                              _vm._v(" "),
-                              _c("td"),
-                              _vm._v(" "),
-                              _c("td", { staticClass: "text-end" }, [
-                                _vm._v(
-                                  _vm._s(_vm.$currency) +
-                                    " " +
-                                    _vm._s(_vm.fmt(_vm.totals.total_collected))
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("td", { attrs: { colspan: "2" } }),
-                            ]),
-                          ]),
-                        ]
-                      ),
-                    ]),
-              ]),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "card mt-3" }, [
-              _c(
-                "div",
-                {
-                  staticClass:
-                    "card-body d-flex align-items-center gap-4 flex-wrap",
-                },
-                [
-                  _c("div", { staticClass: "me-2" }, [
-                    _c("div", { staticClass: "footer-label" }, [
-                      _vm._v(_vm._s(_vm.__("cash"))),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "footer-value text-success" }, [
-                      _vm._v(
-                        _vm._s(_vm.$currency) +
-                          " " +
-                          _vm._s(_vm.fmt(_vm.totals.total_cash))
-                      ),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "footer-divider" }),
-                  _vm._v(" "),
-                  _vm.totals.total_upi > 0
-                    ? _c("div", { staticClass: "me-2" }, [
-                        _c("div", { staticClass: "footer-label" }, [
-                          _vm._v(_vm._s(_vm.__("upi"))),
-                        ]),
-                        _vm._v(" "),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "footer-value" }, [
                         _c(
-                          "div",
-                          { staticClass: "footer-value text-primary" },
-                          [
-                            _vm._v(
-                              _vm._s(_vm.$currency) +
-                                " " +
-                                _vm._s(_vm.fmt(_vm.totals.total_upi))
-                            ),
-                          ]
-                        ),
-                      ])
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.totals.total_upi > 0
-                    ? _c("div", { staticClass: "footer-divider" })
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.totals.total_cheque > 0
-                    ? _c("div", { staticClass: "me-2" }, [
-                        _c("div", { staticClass: "footer-label" }, [
-                          _vm._v(_vm._s(_vm.__("cheque"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "footer-value text-info" }, [
-                          _vm._v(
-                            _vm._s(_vm.$currency) +
-                              " " +
-                              _vm._s(_vm.fmt(_vm.totals.total_cheque))
-                          ),
-                        ]),
-                      ])
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.totals.total_cheque > 0
-                    ? _c("div", { staticClass: "footer-divider" })
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.totals.total_signature > 0
-                    ? _c("div", { staticClass: "me-2" }, [
-                        _c("div", { staticClass: "footer-label" }, [
-                          _vm._v(_vm._s(_vm.__("signature"))),
-                        ]),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "footer-value text-warning" },
-                          [
-                            _vm._v(
-                              _vm._s(_vm.$currency) +
-                                " " +
-                                _vm._s(_vm.fmt(_vm.totals.total_signature))
-                            ),
-                          ]
-                        ),
-                      ])
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.totals.total_signature > 0
-                    ? _c("div", { staticClass: "footer-divider" })
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "me-2" }, [
-                    _c("div", { staticClass: "footer-label" }, [
-                      _vm._v(_vm._s(_vm.__("reconciliation_status"))),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "footer-value" }, [
-                      _c(
-                        "span",
-                        {
-                          class: _vm.reconStatusClass(
-                            _vm.settlement.reconciliation_status
-                          ),
-                        },
-                        [
-                          _c("i", {
-                            staticClass: "me-1",
-                            class: _vm.reconStatusIcon(
+                          "span",
+                          {
+                            class: _vm.reconStatusClass(
                               _vm.settlement.reconciliation_status
                             ),
-                          }),
-                          _vm._v(
-                            "\n                                " +
-                              _vm._s(
-                                _vm.reconStatusLabel(
-                                  _vm.settlement.reconciliation_status
-                                )
-                              ) +
-                              "\n                            "
-                          ),
-                        ]
-                      ),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "ms-auto" }, [
-                    !_vm.isClosed
-                      ? _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-primary",
-                            attrs: {
-                              disabled: _vm.closing || !_vm.canCloseNow,
-                            },
-                            on: { click: _vm.closeTrip },
                           },
                           [
-                            _vm.closing
-                              ? _c("b-spinner", {
-                                  staticClass: "me-1",
-                                  attrs: { small: "" },
-                                })
-                              : _c("i", {
-                                  staticClass: "fa fa-check-circle me-1",
-                                }),
+                            _c("i", {
+                              staticClass: "me-1",
+                              class: _vm.reconStatusIcon(
+                                _vm.settlement.reconciliation_status
+                              ),
+                            }),
                             _vm._v(
-                              "\n                            " +
+                              "\n                                " +
                                 _vm._s(
-                                  _vm.needsRereconcile
-                                    ? "Re-Reconcile"
-                                    : _vm.__("close_and_reconcile")
+                                  _vm.reconStatusLabel(
+                                    _vm.settlement.reconciliation_status
+                                  )
                                 ) +
-                                "\n                        "
-                            ),
-                          ],
-                          1
-                        )
-                      : _c(
-                          "span",
-                          { staticClass: "text-success fw-semibold" },
-                          [
-                            _c("i", { staticClass: "fa fa-check-circle me-1" }),
-                            _vm._v(
-                              _vm._s(_vm.__("trip_reconciled")) +
-                                "\n                        "
+                                "\n                            "
                             ),
                           ]
                         ),
-                  ]),
-                ]
-              ),
-            ]),
-          ]),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "ms-auto" }, [
+                      !_vm.isClosed
+                        ? _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-primary",
+                              attrs: {
+                                disabled: _vm.closing || !_vm.canCloseNow,
+                              },
+                              on: { click: _vm.closeTrip },
+                            },
+                            [
+                              _vm.closing
+                                ? _c("b-spinner", {
+                                    staticClass: "me-1",
+                                    attrs: { small: "" },
+                                  })
+                                : _c("i", {
+                                    staticClass: "fa fa-check-circle me-1",
+                                  }),
+                              _vm._v(
+                                "\n                            " +
+                                  _vm._s(
+                                    _vm.needsRereconcile
+                                      ? "Re-Reconcile"
+                                      : _vm.__("close_and_reconcile")
+                                  ) +
+                                  "\n                        "
+                              ),
+                            ],
+                            1
+                          )
+                        : _c(
+                            "span",
+                            { staticClass: "text-success fw-semibold" },
+                            [
+                              _c("i", {
+                                staticClass: "fa fa-check-circle me-1",
+                              }),
+                              _vm._v(
+                                _vm._s(_vm.__("trip_reconciled")) +
+                                  "\n                        "
+                              ),
+                            ]
+                          ),
+                    ]),
+                  ]
+                ),
+              ]),
+            ],
+            1
+          ),
     ]),
   ])
 }
@@ -7448,6 +9733,22 @@ var staticRenderFns = [
       { staticClass: "analytics-row__icon analytics-row__icon--dark" },
       [_c("i", { staticClass: "fa fa-calculator" })]
     )
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("td", { staticClass: "text-center" }, [
+      _c("span", { staticClass: "text-muted small" }, [_vm._v("—")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("td", { staticClass: "text-center" }, [
+      _c("span", { staticClass: "text-muted small" }, [_vm._v("—")]),
+    ])
   },
 ]
 render._withStripped = true

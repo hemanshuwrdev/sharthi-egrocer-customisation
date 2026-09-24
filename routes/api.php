@@ -671,6 +671,8 @@ Route::middleware('auth:api')->group(function () {
         });
         Route::get('order-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getOrderSettings']);
         Route::post('order-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveOrderSettings']);
+        Route::get('sensitive-password',      [App\Http\Controllers\API\SellerSettingController::class, 'getSensitivePasswordStatus']);
+        Route::post('sensitive-password/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveSensitivePassword']);
         Route::get('invoice-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getInvoiceSettings']);
         Route::post('invoice-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveInvoiceSettings']);
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
@@ -688,6 +690,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('payment_methods/save', [\App\Http\Controllers\API\SettlementController::class, 'sellerSavePaymentMethods'])->name('seller.payment_methods.save');
         Route::get('payments/pending',      [\App\Http\Controllers\API\SettlementController::class, 'sellerPendingPayments'])->name('seller.payments.pending');
         Route::post('payments/verify',      [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifyPayment'])->name('seller.payments.verify');
+        Route::post('payments/received',    [\App\Http\Controllers\API\SettlementController::class, 'sellerUpdatePaymentReceived'])->name('seller.payments.received');
+        Route::post('sensitive/verify',     [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifySensitivePassword'])->name('seller.sensitive.verify');
+        Route::post('payments/update-method', [\App\Http\Controllers\API\SettlementController::class, 'sellerUpdatePaymentMethod'])->name('seller.payments.update_method');
         Route::get('settlements',           [\App\Http\Controllers\API\SettlementController::class, 'sellerSettlements'])->name('seller.settlements');
         Route::get('trips',                 [\App\Http\Controllers\API\SettlementController::class, 'sellerTripsListUpdated'])->name('seller.trips.list');
         Route::get('trips/{id}',            [\App\Http\Controllers\API\SettlementController::class, 'sellerTripDetailUpdated'])->name('seller.trips.detail');
@@ -800,8 +805,11 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'list']);
             Route::get('orders', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrdersForAssignment']);
             Route::get('zones', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getZones']);
+            Route::get('products', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getFilterProducts']);
+            Route::post('order_items_summary', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrderItemsSummary']);
             Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('seller.loading_slips.save');
             Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('seller.loading_slips.dispatch');
+            Route::post('cancel', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'cancel'])->name('seller.loading_slips.cancel');
             Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
             Route::post('view', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
         });
@@ -920,8 +928,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'list']);
         Route::get('orders', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrdersForAssignment']);
         Route::get('zones', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getZones']);
+        Route::get('products', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getFilterProducts']);
+        Route::post('order_items_summary', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrderItemsSummary']);
         Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('loading_slips.save');
         Route::post('dispatch', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'dispatch'])->name('loading_slips.dispatch');
+        Route::post('cancel', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'cancel'])->name('loading_slips.cancel');
         Route::get('view/{id}', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
         Route::post('view', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'view']);
     });

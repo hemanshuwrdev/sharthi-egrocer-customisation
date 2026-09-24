@@ -44,37 +44,49 @@
         </div>
 
         <div class="list-surface">
-            <div class="list-toolbar">
+            <div class="list-toolbar has-filters">
                 <!-- Download Sample Files Section -->
-                <div>
-                    <h6 class="box-title mb-2">{{ __('download_sample_files') }}</h6>
-                    <div class="d-flex flex-wrap" style="gap: 8px;">
-                        <button class="btn btn-sm btn-outline-primary"
-                            @click="downloadSampleFile('customer.json', getSystemTypeName(1))">
-                            <i class="fa fa-download"></i> {{ __('customer_app') }}
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary"
-                            @click="downloadSampleFile('partner.json', getSystemTypeName(2))">
-                            <i class="fa fa-download"></i> {{ __('partner_app') }}
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary"
-                            @click="downloadSampleFile('web.json', getSystemTypeName(3))">
-                            <i class="fa fa-download"></i> {{ __('website') }}
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary"
-                            @click="downloadSampleFile('panel.json', getSystemTypeName(4))">
-                            <i class="fa fa-download"></i> {{ __('admin_panel') }}
-                        </button>
+                <div class="list-toolbar-start">
+                    <div>
+                        <h6 class="box-title mb-2">{{ __('download_sample_files') }}</h6>
+                        <div class="d-flex flex-wrap" style="gap: 8px;">
+                            <button class="btn btn-sm btn-outline-primary"
+                                @click="downloadSampleFile('customer.json', getSystemTypeName(1))">
+                                <i class="fa fa-download"></i> {{ __('retailer_app') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary"
+                                @click="downloadSampleFile('partner.json', getSystemTypeName(2))">
+                                <i class="fa fa-download"></i> {{ __('distributor_app') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary"
+                                @click="downloadSampleFile('web.json', getSystemTypeName(3))">
+                                <i class="fa fa-download"></i> {{ __('website') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary"
+                                @click="downloadSampleFile('panel.json', getSystemTypeName(4))">
+                                <i class="fa fa-download"></i> {{ __('admin_panel') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary"
+                                @click="downloadSampleFile('driver.json', getSystemTypeName(5))">
+                                <i class="fa fa-download"></i> {{ __('driver_app') }}
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary"
+                                @click="downloadSampleFile('salesman.json', getSystemTypeName(6))">
+                                <i class="fa fa-download"></i> {{ __('salesman_app') }}
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="list-search">
-                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
-                    <b-form-input id="filter-input" v-model="filter" type="search"
-                        :placeholder="__('search')"></b-form-input>
+                <div class="list-toolbar-end">
+                    <div class="list-search">
+                        <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                        <b-form-input id="filter-input" v-model="filter" type="search"
+                            :placeholder="__('search')"></b-form-input>
+                    </div>
+                    <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
-                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                </button>
             </div>
             <!-- Simple table showing languages -->
             <div class="table-responsive">

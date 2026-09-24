@@ -200,6 +200,53 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -232,7 +279,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       isInvoiceLoading: false,
       invoice_prefix: "",
       invoice_suffix: "",
-      invoice_next_number: 1
+      invoice_next_number: 1,
+      isSensitiveLoading: false,
+      sensitivePasswordIsSet: false,
+      sensitiveOldPassword: "",
+      sensitiveNewPassword: "",
+      sensitiveConfirmPassword: ""
     };
   },
   created: function created() {
@@ -240,6 +292,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     this.getOrderSettings();
     this.getPaymentMethods();
     this.getInvoiceSettings();
+    this.getSensitivePasswordStatus();
   },
   computed: {
     invoiceNumberPreview: function invoiceNumberPreview() {
@@ -398,6 +451,43 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       })["catch"](function () {
         _this8.showError('Failed to save invoice settings');
         _this8.isInvoiceLoading = false;
+      });
+    },
+    // ================= SENSITIVE OPERATIONS PASSWORD =================
+    getSensitivePasswordStatus: function getSensitivePasswordStatus() {
+      var _this9 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/sensitive-password').then(function (res) {
+        if (res.data.status && res.data.data) {
+          _this9.sensitivePasswordIsSet = !!res.data.data.is_set;
+        }
+      })["catch"](function () {});
+    },
+    saveSensitivePassword: function saveSensitivePassword() {
+      var _this10 = this;
+      this.isSensitiveLoading = true;
+      var formData = new FormData();
+      if (this.sensitivePasswordIsSet) {
+        formData.append('old_password', this.sensitiveOldPassword || '');
+        formData.append('new_password', this.sensitiveNewPassword || '');
+        formData.append('confirm_new_password', this.sensitiveConfirmPassword || '');
+      } else {
+        formData.append('password', this.sensitiveNewPassword || '');
+        formData.append('confirm_password', this.sensitiveConfirmPassword || '');
+      }
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/sensitive-password/save', formData).then(function (res) {
+        if (res.data.status) {
+          _this10.showMessage('success', __(res.data.message));
+          _this10.sensitivePasswordIsSet = true;
+          _this10.sensitiveOldPassword = '';
+          _this10.sensitiveNewPassword = '';
+          _this10.sensitiveConfirmPassword = '';
+        } else {
+          _this10.showError(res.data.message || 'Failed to save');
+        }
+        _this10.isSensitiveLoading = false;
+      })["catch"](function () {
+        _this10.showError('Failed to save');
+        _this10.isSensitiveLoading = false;
       });
     }
   }
@@ -1128,6 +1218,216 @@ var render = function () {
                     "\n                    "
                 ),
                 _vm.isInvoiceLoading
+                  ? _c("b-spinner", { attrs: { small: "" } })
+                  : _vm._e(),
+              ],
+              1
+            ),
+          ],
+          1
+        ),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "card mt-4" }, [
+        _c("div", { staticClass: "card-header" }, [
+          _c("h4", [_vm._v(_vm._s(_vm.__("Sensitive Operations Password")))]),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "card-body" },
+          [
+            _c("p", { staticClass: "text-muted font-size-13" }, [
+              _vm._v(
+                "\n                    " +
+                  _vm._s(
+                    _vm.__(
+                      "This password gates risky corrections (like editing a driver's recorded payment method) so only you can authorize them, even if staff have access to this panel."
+                    )
+                  ) +
+                  "\n                "
+              ),
+            ]),
+            _vm._v(" "),
+            !_vm.sensitivePasswordIsSet
+              ? [
+                  _c("div", { staticClass: "row" }, [
+                    _c("div", { staticClass: "form-group col-md-6" }, [
+                      _c("label", [_vm._v(_vm._s(_vm.__("Password")))]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.sensitiveNewPassword,
+                            expression: "sensitiveNewPassword",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "password",
+                          autocomplete: "new-password",
+                        },
+                        domProps: { value: _vm.sensitiveNewPassword },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.sensitiveNewPassword = $event.target.value
+                          },
+                        },
+                      }),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group col-md-6" }, [
+                      _c("label", [_vm._v(_vm._s(_vm.__("Confirm Password")))]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.sensitiveConfirmPassword,
+                            expression: "sensitiveConfirmPassword",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "password",
+                          autocomplete: "new-password",
+                        },
+                        domProps: { value: _vm.sensitiveConfirmPassword },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.sensitiveConfirmPassword = $event.target.value
+                          },
+                        },
+                      }),
+                    ]),
+                  ]),
+                ]
+              : [
+                  _c("div", { staticClass: "row" }, [
+                    _c("div", { staticClass: "form-group col-md-4" }, [
+                      _c("label", [_vm._v(_vm._s(_vm.__("Old Password")))]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.sensitiveOldPassword,
+                            expression: "sensitiveOldPassword",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "password",
+                          autocomplete: "current-password",
+                        },
+                        domProps: { value: _vm.sensitiveOldPassword },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.sensitiveOldPassword = $event.target.value
+                          },
+                        },
+                      }),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group col-md-4" }, [
+                      _c("label", [_vm._v(_vm._s(_vm.__("New Password")))]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.sensitiveNewPassword,
+                            expression: "sensitiveNewPassword",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "password",
+                          autocomplete: "new-password",
+                        },
+                        domProps: { value: _vm.sensitiveNewPassword },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.sensitiveNewPassword = $event.target.value
+                          },
+                        },
+                      }),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group col-md-4" }, [
+                      _c("label", [
+                        _vm._v(_vm._s(_vm.__("Confirm New Password"))),
+                      ]),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.sensitiveConfirmPassword,
+                            expression: "sensitiveConfirmPassword",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: {
+                          type: "password",
+                          autocomplete: "new-password",
+                        },
+                        domProps: { value: _vm.sensitiveConfirmPassword },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.sensitiveConfirmPassword = $event.target.value
+                          },
+                        },
+                      }),
+                    ]),
+                  ]),
+                ],
+          ],
+          2
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "card-footer" },
+          [
+            _c(
+              "b-button",
+              {
+                attrs: { variant: "primary", disabled: _vm.isSensitiveLoading },
+                on: { click: _vm.saveSensitivePassword },
+              },
+              [
+                _vm._v(
+                  "\n                    " +
+                    _vm._s(
+                      _vm.sensitivePasswordIsSet
+                        ? _vm.__("change_password")
+                        : _vm.__("set_password")
+                    ) +
+                    "\n                    "
+                ),
+                _vm.isSensitiveLoading
                   ? _c("b-spinner", { attrs: { small: "" } })
                   : _vm._e(),
               ],

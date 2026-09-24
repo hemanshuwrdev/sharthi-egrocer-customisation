@@ -155,6 +155,13 @@
                                         </button>
                                     </template>
 
+                                    <template #cell(min_qty)="row">
+                                        <input type="number" min="1" step="1"
+                                            class="form-control form-control-sm text-center"
+                                            placeholder="—"
+                                            v-model.number="row.item.min_qty" />
+                                    </template>
+
                                     <template #cell(status)="row">
                                         <div class="form-check form-switch d-flex justify-content-center">
                                             <input class="form-check-input" type="checkbox" role="switch"
@@ -266,6 +273,7 @@ export default {
                 { key: 'allow_loose_qty', label: __('allow_loose_qty'), visible: false, class: 'text-center' },
                 { key: 'max_qty', label: __('max_allowed_qty'), visible: false, class: 'text-center', thStyle: { minWidth: '165px', width: '165px' } },
                 { key: 'slab_count', label: __('slabs'), visible: true, class: 'text-center' },
+                { key: 'min_qty', label: __('min_quantity'), visible: true, class: 'text-center', thStyle: { minWidth: '95px', width: '95px' } },
                 { key: 'status', label: __('status'), visible: true, class: 'text-center' },
                 { key: 'actions', label: __('actions'), visible: true, class: 'text-center' },
             ],
@@ -366,6 +374,7 @@ export default {
                 stock: row.stock,
                 status: row.status,
                 allow_loose_qty: row.allow_loose_qty ? 1 : 0,
+                min_qty: row.min_qty != null && row.min_qty !== '' ? row.min_qty : null,
                 max_qty_mode: row.max_qty_mode || '',
                 max_qty_value: row.max_qty_mode && row.max_qty_value != null ? row.max_qty_value : '',
             }).then(res => {

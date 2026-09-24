@@ -158,6 +158,10 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -230,6 +234,34 @@ __webpack_require__.r(__webpack_exports__);
             }
           })["catch"](function (err) {
             _this2.showError(__('an_error_occurred_during_dispatch'));
+          });
+        }
+      });
+    },
+    cancelSlip: function cancelSlip() {
+      var _this3 = this;
+      this.$swal.fire({
+        title: __('are_you_sure'),
+        text: __('this_will_cancel_the_loading_slip_and_release_all_its_orders_so_they_can_be_added_to_a_new_slip'),
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: __('yes_cancel_slip'),
+        cancelButtonText: __('no'),
+        confirmButtonColor: '#e74a3b',
+        cancelButtonColor: '#858796'
+      }).then(function (result) {
+        if (result.isConfirmed) {
+          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this3.apiBase + '/loading_slips/cancel', {
+            id: _this3.slip.id
+          }).then(function (res) {
+            if (res.data.status === 1) {
+              _this3.showMessage('success', res.data.message);
+              _this3.getSlipDetails();
+            } else {
+              _this3.showError(res.data.message);
+            }
+          })["catch"](function (err) {
+            _this3.showError(__('an_error_occurred_during_cancellation'));
           });
         }
       });
@@ -464,6 +496,21 @@ var render = function () {
                     ]
                   )
                 : _vm._e(),
+              _vm._v(" "),
+              _vm.isSeller && _vm.slip.status == 0
+                ? _c(
+                    "button",
+                    {
+                      staticClass:
+                        "btn btn-danger font-weight-bold rounded-pill",
+                      on: { click: _vm.cancelSlip },
+                    },
+                    [
+                      _c("i", { staticClass: "fa fa-ban mr-2" }),
+                      _vm._v(_vm._s(_vm.__("cancel_slip")) + "\n            "),
+                    ]
+                  )
+                : _vm._e(),
             ],
             1
           ),
@@ -477,7 +524,11 @@ var render = function () {
                 staticClass:
                   "card border-0 shadow-sm rounded-lg mb-4 text-center p-4",
                 class:
-                  _vm.slip.status == 0 ? "bg-soft-warning" : "bg-soft-success",
+                  _vm.slip.status == 0
+                    ? "bg-soft-warning"
+                    : _vm.slip.status == 3
+                    ? "bg-soft-danger"
+                    : "bg-soft-success",
               },
               [
                 _c(
@@ -491,18 +542,28 @@ var render = function () {
                   {
                     staticClass: "h3 font-weight-bold mb-0",
                     class:
-                      _vm.slip.status == 0 ? "text-warning" : "text-success",
+                      _vm.slip.status == 0
+                        ? "text-warning"
+                        : _vm.slip.status == 3
+                        ? "text-danger"
+                        : "text-success",
                   },
                   [
                     _c("i", {
                       class:
-                        _vm.slip.status == 0 ? "fa fa-clock-o" : "fa fa-truck",
+                        _vm.slip.status == 0
+                          ? "fa fa-clock-o"
+                          : _vm.slip.status == 3
+                          ? "fa fa-ban"
+                          : "fa fa-truck",
                     }),
                     _vm._v(
                       "\n                    " +
                         _vm._s(
                           _vm.slip.status == 0
                             ? _vm.__("planned")
+                            : _vm.slip.status == 3
+                            ? _vm.__("cancelled")
                             : _vm.__("dispatched")
                         ) +
                         "\n                "
@@ -516,6 +577,16 @@ var render = function () {
                         _vm._s(
                           _vm.__(
                             "warehouse_operations_are_active_ready_for_driver_loading"
+                          )
+                        )
+                      ),
+                    ])
+                  : _vm.slip.status == 3
+                  ? _c("p", { staticClass: "text-muted mt-2 mb-0 small" }, [
+                      _vm._v(
+                        _vm._s(
+                          _vm.__(
+                            "this_slip_was_cancelled_its_orders_are_available_for_a_new_slip"
                           )
                         )
                       ),

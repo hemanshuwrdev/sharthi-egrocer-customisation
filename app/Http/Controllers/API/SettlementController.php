@@ -16,6 +16,7 @@ use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -23,6 +24,16 @@ use Illuminate\Support\Facades\Validator;
 class SettlementController extends Controller
 {
     private const METHODS = ['cash', 'upi', 'cheque', 'signature'];
+    // How long a verified sensitive-operations password stays "unlocked" server-side.
+    // Generous window for a single page visit; the frontend re-prompts on every fresh
+    // visit to the reconciliation page regardless, this only bounds direct API misuse.
+    private const SENSITIVE_UNLOCK_MINUTES = 120;
+    private const STATUS_TEXT_MAP = [
+        'open'              => 'Open',
+        'locked'            => 'Locked',
+        'reconciled'        => 'Reconciled',
+        'needs_rereconcile' => 'Needs Re-Reconcile',
+    ];
 
     // ──────────────────────────────────────────────────────────────────────────
     //  Shared helpers
@@ -64,6 +75,24 @@ class SettlementController extends Controller
     {
         $adminEnabled = $this->adminEnabledMethods();
         return array_filter($adminEnabled, fn ($m) => (int) ($seller->{'payment_method_' . $m} ?? 0) === 1);
+    }
+
+    /**
+     * Cheap "needs_rereconcile" detection for the trips LIST (not the full legacy-close
+     * upgrade logic sellerTripDetailUpdated() does, which needs per-order/loading-slip
+     * queries that don't scale to a paginated list). A trip flips to needs_rereconcile
+     * when it was reconciled but a payment landed after that close.
+     */
+    private function effectiveTripStatus($settlement, ?string $lastPaymentAt): string
+    {
+        $status = $settlement->status ?? 'open';
+        if ($status === 'reconciled' && $settlement->reconciled_at && $lastPaymentAt) {
+            $reconciledAt = Carbon::parse($settlement->reconciled_at);
+            if (Carbon::parse($lastPaymentAt)->gt($reconciledAt)) {
+                return 'needs_rereconcile';
+            }
+        }
+        return $status;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -278,6 +307,140 @@ class SettlementController extends Controller
         }
 
         return CommonHelper::responseSuccess('payment_verified');
+    }
+
+    /**
+     * POST /seller/payments/received
+     * Body: payment_id, received_amount — records the office-verified actual amount
+     * for this payment (distinct from `amount`, the driver/salesman's self-reported
+     * figure), driving the per-order shortfall shown on the reconciliation screen.
+     */
+    public function sellerUpdatePaymentReceived(Request $request)
+    {
+        $seller = $this->currentSeller();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'payment_id'      => 'required|integer|exists:order_payments,id',
+            'received_amount' => 'required|numeric|min:0',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $payment = OrderPayment::where(function ($q) use ($seller) {
+                $q->whereHas('deliveryBoy', fn ($qq) => $qq->where('seller_id', $seller->id))
+                  ->orWhereHas('salesman', fn ($qq) => $qq->where('seller_id', $seller->id));
+            })
+            ->find($request->payment_id);
+
+        if (!$payment) {
+            return CommonHelper::responseError('payment_not_found');
+        }
+
+        // Once the trip this payment belongs to is reconciled/closed, the figures used to
+        // close it must stay frozen — mirrors the `isClosed` gate on the reconciliation screen.
+        $date       = Carbon::parse($payment->created_at)->toDateString();
+        $settlement = $payment->delivery_boy_id
+            ? DriverSettlement::where('delivery_boy_id', $payment->delivery_boy_id)->whereDate('settlement_date', $date)->first()
+            : SalesmanSettlement::where('salesman_id', $payment->salesman_id)->whereDate('settlement_date', $date)->first();
+
+        if ($settlement && $settlement->status === 'reconciled') {
+            return CommonHelper::responseError('trip_already_closed');
+        }
+
+        $payment->received_amount = $request->received_amount;
+        $payment->save();
+
+        return CommonHelper::responseSuccess('received_amount_saved');
+    }
+
+    /**
+     * POST /seller/sensitive/verify
+     * Body: password — checks the distributor's sensitive-operations password (set
+     * on the Settings page) and, on success, marks it "unlocked" for a limited window
+     * so sensitive edit endpoints below don't need the password resent on every call.
+     */
+    public function sellerVerifySensitivePassword(Request $request)
+    {
+        $seller = $this->currentSeller();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        if (empty($seller->sensitive_password)) {
+            return CommonHelper::responseError('sensitive_password_not_set');
+        }
+
+        $validator = Validator::make($request->all(), ['password' => 'required|string']);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        if (!Hash::check($request->password, $seller->sensitive_password)) {
+            return CommonHelper::responseError('incorrect_password');
+        }
+
+        $seller->sensitive_unlocked_at = Carbon::now();
+        $seller->save();
+
+        return CommonHelper::responseSuccess('unlocked');
+    }
+
+    /**
+     * POST /seller/payments/update-method
+     * Body: payment_id, method — corrects a driver/salesman's mis-recorded payment
+     * method. Gated behind a recent sellerVerifySensitivePassword() call rather than
+     * the trip-closed freeze used for Received, since the mistake this exists to fix
+     * is usually only noticed while reviewing an already-closed trip.
+     */
+    public function sellerUpdatePaymentMethod(Request $request)
+    {
+        $seller = $this->currentSeller();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $unlockedRecently = $seller->sensitive_unlocked_at
+            && Carbon::parse($seller->sensitive_unlocked_at)->gt(Carbon::now()->subMinutes(self::SENSITIVE_UNLOCK_MINUTES));
+        if (!$unlockedRecently) {
+            return CommonHelper::responseError('sensitive_unlock_required');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'payment_id'    => 'required|integer|exists:order_payments,id',
+            'method'        => 'required|string|in:' . implode(',', self::METHODS),
+            'cheque_date'   => 'required_if:method,cheque|nullable|date',
+            'cheque_number' => 'required_if:method,cheque|nullable|digits_between:1,30',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $payment = OrderPayment::where(function ($q) use ($seller) {
+                $q->whereHas('deliveryBoy', fn ($qq) => $qq->where('seller_id', $seller->id))
+                  ->orWhereHas('salesman', fn ($qq) => $qq->where('seller_id', $seller->id));
+            })
+            ->find($request->payment_id);
+
+        if (!$payment) {
+            return CommonHelper::responseError('payment_not_found');
+        }
+
+        $payment->method = $request->method;
+        if ($request->method === 'cheque') {
+            $payment->cheque_date   = $request->cheque_date;
+            $payment->cheque_number = $request->cheque_number;
+        } else {
+            // No longer a cheque — don't leave stale cheque details attached.
+            $payment->cheque_date   = null;
+            $payment->cheque_number = null;
+        }
+        $payment->save();
+
+        return CommonHelper::responseSuccess('method_updated');
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -599,6 +762,7 @@ class SettlementController extends Controller
             return [
                 'id'            => $order->id,
                 'orders_id'     => $order->orders_id,
+                'invoice_number'=> $order->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($order->id),
                 'final_total'   => $order->final_total,
                 'active_status' => $order->active_status,
                 'retailer'      => $order->user
@@ -953,10 +1117,13 @@ class SettlementController extends Controller
         $seller = $this->currentSeller();
         if (!$seller) return CommonHelper::responseError('seller_not_found');
 
-        $filter  = strtolower($request->input('filter', ''));
-        $type    = $request->input('type', 'all');
-        $page    = max(1, (int) $request->input('page', 1));
-        $perPage = 15;
+        $filter       = strtolower($request->input('filter', ''));
+        $type         = $request->input('type', 'all');
+        $statusFilter = $request->input('status', 'all');
+        $fromDate     = $request->input('from_date');
+        $toDate       = $request->input('to_date');
+        $page         = max(1, (int) $request->input('page', 1));
+        $perPage      = 15;
 
         $rows = collect();
 
@@ -968,6 +1135,8 @@ class SettlementController extends Controller
             $driverAgg = DB::table('order_payments')
                 ->join('delivery_boys', 'delivery_boys.id', '=', 'order_payments.delivery_boy_id')
                 ->whereIn('order_payments.delivery_boy_id', $driverIds)
+                ->when($fromDate, fn ($q) => $q->whereDate('order_payments.created_at', '>=', $fromDate))
+                ->when($toDate, fn ($q) => $q->whereDate('order_payments.created_at', '<=', $toDate))
                 ->selectRaw('
                     order_payments.delivery_boy_id,
                     delivery_boys.name  as person_name,
@@ -978,7 +1147,8 @@ class SettlementController extends Controller
                     ROUND(SUM(IF(order_payments.method="upi",       order_payments.amount, 0)), 2) as total_upi,
                     ROUND(SUM(IF(order_payments.method="cheque",    order_payments.amount, 0)), 2) as total_cheque,
                     ROUND(SUM(IF(order_payments.method="signature", order_payments.amount, 0)), 2) as total_signature,
-                    COUNT(DISTINCT order_payments.order_id) as total_orders
+                    COUNT(DISTINCT order_payments.order_id) as total_orders,
+                    MAX(order_payments.created_at) as last_payment_at
                 ')
                 ->groupByRaw('order_payments.delivery_boy_id, delivery_boys.name, delivery_boys.mobile, DATE(order_payments.created_at)')
                 ->get();
@@ -1007,6 +1177,9 @@ class SettlementController extends Controller
                     $driverSettlements->put($key, $ds);
                 }
 
+                $effectiveStatus = $this->effectiveTripStatus($ds, $agg->last_payment_at);
+                if ($statusFilter !== 'all' && $effectiveStatus !== $statusFilter) continue;
+
                 $rows->push([
                     'id'                   => $ds->id,
                     'type'                 => 'driver',
@@ -1021,8 +1194,8 @@ class SettlementController extends Controller
                     'total_signature'      => (float) $agg->total_signature,
                     'cash_received'        => $ds->cash_received,
                     'reconciliation_status'=> $ds->reconciliation_status ?? 'unreconciled',
-                    'status'               => $ds->status ?? 'open',
-                    'status_text'          => ucfirst($ds->status ?? 'open'),
+                    'status'               => $effectiveStatus,
+                    'status_text'          => self::STATUS_TEXT_MAP[$effectiveStatus] ?? ucfirst($effectiveStatus),
                     'sort_key'             => $agg->pay_date . '_' . $agg->delivery_boy_id,
                 ]);
             }
@@ -1035,6 +1208,8 @@ class SettlementController extends Controller
                 ->join('salesmen', 'salesmen.id', '=', 'order_payments.salesman_id')
                 ->whereIn('order_payments.salesman_id', $salesmanIds)
                 ->whereNotNull('order_payments.salesman_id')
+                ->when($fromDate, fn ($q) => $q->whereDate('order_payments.created_at', '>=', $fromDate))
+                ->when($toDate, fn ($q) => $q->whereDate('order_payments.created_at', '<=', $toDate))
                 ->selectRaw('
                     order_payments.salesman_id,
                     salesmen.name   as person_name,
@@ -1045,7 +1220,8 @@ class SettlementController extends Controller
                     ROUND(SUM(IF(order_payments.method="upi",       order_payments.amount, 0)), 2) as total_upi,
                     ROUND(SUM(IF(order_payments.method="cheque",    order_payments.amount, 0)), 2) as total_cheque,
                     ROUND(SUM(IF(order_payments.method="signature", order_payments.amount, 0)), 2) as total_signature,
-                    COUNT(DISTINCT order_payments.order_id) as total_orders
+                    COUNT(DISTINCT order_payments.order_id) as total_orders,
+                    MAX(order_payments.created_at) as last_payment_at
                 ')
                 ->groupByRaw('order_payments.salesman_id, salesmen.name, salesmen.mobile, DATE(order_payments.created_at)')
                 ->get();
@@ -1073,6 +1249,9 @@ class SettlementController extends Controller
                     $salesmanSettlements->put($key, $ss);
                 }
 
+                $effectiveStatus = $this->effectiveTripStatus($ss, $agg->last_payment_at);
+                if ($statusFilter !== 'all' && $effectiveStatus !== $statusFilter) continue;
+
                 $rows->push([
                     'id'                   => $ss->id,
                     'type'                 => 'salesman',
@@ -1087,8 +1266,8 @@ class SettlementController extends Controller
                     'total_signature'      => (float) $agg->total_signature,
                     'cash_received'        => $ss->cash_received,
                     'reconciliation_status'=> $ss->reconciliation_status ?? 'unreconciled',
-                    'status'               => $ss->status ?? 'open',
-                    'status_text'          => ucfirst($ss->status ?? 'open'),
+                    'status'               => $effectiveStatus,
+                    'status_text'          => self::STATUS_TEXT_MAP[$effectiveStatus] ?? ucfirst($effectiveStatus),
                     'sort_key'             => $agg->pay_date . '_' . $agg->salesman_id,
                 ]);
             }
@@ -1199,13 +1378,6 @@ class SettlementController extends Controller
             $dynamicReconStatus = $settlement->reconciliation_status ?? 'unreconciled';
         }
 
-        $statusTextMap = [
-            'open'              => 'Open',
-            'locked'            => 'Locked',
-            'reconciled'        => 'Reconciled',
-            'needs_rereconcile' => 'Needs Re-Reconcile',
-        ];
-
         $blockers = [];
         if ($unverifiedDigital > 0) $blockers[] = "{$unverifiedDigital} digital payment(s) not verified yet";
         if ($hasCash && $settlement->cash_received === null) $blockers[] = 'Enter cash received to close';
@@ -1220,7 +1392,7 @@ class SettlementController extends Controller
             'cash_received'        => $settlement->cash_received,
             'reconciliation_status'=> $dynamicReconStatus,
             'status'               => $effectiveStatus,
-            'status_text'          => $statusTextMap[$effectiveStatus] ?? ucfirst($effectiveStatus),
+            'status_text'          => self::STATUS_TEXT_MAP[$effectiveStatus] ?? ucfirst($effectiveStatus),
         ];
 
         return CommonHelper::responseWithData([
@@ -1228,6 +1400,7 @@ class SettlementController extends Controller
             'orders'         => $orders->map(fn ($o) => [
                 'id'              => $o->id,
                 'orders_id'       => $o->orders_id,
+                'invoice_number'  => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
                 'final_total'     => $o->final_total,
                 'active_status'   => $o->active_status,
                 'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,

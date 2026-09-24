@@ -35,10 +35,12 @@ class DeliveryBoyController extends BaseController
             ->orderBy('id', 'DESC')
             ->first();
 
-        // 2. If no active dispatched slip, fall back to any slip today
+        // 2. If no active dispatched slip, fall back to today's most recent dispatched-or-later
+        // slip — never a still-status-0 (not yet dispatched) one.
         if (!$slip) {
             $slip = LoadingSlip::where('driver_id', $delivery_boy_id)
                 ->whereDate('created_at', Carbon::today())
+                ->where('status', '>=', 1)
                 ->orderBy('id', 'DESC')
                 ->first();
         }
@@ -77,7 +79,17 @@ class DeliveryBoyController extends BaseController
             ->sum('remaining_final');
 
         // Legacy metrics
-        $data['order_count'] = Order::where('delivery_boy_id',$delivery_boy_id)->count();
+        $data['order_count'] = Order::where('delivery_boy_id', $delivery_boy_id)
+            ->where(function ($q) {
+                $q->whereNull('loading_slip_id')
+                  ->orWhereExists(function ($sub) {
+                      $sub->selectRaw('1')
+                          ->from('loading_slips')
+                          ->whereColumn('loading_slips.id', 'orders.loading_slip_id')
+                          ->where('loading_slips.status', '>=', 1);
+                  });
+            })
+            ->count();
         $data['balance'] = number_format(auth()->user()->deliveryBoy->balance, 2);
         
         return CommonHelper::responseWithData($data);
@@ -98,11 +110,14 @@ class DeliveryBoyController extends BaseController
             ->orderBy('id', 'DESC')
             ->first();
 
-        // 2. If no active dispatched slip, fall back to any slip today (created or completed or dispatched)
+        // 2. If no active dispatched slip, fall back to today's most recent dispatched-or-later
+        // slip (e.g. already completed today) — but never a slip that's still status 0 (created,
+        // not yet dispatched), or its orders would leak into the driver app before dispatch.
         if (!$slip) {
             $slip = LoadingSlip::with(['vehicle', 'driver'])
                 ->where('driver_id', $delivery_boy_id)
                 ->whereDate('created_at', Carbon::today())
+                ->where('status', '>=', 1)
                 ->orderBy('id', 'DESC')
                 ->first();
         }
@@ -304,7 +319,21 @@ class DeliveryBoyController extends BaseController
         )
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('delivery_boys', 'orders.delivery_boy_id', '=', 'delivery_boys.id')
-            ->where('orders.delivery_boy_id', $delivery_boy_id);
+            ->where('orders.delivery_boy_id', $delivery_boy_id)
+            // Sarthi: an order assigned via a loading slip must stay hidden from the driver
+            // until the seller actually dispatches that slip — orders.delivery_boy_id gets
+            // set at slip-save time, well before dispatch. Orders assigned outside the
+            // loading-slip flow (no loading_slip_id, e.g. direct assign_delivery_boy) are
+            // unaffected and remain visible immediately as before.
+            ->where(function ($q) {
+                $q->whereNull('orders.loading_slip_id')
+                  ->orWhereExists(function ($sub) {
+                      $sub->selectRaw('1')
+                          ->from('loading_slips')
+                          ->whereColumn('loading_slips.id', 'orders.loading_slip_id')
+                          ->where('loading_slips.status', '>=', 1);
+                  });
+            });
 
         if ($startDate && $endDate) {
             $orders = $orders->whereBetween('orders.created_at', [$startDate, $endDate]);

@@ -11,13 +11,15 @@ class OrderPayment extends Model
     use LogsActivity;
 
     protected $fillable = [
-        'order_id', 'delivery_boy_id', 'salesman_id', 'method', 'amount',
-        'proof_photo', 'status', 'verified_by', 'verified_at',
+        'order_id', 'delivery_boy_id', 'salesman_id', 'method', 'amount', 'received_amount',
+        'proof_photo', 'status', 'verified_by', 'verified_at', 'cheque_date', 'cheque_number',
     ];
 
     protected $casts = [
-        'amount'      => 'float',
-        'verified_at' => 'datetime',
+        'amount'          => 'float',
+        'received_amount' => 'float',
+        'verified_at'     => 'datetime',
+        'cheque_date'     => 'date',
     ];
 
     public function order()

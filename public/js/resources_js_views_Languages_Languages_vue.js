@@ -735,6 +735,18 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -2487,161 +2499,216 @@ var render = function () {
       ]),
       _vm._v(" "),
       _c("div", { staticClass: "list-surface" }, [
-        _c("div", { staticClass: "list-toolbar" }, [
-          _c("div", [
-            _c("h6", { staticClass: "box-title mb-2" }, [
-              _vm._v(_vm._s(_vm.__("download_sample_files"))),
+        _c("div", { staticClass: "list-toolbar has-filters" }, [
+          _c("div", { staticClass: "list-toolbar-start" }, [
+            _c("div", [
+              _c("h6", { staticClass: "box-title mb-2" }, [
+                _vm._v(_vm._s(_vm.__("download_sample_files"))),
+              ]),
+              _vm._v(" "),
+              _c(
+                "div",
+                {
+                  staticClass: "d-flex flex-wrap",
+                  staticStyle: { gap: "8px" },
+                },
+                [
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-outline-primary",
+                      on: {
+                        click: function ($event) {
+                          _vm.downloadSampleFile(
+                            "customer.json",
+                            _vm.getSystemTypeName(1)
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("i", { staticClass: "fa fa-download" }),
+                      _vm._v(
+                        " " +
+                          _vm._s(_vm.__("retailer_app")) +
+                          "\n                        "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-outline-primary",
+                      on: {
+                        click: function ($event) {
+                          _vm.downloadSampleFile(
+                            "partner.json",
+                            _vm.getSystemTypeName(2)
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("i", { staticClass: "fa fa-download" }),
+                      _vm._v(
+                        " " +
+                          _vm._s(_vm.__("distributor_app")) +
+                          "\n                        "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-outline-primary",
+                      on: {
+                        click: function ($event) {
+                          _vm.downloadSampleFile(
+                            "web.json",
+                            _vm.getSystemTypeName(3)
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("i", { staticClass: "fa fa-download" }),
+                      _vm._v(
+                        " " +
+                          _vm._s(_vm.__("website")) +
+                          "\n                        "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-outline-primary",
+                      on: {
+                        click: function ($event) {
+                          _vm.downloadSampleFile(
+                            "panel.json",
+                            _vm.getSystemTypeName(4)
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("i", { staticClass: "fa fa-download" }),
+                      _vm._v(
+                        " " +
+                          _vm._s(_vm.__("admin_panel")) +
+                          "\n                        "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-outline-primary",
+                      on: {
+                        click: function ($event) {
+                          _vm.downloadSampleFile(
+                            "driver.json",
+                            _vm.getSystemTypeName(5)
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("i", { staticClass: "fa fa-download" }),
+                      _vm._v(
+                        " " +
+                          _vm._s(_vm.__("driver_app")) +
+                          "\n                        "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm btn-outline-primary",
+                      on: {
+                        click: function ($event) {
+                          _vm.downloadSampleFile(
+                            "salesman.json",
+                            _vm.getSystemTypeName(6)
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("i", { staticClass: "fa fa-download" }),
+                      _vm._v(
+                        " " +
+                          _vm._s(_vm.__("salesman_app")) +
+                          "\n                        "
+                      ),
+                    ]
+                  ),
+                ]
+              ),
             ]),
-            _vm._v(" "),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "list-toolbar-end" }, [
             _c(
               "div",
-              { staticClass: "d-flex flex-wrap", staticStyle: { gap: "8px" } },
+              { staticClass: "list-search" },
               [
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-sm btn-outline-primary",
-                    on: {
-                      click: function ($event) {
-                        _vm.downloadSampleFile(
-                          "customer.json",
-                          _vm.getSystemTypeName(1)
-                        )
-                      },
-                    },
-                  },
-                  [
-                    _c("i", { staticClass: "fa fa-download" }),
-                    _vm._v(
-                      " " +
-                        _vm._s(_vm.__("customer_app")) +
-                        "\n                    "
-                    ),
-                  ]
-                ),
+                _c("i", {
+                  staticClass: "fa fa-search list-search-icon",
+                  attrs: { "aria-hidden": "true" },
+                }),
                 _vm._v(" "),
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-sm btn-outline-primary",
-                    on: {
-                      click: function ($event) {
-                        _vm.downloadSampleFile(
-                          "partner.json",
-                          _vm.getSystemTypeName(2)
-                        )
-                      },
-                    },
+                _c("b-form-input", {
+                  attrs: {
+                    id: "filter-input",
+                    type: "search",
+                    placeholder: _vm.__("search"),
                   },
-                  [
-                    _c("i", { staticClass: "fa fa-download" }),
-                    _vm._v(
-                      " " +
-                        _vm._s(_vm.__("partner_app")) +
-                        "\n                    "
-                    ),
-                  ]
-                ),
-                _vm._v(" "),
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-sm btn-outline-primary",
-                    on: {
-                      click: function ($event) {
-                        _vm.downloadSampleFile(
-                          "web.json",
-                          _vm.getSystemTypeName(3)
-                        )
-                      },
+                  model: {
+                    value: _vm.filter,
+                    callback: function ($$v) {
+                      _vm.filter = $$v
                     },
+                    expression: "filter",
                   },
-                  [
-                    _c("i", { staticClass: "fa fa-download" }),
-                    _vm._v(
-                      " " + _vm._s(_vm.__("website")) + "\n                    "
-                    ),
-                  ]
-                ),
-                _vm._v(" "),
-                _c(
-                  "button",
+                }),
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _c(
+              "button",
+              {
+                directives: [
                   {
-                    staticClass: "btn btn-sm btn-outline-primary",
-                    on: {
-                      click: function ($event) {
-                        _vm.downloadSampleFile(
-                          "panel.json",
-                          _vm.getSystemTypeName(4)
-                        )
-                      },
-                    },
+                    name: "b-tooltip",
+                    rawName: "v-b-tooltip.hover",
+                    modifiers: { hover: true },
                   },
-                  [
-                    _c("i", { staticClass: "fa fa-download" }),
-                    _vm._v(
-                      " " +
-                        _vm._s(_vm.__("admin_panel")) +
-                        "\n                    "
-                    ),
-                  ]
-                ),
+                ],
+                staticClass: "list-icon-btn",
+                attrs: { title: _vm.__("refresh") },
+                on: {
+                  click: function ($event) {
+                    return _vm.getRecords()
+                  },
+                },
+              },
+              [
+                _c("i", {
+                  staticClass: "fa fa-refresh",
+                  attrs: { "aria-hidden": "true" },
+                }),
               ]
             ),
           ]),
-          _vm._v(" "),
-          _c(
-            "div",
-            { staticClass: "list-search" },
-            [
-              _c("i", {
-                staticClass: "fa fa-search list-search-icon",
-                attrs: { "aria-hidden": "true" },
-              }),
-              _vm._v(" "),
-              _c("b-form-input", {
-                attrs: {
-                  id: "filter-input",
-                  type: "search",
-                  placeholder: _vm.__("search"),
-                },
-                model: {
-                  value: _vm.filter,
-                  callback: function ($$v) {
-                    _vm.filter = $$v
-                  },
-                  expression: "filter",
-                },
-              }),
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "button",
-            {
-              directives: [
-                {
-                  name: "b-tooltip",
-                  rawName: "v-b-tooltip.hover",
-                  modifiers: { hover: true },
-                },
-              ],
-              staticClass: "list-icon-btn",
-              attrs: { title: _vm.__("refresh") },
-              on: {
-                click: function ($event) {
-                  return _vm.getRecords()
-                },
-              },
-            },
-            [
-              _c("i", {
-                staticClass: "fa fa-refresh",
-                attrs: { "aria-hidden": "true" },
-              }),
-            ]
-          ),
         ]),
         _vm._v(" "),
         _c(

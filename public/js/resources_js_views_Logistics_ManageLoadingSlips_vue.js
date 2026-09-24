@@ -128,6 +128,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -196,6 +205,34 @@ __webpack_require__.r(__webpack_exports__);
             }
           })["catch"](function (err) {
             _this2.showError(__('an_error_occurred_during_dispatch'));
+          });
+        }
+      });
+    },
+    cancelSlip: function cancelSlip(id) {
+      var _this3 = this;
+      this.$swal.fire({
+        title: __('are_you_sure'),
+        text: __('this_will_cancel_the_loading_slip_and_release_all_its_orders_so_they_can_be_added_to_a_new_slip'),
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: __('yes_cancel_slip'),
+        cancelButtonText: __('no'),
+        confirmButtonColor: '#e74a3b',
+        cancelButtonColor: '#858796'
+      }).then(function (result) {
+        if (result.isConfirmed) {
+          axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this3.apiBase + '/loading_slips/cancel', {
+            id: id
+          }).then(function (res) {
+            if (res.data.status === 1) {
+              _this3.showMessage('success', res.data.message);
+              _this3.getSlips();
+            } else {
+              _this3.showError(res.data.message);
+            }
+          })["catch"](function (err) {
+            _this3.showError(__('an_error_occurred_during_cancellation'));
           });
         }
       });
@@ -673,6 +710,24 @@ var render = function () {
                                     ),
                                   ]
                                 )
+                              : slip.status == 3
+                              ? _c(
+                                  "span",
+                                  {
+                                    staticClass:
+                                      "badge bg-soft-danger font-weight-bold",
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass: "fa fa-ban mr-1 text-danger",
+                                    }),
+                                    _vm._v(
+                                      " " +
+                                        _vm._s(_vm.__("cancelled")) +
+                                        "\n                                "
+                                    ),
+                                  ]
+                                )
                               : _c(
                                   "span",
                                   {
@@ -716,33 +771,63 @@ var render = function () {
                                   [_c("i", { staticClass: "fa fa-eye" })]
                                 ),
                                 _vm._v(" "),
-                                slip.status == 0 && _vm.isSeller
-                                  ? _c(
-                                      "button",
-                                      {
-                                        staticClass:
-                                          "btn btn-sm btn-soft-success",
-                                        attrs: {
-                                          title: _vm.__(
-                                            "dispatch_out_for_delivery"
-                                          ),
-                                        },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.dispatchSlip(slip.id)
-                                          },
-                                        },
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-sm btn-soft-success",
+                                    class: {
+                                      invisible: !(
+                                        slip.status == 0 && _vm.isSeller
+                                      ),
+                                    },
+                                    attrs: {
+                                      title: _vm.__(
+                                        "dispatch_out_for_delivery"
+                                      ),
+                                    },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.dispatchSlip(slip.id)
                                       },
-                                      [
-                                        _c("i", { staticClass: "fa fa-send" }),
-                                        _vm._v(
-                                          " " +
-                                            _vm._s(_vm.__("dispatch")) +
-                                            "\n                                    "
-                                        ),
-                                      ]
-                                    )
-                                  : _vm._e(),
+                                    },
+                                  },
+                                  [
+                                    _c("i", { staticClass: "fa fa-send" }),
+                                    _vm._v(
+                                      " " +
+                                        _vm._s(_vm.__("dispatch")) +
+                                        "\n                                    "
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-sm btn-soft-danger",
+                                    class: {
+                                      invisible: !(
+                                        slip.status == 0 && _vm.isSeller
+                                      ),
+                                    },
+                                    attrs: {
+                                      title: _vm.__("cancel_loading_slip"),
+                                    },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.cancelSlip(slip.id)
+                                      },
+                                    },
+                                  },
+                                  [
+                                    _c("i", { staticClass: "fa fa-ban" }),
+                                    _vm._v(
+                                      " " +
+                                        _vm._s(_vm.__("cancel")) +
+                                        "\n                                    "
+                                    ),
+                                  ]
+                                ),
                                 _vm._v(" "),
                                 _c(
                                   "button",

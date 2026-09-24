@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
-use App\Helpers\CommonHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,24 +14,23 @@ class Language extends Model
     protected $fillable = ['supported_language_id','system_type','json_data','is_default','display_name','status'];
     protected $appends = ['system_type_name'];
 
-    public static $systemTypeCustomerApp = 1;
-    public static $systemTypeSellerAndDeliveryBoyApp = 2;
+    public static $systemTypeRetailerApp = 1;
+    public static $systemTypeDistributorApp = 2;
     public static $systemTypeWebsite = 3;
     public static $systemTypeAdminPanel = 4;
+    public static $systemTypeDriverApp = 5;
+    public static $systemTypeSalesmanApp = 6;
 
 
     public static function get_system_types(): array {
-        $string = CommonHelper::getColumnComment("languages", "system_type");
-        $arrays = explode(',',$string);
-        $system_types = array();
-        foreach ($arrays as $key => $code){
-            $data = array();
-            $array = explode('=>',$code);
-            $data['id'] = intval($array[0]);
-            $data['name'] = trim($array[1]);
-            $system_types[$key] = $data;
-        }
-        return $system_types;
+        return [
+            ['id' => self::$systemTypeRetailerApp, 'name' => __('retailer_app')],
+            ['id' => self::$systemTypeDistributorApp, 'name' => __('distributor_app')],
+            ['id' => self::$systemTypeWebsite, 'name' => __('website')],
+            ['id' => self::$systemTypeAdminPanel, 'name' => __('admin_panel')],
+            ['id' => self::$systemTypeDriverApp, 'name' => __('driver_app')],
+            ['id' => self::$systemTypeSalesmanApp, 'name' => __('salesman_app')],
+        ];
     }
 
     public function getSystemTypeNameAttribute(){

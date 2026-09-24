@@ -68,6 +68,7 @@ class SellerProductApiController extends Controller
                 'seller_products.stock as sp_stock',
                 'seller_products.status as sp_status',
                 'seller_products.allow_loose_qty as sp_allow_loose_qty',
+                'seller_products.min_qty as sp_min_qty',
                 'seller_products.max_qty_mode as sp_max_qty_mode',
                 'seller_products.max_qty_value as sp_max_qty_value'
             );
@@ -119,6 +120,7 @@ class SellerProductApiController extends Controller
                 'secondary_unit' => $v->secondaryUnit ? $v->secondaryUnit->name : null,
                 'secondary_unit_value' => $v->secondary_unit_value,
                 'allow_loose_qty' => (bool) $v->sp_allow_loose_qty,
+                'min_qty' => $v->sp_min_qty !== null ? (int) $v->sp_min_qty : null,
                 'max_qty_mode' => $v->sp_max_qty_mode,
                 'max_qty_value' => $v->sp_max_qty_value,
                 'weight' => $v->weight,
@@ -158,6 +160,7 @@ class SellerProductApiController extends Controller
             'stock' => 'nullable|numeric|min:0',
             'status' => 'nullable|in:0,1',
             'allow_loose_qty' => 'nullable|boolean',
+            'min_qty' => 'nullable|integer|min:1',
             'max_qty_mode' => 'nullable|in:per_order,per_day',
             'max_qty_value' => 'nullable|integer|min:1',
         ]);
@@ -186,6 +189,7 @@ class SellerProductApiController extends Controller
         if ($request->has('status')) $sp->status = $request->status;
         elseif (!$sp->exists) $sp->status = 0;
         if ($request->has('allow_loose_qty')) $sp->allow_loose_qty = (bool) $request->allow_loose_qty;
+        if ($request->has('min_qty')) $sp->min_qty = $request->min_qty ? (int) $request->min_qty : null;
         if ($request->has('max_qty_mode')) $sp->max_qty_mode = $request->max_qty_mode ?: null;
         if ($request->has('max_qty_value')) $sp->max_qty_value = $request->max_qty_value ?: null;
 

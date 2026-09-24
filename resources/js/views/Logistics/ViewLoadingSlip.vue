@@ -18,6 +18,9 @@
                 <button v-if="isSeller && slip.status == 0" @click="dispatchSlip" class="btn btn-success font-weight-bold rounded-pill">
                     <i class="fa fa-send mr-2"></i>{{ __('dispatch_run') }}
                 </button>
+                <button v-if="isSeller && slip.status == 0" @click="cancelSlip" class="btn btn-danger font-weight-bold rounded-pill">
+                    <i class="fa fa-ban mr-2"></i>{{ __('cancel_slip') }}
+                </button>
             </div>
         </div>
 
@@ -25,13 +28,14 @@
             <!-- Left Side: Summary Cards -->
             <div class="col-lg-4 mb-4">
                 <!-- Status Badge Card -->
-                <div class="card border-0 shadow-sm rounded-lg mb-4 text-center p-4" :class="slip.status == 0 ? 'bg-soft-warning' : 'bg-soft-success'">
+                <div class="card border-0 shadow-sm rounded-lg mb-4 text-center p-4" :class="slip.status == 0 ? 'bg-soft-warning' : (slip.status == 3 ? 'bg-soft-danger' : 'bg-soft-success')">
                     <div class="h6 font-weight-bold text-uppercase mb-1">{{ __('distribution_status') }}</div>
-                    <div class="h3 font-weight-bold mb-0" :class="slip.status == 0 ? 'text-warning' : 'text-success'">
-                        <i :class="slip.status == 0 ? 'fa fa-clock-o' : 'fa fa-truck'"></i>
-                        {{ slip.status == 0 ? __('planned') : __('dispatched') }}
+                    <div class="h3 font-weight-bold mb-0" :class="slip.status == 0 ? 'text-warning' : (slip.status == 3 ? 'text-danger' : 'text-success')">
+                        <i :class="slip.status == 0 ? 'fa fa-clock-o' : (slip.status == 3 ? 'fa fa-ban' : 'fa fa-truck')"></i>
+                        {{ slip.status == 0 ? __('planned') : (slip.status == 3 ? __('cancelled') : __('dispatched')) }}
                     </div>
                     <p class="text-muted mt-2 mb-0 small" v-if="slip.status == 0">{{ __('warehouse_operations_are_active_ready_for_driver_loading') }}</p>
+                    <p class="text-muted mt-2 mb-0 small" v-else-if="slip.status == 3">{{ __('this_slip_was_cancelled_its_orders_are_available_for_a_new_slip') }}</p>
                     <p class="text-muted mt-2 mb-0 small" v-else>{{ __('the_vehicle_is_currently_on_the_delivery_route') }}</p>
                 </div>
 
@@ -214,6 +218,32 @@ export default {
                             }
                         }).catch(err => {
                             this.showError(__('an_error_occurred_during_dispatch'));
+                        });
+                }
+            });
+        },
+        cancelSlip() {
+            this.$swal.fire({
+                title: __('are_you_sure'),
+                text: __('this_will_cancel_the_loading_slip_and_release_all_its_orders_so_they_can_be_added_to_a_new_slip'),
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: __('yes_cancel_slip'),
+                cancelButtonText: __('no'),
+                confirmButtonColor: '#e74a3b',
+                cancelButtonColor: '#858796',
+            }).then(result => {
+                if (result.isConfirmed) {
+                    axios.post(this.apiBase + '/loading_slips/cancel', { id: this.slip.id })
+                        .then(res => {
+                            if (res.data.status === 1) {
+                                this.showMessage('success', res.data.message);
+                                this.getSlipDetails();
+                            } else {
+                                this.showError(res.data.message);
+                            }
+                        }).catch(err => {
+                            this.showError(__('an_error_occurred_during_cancellation'));
                         });
                 }
             });

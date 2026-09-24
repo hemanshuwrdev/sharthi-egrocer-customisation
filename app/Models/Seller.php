@@ -19,7 +19,7 @@ class Seller extends Model
 
     protected $translationModel = 'SellerTranslation';
 
-    protected $hidden = [];
+    protected $hidden = ['sensitive_password'];
     protected $appends = ['logo_url', 'national_identity_card_url', 'address_proof_url', 'categories_array', 'pickup_store_timings_array', 'translations'];
 
     public static $statusRegistered = 0;

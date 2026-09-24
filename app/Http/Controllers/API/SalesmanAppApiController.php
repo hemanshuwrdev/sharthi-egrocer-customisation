@@ -690,6 +690,7 @@ class SalesmanAppApiController extends Controller
                 'seller_products.discounted_price as sp_discounted_price',
                 'seller_products.stock as sp_stock',
                 'seller_products.allow_loose_qty as sp_allow_loose_qty',
+                'seller_products.min_qty as sp_min_qty',
                 'seller_products.max_qty_mode as sp_max_qty_mode',
                 'seller_products.max_qty_value as sp_max_qty_value'
             );
@@ -766,7 +767,7 @@ class SalesmanAppApiController extends Controller
                 'secondary_unit_value' => $r->secondary_unit_value,
                 'allow_loose_qty'      => (bool) $r->sp_allow_loose_qty,
                 'qty_step'             => $r->sp_allow_loose_qty ? 1 : (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
-                'min_qty'              => $r->sp_allow_loose_qty ? 1 : (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1),
+                'min_qty'              => $r->sp_min_qty ? (int) $r->sp_min_qty : ($r->sp_allow_loose_qty ? 1 : (int) ($r->secondary_unit_value > 0 ? $r->secondary_unit_value : 1)),
                 'max_qty_mode'         => $r->sp_max_qty_mode,
                 'max_qty_value'        => $r->sp_max_qty_value,
                 'weight'               => $r->weight,
@@ -915,7 +916,7 @@ class SalesmanAppApiController extends Controller
                 'weight' => $variant->weight,
                 'weight_unit' => $variant->weightUnit->name ?? null,
                 'qty_step' => (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
-                'min_qty'  => (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
+                'min_qty'  => $sp->min_qty ? (int) $sp->min_qty : (int) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
                 'image'    => $variant->image ?: ($variant->masterProduct->image ?? null),
                 'qty'      => (float) $row->qty,
                 'mrp'              => (float) $sp->mrp,

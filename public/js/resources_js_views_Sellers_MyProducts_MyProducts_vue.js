@@ -267,6 +267,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -345,6 +352,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         label: __('slabs'),
         visible: true,
         "class": 'text-center'
+      }, {
+        key: 'min_qty',
+        label: __('min_quantity'),
+        visible: true,
+        "class": 'text-center',
+        thStyle: {
+          minWidth: '95px',
+          width: '95px'
+        }
       }, {
         key: 'status',
         label: __('status'),
@@ -469,6 +485,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         stock: row.stock,
         status: row.status,
         allow_loose_qty: row.allow_loose_qty ? 1 : 0,
+        min_qty: row.min_qty != null && row.min_qty !== '' ? row.min_qty : null,
         max_qty_mode: row.max_qty_mode || '',
         max_qty_value: row.max_qty_mode && row.max_qty_value != null ? row.max_qty_value : ''
       }).then(function (res) {
@@ -1562,6 +1579,47 @@ var render = function () {
                           ),
                         ]
                       ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(min_qty)",
+                  fn: function (row) {
+                    return [
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model.number",
+                            value: row.item.min_qty,
+                            expression: "row.item.min_qty",
+                            modifiers: { number: true },
+                          },
+                        ],
+                        staticClass: "form-control form-control-sm text-center",
+                        attrs: {
+                          type: "number",
+                          min: "1",
+                          step: "1",
+                          placeholder: "—",
+                        },
+                        domProps: { value: row.item.min_qty },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(
+                              row.item,
+                              "min_qty",
+                              _vm._n($event.target.value)
+                            )
+                          },
+                          blur: function ($event) {
+                            return _vm.$forceUpdate()
+                          },
+                        },
+                      }),
                     ]
                   },
                 },

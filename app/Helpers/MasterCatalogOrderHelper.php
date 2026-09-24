@@ -124,10 +124,10 @@ class MasterCatalogOrderHelper
         $allowLooseQty = (int) $sp->allow_loose_qty === 1;
         $step          = (float) ($variant->secondary_unit_value ?? 1);
         $step          = $step > 0 ? $step : 1;
-        $minQty        = $step;
+        $minQty        = $sp->min_qty ? (float) $sp->min_qty : $step;
         if ($allowLooseQty) {
             $step   = 1;
-            $minQty = 1;
+            $minQty = $sp->min_qty ? (float) $sp->min_qty : 1;
         }
         $secondaryUnit = $variant->secondaryUnit ? $variant->secondaryUnit->name : null;
 
@@ -182,10 +182,11 @@ class MasterCatalogOrderHelper
 
         // Loose selling allowed → skip the box-multiple restriction, just require ≥ 1.
         if ((int) $sp->allow_loose_qty === 1) {
-            return $qty < 1 ? 'minimum_qty_is_1' : null;
+            $minLimit = $sp->min_qty ? (float) $sp->min_qty : 1;
+            return $qty < $minLimit ? ('minimum_qty_is_' . (int) $minLimit) : null;
         }
 
-        $minQty = $step; // e.g. step=20 → minQty=20
+        $minQty = $sp->min_qty ? (float) $sp->min_qty : $step; // e.g. step=20 → minQty=20
 
         // Must meet minimum order quantity
         if ($qty < $minQty) {

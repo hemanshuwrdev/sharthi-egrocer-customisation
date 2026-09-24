@@ -23,6 +23,7 @@ class SellerProduct extends Model
         'allow_loose_qty',
         'max_qty_mode',
         'max_qty_value',
+        'min_qty',
     ];
 
     public function seller()

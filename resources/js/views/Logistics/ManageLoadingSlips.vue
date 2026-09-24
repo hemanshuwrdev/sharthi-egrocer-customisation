@@ -75,6 +75,9 @@
                                     <span v-if="slip.status == 0" class="badge bg-soft-warning font-weight-bold">
                                         <i class="fa fa-clock-o mr-1 text-warning"></i> {{ __('planned') }}
                                     </span>
+                                    <span v-else-if="slip.status == 3" class="badge bg-soft-danger font-weight-bold">
+                                        <i class="fa fa-ban mr-1 text-danger"></i> {{ __('cancelled') }}
+                                    </span>
                                     <span v-else class="badge bg-soft-success font-weight-bold">
                                         <i class="fa fa-truck mr-1 text-success"></i> {{ __('dispatched') }}
                                     </span>
@@ -84,9 +87,15 @@
                                         <router-link :to="urlPrefix + '/loading_slips/view/' + slip.id" class="btn btn-sm btn-soft-primary" :title="__('view_details')">
                                             <i class="fa fa-eye"></i>
                                         </router-link>
-                                        
-                                        <button v-if="slip.status == 0 && isSeller" @click="dispatchSlip(slip.id)" class="btn btn-sm btn-soft-success" :title="__('dispatch_out_for_delivery')">
+
+                                        <!-- Always rendered (visibility, not v-if) so every row's action buttons
+                                             stay column-aligned regardless of which ones apply to that row. -->
+                                        <button :class="{ invisible: !(slip.status == 0 && isSeller) }" @click="dispatchSlip(slip.id)" class="btn btn-sm btn-soft-success" :title="__('dispatch_out_for_delivery')">
                                             <i class="fa fa-send"></i> {{ __('dispatch') }}
+                                        </button>
+
+                                        <button :class="{ invisible: !(slip.status == 0 && isSeller) }" @click="cancelSlip(slip.id)" class="btn btn-sm btn-soft-danger" :title="__('cancel_loading_slip')">
+                                            <i class="fa fa-ban"></i> {{ __('cancel') }}
                                         </button>
 
                                         <button @click="printSlip(slip.id)" class="btn btn-sm btn-soft-secondary" :title="__('print_loading_slip')">
@@ -179,6 +188,32 @@ export default {
                             }
                         }).catch(err => {
                             this.showError(__('an_error_occurred_during_dispatch'));
+                        });
+                }
+            });
+        },
+        cancelSlip(id) {
+            this.$swal.fire({
+                title: __('are_you_sure'),
+                text: __('this_will_cancel_the_loading_slip_and_release_all_its_orders_so_they_can_be_added_to_a_new_slip'),
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: __('yes_cancel_slip'),
+                cancelButtonText: __('no'),
+                confirmButtonColor: '#e74a3b',
+                cancelButtonColor: '#858796',
+            }).then(result => {
+                if (result.isConfirmed) {
+                    axios.post(this.apiBase + '/loading_slips/cancel', { id: id })
+                        .then(res => {
+                            if (res.data.status === 1) {
+                                this.showMessage('success', res.data.message);
+                                this.getSlips();
+                            } else {
+                                this.showError(res.data.message);
+                            }
+                        }).catch(err => {
+                            this.showError(__('an_error_occurred_during_cancellation'));
                         });
                 }
             });

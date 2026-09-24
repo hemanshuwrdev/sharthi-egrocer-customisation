@@ -177,6 +177,53 @@
                     </b-button>
                 </div>
             </div>
+
+            <!-- Sarthi: Sensitive Operations Password -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>{{ __('Sensitive Operations Password') }}</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted font-size-13">
+                        {{ __('This password gates risky corrections (like editing a driver\'s recorded payment method) so only you can authorize them, even if staff have access to this panel.') }}
+                    </p>
+
+                    <template v-if="!sensitivePasswordIsSet">
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label>{{ __('Password') }}</label>
+                                <input type="password" class="form-control" v-model="sensitiveNewPassword" autocomplete="new-password" />
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ __('Confirm Password') }}</label>
+                                <input type="password" class="form-control" v-model="sensitiveConfirmPassword" autocomplete="new-password" />
+                            </div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="row">
+                            <div class="form-group col-md-4">
+                                <label>{{ __('Old Password') }}</label>
+                                <input type="password" class="form-control" v-model="sensitiveOldPassword" autocomplete="current-password" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>{{ __('New Password') }}</label>
+                                <input type="password" class="form-control" v-model="sensitiveNewPassword" autocomplete="new-password" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>{{ __('Confirm New Password') }}</label>
+                                <input type="password" class="form-control" v-model="sensitiveConfirmPassword" autocomplete="new-password" />
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="card-footer">
+                    <b-button variant="primary" :disabled="isSensitiveLoading" @click="saveSensitivePassword">
+                        {{ sensitivePasswordIsSet ? __('change_password') : __('set_password') }}
+                        <b-spinner small v-if="isSensitiveLoading"></b-spinner>
+                    </b-button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -208,6 +255,11 @@ export default {
             invoice_prefix: "",
             invoice_suffix: "",
             invoice_next_number: 1,
+            isSensitiveLoading: false,
+            sensitivePasswordIsSet: false,
+            sensitiveOldPassword: "",
+            sensitiveNewPassword: "",
+            sensitiveConfirmPassword: "",
         }
     },
 
@@ -216,6 +268,7 @@ export default {
         this.getOrderSettings();
         this.getPaymentMethods();
         this.getInvoiceSettings();
+        this.getSensitivePasswordStatus();
     },
 
     computed: {
@@ -401,7 +454,50 @@ export default {
                     this.showError('Failed to save invoice settings');
                     this.isInvoiceLoading = false;
                 });
-        }
+        },
+
+        // ================= SENSITIVE OPERATIONS PASSWORD =================
+        getSensitivePasswordStatus() {
+            axios.get(this.$sellerApiUrl + '/sensitive-password')
+                .then(res => {
+                    if (res.data.status && res.data.data) {
+                        this.sensitivePasswordIsSet = !!res.data.data.is_set;
+                    }
+                })
+                .catch(() => {});
+        },
+
+        saveSensitivePassword() {
+            this.isSensitiveLoading = true;
+
+            let formData = new FormData();
+            if (this.sensitivePasswordIsSet) {
+                formData.append('old_password', this.sensitiveOldPassword || '');
+                formData.append('new_password', this.sensitiveNewPassword || '');
+                formData.append('confirm_new_password', this.sensitiveConfirmPassword || '');
+            } else {
+                formData.append('password', this.sensitiveNewPassword || '');
+                formData.append('confirm_password', this.sensitiveConfirmPassword || '');
+            }
+
+            axios.post(this.$sellerApiUrl + '/sensitive-password/save', formData)
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                        this.sensitivePasswordIsSet = true;
+                        this.sensitiveOldPassword = '';
+                        this.sensitiveNewPassword = '';
+                        this.sensitiveConfirmPassword = '';
+                    } else {
+                        this.showError(res.data.message || 'Failed to save');
+                    }
+                    this.isSensitiveLoading = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to save');
+                    this.isSensitiveLoading = false;
+                });
+        },
     }
 }
 </script>
