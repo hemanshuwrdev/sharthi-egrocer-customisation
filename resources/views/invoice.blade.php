@@ -379,6 +379,33 @@
         </tr>
     </table>
 
+    @if (!empty($order->seller_bank_name) || !empty($order->seller_bank_account_number))
+        <!-- Distributor Bank Details -->
+        <div style="border: 1px solid #ddd; padding: 10px 15px; margin-bottom: 15px;">
+            <div style="font-size: 12px; color: #222; margin-bottom: 8px;"><strong>Bank Details</strong></div>
+            <table width="100%" style="border-collapse: collapse;">
+                <tr>
+                    <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
+                        Bank Name<br>
+                        <strong style="color: #222;">{{ $order->seller_bank_name ?: '-' }}</strong>
+                    </td>
+                    <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
+                        Account Number<br>
+                        <strong style="color: #222;">{{ $order->seller_bank_account_number ?: '-' }}</strong>
+                    </td>
+                    <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
+                        Bank's IFSC Code<br>
+                        <strong style="color: #222;">{{ $order->seller_bank_ifsc_code ?: '-' }}</strong>
+                    </td>
+                    <td style="border: none; padding: 0; width: 25%; font-size: 11px; color: #555;">
+                        Bank Account Name<br>
+                        <strong style="color: #222;">{{ $order->seller_bank_account_name ?: '-' }}</strong>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    @endif
+
     <!-- Advertisement Banner Table -->
     <table width="100%" style="border: 1px solid #f8a5c2; background-color: #ffeef2; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; border-collapse: collapse;">
         <tr>
