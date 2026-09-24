@@ -2346,5 +2346,6 @@
     "confirm_password_change": "Confirm Password Change",
     "enter_the_code_we_emailed_to_your_registered_address_to_confirm_this_password_change": "Enter the code we emailed to your registered address to confirm this password change",
     "name_email_mobile_are_locked_contact_admin_to_change_them": "Name, Email and Mobile are locked. Contact admin to change them.",
-    "account_details_updated_successfully": "Account details updated successfully"
+    "account_details_updated_successfully": "Account details updated successfully",
+    "weight_is_per_outer_pack_hint": "Total weight of ONE Outer Pack / box, in Kg — not the weight of a single Inner Pack unit."
 }

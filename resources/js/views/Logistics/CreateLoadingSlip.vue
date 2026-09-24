@@ -232,8 +232,8 @@
                                         <th>{{ __('order') }} #</th>
                                         <th>{{ __('retailer') }}</th>
                                         <th class="text-end">{{ __('Qty') }}</th>
-                                        <th class="text-end">{{ __('Boxes') }}</th>
-                                        <th class="text-end">{{ __('Loose Pieces') }}</th>
+                                        <th class="text-end">{{ product.boxUnit || __('Boxes') }}</th>
+                                        <th class="text-end">{{ product.pieceUnit || __('Loose Pieces') }}</th>
                                         <th class="text-center" style="width:50px;"></th>
                                     </tr>
                                 </thead>

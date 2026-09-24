@@ -435,6 +435,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -2540,7 +2547,7 @@ var render = function () {
                           ],
                           staticClass: "fa fa-info-circle text-muted",
                           attrs: {
-                            title: _vm.__("weight_is_per_inner_pack_hint"),
+                            title: _vm.__("weight_is_per_outer_pack_hint"),
                           },
                         }),
                       ]),
@@ -2617,8 +2624,8 @@ var render = function () {
                                 {
                                   name: "model",
                                   rawName: "v-model",
-                                  value: v.unit_id,
-                                  expression: "v.unit_id",
+                                  value: v.secondary_unit_id,
+                                  expression: "v.secondary_unit_id",
                                 },
                               ],
                               staticClass: "form-control form-control-sm",
@@ -2635,7 +2642,7 @@ var render = function () {
                                     })
                                   _vm.$set(
                                     v,
-                                    "unit_id",
+                                    "secondary_unit_id",
                                     $event.target.multiple
                                       ? $$selectedVal
                                       : $$selectedVal[0]
@@ -2668,8 +2675,8 @@ var render = function () {
                                 {
                                   name: "model",
                                   rawName: "v-model",
-                                  value: v.secondary_unit_id,
-                                  expression: "v.secondary_unit_id",
+                                  value: v.unit_id,
+                                  expression: "v.unit_id",
                                 },
                               ],
                               staticClass: "form-control form-control-sm",
@@ -2686,7 +2693,7 @@ var render = function () {
                                     })
                                   _vm.$set(
                                     v,
-                                    "secondary_unit_id",
+                                    "unit_id",
                                     $event.target.multiple
                                       ? $$selectedVal
                                       : $$selectedVal[0]

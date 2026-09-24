@@ -2010,11 +2010,20 @@ var render = function () {
                                     ]),
                                     _vm._v(" "),
                                     _c("th", { staticClass: "text-end" }, [
-                                      _vm._v(_vm._s(_vm.__("Boxes"))),
+                                      _vm._v(
+                                        _vm._s(
+                                          product.boxUnit || _vm.__("Boxes")
+                                        )
+                                      ),
                                     ]),
                                     _vm._v(" "),
                                     _c("th", { staticClass: "text-end" }, [
-                                      _vm._v(_vm._s(_vm.__("Loose Pieces"))),
+                                      _vm._v(
+                                        _vm._s(
+                                          product.pieceUnit ||
+                                            _vm.__("Loose Pieces")
+                                        )
+                                      ),
                                     ]),
                                     _vm._v(" "),
                                     _c("th", {

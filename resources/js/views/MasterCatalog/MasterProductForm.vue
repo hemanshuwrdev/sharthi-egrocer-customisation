@@ -284,11 +284,18 @@
                                 <tr>
                                     <th>{{ __('sku') }}</th>
                                     <th>{{ __('barcode') }}</th>
+                                    <!-- Column order/labels here are swapped vs. the underlying
+                                         v.secondary_unit_id/v.unit_id fields below (secondary_unit_id
+                                         still stores the bulk container, unit_id still stores the small
+                                         individual unit — unchanged, same as every formula elsewhere in
+                                         the app already assumes). Only the display order/label changed,
+                                         so "Outer" reads first as the big outer box, then "Inner" as
+                                         what's packed inside it, matching plain-English intuition. -->
                                     <th>{{ __('outer_pack_unit') }}</th>
                                     <th>{{ __('inner_pack_unit') }}</th>
                                     <th>{{ __('inner_pack_value') }}</th>
                                     <th>{{ __('weight') }} (Kg)
-                                        <i class="fa fa-info-circle text-muted" v-b-tooltip.hover :title="__('weight_is_per_inner_pack_hint')"></i>
+                                        <i class="fa fa-info-circle text-muted" v-b-tooltip.hover :title="__('weight_is_per_outer_pack_hint')"></i>
                                     </th>
                                     <th>{{ __('image') }}</th>
                                     <th>{{ __('status') }}</th>
@@ -304,13 +311,13 @@
                                         <input type="text" class="form-control form-control-sm" v-model="v.barcode" />
                                     </td>
                                     <td>
-                                        <select class="form-control form-control-sm" v-model="v.unit_id">
+                                        <select class="form-control form-control-sm" v-model="v.secondary_unit_id">
                                             <option :value="null">--</option>
                                             <option v-for="u in units" :key="u.id" :value="u.id">{{ u.name }}</option>
                                         </select>
                                     </td>
                                     <td>
-                                        <select class="form-control form-control-sm" v-model="v.secondary_unit_id">
+                                        <select class="form-control form-control-sm" v-model="v.unit_id">
                                             <option :value="null">--</option>
                                             <option v-for="u in units" :key="u.id" :value="u.id">{{ u.name }}</option>
                                         </select>
