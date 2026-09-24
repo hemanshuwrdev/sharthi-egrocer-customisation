@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Scheme;
+use App\Models\SchemeSlab;
 use App\Models\SellerProduct;
 
 class SchemeEngine
@@ -29,12 +30,16 @@ class SchemeEngine
             return null;
         }
 
-        $qtyByProduct   = [];
-        $totalByProduct = [];
+        $qtyByProduct         = [];
+        $totalByProduct       = [];
+        $actualTotalByProduct = [];
         foreach ($lines as $line) {
             $spId = (int) $line['seller_product_id'];
-            $qtyByProduct[$spId]   = ($qtyByProduct[$spId]   ?? 0) + (float) $line['qty'];
-            $totalByProduct[$spId] = ($totalByProduct[$spId] ?? 0) + (float) $line['line_total'];
+            $qtyByProduct[$spId]         = ($qtyByProduct[$spId]         ?? 0) + (float) $line['qty'];
+            $totalByProduct[$spId]       = ($totalByProduct[$spId]       ?? 0) + (float) $line['line_total'];
+            // actual_line_total (pre-tax) is optional — callers that don't pass it fall
+            // back to line_total, so an 'exclusive' slab just behaves like 'inclusive'.
+            $actualTotalByProduct[$spId] = ($actualTotalByProduct[$spId] ?? 0) + (float) ($line['actual_line_total'] ?? $line['line_total']);
         }
 
         $schemes = Scheme::active()
@@ -46,8 +51,8 @@ class SchemeEngine
         foreach ($schemes as $scheme) {
             $result = match ($scheme->type) {
                 Scheme::TYPE_BUY_X_GET_Y         => self::evaluateBuyXGetY($scheme, $qtyByProduct),
-                Scheme::TYPE_GROUP_DISCOUNT_PRICE => self::evaluateGroupDiscountPrice($scheme, $totalByProduct),
-                Scheme::TYPE_GROUP_DISCOUNT_QTY   => self::evaluateGroupDiscountQty($scheme, $qtyByProduct, $totalByProduct),
+                Scheme::TYPE_GROUP_DISCOUNT_PRICE => self::evaluateGroupDiscountPrice($scheme, $totalByProduct, $actualTotalByProduct),
+                Scheme::TYPE_GROUP_DISCOUNT_QTY   => self::evaluateGroupDiscountQty($scheme, $qtyByProduct, $totalByProduct, $actualTotalByProduct),
                 default                           => null,
             };
 
@@ -285,6 +290,7 @@ class SchemeEngine
             'min_value'      => (float) $nearest['nextSlab']->min_value,
             'discount_type'  => $nearest['nextSlab']->discount_type,
             'discount_value' => (float) $nearest['nextSlab']->discount_value,
+            'tax_option'     => $nearest['nextSlab']->tax_option ?? 'inclusive',
         ] : null;
 
         return [
@@ -313,6 +319,7 @@ class SchemeEngine
                 'min_value'      => (float) $sl->min_value,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => (float) $sl->discount_value,
+                'tax_option'     => $sl->tax_option ?? 'inclusive',
             ])->values() : null,
         ];
     }
@@ -365,7 +372,7 @@ class SchemeEngine
         ];
     }
 
-    private static function evaluateGroupDiscountPrice(Scheme $scheme, array $totalByProduct): ?array
+    private static function evaluateGroupDiscountPrice(Scheme $scheme, array $totalByProduct, array $actualTotalByProduct = []): ?array
     {
         $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
         if (empty($groupIds)) {
@@ -373,8 +380,10 @@ class SchemeEngine
         }
 
         $groupTotal = 0.0;
+        $groupActualTotal = 0.0;
         foreach ($groupIds as $spId) {
             $groupTotal += $totalByProduct[(int) $spId] ?? 0;
+            $groupActualTotal += $actualTotalByProduct[(int) $spId] ?? ($totalByProduct[(int) $spId] ?? 0);
         }
         if ($groupTotal <= 0) {
             return null;
@@ -388,10 +397,7 @@ class SchemeEngine
             return null;
         }
 
-        $discount = $matched->discount_type === 'percentage'
-            ? round($groupTotal * (float) $matched->discount_value / 100, 2)
-            : (float) $matched->discount_value;
-        $discount = min($discount, $groupTotal);
+        $discount = self::computeSlabDiscount($matched, $groupTotal, $groupActualTotal);
 
         if ($discount <= 0) {
             return null;
@@ -407,7 +413,7 @@ class SchemeEngine
         ];
     }
 
-    private static function evaluateGroupDiscountQty(Scheme $scheme, array $qtyByProduct, array $totalByProduct): ?array
+    private static function evaluateGroupDiscountQty(Scheme $scheme, array $qtyByProduct, array $totalByProduct, array $actualTotalByProduct = []): ?array
     {
         $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
         if (empty($groupIds)) {
@@ -416,9 +422,11 @@ class SchemeEngine
 
         $groupQty   = 0.0;
         $groupTotal = 0.0;
+        $groupActualTotal = 0.0;
         foreach ($groupIds as $spId) {
             $groupQty   += $qtyByProduct[(int) $spId]   ?? 0;
             $groupTotal += $totalByProduct[(int) $spId] ?? 0;
+            $groupActualTotal += $actualTotalByProduct[(int) $spId] ?? ($totalByProduct[(int) $spId] ?? 0);
         }
         if ($groupQty <= 0) {
             return null;
@@ -434,10 +442,7 @@ class SchemeEngine
         }
 
         // Discount is applied to the ₹ group total
-        $discount = $matched->discount_type === 'percentage'
-            ? round($groupTotal * (float) $matched->discount_value / 100, 2)
-            : (float) $matched->discount_value;
-        $discount = min($discount, $groupTotal);
+        $discount = self::computeSlabDiscount($matched, $groupTotal, $groupActualTotal);
 
         if ($discount <= 0) {
             return null;
@@ -451,5 +456,38 @@ class SchemeEngine
             'scheme_discount' => $discount,
             'free_items'      => [],
         ];
+    }
+
+    /**
+     * Resolve a matched slab's discount_value/discount_type/tax_option into the actual
+     * ₹ amount to subtract from the (tax-inclusive) group total.
+     *
+     * tax_option = 'inclusive' (default): discount_value is a pre-tax figure — it comes
+     *   off the Net Taxable Amount first, and tax is effectively recomputed on that
+     *   smaller base (GST-style "discount before tax").
+     *   - percentage: computed on the group's pre-tax (actual) total, not the inclusive
+     *     total.
+     *   - flat: grossed up by the group's own average tax rate before being subtracted
+     *     from the inclusive total, since removing ₹X pre-tax also removes the tax that
+     *     would've applied to that ₹X.
+     * tax_option = 'exclusive': discount_value applies directly to the Total Amt
+     *   (already tax-inclusive) — tax itself is unaffected.
+     */
+    private static function computeSlabDiscount(SchemeSlab $matched, float $groupTotal, float $groupActualTotal): float
+    {
+        $isPreTax = ($matched->tax_option ?? 'inclusive') === 'inclusive';
+
+        if ($matched->discount_type === 'percentage') {
+            $base = $isPreTax ? $groupActualTotal : $groupTotal;
+            $discount = round($base * (float) $matched->discount_value / 100, 2);
+        } else {
+            $discount = (float) $matched->discount_value;
+            if ($isPreTax && $groupActualTotal > 0) {
+                $avgTaxPercent = ($groupTotal - $groupActualTotal) / $groupActualTotal * 100;
+                $discount = round($discount * (1 + $avgTaxPercent / 100), 2);
+            }
+        }
+
+        return min($discount, $groupTotal);
     }
 }

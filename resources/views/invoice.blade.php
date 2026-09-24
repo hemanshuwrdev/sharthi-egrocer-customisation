@@ -343,7 +343,10 @@
                         <td align="right" style="font-weight: 500;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>
                     </tr>
                     @php
-                        $totalDiscount = $order->discount + $order->promo_discount;
+                        // scheme_discount was missing here before — final_total already had
+                        // it subtracted at order-creation time, so only this displayed total
+                        // was under-reporting, not the amount actually charged.
+                        $totalDiscount = $order->discount + $order->promo_discount + ($order->scheme_discount ?? 0);
                     @endphp
                     @if ($totalDiscount > 0)
                         <tr>

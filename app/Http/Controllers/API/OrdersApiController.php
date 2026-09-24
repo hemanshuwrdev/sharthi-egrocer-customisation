@@ -1276,14 +1276,22 @@ class OrdersApiController extends Controller
 
             $refundable = max(0, round($refundable, 2));
 
-            // Update order totals
+            // Update order totals. total/final_total are the order's actual value and
+            // must shrink on cancellation too — Loading Slip / Invoice read these directly,
+            // not remaining_total/remaining_final, and were previously left stale (still
+            // showing the pre-cancellation amount) since only the remaining_* pair here
+            // used to be touched.
             if ($isLastItem) {
+                $order->total = 0;
+                $order->final_total = $non_refundable_charges_total + floatval($order->delivery_charge);
                 $order->remaining_total = 0;
                 $order->remaining_final = $non_refundable_charges_total + floatval($order->delivery_charge);
                 $order->wallet_balance = 0;
             } else {
-                $order->remaining_total = max(0, floatval($order->remaining_total) - $itemSubTotal);
+                $order->total = max(0, floatval($order->total) - $itemSubTotal);
                 $nonWalletRefund = $refundable - $walletRefund;
+                $order->final_total = max(0, floatval($order->final_total) - $nonWalletRefund);
+                $order->remaining_total = max(0, floatval($order->remaining_total) - $itemSubTotal);
                 $order->remaining_final = max(0, floatval($order->remaining_final) - $nonWalletRefund);
             }
 
@@ -1301,10 +1309,19 @@ class OrdersApiController extends Controller
             $order_item->canceled_at = now();
             $order_item->save();
 
-            $product_variant = ProductVariant::where('id', $order_item->product_variant_id)->first();
-            if ($product_variant) {
-                $product_variant->stock += $order_item->quantity;
-                $product_variant->save();
+            // Restore stock — master-catalog order_items always have product_variant_id=0
+            // (they use seller_product_id/master_product_variant_id instead), so the
+            // legacy ProductVariant lookup below silently found nothing and never
+            // restored stock for them.
+            if (!empty($order_item->seller_product_id)) {
+                \App\Models\SellerProduct::where('id', $order_item->seller_product_id)
+                    ->increment('stock', $order_item->quantity);
+            } else {
+                $product_variant = ProductVariant::where('id', $order_item->product_variant_id)->first();
+                if ($product_variant) {
+                    $product_variant->stock += $order_item->quantity;
+                    $product_variant->save();
+                }
             }
 
             if (isset($order->promo_code) && $order->promo_code != null && isset($order->promo_discount) && $order->promo_discount != null) {

@@ -626,6 +626,19 @@ class SarthiCustomisation extends Migration
             });
         }
 
+        // Scheme discount tax option — is discount_value applied before or after tax?
+        // 'inclusive': discount_value is a pre-tax figure — applies to the Net Taxable
+        //   Amount first, so tax is effectively recomputed on the smaller base (GST-style
+        //   "discount before tax"). Flat is grossed up by the basket's average tax rate
+        //   before being subtracted from the inclusive total.
+        // 'exclusive': discount_value applies directly to the already tax-inclusive
+        //   basket total (Total Amt) — tax itself is unaffected.
+        Schema::table('scheme_slabs', function (Blueprint $table) {
+            if (!Schema::hasColumn('scheme_slabs', 'tax_option')) {
+                $table->enum('tax_option', ['inclusive', 'exclusive'])->default('inclusive')->after('discount_value');
+            }
+        });
+
         // 10.d-pre. Migrate existing 'group_discount' records to 'group_discount_price' and expand enum
         if (Schema::hasTable('schemes')) {
             // Step 1: expand enum to include all old + new values so the UPDATE below is valid

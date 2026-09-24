@@ -199,6 +199,7 @@ class RetailerCartOrderApiController extends Controller
                 'seller_product_id' => $line['seller_product']->id,
                 'qty' => (float) $row->qty,
                 'line_total' => $subtotal,
+                'actual_line_total' => $line['actual_price_per_unit'] * (float) $row->qty,
             ];
         }
 
@@ -561,6 +562,7 @@ class RetailerCartOrderApiController extends Controller
                             'seller_product_id' => $r['seller_product']->id,
                             'qty' => (float) $row->qty,
                             'line_total' => $lineTotal,
+                            'actual_line_total' => $r['actual_price_per_unit'] * (float) $row->qty,
                         ];
                     }
                     $sellerTaxTotal = round($sellerTaxTotal, 2);

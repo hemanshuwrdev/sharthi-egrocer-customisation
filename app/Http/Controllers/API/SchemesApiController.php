@@ -66,6 +66,7 @@ class SchemesApiController extends Controller
                 'min_value'      => $sl->min_value,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => $sl->discount_value,
+                'tax_option'     => $sl->tax_option ?? 'inclusive',
             ])->values(),
         ]);
     }
@@ -154,6 +155,7 @@ class SchemesApiController extends Controller
                 'slabs.*.min_value'      => 'required|numeric|min:1',
                 'slabs.*.discount_type'  => 'required|in:percentage,flat',
                 'slabs.*.discount_value' => 'required|numeric|min:0.01',
+                'slabs.*.tax_option'     => 'nullable|in:inclusive,exclusive',
             ];
         }
 
@@ -216,6 +218,7 @@ class SchemesApiController extends Controller
                             'min_value'      => $slab['min_value'],
                             'discount_type'  => $slab['discount_type'],
                             'discount_value' => $slab['discount_value'],
+                            'tax_option'     => $slab['tax_option'] ?? 'inclusive',
                         ]);
                     }
                 }
@@ -256,6 +259,7 @@ class SchemesApiController extends Controller
                 'min_value'      => (float) $sl->min_value,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => (float) $sl->discount_value,
+                'tax_option'     => $sl->tax_option ?? 'inclusive',
             ])->values() : [],
         ];
     }

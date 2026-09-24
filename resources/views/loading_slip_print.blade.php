@@ -775,7 +775,10 @@
                 <div class="udaan-totals-area">
                     <table class="udaan-totals-table">
                         @php
-                            $totalDiscount = ($order->total * $order->discount) / 100 + $order->promo_discount;
+                            // discount was being treated as a % of total here — it's actually
+                            // a flat ₹ amount, and scheme_discount was missing entirely, so a
+                            // scheme discount never showed on this particular print view.
+                            $totalDiscount = $order->discount + $order->promo_discount + ($order->scheme_discount ?? 0);
                         @endphp
                         @if ($totalDiscount > 0)
                             <tr>
