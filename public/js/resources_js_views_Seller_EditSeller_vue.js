@@ -1134,6 +1134,67 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1158,6 +1219,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       cachedData: null,
       skipCache: false,
       isLoading: false,
+      isAccountLoading: false,
       center: {
         lat: 23.0225,
         lng: 72.5714
@@ -1191,6 +1253,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       showPassword: false,
       confirm_password: "",
       showConfirmPassword: false,
+      loginOtpModalShow: false,
+      loginOtp: "",
+      isSendingLoginOtp: false,
+      loginOtpResendCooldown: 0,
+      loginOtpCooldownTimer: null,
       store_name: "",
       street: "",
       pincode_id: "",
@@ -2729,7 +2796,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return this.validateDefaultLanguage();
     },
     saveRecord: function saveRecord() {
-      var _this23 = this;
       // Validate default language fields
       if (!this.validateDefaultLanguage()) {
         return;
@@ -2738,6 +2804,94 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.showError(__('please_assign_at_least_one_brand_zone'));
         return;
       }
+      this.performSave();
+    },
+    // ================= ACCOUNT & LOGIN DETAILS (separate form/submit) =================
+    saveAccountDetails: function saveAccountDetails() {
+      if (!this.id) return; // Create mode saves name/email/mobile/password via the main form/save endpoint instead.
+
+      // A distributor changing their own login password must confirm via an
+      // emailed OTP first — send it and open the confirm modal instead of
+      // saving directly. Admin editing a seller, or a self-edit that isn't
+      // touching the password, skips straight to performAccountSave().
+      if (this.isSellerRole && this.password) {
+        this.sendLoginPasswordOtp();
+        return;
+      }
+      this.performAccountSave();
+    },
+    sendLoginPasswordOtp: function sendLoginPasswordOtp() {
+      var _this23 = this;
+      if (this.isSendingLoginOtp || this.loginOtpResendCooldown > 0) return;
+      this.isSendingLoginOtp = true;
+      axios__WEBPACK_IMPORTED_MODULE_2___default().post(this.$apiUrl + '/sellers/send-login-otp').then(function (res) {
+        if (res.data.status) {
+          _this23.loginOtpModalShow = true;
+          _this23.showMessage('success', __(res.data.message));
+          _this23.loginOtpResendCooldown = 60;
+          if (_this23.loginOtpCooldownTimer) clearInterval(_this23.loginOtpCooldownTimer);
+          _this23.loginOtpCooldownTimer = setInterval(function () {
+            _this23.loginOtpResendCooldown--;
+            if (_this23.loginOtpResendCooldown <= 0) {
+              clearInterval(_this23.loginOtpCooldownTimer);
+              _this23.loginOtpCooldownTimer = null;
+            }
+          }, 1000);
+        } else {
+          _this23.showError(res.data.message || 'Failed to send OTP');
+        }
+        _this23.isSendingLoginOtp = false;
+      })["catch"](function () {
+        _this23.showError('Failed to send OTP');
+        _this23.isSendingLoginOtp = false;
+      });
+    },
+    confirmLoginPasswordOtp: function confirmLoginPasswordOtp() {
+      if (!this.loginOtp) {
+        this.showError(__('OTP'));
+        return;
+      }
+      this.performAccountSave(this.loginOtp);
+    },
+    performAccountSave: function performAccountSave(otp) {
+      this.isAccountLoading = true;
+      var vm = this;
+      var formData = new FormData();
+      formData.append('id', this.id);
+      formData.append('admin_id', this.admin_id);
+      formData.append('name', this.defaultLanguageId && this.translations[this.defaultLanguageId] ? this.translations[this.defaultLanguageId].name : '');
+      formData.append('email', this.email);
+      formData.append('mobile', this.mobile);
+      formData.append('country_code', this.country_code);
+      if (this.password) {
+        formData.append('password', this.password);
+        formData.append('confirm_password', this.confirm_password);
+        if (otp) {
+          formData.append('otp', otp);
+        }
+      }
+      axios__WEBPACK_IMPORTED_MODULE_2___default().post(this.$apiUrl + '/sellers/update-account', formData).then(function (res) {
+        vm.isAccountLoading = false;
+        if (res.data.status) {
+          vm.loginOtpModalShow = false;
+          vm.password = '';
+          vm.confirm_password = '';
+          vm.showMessage('success', __(res.data.message));
+        } else {
+          vm.showError(res.data.message || __('something_went_wrong'));
+        }
+      })["catch"](function (error) {
+        var _error$response2, _error$response2$data;
+        vm.isAccountLoading = false;
+        if (error !== null && error !== void 0 && (_error$response2 = error.response) !== null && _error$response2 !== void 0 && (_error$response2$data = _error$response2.data) !== null && _error$response2$data !== void 0 && _error$response2$data.message) {
+          vm.showError(error.response.data.message);
+        } else {
+          vm.showError(__('something_went_wrong'));
+        }
+      });
+    },
+    performSave: function performSave() {
+      var _this24 = this;
       this.isLoading = true;
       var vm = this;
 
@@ -2762,7 +2916,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.languages.forEach(function (language) {
         if (language.is_default) return; // Skip default, already added
 
-        var translation = _this23.translations[language.id];
+        var translation = _this24.translations[language.id];
         var hasData = translation.name && translation.name.trim() !== '' || translation.store_name && translation.store_name.trim() !== '' || translation.store_description && translation.store_description.trim() !== '';
         if (hasData) {
           allTranslations.push({
@@ -2782,14 +2936,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             while (1) {
               switch (_context2.prev = _context2.next) {
                 case 0:
-                  sellerId = _this23.id; // For edit mode
-                  defaultTranslation = _this23.translations[defaultLang.id];
+                  sellerId = _this24.id; // For edit mode
+                  defaultTranslation = _this24.translations[defaultLang.id];
                   formData = new FormData(); // Determine URL
-                  url = _this23.$apiUrl + '/sellers/save';
+                  url = _this24.$apiUrl + '/sellers/save';
                   if (sellerId) {
-                    url = _this23.$apiUrl + '/sellers/update';
+                    url = _this24.$apiUrl + '/sellers/update';
                     formData.append('id', sellerId);
-                    formData.append('admin_id', _this23.admin_id);
+                    formData.append('admin_id', _this24.admin_id);
                   }
 
                   // Send default language_id for backward compatibility
@@ -2801,71 +2955,69 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   formData.append('store_description', defaultTranslation.store_description || '');
 
                   // All required fields
-                  formData.append('email', _this23.email);
-                  formData.append('mobile', _this23.mobile);
-                  formData.append('country_code', _this23.country_code);
-                  formData.append('store_url', _this23.store_url);
+                  formData.append('email', _this24.email);
+                  formData.append('mobile', _this24.mobile);
+                  formData.append('country_code', _this24.country_code);
+                  formData.append('store_url', _this24.store_url);
 
-                  // Password only for new sellers or when changing
+                  // Password only on create — editing the password for an existing seller
+                  // is handled independently by the Account & Login Details form/endpoint.
                   if (!sellerId) {
-                    formData.append('password', _this23.password);
-                    formData.append('confirm_password', _this23.confirm_password);
-                  } else if (_this23.password) {
-                    formData.append('password', _this23.password);
-                    formData.append('confirm_password', _this23.confirm_password);
+                    formData.append('password', _this24.password);
+                    formData.append('confirm_password', _this24.confirm_password);
                   }
 
                   // Non-translatable fields
-                  formData.append('street', _this23.street);
-                  formData.append('pincode_id', _this23.pincode_id);
-                  if (!_this23.isSellerRole) {
-                    formData.append('brand_zone_mappings', JSON.stringify(_this23.brandZoneRows.map(function (r) {
+                  formData.append('street', _this24.street);
+                  formData.append('pincode_id', _this24.pincode_id);
+                  if (!_this24.isSellerRole) {
+                    formData.append('brand_zone_mappings', JSON.stringify(_this24.brandZoneRows.map(function (r) {
                       return {
                         brand_id: r.brand_id,
                         city_ids: r.city_ids
                       };
                     })));
-                    formData.append('area_ids', JSON.stringify(_this23.area_ids));
+                    formData.append('area_ids', JSON.stringify(_this24.area_ids));
                   }
-                  formData.append('state', _this23.state);
-                  formData.append('remark', _this23.remark);
-                  formData.append('bank_name', _this23.bank_name || '');
-                  formData.append('account_number', _this23.account_number || '');
-                  formData.append('bank_ifsc_code', _this23.bank_ifsc_code || '');
-                  formData.append('ifsc_code', _this23.bank_ifsc_code || '');
-                  formData.append('account_name', _this23.account_name || '');
-                  formData.append('upi_id', _this23.upi_id || '');
-                  formData.append('upi_mobile', _this23.upi_mobile || '');
-                  formData.append('upi_name', _this23.upi_name || '');
-                  formData.append('commission', _this23.commission);
-                  formData.append('tax_name', _this23.tax_name);
-                  formData.append('tax_number', _this23.tax_number);
-                  formData.append('pan_number', _this23.pan_number);
-                  formData.append('latitude', _this23.latitude);
-                  formData.append('longitude', _this23.longitude);
-                  formData.append('place_name', _this23.place_name);
-                  formData.append('formatted_address', _this23.formatted_address);
-                  formData.append('require_products_approval', _this23.require_products_approval);
-                  formData.append('self_pickup_mode', _this23.self_pickup_mode);
-                  formData.append('door_step_mode', _this23.door_step_mode);
-                  formData.append('pickup_store_address', _this23.pickup_store_address);
-                  formData.append('pickup_latitude', _this23.pickup_latitude);
-                  formData.append('pickup_longitude', _this23.pickup_longitude);
-                  formData.append('pickup_store_timings', JSON.stringify(_this23.storeTimings));
-                  formData.append('status', _this23.status);
+                  formData.append('state', _this24.state);
+                  formData.append('remark', _this24.remark);
+                  formData.append('bank_name', _this24.bank_name || '');
+                  formData.append('account_number', _this24.account_number || '');
+                  formData.append('bank_ifsc_code', _this24.bank_ifsc_code || '');
+                  formData.append('ifsc_code', _this24.bank_ifsc_code || '');
+                  formData.append('account_name', _this24.account_name || '');
+                  formData.append('upi_id', _this24.upi_id || '');
+                  formData.append('upi_mobile', _this24.upi_mobile || '');
+                  formData.append('upi_name', _this24.upi_name || '');
+                  formData.append('commission', _this24.commission);
+                  formData.append('tax_name', _this24.tax_name);
+                  formData.append('tax_number', _this24.tax_number);
+                  formData.append('pan_number', _this24.pan_number);
+                  formData.append('latitude', _this24.latitude);
+                  formData.append('longitude', _this24.longitude);
+                  formData.append('place_name', _this24.place_name);
+                  formData.append('formatted_address', _this24.formatted_address);
+                  formData.append('require_products_approval', _this24.require_products_approval);
+                  formData.append('self_pickup_mode', _this24.self_pickup_mode);
+                  formData.append('door_step_mode', _this24.door_step_mode);
+                  formData.append('pickup_store_address', _this24.pickup_store_address);
+                  formData.append('pickup_latitude', _this24.pickup_latitude);
+                  formData.append('pickup_longitude', _this24.pickup_longitude);
+                  formData.append('pickup_store_timings', JSON.stringify(_this24.storeTimings));
+                  formData.append('status', _this24.status);
 
                   // Send all translations as JSON array
                   formData.append('translations', JSON.stringify(allTranslations));
 
                   // Files (only for new sellers or when updating)
-                  if (_this23.store_logo) {
-                    formData.append('store_logo', _this23.store_logo);
+                  if (_this24.store_logo) {
+                    formData.append('store_logo', _this24.store_logo);
                   }
-                  if (_this23.national_id_card) {
-                    formData.append('national_id_card', _this23.national_id_card);
+                  if (_this24.national_id_card) {
+                    formData.append('national_id_card', _this24.national_id_card);
                   }
-                  if (_this23.address_proof) {
-                    formData.append('address_proof', _this23.address_proof);
+                  if (_this24.address_proof) {
+                    formData.append('address_proof', _this24.address_proof);
                   }
                   _context2.prev = 47;
                   _context2.next = 50;
@@ -2924,15 +3076,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
         }, 1500);
       })["catch"](function (error) {
-        var _error$response2, _error$response3, _error$response3$data, _error$response4, _error$response4$data;
+        var _error$response3, _error$response4, _error$response4$data, _error$response5, _error$response5$data;
         vm.isLoading = false;
         // Laravel validation errors often return 422 with `errors` object
-        if ((error === null || error === void 0 ? void 0 : (_error$response2 = error.response) === null || _error$response2 === void 0 ? void 0 : _error$response2.status) === 422 && error !== null && error !== void 0 && (_error$response3 = error.response) !== null && _error$response3 !== void 0 && (_error$response3$data = _error$response3.data) !== null && _error$response3$data !== void 0 && _error$response3$data.errors) {
+        if ((error === null || error === void 0 ? void 0 : (_error$response3 = error.response) === null || _error$response3 === void 0 ? void 0 : _error$response3.status) === 422 && error !== null && error !== void 0 && (_error$response4 = error.response) !== null && _error$response4 !== void 0 && (_error$response4$data = _error$response4.data) !== null && _error$response4$data !== void 0 && _error$response4$data.errors) {
           var errors = error.response.data.errors;
           var firstKey = Object.keys(errors)[0];
           var firstMsg = firstKey && Array.isArray(errors[firstKey]) ? errors[firstKey][0] : null;
           vm.showError(firstMsg || error.response.data.message || __('something_went_wrong'));
-        } else if (error !== null && error !== void 0 && (_error$response4 = error.response) !== null && _error$response4 !== void 0 && (_error$response4$data = _error$response4.data) !== null && _error$response4$data !== void 0 && _error$response4$data.message) {
+        } else if (error !== null && error !== void 0 && (_error$response5 = error.response) !== null && _error$response5 !== void 0 && (_error$response5$data = _error$response5.data) !== null && _error$response5$data !== void 0 && _error$response5$data.message) {
           vm.showError(error.response.data.message);
         } else if (error.request && error.request.statusText) {
           vm.showError(error.request.statusText);
@@ -2964,9 +3116,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return true;
     },
     switchToDefaultLanguageTab: function switchToDefaultLanguageTab() {
-      var _this24 = this;
+      var _this25 = this;
       var defaultLangIndex = this.languages.findIndex(function (lang) {
-        return lang.id === _this24.defaultLanguageId;
+        return lang.id === _this25.defaultLanguageId;
       });
       if (defaultLangIndex !== -1) {
         this.activeLanguageTab = defaultLangIndex;
@@ -3630,6 +3782,556 @@ var render = function () {
             _c(
               "form",
               {
+                ref: "account-form",
+                on: {
+                  submit: function ($event) {
+                    $event.preventDefault()
+                    return _vm.saveAccountDetails.apply(null, arguments)
+                  },
+                },
+              },
+              [
+                _c("div", { staticClass: "card" }, [
+                  _c("div", { staticClass: "card-header" }, [
+                    _c("h4", [_vm._v(_vm._s(_vm.__("account_login_details")))]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "card-body" }, [
+                    _c("div", { staticClass: "row" }, [
+                      _vm.defaultLanguageId &&
+                      _vm.translations[_vm.defaultLanguageId]
+                        ? _c("div", { staticClass: "form-group col-md-3" }, [
+                            _c("label", [
+                              _vm._v(_vm._s(_vm.__("seller_name")) + " "),
+                              _c("i", { staticClass: "text-danger" }, [
+                                _vm._v("*"),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value:
+                                    _vm.translations[_vm.defaultLanguageId]
+                                      .name,
+                                  expression:
+                                    "translations[defaultLanguageId].name",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                required: "",
+                                disabled: _vm.isSellerRole,
+                                placeholder: _vm.__("enter_seller_name"),
+                              },
+                              domProps: {
+                                value:
+                                  _vm.translations[_vm.defaultLanguageId].name,
+                              },
+                              on: {
+                                focus: _vm.onInputFocus,
+                                blur: _vm.onInputBlur,
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.$set(
+                                    _vm.translations[_vm.defaultLanguageId],
+                                    "name",
+                                    $event.target.value
+                                  )
+                                },
+                              },
+                            }),
+                          ])
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group col-md-3" }, [
+                        _c("label", [
+                          _vm._v(_vm._s(_vm.__("email")) + " "),
+                          _c("i", { staticClass: "text-danger" }, [
+                            _vm._v("*"),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.email,
+                              expression: "email",
+                            },
+                          ],
+                          staticClass: "form-control",
+                          attrs: {
+                            type: "email",
+                            disabled: _vm.isSellerRole,
+                            placeholder: _vm.__("enter_email"),
+                          },
+                          domProps: { value: _vm.email },
+                          on: {
+                            focus: _vm.onInputFocus,
+                            blur: _vm.onInputBlur,
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.email = $event.target.value
+                            },
+                          },
+                        }),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group col-md-3" }, [
+                        _c("label", [
+                          _vm._v(_vm._s(_vm.__("mobile")) + " "),
+                          _c("i", { staticClass: "text-danger" }, [
+                            _vm._v("*"),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "input-group" }, [
+                          _c(
+                            "div",
+                            {
+                              ref: "countryDropdown",
+                              staticClass: "country-code-dropdown",
+                            },
+                            [
+                              _c(
+                                "button",
+                                {
+                                  staticClass:
+                                    "form-control country-code-toggle",
+                                  attrs: {
+                                    type: "button",
+                                    disabled: _vm.isSellerRole,
+                                  },
+                                  on: {
+                                    click: function ($event) {
+                                      _vm.countryDropdownOpen =
+                                        !_vm.countryDropdownOpen
+                                    },
+                                  },
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                                " +
+                                      _vm._s(_vm.country_code) +
+                                      "\n                                            "
+                                  ),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _vm.countryDropdownOpen
+                                ? _c(
+                                    "ul",
+                                    { staticClass: "country-code-menu" },
+                                    _vm._l(_vm.countries, function (c) {
+                                      return _c(
+                                        "li",
+                                        {
+                                          key: c.id,
+                                          on: {
+                                            click: function ($event) {
+                                              _vm.country_code = c.dial_code
+                                              _vm.countryDropdownOpen = false
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _vm._v(
+                                            "\n                                                    " +
+                                              _vm._s(c.dial_code) +
+                                              "\n                                                "
+                                          ),
+                                        ]
+                                      )
+                                    }),
+                                    0
+                                  )
+                                : _vm._e(),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.mobile,
+                                expression: "mobile",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: {
+                              type: "text",
+                              disabled: _vm.isSellerRole,
+                              placeholder: _vm.__("enter_mobile_number"),
+                              inputmode: "numeric",
+                              required: "",
+                            },
+                            domProps: { value: _vm.mobile },
+                            on: {
+                              input: [
+                                function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.mobile = $event.target.value
+                                },
+                                _vm.validateMobileNumber,
+                              ],
+                              focus: _vm.onInputFocus,
+                              blur: _vm.onInputBlur,
+                            },
+                          }),
+                        ]),
+                        _vm._v(" "),
+                        _vm.mobilevalidationError
+                          ? _c("span", { staticClass: "error" }, [
+                              _vm._v(_vm._s(_vm.mobilevalidationError)),
+                            ])
+                          : _vm._e(),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group col-md-3" }, [
+                        _c("label", [
+                          _vm._v(_vm._s(_vm.__("password")) + " "),
+                          !_vm.id
+                            ? _c("i", { staticClass: "text-danger" }, [
+                                _vm._v("*"),
+                              ])
+                            : _vm._e(),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "input-group" }, [
+                          (_vm.showPassword ? "text" : "password") ===
+                          "checkbox"
+                            ? _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.password,
+                                    expression: "password",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  placeholder: _vm.__(
+                                    "leave_blank_to_keep_current_password"
+                                  ),
+                                  type: "checkbox",
+                                },
+                                domProps: {
+                                  checked: Array.isArray(_vm.password)
+                                    ? _vm._i(_vm.password, null) > -1
+                                    : _vm.password,
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    var $$a = _vm.password,
+                                      $$el = $event.target,
+                                      $$c = $$el.checked ? true : false
+                                    if (Array.isArray($$a)) {
+                                      var $$v = null,
+                                        $$i = _vm._i($$a, $$v)
+                                      if ($$el.checked) {
+                                        $$i < 0 &&
+                                          (_vm.password = $$a.concat([$$v]))
+                                      } else {
+                                        $$i > -1 &&
+                                          (_vm.password = $$a
+                                            .slice(0, $$i)
+                                            .concat($$a.slice($$i + 1)))
+                                      }
+                                    } else {
+                                      _vm.password = $$c
+                                    }
+                                  },
+                                },
+                              })
+                            : (_vm.showPassword ? "text" : "password") ===
+                              "radio"
+                            ? _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.password,
+                                    expression: "password",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  placeholder: _vm.__(
+                                    "leave_blank_to_keep_current_password"
+                                  ),
+                                  type: "radio",
+                                },
+                                domProps: {
+                                  checked: _vm._q(_vm.password, null),
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    _vm.password = null
+                                  },
+                                },
+                              })
+                            : _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.password,
+                                    expression: "password",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  placeholder: _vm.__(
+                                    "leave_blank_to_keep_current_password"
+                                  ),
+                                  type: _vm.showPassword ? "text" : "password",
+                                },
+                                domProps: { value: _vm.password },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.password = $event.target.value
+                                  },
+                                },
+                              }),
+                          _vm._v(" "),
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-primary font-bold",
+                              attrs: { type: "button" },
+                              on: {
+                                click: function ($event) {
+                                  _vm.showPassword = !_vm.showPassword
+                                },
+                              },
+                            },
+                            [
+                              _vm.showPassword
+                                ? _c("i", {
+                                    staticClass: "fa fa-eye",
+                                    attrs: { "aria-hidden": "true" },
+                                  })
+                                : _c("i", {
+                                    staticClass: "fa fa-eye-slash",
+                                    attrs: { "aria-hidden": "true" },
+                                  }),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-group col-md-3" }, [
+                        _c("label", [
+                          _vm._v(_vm._s(_vm.__("confirm_password")) + " "),
+                          !_vm.id
+                            ? _c("i", { staticClass: "text-danger" }, [
+                                _vm._v("*"),
+                              ])
+                            : _vm._e(),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "input-group" }, [
+                          (_vm.showConfirmPassword ? "text" : "password") ===
+                          "checkbox"
+                            ? _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.confirm_password,
+                                    expression: "confirm_password",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  placeholder: _vm.__("enter_confirm_password"),
+                                  type: "checkbox",
+                                },
+                                domProps: {
+                                  checked: Array.isArray(_vm.confirm_password)
+                                    ? _vm._i(_vm.confirm_password, null) > -1
+                                    : _vm.confirm_password,
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    var $$a = _vm.confirm_password,
+                                      $$el = $event.target,
+                                      $$c = $$el.checked ? true : false
+                                    if (Array.isArray($$a)) {
+                                      var $$v = null,
+                                        $$i = _vm._i($$a, $$v)
+                                      if ($$el.checked) {
+                                        $$i < 0 &&
+                                          (_vm.confirm_password = $$a.concat([
+                                            $$v,
+                                          ]))
+                                      } else {
+                                        $$i > -1 &&
+                                          (_vm.confirm_password = $$a
+                                            .slice(0, $$i)
+                                            .concat($$a.slice($$i + 1)))
+                                      }
+                                    } else {
+                                      _vm.confirm_password = $$c
+                                    }
+                                  },
+                                },
+                              })
+                            : (_vm.showConfirmPassword
+                                ? "text"
+                                : "password") === "radio"
+                            ? _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.confirm_password,
+                                    expression: "confirm_password",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  placeholder: _vm.__("enter_confirm_password"),
+                                  type: "radio",
+                                },
+                                domProps: {
+                                  checked: _vm._q(_vm.confirm_password, null),
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    _vm.confirm_password = null
+                                  },
+                                },
+                              })
+                            : _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.confirm_password,
+                                    expression: "confirm_password",
+                                  },
+                                ],
+                                staticClass: "form-control",
+                                attrs: {
+                                  placeholder: _vm.__("enter_confirm_password"),
+                                  type: _vm.showConfirmPassword
+                                    ? "text"
+                                    : "password",
+                                },
+                                domProps: { value: _vm.confirm_password },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.confirm_password = $event.target.value
+                                  },
+                                },
+                              }),
+                          _vm._v(" "),
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-primary font-bold",
+                              attrs: { type: "button" },
+                              on: {
+                                click: function ($event) {
+                                  _vm.showConfirmPassword =
+                                    !_vm.showConfirmPassword
+                                },
+                              },
+                            },
+                            [
+                              _vm.showConfirmPassword
+                                ? _c("i", {
+                                    staticClass: "fa fa-eye",
+                                    attrs: { "aria-hidden": "true" },
+                                  })
+                                : _c("i", {
+                                    staticClass: "fa fa-eye-slash",
+                                    attrs: { "aria-hidden": "true" },
+                                  }),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _vm.isSellerRole
+                      ? _c(
+                          "p",
+                          { staticClass: "text-muted font-size-13 mb-0" },
+                          [
+                            _vm._v(
+                              "\n                                " +
+                                _vm._s(
+                                  _vm.__(
+                                    "name_email_mobile_are_locked_contact_admin_to_change_them"
+                                  )
+                                ) +
+                                "\n                            "
+                            ),
+                          ]
+                        )
+                      : _vm._e(),
+                  ]),
+                  _vm._v(" "),
+                  _vm.id
+                    ? _c(
+                        "div",
+                        { staticClass: "card-footer" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                type: "submit",
+                                variant: "primary",
+                                disabled: _vm.isAccountLoading,
+                              },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.__("update")) +
+                                  "\n                                "
+                              ),
+                              _vm.isAccountLoading
+                                ? _c("b-spinner", {
+                                    attrs: { small: "", label: "Spinning" },
+                                  })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      )
+                    : _vm._e(),
+                ]),
+              ]
+            ),
+            _vm._v(" "),
+            _c(
+              "form",
+              {
                 ref: "my-form",
                 on: {
                   submit: function ($event) {
@@ -3852,813 +4554,70 @@ var render = function () {
                                         )
                                       : _vm._e(),
                                     _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      { staticClass: "row" },
-                                      [
-                                        _c(
-                                          "div",
-                                          {
-                                            staticClass: "form-group col-md-4",
-                                          },
-                                          [
-                                            _c("label", [
-                                              _vm._v(
-                                                _vm._s(_vm.__("seller_name")) +
-                                                  " "
-                                              ),
-                                              language.is_default
-                                                ? _c(
-                                                    "i",
-                                                    {
-                                                      staticClass:
-                                                        "text-danger",
-                                                    },
-                                                    [_vm._v("*")]
-                                                  )
-                                                : _vm._e(),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("input", {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
+                                    !language.is_default
+                                      ? _c("div", { staticClass: "row" }, [
+                                          _c(
+                                            "div",
+                                            {
+                                              staticClass:
+                                                "form-group col-md-4",
+                                            },
+                                            [
+                                              _c("label", [
+                                                _vm._v(
+                                                  _vm._s(_vm.__("seller_name"))
+                                                ),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      _vm.translations[
+                                                        language.id
+                                                      ].name,
+                                                    expression:
+                                                      "translations[language.id].name",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "text",
+                                                  disabled: _vm.isSellerRole,
+                                                  placeholder:
+                                                    _vm.__("enter_seller_name"),
+                                                },
+                                                domProps: {
                                                   value:
                                                     _vm.translations[
                                                       language.id
                                                     ].name,
-                                                  expression:
-                                                    "translations[language.id].name",
                                                 },
-                                              ],
-                                              staticClass: "form-control",
-                                              attrs: {
-                                                type: "text",
-                                                required: language.is_default
-                                                  ? true
-                                                  : undefined,
-                                                placeholder:
-                                                  _vm.__("enter_seller_name"),
-                                              },
-                                              domProps: {
-                                                value:
-                                                  _vm.translations[language.id]
-                                                    .name,
-                                              },
-                                              on: {
-                                                focus: _vm.onInputFocus,
-                                                blur: _vm.onInputBlur,
-                                                input: function ($event) {
-                                                  if ($event.target.composing) {
-                                                    return
-                                                  }
-                                                  _vm.$set(
-                                                    _vm.translations[
-                                                      language.id
-                                                    ],
-                                                    "name",
-                                                    $event.target.value
-                                                  )
+                                                on: {
+                                                  focus: _vm.onInputFocus,
+                                                  blur: _vm.onInputBlur,
+                                                  input: function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      _vm.translations[
+                                                        language.id
+                                                      ],
+                                                      "name",
+                                                      $event.target.value
+                                                    )
+                                                  },
                                                 },
-                                              },
-                                            }),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        language.is_default
-                                          ? [
-                                              _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "form-group col-md-4",
-                                                },
-                                                [
-                                                  _c("label", [
-                                                    _vm._v(
-                                                      _vm._s(_vm.__("email")) +
-                                                        " "
-                                                    ),
-                                                    _c(
-                                                      "i",
-                                                      {
-                                                        staticClass:
-                                                          "text-danger",
-                                                      },
-                                                      [_vm._v("*")]
-                                                    ),
-                                                  ]),
-                                                  _vm._v(" "),
-                                                  _c("input", {
-                                                    directives: [
-                                                      {
-                                                        name: "model",
-                                                        rawName: "v-model",
-                                                        value: _vm.email,
-                                                        expression: "email",
-                                                      },
-                                                    ],
-                                                    staticClass: "form-control",
-                                                    attrs: {
-                                                      type: "email",
-                                                      placeholder:
-                                                        _vm.__("enter_email"),
-                                                    },
-                                                    domProps: {
-                                                      value: _vm.email,
-                                                    },
-                                                    on: {
-                                                      focus: _vm.onInputFocus,
-                                                      blur: _vm.onInputBlur,
-                                                      input: function ($event) {
-                                                        if (
-                                                          $event.target
-                                                            .composing
-                                                        ) {
-                                                          return
-                                                        }
-                                                        _vm.email =
-                                                          $event.target.value
-                                                      },
-                                                    },
-                                                  }),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "form-group col-md-4",
-                                                },
-                                                [
-                                                  _c("label", [
-                                                    _vm._v(
-                                                      _vm._s(_vm.__("mobile")) +
-                                                        " "
-                                                    ),
-                                                    _c(
-                                                      "i",
-                                                      {
-                                                        staticClass:
-                                                          "text-danger",
-                                                      },
-                                                      [_vm._v("*")]
-                                                    ),
-                                                  ]),
-                                                  _vm._v(" "),
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass:
-                                                        "input-group",
-                                                    },
-                                                    [
-                                                      _c(
-                                                        "div",
-                                                        {
-                                                          ref: "countryDropdown",
-                                                          refInFor: true,
-                                                          staticClass:
-                                                            "country-code-dropdown",
-                                                        },
-                                                        [
-                                                          _c(
-                                                            "button",
-                                                            {
-                                                              staticClass:
-                                                                "form-control country-code-toggle",
-                                                              attrs: {
-                                                                type: "button",
-                                                              },
-                                                              on: {
-                                                                click:
-                                                                  function (
-                                                                    $event
-                                                                  ) {
-                                                                    _vm.countryDropdownOpen =
-                                                                      !_vm.countryDropdownOpen
-                                                                  },
-                                                              },
-                                                            },
-                                                            [
-                                                              _vm._v(
-                                                                "\n                                                                " +
-                                                                  _vm._s(
-                                                                    _vm.country_code
-                                                                  ) +
-                                                                  "\n                                                            "
-                                                              ),
-                                                            ]
-                                                          ),
-                                                          _vm._v(" "),
-                                                          _vm.countryDropdownOpen
-                                                            ? _c(
-                                                                "ul",
-                                                                {
-                                                                  staticClass:
-                                                                    "country-code-menu",
-                                                                },
-                                                                _vm._l(
-                                                                  _vm.countries,
-                                                                  function (c) {
-                                                                    return _c(
-                                                                      "li",
-                                                                      {
-                                                                        key: c.id,
-                                                                        on: {
-                                                                          click:
-                                                                            function (
-                                                                              $event
-                                                                            ) {
-                                                                              _vm.country_code =
-                                                                                c.dial_code
-                                                                              _vm.countryDropdownOpen = false
-                                                                            },
-                                                                        },
-                                                                      },
-                                                                      [
-                                                                        _vm._v(
-                                                                          "\n                                                                    " +
-                                                                            _vm._s(
-                                                                              c.dial_code
-                                                                            ) +
-                                                                            "\n                                                                "
-                                                                        ),
-                                                                      ]
-                                                                    )
-                                                                  }
-                                                                ),
-                                                                0
-                                                              )
-                                                            : _vm._e(),
-                                                        ]
-                                                      ),
-                                                      _vm._v(" "),
-                                                      _c("input", {
-                                                        directives: [
-                                                          {
-                                                            name: "model",
-                                                            rawName: "v-model",
-                                                            value: _vm.mobile,
-                                                            expression:
-                                                              "mobile",
-                                                          },
-                                                        ],
-                                                        staticClass:
-                                                          "form-control",
-                                                        attrs: {
-                                                          type: "text",
-                                                          placeholder: _vm.__(
-                                                            "enter_mobile_number"
-                                                          ),
-                                                          inputmode: "numeric",
-                                                          required: "",
-                                                        },
-                                                        domProps: {
-                                                          value: _vm.mobile,
-                                                        },
-                                                        on: {
-                                                          input: [
-                                                            function ($event) {
-                                                              if (
-                                                                $event.target
-                                                                  .composing
-                                                              ) {
-                                                                return
-                                                              }
-                                                              _vm.mobile =
-                                                                $event.target.value
-                                                            },
-                                                            _vm.validateMobileNumber,
-                                                          ],
-                                                          focus:
-                                                            _vm.onInputFocus,
-                                                          blur: _vm.onInputBlur,
-                                                        },
-                                                      }),
-                                                    ]
-                                                  ),
-                                                  _vm._v(" "),
-                                                  _vm.mobilevalidationError
-                                                    ? _c(
-                                                        "span",
-                                                        {
-                                                          staticClass: "error",
-                                                        },
-                                                        [
-                                                          _vm._v(
-                                                            _vm._s(
-                                                              _vm.mobilevalidationError
-                                                            )
-                                                          ),
-                                                        ]
-                                                      )
-                                                    : _vm._e(),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "form-group col-md-4",
-                                                },
-                                                [
-                                                  _c("label", [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.__("password")
-                                                      ) + " "
-                                                    ),
-                                                    !_vm.id
-                                                      ? _c(
-                                                          "i",
-                                                          {
-                                                            staticClass:
-                                                              "text-danger",
-                                                          },
-                                                          [_vm._v("*")]
-                                                        )
-                                                      : _vm._e(),
-                                                  ]),
-                                                  _vm._v(" "),
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass:
-                                                        "input-group",
-                                                    },
-                                                    [
-                                                      (_vm.showPassword
-                                                        ? "text"
-                                                        : "password") ===
-                                                      "checkbox"
-                                                        ? _c("input", {
-                                                            directives: [
-                                                              {
-                                                                name: "model",
-                                                                rawName:
-                                                                  "v-model",
-                                                                value:
-                                                                  _vm.password,
-                                                                expression:
-                                                                  "password",
-                                                              },
-                                                            ],
-                                                            staticClass:
-                                                              "form-control",
-                                                            attrs: {
-                                                              placeholder:
-                                                                _vm.__(
-                                                                  "leave_blank_to_keep_current_password"
-                                                                ),
-                                                              type: "checkbox",
-                                                            },
-                                                            domProps: {
-                                                              checked:
-                                                                Array.isArray(
-                                                                  _vm.password
-                                                                )
-                                                                  ? _vm._i(
-                                                                      _vm.password,
-                                                                      null
-                                                                    ) > -1
-                                                                  : _vm.password,
-                                                            },
-                                                            on: {
-                                                              change: function (
-                                                                $event
-                                                              ) {
-                                                                var $$a =
-                                                                    _vm.password,
-                                                                  $$el =
-                                                                    $event.target,
-                                                                  $$c =
-                                                                    $$el.checked
-                                                                      ? true
-                                                                      : false
-                                                                if (
-                                                                  Array.isArray(
-                                                                    $$a
-                                                                  )
-                                                                ) {
-                                                                  var $$v =
-                                                                      null,
-                                                                    $$i =
-                                                                      _vm._i(
-                                                                        $$a,
-                                                                        $$v
-                                                                      )
-                                                                  if (
-                                                                    $$el.checked
-                                                                  ) {
-                                                                    $$i < 0 &&
-                                                                      (_vm.password =
-                                                                        $$a.concat(
-                                                                          [$$v]
-                                                                        ))
-                                                                  } else {
-                                                                    $$i > -1 &&
-                                                                      (_vm.password =
-                                                                        $$a
-                                                                          .slice(
-                                                                            0,
-                                                                            $$i
-                                                                          )
-                                                                          .concat(
-                                                                            $$a.slice(
-                                                                              $$i +
-                                                                                1
-                                                                            )
-                                                                          ))
-                                                                  }
-                                                                } else {
-                                                                  _vm.password =
-                                                                    $$c
-                                                                }
-                                                              },
-                                                            },
-                                                          })
-                                                        : (_vm.showPassword
-                                                            ? "text"
-                                                            : "password") ===
-                                                          "radio"
-                                                        ? _c("input", {
-                                                            directives: [
-                                                              {
-                                                                name: "model",
-                                                                rawName:
-                                                                  "v-model",
-                                                                value:
-                                                                  _vm.password,
-                                                                expression:
-                                                                  "password",
-                                                              },
-                                                            ],
-                                                            staticClass:
-                                                              "form-control",
-                                                            attrs: {
-                                                              placeholder:
-                                                                _vm.__(
-                                                                  "leave_blank_to_keep_current_password"
-                                                                ),
-                                                              type: "radio",
-                                                            },
-                                                            domProps: {
-                                                              checked: _vm._q(
-                                                                _vm.password,
-                                                                null
-                                                              ),
-                                                            },
-                                                            on: {
-                                                              change: function (
-                                                                $event
-                                                              ) {
-                                                                _vm.password =
-                                                                  null
-                                                              },
-                                                            },
-                                                          })
-                                                        : _c("input", {
-                                                            directives: [
-                                                              {
-                                                                name: "model",
-                                                                rawName:
-                                                                  "v-model",
-                                                                value:
-                                                                  _vm.password,
-                                                                expression:
-                                                                  "password",
-                                                              },
-                                                            ],
-                                                            staticClass:
-                                                              "form-control",
-                                                            attrs: {
-                                                              placeholder:
-                                                                _vm.__(
-                                                                  "leave_blank_to_keep_current_password"
-                                                                ),
-                                                              type: _vm.showPassword
-                                                                ? "text"
-                                                                : "password",
-                                                            },
-                                                            domProps: {
-                                                              value:
-                                                                _vm.password,
-                                                            },
-                                                            on: {
-                                                              input: function (
-                                                                $event
-                                                              ) {
-                                                                if (
-                                                                  $event.target
-                                                                    .composing
-                                                                ) {
-                                                                  return
-                                                                }
-                                                                _vm.password =
-                                                                  $event.target.value
-                                                              },
-                                                            },
-                                                          }),
-                                                      _vm._v(" "),
-                                                      _c(
-                                                        "button",
-                                                        {
-                                                          staticClass:
-                                                            "btn btn-primary font-bold",
-                                                          attrs: {
-                                                            type: "button",
-                                                          },
-                                                          on: {
-                                                            click: function (
-                                                              $event
-                                                            ) {
-                                                              _vm.showPassword =
-                                                                !_vm.showPassword
-                                                            },
-                                                          },
-                                                        },
-                                                        [
-                                                          _vm.showPassword
-                                                            ? _c("i", {
-                                                                staticClass:
-                                                                  "fa fa-eye",
-                                                                attrs: {
-                                                                  "aria-hidden":
-                                                                    "true",
-                                                                },
-                                                              })
-                                                            : _c("i", {
-                                                                staticClass:
-                                                                  "fa fa-eye-slash",
-                                                                attrs: {
-                                                                  "aria-hidden":
-                                                                    "true",
-                                                                },
-                                                              }),
-                                                        ]
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "form-group col-md-4",
-                                                },
-                                                [
-                                                  _c("label", [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.__(
-                                                          "confirm_password"
-                                                        )
-                                                      ) + " "
-                                                    ),
-                                                    !_vm.id
-                                                      ? _c(
-                                                          "i",
-                                                          {
-                                                            staticClass:
-                                                              "text-danger",
-                                                          },
-                                                          [_vm._v("*")]
-                                                        )
-                                                      : _vm._e(),
-                                                  ]),
-                                                  _vm._v(" "),
-                                                  _c(
-                                                    "div",
-                                                    {
-                                                      staticClass:
-                                                        "input-group",
-                                                    },
-                                                    [
-                                                      (_vm.showConfirmPassword
-                                                        ? "text"
-                                                        : "password") ===
-                                                      "checkbox"
-                                                        ? _c("input", {
-                                                            directives: [
-                                                              {
-                                                                name: "model",
-                                                                rawName:
-                                                                  "v-model",
-                                                                value:
-                                                                  _vm.confirm_password,
-                                                                expression:
-                                                                  "confirm_password",
-                                                              },
-                                                            ],
-                                                            staticClass:
-                                                              "form-control",
-                                                            attrs: {
-                                                              placeholder:
-                                                                _vm.__(
-                                                                  "enter_confirm_password"
-                                                                ),
-                                                              type: "checkbox",
-                                                            },
-                                                            domProps: {
-                                                              checked:
-                                                                Array.isArray(
-                                                                  _vm.confirm_password
-                                                                )
-                                                                  ? _vm._i(
-                                                                      _vm.confirm_password,
-                                                                      null
-                                                                    ) > -1
-                                                                  : _vm.confirm_password,
-                                                            },
-                                                            on: {
-                                                              change: function (
-                                                                $event
-                                                              ) {
-                                                                var $$a =
-                                                                    _vm.confirm_password,
-                                                                  $$el =
-                                                                    $event.target,
-                                                                  $$c =
-                                                                    $$el.checked
-                                                                      ? true
-                                                                      : false
-                                                                if (
-                                                                  Array.isArray(
-                                                                    $$a
-                                                                  )
-                                                                ) {
-                                                                  var $$v =
-                                                                      null,
-                                                                    $$i =
-                                                                      _vm._i(
-                                                                        $$a,
-                                                                        $$v
-                                                                      )
-                                                                  if (
-                                                                    $$el.checked
-                                                                  ) {
-                                                                    $$i < 0 &&
-                                                                      (_vm.confirm_password =
-                                                                        $$a.concat(
-                                                                          [$$v]
-                                                                        ))
-                                                                  } else {
-                                                                    $$i > -1 &&
-                                                                      (_vm.confirm_password =
-                                                                        $$a
-                                                                          .slice(
-                                                                            0,
-                                                                            $$i
-                                                                          )
-                                                                          .concat(
-                                                                            $$a.slice(
-                                                                              $$i +
-                                                                                1
-                                                                            )
-                                                                          ))
-                                                                  }
-                                                                } else {
-                                                                  _vm.confirm_password =
-                                                                    $$c
-                                                                }
-                                                              },
-                                                            },
-                                                          })
-                                                        : (_vm.showConfirmPassword
-                                                            ? "text"
-                                                            : "password") ===
-                                                          "radio"
-                                                        ? _c("input", {
-                                                            directives: [
-                                                              {
-                                                                name: "model",
-                                                                rawName:
-                                                                  "v-model",
-                                                                value:
-                                                                  _vm.confirm_password,
-                                                                expression:
-                                                                  "confirm_password",
-                                                              },
-                                                            ],
-                                                            staticClass:
-                                                              "form-control",
-                                                            attrs: {
-                                                              placeholder:
-                                                                _vm.__(
-                                                                  "enter_confirm_password"
-                                                                ),
-                                                              type: "radio",
-                                                            },
-                                                            domProps: {
-                                                              checked: _vm._q(
-                                                                _vm.confirm_password,
-                                                                null
-                                                              ),
-                                                            },
-                                                            on: {
-                                                              change: function (
-                                                                $event
-                                                              ) {
-                                                                _vm.confirm_password =
-                                                                  null
-                                                              },
-                                                            },
-                                                          })
-                                                        : _c("input", {
-                                                            directives: [
-                                                              {
-                                                                name: "model",
-                                                                rawName:
-                                                                  "v-model",
-                                                                value:
-                                                                  _vm.confirm_password,
-                                                                expression:
-                                                                  "confirm_password",
-                                                              },
-                                                            ],
-                                                            staticClass:
-                                                              "form-control",
-                                                            attrs: {
-                                                              placeholder:
-                                                                _vm.__(
-                                                                  "enter_confirm_password"
-                                                                ),
-                                                              type: _vm.showConfirmPassword
-                                                                ? "text"
-                                                                : "password",
-                                                            },
-                                                            domProps: {
-                                                              value:
-                                                                _vm.confirm_password,
-                                                            },
-                                                            on: {
-                                                              input: function (
-                                                                $event
-                                                              ) {
-                                                                if (
-                                                                  $event.target
-                                                                    .composing
-                                                                ) {
-                                                                  return
-                                                                }
-                                                                _vm.confirm_password =
-                                                                  $event.target.value
-                                                              },
-                                                            },
-                                                          }),
-                                                      _vm._v(" "),
-                                                      _c(
-                                                        "button",
-                                                        {
-                                                          staticClass:
-                                                            "btn btn-primary font-bold",
-                                                          attrs: {
-                                                            type: "button",
-                                                          },
-                                                          on: {
-                                                            click: function (
-                                                              $event
-                                                            ) {
-                                                              _vm.showConfirmPassword =
-                                                                !_vm.showConfirmPassword
-                                                            },
-                                                          },
-                                                        },
-                                                        [
-                                                          _vm.showConfirmPassword
-                                                            ? _c("i", {
-                                                                staticClass:
-                                                                  "fa fa-eye",
-                                                                attrs: {
-                                                                  "aria-hidden":
-                                                                    "true",
-                                                                },
-                                                              })
-                                                            : _c("i", {
-                                                                staticClass:
-                                                                  "fa fa-eye-slash",
-                                                                attrs: {
-                                                                  "aria-hidden":
-                                                                    "true",
-                                                                },
-                                                              }),
-                                                        ]
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              ),
+                                              }),
                                             ]
-                                          : _vm._e(),
-                                      ],
-                                      2
-                                    ),
+                                          ),
+                                        ])
+                                      : _vm._e(),
                                     _vm._v(" "),
                                     _c("div", { staticClass: "card" }, [
                                       _c(
@@ -9562,6 +9521,144 @@ var render = function () {
               ]),
             ]),
           ]),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            title: _vm.__("confirm_password_change"),
+            "hide-footer": "",
+            "no-close-on-backdrop": "",
+          },
+          on: {
+            hidden: function ($event) {
+              _vm.loginOtp = ""
+            },
+          },
+          model: {
+            value: _vm.loginOtpModalShow,
+            callback: function ($$v) {
+              _vm.loginOtpModalShow = $$v
+            },
+            expression: "loginOtpModalShow",
+          },
+        },
+        [
+          _c("p", { staticClass: "text-muted font-size-13" }, [
+            _vm._v(
+              "\n            " +
+                _vm._s(
+                  _vm.__(
+                    "enter_the_code_we_emailed_to_your_registered_address_to_confirm_this_password_change"
+                  )
+                ) +
+                "\n        "
+            ),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "form-group" }, [
+            _c("label", [_vm._v(_vm._s(_vm.__("OTP")))]),
+            _vm._v(" "),
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.loginOtp,
+                  expression: "loginOtp",
+                },
+              ],
+              staticClass: "form-control",
+              attrs: {
+                type: "text",
+                maxlength: "6",
+                inputmode: "numeric",
+                autocomplete: "one-time-code",
+              },
+              domProps: { value: _vm.loginOtp },
+              on: {
+                input: function ($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.loginOtp = $event.target.value
+                },
+              },
+            }),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            {
+              staticClass:
+                "d-flex justify-content-between align-items-center mt-3",
+            },
+            [
+              _c(
+                "a",
+                {
+                  attrs: { href: "javascript:void(0)" },
+                  on: {
+                    click: function ($event) {
+                      _vm.loginOtpModalShow = false
+                    },
+                  },
+                },
+                [_vm._v(_vm._s(_vm.__("cancel")))]
+              ),
+              _vm._v(" "),
+              _c(
+                "a",
+                {
+                  class: { "text-muted": _vm.loginOtpResendCooldown > 0 },
+                  attrs: { href: "javascript:void(0)" },
+                  on: {
+                    click: function ($event) {
+                      _vm.loginOtpResendCooldown === 0 &&
+                        _vm.sendLoginPasswordOtp()
+                    },
+                  },
+                },
+                [
+                  _vm._v(
+                    "\n                " +
+                      _vm._s(
+                        _vm.loginOtpResendCooldown > 0
+                          ? _vm.__("resend_code") +
+                              " (" +
+                              _vm.loginOtpResendCooldown +
+                              "s)"
+                          : _vm.__("resend_code")
+                      ) +
+                      "\n            "
+                  ),
+                ]
+              ),
+            ]
+          ),
+          _vm._v(" "),
+          _c(
+            "b-button",
+            {
+              staticClass: "mt-3 w-100",
+              attrs: { variant: "primary", disabled: _vm.isAccountLoading },
+              on: { click: _vm.confirmLoginPasswordOtp },
+            },
+            [
+              _vm._v(
+                "\n            " +
+                  _vm._s(_vm.__("confirm_and_save")) +
+                  "\n            "
+              ),
+              _vm.isAccountLoading
+                ? _c("b-spinner", { attrs: { small: "" } })
+                : _vm._e(),
+            ],
+            1
+          ),
         ],
         1
       ),

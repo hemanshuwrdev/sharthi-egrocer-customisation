@@ -375,6 +375,22 @@ class SellerApiController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
+
+        // A distributor changing their own login password must prove they still
+        // control the registered email first — reuses the sensitive_otp columns
+        // (see SellerSettingController::sendSensitivePasswordOtp for the recovery
+        // use of the same pair). Checked before anything else runs, so an invalid
+        // code rejects the whole update, not just the password.
+        if ($isSellerCaller && $record && $request->filled('password')) {
+            if (
+                empty($record->sensitive_otp) ||
+                (string) $record->sensitive_otp !== (string) $request->otp ||
+                !$record->sensitive_otp_expires_at ||
+                now()->gt(\Carbon\Carbon::parse($record->sensitive_otp_expires_at))
+            ) {
+                return CommonHelper::responseError('otp_is_invalid_or_expired');
+            }
+        }
         // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
         // if ($request->self_pickup_mode == 0 && $request->door_step_mode == 0) {
         //     return CommonHelper::responseError('at_least_one_delivery_mode_must_be_enabled');
@@ -408,23 +424,38 @@ class SellerApiController extends Controller
                 DB::beginTransaction();
 
                 $data = array();
-                $data['username'] = $request->name;
-                $data['email'] = $request->email;
+                // Name/email are login-identity fields — a distributor can't self-edit
+                // these (locked in the UI too), only Admin can change them on a seller's
+                // behalf. Never trust the frontend's `disabled` attribute alone here.
+                if (!$isSellerCaller) {
+                    $data['username'] = $request->name;
+                    $data['email'] = $request->email;
+                }
 
                 if (isset($request->password) && $request->password != "") {
 
                     $data['password'] = bcrypt($request->password);
                 }
-                // Use the record's own admin_id, not $request->admin_id — the app doesn't
-                // always send it, which would silently match zero rows here and leave the
-                // admins.email/username login credentials out of sync with sellers.email.
-                Admin::where('id', $record->admin_id)->update($data);
+                if (!empty($data)) {
+                    // Use the record's own admin_id, not $request->admin_id — the app doesn't
+                    // always send it, which would silently match zero rows here and leave the
+                    // admins.email/username login credentials out of sync with sellers.email.
+                    Admin::where('id', $record->admin_id)->update($data);
+                }
 
-                $record->name = $request->name;
-                $record->email = $request->email;
+                if (!$isSellerCaller) {
+                    $record->name = $request->name;
+                    $record->email = $request->email;
+                    $record->mobile = $request->mobile;
+                    $record->country_code = $request->country_code ?? $record->country_code;
+                }
 
-                $record->mobile = $request->mobile;
-                $record->country_code = $request->country_code ?? $record->country_code;
+                // OTP already verified above (before the transaction started) — clear it
+                // now so the same code can't be replayed on a later request.
+                if ($isSellerCaller && $request->filled('password')) {
+                    $record->sensitive_otp = null;
+                    $record->sensitive_otp_expires_at = null;
+                }
 
                 // Get default language to check if this is default language update
                 $defaultLanguage = $this->languageService->getDefaultLanguage();
@@ -432,7 +463,9 @@ class SellerApiController extends Controller
 
                 // Only update translatable fields in main table if default language
                 if ($isDefaultLanguage) {
-                    $record->name = $request->name;
+                    if (!$isSellerCaller) {
+                        $record->name = $request->name;
+                    }
                     $record->store_name = $request->store_name;
                     $record->store_description = $request->store_description;
                 }
@@ -487,7 +520,10 @@ class SellerApiController extends Controller
                         $record->remark = $request->remark;
                     }
                 }
-                $record->slug = Str::slug($request->name);
+                // Derived from $record->name (the final, already-locked-down-for-sellers
+                // value above), not $request->name directly — keeps the slug consistent
+                // with whatever name actually ends up persisted.
+                $record->slug = Str::slug($record->name);
 
                 if ($request->hasFile('store_logo')) {
                     $file = $request->file('store_logo');
@@ -533,6 +569,17 @@ class SellerApiController extends Controller
                                     'store_name' => $translation['store_name'] ?? '',
                                     'store_description' => $translation['store_description'] ?? '',
                                 ];
+                                // Name is locked for self-edit (see above) — the per-language
+                                // translation row is a separate table, so it needs the same
+                                // guard, not just the main sellers.name column. $record->translations
+                                // is an accessor (see HasTranslations::getTranslationsAttribute, in
+                                // $appends) that shadows the actual translations() relation and
+                                // returns a plain array, not a Collection — call the relation
+                                // method directly to get a queryable/firstWhere-able result.
+                                if ($isSellerCaller) {
+                                    $existing = $record->translations()->where('language_id', $translation['language_id'])->first();
+                                    $translationData['name'] = $existing->name ?? '';
+                                }
                                 $record->saveTranslation($translation['language_id'], $translationData);
                             }
                         }
@@ -544,6 +591,10 @@ class SellerApiController extends Controller
                         'store_name' => $request->store_name ?? '',
                         'store_description' => $request->store_description ?? '',
                     ];
+                    if ($isSellerCaller) {
+                        $existing = $record->translations()->where('language_id', $request->language_id)->first();
+                        $translationData['name'] = $existing->name ?? '';
+                    }
                     $record->saveTranslation($request->language_id, $translationData);
                 }
 
@@ -567,6 +618,144 @@ class SellerApiController extends Controller
             }
         }
         return CommonHelper::responseSuccess('seller_updated_successfully');
+        } catch (\Exception $e) {
+            return CommonHelper::responseError($e->getMessage());
+        }
+    }
+
+    /**
+     * Confirms account ownership before a distributor's self-edit changes their
+     * login password — reuses the sensitive_otp columns (see
+     * SellerSettingController::sendSensitivePasswordOtp, which uses the same pair
+     * for a different purpose: recovering a forgotten sensitive-operations password).
+     */
+    public function sendLoginPasswordOtp(Request $request)
+    {
+        $seller = auth()->user()->seller;
+
+        if (!$seller || empty($seller->email)) {
+            return CommonHelper::responseError('no_email_on_file_contact_admin_to_recover_password');
+        }
+
+        // Sent less than 60s ago (more than 9 of the 10 minutes still left)? Block resend spam.
+        if ($seller->sensitive_otp_expires_at && now()->lt(\Carbon\Carbon::parse($seller->sensitive_otp_expires_at)->subMinutes(9))) {
+            return CommonHelper::responseError('please_wait_before_requesting_another_code');
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        $seller->sensitive_otp = $otp;
+        $seller->sensitive_otp_expires_at = now()->addMinutes(10);
+        $seller->save();
+
+        try {
+            CommonHelper::sendMail($seller->email, 'Confirm Password Change', [
+                'type' => 'login_password_otp',
+                'otp'  => $otp,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('sendLoginPasswordOtp mail failed: ' . $e->getMessage());
+            return CommonHelper::responseError('failed_to_send_otp_email_check_mail_settings');
+        }
+
+        return CommonHelper::responseSuccess('otp_sent_to_your_registered_email');
+    }
+
+    /**
+     * Lightweight sibling of update() for just the "Account & Login Details" card
+     * (name/email/mobile/password) — a distributor changing their password shouldn't
+     * need to also satisfy the full seller-edit form's store/commission/coordinate
+     * validation. Same identity-field lock + OTP gate as update() for self-callers.
+     */
+    public function updateAccountDetails(Request $request)
+    {
+        try {
+            $record = isset($request->id) ? Seller::find($request->id) : null;
+            if (!$record) {
+                return CommonHelper::responseError('seller_not_found');
+            }
+
+            $isSellerCaller = (int) (auth()->user()->role_id ?? 0) === (int) Role::$roleSeller;
+            $adminIdForUniqueCheck = $record->admin_id;
+
+            $rules = [
+                'confirm_password' => 'same:password',
+            ];
+            if (!$isSellerCaller) {
+                $rules['name'] = 'required';
+                $rules['email'] = 'email|required|unique:admins,email,' . $adminIdForUniqueCheck;
+                $rules['mobile'] = 'required|numeric|unique:sellers,mobile,' . $record->id;
+            }
+            $validator = Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                return CommonHelper::responseError($validator->errors()->first());
+            }
+
+            // Same ownership-confirmation OTP as update() — see sendLoginPasswordOtp().
+            if ($isSellerCaller && $request->filled('password')) {
+                if (
+                    empty($record->sensitive_otp) ||
+                    (string) $record->sensitive_otp !== (string) $request->otp ||
+                    !$record->sensitive_otp_expires_at ||
+                    now()->gt(\Carbon\Carbon::parse($record->sensitive_otp_expires_at))
+                ) {
+                    return CommonHelper::responseError('otp_is_invalid_or_expired');
+                }
+            }
+
+            DB::beginTransaction();
+
+            $data = [];
+            // Name/email are login-identity fields — a distributor can't self-edit these
+            // (locked in the UI too), only Admin can change them on a seller's behalf.
+            if (!$isSellerCaller) {
+                $data['username'] = $request->name;
+                $data['email'] = $request->email;
+            }
+            if ($request->filled('password')) {
+                $data['password'] = bcrypt($request->password);
+            }
+            if (!empty($data)) {
+                Admin::where('id', $record->admin_id)->update($data);
+            }
+
+            if (!$isSellerCaller) {
+                $record->name = $request->name;
+                $record->email = $request->email;
+                $record->mobile = $request->mobile;
+                $record->country_code = $request->country_code ?? $record->country_code;
+                $record->slug = Str::slug($request->name);
+
+                // Keep the default-language translation's name in sync with the main
+                // table, without touching that row's store_name/store_description.
+                $defaultLanguage = $this->languageService->getDefaultLanguage();
+                $existing = $record->translations()->where('language_id', $defaultLanguage->id)->first();
+                $record->saveTranslation($defaultLanguage->id, [
+                    'name' => $request->name,
+                    'store_name' => $existing->store_name ?? $record->store_name,
+                    'store_description' => $existing->store_description ?? $record->store_description,
+                ]);
+            }
+
+            // OTP already verified above (before the transaction started) — clear it
+            // now so the same code can't be replayed on a later request.
+            if ($isSellerCaller && $request->filled('password')) {
+                $record->sensitive_otp = null;
+                $record->sensitive_otp_expires_at = null;
+            }
+
+            $record->save();
+
+            if (!$isSellerCaller) {
+                $conflict = CommonHelper::claimMobile($record->mobile, \App\Models\MobileRegistry::ROLE_SELLER, $record->id);
+                if ($conflict) {
+                    DB::rollBack();
+                    return CommonHelper::responseError($conflict);
+                }
+            }
+
+            DB::commit();
+
+            return CommonHelper::responseSuccess('account_details_updated_successfully');
         } catch (\Exception $e) {
             return CommonHelper::responseError($e->getMessage());
         }

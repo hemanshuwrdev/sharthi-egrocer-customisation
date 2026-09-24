@@ -165,6 +165,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 
 
@@ -593,9 +599,25 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "list-page" }, [
-    _c("div", { staticClass: "page-head" }, [
-      _c("h3", { staticClass: "page-head-title" }, [
-        _vm._v(_vm._s(_vm.__("trip_reconciliation"))),
+    _c("div", { staticClass: "page-header-bar" }, [
+      _c("div", { staticClass: "page-header-left" }, [
+        _vm._m(0),
+        _vm._v(" "),
+        _c("div", [
+          _c("h1", { staticClass: "page-header-title" }, [
+            _vm._v(_vm._s(_vm.__("trip_reconciliation"))),
+          ]),
+          _vm._v(" "),
+          _c("p", { staticClass: "page-header-subtitle" }, [
+            _vm._v(
+              _vm._s(
+                _vm.__(
+                  "reconcile_driver_and_salesman_cash_collections_against_settlements"
+                )
+              )
+            ),
+          ]),
+        ]),
       ]),
     ]),
     _vm._v(" "),
@@ -1107,7 +1129,16 @@ var render = function () {
     ]),
   ])
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("span", { staticClass: "page-header-icon" }, [
+      _c("i", { staticClass: "fa fa-exchange" }),
+    ])
+  },
+]
 render._withStripped = true
 
 

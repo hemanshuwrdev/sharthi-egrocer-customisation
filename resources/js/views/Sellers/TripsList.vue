@@ -1,7 +1,13 @@
 <template>
     <div class="list-page">
-        <div class="page-head">
-            <h3 class="page-head-title">{{ __('trip_reconciliation') }}</h3>
+        <div class="page-header-bar">
+            <div class="page-header-left">
+                <span class="page-header-icon"><i class="fa fa-exchange"></i></span>
+                <div>
+                    <h1 class="page-header-title">{{ __('trip_reconciliation') }}</h1>
+                    <p class="page-header-subtitle">{{ __('reconcile_driver_and_salesman_cash_collections_against_settlements') }}</p>
+                </div>
+            </div>
         </div>
 
         <div class="list-surface">

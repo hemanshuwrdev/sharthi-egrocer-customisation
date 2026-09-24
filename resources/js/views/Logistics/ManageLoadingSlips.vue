@@ -1,14 +1,15 @@
 <template>
     <div class="container-fluid py-4">
         <!-- Header Section -->
-        <div class="row align-items-center mb-4">
-            <div class="col">
-                <h1 class="h3 font-weight-bold mb-1">
-                    <i class="fa fa-file-text text-primary mr-2"></i>{{ __('loading_slips_and_dispatches') }}
-                </h1>
-                <p class="text-muted mb-0">{{ __('track_and_dispatch_warehouse_loading_slips') }}</p>
+        <div class="page-header-bar">
+            <div class="page-header-left">
+                <span class="page-header-icon"><i class="fa fa-file-text"></i></span>
+                <div>
+                    <h1 class="page-header-title">{{ __('loading_slips_and_dispatches') }}</h1>
+                    <p class="page-header-subtitle">{{ __('track_and_dispatch_warehouse_loading_slips') }}</p>
+                </div>
             </div>
-            <div class="col-auto" v-if="isSeller">
+            <div class="page-header-actions" v-if="isSeller">
                 <router-link :to="urlPrefix + '/loading_slips/create'" class="btn btn-primary btn-lg shadow-sm font-weight-bold rounded-pill">
                     <i class="fa fa-plus-circle mr-2"></i>{{ __('plan_new_slip') }}
                 </router-link>
@@ -22,20 +23,47 @@
             </div>
             <div class="card-body p-0">
                 <div class="p-3 border-bottom">
-                    <b-row class="mb-2">
-                        <b-col md="4" offset-md="7">
-                            <h6 class="box-title">{{ __('search') }}</h6>
-                            <b-form-input id="filter-input" v-model="filter" @input="getSlips" type="search"
-                                :placeholder="__('search_by_slip_no_vehicle_driver')"></b-form-input>
-                        </b-col>
-                        <b-col md="1" class="text-center">
-                            <h6 class="box-title" style="visibility: hidden;">{{ __('refresh') }}</h6>
-                            <button class="btn btn-primary btn_refresh" v-b-tooltip.hover :title="__('refresh')"
-                                @click="getSlips()">
+                    <div class="list-toolbar has-filters">
+                        <div class="list-toolbar-start">
+                            <div class="list-filter">
+                                <span class="list-filter-label">{{ __('status') }}</span>
+                                <select v-model="statusFilter" @change="applyFilters" class="form-control form-select">
+                                    <option value="all">{{ __('all_statuses') }}</option>
+                                    <option value="0">{{ __('planned') }}</option>
+                                    <option value="1">{{ __('dispatched') }}</option>
+                                    <option value="2">{{ __('completed') }}</option>
+                                    <option value="3">{{ __('cancelled') }}</option>
+                                </select>
+                            </div>
+
+                            <div class="list-filter">
+                                <span class="list-filter-label">{{ __('Date Range') }}</span>
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <date-range-picker :autoApply="false" :showDropdowns="true" v-model="dateRange"
+                                        :maxDate="maxDate" @update="applyFilters" :locale-data="dateRangePickerLocale"
+                                        :ranges="dateRangePickerRanges" :append-to-body="true" opens="right"></date-range-picker>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" @click="setQuickRange('today')">{{ __('today') }}</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" @click="setQuickRange('last7')">{{ __('Last 7 Days') }}</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" @click="setQuickRange('this_month')">{{ __('this_month') }}</button>
+                                </div>
+                            </div>
+
+                            <button v-if="hasActiveFilters" type="button" class="btn btn-sm btn-outline-danger" @click="clearFilters">
+                                <i class="fa fa-times me-1" aria-hidden="true"></i>{{ __('Clear Filters') }}
+                            </button>
+                        </div>
+
+                        <div class="list-toolbar-end">
+                            <div class="list-search">
+                                <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
+                                <b-form-input id="filter-input" v-model="filter" @input="getSlips" type="search"
+                                    :placeholder="__('search_by_slip_no_vehicle_driver')"></b-form-input>
+                            </div>
+                            <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getSlips()">
                                 <i class="fa fa-refresh" aria-hidden="true"></i>
                             </button>
-                        </b-col>
-                    </b-row>
+                        </div>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table align-items-center table-flush table-hover mb-0">
@@ -124,9 +152,14 @@
 
 <script>
 import axios from 'axios';
+import moment from 'moment';
+import DateRangePicker from 'vue2-daterange-picker';
+import DateRangePickerMixin from '../../mixins/DateRangePickerMixin';
 
 export default {
     name: 'ManageLoadingSlips',
+    mixins: [DateRangePickerMixin],
+    components: { DateRangePicker },
     data() {
         return {
             slips: [],
@@ -134,7 +167,10 @@ export default {
             page: 1,
             per_page: 10,
             filter: '',
-            loading: false
+            loading: false,
+            statusFilter: 'all',
+            dateRange: { startDate: null, endDate: null },
+            maxDate: new Date(),
         };
     },
     computed: {
@@ -146,18 +182,57 @@ export default {
         },
         apiBase() {
             return this.isSeller ? this.$sellerApiUrl : this.$apiUrl;
-        }
+        },
+        hasActiveFilters() {
+            return !!(this.filter || this.dateRange.startDate || this.dateRange.endDate || this.statusFilter !== 'all');
+        },
     },
     mounted() {
         this.getSlips();
     },
     methods: {
+        applyFilters() {
+            this.page = 1;
+            this.getSlips();
+        },
+        setQuickRange(key) {
+            const ranges = {
+                today: this.getTodayRange(),
+                last7: this.getLast7DaysRange(),
+                this_month: this.getThisMonthRange(),
+            };
+            const [start, end] = ranges[key];
+            this.dateRange = { startDate: start, endDate: end };
+            this.applyFilters();
+        },
+        getLast7DaysRange() {
+            const end = new Date();
+            end.setHours(23, 59, 59, 999);
+            const start = new Date();
+            start.setDate(start.getDate() - 6);
+            start.setHours(0, 0, 0, 0);
+            return [start, end];
+        },
+        clearFilters() {
+            this.filter = '';
+            this.statusFilter = 'all';
+            this.dateRange = { startDate: null, endDate: null };
+            this.page = 1;
+            this.getSlips();
+        },
         getSlips() {
+            const fromDate = (this.dateRange.startDate && moment(this.dateRange.startDate).isValid())
+                ? moment(this.dateRange.startDate).format('YYYY-MM-DD') : undefined;
+            const toDate = (this.dateRange.endDate && moment(this.dateRange.endDate).isValid())
+                ? moment(this.dateRange.endDate).format('YYYY-MM-DD') : undefined;
             axios.get(this.apiBase + '/loading_slips', {
                 params: {
                     page: this.page,
                     per_page: this.per_page,
-                    filter: this.filter
+                    filter: this.filter,
+                    status: this.statusFilter,
+                    from_date: fromDate,
+                    to_date: toDate,
                 }
             }).then(res => {
                 if (res.data.status === 1) {
@@ -226,6 +301,12 @@ export default {
 </script>
 
 <style scoped>
+@import "../../../../node_modules/vue2-daterange-picker/dist/vue2-daterange-picker.css";
+
+.vue-daterange-picker {
+    min-width: 220px;
+}
+
 .bg-soft-primary {
     background-color: rgba(78, 115, 223, 0.1) !important;
     color: #4e73df !important;
@@ -245,6 +326,10 @@ export default {
 .bg-soft-warning {
     background-color: rgba(246, 194, 62, 0.1) !important;
     color: #f6c23e !important;
+}
+.bg-soft-danger {
+    background-color: rgba(231, 74, 59, 0.1) !important;
+    color: #e74a3b !important;
 }
 .btn-soft-primary {
     background-color: rgba(78, 115, 223, 0.1);

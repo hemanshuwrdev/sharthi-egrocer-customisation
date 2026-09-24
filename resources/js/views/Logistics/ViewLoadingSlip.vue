@@ -275,6 +275,10 @@ export default {
     background-color: rgba(246, 194, 62, 0.1) !important;
     color: #f6c23e !important;
 }
+.bg-soft-danger {
+    background-color: rgba(231, 74, 59, 0.1) !important;
+    color: #e74a3b !important;
+}
 .bg-soft-secondary {
     background-color: rgba(133, 135, 150, 0.1) !important;
     color: #858796 !important;

@@ -29,11 +29,21 @@ class LoadingSlipsApiController extends Controller
         $page = max((int) $request->input('page', 1), 1);
         $offset = ($page - 1) * $limit;
         $filter = $request->input('filter', '');
+        $status = $request->input('status', 'all');
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+
+        $query = LoadingSlip::with(['vehicle', 'driver'])->orderBy('id', 'DESC');
 
         // Cancelled slips are kept in the DB for the audit trail (never deleted — see
         // cancel()) but a cancelled slip has no further action to take on it, so it's
-        // excluded from this list by default. Still reachable directly via view().
-        $query = LoadingSlip::with(['vehicle', 'driver'])->where('status', '!=', 3)->orderBy('id', 'DESC');
+        // excluded from this list by default. Still reachable directly via view(), or by
+        // explicitly filtering status=3.
+        if ($status === 'all' || $status === '' || $status === null) {
+            $query->where('status', '!=', 3);
+        } else {
+            $query->where('status', (int) $status);
+        }
 
         if (auth()->user() && auth()->user()->seller) {
             $query->where('created_by', auth()->user()->id);
@@ -51,6 +61,9 @@ class LoadingSlipsApiController extends Controller
                   });
             });
         }
+
+        $query->when($fromDate, fn ($q) => $q->whereDate('created_at', '>=', $fromDate))
+              ->when($toDate, fn ($q) => $q->whereDate('created_at', '<=', $toDate));
 
         $total = $query->count();
         $slips = $query->skip($offset)->take($limit)->get();

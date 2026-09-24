@@ -42,6 +42,102 @@
 
             <div class="row">
                 <div class="col-12 col-md-12 order-md-1 order-last">
+                    <!-- Account & Login Details: its own form/submit, independent of the
+                         Seller Information form below (a password change shouldn't require
+                         touching store info, and vice versa). -->
+                    <form ref="account-form" @submit.prevent="saveAccountDetails">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4>{{ __('account_login_details') }}</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="form-group col-md-3" v-if="defaultLanguageId && translations[defaultLanguageId]">
+                                        <label>{{ __('seller_name') }} <i class="text-danger">*</i></label>
+                                        <input type="text" class="form-control" required
+                                            :disabled="isSellerRole"
+                                            v-model="translations[defaultLanguageId].name"
+                                            :placeholder="__('enter_seller_name')" @focus="onInputFocus"
+                                            @blur="onInputBlur">
+                                    </div>
+
+                                    <div class="form-group col-md-3">
+                                        <label>{{ __('email') }} <i class="text-danger">*</i></label>
+                                        <input type="email" class="form-control" v-model="email"
+                                            :disabled="isSellerRole"
+                                            :placeholder="__('enter_email')" @focus="onInputFocus"
+                                            @blur="onInputBlur">
+                                    </div>
+
+                                    <div class="form-group col-md-3">
+                                        <label>{{ __('mobile') }} <i class="text-danger">*</i></label>
+                                        <div class="input-group">
+                                            <div class="country-code-dropdown" ref="countryDropdown">
+                                                <button type="button" class="form-control country-code-toggle"
+                                                    :disabled="isSellerRole"
+                                                    @click="countryDropdownOpen = !countryDropdownOpen">
+                                                    {{ country_code }}
+                                                </button>
+                                                <ul v-if="countryDropdownOpen" class="country-code-menu">
+                                                    <li v-for="c in countries" :key="c.id" @click="country_code = c.dial_code; countryDropdownOpen = false">
+                                                        {{ c.dial_code }}
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <input type="text" class="form-control" v-model="mobile"
+                                                :disabled="isSellerRole"
+                                                :placeholder="__('enter_mobile_number')" inputmode="numeric"
+                                                required @input="validateMobileNumber"
+                                                @focus="onInputFocus" @blur="onInputBlur">
+                                        </div>
+                                        <span v-if="mobilevalidationError" class="error">{{ mobilevalidationError }}</span>
+                                    </div>
+
+                                    <div class="form-group col-md-3">
+                                        <label>{{ __('password') }} <i v-if="!id" class="text-danger">*</i></label>
+                                        <div class="input-group">
+                                            <input :type="showPassword ? 'text' : 'password'"
+                                                class="form-control" v-model="password"
+                                                :placeholder="__('leave_blank_to_keep_current_password')" >
+                                            <button type="button"
+                                                v-on:click="showPassword = !showPassword"
+                                                class="btn btn-primary font-bold">
+                                                <i v-if="showPassword" class="fa fa-eye"
+                                                    aria-hidden="true"></i>
+                                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-3">
+                                        <label>{{ __('confirm_password') }} <i v-if="!id" class="text-danger">*</i></label>
+                                        <div class="input-group">
+                                            <input :type="showConfirmPassword ? 'text' : 'password'"
+                                                class="form-control" v-model="confirm_password"
+                                                :placeholder="__('enter_confirm_password')" >
+                                            <button type="button"
+                                                v-on:click="showConfirmPassword = !showConfirmPassword"
+                                                class="btn btn-primary font-bold">
+                                                <i v-if="showConfirmPassword"
+                                                    class="fa fa-eye" aria-hidden="true"></i>
+                                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p v-if="isSellerRole" class="text-muted font-size-13 mb-0">
+                                    {{ __('name_email_mobile_are_locked_contact_admin_to_change_them') }}
+                                </p>
+                            </div>
+                            <div class="card-footer" v-if="id">
+                                <b-button type="submit" variant="primary" :disabled="isAccountLoading">
+                                    {{ __('update') }}
+                                    <b-spinner v-if="isAccountLoading" small label="Spinning"></b-spinner>
+                                </b-button>
+                            </div>
+                        </div>
+                    </form>
+
                     <form ref="my-form" @submit.prevent="saveRecord">
                         <div class="card">
                             <div class="card-header">
@@ -89,78 +185,18 @@
                                             </div>
                                             <!-- Translate buttons END -->
 
-                                            <div class="row">
+                                            <!-- Default-language name is edited from the Account & Login Details
+                                                 card above; only non-default (translation) languages need their
+                                                 own name field here, to avoid editing the same value in two places. -->
+                                            <div class="row" v-if="!language.is_default">
                                                 <div class="form-group col-md-4">
-                                                    <label>{{ __('seller_name') }} <i class="text-danger" v-if="language.is_default">*</i></label>
+                                                    <label>{{ __('seller_name') }}</label>
                                                     <input type="text" class="form-control"
-                                                        :required="language.is_default ? true : undefined"
+                                                        :disabled="isSellerRole"
                                                         v-model="translations[language.id].name"
                                                         :placeholder="__('enter_seller_name')" @focus="onInputFocus"
                                                         @blur="onInputBlur">
                                                 </div>
-
-                                                <!-- Non-translatable Fields (only shown in default language tab) -->
-                                                <template v-if="language.is_default">
-                                                    <div class="form-group col-md-4">
-                                                        <label>{{ __('email') }} <i class="text-danger">*</i></label>
-                                                        <input type="email" class="form-control" v-model="email"
-                                                            :placeholder="__('enter_email')" @focus="onInputFocus"
-                                                            @blur="onInputBlur">
-                                                    </div>
-
-                                                    <div class="form-group col-md-4">
-                                                        <label>{{ __('mobile') }} <i class="text-danger">*</i></label>
-                                                        <div class="input-group">
-                                                            <div class="country-code-dropdown" ref="countryDropdown">
-                                                                <button type="button" class="form-control country-code-toggle" @click="countryDropdownOpen = !countryDropdownOpen">
-                                                                    {{ country_code }}
-                                                                </button>
-                                                                <ul v-if="countryDropdownOpen" class="country-code-menu">
-                                                                    <li v-for="c in countries" :key="c.id" @click="country_code = c.dial_code; countryDropdownOpen = false">
-                                                                        {{ c.dial_code }}
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                            <input type="text" class="form-control" v-model="mobile"
-                                                                :placeholder="__('enter_mobile_number')" inputmode="numeric"
-                                                                required @input="validateMobileNumber"
-                                                                @focus="onInputFocus" @blur="onInputBlur">
-                                                        </div>
-                                                        <span v-if="mobilevalidationError" class="error">{{ mobilevalidationError }}</span>
-                                                    </div>
-
-                                                    <div class="form-group col-md-4">
-                                                        <label>{{ __('password') }} <i v-if="!id" class="text-danger">*</i></label>
-                                                        <div class="input-group">
-                                                            <input :type="showPassword ? 'text' : 'password'"
-                                                                class="form-control" v-model="password"
-                                                                :placeholder="__('leave_blank_to_keep_current_password')" >
-                                                            <button type="button"
-                                                                v-on:click="showPassword = !showPassword"
-                                                                class="btn btn-primary font-bold">
-                                                                <i v-if="showPassword" class="fa fa-eye"
-                                                                    aria-hidden="true"></i>
-                                                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="form-group col-md-4">
-                                                        <label>{{ __('confirm_password') }} <i v-if="!id" class="text-danger">*</i></label>
-                                                        <div class="input-group">
-                                                            <input :type="showConfirmPassword ? 'text' : 'password'"
-                                                                class="form-control" v-model="confirm_password"
-                                                                :placeholder="__('enter_confirm_password')" >
-                                                            <button type="button"
-                                                                v-on:click="showConfirmPassword = !showConfirmPassword"
-                                                                class="btn btn-primary font-bold">
-                                                                <i v-if="showConfirmPassword"
-                                                                    class="fa fa-eye" aria-hidden="true"></i>
-                                                                <i v-else class="fa fa-eye-slash" aria-hidden="true"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </template>
                                             </div>
 
                                             <div class="card">
@@ -1092,6 +1128,31 @@
                 </b-button>
             </template>
         </b-modal>
+
+        <!-- Login Password Change OTP Modal -->
+        <b-modal v-model="loginOtpModalShow" :title="__('confirm_password_change')" hide-footer
+            no-close-on-backdrop @hidden="loginOtp = ''">
+            <p class="text-muted font-size-13">
+                {{ __('enter_the_code_we_emailed_to_your_registered_address_to_confirm_this_password_change') }}
+            </p>
+            <div class="form-group">
+                <label>{{ __('OTP') }}</label>
+                <input type="text" class="form-control" v-model="loginOtp" maxlength="6" inputmode="numeric"
+                    autocomplete="one-time-code" />
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <a href="javascript:void(0)" @click="loginOtpModalShow = false">{{ __('cancel') }}</a>
+                <a href="javascript:void(0)"
+                    :class="{ 'text-muted': loginOtpResendCooldown > 0 }"
+                    @click="loginOtpResendCooldown === 0 && sendLoginPasswordOtp()">
+                    {{ loginOtpResendCooldown > 0 ? __('resend_code') + ' (' + loginOtpResendCooldown + 's)' : __('resend_code') }}
+                </a>
+            </div>
+            <b-button variant="primary" class="mt-3 w-100" :disabled="isAccountLoading" @click="confirmLoginPasswordOtp">
+                {{ __('confirm_and_save') }}
+                <b-spinner v-if="isAccountLoading" small></b-spinner>
+            </b-button>
+        </b-modal>
     </div>
 </template>
 <script>
@@ -1122,6 +1183,7 @@ export default {
             skipCache: false,
 
             isLoading: false,
+            isAccountLoading: false,
             center: { lat: 23.0225, lng: 72.5714 },
             map: "",
             drawingManager: "",
@@ -1152,6 +1214,12 @@ export default {
             showPassword: false,
             confirm_password: "",
             showConfirmPassword: false,
+
+            loginOtpModalShow: false,
+            loginOtp: "",
+            isSendingLoginOtp: false,
+            loginOtpResendCooldown: 0,
+            loginOtpCooldownTimer: null,
 
             store_name: "",
             street: "",
@@ -2403,6 +2471,104 @@ export default {
                 return;
             }
 
+            this.performSave();
+        },
+
+        // ================= ACCOUNT & LOGIN DETAILS (separate form/submit) =================
+        saveAccountDetails() {
+            if (!this.id) return; // Create mode saves name/email/mobile/password via the main form/save endpoint instead.
+
+            // A distributor changing their own login password must confirm via an
+            // emailed OTP first — send it and open the confirm modal instead of
+            // saving directly. Admin editing a seller, or a self-edit that isn't
+            // touching the password, skips straight to performAccountSave().
+            if (this.isSellerRole && this.password) {
+                this.sendLoginPasswordOtp();
+                return;
+            }
+
+            this.performAccountSave();
+        },
+
+        sendLoginPasswordOtp() {
+            if (this.isSendingLoginOtp || this.loginOtpResendCooldown > 0) return;
+            this.isSendingLoginOtp = true;
+
+            axios.post(this.$apiUrl + '/sellers/send-login-otp')
+                .then(res => {
+                    if (res.data.status) {
+                        this.loginOtpModalShow = true;
+                        this.showMessage('success', __(res.data.message));
+                        this.loginOtpResendCooldown = 60;
+                        if (this.loginOtpCooldownTimer) clearInterval(this.loginOtpCooldownTimer);
+                        this.loginOtpCooldownTimer = setInterval(() => {
+                            this.loginOtpResendCooldown--;
+                            if (this.loginOtpResendCooldown <= 0) {
+                                clearInterval(this.loginOtpCooldownTimer);
+                                this.loginOtpCooldownTimer = null;
+                            }
+                        }, 1000);
+                    } else {
+                        this.showError(res.data.message || 'Failed to send OTP');
+                    }
+                    this.isSendingLoginOtp = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to send OTP');
+                    this.isSendingLoginOtp = false;
+                });
+        },
+
+        confirmLoginPasswordOtp() {
+            if (!this.loginOtp) {
+                this.showError(__('OTP'));
+                return;
+            }
+            this.performAccountSave(this.loginOtp);
+        },
+
+        performAccountSave(otp) {
+            this.isAccountLoading = true;
+            let vm = this;
+
+            let formData = new FormData();
+            formData.append('id', this.id);
+            formData.append('admin_id', this.admin_id);
+            formData.append('name', this.defaultLanguageId && this.translations[this.defaultLanguageId] ? this.translations[this.defaultLanguageId].name : '');
+            formData.append('email', this.email);
+            formData.append('mobile', this.mobile);
+            formData.append('country_code', this.country_code);
+            if (this.password) {
+                formData.append('password', this.password);
+                formData.append('confirm_password', this.confirm_password);
+                if (otp) {
+                    formData.append('otp', otp);
+                }
+            }
+
+            axios.post(this.$apiUrl + '/sellers/update-account', formData)
+                .then(res => {
+                    vm.isAccountLoading = false;
+                    if (res.data.status) {
+                        vm.loginOtpModalShow = false;
+                        vm.password = '';
+                        vm.confirm_password = '';
+                        vm.showMessage('success', __(res.data.message));
+                    } else {
+                        vm.showError(res.data.message || __('something_went_wrong'));
+                    }
+                })
+                .catch(error => {
+                    vm.isAccountLoading = false;
+                    if (error?.response?.data?.message) {
+                        vm.showError(error.response.data.message);
+                    } else {
+                        vm.showError(__('something_went_wrong'));
+                    }
+                });
+        },
+
+        performSave: function () {
             this.isLoading = true;
             let vm = this;
 
@@ -2469,11 +2635,9 @@ export default {
                 formData.append('country_code', this.country_code);
                 formData.append('store_url', this.store_url);
 
-                // Password only for new sellers or when changing
+                // Password only on create — editing the password for an existing seller
+                // is handled independently by the Account & Login Details form/endpoint.
                 if (!sellerId) {
-                    formData.append('password', this.password);
-                    formData.append('confirm_password', this.confirm_password);
-                } else if (this.password) {
                     formData.append('password', this.password);
                     formData.append('confirm_password', this.confirm_password);
                 }

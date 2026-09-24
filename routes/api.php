@@ -208,6 +208,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [\App\Http\Controllers\API\SellerApiController::class, 'getSellers']);
         Route::post('save', [\App\Http\Controllers\API\SellerApiController::class, 'save'])->name('sellers.save');
         Route::post('update', [\App\Http\Controllers\API\SellerApiController::class, 'update'])->name('sellers.update');
+        Route::post('send-login-otp', [\App\Http\Controllers\API\SellerApiController::class, 'sendLoginPasswordOtp'])->name('sellers.send_login_otp');
+        Route::post('update-account', [\App\Http\Controllers\API\SellerApiController::class, 'updateAccountDetails'])->name('sellers.update_account');
         Route::post('delete', [\App\Http\Controllers\API\SellerApiController::class, 'delete'])->name('sellers.delete');
         Route::get('edit/{id}', [\App\Http\Controllers\API\SellerApiController::class, 'edit']);
         Route::post('update_status', [\App\Http\Controllers\API\SellerApiController::class, 'updateStatus'])->name('sellers.update-status');
