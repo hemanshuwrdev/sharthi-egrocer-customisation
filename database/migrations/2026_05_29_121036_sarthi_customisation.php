@@ -1328,6 +1328,25 @@ class SarthiCustomisation extends Migration
                 }
             });
         }
+
+        // 16. Per-loading-slip payment lock for drivers. Replaces the whole-day EOD lock
+        // (driver_settlements) with a per-slip lock: a driver locks one loading slip once
+        // every order in it is delivered and every OrderPayment for it is manually verified.
+        if (Schema::hasTable('loading_slips')) {
+            Schema::table('loading_slips', function (Blueprint $table) {
+                if (!Schema::hasColumn('loading_slips', 'payment_lock_status')) {
+                    $table->enum('payment_lock_status', ['open', 'locked'])->default('open')->after('reconciled_by')
+                        ->comment('Driver-side lock: locked once all orders in this slip are delivered and all payments manually verified.');
+                }
+                if (!Schema::hasColumn('loading_slips', 'payment_locked_at')) {
+                    $table->timestamp('payment_locked_at')->nullable()->after('payment_lock_status');
+                }
+                if (!Schema::hasColumn('loading_slips', 'payment_locked_by')) {
+                    $table->unsignedBigInteger('payment_locked_by')->nullable()->after('payment_locked_at')
+                        ->comment('delivery_boys.id of the driver who locked it.');
+                }
+            });
+        }
     }
 
     /**
@@ -1337,6 +1356,11 @@ class SarthiCustomisation extends Migration
      */
     public function down()
     {
+        if (Schema::hasTable('loading_slips') && Schema::hasColumn('loading_slips', 'payment_lock_status')) {
+            Schema::table('loading_slips', function (Blueprint $table) {
+                $table->dropColumn(['payment_lock_status', 'payment_locked_at', 'payment_locked_by']);
+            });
+        }
         if (Schema::hasTable('seller_products') && Schema::hasColumn('seller_products', 'cancelable_status')) {
             Schema::table('seller_products', function (Blueprint $table) {
                 $table->dropColumn(['cancelable_status', 'return_status', 'return_days']);

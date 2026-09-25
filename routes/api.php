@@ -866,6 +866,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('settlement/today',        [\App\Http\Controllers\API\SettlementController::class, 'todaySummary'])->name('delivery_boy.settlement.today');
         Route::post('settlement/lock_eod',    [\App\Http\Controllers\API\SettlementController::class, 'lockEod'])->name('delivery_boy.settlement.lock_eod');
 
+        // Sarthi: loading-slip-wise payment lock (replaces whole-day EOD lock above)
+        Route::get('loading_slips/active',       [\App\Http\Controllers\API\SettlementController::class, 'driverActiveLoadingSlips'])->name('delivery_boy.loading_slips.active');
+        Route::post('loading_slips/{id}/lock',   [\App\Http\Controllers\API\SettlementController::class, 'driverLockLoadingSlip'])->name('delivery_boy.loading_slips.lock');
+
         // Sarthi: delivery outcome
         Route::post('order/not_delivered',    [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'markNotDelivered'])->name('delivery_boy.order.not_delivered');
         // Partial delivery itself goes through orders/update_status with status_id=13 —

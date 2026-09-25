@@ -23,11 +23,15 @@ class LoadingSlip extends Model
         'reconciliation_status',
         'reconciled_at',
         'reconciled_by',
+        'payment_lock_status',
+        'payment_locked_at',
+        'payment_locked_by',
     ];
 
     protected $casts = [
-        'cash_received' => 'float',
-        'reconciled_at' => 'datetime',
+        'cash_received'     => 'float',
+        'reconciled_at'     => 'datetime',
+        'payment_locked_at' => 'datetime',
     ];
 
     protected $appends = ['status_text'];
