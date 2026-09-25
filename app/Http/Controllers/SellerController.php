@@ -921,6 +921,7 @@ class SellerController extends BaseController
             'order_items.tax_percentage',
             'order_items.created_at as item_created_at',
             'order_items.product_name',
+            'order_items.variant_name',
             'orders.delivery_charge',
             'retailer_profiles.party_name',
             'retailer_profiles.shop_name',
@@ -960,12 +961,15 @@ class SellerController extends BaseController
             $taxableValue = (float) $row->sub_total;
             $invoiceTotal = round($taxableValue + $taxAmount, 2);
             $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
+            // Same "Product (Variant)" format the app itself displays — variant_name
+            // is already a stored column on order_items, not something computed live.
+            $itemName = $row->variant_name ? $row->product_name . ' (' . $row->variant_name . ')' : $row->product_name;
 
             $csvData[] = [
                 'INV' . $row->order_id,
                 Carbon::parse($row->item_created_at)->format('j/M/Y'),
                 $partyName,
-                $row->product_name,
+                $itemName,
                 '',
                 $row->quantity,
                 $row->price,
