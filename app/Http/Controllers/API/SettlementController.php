@@ -702,6 +702,127 @@ class SettlementController extends Controller
         ]);
     }
 
+    /**
+     * GET /delivery_boy/loading_slips/active
+     * Loading-slip-wise replacement for the whole-day EOD lock: lists this driver's
+     * active slips (not yet Completed/Cancelled) with a per-slip lock readiness flag.
+     * A slip can be locked only once every order in it has finished its delivery
+     * attempt AND every OrderPayment for it has been manually verified by the
+     * distributor (no auto-verification — cash included).
+     */
+    public function driverActiveLoadingSlips()
+    {
+        $driver = $this->currentDriver();
+        if (!$driver) {
+            return CommonHelper::responseError('driver_not_found');
+        }
+
+        $terminalDeliveryStatuses = [
+            \App\Models\OrderStatusList::$delivered,
+            \App\Models\OrderStatusList::$partialDelivery,
+            \App\Models\OrderStatusList::$notDelivered,
+            \App\Models\OrderStatusList::$cancelled,
+            \App\Models\OrderStatusList::$returned,
+        ];
+
+        $slips = LoadingSlip::where('driver_id', $driver->id)
+            ->whereIn('status', [0, 1]) // Created, Dispatched — not yet Completed/Cancelled
+            ->orderByDesc('id')
+            ->get();
+
+        $data = $slips->map(function (LoadingSlip $slip) use ($terminalDeliveryStatuses) {
+            $orders       = Order::where('loading_slip_id', $slip->id)->get();
+            $orderIds     = $orders->pluck('id');
+            $payments     = OrderPayment::whereIn('order_id', $orderIds)->get();
+
+            $undeliveredCount = $orders->whereNotIn('active_status', $terminalDeliveryStatuses)->count();
+            $pendingPayments  = $payments->where('status', 'pending')->count();
+            $alreadyLocked    = $slip->payment_lock_status === 'locked';
+
+            $canLock  = !$alreadyLocked && $orders->isNotEmpty() && $undeliveredCount === 0 && $pendingPayments === 0;
+            $reason   = null;
+            if (!$canLock && !$alreadyLocked) {
+                $reason = $orders->isEmpty()
+                    ? 'no_orders_in_slip'
+                    : ($undeliveredCount > 0 ? 'orders_pending_delivery' : 'payment_verification_pending');
+            }
+
+            return [
+                'id'                 => $slip->id,
+                'slip_no'            => $slip->slip_no,
+                'status'             => $slip->status,
+                'status_text'        => $slip->status_text,
+                'total_orders'       => $orders->count(),
+                'undelivered_count'  => $undeliveredCount,
+                'pending_payments'   => $pendingPayments,
+                'payment_lock_status'=> $slip->payment_lock_status,
+                'payment_locked_at'  => $slip->payment_locked_at,
+                'can_lock'           => $canLock,
+                'lock_blocked_reason'=> $reason,
+                'total_collected'    => round($payments->sum('amount'), 2),
+            ];
+        });
+
+        return CommonHelper::responseWithData(['total' => $data->count(), 'data' => $data->values()]);
+    }
+
+    /**
+     * POST /delivery_boy/loading_slips/{id}/lock
+     * Locks one loading slip's payments. Requires every order in the slip to have
+     * finished its delivery attempt and every OrderPayment for it to already be
+     * manually verified by the distributor — nothing here auto-verifies anything.
+     */
+    public function driverLockLoadingSlip(int $id)
+    {
+        $driver = $this->currentDriver();
+        if (!$driver) {
+            return CommonHelper::responseError('driver_not_found');
+        }
+
+        $slip = LoadingSlip::where('id', $id)->where('driver_id', $driver->id)->first();
+        if (!$slip) {
+            return CommonHelper::responseError('loading_slip_not_found');
+        }
+
+        if ($slip->payment_lock_status === 'locked') {
+            return CommonHelper::responseError('loading_slip_already_locked');
+        }
+
+        $orders = Order::where('loading_slip_id', $slip->id)->get();
+        if ($orders->isEmpty()) {
+            return CommonHelper::responseError('no_orders_in_slip');
+        }
+
+        $terminalDeliveryStatuses = [
+            \App\Models\OrderStatusList::$delivered,
+            \App\Models\OrderStatusList::$partialDelivery,
+            \App\Models\OrderStatusList::$notDelivered,
+            \App\Models\OrderStatusList::$cancelled,
+            \App\Models\OrderStatusList::$returned,
+        ];
+        if ($orders->whereNotIn('active_status', $terminalDeliveryStatuses)->isNotEmpty()) {
+            return CommonHelper::responseError('orders_pending_delivery');
+        }
+
+        $pendingPayments = OrderPayment::whereIn('order_id', $orders->pluck('id'))
+            ->where('status', 'pending')
+            ->count();
+        if ($pendingPayments > 0) {
+            return CommonHelper::responseError('payment_verification_pending');
+        }
+
+        $slip->payment_lock_status = 'locked';
+        $slip->payment_locked_at   = Carbon::now();
+        $slip->payment_locked_by   = $driver->id;
+        $slip->save();
+
+        return CommonHelper::responseWithData([
+            'id'                 => $slip->id,
+            'payment_lock_status'=> $slip->payment_lock_status,
+            'payment_locked_at'  => $slip->payment_locked_at,
+        ]);
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     //  Distributor reconciliation
     // ──────────────────────────────────────────────────────────────────────────

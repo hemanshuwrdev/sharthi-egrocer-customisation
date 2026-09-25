@@ -2048,6 +2048,8 @@ class OrderApiController extends Controller
                 'v.measurement',
                 'v.stock_unit_id',
                 DB::raw('(select short_code from units as u where u.id = v.stock_unit_id) as unit'),
+                DB::raw('COALESCE(v.sku, mpv.sku) as sku'),
+                DB::raw('(select short_code from units as u where u.id = COALESCE(v.stock_unit_id, mpv.unit_id)) as inner_pack_unit'),
                 'co.name as country_made_in',
                 's.name as seller_name',
                 's.formatted_address as seller_address',
