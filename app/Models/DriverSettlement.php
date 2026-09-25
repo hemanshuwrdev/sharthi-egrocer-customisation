@@ -11,7 +11,7 @@ class DriverSettlement extends Model
     use LogsActivity;
 
     protected $fillable = [
-        'delivery_boy_id', 'seller_id', 'settlement_date',
+        'delivery_boy_id', 'loading_slip_id', 'seller_id', 'settlement_date',
         'total_orders', 'total_cash', 'total_upi', 'total_cheque', 'total_signature',
         'status', 'locked_at',
         'cash_received', 'reconciliation_status', 'reconciled_at', 'reconciled_by',
@@ -31,6 +31,11 @@ class DriverSettlement extends Model
     public function deliveryBoy()
     {
         return $this->belongsTo(DeliveryBoy::class);
+    }
+
+    public function loadingSlip()
+    {
+        return $this->belongsTo(LoadingSlip::class);
     }
 
     public function getActivitylogOptions(): LogOptions

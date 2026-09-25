@@ -45,6 +45,7 @@
                                     <span class="badge me-1" :class="tripType === 'salesman' ? 'bg-purple' : 'bg-info'">
                                         {{ tripType === 'salesman' ? __('salesman') : __('driver') }}
                                     </span>
+                                    <span v-if="settlement.trip_no" class="badge bg-secondary me-1">{{ settlement.trip_no }}</span>
                                     {{ settlement.date }}
                                     &nbsp;·&nbsp; {{ __('total_orders') }}: {{ orders.length }}
                                 </div>

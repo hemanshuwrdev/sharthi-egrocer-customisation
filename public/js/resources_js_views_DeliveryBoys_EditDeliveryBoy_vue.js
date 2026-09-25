@@ -535,10 +535,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         national_identity_card_url: "",
         status: 0,
         remark: "",
-        bonus_type: "",
-        bonus_percentage: "",
-        bonus_min_amount: "",
-        bonus_max_amount: ""
+        bonus_type: 0,
+        bonus_percentage: 0,
+        bonus_min_amount: 0,
+        bonus_max_amount: 0
       },
       mobilevalidationError: null,
       dobvalidationError: null,
@@ -897,7 +897,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var _this7 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
         var _defaultTrans$name;
-        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this7$deliveryBoys$d, _this7$deliveryBoys$r, _this7$deliveryBoys$b, _this7$deliveryBoys$b2, _this7$deliveryBoys$b3, isEdit, fd, _this7$deliveryBoys$p, _this7$deliveryBoys$c, _this7$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response, _error$response$data;
+        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this7$deliveryBoys$d, _this7$deliveryBoys$r, isEdit, fd, _this7$deliveryBoys$p, _this7$deliveryBoys$c, _this7$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response, _error$response$data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -971,10 +971,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 });
                 fd.append('status', _this7.deliveryBoys.status);
                 fd.append('remark', (_this7$deliveryBoys$r = _this7.deliveryBoys.remark) !== null && _this7$deliveryBoys$r !== void 0 ? _this7$deliveryBoys$r : '');
-                fd.append('bonus_type', _this7.deliveryBoys.bonus_type);
-                fd.append('bonus_percentage', (_this7$deliveryBoys$b = _this7.deliveryBoys.bonus_percentage) !== null && _this7$deliveryBoys$b !== void 0 ? _this7$deliveryBoys$b : 0);
-                fd.append('bonus_min_amount', (_this7$deliveryBoys$b2 = _this7.deliveryBoys.bonus_min_amount) !== null && _this7$deliveryBoys$b2 !== void 0 ? _this7$deliveryBoys$b2 : 0);
-                fd.append('bonus_max_amount', (_this7$deliveryBoys$b3 = _this7.deliveryBoys.bonus_max_amount) !== null && _this7$deliveryBoys$b3 !== void 0 ? _this7$deliveryBoys$b3 : 0);
+                fd.append('bonus_type', _this7.deliveryBoys.bonus_type || 0);
+                fd.append('bonus_percentage', _this7.deliveryBoys.bonus_percentage || 0);
+                fd.append('bonus_min_amount', _this7.deliveryBoys.bonus_min_amount || 0);
+                fd.append('bonus_max_amount', _this7.deliveryBoys.bonus_max_amount || 0);
 
                 // password: required on CREATE; on EDIT send only when filled
                 if (!isEdit) {
@@ -2787,411 +2787,492 @@ var render = function () {
                             ]),
                           ]),
                           _vm._v(" "),
-                          _c("div", { staticClass: "list-group-item m-2" }, [
-                            _c(
-                              "div",
-                              {
-                                staticClass:
-                                  "d-flex justify-content-between align-content-center",
-                              },
-                              [
-                                _c("h6", [
-                                  _vm._v(
-                                    _vm._s(_vm.__("delivery_boy_bonus_details"))
-                                  ),
-                                ]),
-                                _vm._v(" "),
-                                this.$roleDeliveryBoy !==
-                                this.login_user.role.name
-                                  ? _c(
-                                      "b-button-group",
-                                      [
-                                        _vm.$deliveryBoyBonusSettings == 1
-                                          ? _c(
-                                              "b-button",
-                                              {
-                                                attrs: {
-                                                  type: "button",
-                                                  variant: "primary",
-                                                  size: "sm",
-                                                },
-                                                on: {
-                                                  click: _vm.getBonusSettings,
-                                                },
-                                              },
-                                              [
-                                                _vm._v(
-                                                  "\n                                                " +
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "add_default_bonus"
-                                                      )
-                                                    ) +
-                                                    "\n                                            "
-                                                ),
-                                              ]
-                                            )
-                                          : _vm._e(),
-                                        _vm._v(" "),
-                                        _vm.deliveryBoys.id
-                                          ? _c(
-                                              "b-button",
-                                              {
-                                                attrs: {
-                                                  type: "button",
-                                                  size: "sm",
-                                                },
-                                                on: { click: _vm.resetBonus },
-                                              },
-                                              [
-                                                _vm._v(
-                                                  "\n                                                " +
-                                                    _vm._s(
-                                                      _vm.__("reset_bonus")
-                                                    ) +
-                                                    "\n                                            "
-                                                ),
-                                              ]
-                                            )
-                                          : _vm._e(),
-                                      ],
-                                      1
-                                    )
-                                  : _vm._e(),
-                              ],
-                              1
-                            ),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "row mt-2" }, [
-                              _c("div", { staticClass: "col-md-3" }, [
-                                _c("div", { staticClass: "form-group" }, [
+                          !_vm.$route.path.includes("/seller")
+                            ? _c(
+                                "div",
+                                { staticClass: "list-group-item m-2" },
+                                [
                                   _c(
-                                    "label",
-                                    { attrs: { for: "bonus_type" } },
-                                    [
-                                      _vm._v(
-                                        _vm._s(_vm.__("bonus_type")) +
-                                          "\n                                                       "
-                                      ),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "select",
+                                    "div",
                                     {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.deliveryBoys.bonus_type,
-                                          expression: "deliveryBoys.bonus_type",
-                                        },
-                                      ],
-                                      staticClass: "form-control form-select",
-                                      attrs: {
-                                        name: "bonus_type",
-                                        id: "bonus_type",
-                                        disabled:
-                                          this.$roleDeliveryBoy ===
-                                          this.login_user.role.name,
-                                      },
-                                      on: {
-                                        change: [
-                                          function ($event) {
-                                            var $$selectedVal =
-                                              Array.prototype.filter
-                                                .call(
-                                                  $event.target.options,
-                                                  function (o) {
-                                                    return o.selected
-                                                  }
-                                                )
-                                                .map(function (o) {
-                                                  var val =
-                                                    "_value" in o
-                                                      ? o._value
-                                                      : o.value
-                                                  return val
-                                                })
-                                            _vm.$set(
-                                              _vm.deliveryBoys,
-                                              "bonus_type",
-                                              $event.target.multiple
-                                                ? $$selectedVal
-                                                : $$selectedVal[0]
-                                            )
-                                          },
-                                          _vm.changeBonusType,
-                                        ],
-                                      },
+                                      staticClass:
+                                        "d-flex justify-content-between align-content-center",
                                     },
                                     [
-                                      _c("option", { attrs: { value: "" } }, [
-                                        _vm._v(_vm._s(_vm.__("select"))),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("option", { attrs: { value: "1" } }, [
-                                        _vm._v(_vm._s(_vm.__("commission"))),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c("option", { attrs: { value: "0" } }, [
+                                      _c("h6", [
                                         _vm._v(
-                                          _vm._s(_vm.__("fixed_salaried"))
+                                          _vm._s(
+                                            _vm.__("delivery_boy_bonus_details")
+                                          )
                                         ),
                                       ]),
-                                    ]
+                                      _vm._v(" "),
+                                      this.$roleDeliveryBoy !==
+                                      this.login_user.role.name
+                                        ? _c(
+                                            "b-button-group",
+                                            [
+                                              _vm.$deliveryBoyBonusSettings == 1
+                                                ? _c(
+                                                    "b-button",
+                                                    {
+                                                      attrs: {
+                                                        type: "button",
+                                                        variant: "primary",
+                                                        size: "sm",
+                                                      },
+                                                      on: {
+                                                        click:
+                                                          _vm.getBonusSettings,
+                                                      },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        "\n                                                " +
+                                                          _vm._s(
+                                                            _vm.__(
+                                                              "add_default_bonus"
+                                                            )
+                                                          ) +
+                                                          "\n                                            "
+                                                      ),
+                                                    ]
+                                                  )
+                                                : _vm._e(),
+                                              _vm._v(" "),
+                                              _vm.deliveryBoys.id
+                                                ? _c(
+                                                    "b-button",
+                                                    {
+                                                      attrs: {
+                                                        type: "button",
+                                                        size: "sm",
+                                                      },
+                                                      on: {
+                                                        click: _vm.resetBonus,
+                                                      },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        "\n                                                " +
+                                                          _vm._s(
+                                                            _vm.__(
+                                                              "reset_bonus"
+                                                            )
+                                                          ) +
+                                                          "\n                                            "
+                                                      ),
+                                                    ]
+                                                  )
+                                                : _vm._e(),
+                                            ],
+                                            1
+                                          )
+                                        : _vm._e(),
+                                    ],
+                                    1
                                   ),
-                                ]),
-                              ]),
-                              _vm._v(" "),
-                              _vm.deliveryBoys.bonus_type == 1
-                                ? _c("div", { staticClass: "col-md-3" }, [
-                                    _c("div", { staticClass: "form-group" }, [
-                                      _c(
-                                        "label",
-                                        { attrs: { for: "bonus_percentage" } },
-                                        [
-                                          _vm._v(
-                                            _vm._s(_vm.__("bonus_percentage"))
-                                          ),
-                                        ]
-                                      ),
-                                      _vm._v(" "),
-                                      _c("input", {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value:
-                                              _vm.deliveryBoys.bonus_percentage,
-                                            expression:
-                                              "deliveryBoys.bonus_percentage",
-                                          },
-                                        ],
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "number",
-                                          min: "0.1",
-                                          max: "100",
-                                          step: "0.1",
-                                          name: "bonus_percentage",
-                                          id: "bonus_percentage",
-                                          placeholder:
-                                            _vm.__("bonus_percentage"),
-                                          readonly:
-                                            this.$roleDeliveryBoy ===
-                                            this.login_user.role.name,
-                                        },
-                                        domProps: {
-                                          value:
-                                            _vm.deliveryBoys.bonus_percentage,
-                                        },
-                                        on: {
-                                          input: function ($event) {
-                                            if ($event.target.composing) {
-                                              return
-                                            }
-                                            _vm.$set(
-                                              _vm.deliveryBoys,
-                                              "bonus_percentage",
-                                              $event.target.value
-                                            )
-                                          },
-                                        },
-                                      }),
-                                    ]),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              _vm.deliveryBoys.bonus_type == 1
-                                ? _c("div", { staticClass: "col-md-3" }, [
-                                    _c("div", { staticClass: "form-group" }, [
-                                      _c(
-                                        "label",
-                                        { attrs: { for: "bonus_min_amount" } },
-                                        [
-                                          _vm._v(
-                                            _vm._s(
-                                              _vm.__("minimum_bonus_amount")
-                                            )
-                                          ),
-                                        ]
-                                      ),
-                                      _vm._v(" "),
-                                      _c("input", {
-                                        directives: [
-                                          {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value:
-                                              _vm.deliveryBoys.bonus_min_amount,
-                                            expression:
-                                              "deliveryBoys.bonus_min_amount",
-                                          },
-                                        ],
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "number",
-                                          min: "0",
-                                          step: "0.1",
-                                          required: "",
-                                          name: "bonus_min_amount",
-                                          id: "bonus_min_amount",
-                                          placeholder: "Minimum bonus amount",
-                                          readonly:
-                                            this.$roleDeliveryBoy ===
-                                            this.login_user.role.name,
-                                        },
-                                        domProps: {
-                                          value:
-                                            _vm.deliveryBoys.bonus_min_amount,
-                                        },
-                                        on: {
-                                          input: [
-                                            function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.deliveryBoys,
-                                                "bonus_min_amount",
-                                                $event.target.value
-                                              )
-                                            },
-                                            _vm.validateBonusMinAmount,
-                                          ],
-                                        },
-                                      }),
-                                      _vm._v(" "),
-                                      this.$roleDeliveryBoy !==
-                                      this.login_user.role.name
-                                        ? _c(
-                                            "span",
-                                            {
-                                              staticClass:
-                                                "text text-primary font-size-13",
-                                            },
-                                            [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "set_0_if_you_want_to_remove_limit"
-                                                  )
-                                                )
-                                              ),
-                                            ]
-                                          )
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      _vm.bonusMinAmountValidationError
-                                        ? _c("span", { staticClass: "error" }, [
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "row mt-2" }, [
+                                    _c("div", { staticClass: "col-md-3" }, [
+                                      _c("div", { staticClass: "form-group" }, [
+                                        _c(
+                                          "label",
+                                          { attrs: { for: "bonus_type" } },
+                                          [
                                             _vm._v(
-                                              _vm._s(
-                                                _vm.bonusMinAmountValidationError
-                                              )
+                                              _vm._s(_vm.__("bonus_type")) +
+                                                "\n                                                       "
                                             ),
-                                          ])
-                                        : _vm._e(),
-                                    ]),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              _vm.deliveryBoys.bonus_type == 1
-                                ? _c("div", { staticClass: "col-md-3" }, [
-                                    _c("div", { staticClass: "form-group" }, [
-                                      _c(
-                                        "label",
-                                        { attrs: { for: "bonus_max_amount" } },
-                                        [
-                                          _vm._v(
-                                            _vm._s(
-                                              _vm.__("maximum_bonus_amount")
-                                            )
-                                          ),
-                                        ]
-                                      ),
-                                      _vm._v(" "),
-                                      _c("input", {
-                                        directives: [
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "select",
                                           {
-                                            name: "model",
-                                            rawName: "v-model",
-                                            value:
-                                              _vm.deliveryBoys.bonus_max_amount,
-                                            expression:
-                                              "deliveryBoys.bonus_max_amount",
-                                          },
-                                        ],
-                                        staticClass: "form-control",
-                                        attrs: {
-                                          type: "number",
-                                          min: "0",
-                                          step: "0.1",
-                                          required: "",
-                                          name: "bonus_max_amount",
-                                          id: "bonus_max_amount",
-                                          placeholder: _vm.__(
-                                            "maximum_bonus_amount"
-                                          ),
-                                          readonly:
-                                            this.$roleDeliveryBoy ===
-                                            this.login_user.role.name,
-                                        },
-                                        domProps: {
-                                          value:
-                                            _vm.deliveryBoys.bonus_max_amount,
-                                        },
-                                        on: {
-                                          input: [
-                                            function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.deliveryBoys,
-                                                "bonus_max_amount",
-                                                $event.target.value
-                                              )
+                                            directives: [
+                                              {
+                                                name: "model",
+                                                rawName: "v-model",
+                                                value:
+                                                  _vm.deliveryBoys.bonus_type,
+                                                expression:
+                                                  "deliveryBoys.bonus_type",
+                                              },
+                                            ],
+                                            staticClass:
+                                              "form-control form-select",
+                                            attrs: {
+                                              name: "bonus_type",
+                                              id: "bonus_type",
+                                              disabled:
+                                                this.$roleDeliveryBoy ===
+                                                this.login_user.role.name,
                                             },
-                                            _vm.validateBonusMaxAmount,
-                                          ],
-                                        },
-                                      }),
-                                      _vm._v(" "),
-                                      this.$roleDeliveryBoy !==
-                                      this.login_user.role.name
-                                        ? _c(
-                                            "span",
-                                            {
-                                              staticClass:
-                                                "text text-primary font-size-13",
-                                            },
-                                            [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.__(
-                                                    "set_0_if_you_want_to_remove_limit"
+                                            on: {
+                                              change: [
+                                                function ($event) {
+                                                  var $$selectedVal =
+                                                    Array.prototype.filter
+                                                      .call(
+                                                        $event.target.options,
+                                                        function (o) {
+                                                          return o.selected
+                                                        }
+                                                      )
+                                                      .map(function (o) {
+                                                        var val =
+                                                          "_value" in o
+                                                            ? o._value
+                                                            : o.value
+                                                        return val
+                                                      })
+                                                  _vm.$set(
+                                                    _vm.deliveryBoys,
+                                                    "bonus_type",
+                                                    $event.target.multiple
+                                                      ? $$selectedVal
+                                                      : $$selectedVal[0]
                                                   )
-                                                )
-                                              ),
-                                            ]
-                                          )
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      _vm.bonusMaxAmountValidationError
-                                        ? _c("span", { staticClass: "error" }, [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.bonusMaxAmountValidationError
-                                              )
+                                                },
+                                                _vm.changeBonusType,
+                                              ],
+                                            },
+                                          },
+                                          [
+                                            _c(
+                                              "option",
+                                              { attrs: { value: "" } },
+                                              [_vm._v(_vm._s(_vm.__("select")))]
                                             ),
-                                          ])
-                                        : _vm._e(),
+                                            _vm._v(" "),
+                                            _c(
+                                              "option",
+                                              { attrs: { value: "1" } },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(_vm.__("commission"))
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "option",
+                                              { attrs: { value: "0" } },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.__("fixed_salaried")
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                          ]
+                                        ),
+                                      ]),
                                     ]),
-                                  ])
-                                : _vm._e(),
-                            ]),
-                          ]),
+                                    _vm._v(" "),
+                                    _vm.deliveryBoys.bonus_type == 1
+                                      ? _c("div", { staticClass: "col-md-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c(
+                                                "label",
+                                                {
+                                                  attrs: {
+                                                    for: "bonus_percentage",
+                                                  },
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__("bonus_percentage")
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                              _vm._v(" "),
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      _vm.deliveryBoys
+                                                        .bonus_percentage,
+                                                    expression:
+                                                      "deliveryBoys.bonus_percentage",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  min: "0.1",
+                                                  max: "100",
+                                                  step: "0.1",
+                                                  name: "bonus_percentage",
+                                                  id: "bonus_percentage",
+                                                  placeholder:
+                                                    _vm.__("bonus_percentage"),
+                                                  readonly:
+                                                    this.$roleDeliveryBoy ===
+                                                    this.login_user.role.name,
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    _vm.deliveryBoys
+                                                      .bonus_percentage,
+                                                },
+                                                on: {
+                                                  input: function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      _vm.deliveryBoys,
+                                                      "bonus_percentage",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                },
+                                              }),
+                                            ]
+                                          ),
+                                        ])
+                                      : _vm._e(),
+                                    _vm._v(" "),
+                                    _vm.deliveryBoys.bonus_type == 1
+                                      ? _c("div", { staticClass: "col-md-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c(
+                                                "label",
+                                                {
+                                                  attrs: {
+                                                    for: "bonus_min_amount",
+                                                  },
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "minimum_bonus_amount"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                              _vm._v(" "),
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      _vm.deliveryBoys
+                                                        .bonus_min_amount,
+                                                    expression:
+                                                      "deliveryBoys.bonus_min_amount",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  min: "0",
+                                                  step: "0.1",
+                                                  required: "",
+                                                  name: "bonus_min_amount",
+                                                  id: "bonus_min_amount",
+                                                  placeholder:
+                                                    "Minimum bonus amount",
+                                                  readonly:
+                                                    this.$roleDeliveryBoy ===
+                                                    this.login_user.role.name,
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    _vm.deliveryBoys
+                                                      .bonus_min_amount,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        _vm.deliveryBoys,
+                                                        "bonus_min_amount",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    _vm.validateBonusMinAmount,
+                                                  ],
+                                                },
+                                              }),
+                                              _vm._v(" "),
+                                              this.$roleDeliveryBoy !==
+                                              this.login_user.role.name
+                                                ? _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "text text-primary font-size-13",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "set_0_if_you_want_to_remove_limit"
+                                                          )
+                                                        )
+                                                      ),
+                                                    ]
+                                                  )
+                                                : _vm._e(),
+                                              _vm._v(" "),
+                                              _vm.bonusMinAmountValidationError
+                                                ? _c(
+                                                    "span",
+                                                    { staticClass: "error" },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.bonusMinAmountValidationError
+                                                        )
+                                                      ),
+                                                    ]
+                                                  )
+                                                : _vm._e(),
+                                            ]
+                                          ),
+                                        ])
+                                      : _vm._e(),
+                                    _vm._v(" "),
+                                    _vm.deliveryBoys.bonus_type == 1
+                                      ? _c("div", { staticClass: "col-md-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c(
+                                                "label",
+                                                {
+                                                  attrs: {
+                                                    for: "bonus_max_amount",
+                                                  },
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "maximum_bonus_amount"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                              _vm._v(" "),
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      _vm.deliveryBoys
+                                                        .bonus_max_amount,
+                                                    expression:
+                                                      "deliveryBoys.bonus_max_amount",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  min: "0",
+                                                  step: "0.1",
+                                                  required: "",
+                                                  name: "bonus_max_amount",
+                                                  id: "bonus_max_amount",
+                                                  placeholder: _vm.__(
+                                                    "maximum_bonus_amount"
+                                                  ),
+                                                  readonly:
+                                                    this.$roleDeliveryBoy ===
+                                                    this.login_user.role.name,
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    _vm.deliveryBoys
+                                                      .bonus_max_amount,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        _vm.deliveryBoys,
+                                                        "bonus_max_amount",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    _vm.validateBonusMaxAmount,
+                                                  ],
+                                                },
+                                              }),
+                                              _vm._v(" "),
+                                              this.$roleDeliveryBoy !==
+                                              this.login_user.role.name
+                                                ? _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "text text-primary font-size-13",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "set_0_if_you_want_to_remove_limit"
+                                                          )
+                                                        )
+                                                      ),
+                                                    ]
+                                                  )
+                                                : _vm._e(),
+                                              _vm._v(" "),
+                                              _vm.bonusMaxAmountValidationError
+                                                ? _c(
+                                                    "span",
+                                                    { staticClass: "error" },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.bonusMaxAmountValidationError
+                                                        )
+                                                      ),
+                                                    ]
+                                                  )
+                                                : _vm._e(),
+                                            ]
+                                          ),
+                                        ])
+                                      : _vm._e(),
+                                  ]),
+                                ]
+                              )
+                            : _vm._e(),
                           _vm._v(" "),
                           _vm.deliveryBoys.id &&
                           this.$roleDeliveryBoy !== this.login_user.role.name

@@ -687,9 +687,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     };
   },
   computed: {
+    visibleFields: function visibleFields() {
+      if (this.$route.path.includes('/seller')) {
+        return this.fields.filter(function (f) {
+          return f.key !== 'bonus_percentage';
+        });
+      }
+      return this.fields;
+    },
     sortOptions: function sortOptions() {
       // Create an options list from our fields
-      return this.fields.filter(function (f) {
+      return this.visibleFields.filter(function (f) {
         return f.sortable;
       }).map(function (f) {
         return {
@@ -2292,7 +2300,7 @@ var render = function () {
             _c("b-table", {
               attrs: {
                 items: _vm.translatedDeliveryBoys,
-                fields: _vm.fields,
+                fields: _vm.visibleFields,
                 "current-page": _vm.currentPage,
                 "per-page": _vm.perPage,
                 filter: _vm.filter,

@@ -434,7 +434,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue2_daterange_picker_dist_vue2_daterange_picker_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.trip-type-toggle .btn[data-v-a90058fc]:first-child { border-top-left-radius: 50rem; border-bottom-left-radius: 50rem;\n}\n.trip-type-toggle .btn[data-v-a90058fc]:last-child  { border-top-right-radius: 50rem; border-bottom-right-radius: 50rem;\n}\n.vue-daterange-picker[data-v-a90058fc] {\n    min-width: 220px;\n}\n.bg-purple[data-v-a90058fc] { background-color: #7c3aed !important; color: #fff !important;\n}\n.recon-pill[data-v-a90058fc] {\n    display: inline-flex; align-items: center;\n    font-size: 11px; font-weight: 700;\n    padding: 4px 10px; border-radius: 20px;\n}\n.recon-pill--grey[data-v-a90058fc]   { background: #f3f4f6; color: #6b7280;\n}\n.recon-pill--orange[data-v-a90058fc] { background: #fff7ed; color: #ea580c;\n}\n.recon-pill--green[data-v-a90058fc]  { background: #dcfce7; color: #16a34a;\n}\n.recon-pill--blue[data-v-a90058fc]   { background: #e0f2fe; color: #0284c7;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.trip-type-toggle .btn[data-v-a90058fc]:first-child { border-top-left-radius: 50rem; border-bottom-left-radius: 50rem;\n}\n.trip-type-toggle .btn[data-v-a90058fc]:last-child  { border-top-right-radius: 50rem; border-bottom-right-radius: 50rem;\n}\n.vue-daterange-picker[data-v-a90058fc] {\n    min-width: 220px;\n}\n.recon-pill[data-v-a90058fc] {\n    display: inline-flex; align-items: center;\n    font-size: 11px; font-weight: 700;\n    padding: 4px 10px; border-radius: 20px;\n}\n.recon-pill--grey[data-v-a90058fc]   { background: #f3f4f6; color: #6b7280;\n}\n.recon-pill--orange[data-v-a90058fc] { background: #fff7ed; color: #ea580c;\n}\n.recon-pill--green[data-v-a90058fc]  { background: #dcfce7; color: #16a34a;\n}\n.recon-pill--blue[data-v-a90058fc]   { background: #e0f2fe; color: #0284c7;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -901,7 +901,7 @@ var render = function () {
                       _vm._v(_vm._s(_vm.__("date"))),
                     ]),
                     _vm._v(" "),
-                    _c("th", [_vm._v(_vm._s(_vm.__("type")))]),
+                    _c("th", [_vm._v(_vm._s(_vm.__("slip_no")))]),
                     _vm._v(" "),
                     _c("th", [_vm._v(_vm._s(_vm.__("driver_rider")))]),
                     _vm._v(" "),
@@ -934,32 +934,17 @@ var render = function () {
                       ]),
                       _vm._v(" "),
                       _c("td", [
-                        _c(
-                          "span",
-                          {
-                            staticClass: "badge",
-                            class:
-                              row.type === "driver" ? "bg-info" : "bg-purple",
-                          },
-                          [
-                            _c("i", {
-                              staticClass: "me-1",
-                              class:
-                                row.type === "driver"
-                                  ? "fa fa-truck"
-                                  : "fa fa-user-tie",
-                            }),
-                            _vm._v(
-                              "\n                                            " +
-                                _vm._s(
-                                  row.type === "driver"
-                                    ? _vm.__("driver")
-                                    : _vm.__("salesman")
-                                ) +
-                                "\n                                        "
-                            ),
-                          ]
-                        ),
+                        row.trip_no
+                          ? _c("span", { staticClass: "badge bg-info" }, [
+                              _c("i", { staticClass: "fa fa-truck me-1" }),
+                              _vm._v(
+                                _vm._s(row.trip_no) +
+                                  "\n                                        "
+                              ),
+                            ])
+                          : _c("span", { staticClass: "text-muted small" }, [
+                              _vm._v("-"),
+                            ]),
                       ]),
                       _vm._v(" "),
                       _c("td", [

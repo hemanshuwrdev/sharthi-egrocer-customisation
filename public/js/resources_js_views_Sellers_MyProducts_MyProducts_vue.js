@@ -1220,8 +1220,8 @@ var render = function () {
                   key: "cell(unit)",
                   fn: function (row) {
                     return [
-                      row.item.secondary_unit
-                        ? _c("span", [_vm._v(_vm._s(row.item.secondary_unit))])
+                      row.item.unit
+                        ? _c("span", [_vm._v(_vm._s(row.item.unit))])
                         : _c("span", [_vm._v("—")]),
                     ]
                   },

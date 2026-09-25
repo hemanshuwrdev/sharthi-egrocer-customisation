@@ -707,6 +707,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
 
 
 
@@ -6989,6 +6990,14 @@ var render = function () {
                                 ),
                               ]
                             ),
+                            _vm._v(" "),
+                            _vm.settlement.trip_no
+                              ? _c(
+                                  "span",
+                                  { staticClass: "badge bg-secondary me-1" },
+                                  [_vm._v(_vm._s(_vm.settlement.trip_no))]
+                                )
+                              : _vm._e(),
                             _vm._v(
                               "\n                                " +
                                 _vm._s(_vm.settlement.date) +

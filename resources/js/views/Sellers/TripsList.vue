@@ -77,7 +77,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th class="ps-3">{{ __('date') }}</th>
-                                        <th>{{ __('type') }}</th>
+                                        <th>{{ __('slip_no') }}</th>
                                         <th>{{ __('driver_rider') }}</th>
                                         <th class="text-end">{{ __('cash') }}</th>
                                         <th class="text-center">{{ __('status') }}</th>
@@ -91,10 +91,10 @@
                                             <span class="fw-bold">{{ row.date }}</span>
                                         </td>
                                         <td>
-                                            <span class="badge" :class="row.type === 'driver' ? 'bg-info' : 'bg-purple'">
-                                                <i :class="row.type === 'driver' ? 'fa fa-truck' : 'fa fa-user-tie'" class="me-1"></i>
-                                                {{ row.type === 'driver' ? __('driver') : __('salesman') }}
+                                            <span v-if="row.trip_no" class="badge bg-info">
+                                                <i class="fa fa-truck me-1"></i>{{ row.trip_no }}
                                             </span>
+                                            <span v-else class="text-muted small">-</span>
                                         </td>
                                         <td>
                                             <div class="fw-semibold">{{ row.person_name }}</div>
@@ -284,8 +284,6 @@ export default {
 .vue-daterange-picker {
     min-width: 220px;
 }
-
-.bg-purple { background-color: #7c3aed !important; color: #fff !important; }
 
 .recon-pill {
     display: inline-flex; align-items: center;

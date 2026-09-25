@@ -309,7 +309,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="list-group-item m-2">
+                                    <div class="list-group-item m-2" v-if="!$route.path.includes('/seller')">
                                         <div class="d-flex justify-content-between align-content-center">
                                             <h6>{{ __('delivery_boy_bonus_details') }}</h6>
                                             <b-button-group v-if="this.$roleDeliveryBoy !== this.login_user.role.name">
@@ -509,10 +509,10 @@ export default {
                 status: 0,
                 remark: "",
 
-                bonus_type: "",
-                bonus_percentage: "",
-                bonus_min_amount: "",
-                bonus_max_amount: "",
+                bonus_type: 0,
+                bonus_percentage: 0,
+                bonus_min_amount: 0,
+                bonus_max_amount: 0,
             },
             mobilevalidationError: null,
             dobvalidationError: null,
@@ -954,10 +954,10 @@ export default {
                 (this.deliveryBoys.city_ids || []).forEach((id, i) => fd.append('city_ids[' + i + ']', id));
                 fd.append('status', this.deliveryBoys.status);
                 fd.append('remark', this.deliveryBoys.remark ?? '');
-                fd.append('bonus_type', this.deliveryBoys.bonus_type);
-                fd.append('bonus_percentage', this.deliveryBoys.bonus_percentage ?? 0);
-                fd.append('bonus_min_amount', this.deliveryBoys.bonus_min_amount ?? 0);
-                fd.append('bonus_max_amount', this.deliveryBoys.bonus_max_amount ?? 0);
+                fd.append('bonus_type', this.deliveryBoys.bonus_type || 0);
+                fd.append('bonus_percentage', this.deliveryBoys.bonus_percentage || 0);
+                fd.append('bonus_min_amount', this.deliveryBoys.bonus_min_amount || 0);
+                fd.append('bonus_max_amount', this.deliveryBoys.bonus_max_amount || 0);
 
                 // password: required on CREATE; on EDIT send only when filled
                 if (!isEdit) {

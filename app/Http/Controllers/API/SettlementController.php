@@ -98,6 +98,31 @@ class SettlementController extends Controller
         return $status;
     }
 
+    /**
+     * Payments belonging to one driver settlement row (one trip). When the row is
+     * tied to a loading slip, only that slip's orders count — this is what keeps
+     * two same-day trips from being reconciled/closed as one merged blob. Rows
+     * without a slip (legacy/slip-less payments) fall back to the old same-day grouping.
+     */
+    private function paymentsForDriverSettlement(DriverSettlement $ds)
+    {
+        $query = OrderPayment::where('delivery_boy_id', $ds->delivery_boy_id);
+
+        if ($ds->loading_slip_id) {
+            $query->whereIn('order_id', Order::where('loading_slip_id', $ds->loading_slip_id)->pluck('id'));
+        } else {
+            $date = $ds->settlement_date instanceof Carbon
+                ? $ds->settlement_date->toDateString()
+                : (string) $ds->settlement_date;
+            $query->whereDate('created_at', $date)
+                  ->whereIn('order_id', function ($q) {
+                      $q->select('id')->from('orders')->whereNull('loading_slip_id');
+                  });
+        }
+
+        return $query->get();
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     //  Admin endpoints
     // ──────────────────────────────────────────────────────────────────────────
@@ -1256,8 +1281,13 @@ class SettlementController extends Controller
             // settlement.total_cash stays 0 until driver locks EOD, so we can't use it here.
             $driverIds = DeliveryBoy::where('seller_id', $seller->id)->pluck('id');
 
+            // Grouped by loading slip so two trips a driver runs on the same day stay
+            // two rows, not one merged row. Orders never assigned a slip (legacy/edge
+            // cases) fall back to the old per-day grouping via the CASE below.
             $driverAgg = DB::table('order_payments')
                 ->join('delivery_boys', 'delivery_boys.id', '=', 'order_payments.delivery_boy_id')
+                ->join('orders', 'orders.id', '=', 'order_payments.order_id')
+                ->leftJoin('loading_slips', 'loading_slips.id', '=', 'orders.loading_slip_id')
                 ->whereIn('order_payments.delivery_boy_id', $driverIds)
                 ->when($fromDate, fn ($q) => $q->whereDate('order_payments.created_at', '>=', $fromDate))
                 ->when($toDate, fn ($q) => $q->whereDate('order_payments.created_at', '<=', $toDate))
@@ -1266,7 +1296,9 @@ class SettlementController extends Controller
                     delivery_boys.name  as person_name,
                     delivery_boys.mobile as person_mobile,
                     delivery_boys.country_code as person_country_code,
-                    DATE(order_payments.created_at) as pay_date,
+                    MAX(orders.loading_slip_id) as loading_slip_id,
+                    MAX(loading_slips.slip_no) as slip_no,
+                    DATE(MIN(order_payments.created_at)) as pay_date,
                     ROUND(SUM(IF(order_payments.method="cash",      order_payments.amount, 0)), 2) as total_cash,
                     ROUND(SUM(IF(order_payments.method="upi",       order_payments.amount, 0)), 2) as total_upi,
                     ROUND(SUM(IF(order_payments.method="cheque",    order_payments.amount, 0)), 2) as total_cheque,
@@ -1274,27 +1306,39 @@ class SettlementController extends Controller
                     COUNT(DISTINCT order_payments.order_id) as total_orders,
                     MAX(order_payments.created_at) as last_payment_at
                 ')
-                ->groupByRaw('order_payments.delivery_boy_id, delivery_boys.name, delivery_boys.mobile, DATE(order_payments.created_at)')
+                ->groupByRaw('
+                    order_payments.delivery_boy_id, delivery_boys.name, delivery_boys.mobile,
+                    COALESCE(orders.loading_slip_id, 0),
+                    (CASE WHEN orders.loading_slip_id IS NULL THEN DATE(order_payments.created_at) ELSE NULL END)
+                ')
                 ->get();
 
             // Load settlements as a lookup map for reconciliation meta (cash_received, recon_status, etc.)
             $driverSettlements = DriverSettlement::where('seller_id', $seller->id)
                 ->get()
-                ->keyBy(fn ($ds) => $ds->delivery_boy_id . '_' . (
-                    $ds->settlement_date instanceof Carbon
-                        ? $ds->settlement_date->format('Y-m-d')
-                        : (string) $ds->settlement_date
-                ));
+                ->keyBy(fn ($ds) => $ds->loading_slip_id
+                    ? 'slip_' . $ds->loading_slip_id
+                    : 'day_' . $ds->delivery_boy_id . '_' . (
+                        $ds->settlement_date instanceof Carbon
+                            ? $ds->settlement_date->format('Y-m-d')
+                            : (string) $ds->settlement_date
+                    ));
 
             foreach ($driverAgg as $agg) {
                 if ($filter && stripos($agg->person_name ?? '', $filter) === false) continue;
-                $key = $agg->delivery_boy_id . '_' . $agg->pay_date;
+                $key = $agg->loading_slip_id
+                    ? 'slip_' . $agg->loading_slip_id
+                    : 'day_' . $agg->delivery_boy_id . '_' . $agg->pay_date;
                 $ds  = $driverSettlements->get($key);
 
                 // Ensure a settlement row exists so the detail view has a valid ID to link to.
                 if (!$ds) {
                     $ds = DriverSettlement::firstOrCreate(
-                        ['delivery_boy_id' => $agg->delivery_boy_id, 'settlement_date' => $agg->pay_date],
+                        [
+                            'delivery_boy_id' => $agg->delivery_boy_id,
+                            'loading_slip_id' => $agg->loading_slip_id,
+                            'settlement_date' => $agg->pay_date,
+                        ],
                         ['seller_id' => $seller->id, 'total_orders' => 0, 'total_cash' => 0,
                          'total_upi' => 0, 'total_cheque' => 0, 'total_signature' => 0, 'status' => 'open']
                     );
@@ -1307,6 +1351,7 @@ class SettlementController extends Controller
                 $rows->push([
                     'id'                   => $ds->id,
                     'type'                 => 'driver',
+                    'trip_no'              => $agg->slip_no,
                     'person_name'          => $agg->person_name ?: '-',
                     'person_mobile'        => $agg->person_mobile ?? '',
                     'person_country_code'  => $agg->person_country_code ?? '+91',
@@ -1320,7 +1365,7 @@ class SettlementController extends Controller
                     'reconciliation_status'=> $ds->reconciliation_status ?? 'unreconciled',
                     'status'               => $effectiveStatus,
                     'status_text'          => self::STATUS_TEXT_MAP[$effectiveStatus] ?? ucfirst($effectiveStatus),
-                    'sort_key'             => $agg->pay_date . '_' . $agg->delivery_boy_id,
+                    'sort_key'             => $agg->pay_date . '_' . $agg->delivery_boy_id . '_' . ($agg->loading_slip_id ?? 0),
                 ]);
             }
         }
@@ -1379,6 +1424,7 @@ class SettlementController extends Controller
                 $rows->push([
                     'id'                   => $ss->id,
                     'type'                 => 'salesman',
+                    'trip_no'              => null,
                     'person_name'          => $agg->person_name ?: '-',
                     'person_mobile'        => $agg->person_mobile ?? '',
                     'person_country_code'  => $agg->person_country_code ?? '+91',
@@ -1430,7 +1476,7 @@ class SettlementController extends Controller
             $payments = OrderPayment::where('salesman_id', $personId)->whereDate('created_at', $date)->get();
             $person   = ['name' => $settlement->salesman?->name ?? '-', 'mobile' => $settlement->salesman?->mobile ?? ''];
         } else {
-            $settlement = DriverSettlement::with('deliveryBoy:id,name,mobile')->find($id);
+            $settlement = DriverSettlement::with(['deliveryBoy:id,name,mobile', 'loadingSlip:id,slip_no'])->find($id);
             // verify this driver belongs to the current seller
             if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
                 return CommonHelper::responseError('settlement_not_found');
@@ -1440,7 +1486,7 @@ class SettlementController extends Controller
                             ? $settlement->settlement_date->toDateString()
                             : (string) $settlement->settlement_date;
             $personId = $settlement->delivery_boy_id;
-            $payments = OrderPayment::where('delivery_boy_id', $personId)->whereDate('created_at', $date)->get();
+            $payments = $this->paymentsForDriverSettlement($settlement);
             $person   = ['name' => $settlement->deliveryBoy?->name ?? '-', 'mobile' => $settlement->deliveryBoy?->mobile ?? ''];
         }
 
@@ -1521,6 +1567,7 @@ class SettlementController extends Controller
         $settlementData = [
             'id'                   => $settlement->id,
             'type'                 => $type,
+            'trip_no'              => $type === 'driver' ? ($settlement->loadingSlip?->slip_no ?? null) : null,
             'person'               => $person,
             'date'                 => $date,
             'total_orders'         => $settlement->total_orders,
@@ -1596,13 +1643,13 @@ class SettlementController extends Controller
             }
         }
 
-        $date      = $settlement->settlement_date instanceof Carbon
-                        ? $settlement->settlement_date->toDateString()
-                        : (string) $settlement->settlement_date;
-        $personKey = $type === 'salesman' ? 'salesman_id' : 'delivery_boy_id';
-        $personId  = $type === 'salesman' ? $settlement->salesman_id : $settlement->delivery_boy_id;
-
-        $payments     = OrderPayment::where($personKey, $personId)->whereDate('created_at', $date)->get();
+        $payments = $type === 'salesman'
+            ? OrderPayment::where('salesman_id', $settlement->salesman_id)
+                ->whereDate('created_at', $settlement->settlement_date instanceof Carbon
+                    ? $settlement->settlement_date->toDateString()
+                    : (string) $settlement->settlement_date)
+                ->get()
+            : $this->paymentsForDriverSettlement($settlement);
         $cashExpected = round($payments->where('method', 'cash')->sum('amount'), 2);
         $cashReceived = (float) $request->cash_received;
         $diff         = round($cashExpected - $cashReceived, 2);
@@ -1638,13 +1685,13 @@ class SettlementController extends Controller
                 return CommonHelper::responseError('settlement_not_found');
             }
         }
-        $date      = $settlement->settlement_date instanceof \Carbon\Carbon
-                        ? $settlement->settlement_date->toDateString()
-                        : (string) $settlement->settlement_date;
-        $personKey = $type === 'salesman' ? 'salesman_id' : 'delivery_boy_id';
-        $personId  = $type === 'salesman' ? $settlement->salesman_id : $settlement->delivery_boy_id;
-
-        $payments = OrderPayment::where($personKey, $personId)->whereDate('created_at', $date)->get();
+        $payments = $type === 'salesman'
+            ? OrderPayment::where('salesman_id', $settlement->salesman_id)
+                ->whereDate('created_at', $settlement->settlement_date instanceof \Carbon\Carbon
+                    ? $settlement->settlement_date->toDateString()
+                    : (string) $settlement->settlement_date)
+                ->get()
+            : $this->paymentsForDriverSettlement($settlement);
 
         if ($settlement->status === 'reconciled') {
             // Allow re-close only when new payments arrived after the last reconciliation

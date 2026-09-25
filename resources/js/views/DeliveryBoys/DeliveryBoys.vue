@@ -38,7 +38,7 @@
                 </div>
             </div>
             <div class="table-responsive">
-                            <b-table :items="translatedDeliveryBoys" :fields="fields" :current-page="currentPage"
+                            <b-table :items="translatedDeliveryBoys" :fields="visibleFields" :current-page="currentPage"
                                 :per-page="perPage" :filter="filter" :filter-included-fields="filterOn"
                                 :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection"
                                 :bordered="true" :busy="isLoading" stacked="md" show-empty small>
@@ -198,6 +198,12 @@ export default {
         }
     },
     computed: {
+        visibleFields() {
+            if (this.$route.path.includes('/seller')) {
+                return this.fields.filter(f => f.key !== 'bonus_percentage');
+            }
+            return this.fields;
+        },
         translatedDeliveryBoys() {
             if (!this.currentLanguageId || !Array.isArray(this.deliveryBoys)) {
                 return this.deliveryBoys;
@@ -232,7 +238,7 @@ export default {
         },
         sortOptions() {
             // Create an options list from our fields
-            return this.fields
+            return this.visibleFields
                 .filter(f => f.sortable)
                 .map(f => {
                     return { text: f.label, value: f.key }

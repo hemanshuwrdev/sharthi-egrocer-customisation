@@ -81,7 +81,7 @@
                                     </template>
 
                                     <template #cell(unit)="row">
-                                        <span v-if="row.item.secondary_unit">{{ row.item.secondary_unit }}</span>
+                                        <span v-if="row.item.unit">{{ row.item.unit }}</span>
                                         <span v-else>—</span>
                                     </template>
 
