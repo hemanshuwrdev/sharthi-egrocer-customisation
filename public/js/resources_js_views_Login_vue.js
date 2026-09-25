@@ -112,6 +112,10 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -155,6 +159,15 @@ __webpack_require__.r(__webpack_exports__);
         vm.isLoading = false;
         var data = res.data;
         if (data.status === 1) {
+          // Sarthi: this admin-domain login form must not accept a distributor
+          // login — currently nothing stops it, only the post-login router
+          // redirect confines a seller-role user to their own pages. Block it
+          // here directly so distributors are told to use the Distributor Panel
+          // URL instead of silently landing on the same panel from this domain.
+          if (!_this.isDistributorHost && data.data.user.role_id === 3) {
+            vm.showError('Distributors must log in via the Distributor Panel.');
+            return;
+          }
           _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].login(data.data.access_token, data.data.user);
           _this.$router.push('/dashboard');
           if (data.data.subscription_warning) {
@@ -549,28 +562,7 @@ var render = function () {
                   ],
                   1
                 ),
-                _vm._v(" "),
-                !_vm.isDistributorHost
-                  ? [
-                      _c("hr"),
-                      _vm._v(" "),
-                      _c(
-                        "router-link",
-                        {
-                          staticClass:
-                            "btn btn-primary btn-block btn-lg shadow-lg mt-2",
-                          attrs: { to: "/seller/login" },
-                        },
-                        [
-                          _vm._v(
-                            "\n                            Distributor Panel"
-                          ),
-                        ]
-                      ),
-                    ]
-                  : _vm._e(),
-              ],
-              2
+              ]
             ),
             _vm._v(" "),
             _c("div", { staticClass: "auth-copyright" }, [

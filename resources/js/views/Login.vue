@@ -48,11 +48,15 @@
                             <span v-else class="bi bi-arrow-right"></span>
                         </button>
 
+                        <!-- Sarthi: admin panel and distributor panel are now separate
+                             domains/apps — this cross-link is no longer needed, kept for
+                             reference, not deleted.
                         <template v-if="!isDistributorHost">
                             <hr>
                             <router-link to="/seller/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-2">
                                 Distributor Panel</router-link>
                         </template>
+                        -->
                         <!-- <router-link to="/delivery_boy/login" class="btn btn-primary btn-block btn-lg shadow-lg mt-2">
                             Driver Panel</router-link> -->
 
@@ -143,6 +147,15 @@ export default {
                 vm.isLoading = false;
                 let data = res.data;
                 if (data.status === 1) {
+                    // Sarthi: this admin-domain login form must not accept a distributor
+                    // login — currently nothing stops it, only the post-login router
+                    // redirect confines a seller-role user to their own pages. Block it
+                    // here directly so distributors are told to use the Distributor Panel
+                    // URL instead of silently landing on the same panel from this domain.
+                    if (!this.isDistributorHost && data.data.user.role_id === 3) {
+                        vm.showError('Distributors must log in via the Distributor Panel.');
+                        return;
+                    }
                     Auth.login(data.data.access_token, data.data.user);
                     this.$router.push('/dashboard');
                     if (data.data.subscription_warning) {
