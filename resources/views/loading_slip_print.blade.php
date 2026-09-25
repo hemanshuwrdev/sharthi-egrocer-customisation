@@ -342,6 +342,14 @@
             margin-bottom: 12px;
         }
 
+        /* A tall row (long product name wrapping to 2-3 lines) could otherwise get
+           split mid-content right at a page boundary, leaving a stray near-empty
+           fragment on the next page above the following chunk's table. */
+        .udaan-table tr,
+        .udaan-table thead {
+            page-break-inside: avoid;
+        }
+
         .udaan-table th,
         .udaan-table td {
             border: 1px solid #777;
@@ -363,6 +371,8 @@
             display: flex;
             justify-content: flex-end;
             margin-bottom: 15px;
+            padding-top: 20px;
+            page-break-inside: avoid;
         }
 
         .udaan-totals-table {
@@ -656,9 +666,18 @@
                 </div>
 
                 <!-- Items Table -->
+                @php
+                    $totalBillQty = 0;
+                    $totalNetTaxable = 0;
+                    $totalTaxAmount = 0;
+                    $totalBillAmt = 0;
+                    $srNo = 0;
+                @endphp
+              
                 <table class="udaan-table">
                     <thead>
                         <tr>
+                            <th style="width: 35px; text-align: center;">Sr No.</th>
                             <th>Description</th>
                             <th style="width: 60px; text-align: center;">HSN</th>
                             <th style="width: 45px; text-align: center;">Qty</th>
@@ -671,12 +690,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            $totalBillQty = 0;
-                            $totalNetTaxable = 0;
-                            $totalTaxAmount = 0;
-                            $totalBillAmt = 0;
-                        @endphp
                         @foreach ($order->items as $itemIndex => $item)
                             @php
                                 $pkgFormat = '';
@@ -723,10 +736,13 @@
                                 $totalNetTaxable += $netTaxable;
                                 $totalTaxAmount += $itemTax;
                                 $totalBillAmt += $itemTotal;
+                                $srNo++;
                             @endphp
                             <tr>
+                                <td style="text-align: center;">{{ $srNo }}</td>
                                 <td>
                                     <strong>{{ $item->product_name }}</strong>
+                                    <br><span style="color: #555; font-size: 9px;">HSN: {{ $hsn }}</span>
                                     @if ($pkgFormat)
                                         <br><span style="color: #111; font-weight: bold; font-size: 10px;">Format:
                                             {{ $pkgFormat }}</span>
@@ -756,8 +772,8 @@
                                 </td>
                             </tr>
                         @endforeach
-                        <!-- Total row -->
                         <tr style="font-weight: bold; background-color: #f2f2f2;">
+                            <td></td>
                             <td>Total</td>
                             <td></td>
                             <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
@@ -811,6 +827,33 @@
                         </tr>
                     </table>
                 </div>
+
+                @if (isset($seller) && (!empty($seller->bank_name) || !empty($seller->account_number)))
+                    <!-- Distributor Bank Details -->
+                    <div style="border: 1px solid #ddd; padding: 10px 15px; margin-bottom: 15px;">
+                        <div style="font-size: 12px; color: #222; margin-bottom: 8px;"><strong>Bank Details</strong></div>
+                        <table width="100%" style="border-collapse: collapse;">
+                            <tr>
+                                <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
+                                    Bank Name<br>
+                                    <strong style="color: #222;">{{ $seller->bank_name ?: '-' }}</strong>
+                                </td>
+                                <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
+                                    Account Number<br>
+                                    <strong style="color: #222;">{{ $seller->account_number ?: '-' }}</strong>
+                                </td>
+                                <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
+                                    Bank's IFSC Code<br>
+                                    <strong style="color: #222;">{{ $seller->bank_ifsc_code ?: '-' }}</strong>
+                                </td>
+                                <td style="border: none; padding: 0; width: 25%; font-size: 11px; color: #555;">
+                                    Bank Account Name<br>
+                                    <strong style="color: #222;">{{ $seller->account_name ?: '-' }}</strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                @endif
 
                 <!-- Advertisement Banner -->
                 <div class="udaan-ad-banner">

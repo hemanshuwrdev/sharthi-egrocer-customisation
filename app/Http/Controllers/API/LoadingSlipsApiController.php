@@ -68,6 +68,17 @@ class LoadingSlipsApiController extends Controller
         $total = $query->count();
         $slips = $query->skip($offset)->take($limit)->get();
 
+        // DeliveryBoy model globally appends pending_order_count/translations/license
+        // URLs — each of those runs its own query when a driver is serialized, firing
+        // once per row here (N+1). This list only ever shows driver name/mobile, so hide
+        // the unused appends for this response only — the model's global $appends stay
+        // untouched, so every other screen that actually needs them is unaffected.
+        foreach ($slips as $slip) {
+            if ($slip->driver) {
+                $slip->driver->makeHidden(['pending_order_count', 'translations', 'driving_license_url', 'national_identity_card_url']);
+            }
+        }
+
         return CommonHelper::responseWithData($slips, $total);
     }
 
@@ -877,12 +888,30 @@ class LoadingSlipsApiController extends Controller
             ->get();
         $totalWeight = 0;
 
+        // Batch-load every variant + unit this order's items could need, once, instead of
+        // one MasterProductVariant::find()/ProductVariant::find()/Unit::find() per item —
+        // that was N+1 (2 queries per line item) on every order with several lines.
+        $masterVariantIds = $items->pluck('master_product_variant_id')->filter()->unique();
+        $legacyVariantIds = $items->whereNull('master_product_variant_id')->pluck('product_variant_id')->filter()->unique();
+
+        $masterVariants = $masterVariantIds->isNotEmpty()
+            ? \App\Models\MasterProductVariant::whereIn('id', $masterVariantIds)->get()->keyBy('id')
+            : collect();
+        $legacyVariants = $legacyVariantIds->isNotEmpty()
+            ? ProductVariant::whereIn('id', $legacyVariantIds)->get()->keyBy('id')
+            : collect();
+
+        $unitIds = $masterVariants->map(fn ($v) => $v->weight_unit_id ?: $v->unit_id)
+            ->merge($legacyVariants->pluck('stock_unit_id'))
+            ->filter()->unique();
+        $units = $unitIds->isNotEmpty() ? Unit::whereIn('id', $unitIds)->get()->keyBy('id') : collect();
+
         foreach ($items as $item) {
             $weightInKg = 0;
 
             if ($item->master_product_variant_id) {
                 // Master catalog system
-                $variant = \App\Models\MasterProductVariant::find($item->master_product_variant_id);
+                $variant = $masterVariants->get($item->master_product_variant_id);
                 if ($variant) {
                     // variant->weight is the weight of ONE Inner Pack (box of secondary_unit_value
                     // outer-pack units) — divide down to a per-outer-unit weight before multiplying
@@ -892,7 +921,7 @@ class LoadingSlipsApiController extends Controller
                     $weight = (float)($variant->weight ?? 0);
                     $weight = $secondaryUnitValue > 0 ? $weight / $secondaryUnitValue : $weight;
                     // weight is stored in weight_unit_id; unit_id is the selling unit (Nos/Pcs)
-                    $unit = Unit::find($variant->weight_unit_id ?: $variant->unit_id);
+                    $unit = $units->get($variant->weight_unit_id ?: $variant->unit_id);
 
                     if ($unit) {
                         $code = strtolower(trim($unit->short_code));
@@ -912,10 +941,10 @@ class LoadingSlipsApiController extends Controller
                 }
             } else {
                 // Legacy system
-                $variant = ProductVariant::find($item->product_variant_id);
+                $variant = $legacyVariants->get($item->product_variant_id);
                 if ($variant) {
                     $measurement = (float)$variant->measurement;
-                    $unit = Unit::find($variant->stock_unit_id);
+                    $unit = $units->get($variant->stock_unit_id);
 
                     if ($unit) {
                         $code = strtolower(trim($unit->short_code));

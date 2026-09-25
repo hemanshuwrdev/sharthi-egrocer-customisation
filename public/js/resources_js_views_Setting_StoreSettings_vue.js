@@ -1745,7 +1745,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       Logoerror: null,
       Panel_login_background_imgerror: null,
       Fssaierror: null,
-      tabs: [__('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'), __('seller_setting'), __('login_setting'), __('cart_setting'), __('refer_earn_setting')]
+      tabs: [__('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'), __('seller_setting'), __('login_setting'),
+      // __('cart_setting'), // Sarthi: hidden per request — not deleted, just unreachable.
+      __('refer_earn_setting')]
     }, _defineProperty(_ref, "activeTab", __('store_setting')), _defineProperty(_ref, "dateFormatDefs", [{
       value: 'd-m-Y',
       labelPrefix: 'DD-MM-YYYY'
