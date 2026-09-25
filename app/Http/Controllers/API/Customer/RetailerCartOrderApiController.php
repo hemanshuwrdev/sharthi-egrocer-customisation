@@ -660,7 +660,7 @@ class RetailerCartOrderApiController extends Controller
                             'variant_name' => implode(' | ', array_filter([
                                 $mv->sku ?? '',
                                 $mv->secondary_unit_value
-                                    ? ((int)$mv->secondary_unit_value . ' ' . ($mv->secondaryUnit?->name ?? 'units') . '/box')
+                                    ? ((int)$mv->secondary_unit_value . ' ' . ($mv->unit?->name ?? 'units') . '/' . ($mv->secondaryUnit?->name ?? 'pack'))
                                     : null,
                             ])),
                             'product_variant_id' => 0,
