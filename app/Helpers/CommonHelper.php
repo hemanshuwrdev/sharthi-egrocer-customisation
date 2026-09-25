@@ -1738,11 +1738,20 @@ class CommonHelper
     }
 
     /**
-     * Split an outer-pack price (e.g. 1 box) into outer_pack (box) and
-     * inner_pack (1 piece) price breakdown using secondary_unit_value
-     * (pieces per box). Pass null/0 outer prices through unchanged.
+     * Split a per-individual-unit price into outer_pack (the bulk pack, e.g.
+     * a Ctn) and inner_pack (the individual unit, e.g. Nos) using
+     * secondary_unit_value (individual units per bulk pack). $price is the
+     * price of ONE individual unit, as entered by the seller.
+     *
+     * outer_pack = the bulk pack — matches "Outerpack Unit" in the Master
+     * Catalog admin form. inner_pack = the individual unit — matches
+     * "Innerpack Unit". (Swapped 2026-09-25 to match that admin form's
+     * labels, which were themselves relabeled to read "outer = the big box"
+     * per plain-English intuition — previously outer_pack held the
+     * individual unit and inner_pack the bulk pack, the opposite. Any client
+     * reading price_by_unit.outer_pack/inner_pack needs updating to match.)
      */
-    public static function buildUnitWisePrice($price, $secondaryUnitValue, $outerUnitName = null, $innerUnitName = null)
+    public static function buildUnitWisePrice($price, $secondaryUnitValue, $individualUnitName = null, $bulkUnitName = null)
     {
         $price = $price !== null ? (float) $price : null;
         $step = (float) ($secondaryUnitValue ?? 0);
@@ -1750,13 +1759,13 @@ class CommonHelper
         return [
             'outer_pack' => [
                 'qty' => 1,
-                'unit' => $outerUnitName,
-                'price' => $price !== null ? round($price, 2) : null,
+                'unit' => $bulkUnitName,
+                'price' => ($price !== null && $step > 0) ? round($price * $step, 2) : $price,
             ],
             'inner_pack' => [
                 'qty' => $step > 0 ? $step : 1,
-                'unit' => $innerUnitName,
-                'price' => ($price !== null && $step > 0) ? round($price / $step, 2) : $price,
+                'unit' => $individualUnitName,
+                'price' => $price !== null ? round($price, 2) : null,
             ],
         ];
     }
@@ -1765,20 +1774,22 @@ class CommonHelper
      * Same as buildUnitWisePrice but for several price fields at once
      * (e.g. mrp, selling_price, discounted_price), keyed under outer_pack/inner_pack.
      * $prices is ['mrp' => .., 'selling_price' => .., 'discounted_price' => ..].
+     * See buildUnitWisePrice's docblock for what outer_pack/inner_pack mean.
      */
-    public static function buildUnitWisePriceSet(array $prices, $secondaryUnitValue, $outerUnitName = null, $innerUnitName = null)
+    public static function buildUnitWisePriceSet(array $prices, $secondaryUnitValue, $individualUnitName = null, $bulkUnitName = null)
     {
         $step = (float) ($secondaryUnitValue ?? 0);
-        // $price is entered by the seller as the price of ONE outer-pack (base) unit —
-        // an inner-pack (box) of $step base units costs $step times that, not a fraction of it.
+        // $price is entered by the seller as the price of ONE individual unit —
+        // a bulk pack (outer_pack) of $step individual units costs $step times
+        // that, not a fraction of it.
         $multiply = fn($price) => ($price !== null && $step > 0) ? round(((float) $price) * $step, 2) : ($price !== null ? round((float) $price, 2) : null);
         $round = fn($price) => $price !== null ? round((float) $price, 2) : null;
 
-        $outer = ['qty' => 1, 'unit' => $outerUnitName];
-        $inner = ['qty' => $step > 0 ? $step : 1, 'unit' => $innerUnitName];
+        $outer = ['qty' => 1, 'unit' => $bulkUnitName];
+        $inner = ['qty' => $step > 0 ? $step : 1, 'unit' => $individualUnitName];
         foreach ($prices as $key => $price) {
-            $outer[$key] = $round($price);
-            $inner[$key] = $multiply($price);
+            $outer[$key] = $multiply($price);
+            $inner[$key] = $round($price);
         }
 
         return ['outer_pack' => $outer, 'inner_pack' => $inner];

@@ -42,9 +42,11 @@
 
                                 <!-- Variant column -->
                                 <template #cell(variant)="row">
-
-                                    {{ getTranslatedVariant(row.item) }}
-
+                                    <div v-if="getTranslatedVariant(row.item)">{{ getTranslatedVariant(row.item) }}</div>
+                                    <div v-if="row.item.sku" :class="getTranslatedVariant(row.item) ? 'text-muted small mt-1' : 'font-weight-bold'">
+                                        <span v-if="getTranslatedVariant(row.item)">{{ __('sku') }}: </span>{{ row.item.sku }}
+                                    </div>
+                                    <span v-if="!getTranslatedVariant(row.item) && !row.item.sku" class="text-muted">—</span>
                                 </template>
 
                                 <!-- Type column with rowspan for 'loose' type products -->

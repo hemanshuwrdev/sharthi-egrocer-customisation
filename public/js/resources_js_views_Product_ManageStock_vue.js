@@ -134,6 +134,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
 
 
 
@@ -692,11 +694,37 @@ var render = function () {
                 key: "cell(variant)",
                 fn: function (row) {
                   return [
-                    _vm._v(
-                      "\n\n                                " +
-                        _vm._s(_vm.getTranslatedVariant(row.item)) +
-                        "\n\n                            "
-                    ),
+                    _vm.getTranslatedVariant(row.item)
+                      ? _c("div", [
+                          _vm._v(_vm._s(_vm.getTranslatedVariant(row.item))),
+                        ])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    row.item.sku
+                      ? _c(
+                          "div",
+                          {
+                            class: _vm.getTranslatedVariant(row.item)
+                              ? "text-muted small mt-1"
+                              : "font-weight-bold",
+                          },
+                          [
+                            _vm.getTranslatedVariant(row.item)
+                              ? _c("span", [
+                                  _vm._v(_vm._s(_vm.__("sku")) + ": "),
+                                ])
+                              : _vm._e(),
+                            _vm._v(
+                              _vm._s(row.item.sku) +
+                                "\n                                "
+                            ),
+                          ]
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    !_vm.getTranslatedVariant(row.item) && !row.item.sku
+                      ? _c("span", { staticClass: "text-muted" }, [_vm._v("—")])
+                      : _vm._e(),
                   ]
                 },
               },
