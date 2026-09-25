@@ -695,6 +695,11 @@ class SalesmanAppApiController extends Controller
                 'seller_products.max_qty_value as sp_max_qty_value'
             );
 
+        $assignedBrands = $salesman->brands;
+        if (!empty($assignedBrands)) {
+            $query->whereIn('master_products.brand_id', $assignedBrands);
+        }
+
         if ($filter !== '') {
             $query->where(function ($w) use ($filter) {
                 $w->where('master_products.name', 'like', "%{$filter}%")
