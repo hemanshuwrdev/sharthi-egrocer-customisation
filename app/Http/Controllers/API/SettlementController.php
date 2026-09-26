@@ -740,7 +740,7 @@ class SettlementController extends Controller
      * attempt AND every OrderPayment for it has been manually verified by the
      * distributor (no auto-verification — cash included).
      */
-    public function driverActiveLoadingSlips()
+    public function driverActiveLoadingSlips(Request $request)
     {
         $driver = $this->currentDriver();
         if (!$driver) {
@@ -757,6 +757,7 @@ class SettlementController extends Controller
 
         $slips = LoadingSlip::where('driver_id', $driver->id)
             ->whereIn('status', [0, 1]) // Created, Dispatched — not yet Completed/Cancelled
+            ->when($request->filled('search'), fn ($q) => $q->where('slip_no', 'like', '%' . $request->input('search') . '%'))
             ->orderByDesc('id')
             ->get();
 
