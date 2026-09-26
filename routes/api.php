@@ -746,6 +746,8 @@ Route::middleware('auth:api')->group(function () {
             // Sarthi: list and write endpoints now run off the master catalog (seller_products overrides).
             // Distributor no longer owns products — they get auto-populated from assigned brands.
             Route::get('/', [\App\Http\Controllers\API\SellerProductApiController::class, 'getMyProducts']);
+            Route::get('filter_brands', [\App\Http\Controllers\API\SellerProductApiController::class, 'getFilterBrands'])->name('products.filter_brands');
+            Route::get('filter_categories', [\App\Http\Controllers\API\SellerProductApiController::class, 'getFilterCategories'])->name('products.filter_categories');
             Route::post('save', [\App\Http\Controllers\API\SellerProductApiController::class, 'save'])->name('products.save');
             Route::post('update', [\App\Http\Controllers\API\SellerProductApiController::class, 'save'])->name('products.update');
             Route::post('update_variant_stock', [\App\Http\Controllers\API\SellerProductApiController::class, 'save'])->name('products.update_variant_stock');

@@ -13,10 +13,32 @@
                     </select>
                 </div>
                 <div class="mb-0">
+                    <select v-model="categoryFilter" @change="getRecords()" class="form-control form-select">
+                        <option :value="null">{{ __('all_categories') }}</option>
+                        <option v-for="c in availableCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+                    </select>
+                </div>
+                <div class="mb-0">
                     <select v-model="activeFilter" @change="getRecords()" class="form-control form-select">
                         <option :value="null">{{ __('all_products') }}</option>
                         <option value="1">{{ __('activated_only') }}</option>
+                        <option value="0">{{ __('deactivated_only') }}</option>
                     </select>
+                </div>
+                <div class="mb-0">
+                    <select v-model="stockStatusFilter" @change="getRecords()" class="form-control form-select">
+                        <option :value="null">{{ __('all_stock_levels') }}</option>
+                        <option value="in_stock">{{ __('in_stock') }}</option>
+                        <option value="low_stock">{{ __('low_stock') }}</option>
+                        <option value="sold_out">{{ __('sold_out') }}</option>
+                    </select>
+                </div>
+                <div class="mb-0 d-flex align-items-center gap-1">
+                    <b-form-input v-model="minPriceFilter" type="number" min="0" style="width:90px"
+                        :placeholder="__('min_price')" @change="getRecords()"></b-form-input>
+                    <span class="text-muted">-</span>
+                    <b-form-input v-model="maxPriceFilter" type="number" min="0" style="width:90px"
+                        :placeholder="__('max_price')" @change="getRecords()"></b-form-input>
                 </div>
                 <div class="list-search">
                     <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
@@ -41,8 +63,11 @@
                 </b-dropdown>
             </div>
 
-                            <div v-if="!isLoading && !rows.length" class="alert alert-info">
+                            <div v-if="!isLoading && !rows.length && noBrandsAssigned" class="alert alert-info">
                                 {{ __('no_brands_assigned_yet') }}
+                            </div>
+                            <div v-else-if="!isLoading && !rows.length" class="alert alert-secondary">
+                                {{ __('no_products_found') }}
                             </div>
 
                             <div class="table-responsive">
@@ -70,9 +95,9 @@
                                     <template #cell(name)="row">
                                         <strong>{{ row.item.master_product_name }}</strong>
                                         <span v-if="row.item.brand" class="badge bg-light text-dark border ms-1">{{ row.item.brand }}</span>
-                                        <div class="text-muted small" v-if="row.item.parent_company">
+                                        <!-- <div class="text-muted small" v-if="row.item.parent_company">
                                             {{ row.item.parent_company }}
-                                        </div>
+                                        </div> -->
                                     </template>
 
 
@@ -308,9 +333,15 @@ export default {
             filter: null,
             filterDebounce: null,
             brandFilter: null,
+            categoryFilter: null,
             activeFilter: null,
+            stockStatusFilter: null,
+            minPriceFilter: null,
+            maxPriceFilter: null,
             masterProductIdFilter: this.$route.query.master_product_id || null,
             availableBrands: [],
+            availableCategories: [],
+            noBrandsAssigned: false,
             isLoading: false,
 
             toggler: false,
@@ -329,6 +360,8 @@ export default {
     },
     created() {
         this.getRecords();
+        this.getBrands();
+        this.getCategories();
     },
     watch: {
         currentPage() { this.getRecords(); },
@@ -359,7 +392,11 @@ export default {
                     per_page: this.perPage,
                     filter: this.filter,
                     brand_id: this.brandFilter,
+                    category_id: this.categoryFilter,
                     active_only: this.activeFilter,
+                    type: this.stockStatusFilter,
+                    min_price: this.minPriceFilter,
+                    max_price: this.maxPriceFilter,
                     master_product_id: this.masterProductIdFilter,
                 },
             }).then(res => {
@@ -367,19 +404,28 @@ export default {
                 const data = res.data.data || [];
                 this.rows = data.map(r => ({ ...r, _saving: false }));
                 this.totalRows = res.data.total || 0;
-                this.collectBrands();
+                // Explicit backend flag — an empty result can also just mean the current
+                // filter/search matched nothing, which isn't the same thing.
+                this.noBrandsAssigned = !!res.data.no_brands_assigned;
             }).catch(() => { this.isLoading = false; });
         },
-        collectBrands() {
-            const seen = new Set();
-            const list = [];
-            this.rows.forEach(r => {
-                if (r.brand_id && !seen.has(r.brand_id)) {
-                    seen.add(r.brand_id);
-                    list.push({ id: r.brand_id, name: r.brand });
-                }
-            });
-            this.availableBrands = list;
+        getBrands() {
+            // Fetched independently of the product list/filters/pagination — this used
+            // to be derived from whatever rows were on the current page (collectBrands()),
+            // so filtering or paging down to a handful of rows made brands silently
+            // disappear from their own filter dropdown.
+            axios.get(this.$sellerApiUrl + '/products/filter_brands')
+                .then(res => { this.availableBrands = res.data.data || []; })
+                .catch(() => {});
+        },
+        getCategories() {
+            // Fetched independently of the product list/filters — same reasoning as
+            // the brand list should have used all along: an options list derived
+            // from the currently filtered rows shrinks to empty the moment a filter
+            // matches nothing, which would make the dropdown itself look broken.
+            axios.get(this.$sellerApiUrl + '/products/filter_categories')
+                .then(res => { this.availableCategories = res.data.data || []; })
+                .catch(() => {});
         },
 
         openLightbox(src) {

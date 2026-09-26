@@ -296,6 +296,31 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -410,9 +435,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       filter: null,
       filterDebounce: null,
       brandFilter: null,
+      categoryFilter: null,
       activeFilter: null,
+      stockStatusFilter: null,
+      minPriceFilter: null,
+      maxPriceFilter: null,
       masterProductIdFilter: this.$route.query.master_product_id || null,
       availableBrands: [],
+      availableCategories: [],
+      noBrandsAssigned: false,
       isLoading: false,
       toggler: false,
       lightboxSources: [],
@@ -431,6 +462,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   },
   created: function created() {
     this.getRecords();
+    this.getBrands();
+    this.getCategories();
   },
   watch: {
     currentPage: function currentPage() {
@@ -467,7 +500,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           per_page: this.perPage,
           filter: this.filter,
           brand_id: this.brandFilter,
+          category_id: this.categoryFilter,
           active_only: this.activeFilter,
+          type: this.stockStatusFilter,
+          min_price: this.minPriceFilter,
+          max_price: this.maxPriceFilter,
           master_product_id: this.masterProductIdFilter
         }
       }).then(function (res) {
@@ -479,24 +516,32 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           });
         });
         _this2.totalRows = res.data.total || 0;
-        _this2.collectBrands();
+        // Explicit backend flag — an empty result can also just mean the current
+        // filter/search matched nothing, which isn't the same thing.
+        _this2.noBrandsAssigned = !!res.data.no_brands_assigned;
       })["catch"](function () {
         _this2.isLoading = false;
       });
     },
-    collectBrands: function collectBrands() {
-      var seen = new Set();
-      var list = [];
-      this.rows.forEach(function (r) {
-        if (r.brand_id && !seen.has(r.brand_id)) {
-          seen.add(r.brand_id);
-          list.push({
-            id: r.brand_id,
-            name: r.brand
-          });
-        }
-      });
-      this.availableBrands = list;
+    getBrands: function getBrands() {
+      var _this3 = this;
+      // Fetched independently of the product list/filters/pagination — this used
+      // to be derived from whatever rows were on the current page (collectBrands()),
+      // so filtering or paging down to a handful of rows made brands silently
+      // disappear from their own filter dropdown.
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/products/filter_brands').then(function (res) {
+        _this3.availableBrands = res.data.data || [];
+      })["catch"](function () {});
+    },
+    getCategories: function getCategories() {
+      var _this4 = this;
+      // Fetched independently of the product list/filters — same reasoning as
+      // the brand list should have used all along: an options list derived
+      // from the currently filtered rows shrinks to empty the moment a filter
+      // matches nothing, which would make the dropdown itself look broken.
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/products/filter_categories').then(function (res) {
+        _this4.availableCategories = res.data.data || [];
+      })["catch"](function () {});
     },
     openLightbox: function openLightbox(src) {
       this.lightboxSources = [src];
@@ -506,7 +551,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.toggler = false;
     },
     saveRow: function saveRow(row) {
-      var _this3 = this;
+      var _this5 = this;
       row._saving = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/products/update', {
         product_variant_id: row.product_variant_id,
@@ -527,18 +572,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           if (res.data.data && res.data.data.seller_product_id) {
             row.seller_product_id = res.data.data.seller_product_id;
           }
-          _this3.showMessage('success', res.data.message || __('product_updated_successfully'));
+          _this5.showMessage('success', res.data.message || __('product_updated_successfully'));
         } else {
-          _this3.showError(res.data.message);
+          _this5.showError(res.data.message);
         }
       })["catch"](function (err) {
         row._saving = false;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this3.showError(msg);
+        _this5.showError(msg);
       });
     },
     toggleStatus: function toggleStatus(row, event) {
-      var _this4 = this;
+      var _this6 = this;
       var newStatus = event.target.checked ? 1 : 0;
       row.status = newStatus;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/products/toggle_status', {
@@ -547,7 +592,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       })["catch"](function (err) {
         row.status = newStatus === 1 ? 0 : 1;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this4.showError(msg);
+        _this6.showError(msg);
       });
     },
     openSlabs: function openSlabs(row) {
@@ -571,7 +616,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.slabDraft.splice(idx, 1);
     },
     saveSlabs: function saveSlabs() {
-      var _this5 = this;
+      var _this7 = this;
       if (!this.slabTarget.seller_product_id) {
         this.showError(__('save_price_first_before_slabs'));
         return;
@@ -641,18 +686,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         seller_product_id: this.slabTarget.seller_product_id,
         slabs: this.slabDraft
       }).then(function (res) {
-        _this5.slabSaving = false;
+        _this7.slabSaving = false;
         if (res.data.status) {
-          _this5.slabTarget.slab_prices = _this5.slabDraft.slice();
-          _this5.slabModalOpen = false;
-          _this5.showMessage('success', res.data.message || __('slab_prices_saved_successfully'));
+          _this7.slabTarget.slab_prices = _this7.slabDraft.slice();
+          _this7.slabModalOpen = false;
+          _this7.showMessage('success', res.data.message || __('slab_prices_saved_successfully'));
         } else {
-          _this5.showError(res.data.message);
+          _this7.showError(res.data.message);
         }
       })["catch"](function (err) {
-        _this5.slabSaving = false;
+        _this7.slabSaving = false;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this5.showError(msg);
+        _this7.showError(msg);
       });
     }
   }
@@ -891,6 +936,57 @@ var render = function () {
                     {
                       name: "model",
                       rawName: "v-model",
+                      value: _vm.categoryFilter,
+                      expression: "categoryFilter",
+                    },
+                  ],
+                  staticClass: "form-control form-select",
+                  on: {
+                    change: [
+                      function ($event) {
+                        var $$selectedVal = Array.prototype.filter
+                          .call($event.target.options, function (o) {
+                            return o.selected
+                          })
+                          .map(function (o) {
+                            var val = "_value" in o ? o._value : o.value
+                            return val
+                          })
+                        _vm.categoryFilter = $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      },
+                      function ($event) {
+                        return _vm.getRecords()
+                      },
+                    ],
+                  },
+                },
+                [
+                  _c("option", { domProps: { value: null } }, [
+                    _vm._v(_vm._s(_vm.__("all_categories"))),
+                  ]),
+                  _vm._v(" "),
+                  _vm._l(_vm.availableCategories, function (c) {
+                    return _c(
+                      "option",
+                      { key: c.id, domProps: { value: c.id } },
+                      [_vm._v(_vm._s(c.name))]
+                    )
+                  }),
+                ],
+                2
+              ),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "mb-0" }, [
+              _c(
+                "select",
+                {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
                       value: _vm.activeFilter,
                       expression: "activeFilter",
                     },
@@ -925,9 +1021,118 @@ var render = function () {
                   _c("option", { attrs: { value: "1" } }, [
                     _vm._v(_vm._s(_vm.__("activated_only"))),
                   ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "0" } }, [
+                    _vm._v(_vm._s(_vm.__("deactivated_only"))),
+                  ]),
                 ]
               ),
             ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "mb-0" }, [
+              _c(
+                "select",
+                {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.stockStatusFilter,
+                      expression: "stockStatusFilter",
+                    },
+                  ],
+                  staticClass: "form-control form-select",
+                  on: {
+                    change: [
+                      function ($event) {
+                        var $$selectedVal = Array.prototype.filter
+                          .call($event.target.options, function (o) {
+                            return o.selected
+                          })
+                          .map(function (o) {
+                            var val = "_value" in o ? o._value : o.value
+                            return val
+                          })
+                        _vm.stockStatusFilter = $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      },
+                      function ($event) {
+                        return _vm.getRecords()
+                      },
+                    ],
+                  },
+                },
+                [
+                  _c("option", { domProps: { value: null } }, [
+                    _vm._v(_vm._s(_vm.__("all_stock_levels"))),
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "in_stock" } }, [
+                    _vm._v(_vm._s(_vm.__("in_stock"))),
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "low_stock" } }, [
+                    _vm._v(_vm._s(_vm.__("low_stock"))),
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "sold_out" } }, [
+                    _vm._v(_vm._s(_vm.__("sold_out"))),
+                  ]),
+                ]
+              ),
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "mb-0 d-flex align-items-center gap-1" },
+              [
+                _c("b-form-input", {
+                  staticStyle: { width: "90px" },
+                  attrs: {
+                    type: "number",
+                    min: "0",
+                    placeholder: _vm.__("min_price"),
+                  },
+                  on: {
+                    change: function ($event) {
+                      return _vm.getRecords()
+                    },
+                  },
+                  model: {
+                    value: _vm.minPriceFilter,
+                    callback: function ($$v) {
+                      _vm.minPriceFilter = $$v
+                    },
+                    expression: "minPriceFilter",
+                  },
+                }),
+                _vm._v(" "),
+                _c("span", { staticClass: "text-muted" }, [_vm._v("-")]),
+                _vm._v(" "),
+                _c("b-form-input", {
+                  staticStyle: { width: "90px" },
+                  attrs: {
+                    type: "number",
+                    min: "0",
+                    placeholder: _vm.__("max_price"),
+                  },
+                  on: {
+                    change: function ($event) {
+                      return _vm.getRecords()
+                    },
+                  },
+                  model: {
+                    value: _vm.maxPriceFilter,
+                    callback: function ($$v) {
+                      _vm.maxPriceFilter = $$v
+                    },
+                    expression: "maxPriceFilter",
+                  },
+                }),
+              ],
+              1
+            ),
             _vm._v(" "),
             _c(
               "div",
@@ -1082,11 +1287,19 @@ var render = function () {
           1
         ),
         _vm._v(" "),
-        !_vm.isLoading && !_vm.rows.length
+        !_vm.isLoading && !_vm.rows.length && _vm.noBrandsAssigned
           ? _c("div", { staticClass: "alert alert-info" }, [
               _vm._v(
                 "\n                            " +
                   _vm._s(_vm.__("no_brands_assigned_yet")) +
+                  "\n                        "
+              ),
+            ])
+          : !_vm.isLoading && !_vm.rows.length
+          ? _c("div", { staticClass: "alert alert-secondary" }, [
+              _vm._v(
+                "\n                            " +
+                  _vm._s(_vm.__("no_products_found")) +
                   "\n                        "
               ),
             ])
@@ -1190,16 +1403,6 @@ var render = function () {
                             },
                             [_vm._v(_vm._s(row.item.brand))]
                           )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      row.item.parent_company
-                        ? _c("div", { staticClass: "text-muted small" }, [
-                            _vm._v(
-                              "\n                                        " +
-                                _vm._s(row.item.parent_company) +
-                                "\n                                    "
-                            ),
-                          ])
                         : _vm._e(),
                     ]
                   },

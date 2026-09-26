@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\BrandDistributorMapping;
+use App\Models\Category;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
 use App\Models\SellerProduct;
@@ -42,7 +44,16 @@ class SellerProductApiController extends Controller
             ->values();
 
         if ($brandIds->isEmpty()) {
-            return CommonHelper::responseWithData([], 0);
+            // Distinct from "this filter/search just matched nothing" — the frontend
+            // can't tell those apart from an empty data array alone, so this is called
+            // out as its own top-level flag alongside the (still-array) data field.
+            return response()->json([
+                'status' => 1,
+                'message' => __('success'),
+                'total' => 0,
+                'data' => [],
+                'no_brands_assigned' => true,
+            ]);
         }
 
         // Accept both the admin panel's page/per_page and the mobile app's limit/offset.
@@ -96,7 +107,17 @@ class SellerProductApiController extends Controller
             $query->where('master_products.brand_id', $request->brand_id);
         }
         if ($request->filled('active_only')) {
-            $query->where('seller_products.status', 1);
+            // '1' = activated only. '0' = deactivated only, meaning "not currently
+            // sellable" — both explicitly-off (status=0) AND never activated at all
+            // (no seller_products row yet, so status is NULL via the left join above).
+            if ((int) $request->active_only === 1) {
+                $query->where('seller_products.status', 1);
+            } else {
+                $query->where(function ($w) {
+                    $w->where('seller_products.status', 0)
+                        ->orWhereNull('seller_products.status');
+                });
+            }
         }
         if ($request->filled('master_product_id')) {
             $query->where('master_products.id', $request->master_product_id);
@@ -117,6 +138,24 @@ class SellerProductApiController extends Controller
                 // No threshold configured — nothing can be "low stock" by definition.
                 $query->whereRaw('1 = 0');
             }
+        } elseif ($type === 'in_stock') {
+            $lowStockLimit = Setting::where('variable', 'low_stock_limit')->value('value');
+            $query->where('seller_products.status', 1);
+            if ($lowStockLimit !== null && $lowStockLimit !== '') {
+                $query->where('seller_products.stock', '>', (float) $lowStockLimit);
+            } else {
+                $query->where('seller_products.stock', '>', 0);
+            }
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('master_products.category_id', $request->category_id);
+        }
+        if ($request->filled('min_price')) {
+            $query->where('seller_products.selling_price', '>=', (float) $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('seller_products.selling_price', '<=', (float) $request->max_price);
         }
 
         $total = (clone $query)->count();
@@ -178,6 +217,72 @@ class SellerProductApiController extends Controller
         });
 
         return CommonHelper::responseWithData($result, $total);
+    }
+
+    /**
+     * Brands available for the "My Products" filter dropdown — every brand assigned
+     * to this distributor. Deliberately independent of the current product list: the
+     * frontend used to derive this from whatever rows happened to be on the current
+     * page (collectBrands()), so paging or filtering down to a handful of rows made
+     * brands silently disappear from their own filter dropdown.
+     */
+    public function getFilterBrands()
+    {
+        $seller = $this->seller();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $brandIds = BrandDistributorMapping::where('seller_id', $seller->id)
+            ->pluck('brand_id')
+            ->unique()
+            ->values();
+
+        if ($brandIds->isEmpty()) {
+            return CommonHelper::responseWithData([], 0);
+        }
+
+        $brands = Brand::whereIn('id', $brandIds)
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return CommonHelper::responseWithData($brands, $brands->count());
+    }
+
+    /**
+     * Categories available for the "My Products" filter dropdown — distinct
+     * categories among master products under this distributor's assigned brands.
+     * Deliberately independent of any currently-active filter (status/search/stock/
+     * price), the same reasoning as collectBrands() above.
+     */
+    public function getFilterCategories()
+    {
+        $seller = $this->seller();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $brandIds = BrandDistributorMapping::where('seller_id', $seller->id)
+            ->pluck('brand_id')
+            ->unique()
+            ->values();
+
+        if ($brandIds->isEmpty()) {
+            return CommonHelper::responseWithData([], 0);
+        }
+
+        $categories = Category::whereIn('id', function ($q) use ($brandIds) {
+                $q->select('category_id')
+                    ->from('master_products')
+                    ->whereIn('brand_id', $brandIds)
+                    ->where('status', 1)
+                    ->whereNotNull('category_id');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return CommonHelper::responseWithData($categories, $categories->count());
     }
 
     /**
