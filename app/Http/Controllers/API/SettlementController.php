@@ -806,7 +806,9 @@ class SettlementController extends Controller
                     'order_id'   => $p->order_id,
                     'method'     => $p->method,
                     'amount'     => (float) $p->amount,
-                    'status'     => $p->status,
+                    // Cash never goes through distributor verification (see lock-gate
+                    // above) — reflect that here so it doesn't read as stuck "pending".
+                    'status'     => $p->method === 'cash' ? 'verified' : $p->status,
                     'verified_at'=> $p->verified_at,
                 ])->values(),
             ];
