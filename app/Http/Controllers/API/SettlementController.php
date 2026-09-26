@@ -785,6 +785,22 @@ class SettlementController extends Controller
                 'can_lock'           => $canLock,
                 'lock_blocked_reason'=> $reason,
                 'total_collected'    => round($payments->sum('amount'), 2),
+                // Per-method breakdown so the driver can see what's collected/verified
+                // vs. still pending, per payment method — same shape as settlement/today.
+                'payment_methods'    => [
+                    'cash'      => round($payments->where('method', 'cash')->sum('amount'), 2),
+                    'upi'       => round($payments->where('method', 'upi')->sum('amount'), 2),
+                    'cheque'    => round($payments->where('method', 'cheque')->sum('amount'), 2),
+                    'signature' => round($payments->where('method', 'signature')->sum('amount'), 2),
+                ],
+                'payments' => $payments->map(fn (OrderPayment $p) => [
+                    'id'         => $p->id,
+                    'order_id'   => $p->order_id,
+                    'method'     => $p->method,
+                    'amount'     => (float) $p->amount,
+                    'status'     => $p->status,
+                    'verified_at'=> $p->verified_at,
+                ])->values(),
             ];
         });
 
