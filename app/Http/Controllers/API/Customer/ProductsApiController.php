@@ -1529,7 +1529,9 @@ class ProductsApiController extends Controller
                                 // secondary unit (box) size.
                                 'allow_loose_qty' => $sp ? (bool) $sp->allow_loose_qty : false,
                                 'qty_step' => ($sp && $sp->allow_loose_qty) ? 1 : (int) (($v->secondary_unit_value ?? 1) > 0 ? $v->secondary_unit_value : 1),
-                                'min_qty' => ($sp && $sp->allow_loose_qty) ? 1 : (int) (($v->secondary_unit_value ?? 1) > 0 ? $v->secondary_unit_value : 1),
+                                'min_qty' => $sp && $sp->min_qty
+                                    ? (int) $sp->min_qty
+                                    : (($sp && $sp->allow_loose_qty) ? 1 : (int) (($v->secondary_unit_value ?? 1) > 0 ? $v->secondary_unit_value : 1)),
                                 'max_qty_mode' => $sp ? $sp->max_qty_mode : null,
                                 'max_qty_value' => $sp && $sp->max_qty_value !== null ? (int) $sp->max_qty_value : null,
                             ];

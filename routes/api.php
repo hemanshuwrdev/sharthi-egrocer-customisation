@@ -679,6 +679,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('sensitive-password/reset-with-otp', [App\Http\Controllers\API\SellerSettingController::class, 'resetSensitivePasswordWithOtp']);
         Route::get('invoice-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getInvoiceSettings']);
         Route::post('invoice-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveInvoiceSettings']);
+        Route::get('credit-note-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getCreditNoteSettings']);
+        Route::post('credit-note-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveCreditNoteSettings']);
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
         Route::group(['prefix' => 'delivery_boys'], function () {
             Route::get('/', [\App\Http\Controllers\SellerController::class, 'getDeliveryBoys']);
@@ -702,6 +704,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('trips/{id}',            [\App\Http\Controllers\API\SettlementController::class, 'sellerTripDetailUpdated'])->name('seller.trips.detail');
         Route::post('trips/{id}/reconcile', [\App\Http\Controllers\API\SettlementController::class, 'sellerUpdateReconciliationUpdated'])->name('seller.trips.reconcile');
         Route::post('trips/{id}/close',     [\App\Http\Controllers\API\SettlementController::class, 'sellerCloseTripUpdated'])->name('seller.trips.close');
+        Route::post('trips/{id}/partial-invoices/{itemId}/verify', [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifyPartialInvoiceItem'])->name('seller.trips.partial_invoices.verify');
+        Route::post('trips/{id}/cancel-invoices/{orderId}/verify', [\App\Http\Controllers\API\SettlementController::class, 'sellerVerifyCancelInvoice'])->name('seller.trips.cancel_invoices.verify');
 
         // Sarthi: distributor billing overview (GMV + commission)
         Route::get('billing', [\App\Http\Controllers\API\CommissionBillingController::class, 'sellerBilling'])->name('seller.billing');

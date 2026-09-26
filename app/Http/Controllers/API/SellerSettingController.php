@@ -119,6 +119,44 @@ class SellerSettingController extends Controller
     }
 
     /**
+     * Credit note numbering: {prefix}{number}{suffix}, same shape as invoice numbering
+     * above but its own independent prefix/suffix/counter — kept deliberately separate
+     * so a credit note isn't visually indistinguishable from an invoice number.
+     */
+    public function getCreditNoteSettings()
+    {
+        $seller = auth()->user()->seller;
+        return CommonHelper::responseWithData([
+            'credit_note_prefix' => $seller->credit_note_prefix,
+            'credit_note_suffix' => $seller->credit_note_suffix,
+            'credit_note_next_number' => $seller->credit_note_next_number,
+        ]);
+    }
+
+    public function saveCreditNoteSettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'credit_note_prefix' => 'nullable|string|max:20',
+            'credit_note_suffix' => 'nullable|string|max:20',
+            'credit_note_next_number' => 'required|integer|min:1',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        try {
+            $seller = auth()->user()->seller;
+            $seller->credit_note_prefix = $request->credit_note_prefix ?: null;
+            $seller->credit_note_suffix = $request->credit_note_suffix ?: null;
+            $seller->credit_note_next_number = $request->credit_note_next_number;
+            $seller->save();
+            return CommonHelper::responseSuccess('credit_note_settings_saved_successfully');
+        } catch (\Exception $e) {
+            return CommonHelper::responseError($e->getMessage());
+        }
+    }
+
+    /**
      * Sensitive-operations password: a second password (distinct from the login
      * password) that gates risky corrections like editing a driver's recorded
      * payment method. Only the seller who already knows it can rotate it, so

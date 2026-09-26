@@ -34,6 +34,8 @@ protected $casts = [
         'is_credited' => 'integer',
         'delivery_boy_id' => 'integer',
         'seller_id' => 'integer',
+        'shortfall_verified_at' => 'datetime',
+        'shortfall_verified_by' => 'integer',
     ];
     protected $appends = ['image_url'];
 

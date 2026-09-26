@@ -290,6 +290,11 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         maximumFractionDigits: 2
       });
     },
+    fmtDate: function fmtDate(val) {
+      if (!val) return '-';
+      var m = moment__WEBPACK_IMPORTED_MODULE_0___default()(val);
+      return m.isValid() ? m.format('DD-MM-YYYY') : val;
+    },
     settlementStatusClass: function settlementStatusClass(s) {
       return {
         open: 'bg-warning text-dark',
@@ -929,7 +934,7 @@ var render = function () {
                     return _c("tr", { key: row.type + "_" + row.id }, [
                       _c("td", { staticClass: "ps-3" }, [
                         _c("span", { staticClass: "fw-bold" }, [
-                          _vm._v(_vm._s(row.date)),
+                          _vm._v(_vm._s(_vm.fmtDate(row.date))),
                         ]),
                       ]),
                       _vm._v(" "),

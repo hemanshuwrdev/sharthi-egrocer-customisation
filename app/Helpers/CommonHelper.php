@@ -3122,6 +3122,23 @@ class CommonHelper
         });
     }
 
+    /**
+     * Resolve the next credit-note number for $seller and consume it. Same
+     * lock-then-increment shape as nextLoadingSlipNumber, but with its own
+     * prefix/suffix pair — a credit note visually indistinguishable from an
+     * invoice number would be a real problem for a distributor's bookkeeping.
+     */
+    public static function nextCreditNoteNumber($seller)
+    {
+        return DB::transaction(function () use ($seller) {
+            $locked = \App\Models\Seller::where('id', $seller->id)->lockForUpdate()->first();
+            $number = self::formatDistributorSequenceNumber($locked->credit_note_prefix, $locked->credit_note_next_number, $locked->credit_note_suffix);
+            $locked->credit_note_next_number = $locked->credit_note_next_number + 1;
+            $locked->save();
+            return $number;
+        });
+    }
+
     public static function generateOrderInvoice($data)
     {
         $invoice = view('invoice', $data)->render();

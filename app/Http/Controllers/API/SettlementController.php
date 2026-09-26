@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
+use App\Models\CreditNote;
+use App\Models\CreditNoteItem;
 use App\Models\DeliveryBoy;
 use App\Models\DriverSettlement;
 use App\Models\LoadingSlip;
@@ -302,6 +304,9 @@ class SettlementController extends Controller
         }
         if ($payment->status === 'verified') {
             return CommonHelper::responseError('already_verified');
+        }
+        if ($payment->method === 'cheque' && (empty($payment->cheque_date) || empty($payment->cheque_number))) {
+            return CommonHelper::responseError('cheque_date_and_number_required_before_verification');
         }
 
         $payment->status      = 'verified';
@@ -1491,21 +1496,156 @@ class SettlementController extends Controller
         }
 
         $orderIds   = $payments->pluck('order_id')->unique();
-        $orders     = Order::with(['user:id,name,mobile', 'loadingSlip:id,slip_no'])->whereIn('id', $orderIds)->get();
+
+        // Broader order set for this trip. $orderIds only has orders with a payment
+        // row — a cancelled order never gets one, so it would never surface. A
+        // cancel via the generic status-update path does NOT null loading_slip_id
+        // (unlike reschedule, which does — see the OrderStatus lookup below instead),
+        // so sourcing directly from the slip catches those too. Only meaningful when
+        // this trip actually has a slip; otherwise it's the same set as $orderIds.
+        $tripOrderIds = $orderIds;
+        if ($type === 'driver' && $settlement->loading_slip_id) {
+            $tripOrderIds = $orderIds->merge(
+                Order::where('loading_slip_id', $settlement->loading_slip_id)->pluck('id')
+            )->unique()->values();
+        }
+
+        $orders     = Order::with(['user:id,name,mobile', 'loadingSlip:id,slip_no'])->whereIn('id', $tripOrderIds)->get();
         $paymentMap = $payments->groupBy('order_id');
 
         // Approved returns against orders in this trip — refund is wallet-credited
         // (CommonHelper::calculateRefundAmountForOrderItem at approval time), not cash
         // handed back by the driver, so it's shown separately from the cash/digital
         // collection math above rather than folded into it.
-        $returnRequests = ReturnRequest::with('orderItem:id,order_id,product_name,refund_amount')
-            ->whereIn('order_id', $orderIds)
+        $returnRequests = ReturnRequest::with([
+                'orderItem:id,order_id,product_name,variant_name,refund_amount',
+                'user:id,name,mobile',
+            ])
+            ->whereIn('order_id', $tripOrderIds)
             ->where('status', ReturnStatusList::$rApproved)
             ->get();
         $returnMap    = $returnRequests->groupBy('order_id');
         $totalReturns = round($returnRequests->sum(fn ($r) => (float) ($r->orderItem->refund_amount ?? 0)), 2);
 
-        $totalExpected        = round($orders->sum('final_total'), 2);
+        // Item-level shortfall detection. The order's own active_status is NOT a
+        // reliable flag here — an order delivered through the normal flow can still
+        // carry a per-item delivered_quantity < quantity (order stays "Delivered",
+        // never flips to "Partial Delivery"), so this always scans order_items
+        // directly instead of trusting the order status.
+        $itemsByOrder = OrderItem::whereIn('order_id', $tripOrderIds)->get()->groupBy('order_id');
+
+        $partialInvoices = $orders->map(function ($o) use ($itemsByOrder) {
+                $items = $itemsByOrder->get($o->id, collect());
+                $shortfallItems = $items->filter(
+                    fn ($i) => $i->delivered_quantity !== null && (float) $i->delivered_quantity < (float) $i->quantity
+                );
+                if ($shortfallItems->isEmpty()) return null;
+
+                return [
+                    'order_id'            => $o->id,
+                    'orders_id'           => $o->orders_id,
+                    'invoice_number'      => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
+                    'loading_slip_no'     => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
+                    'retailer'            => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+                    'final_total'         => $o->final_total,
+                    'total_ordered_qty'   => $items->sum(fn ($i) => (float) $i->quantity),
+                    'total_delivered_qty' => $items->sum(fn ($i) => (float) ($i->delivered_quantity ?? $i->quantity)),
+                    'items'               => $shortfallItems->map(fn ($i) => [
+                        'order_item_id'      => $i->id,
+                        'product_name'       => $i->product_name,
+                        'variant_name'       => $i->variant_name,
+                        'quantity'           => (float) $i->quantity,
+                        'delivered_quantity' => (float) $i->delivered_quantity,
+                        'shortfall_qty'      => round((float) $i->quantity - (float) $i->delivered_quantity, 2),
+                        'shortfall_value'    => round(((float) $i->quantity - (float) $i->delivered_quantity) * ((float) ($i->discounted_price ?: $i->price)), 2),
+                        'shortfall_reason'   => $i->shortfall_reason,
+                        'damage_photo'       => $i->damage_photo,
+                        'verified'           => $i->shortfall_verified_at !== null,
+                    ])->values(),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        // Cancelled orders came in via the broader $tripOrderIds above (a cancel
+        // doesn't touch loading_slip_id, unlike reschedule) — their final_total is
+        // never zeroed out, so they must stay out of the money totals below or
+        // "Total Expected" quietly inflates by whatever was cancelled.
+        $cancelledOrders = $orders->where('active_status', \App\Models\OrderStatusList::$cancelled)->values();
+
+        $cancelledAtMap = \App\Models\OrderStatus::whereIn('order_id', $cancelledOrders->pluck('id'))
+            ->where('status', (string) \App\Models\OrderStatusList::$cancelled)
+            ->get()
+            ->groupBy('order_id')
+            ->map(fn ($rows) => $rows->sortByDesc('created_at')->first()->created_at);
+
+        $cancelInvoices = $cancelledOrders->map(fn ($o) => [
+            'order_id'        => $o->id,
+            'orders_id'       => $o->orders_id,
+            'invoice_number'  => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
+            'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
+            'retailer'        => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+            'final_total'     => $o->final_total,
+            'cancelled_at'    => $cancelledAtMap->get($o->id),
+            'verified'        => $o->cancel_verified_at !== null,
+        ])->values();
+
+        // Rescheduled orders detach from the slip immediately (loading_slip_id is
+        // nulled), so unlike cancels they can't be found via $tripOrderIds at all —
+        // only the snapshot captured on the "Rescheduled" order_statuses row at the
+        // moment of reschedule can still tell us which trip one came from.
+        $rescheduleStatuses = ($type === 'driver' && $settlement->loading_slip_id)
+            ? \App\Models\OrderStatus::where('status', 'Rescheduled')
+                ->where('loading_slip_id', $settlement->loading_slip_id)
+                ->orderByDesc('created_at')
+                ->get()
+            : collect();
+
+        $rescheduledOrdersMap = Order::with('user:id,name,mobile')
+            ->whereIn('id', $rescheduleStatuses->pluck('order_id')->unique())
+            ->get()
+            ->keyBy('id');
+
+        $rescheduleInvoices = $rescheduleStatuses->map(function ($statusRow) use ($rescheduledOrdersMap) {
+                $o = $rescheduledOrdersMap->get((int) $statusRow->order_id);
+                if (!$o) return null;
+                return [
+                    'order_id'          => $o->id,
+                    'orders_id'         => $o->orders_id,
+                    'invoice_number'    => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
+                    'retailer'          => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+                    'final_total'       => $o->final_total,
+                    'new_delivery_date' => $o->delivery_date,
+                    'delivery_reason'   => $o->delivery_reason,
+                    'rescheduled_at'    => $statusRow->created_at,
+                    'current_status'    => $o->active_status,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        // Item Summary of Returned Items — same approved-returns source that already
+        // feeds $totalReturns above, just reshaped as its own flat list for the tab.
+        $returnItemOrdersMap = Order::whereIn('id', $returnRequests->pluck('order_id')->unique())
+            ->get(['id', 'orders_id', 'invoice_number'])
+            ->keyBy('id');
+
+        $returnItemSummary = $returnRequests->map(function ($r) use ($returnItemOrdersMap) {
+                $o = $returnItemOrdersMap->get($r->order_id);
+                return [
+                    'order_id'       => $r->order_id,
+                    'invoice_number' => $o ? ($o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id)) : null,
+                    'product_name'   => $r->orderItem->product_name ?? '-',
+                    'variant_name'   => $r->orderItem->variant_name ?? null,
+                    'refund_amount'  => (float) ($r->orderItem->refund_amount ?? 0),
+                    'reason'         => $r->reason,
+                    'retailer'       => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'mobile' => $r->user->mobile] : null,
+                    'returned_at'    => $r->updated_at,
+                ];
+            })
+            ->values();
+
+        $totalExpected        = round($orders->where('active_status', '!=', \App\Models\OrderStatusList::$cancelled)->sum('final_total'), 2);
         $digitalVerified      = round($payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2);
         // Cash expected = actual cash the driver collected (not total_expected minus digital_verified,
         // which wrongly inflates cash_expected when digital payments are unverified).
@@ -1559,10 +1699,16 @@ class SettlementController extends Controller
             $dynamicReconStatus = $settlement->reconciliation_status ?? 'unreconciled';
         }
 
+        $unverifiedPartialCount = $partialInvoices->flatMap(fn ($inv) => $inv['items'])->filter(fn ($i) => !$i['verified'])->count();
+        $unverifiedCancelCount  = $cancelInvoices->filter(fn ($c) => !$c['verified'])->count();
+
         $blockers = [];
         if ($unverifiedDigital > 0) $blockers[] = "{$unverifiedDigital} digital payment(s) not verified yet";
         if ($hasCash && $settlement->cash_received === null) $blockers[] = 'Enter cash received to close';
-        $canClose = ($unverifiedDigital === 0) && (!$hasCash || $settlement->cash_received !== null) && !$isClosed;
+        if ($unverifiedPartialCount > 0) $blockers[] = "{$unverifiedPartialCount} partial invoice item(s) not verified yet";
+        if ($unverifiedCancelCount > 0) $blockers[] = "{$unverifiedCancelCount} cancelled invoice(s) not verified yet";
+        $canClose = ($unverifiedDigital === 0) && (!$hasCash || $settlement->cash_received !== null)
+            && ($unverifiedPartialCount === 0) && ($unverifiedCancelCount === 0) && !$isClosed;
 
         $settlementData = [
             'id'                   => $settlement->id,
@@ -1610,11 +1756,84 @@ class SettlementController extends Controller
                 'verified_cheque'   => round($payments->where('method', 'cheque')->where('status', 'verified')->sum('amount'), 2),
                 'verified_signature'=> round($payments->where('method', 'signature')->where('status', 'verified')->sum('amount'), 2),
                 'unverified_digital'=> $unverifiedDigital,
+                'unverified_partial'=> $unverifiedPartialCount,
+                'unverified_cancel' => $unverifiedCancelCount,
                 'total_returns'     => $totalReturns,
             ],
+            'partial_invoices'    => $partialInvoices,
+            'cancel_invoices'     => $cancelInvoices,
+            'reschedule_invoices' => $rescheduleInvoices,
+            'return_item_summary' => $returnItemSummary,
             'can_close'      => $canClose,
             'close_blockers' => $blockers,
         ]);
+    }
+
+    /**
+     * POST /seller/trips/{id}/partial-invoices/{itemId}/verify
+     * Distributor acknowledgment that a shortfall item has been reviewed — a plain
+     * flag (mirrors how order_payments verify already works), feeding the trip's
+     * close-gate. No other side effect.
+     */
+    public function sellerVerifyPartialInvoiceItem(Request $request, int $id, int $itemId)
+    {
+        $seller = $this->currentSeller();
+        if (!$seller) return CommonHelper::responseError('seller_not_found');
+
+        $settlement = DriverSettlement::find($id);
+        if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+            return CommonHelper::responseError('settlement_not_found');
+        }
+        if (!$settlement->loading_slip_id) {
+            return CommonHelper::responseError('trip_has_no_loading_slip');
+        }
+
+        $item = OrderItem::find($itemId);
+        if (!$item) return CommonHelper::responseError('order_item_not_found');
+
+        $belongsToTrip = Order::where('id', $item->order_id)->where('loading_slip_id', $settlement->loading_slip_id)->exists();
+        if (!$belongsToTrip) return CommonHelper::responseError('item_not_in_this_trip');
+
+        if ($item->delivered_quantity === null || (float) $item->delivered_quantity >= (float) $item->quantity) {
+            return CommonHelper::responseError('item_has_no_shortfall');
+        }
+
+        $item->shortfall_verified_at = Carbon::now();
+        $item->shortfall_verified_by = auth()->id();
+        $item->save();
+
+        return CommonHelper::responseSuccess('shortfall_verified');
+    }
+
+    /**
+     * POST /seller/trips/{id}/cancel-invoices/{orderId}/verify
+     * Distributor acknowledgment that a cancelled order on this trip has been
+     * reviewed — a plain flag, feeding the trip's close-gate. No other side effect.
+     */
+    public function sellerVerifyCancelInvoice(Request $request, int $id, int $orderId)
+    {
+        $seller = $this->currentSeller();
+        if (!$seller) return CommonHelper::responseError('seller_not_found');
+
+        $settlement = DriverSettlement::find($id);
+        if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+            return CommonHelper::responseError('settlement_not_found');
+        }
+        if (!$settlement->loading_slip_id) {
+            return CommonHelper::responseError('trip_has_no_loading_slip');
+        }
+
+        $order = Order::where('id', $orderId)
+            ->where('loading_slip_id', $settlement->loading_slip_id)
+            ->where('active_status', \App\Models\OrderStatusList::$cancelled)
+            ->first();
+        if (!$order) return CommonHelper::responseError('cancelled_order_not_in_this_trip');
+
+        $order->cancel_verified_at = Carbon::now();
+        $order->cancel_verified_by = auth()->id();
+        $order->save();
+
+        return CommonHelper::responseSuccess('cancellation_verified');
     }
 
     /**
@@ -1661,6 +1880,118 @@ class SettlementController extends Controller
         $settlement->save();
 
         return CommonHelper::responseWithData(['reconciliation_status' => $reconStatus, 'cash_expected' => $cashExpected, 'shortfall' => $diff]);
+    }
+
+    /**
+     * Generates one credit note per order that had either an approved return or a
+     * cancellation surfacing in this trip. Document only — it records money that
+     * already moved via the existing wallet flows (return approval / item-level
+     * cancel refund at cancelOrderItem time), it never credits anything itself.
+     * At most one credit note per (order_id, reason_type) ever — the unique index
+     * on credit_notes plus this exists-check make re-closing a trip (needs_rereconcile)
+     * safe to call again without duplicating one already generated.
+     */
+    private function generateCreditNotesForTripClose($settlement, string $type, Seller $seller): array
+    {
+        if ($type === 'driver') {
+            $tripOrderIds = $settlement->loading_slip_id
+                ? Order::where('loading_slip_id', $settlement->loading_slip_id)->pluck('id')
+                : $this->paymentsForDriverSettlement($settlement)->pluck('order_id')->unique();
+        } else {
+            $date = $settlement->settlement_date instanceof Carbon
+                ? $settlement->settlement_date->toDateString()
+                : (string) $settlement->settlement_date;
+            $tripOrderIds = OrderPayment::where('salesman_id', $settlement->salesman_id)
+                ->whereDate('created_at', $date)
+                ->pluck('order_id')->unique();
+        }
+
+        if ($tripOrderIds->isEmpty()) {
+            return [];
+        }
+
+        $generatedNos = [];
+
+        // Returns — applies to both driver and salesman trips, any order that was ever paid for on this trip.
+        $approvedReturnsByOrder = ReturnRequest::with('orderItem')
+            ->whereIn('order_id', $tripOrderIds)
+            ->where('status', ReturnStatusList::$rApproved)
+            ->get()
+            ->groupBy('order_id');
+
+        foreach ($approvedReturnsByOrder as $orderId => $returns) {
+            if (CreditNote::where('order_id', $orderId)->where('reason_type', 'return')->exists()) continue;
+
+            $totalAmount = round($returns->sum(fn ($r) => (float) ($r->orderItem->refund_amount ?? 0)), 2);
+            if ($totalAmount <= 0) continue;
+
+            $order = Order::find($orderId);
+
+            $cn = CreditNote::create([
+                'credit_note_no'      => CommonHelper::nextCreditNoteNumber($seller),
+                'seller_id'           => $seller->id,
+                'driver_settlement_id'=> $type === 'driver' ? $settlement->id : null,
+                'order_id'            => $orderId,
+                'retailer_id'         => $order->user_id ?? null,
+                'reason_type'         => 'return',
+                'total_amount'        => $totalAmount,
+                'generated_at'        => Carbon::now(),
+                'generated_by'        => auth()->id(),
+            ]);
+
+            foreach ($returns as $r) {
+                CreditNoteItem::create([
+                    'credit_note_id' => $cn->id,
+                    'order_item_id'  => $r->order_item_id,
+                    'product_name'   => $r->orderItem->product_name ?? null,
+                    'variant_name'   => $r->orderItem->variant_name ?? null,
+                    'quantity'       => 1,
+                    'amount'         => round((float) ($r->orderItem->refund_amount ?? 0), 2),
+                ]);
+            }
+
+            $generatedNos[] = $cn->credit_note_no;
+        }
+
+        // Cancels — driver trips with a loading slip only, matching the Cancel Invoices tab's own scope.
+        if ($type === 'driver' && $settlement->loading_slip_id) {
+            $cancelledOrders = Order::with('items')
+                ->whereIn('id', $tripOrderIds)
+                ->where('active_status', \App\Models\OrderStatusList::$cancelled)
+                ->get();
+
+            foreach ($cancelledOrders as $order) {
+                if (CreditNote::where('order_id', $order->id)->where('reason_type', 'cancel')->exists()) continue;
+                if ((float) $order->final_total <= 0) continue;
+
+                $cn = CreditNote::create([
+                    'credit_note_no'      => CommonHelper::nextCreditNoteNumber($seller),
+                    'seller_id'           => $seller->id,
+                    'driver_settlement_id'=> $settlement->id,
+                    'order_id'            => $order->id,
+                    'retailer_id'         => $order->user_id,
+                    'reason_type'         => 'cancel',
+                    'total_amount'        => round((float) $order->final_total, 2),
+                    'generated_at'        => Carbon::now(),
+                    'generated_by'        => auth()->id(),
+                ]);
+
+                foreach ($order->items as $item) {
+                    CreditNoteItem::create([
+                        'credit_note_id' => $cn->id,
+                        'order_item_id'  => $item->id,
+                        'product_name'   => $item->product_name,
+                        'variant_name'   => $item->variant_name,
+                        'quantity'       => (float) $item->quantity,
+                        'amount'         => round((float) $item->sub_total, 2),
+                    ]);
+                }
+
+                $generatedNos[] = $cn->credit_note_no;
+            }
+        }
+
+        return $generatedNos;
     }
 
     /**
@@ -1712,6 +2043,30 @@ class SettlementController extends Controller
             return CommonHelper::responseError("{$unverifiedDigital} digital payment(s) still pending verification");
         }
 
+        // Same gate as above, server-side: close must not go through while any
+        // shortfall item or cancelled order on this trip is still unacknowledged.
+        // Re-checked here independent of the client, same as the digital-payment gate.
+        if ($type === 'driver' && $settlement->loading_slip_id) {
+            $tripOrderIdsForGate = Order::where('loading_slip_id', $settlement->loading_slip_id)->pluck('id');
+
+            $unverifiedPartial = OrderItem::whereIn('order_id', $tripOrderIdsForGate)
+                ->whereNotNull('delivered_quantity')
+                ->whereColumn('delivered_quantity', '<', 'quantity')
+                ->whereNull('shortfall_verified_at')
+                ->count();
+            if ($unverifiedPartial > 0) {
+                return CommonHelper::responseError("{$unverifiedPartial} partial invoice item(s) still pending verification");
+            }
+
+            $unverifiedCancel = Order::whereIn('id', $tripOrderIdsForGate)
+                ->where('active_status', \App\Models\OrderStatusList::$cancelled)
+                ->whereNull('cancel_verified_at')
+                ->count();
+            if ($unverifiedCancel > 0) {
+                return CommonHelper::responseError("{$unverifiedCancel} cancelled invoice(s) still pending verification");
+            }
+        }
+
         // Reconcile cash inline so the distributor closes in a single action.
         // Auto-set cash_received from actual cash payments — no manual input needed
         $cashCollected = round($payments->where('method', 'cash')->sum('amount'), 2);
@@ -1727,6 +2082,8 @@ class SettlementController extends Controller
         $settlement->reconciled_by = auth()->id();
         $settlement->save();
 
-        return CommonHelper::responseSuccess('trip_closed');
+        $creditNoteNos = $this->generateCreditNotesForTripClose($settlement, $type, $seller);
+
+        return CommonHelper::responseSuccessWithData('trip_closed', ['credit_notes' => $creditNoteNos]);
     }
 }

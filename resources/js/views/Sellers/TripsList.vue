@@ -88,7 +88,7 @@
                                 <tbody>
                                     <tr v-for="row in rows" :key="row.type + '_' + row.id">
                                         <td class="ps-3">
-                                            <span class="fw-bold">{{ row.date }}</span>
+                                            <span class="fw-bold">{{ fmtDate(row.date) }}</span>
                                         </td>
                                         <td>
                                             <span v-if="row.trip_no" class="badge bg-info">
@@ -240,6 +240,11 @@ export default {
         fmt(val) {
             if (val == null) return '0.00';
             return parseFloat(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        fmtDate(val) {
+            if (!val) return '-';
+            const m = moment(val);
+            return m.isValid() ? m.format('DD-MM-YYYY') : val;
         },
         settlementStatusClass(s) {
             return { open: 'bg-warning text-dark', locked: 'bg-info', reconciled: 'bg-success', needs_rereconcile: 'bg-danger' }[s] || 'bg-secondary';

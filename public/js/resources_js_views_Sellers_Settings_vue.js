@@ -274,6 +274,43 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -308,6 +345,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       invoice_prefix: "",
       invoice_suffix: "",
       invoice_next_number: 1,
+      isCreditNoteLoading: false,
+      credit_note_prefix: "",
+      credit_note_suffix: "",
+      credit_note_next_number: 1,
       isSensitiveLoading: false,
       sensitivePasswordIsSet: false,
       sensitiveOldPassword: "",
@@ -325,12 +366,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     this.getOrderSettings();
     this.getPaymentMethods();
     this.getInvoiceSettings();
+    this.getCreditNoteSettings();
     this.getSensitivePasswordStatus();
   },
   computed: {
     invoiceNumberPreview: function invoiceNumberPreview() {
       var padded = String(this.invoice_next_number || 1).padStart(4, '0');
       return "".concat(this.invoice_prefix || '').concat(padded).concat(this.invoice_suffix || '');
+    },
+    creditNoteNumberPreview: function creditNoteNumberPreview() {
+      var padded = String(this.credit_note_next_number || 1).padStart(4, '0');
+      return "".concat(this.credit_note_prefix || '').concat(padded).concat(this.credit_note_suffix || '');
     }
   },
   methods: {
@@ -488,12 +534,43 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _this8.isInvoiceLoading = false;
       });
     },
+    getCreditNoteSettings: function getCreditNoteSettings() {
+      var _this9 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/credit-note-settings').then(function (res) {
+        if (res.data.status && res.data.data) {
+          _this9.credit_note_prefix = res.data.data.credit_note_prefix || "";
+          _this9.credit_note_suffix = res.data.data.credit_note_suffix || "";
+          _this9.credit_note_next_number = res.data.data.credit_note_next_number || 1;
+        }
+      })["catch"](function () {
+        _this9.showError('Failed to load credit note settings');
+      });
+    },
+    saveCreditNoteSettings: function saveCreditNoteSettings() {
+      var _this10 = this;
+      this.isCreditNoteLoading = true;
+      var formData = new FormData();
+      formData.append('credit_note_prefix', this.credit_note_prefix || '');
+      formData.append('credit_note_suffix', this.credit_note_suffix || '');
+      formData.append('credit_note_next_number', this.credit_note_next_number || 1);
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/credit-note-settings/save', formData).then(function (res) {
+        if (res.data.status) {
+          _this10.showMessage('success', __(res.data.message));
+        } else {
+          _this10.showError(res.data.message || 'Failed to save');
+        }
+        _this10.isCreditNoteLoading = false;
+      })["catch"](function () {
+        _this10.showError('Failed to save credit note settings');
+        _this10.isCreditNoteLoading = false;
+      });
+    },
     // ================= SENSITIVE OPERATIONS PASSWORD =================
     getSensitivePasswordStatus: function getSensitivePasswordStatus() {
-      var _this9 = this;
+      var _this11 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/sensitive-password').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this9.sensitivePasswordIsSet = !!res.data.data.is_set;
+          _this11.sensitivePasswordIsSet = !!res.data.data.is_set;
         }
       })["catch"](function () {});
     },
@@ -512,32 +589,32 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.otpResendCooldown = 0;
     },
     sendSensitiveOtp: function sendSensitiveOtp() {
-      var _this10 = this;
+      var _this12 = this;
       if (this.isSendingOtp || this.otpResendCooldown > 0) return;
       this.isSendingOtp = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/sensitive-password/send-otp').then(function (res) {
         if (res.data.status) {
-          _this10.showMessage('success', __(res.data.message));
-          _this10.otpResendCooldown = 60;
-          if (_this10.otpCooldownTimer) clearInterval(_this10.otpCooldownTimer);
-          _this10.otpCooldownTimer = setInterval(function () {
-            _this10.otpResendCooldown--;
-            if (_this10.otpResendCooldown <= 0) {
-              clearInterval(_this10.otpCooldownTimer);
-              _this10.otpCooldownTimer = null;
+          _this12.showMessage('success', __(res.data.message));
+          _this12.otpResendCooldown = 60;
+          if (_this12.otpCooldownTimer) clearInterval(_this12.otpCooldownTimer);
+          _this12.otpCooldownTimer = setInterval(function () {
+            _this12.otpResendCooldown--;
+            if (_this12.otpResendCooldown <= 0) {
+              clearInterval(_this12.otpCooldownTimer);
+              _this12.otpCooldownTimer = null;
             }
           }, 1000);
         } else {
-          _this10.showError(res.data.message || 'Failed to send OTP');
+          _this12.showError(res.data.message || 'Failed to send OTP');
         }
-        _this10.isSendingOtp = false;
+        _this12.isSendingOtp = false;
       })["catch"](function () {
-        _this10.showError('Failed to send OTP');
-        _this10.isSendingOtp = false;
+        _this12.showError('Failed to send OTP');
+        _this12.isSendingOtp = false;
       });
     },
     saveSensitivePassword: function saveSensitivePassword() {
-      var _this11 = this;
+      var _this13 = this;
       this.isSensitiveLoading = true;
       var formData = new FormData();
       if (this.sensitiveForgotMode) {
@@ -555,19 +632,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var endpoint = this.sensitiveForgotMode ? '/sensitive-password/reset-with-otp' : '/sensitive-password/save';
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + endpoint, formData).then(function (res) {
         if (res.data.status) {
-          _this11.showMessage('success', __(res.data.message));
-          _this11.sensitivePasswordIsSet = true;
-          _this11.sensitiveOldPassword = '';
-          _this11.sensitiveNewPassword = '';
-          _this11.sensitiveConfirmPassword = '';
-          _this11.cancelSensitiveForgotMode();
+          _this13.showMessage('success', __(res.data.message));
+          _this13.sensitivePasswordIsSet = true;
+          _this13.sensitiveOldPassword = '';
+          _this13.sensitiveNewPassword = '';
+          _this13.sensitiveConfirmPassword = '';
+          _this13.cancelSensitiveForgotMode();
         } else {
-          _this11.showError(res.data.message || 'Failed to save');
+          _this13.showError(res.data.message || 'Failed to save');
         }
-        _this11.isSensitiveLoading = false;
+        _this13.isSensitiveLoading = false;
       })["catch"](function () {
-        _this11.showError('Failed to save');
-        _this11.isSensitiveLoading = false;
+        _this13.showError('Failed to save');
+        _this13.isSensitiveLoading = false;
       });
     }
   }
@@ -1359,6 +1436,155 @@ var render = function () {
                     "\n                    "
                 ),
                 _vm.isInvoiceLoading
+                  ? _c("b-spinner", { attrs: { small: "" } })
+                  : _vm._e(),
+              ],
+              1
+            ),
+          ],
+          1
+        ),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "card mt-4" }, [
+        _c("div", { staticClass: "card-header" }, [
+          _c("h4", [_vm._v(_vm._s(_vm.__("credit_note_settings")))]),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "card-body" }, [
+          _c("p", { staticClass: "text-muted font-size-13" }, [
+            _vm._v(_vm._s(_vm.__("credit_note_settings_hint"))),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "form-group col-md-4" }, [
+              _c("label", { attrs: { for: "credit_note_prefix" } }, [
+                _vm._v(_vm._s(_vm.__("credit_note_prefix"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.credit_note_prefix,
+                    expression: "credit_note_prefix",
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "text",
+                  id: "credit_note_prefix",
+                  placeholder: _vm.__("optional"),
+                },
+                domProps: { value: _vm.credit_note_prefix },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.credit_note_prefix = $event.target.value
+                  },
+                },
+              }),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "form-group col-md-4" }, [
+              _c("label", { attrs: { for: "credit_note_next_number" } }, [
+                _vm._v(_vm._s(_vm.__("credit_note_number"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model.number",
+                    value: _vm.credit_note_next_number,
+                    expression: "credit_note_next_number",
+                    modifiers: { number: true },
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "number",
+                  min: "1",
+                  id: "credit_note_next_number",
+                  placeholder: "1",
+                },
+                domProps: { value: _vm.credit_note_next_number },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.credit_note_next_number = _vm._n($event.target.value)
+                  },
+                  blur: function ($event) {
+                    return _vm.$forceUpdate()
+                  },
+                },
+              }),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "form-group col-md-4" }, [
+              _c("label", { attrs: { for: "credit_note_suffix" } }, [
+                _vm._v(_vm._s(_vm.__("credit_note_suffix"))),
+              ]),
+              _vm._v(" "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.credit_note_suffix,
+                    expression: "credit_note_suffix",
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: {
+                  type: "text",
+                  id: "credit_note_suffix",
+                  placeholder: _vm.__("optional"),
+                },
+                domProps: { value: _vm.credit_note_suffix },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.credit_note_suffix = $event.target.value
+                  },
+                },
+              }),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c("p", { staticClass: "text-muted font-size-13 mb-0" }, [
+            _vm._v("\n                    " + _vm._s(_vm.__("preview")) + ": "),
+            _c("strong", [_vm._v(_vm._s(_vm.creditNoteNumberPreview))]),
+          ]),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "card-footer" },
+          [
+            _c(
+              "b-button",
+              {
+                attrs: {
+                  variant: "primary",
+                  disabled: _vm.isCreditNoteLoading,
+                },
+                on: { click: _vm.saveCreditNoteSettings },
+              },
+              [
+                _vm._v(
+                  "\n                    " +
+                    _vm._s(_vm.__("save")) +
+                    "\n                    "
+                ),
+                _vm.isCreditNoteLoading
                   ? _c("b-spinner", { attrs: { small: "" } })
                   : _vm._e(),
               ],

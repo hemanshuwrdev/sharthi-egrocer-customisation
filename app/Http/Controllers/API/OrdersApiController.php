@@ -483,6 +483,8 @@ class OrdersApiController extends Controller
 
             DB::beginTransaction();
             try {
+                $loadingSlipIdAtReschedule = $order->loading_slip_id;
+
                 $order->delivery_date   = $request->delivery_date;
                 $order->delivery_reason = $request->delivery_reason;
                 $order->delivery_time   = $request->delivery_time;
@@ -498,12 +500,13 @@ class OrdersApiController extends Controller
                     ->update(['active_status' => OrderStatusList::$rescheduled]);
 
                 OrderStatus::create([
-                    'order_id'      => $order->id,
-                    'order_item_id' => 0,
-                    'status'        => 'Rescheduled',
-                    'created_by'    => auth()->user()->id,
-                    'user_type'     => OrderStatus::$userTypeAdmin,
-                    'created_at'    => now(),
+                    'order_id'        => $order->id,
+                    'order_item_id'   => 0,
+                    'loading_slip_id' => $loadingSlipIdAtReschedule,
+                    'status'          => 'Rescheduled',
+                    'created_by'      => auth()->user()->id,
+                    'user_type'       => OrderStatus::$userTypeAdmin,
+                    'created_at'      => now(),
                 ]);
 
                 DB::commit();
@@ -1695,6 +1698,8 @@ class OrdersApiController extends Controller
 
         DB::beginTransaction();
         try {
+            $loadingSlipIdAtReschedule = $order->loading_slip_id;
+
             $order->delivery_date = $request->delivery_date;
             if ($request->has('delivery_reason')) {
                 $order->delivery_reason = $request->delivery_reason;
@@ -1714,14 +1719,16 @@ class OrdersApiController extends Controller
                 ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
                 ->update(['active_status' => OrderStatusList::$rescheduled]);
 
-            // Log status history
+            // Log status history — loading_slip_id snapshots which trip this reschedule
+            // happened on, since the column above is nulled the instant we save().
             $orderStatus = [
-                'order_id'      => $order->id,
-                'order_item_id' => 0,
-                'status'        => 'Rescheduled',
-                'created_by'    => $authUser->id,
-                'user_type'     => OrderStatus::$userTypeAdmin,
-                'created_at'    => now()
+                'order_id'        => $order->id,
+                'order_item_id'   => 0,
+                'loading_slip_id' => $loadingSlipIdAtReschedule,
+                'status'          => 'Rescheduled',
+                'created_by'      => $authUser->id,
+                'user_type'       => OrderStatus::$userTypeAdmin,
+                'created_at'      => now()
             ];
             OrderStatus::create($orderStatus);
 

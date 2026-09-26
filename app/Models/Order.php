@@ -16,6 +16,8 @@ class Order extends Model
     public static $previousType = 0;
     protected $casts = [
         'additional_charges' => 'array',
+        'cancel_verified_at' => 'datetime',
+        'cancel_verified_by' => 'integer',
     ];
 
     public static $previousTypeStatus = 0;

@@ -21,6 +21,7 @@ class OrderStatus extends Model
     public $fillable = [
         'order_id',
         'order_item_id',
+        'loading_slip_id',
 		'status',
         'created_by',
         'user_type',

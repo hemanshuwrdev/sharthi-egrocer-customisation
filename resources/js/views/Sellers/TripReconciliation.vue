@@ -33,38 +33,43 @@
             <section class="section" v-else>
 
                 <!-- Header bar -->
-                <div class="card mb-4 trip-header">
-                    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="driver-avatar" :class="tripType === 'salesman' ? 'driver-avatar--purple' : ''">
-                                <i :class="tripType === 'salesman' ? 'fa fa-user-tie' : 'fa fa-truck'"></i>
+                <div class="trip-header">
+                    <div class="trip-header__left">
+                        <div class="driver-avatar" :class="tripType === 'salesman' ? 'driver-avatar--purple' : ''">
+                            <i :class="tripType === 'salesman' ? 'fa fa-user-tie' : 'fa fa-truck'"></i>
+                        </div>
+                        <div>
+                            <div class="trip-header__title">
+                                <span class="trip-header__name">{{ settlement.person ? settlement.person.name : '-' }}</span>
+                                <span v-if="settlement.trip_no" class="trip-header__code">{{ settlement.trip_no }}</span>
                             </div>
-                            <div>
-                                <div class="fw-bold fs-5">{{ settlement.person ? settlement.person.name : '-' }}</div>
-                                <div class="text-muted small">
-                                    <span class="badge me-1" :class="tripType === 'salesman' ? 'bg-purple' : 'bg-info'">
-                                        {{ tripType === 'salesman' ? __('salesman') : __('driver') }}
-                                    </span>
-                                    <span v-if="settlement.trip_no" class="badge bg-secondary me-1">{{ settlement.trip_no }}</span>
-                                    {{ settlement.date }}
-                                    &nbsp;·&nbsp; {{ __('total_orders') }}: {{ orders.length }}
-                                </div>
+                            <div class="trip-header__meta">
+                                <span>{{ fmtDate(settlement.date) }}</span>
+                                <span class="trip-header__dot">•</span>
+                                <span>{{ orders.length }} {{ __('total_orders') }}</span>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="trip-badge" :class="statusBadgeClass(settlement.status)">
-                                <i :class="statusIcon(settlement.status)" class="me-1"></i>
-                                {{ settlement.status_text }}
-                            </span>
+                    </div>
+                    <div class="trip-header__right">
+                        <span class="trip-badge" :class="statusBadgeClass(settlement.status)">
+                            <span class="trip-badge__dot"></span>
+                            {{ settlement.status_text }}
+                        </span>
+
+                        <div class="trip-header__divider"></div>
+
+                        <div class="trip-header__actions">
                             <span v-if="methodEditUnlocked" class="text-success small fw-semibold">
                                 <i class="fa fa-unlock me-1"></i>{{ __('editing_enabled') }}
                             </span>
-                            <b-button v-else variant="outline-danger" size="sm" @click="openUnlockModal">
-                                <i class="fa fa-lock me-1"></i>{{ __('edit') }}
-                            </b-button>
-                            <b-dropdown v-if="isClosed" variant="outline-secondary" size="sm" right boundary="window" class="export-dropdown">
+                            <button v-else type="button" class="trip-header__btn trip-header__btn--secondary" @click="openUnlockModal">
+                                <i class="fa fa-lock trip-header__btn-icon"></i>{{ __('edit') }}
+                            </button>
+                            <b-dropdown v-if="isClosed" right boundary="window" class="export-dropdown"
+                                toggle-class="trip-header__btn trip-header__btn--primary" no-caret>
                                 <template #button-content>
-                                    <i class="fa fa-download me-1"></i>{{ __('export_report') }}
+                                    <i class="fa fa-download"></i>{{ __('export_report') }}
+                                    <i class="fa fa-caret-down trip-header__btn-caret"></i>
                                 </template>
                                 <b-dropdown-item href="#" @click.prevent="exportReport('csv')">{{ __('export_as_csv') }}</b-dropdown-item>
                                 <b-dropdown-item href="#" @click.prevent="exportReport('pdf')">{{ __('export_as_pdf') }}</b-dropdown-item>
@@ -135,6 +140,16 @@
                                 <div v-if="totals.unverified_digital > 0 && !isClosed" class="alert alert-danger py-2 small mb-0">
                                     <i class="fa fa-lock me-1"></i>
                                     {{ totals.unverified_digital }} {{ __('digital_payment_pending_verify') }}
+                                </div>
+
+                                <!-- Pending partial-invoice / cancel-invoice verification warnings -->
+                                <div v-if="totals.unverified_partial > 0 && !isClosed" class="alert alert-danger py-2 small mb-0 mt-2">
+                                    <i class="fa fa-lock me-1"></i>
+                                    {{ totals.unverified_partial }} {{ __('partial_invoice_item_pending_verify') }}
+                                </div>
+                                <div v-if="totals.unverified_cancel > 0 && !isClosed" class="alert alert-danger py-2 small mb-0 mt-2">
+                                    <i class="fa fa-lock me-1"></i>
+                                    {{ totals.unverified_cancel }} {{ __('cancel_invoice_pending_verify') }}
                                 </div>
 
                             </div>
@@ -213,6 +228,14 @@
                     </div>
 
                 </div>
+
+                <b-tabs content-class="mt-3" nav-class="trip-tabs">
+                <b-tab active>
+                    <template #title>
+                        <span class="trip-tab-title">
+                            <i class="fa fa-money trip-tab-icon"></i>{{ __('payments') }}
+                        </span>
+                    </template>
 
                 <!-- Cash Settlement -->
                 <div class="card" v-if="cashRows.length > 0">
@@ -483,7 +506,8 @@
                                             <button v-else
                                                 class="btn btn-sm btn-outline-success"
                                                 @click="verifyPayment(row.paymentId)"
-                                                :disabled="isClosed || verifyingId === row.paymentId">
+                                                v-b-tooltip.hover :title="(!row.chequeDate || !row.chequeNumber) ? __('cheque_date_and_number_required_before_verification') : ''"
+                                                :disabled="isClosed || verifyingId === row.paymentId || !row.chequeDate || !row.chequeNumber">
                                                 <b-spinner v-if="verifyingId === row.paymentId" small></b-spinner>
                                                 <i v-else class="fa fa-check"></i>
                                                 {{ __('verify') }}
@@ -608,6 +632,305 @@
                     </div>
                 </div>
 
+                </b-tab>
+
+                <b-tab>
+                    <template #title>
+                        <span class="trip-tab-title">
+                            <i class="fa fa-exclamation-triangle trip-tab-icon"></i>{{ __('partial_invoices') }}
+                            <span v-if="partialInvoices.length" class="trip-tab-badge">{{ partialInvoices.length }}</span>
+                        </span>
+                    </template>
+
+                <!-- Partial Invoices -->
+                <div class="card" v-if="partialInvoiceRows.length > 0">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fa fa-exclamation-triangle me-2 text-warning"></i>{{ __('partial_invoices') }}</h5>
+                        <span class="text-muted small">{{ partialInvoices.length }} {{ __('invoice') }}(s)</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3" style="width:120px">{{ __('invoice') }} #</th>
+                                        <th style="width:110px">{{ __('loading_slip') }}</th>
+                                        <th>{{ __('retailer') }}</th>
+                                        <th>{{ __('product') }}</th>
+                                        <th class="text-center" style="width:110px">{{ __('items_accepted') }}</th>
+                                        <th class="text-end" style="width:90px">{{ __('ordered_qty') }}</th>
+                                        <th class="text-end" style="width:90px">{{ __('delivered_qty') }}</th>
+                                        <th class="text-end" style="width:90px">{{ __('shortfall_qty') }}</th>
+                                        <th class="text-end" style="width:110px">{{ __('shortfall_value') }}</th>
+                                        <th style="width:160px">{{ __('reason') }}</th>
+                                        <th class="text-center" style="width:70px">{{ __('proof') }}</th>
+                                        <th class="text-center" style="width:100px">{{ __('status') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(row, idx) in partialInvoiceRows" :key="row.orderId + '_' + idx">
+                                        <td class="ps-3 fw-semibold text-primary">{{ row.invoiceNumber || ('#' + row.orderId) }}</td>
+                                        <td>
+                                            <span v-if="row.loadingSlipNo" class="badge bg-secondary">{{ row.loadingSlipNo }}</span>
+                                            <span v-else class="text-muted small">—</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.retailerName }}</div>
+                                            <div class="text-muted small">{{ row.retailerMobile }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.productName }}</div>
+                                            <div class="text-muted small" v-if="row.variantName">{{ row.variantName }}</div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge" :class="row.totalDeliveredQty < row.totalOrderedQty ? 'bg-warning text-dark' : 'bg-success'">
+                                                {{ row.totalDeliveredQty }}/{{ row.totalOrderedQty }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">{{ row.quantity }}</td>
+                                        <td class="text-end">{{ row.deliveredQuantity }}</td>
+                                        <td class="text-end text-danger fw-bold">{{ row.shortfallQty }}</td>
+                                        <td class="text-end text-danger fw-bold">{{ $currency }} {{ fmt(row.shortfallValue) }}</td>
+                                        <td>{{ row.shortfallReason ? __(row.shortfallReason) : '-' }}</td>
+                                        <td class="text-center">
+                                            <a v-if="row.damagePhoto" :href="'/storage/' + row.damagePhoto" target="_blank" class="btn btn-sm btn-outline-info">
+                                                <i class="fa fa-image"></i>
+                                            </a>
+                                            <span v-else class="text-muted small">—</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span v-if="row.verified" class="text-success small fw-semibold">
+                                                <i class="fa fa-check-circle"></i> {{ __('verified') }}
+                                            </span>
+                                            <button v-else
+                                                class="btn btn-sm btn-outline-success"
+                                                @click="verifyPartialInvoiceItem(row.orderItemId)"
+                                                :disabled="isClosed || verifyingPartialId === row.orderItemId">
+                                                <b-spinner v-if="verifyingPartialId === row.orderItemId" small></b-spinner>
+                                                <i v-else class="fa fa-check"></i>
+                                                {{ __('verify') }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="8" class="ps-3 text-end">{{ __('total') }}</td>
+                                        <td class="text-end text-danger">{{ $currency }} {{ fmt(totalShortfallValue) }}</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" v-else>
+                    <div class="card-body text-center text-success py-4">
+                        <i class="fa fa-check-circle fa-2x mb-2 d-block"></i>
+                        {{ __('all_items_delivered_in_full') }}
+                    </div>
+                </div>
+
+                </b-tab>
+
+                <b-tab>
+                    <template #title>
+                        <span class="trip-tab-title">
+                            <i class="fa fa-ban trip-tab-icon"></i>{{ __('cancel_invoices') }}
+                            <span v-if="cancelInvoices.length" class="trip-tab-badge">{{ cancelInvoices.length }}</span>
+                        </span>
+                    </template>
+
+                <!-- Cancel Invoices -->
+                <div class="card" v-if="cancelInvoices.length > 0">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fa fa-ban me-2 text-danger"></i>{{ __('cancel_invoices') }}</h5>
+                        <span class="text-muted small">{{ cancelInvoices.length }} {{ __('invoice') }}(s)</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3" style="width:120px">{{ __('invoice') }} #</th>
+                                        <th style="width:110px">{{ __('loading_slip') }}</th>
+                                        <th>{{ __('retailer') }}</th>
+                                        <th class="text-end" style="width:120px">{{ __('order_value') }}</th>
+                                        <th style="width:170px">{{ __('cancelled_at') }}</th>
+                                        <th class="text-center" style="width:100px">{{ __('status') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="row in cancelInvoices" :key="row.order_id">
+                                        <td class="ps-3 fw-semibold text-primary">{{ row.invoice_number || ('#' + row.order_id) }}</td>
+                                        <td>
+                                            <span v-if="row.loading_slip_no" class="badge bg-secondary">{{ row.loading_slip_no }}</span>
+                                            <span v-else class="text-muted small">—</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.retailer ? row.retailer.name : '-' }}</div>
+                                            <div class="text-muted small">{{ row.retailer ? row.retailer.mobile : '' }}</div>
+                                        </td>
+                                        <td class="text-end fw-bold">{{ $currency }} {{ fmt(row.final_total) }}</td>
+                                        <td>{{ fmtDateTime(row.cancelled_at) }}</td>
+                                        <td class="text-center">
+                                            <span v-if="row.verified" class="text-success small fw-semibold">
+                                                <i class="fa fa-check-circle"></i> {{ __('verified') }}
+                                            </span>
+                                            <button v-else
+                                                class="btn btn-sm btn-outline-success"
+                                                @click="verifyCancelInvoice(row.order_id)"
+                                                :disabled="isClosed || verifyingCancelId === row.order_id">
+                                                <b-spinner v-if="verifyingCancelId === row.order_id" small></b-spinner>
+                                                <i v-else class="fa fa-check"></i>
+                                                {{ __('verify') }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="3" class="ps-3 text-end">{{ __('total') }}</td>
+                                        <td class="text-end">{{ $currency }} {{ fmt(cancelInvoices.reduce((s, r) => s + parseFloat(r.final_total || 0), 0)) }}</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" v-else>
+                    <div class="card-body text-center text-success py-4">
+                        <i class="fa fa-check-circle fa-2x mb-2 d-block"></i>
+                        {{ __('no_cancelled_orders_in_this_trip') }}
+                    </div>
+                </div>
+
+                </b-tab>
+
+                <b-tab>
+                    <template #title>
+                        <span class="trip-tab-title">
+                            <i class="fa fa-calendar trip-tab-icon"></i>{{ __('reschedule_invoices') }}
+                            <span v-if="rescheduleInvoices.length" class="trip-tab-badge">{{ rescheduleInvoices.length }}</span>
+                        </span>
+                    </template>
+
+                <!-- Reschedule Invoices -->
+                <div class="card" v-if="rescheduleInvoices.length > 0">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fa fa-calendar me-2 text-warning"></i>{{ __('reschedule_invoices') }}</h5>
+                        <span class="text-muted small">{{ rescheduleInvoices.length }} {{ __('invoice') }}(s)</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3" style="width:120px">{{ __('invoice') }} #</th>
+                                        <th>{{ __('retailer') }}</th>
+                                        <th class="text-end" style="width:110px">{{ __('order_value') }}</th>
+                                        <th style="width:130px">{{ __('new_delivery_date') }}</th>
+                                        <th>{{ __('reason') }}</th>
+                                        <th style="width:170px">{{ __('rescheduled_at') }}</th>
+                                        <th style="width:130px">{{ __('current_status') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="row in rescheduleInvoices" :key="row.order_id">
+                                        <td class="ps-3 fw-semibold text-primary">{{ row.invoice_number || ('#' + row.order_id) }}</td>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.retailer ? row.retailer.name : '-' }}</div>
+                                            <div class="text-muted small">{{ row.retailer ? row.retailer.mobile : '' }}</div>
+                                        </td>
+                                        <td class="text-end fw-bold">{{ $currency }} {{ fmt(row.final_total) }}</td>
+                                        <td>{{ fmtDate(row.new_delivery_date) }}</td>
+                                        <td>{{ row.delivery_reason || '-' }}</td>
+                                        <td>{{ fmtDateTime(row.rescheduled_at) }}</td>
+                                        <td><span class="badge bg-secondary">{{ orderStatusLabel(row.current_status) }}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" v-else>
+                    <div class="card-body text-center text-success py-4">
+                        <i class="fa fa-check-circle fa-2x mb-2 d-block"></i>
+                        {{ __('no_rescheduled_orders_in_this_trip') }}
+                    </div>
+                </div>
+
+                </b-tab>
+
+                <b-tab>
+                    <template #title>
+                        <span class="trip-tab-title">
+                            <i class="fa fa-undo trip-tab-icon"></i>{{ __('returns') }}
+                            <span v-if="returnItemSummary.length" class="trip-tab-badge">{{ returnItemSummary.length }}</span>
+                        </span>
+                    </template>
+
+                <!-- Item Summary of Returned Items -->
+                <div class="card" v-if="returnItemSummary.length > 0">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fa fa-undo me-2 text-info"></i>{{ __('item_summary_of_returned_items') }}</h5>
+                        <span class="text-muted small">{{ returnItemSummary.length }} {{ __('item') }}(s)</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3" style="width:120px">{{ __('invoice') }} #</th>
+                                        <th>{{ __('retailer') }}</th>
+                                        <th>{{ __('product') }}</th>
+                                        <th class="text-end" style="width:120px">{{ __('refund_amount') }}</th>
+                                        <th>{{ __('reason') }}</th>
+                                        <th style="width:170px">{{ __('returned_at') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(row, idx) in returnItemSummary" :key="row.order_id + '_' + idx">
+                                        <td class="ps-3 fw-semibold text-primary">{{ row.invoice_number || ('#' + row.order_id) }}</td>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.retailer ? row.retailer.name : '-' }}</div>
+                                            <div class="text-muted small">{{ row.retailer ? row.retailer.mobile : '' }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.product_name }}</div>
+                                            <div class="text-muted small" v-if="row.variant_name">{{ row.variant_name }}</div>
+                                        </td>
+                                        <td class="text-end fw-bold">{{ $currency }} {{ fmt(row.refund_amount) }}</td>
+                                        <td>{{ row.reason || '-' }}</td>
+                                        <td>{{ fmtDateTime(row.returned_at) }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="3" class="ps-3 text-end">{{ __('total') }}</td>
+                                        <td class="text-end">{{ $currency }} {{ fmt(returnItemSummary.reduce((s, r) => s + parseFloat(r.refund_amount || 0), 0)) }}</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" v-else>
+                    <div class="card-body text-center text-success py-4">
+                        <i class="fa fa-check-circle fa-2x mb-2 d-block"></i>
+                        {{ __('no_returns_in_this_trip') }}
+                    </div>
+                </div>
+
+                </b-tab>
+                </b-tabs>
+
                 <!-- Cheque details modal: opens when a row's method is changed to Cheque,
                      since Cheque Date + Number must be captured before the change is saved. -->
                 <b-modal v-model="chequeModalShow" :title="__('Enter Cheque Details')" hide-footer no-close-on-backdrop>
@@ -686,6 +1009,7 @@
 </template>
 
 <script>
+import moment from 'moment';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -696,15 +1020,22 @@ export default {
             loading:     true,
             settlement:  null,
             orders:      [],
+            partialInvoices: [],
+            cancelInvoices: [],
+            rescheduleInvoices: [],
+            returnItemSummary: [],
             totals: {
                 total_expected: 0, total_collected: 0,
                 total_cash: 0, total_upi: 0, total_cheque: 0, total_signature: 0,
                 verified_upi: 0, verified_cheque: 0, verified_signature: 0,
                 digital_verified: 0, cash_expected: 0, cash_received: null,
                 has_cash: false, unverified_digital: 0,
+                unverified_partial: 0, unverified_cancel: 0,
             },
             closing:     false,
             verifyingId: null,
+            verifyingPartialId: null,
+            verifyingCancelId: null,
             methodOptions:      ['cash', 'upi', 'cheque', 'signature'],
             methodEditUnlocked: false,
             unlockModalShow:    false,
@@ -733,7 +1064,9 @@ export default {
             return this.flatRows.reduce((s, row) => s + parseFloat(row.receivedAmount || 0), 0);
         },
         canCloseNow() {
-            return this.totals.unverified_digital === 0;
+            return this.totals.unverified_digital === 0
+                && this.totals.unverified_partial === 0
+                && this.totals.unverified_cancel === 0;
         },
         // One row per payment, order-level fields (Order #, Retailer, Order Value,
         // Shortfall) repeated on every row — each of the 4 method tables below just
@@ -778,6 +1111,38 @@ export default {
         upiRows()       { return this.flatRows.filter(r => r.method === 'upi'); },
         chequeRows()    { return this.flatRows.filter(r => r.method === 'cheque'); },
         signatureRows() { return this.flatRows.filter(r => r.method === 'signature'); },
+        // One row per shortfall item, invoice-level fields (Invoice #, Retailer, Items
+        // Accepted) repeated on every row — mirrors flatRows' pattern for payments.
+        partialInvoiceRows() {
+            const rows = [];
+            this.partialInvoices.forEach(inv => {
+                (inv.items || []).forEach(item => {
+                    rows.push({
+                        orderId: inv.order_id,
+                        orderItemId: item.order_item_id,
+                        invoiceNumber: inv.invoice_number,
+                        loadingSlipNo: inv.loading_slip_no,
+                        retailerName: inv.retailer ? inv.retailer.name : '-',
+                        retailerMobile: inv.retailer ? inv.retailer.mobile : '',
+                        totalOrderedQty: inv.total_ordered_qty,
+                        totalDeliveredQty: inv.total_delivered_qty,
+                        productName: item.product_name,
+                        variantName: item.variant_name,
+                        quantity: item.quantity,
+                        deliveredQuantity: item.delivered_quantity,
+                        shortfallQty: item.shortfall_qty,
+                        shortfallValue: item.shortfall_value,
+                        shortfallReason: item.shortfall_reason,
+                        damagePhoto: item.damage_photo,
+                        verified: item.verified,
+                    });
+                });
+            });
+            return rows;
+        },
+        totalShortfallValue() {
+            return this.partialInvoiceRows.reduce((s, row) => s + parseFloat(row.shortfallValue || 0), 0);
+        },
     },
     created() { this.load(); },
     methods: {
@@ -786,11 +1151,15 @@ export default {
             axios.get(this.$apiUrl + '/seller/trips/' + this.$route.params.id, {
                 params: { type: this.tripType },
             }).then(res => {
-                const d          = res.data.data;
-                this.settlement  = d.settlement;
-                this.orders      = d.orders;
-                this.totals      = d.totals;
-                this.loading     = false;
+                const d              = res.data.data;
+                this.settlement      = d.settlement;
+                this.orders          = d.orders;
+                this.totals          = d.totals;
+                this.partialInvoices    = d.partial_invoices || [];
+                this.cancelInvoices     = d.cancel_invoices || [];
+                this.rescheduleInvoices = d.reschedule_invoices || [];
+                this.returnItemSummary  = d.return_item_summary || [];
+                this.loading            = false;
             }).catch(() => { this.loading = false; });
         },
         markPaymentVerifiedLocally(paymentId) {
@@ -818,23 +1187,65 @@ export default {
         verifyPayment(paymentId) {
             this.verifyingId = paymentId;
             axios.post(this.$apiUrl + '/seller/payments/verify', { payment_id: paymentId })
-                .then(() => {
+                .then(res => {
                     this.verifyingId = null;
+                    // CommonHelper::responseError() replies with HTTP 200 and status:0 in
+                    // the body, not an HTTP error — axios lands in .then() either way, so
+                    // status must be checked here, never inferred from a resolved promise.
+                    if (!res.data.status) {
+                        if (res.data.message === 'already_verified') {
+                            // DB already has it verified — sync UI immediately, then reload totals
+                            this.markPaymentVerifiedLocally(paymentId);
+                            this.load();
+                        } else {
+                            this.$toast.error(res.data.message || __('something_went_wrong'));
+                        }
+                        return;
+                    }
                     this.markPaymentVerifiedLocally(paymentId);
                     this.$toast.success(__('payment_verified'));
                     this.load();
                 })
                 .catch(err => {
                     this.verifyingId = null;
-                    const msg = err.response?.data?.message || '';
-                    if (msg === 'already_verified') {
-                        // DB already has it verified — sync UI immediately, then reload totals
-                        this.markPaymentVerifiedLocally(paymentId);
-                        this.load();
-                    } else {
-                        this.$toast.error(msg || __('something_went_wrong'));
-                    }
+                    this.$toast.error(err.response?.data?.message || __('something_went_wrong'));
                 });
+        },
+        verifyPartialInvoiceItem(orderItemId) {
+            if (orderItemId == null) return;
+            this.verifyingPartialId = orderItemId;
+            axios.post(this.$apiUrl + '/seller/trips/' + this.$route.params.id + '/partial-invoices/' + orderItemId + '/verify', {
+                type: this.tripType,
+            }).then(res => {
+                this.verifyingPartialId = null;
+                if (!res.data.status) {
+                    this.$toast.error(res.data.message || __('something_went_wrong'));
+                    return;
+                }
+                this.$toast.success(__('shortfall_verified'));
+                this.load();
+            }).catch(err => {
+                this.verifyingPartialId = null;
+                this.$toast.error(err.response?.data?.message || __('something_went_wrong'));
+            });
+        },
+        verifyCancelInvoice(orderId) {
+            if (orderId == null) return;
+            this.verifyingCancelId = orderId;
+            axios.post(this.$apiUrl + '/seller/trips/' + this.$route.params.id + '/cancel-invoices/' + orderId + '/verify', {
+                type: this.tripType,
+            }).then(res => {
+                this.verifyingCancelId = null;
+                if (!res.data.status) {
+                    this.$toast.error(res.data.message || __('something_went_wrong'));
+                    return;
+                }
+                this.$toast.success(__('cancellation_verified'));
+                this.load();
+            }).catch(err => {
+                this.verifyingCancelId = null;
+                this.$toast.error(err.response?.data?.message || __('something_went_wrong'));
+            });
         },
         updateReceivedAmountLocally(paymentId, value) {
             if (paymentId == null) return;
@@ -1028,9 +1439,20 @@ export default {
                 this.closing = true;
                 axios.post(this.$apiUrl + '/seller/trips/' + this.$route.params.id + '/close', {
                     type: this.tripType,
-                }).then(() => {
+                }).then(res => {
                     this.closing = false;
-                    this.$toast.success(__('trip_closed'));
+                    // CommonHelper::responseError() replies with HTTP 200 and status:0 in
+                    // the body, not an HTTP error — axios lands in .then() either way, so
+                    // status must be checked here, not inferred from a resolved promise.
+                    if (!res.data.status) {
+                        this.$toast.error(res.data.message || __('something_went_wrong'));
+                        this.load();
+                        return;
+                    }
+                    const creditNotes = res.data?.data?.credit_notes || [];
+                    this.$toast.success(creditNotes.length
+                        ? __('trip_closed') + ' — ' + creditNotes.length + ' ' + __('credit_notes_generated')
+                        : __('trip_closed'));
                     this.load();
                 }).catch(err => {
                     this.closing = false;
@@ -1088,7 +1510,7 @@ export default {
                 styles: { fontSize: 9, cellPadding: 1 },
                 body: [
                     [{ content: __('type'), styles: { fontStyle: 'bold' } }, typeLabel,
-                     { content: __('date'), styles: { fontStyle: 'bold' } }, this.settlement.date],
+                     { content: __('date'), styles: { fontStyle: 'bold' } }, this.fmtDate(this.settlement.date)],
                     [{ content: __('name'), styles: { fontStyle: 'bold' } }, personName,
                      { content: __('status'), styles: { fontStyle: 'bold' } }, this.settlement.status_text],
                 ],
@@ -1212,9 +1634,25 @@ export default {
 
             doc.save('settlement-' + this.tripType + '-' + this.$route.params.id + '.pdf');
         },
+        // Mirrors Sellers/Dashboard.vue's getStatusTranslationKey — same OrderStatusList ids.
+        orderStatusLabel(id) {
+            const map = { 1: 'payment_pending', 2: 'received', 3: 'processed', 4: 'shipped', 5: 'outForDelivery', 6: 'delivered', 7: 'cancelled', 8: 'returned', 9: 'pending', 10: 'ready_for_pickup', 11: 'picked_up', 12: 'rescheduled', 13: 'partial_delivery', 14: 'not_delivered' };
+            const key = map[Number(id)];
+            return key ? __(key) : (id || '-');
+        },
         fmt(val) {
             if (val == null) return '0.00';
             return parseFloat(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        fmtDate(val) {
+            if (!val) return '-';
+            const m = moment(val);
+            return m.isValid() ? m.format('DD-MM-YYYY') : val;
+        },
+        fmtDateTime(val) {
+            if (!val) return '-';
+            const m = moment(val);
+            return m.isValid() ? m.format('DD-MM-YYYY hh:mm A') : val;
         },
         methodTotal(rows, field) {
             return rows.reduce((s, r) => s + parseFloat(r[field] || 0), 0);
@@ -1247,22 +1685,69 @@ export default {
 <style scoped>
 .bg-purple { background-color: #7c3aed !important; color: #fff !important; }
 
-.trip-header, .trip-header .card-body { overflow: visible; }
+.trip-header {
+    background: #fff; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    padding: 16px 24px; margin-bottom: 16px; overflow: visible;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+}
+.trip-header__left { display: flex; align-items: center; gap: 16px; }
+.trip-header__right { display: flex; align-items: center; gap: 12px; }
+.trip-header__actions { display: flex; align-items: center; gap: 8px; }
+.trip-header__divider { width: 1px; height: 20px; background: #e2e8f0; flex-shrink: 0; }
 
 .driver-avatar {
-    width: 48px; height: 48px; border-radius: 50%;
-    background: #e8f0fe; color: #4f8ef7;
-    display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+    width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+    background: #eff6ff; color: #2563eb; border: 1px solid rgba(219, 234, 254, 0.8);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
 }
-.driver-avatar--purple { background: #f3e8ff; color: #7c3aed; }
+.driver-avatar--purple { background: #f3e8ff; color: #7c3aed; border-color: rgba(233, 213, 255, 0.8); }
+
+.trip-header__title { display: flex; align-items: center; gap: 8px; }
+.trip-header__name { font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; text-transform: capitalize; }
+.trip-header__code {
+    font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; font-weight: 500;
+    padding: 2px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+}
+.trip-header__meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; color: #64748b; margin-top: 4px;
+}
+.trip-header__dot { color: #cbd5e1; }
 
 .trip-badge {
-    display: inline-flex; align-items: center;
-    font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid transparent;
 }
-.trip-badge--green  { background: #dcfce7; color: #16a34a; }
-.trip-badge--blue   { background: #e0f2fe; color: #0284c7; }
-.trip-badge--orange { background: #fff7ed; color: #ea580c; }
+.trip-badge__dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.trip-badge--green  { background: #ecfdf5; color: #047857; border-color: rgba(167, 243, 208, 0.8); }
+.trip-badge--blue   { background: #eff6ff; color: #1d4ed8; border-color: rgba(191, 219, 254, 0.8); }
+.trip-badge--orange { background: #fffbeb; color: #b45309; border-color: rgba(253, 230, 138, 0.8); }
+.trip-badge--green  .trip-badge__dot { background: #10b981; }
+.trip-badge--blue   .trip-badge__dot { background: #3b82f6; }
+.trip-badge--orange .trip-badge__dot { background: #f59e0b; }
+
+/* Shared by both a plain <button> in this template (the Edit button) and the
+   toggle-class passed into <b-dropdown> (renders its own internal <button>, hence
+   ::v-deep) — using ::v-deep throughout keeps both reachable from one rule set. */
+::v-deep .trip-header__btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 14px; font-size: 12.5px; font-weight: 600;
+    border-radius: 8px; border: 1px solid transparent; transition: all .15s ease; white-space: nowrap;
+}
+::v-deep .trip-header__btn--secondary {
+    background: #fff; color: #334155; border-color: #cbd5e1;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+}
+::v-deep .trip-header__btn--secondary:hover { background: #f8fafc; }
+::v-deep .trip-header__btn-icon { color: #64748b; font-size: 12px; }
+::v-deep .trip-header__btn--primary {
+    background: #0f172a !important; color: #fff !important; border-color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+::v-deep .trip-header__btn--primary:hover { background: #1e293b !important; }
+::v-deep .trip-header__btn-caret { color: #94a3b8; font-size: 11px; }
 
 .recon-tiles { display: flex; gap: 16px; flex-wrap: wrap; }
 .recon-tile {
@@ -1303,4 +1788,49 @@ export default {
 .footer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; font-weight: 700; }
 .footer-value { font-size: 16px; font-weight: 800; color: #111827; }
 .footer-divider { width: 1px; height: 36px; background: #e5e7eb; flex-shrink: 0; }
+
+/* .trip-tabs / .nav-link are rendered inside <b-tabs>'s own template, not this
+   component's — ::v-deep is required to reach past that component boundary. */
+::v-deep .trip-tabs {
+    display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;
+    padding: 4px; background: rgba(226, 232, 240, 0.6); border: 1px solid #e2e8f0;
+    border-radius: 12px; border-bottom: none !important;
+}
+::v-deep .trip-tabs .nav-item { margin: 0; }
+::v-deep .trip-tabs .nav-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 8px !important;
+    font-weight: 500; font-size: 14px; color: #475569;
+    border: 1px solid transparent !important; background: transparent !important;
+    box-shadow: none !important; transition: all .15s ease;
+}
+::v-deep .trip-tabs .nav-link:hover:not(.active) {
+    color: #0f172a; background: rgba(255, 255, 255, 0.5) !important;
+}
+::v-deep .trip-tabs .nav-link.active {
+    color: #0f172a; font-weight: 600;
+    background: #fff !important; border-color: rgba(226, 232, 240, 0.5) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+/* The theme's global common.css (and its dark-mode twin) draws its own active-tab
+   accent as a synthetic bar via ::after — content/position/background-color, not a
+   border — so no border/background override above ever touches it. This is the
+   actual fix for the persistent green underline; kill the pseudo-element outright. */
+::v-deep .trip-tabs .nav-link.active::after { display: none !important; content: none !important; }
+
+::v-deep .trip-tabs .nav-link .trip-tab-icon { color: #94a3b8; }
+::v-deep .trip-tabs .nav-link:hover:not(.active) .trip-tab-icon { color: #475569; }
+::v-deep .trip-tabs .nav-link.active .trip-tab-icon { color: #059669; }
+
+.trip-tab-title { display: inline-flex; align-items: center; gap: 8px; }
+.trip-tab-icon { font-size: 14px; transition: color .15s ease; }
+.trip-tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 18px; padding: 2px 6px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; line-height: 1;
+    background: rgba(203, 213, 225, 0.6); color: #334155;
+}
+::v-deep .trip-tabs .nav-link.active .trip-tab-badge {
+    background: #f1f5f9 !important; color: #334155 !important;
+}
 </style>

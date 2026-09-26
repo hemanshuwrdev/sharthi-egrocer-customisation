@@ -189,6 +189,43 @@
                 </div>
             </div>
 
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>{{ __('credit_note_settings') }}</h4>
+                </div>
+
+                <div class="card-body">
+                    <p class="text-muted font-size-13">{{ __('credit_note_settings_hint') }}</p>
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label for="credit_note_prefix">{{ __('credit_note_prefix') }}</label>
+                            <input type="text" class="form-control" id="credit_note_prefix"
+                                v-model="credit_note_prefix" :placeholder="__('optional')" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="credit_note_next_number">{{ __('credit_note_number') }}</label>
+                            <input type="number" min="1" class="form-control" id="credit_note_next_number"
+                                v-model.number="credit_note_next_number" placeholder="1" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="credit_note_suffix">{{ __('credit_note_suffix') }}</label>
+                            <input type="text" class="form-control" id="credit_note_suffix"
+                                v-model="credit_note_suffix" :placeholder="__('optional')" />
+                        </div>
+                    </div>
+                    <p class="text-muted font-size-13 mb-0">
+                        {{ __('preview') }}: <strong>{{ creditNoteNumberPreview }}</strong>
+                    </p>
+                </div>
+
+                <div class="card-footer">
+                    <b-button variant="primary" :disabled="isCreditNoteLoading" @click="saveCreditNoteSettings">
+                        {{ __('save') }}
+                        <b-spinner small v-if="isCreditNoteLoading"></b-spinner>
+                    </b-button>
+                </div>
+            </div>
+
             <!-- Sarthi: Sensitive Operations Password -->
             <div class="card mt-4">
                 <div class="card-header">
@@ -283,6 +320,10 @@ export default {
             invoice_prefix: "",
             invoice_suffix: "",
             invoice_next_number: 1,
+            isCreditNoteLoading: false,
+            credit_note_prefix: "",
+            credit_note_suffix: "",
+            credit_note_next_number: 1,
             isSensitiveLoading: false,
             sensitivePasswordIsSet: false,
             sensitiveOldPassword: "",
@@ -301,6 +342,7 @@ export default {
         this.getOrderSettings();
         this.getPaymentMethods();
         this.getInvoiceSettings();
+        this.getCreditNoteSettings();
         this.getSensitivePasswordStatus();
     },
 
@@ -308,6 +350,10 @@ export default {
         invoiceNumberPreview() {
             const padded = String(this.invoice_next_number || 1).padStart(4, '0');
             return `${this.invoice_prefix || ''}${padded}${this.invoice_suffix || ''}`;
+        },
+        creditNoteNumberPreview() {
+            const padded = String(this.credit_note_next_number || 1).padStart(4, '0');
+            return `${this.credit_note_prefix || ''}${padded}${this.credit_note_suffix || ''}`;
         },
     },
 
@@ -490,6 +536,43 @@ export default {
                 .catch(() => {
                     this.showError('Failed to save invoice settings');
                     this.isInvoiceLoading = false;
+                });
+        },
+
+        getCreditNoteSettings() {
+            axios.get(this.$sellerApiUrl + '/credit-note-settings')
+                .then(res => {
+                    if (res.data.status && res.data.data) {
+                        this.credit_note_prefix = res.data.data.credit_note_prefix || "";
+                        this.credit_note_suffix = res.data.data.credit_note_suffix || "";
+                        this.credit_note_next_number = res.data.data.credit_note_next_number || 1;
+                    }
+                })
+                .catch(() => {
+                    this.showError('Failed to load credit note settings');
+                });
+        },
+
+        saveCreditNoteSettings() {
+            this.isCreditNoteLoading = true;
+
+            let formData = new FormData();
+            formData.append('credit_note_prefix', this.credit_note_prefix || '');
+            formData.append('credit_note_suffix', this.credit_note_suffix || '');
+            formData.append('credit_note_next_number', this.credit_note_next_number || 1);
+
+            axios.post(this.$sellerApiUrl + '/credit-note-settings/save', formData)
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                    } else {
+                        this.showError(res.data.message || 'Failed to save');
+                    }
+                    this.isCreditNoteLoading = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to save credit note settings');
+                    this.isCreditNoteLoading = false;
                 });
         },
 
