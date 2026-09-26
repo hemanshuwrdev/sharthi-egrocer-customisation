@@ -813,6 +813,7 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'list']);
             Route::get('orders', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrdersForAssignment']);
             Route::get('zones', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getZones']);
+            Route::get('areas', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getFilterAreas']);
             Route::get('products', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getFilterProducts']);
             Route::post('order_items_summary', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'getOrderItemsSummary']);
             Route::post('save', [\App\Http\Controllers\API\LoadingSlipsApiController::class, 'save'])->name('seller.loading_slips.save');

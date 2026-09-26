@@ -424,9 +424,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     getAreas: function getAreas() {
       var _this2 = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/areas').then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/areas').then(function (res) {
         if (res.data.status === 1) {
-          _this2.areas = res.data.data.areas || [];
+          _this2.areas = res.data.data || [];
         }
       });
     },
