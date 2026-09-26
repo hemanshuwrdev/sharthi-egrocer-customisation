@@ -1370,14 +1370,11 @@ class SellerController extends BaseController
             }
         }
 
-        // For loading slip context (no order_id), show all seller-owned drivers.
+        // Strictly this distributor's own drivers only — unassigned drivers
+        // (seller_id null/0) used to leak into every distributor's dropdown here.
         // City filter only applies when fetching drivers for a specific order delivery.
         $deliveryBoys = DeliveryBoy::with(['admin', 'translations'])
-            ->where(function ($query) use ($seller_id) {
-                $query->where('seller_id', $seller_id)
-                      ->orWhereNull('seller_id')
-                      ->orWhere('seller_id', 0);
-            });
+            ->where('seller_id', $seller_id);
 
         if ($request->order_id) {
             $cityIds = array_filter(array_map('trim', explode(',', $city_id)));

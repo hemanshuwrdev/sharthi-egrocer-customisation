@@ -392,10 +392,10 @@ export default {
                 });
         },
         getAreas() {
-            axios.get(this.$apiUrl + '/areas')
+            axios.get(this.apiBase + '/loading_slips/areas')
                 .then(res => {
                     if (res.data.status === 1) {
-                        this.areas = res.data.data.areas || [];
+                        this.areas = res.data.data || [];
                     }
                 });
         },

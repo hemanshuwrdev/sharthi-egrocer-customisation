@@ -144,7 +144,19 @@ class LoadingSlipsApiController extends Controller
         }
 
         if ($areaId) {
-            $query->where('orders.area_id', $areaId);
+            // Match the same area resolved for display (COALESCE above): orders.area_id
+            // first, falling back to the delivery address's area, then the retailer
+            // profile's area — otherwise orders showing "bhuj" via fallback never match
+            // a "bhuj" filter that only checked orders.area_id.
+            $query->where(function ($q) use ($areaId) {
+                $q->where('orders.area_id', $areaId)
+                  ->orWhere(function ($q2) use ($areaId) {
+                      $q2->whereNull('orders.area_id')->where('user_addresses.area_id', $areaId);
+                  })
+                  ->orWhere(function ($q3) use ($areaId) {
+                      $q3->whereNull('orders.area_id')->whereNull('user_addresses.area_id')->where('rp.area_id', $areaId);
+                  });
+            });
         }
 
         // Product filter: an order matches if it contains ANY of the selected products
@@ -332,6 +344,27 @@ class LoadingSlipsApiController extends Controller
         $zones = $query->orderBy('zone')->get(['id', 'zone']);
 
         return CommonHelper::responseWithData($zones);
+    }
+
+    /**
+     * GET /seller/loading_slips/areas
+     * "Filter By Area" options on the create-slip screen — restricted to areas
+     * actually assigned to this distributor (distributor_areas), not every area
+     * in the system.
+     */
+    public function getFilterAreas()
+    {
+        $query = \App\Models\Area::query();
+
+        if (auth()->user() && auth()->user()->seller) {
+            $areaIds = \App\Models\DistributorArea::where('seller_id', auth()->user()->seller->id)
+                ->pluck('area_id');
+            $query->whereIn('id', $areaIds);
+        }
+
+        $areas = $query->orderBy('name')->get(['id', 'name']);
+
+        return CommonHelper::responseWithData($areas);
     }
 
     public function save(Request $request)
