@@ -334,17 +334,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         key: 'product_variant_id',
         label: __('id'),
         visible: true,
-        "class": 'text-center'
+        "class": 'text-center',
+        thStyle: {
+          width: '60px'
+        }
       }, {
         key: 'image',
         label: __('image'),
         visible: true,
-        "class": 'text-center'
+        "class": 'text-center',
+        thStyle: {
+          width: '70px'
+        }
       }, {
         key: 'name',
         label: __('name'),
         visible: true,
-        "class": 'text-start'
+        "class": 'text-start',
+        thStyle: {
+          minWidth: '220px'
+        }
       }, {
         key: 'sku',
         label: __('sku'),
@@ -392,21 +401,27 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }, {
         key: 'cancelable_status',
         label: __('cancelable'),
-        visible: true,
-        "class": 'text-center'
+        visible: false,
+        "class": 'text-center',
+        thStyle: {
+          width: '100px'
+        }
       }, {
         key: 'return_status',
         label: __('returnable'),
-        visible: true,
+        visible: false,
         "class": 'text-center',
         thStyle: {
-          minWidth: '150px'
+          width: '100px'
         }
       }, {
         key: 'slab_count',
         label: __('slabs'),
         visible: true,
-        "class": 'text-center'
+        "class": 'text-center',
+        thStyle: {
+          width: '80px'
+        }
       }, {
         key: 'min_qty',
         label: __('min_quantity'),
@@ -420,12 +435,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         key: 'status',
         label: __('status'),
         visible: true,
-        "class": 'text-center'
+        "class": 'text-center',
+        thStyle: {
+          width: '90px'
+        }
       }, {
         key: 'actions',
         label: __('actions'),
         visible: true,
-        "class": 'text-center'
+        "class": 'text-center',
+        thStyle: {
+          width: '80px'
+        }
       }],
       rows: [],
       totalRows: 0,
