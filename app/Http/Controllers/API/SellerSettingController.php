@@ -157,6 +157,45 @@ class SellerSettingController extends Controller
     }
 
     /**
+     * loading_slip_next_number was already its own independent counter, but
+     * slip numbers borrowed invoice_prefix/invoice_suffix — making a loading
+     * slip visually indistinguishable from an actual invoice. Own prefix/suffix
+     * pair here, same shape as credit note above.
+     */
+    public function getLoadingSlipSettings()
+    {
+        $seller = auth()->user()->seller;
+        return CommonHelper::responseWithData([
+            'loading_slip_prefix' => $seller->loading_slip_prefix,
+            'loading_slip_suffix' => $seller->loading_slip_suffix,
+            'loading_slip_next_number' => $seller->loading_slip_next_number,
+        ]);
+    }
+
+    public function saveLoadingSlipSettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'loading_slip_prefix' => 'nullable|string|max:20',
+            'loading_slip_suffix' => 'nullable|string|max:20',
+            'loading_slip_next_number' => 'required|integer|min:1',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        try {
+            $seller = auth()->user()->seller;
+            $seller->loading_slip_prefix = $request->loading_slip_prefix ?: null;
+            $seller->loading_slip_suffix = $request->loading_slip_suffix ?: null;
+            $seller->loading_slip_next_number = $request->loading_slip_next_number;
+            $seller->save();
+            return CommonHelper::responseSuccess('loading_slip_settings_saved_successfully');
+        } catch (\Exception $e) {
+            return CommonHelper::responseError($e->getMessage());
+        }
+    }
+
+    /**
      * Sensitive-operations password: a second password (distinct from the login
      * password) that gates risky corrections like editing a driver's recorded
      * payment method. Only the seller who already knows it can rotate it, so

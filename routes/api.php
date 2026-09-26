@@ -681,6 +681,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('invoice-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveInvoiceSettings']);
         Route::get('credit-note-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getCreditNoteSettings']);
         Route::post('credit-note-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveCreditNoteSettings']);
+        Route::get('loading-slip-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getLoadingSlipSettings']);
+        Route::post('loading-slip-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveLoadingSlipSettings']);
         Route::get('/orders/{orderId}/items', [App\Http\Controllers\SellerController::class, 'getOrderItems']);
         Route::group(['prefix' => 'delivery_boys'], function () {
             Route::get('/', [\App\Http\Controllers\SellerController::class, 'getDeliveryBoys']);

@@ -3115,7 +3115,7 @@ class CommonHelper
     {
         return DB::transaction(function () use ($seller) {
             $locked = \App\Models\Seller::where('id', $seller->id)->lockForUpdate()->first();
-            $number = self::formatDistributorSequenceNumber($locked->invoice_prefix, $locked->loading_slip_next_number, $locked->invoice_suffix);
+            $number = self::formatDistributorSequenceNumber($locked->loading_slip_prefix, $locked->loading_slip_next_number, $locked->loading_slip_suffix);
             $locked->loading_slip_next_number = $locked->loading_slip_next_number + 1;
             $locked->save();
             return $number;

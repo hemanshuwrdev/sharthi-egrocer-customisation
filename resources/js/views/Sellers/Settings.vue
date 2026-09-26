@@ -191,6 +191,43 @@
 
             <div class="card mt-4">
                 <div class="card-header">
+                    <h4>{{ __('loading_slip_settings') }}</h4>
+                </div>
+
+                <div class="card-body">
+                    <p class="text-muted font-size-13">{{ __('loading_slip_settings_hint') }}</p>
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label for="loading_slip_prefix">{{ __('loading_slip_prefix') }}</label>
+                            <input type="text" class="form-control" id="loading_slip_prefix"
+                                v-model="loading_slip_prefix" :placeholder="__('optional')" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="loading_slip_next_number">{{ __('loading_slip_number') }}</label>
+                            <input type="number" min="1" class="form-control" id="loading_slip_next_number"
+                                v-model.number="loading_slip_next_number" placeholder="1" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="loading_slip_suffix">{{ __('loading_slip_suffix') }}</label>
+                            <input type="text" class="form-control" id="loading_slip_suffix"
+                                v-model="loading_slip_suffix" :placeholder="__('optional')" />
+                        </div>
+                    </div>
+                    <p class="text-muted font-size-13 mb-0">
+                        {{ __('preview') }}: <strong>{{ loadingSlipNumberPreview }}</strong>
+                    </p>
+                </div>
+
+                <div class="card-footer">
+                    <b-button variant="primary" :disabled="isLoadingSlipSettingsLoading" @click="saveLoadingSlipSettings">
+                        {{ __('save') }}
+                        <b-spinner small v-if="isLoadingSlipSettingsLoading"></b-spinner>
+                    </b-button>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
                     <h4>{{ __('credit_note_settings') }}</h4>
                 </div>
 
@@ -320,6 +357,10 @@ export default {
             invoice_prefix: "",
             invoice_suffix: "",
             invoice_next_number: 1,
+            isLoadingSlipSettingsLoading: false,
+            loading_slip_prefix: "",
+            loading_slip_suffix: "",
+            loading_slip_next_number: 1,
             isCreditNoteLoading: false,
             credit_note_prefix: "",
             credit_note_suffix: "",
@@ -342,6 +383,7 @@ export default {
         this.getOrderSettings();
         this.getPaymentMethods();
         this.getInvoiceSettings();
+        this.getLoadingSlipSettings();
         this.getCreditNoteSettings();
         this.getSensitivePasswordStatus();
     },
@@ -354,6 +396,10 @@ export default {
         creditNoteNumberPreview() {
             const padded = String(this.credit_note_next_number || 1).padStart(4, '0');
             return `${this.credit_note_prefix || ''}${padded}${this.credit_note_suffix || ''}`;
+        },
+        loadingSlipNumberPreview() {
+            const padded = String(this.loading_slip_next_number || 1).padStart(4, '0');
+            return `${this.loading_slip_prefix || ''}${padded}${this.loading_slip_suffix || ''}`;
         },
     },
 
@@ -536,6 +582,43 @@ export default {
                 .catch(() => {
                     this.showError('Failed to save invoice settings');
                     this.isInvoiceLoading = false;
+                });
+        },
+
+        getLoadingSlipSettings() {
+            axios.get(this.$sellerApiUrl + '/loading-slip-settings')
+                .then(res => {
+                    if (res.data.status && res.data.data) {
+                        this.loading_slip_prefix = res.data.data.loading_slip_prefix || "";
+                        this.loading_slip_suffix = res.data.data.loading_slip_suffix || "";
+                        this.loading_slip_next_number = res.data.data.loading_slip_next_number || 1;
+                    }
+                })
+                .catch(() => {
+                    this.showError('Failed to load loading slip settings');
+                });
+        },
+
+        saveLoadingSlipSettings() {
+            this.isLoadingSlipSettingsLoading = true;
+
+            let formData = new FormData();
+            formData.append('loading_slip_prefix', this.loading_slip_prefix || '');
+            formData.append('loading_slip_suffix', this.loading_slip_suffix || '');
+            formData.append('loading_slip_next_number', this.loading_slip_next_number || 1);
+
+            axios.post(this.$sellerApiUrl + '/loading-slip-settings/save', formData)
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                    } else {
+                        this.showError(res.data.message || 'Failed to save');
+                    }
+                    this.isLoadingSlipSettingsLoading = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to save loading slip settings');
+                    this.isLoadingSlipSettingsLoading = false;
                 });
         },
 
