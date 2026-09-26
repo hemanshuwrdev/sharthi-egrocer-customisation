@@ -767,7 +767,9 @@ class SettlementController extends Controller
             $payments     = OrderPayment::whereIn('order_id', $orderIds)->get();
 
             $undeliveredCount = $orders->whereNotIn('active_status', $terminalDeliveryStatuses)->count();
-            $pendingPayments  = $payments->where('status', 'pending')->count();
+            // Cash is collected in hand by the driver — it doesn't need distributor
+            // verification to lock. Only digital methods (upi/cheque/signature) gate the lock.
+            $pendingPayments  = $payments->where('method', '!=', 'cash')->where('status', 'pending')->count();
             $alreadyLocked    = $slip->payment_lock_status === 'locked';
 
             $canLock  = !$alreadyLocked && $orders->isNotEmpty() && $undeliveredCount === 0 && $pendingPayments === 0;
@@ -851,7 +853,9 @@ class SettlementController extends Controller
             return CommonHelper::responseError('orders_pending_delivery');
         }
 
+        // Cash needs no distributor verification to lock — only digital methods do.
         $pendingPayments = OrderPayment::whereIn('order_id', $orders->pluck('id'))
+            ->where('method', '!=', 'cash')
             ->where('status', 'pending')
             ->count();
         if ($pendingPayments > 0) {
