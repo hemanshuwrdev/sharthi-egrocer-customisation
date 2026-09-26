@@ -220,7 +220,6 @@ export default {
                 { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
                 { key: 'seller_info', label: __('seller_info'), class: 'text-legt', sortable: true, sortDirection: 'desc' },
                 { key: 'store_info', label: __('store_details'), class: 'text-left', sortable: true, sortDirection: 'desc' },
-                { key: 'categories_array', label: __('category'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'cities', label: __('city'), class: 'text-center' },
                 { key: 'logo', label: __('logo'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'other_info', label: __('other_info'), class: 'text-left', sortable: true, sortDirection: 'desc' },

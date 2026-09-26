@@ -158,7 +158,6 @@ export default {
                 { key: 'balance', label:  __('balance'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'logo', label:  __('logo'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'commission', label:  __('commission'), class: 'text-center', sortable: true, sortDirection: 'desc' },
-                { key: 'categories_array', label:  __('categories'), class: 'text-center', sortable: true, sortDirection: 'desc' }, 
                 { key: 'status', label:  __('status'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'availability', label:  __('availability'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'require_products_approval', label:  __('require_products_approval'), class: 'text-center', sortable: true, sortDirection: 'desc' },

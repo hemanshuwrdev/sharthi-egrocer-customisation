@@ -218,12 +218,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         sortable: true,
         sortDirection: 'desc'
       }, {
-        key: 'categories_array',
-        label: __('categories'),
-        "class": 'text-center',
-        sortable: true,
-        sortDirection: 'desc'
-      }, {
         key: 'status',
         label: __('status'),
         "class": 'text-center',
