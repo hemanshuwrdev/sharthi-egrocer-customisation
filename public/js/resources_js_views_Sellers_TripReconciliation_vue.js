@@ -1855,23 +1855,109 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         });
       }
 
+      // Partial Invoices — order items delivered short of what was ordered.
+      if (this.partialInvoiceRows.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text((__('partial_invoices') || 'Partial Invoices') + ' — ' + money(this.totalShortfallValue), 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Invoice #', 'Loading Slip', 'Retailer', 'Product', 'Ordered Qty', 'Delivered Qty', 'Shortfall Qty', 'Shortfall Value', 'Status']],
+          body: this.partialInvoiceRows.map(function (r) {
+            return [r.invoiceNumber || '#' + r.orderId, r.loadingSlipNo || '-', r.retailerName, r.productName, r.quantity, r.deliveredQuantity, r.shortfallQty, money(r.shortfallValue), r.verified ? __('verified') : '-'];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [217, 119, 6]
+          },
+          alternateRowStyles: {
+            fillColor: [255, 251, 235]
+          },
+          columnStyles: {
+            2: {
+              cellWidth: 35
+            }
+          }
+        });
+      }
+
+      // Cancel Invoices — orders cancelled while out on this trip.
+      if (this.cancelInvoices.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(__('cancel_invoices') || 'Cancel Invoices', 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Invoice #', 'Loading Slip', 'Retailer', 'Order Value', 'Cancelled At', 'Status']],
+          body: this.cancelInvoices.map(function (r) {
+            return [r.invoice_number || '#' + r.order_id, r.loading_slip_no || '-', r.retailer ? r.retailer.name : '-', money(r.final_total), _this13.fmtDateTime(r.cancelled_at), r.verified ? __('verified') : '-'];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [220, 53, 69]
+          },
+          alternateRowStyles: {
+            fillColor: [253, 242, 242]
+          },
+          columnStyles: {
+            2: {
+              cellWidth: 35
+            }
+          }
+        });
+      }
+
+      // Reschedule Invoices — orders whose delivery was pushed to a later date.
+      if (this.rescheduleInvoices.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(__('reschedule_invoices') || 'Reschedule Invoices', 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [['Invoice #', 'Retailer', 'Order Value', 'New Delivery Date', 'Reason', 'Rescheduled At', 'Current Status']],
+          body: this.rescheduleInvoices.map(function (r) {
+            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', money(r.final_total), _this13.fmtDate(r.new_delivery_date), r.delivery_reason || '-', _this13.fmtDateTime(r.rescheduled_at), _this13.orderStatusLabel(r.current_status)];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [107, 114, 128]
+          },
+          alternateRowStyles: {
+            fillColor: [249, 250, 251]
+          },
+          columnStyles: {
+            1: {
+              cellWidth: 35
+            }
+          }
+        });
+      }
+
       // Returns — approved return requests against orders in this trip. Refund is
       // wallet-credited, not cash the driver hands back, so it's a separate table.
-      var returnRows = [];
-      this.orders.forEach(function (order) {
-        (order.returns || []).forEach(function (r) {
-          returnRows.push([order.orders_id, order.retailer ? order.retailer.name : '-', r.product_name, money(r.refund_amount)]);
-        });
-      });
-      if (returnRows.length) {
+      if (this.returnItemSummary.length) {
         doc.setFontSize(11);
         doc.setFont(undefined, 'bold');
         doc.text((__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0), 14, doc.lastAutoTable.finalY + 10);
         doc.setFont(undefined, 'normal');
         (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
           startY: doc.lastAutoTable.finalY + 13,
-          head: [['Order #', 'Retailer', 'Product', 'Refund Amount']],
-          body: returnRows,
+          head: [['Invoice #', 'Retailer', 'Product', 'Refund Amount', 'Reason', 'Returned At']],
+          body: this.returnItemSummary.map(function (r) {
+            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', r.product_name, money(r.refund_amount), r.reason || '-', _this13.fmtDateTime(r.returned_at)];
+          }),
           styles: {
             fontSize: 8,
             cellPadding: 2
@@ -1883,8 +1969,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
             fillColor: [255, 247, 237]
           },
           columnStyles: {
-            2: {
-              cellWidth: 50
+            1: {
+              cellWidth: 35
             }
           }
         });
