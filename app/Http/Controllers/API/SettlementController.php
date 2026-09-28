@@ -436,12 +436,6 @@ class SettlementController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        $unlockedRecently = $seller->sensitive_unlocked_at
-            && Carbon::parse($seller->sensitive_unlocked_at)->gt(Carbon::now()->subMinutes(self::SENSITIVE_UNLOCK_MINUTES));
-        if (!$unlockedRecently) {
-            return CommonHelper::responseError('sensitive_unlock_required');
-        }
-
         $validator = Validator::make($request->all(), [
             'payment_id'    => 'required|integer|exists:order_payments,id',
             'method'        => 'required|string|in:' . implode(',', self::METHODS),
@@ -460,6 +454,18 @@ class SettlementController extends Controller
 
         if (!$payment) {
             return CommonHelper::responseError('payment_not_found');
+        }
+
+        // The sensitive gate exists for masking what was actually collected (e.g.
+        // secretly recording cash as signature) — an actual method change. Filling in
+        // an already-cheque payment's own date/number (the inline "directly editable"
+        // edit below) doesn't change what was collected, so it doesn't need it.
+        if ($request->method !== $payment->method) {
+            $unlockedRecently = $seller->sensitive_unlocked_at
+                && Carbon::parse($seller->sensitive_unlocked_at)->gt(Carbon::now()->subMinutes(self::SENSITIVE_UNLOCK_MINUTES));
+            if (!$unlockedRecently) {
+                return CommonHelper::responseError('sensitive_unlock_required');
+            }
         }
 
         $payment->method = $request->method;
@@ -1403,6 +1409,8 @@ class SettlementController extends Controller
 
             $salesmanAgg = DB::table('order_payments')
                 ->join('salesmen', 'salesmen.id', '=', 'order_payments.salesman_id')
+                ->leftJoin('orders', 'orders.id', '=', 'order_payments.order_id')
+                ->leftJoin('loading_slips', 'loading_slips.id', '=', 'orders.loading_slip_id')
                 ->whereIn('order_payments.salesman_id', $salesmanIds)
                 ->whereNotNull('order_payments.salesman_id')
                 ->when($fromDate, fn ($q) => $q->whereDate('order_payments.created_at', '>=', $fromDate))
@@ -1418,7 +1426,8 @@ class SettlementController extends Controller
                     ROUND(SUM(IF(order_payments.method="cheque",    order_payments.amount, 0)), 2) as total_cheque,
                     ROUND(SUM(IF(order_payments.method="signature", order_payments.amount, 0)), 2) as total_signature,
                     COUNT(DISTINCT order_payments.order_id) as total_orders,
-                    MAX(order_payments.created_at) as last_payment_at
+                    MAX(order_payments.created_at) as last_payment_at,
+                    GROUP_CONCAT(DISTINCT loading_slips.slip_no ORDER BY loading_slips.slip_no SEPARATOR ", ") as slip_nos
                 ')
                 ->groupByRaw('order_payments.salesman_id, salesmen.name, salesmen.mobile, DATE(order_payments.created_at)')
                 ->get();
@@ -1452,7 +1461,11 @@ class SettlementController extends Controller
                 $rows->push([
                     'id'                   => $ss->id,
                     'type'                 => 'salesman',
-                    'trip_no'              => null,
+                    // A salesman visit is a follow-up on specific orders — each of which
+                    // does have its own loading slip (from whichever driver trip actually
+                    // delivered it). Shown when unambiguous; comma-joined if this salesman
+                    // touched orders from more than one slip in the same day.
+                    'trip_no'              => $agg->slip_nos ?: null,
                     'person_name'          => $agg->person_name ?: '-',
                     'person_mobile'        => $agg->person_mobile ?? '',
                     'person_country_code'  => $agg->person_country_code ?? '+91',
@@ -1668,7 +1681,26 @@ class SettlementController extends Controller
             })
             ->values();
 
-        $totalExpected        = round($orders->where('active_status', '!=', \App\Models\OrderStatusList::$cancelled)->sum('final_total'), 2);
+        // A salesman is only ever sent to collect on a driver's "signature" IOU for an
+        // order (see salesmanCollectPayment's own guard: it requires that signature
+        // payment to exist and caps collection at its amount) — never the order's full
+        // value, which the driver may have already collected the rest of via cash/upi/
+        // cheque on their own separate trip. Using final_total here manufactured a fake
+        // shortfall equal to whatever the driver had already collected.
+        $totalExpected = $type === 'salesman'
+            ? round(OrderPayment::whereIn('order_id', $orderIds)->where('method', 'signature')->sum('amount'), 2)
+            : round($orders->where('active_status', '!=', \App\Models\OrderStatusList::$cancelled)->sum('final_total'), 2);
+
+        // Same fix, per order: the "Order Value" / shortfall columns on the per-order
+        // table must compare against the same baseline as $totalExpected above, or a
+        // salesman's row shows the same fake shortfall this trip-level number just
+        // stopped showing — this table only ever lists the salesman's own payment row,
+        // never the driver's, so comparing it against the order's full value is wrong
+        // for exactly the same reason.
+        $signatureAmountByOrder = $type === 'salesman'
+            ? OrderPayment::whereIn('order_id', $orderIds)->where('method', 'signature')->get()
+                ->groupBy('order_id')->map(fn ($g) => round($g->sum('amount'), 2))
+            : collect();
         $digitalVerified      = round($payments->whereIn('method', ['upi', 'cheque', 'signature'])->where('status', 'verified')->sum('amount'), 2);
         // Cash expected = actual cash the driver collected (not total_expected minus digital_verified,
         // which wrongly inflates cash_expected when digital payments are unverified).
@@ -1753,6 +1785,13 @@ class SettlementController extends Controller
                 'orders_id'       => $o->orders_id,
                 'invoice_number'  => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
                 'final_total'     => $o->final_total,
+                // What this trip's person is actually on the hook for, for this specific
+                // order — the full order value for a driver, but only the signature IOU
+                // amount for a salesman (see $totalExpected above for why). The frontend's
+                // per-row "Order Value"/shortfall columns should use this, not final_total.
+                'expected_amount' => $type === 'salesman'
+                    ? (float) ($signatureAmountByOrder->get($o->id) ?? 0)
+                    : (float) $o->final_total,
                 'active_status'   => $o->active_status,
                 'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
                 'invoice_number'  => $o->invoice_number,

@@ -250,7 +250,6 @@
                                     <tr>
                                         <th class="ps-3" style="width:120px">{{ __('invoice') }} #</th>
                                         <th style="width:110px">{{ __('loading_slip') }}</th>
-                                        <th style="width:120px">{{ __('invoice_no') }}</th>
                                         <th>{{ __('retailer') }}</th>
                                         <th class="text-end" style="width:110px">{{ __('order_value') }}</th>
                                         <th class="text-end" style="width:100px">{{ __('shortfall') }}</th>
@@ -1078,8 +1077,15 @@ export default {
                 const payments = order.payments || [];
                 if (payments.length === 0) return;
 
-                const received       = payments.reduce((s, p) => s + parseFloat((p.received_amount ?? p.amount) || 0), 0);
-                const orderShortfall = parseFloat((order.final_total - received).toFixed(2));
+                const received = payments.reduce((s, p) => s + parseFloat((p.received_amount ?? p.amount) || 0), 0);
+                // What this row's person is actually on the hook for — the full order
+                // value for a driver, but only the signature IOU amount for a salesman
+                // (a salesman's payments here are only ever their own follow-up
+                // collection, never the driver's, so comparing against the full order
+                // manufactures a fake shortfall equal to whatever the driver already
+                // collected separately). Falls back to final_total for safety.
+                const expectedAmount = order.expected_amount ?? order.final_total;
+                const orderShortfall = parseFloat((expectedAmount - received).toFixed(2));
                 const retailerName   = order.retailer ? order.retailer.name   : '-';
                 const retailerMobile = order.retailer ? order.retailer.mobile : '';
 
@@ -1088,9 +1094,8 @@ export default {
                         orderId: order.id, ordersId: order.orders_id,
                         invoiceNumber: order.invoice_number,
                         loadingSlipNo: order.loading_slip_no,
-                        invoiceNumber: order.invoice_number,
                         retailerName, retailerMobile,
-                        finalTotal: order.final_total,
+                        finalTotal: expectedAmount,
                         orderShortfall,
                         paymentId:      p.id,
                         method:         p.method,

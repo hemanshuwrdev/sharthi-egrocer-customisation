@@ -22,8 +22,6 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToAr
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-//
 //
 //
 //
@@ -1115,23 +1113,45 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     flatRows: function flatRows() {
       var rows = [];
       this.orders.forEach(function (order) {
+        var _order$expected_amoun;
         var payments = order.payments || [];
         if (payments.length === 0) return;
         var received = payments.reduce(function (s, p) {
           var _p$received_amount;
           return s + parseFloat(((_p$received_amount = p.received_amount) !== null && _p$received_amount !== void 0 ? _p$received_amount : p.amount) || 0);
         }, 0);
-        var orderShortfall = parseFloat((order.final_total - received).toFixed(2));
+        // What this row's person is actually on the hook for — the full order
+        // value for a driver, but only the signature IOU amount for a salesman
+        // (a salesman's payments here are only ever their own follow-up
+        // collection, never the driver's, so comparing against the full order
+        // manufactures a fake shortfall equal to whatever the driver already
+        // collected separately). Falls back to final_total for safety.
+        var expectedAmount = (_order$expected_amoun = order.expected_amount) !== null && _order$expected_amoun !== void 0 ? _order$expected_amoun : order.final_total;
+        var orderShortfall = parseFloat((expectedAmount - received).toFixed(2));
         var retailerName = order.retailer ? order.retailer.name : '-';
         var retailerMobile = order.retailer ? order.retailer.mobile : '';
         payments.forEach(function (p) {
-          var _p$received_amount2, _rows$push;
-          rows.push((_rows$push = {
+          var _p$received_amount2;
+          rows.push({
             orderId: order.id,
             ordersId: order.orders_id,
             invoiceNumber: order.invoice_number,
-            loadingSlipNo: order.loading_slip_no
-          }, _defineProperty(_rows$push, "invoiceNumber", order.invoice_number), _defineProperty(_rows$push, "retailerName", retailerName), _defineProperty(_rows$push, "retailerMobile", retailerMobile), _defineProperty(_rows$push, "finalTotal", order.final_total), _defineProperty(_rows$push, "orderShortfall", orderShortfall), _defineProperty(_rows$push, "paymentId", p.id), _defineProperty(_rows$push, "method", p.method), _defineProperty(_rows$push, "amount", p.amount), _defineProperty(_rows$push, "receivedAmount", (_p$received_amount2 = p.received_amount) !== null && _p$received_amount2 !== void 0 ? _p$received_amount2 : p.amount), _defineProperty(_rows$push, "proofPhoto", p.proof_photo), _defineProperty(_rows$push, "paymentStatus", p.status), _defineProperty(_rows$push, "chequeDate", p.cheque_date ? String(p.cheque_date).substring(0, 10) : ''), _defineProperty(_rows$push, "chequeNumber", p.cheque_number || ''), _rows$push));
+            loadingSlipNo: order.loading_slip_no,
+            retailerName: retailerName,
+            retailerMobile: retailerMobile,
+            finalTotal: expectedAmount,
+            orderShortfall: orderShortfall,
+            paymentId: p.id,
+            method: p.method,
+            amount: p.amount,
+            receivedAmount: (_p$received_amount2 = p.received_amount) !== null && _p$received_amount2 !== void 0 ? _p$received_amount2 : p.amount,
+            proofPhoto: p.proof_photo,
+            paymentStatus: p.status,
+            // cheque_date comes back as an ISO datetime string (date cast) — trim
+            // to YYYY-MM-DD for the native <input type="date">.
+            chequeDate: p.cheque_date ? String(p.cheque_date).substring(0, 10) : '',
+            chequeNumber: p.cheque_number || ''
+          });
         });
       });
       return rows;
@@ -8207,16 +8227,6 @@ var render = function () {
                                             [
                                               _vm._v(
                                                 _vm._s(_vm.__("loading_slip"))
-                                              ),
-                                            ]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "th",
-                                            { staticStyle: { width: "120px" } },
-                                            [
-                                              _vm._v(
-                                                _vm._s(_vm.__("invoice_no"))
                                               ),
                                             ]
                                           ),
