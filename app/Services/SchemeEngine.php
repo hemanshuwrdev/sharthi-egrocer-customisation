@@ -253,7 +253,7 @@ class SchemeEngine
             $variant = $bp ? $bp->masterProductVariant : null;
             $uprice  = $bp ? (float) ($bp->discounted_price && (float) $bp->discounted_price > 0 ? $bp->discounted_price : $bp->selling_price) : 0;
             $buyProductData = $bp ? [
-                'id'         => $bp->id,
+                'id'         => $variant ? $variant->master_product_id : $bp->id,
                 'name'       => trim(($variant->masterProduct->name ?? '') . ' — ' . ($variant->sku ?? '')),
                 'image'      => $bp->image ?? ($variant->masterProduct->image ?? null),
                 'unit_price' => $uprice,
@@ -262,7 +262,7 @@ class SchemeEngine
             $fp      = $s->freeProduct;
             $fvariant = $fp ? $fp->masterProductVariant : null;
             $freeProductData = $fp ? [
-                'id'         => $fp->id,
+                'id'         => $fvariant ? $fvariant->master_product_id : $fp->id,
                 'name'       => trim(($fvariant->masterProduct->name ?? '') . ' — ' . ($fvariant->sku ?? '')),
                 'image'      => $fp->image ?? ($fvariant->masterProduct->image ?? null),
                 'unit_price' => (float) ($fp->discounted_price && (float) $fp->discounted_price > 0 ? $fp->discounted_price : $fp->selling_price),
@@ -278,7 +278,7 @@ class SchemeEngine
                     return null;
                 }
                 return [
-                    'id'         => $sp->id,
+                    'id'         => $variant->master_product_id,
                     'name'       => trim(($variant->masterProduct->name ?? '') . ' — ' . ($variant->sku ?? '')),
                     'image'      => $sp->image ?? ($variant->masterProduct->image ?? null),
                     'unit_price' => (float) ($sp->discounted_price && (float) $sp->discounted_price > 0 ? $sp->discounted_price : $sp->selling_price),
