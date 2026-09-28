@@ -807,30 +807,41 @@ class LoadingSlipsApiController extends Controller
                 ->first();
         }
 
-        // Get aggregate items and quantities loaded with packaging details
+        // Get aggregate items and quantities loaded with packaging details.
+        // Outer/inner pack unit + ratio come from the Master Catalog variant (what
+        // the admin actually edits — "Outerpack Unit" / "Inner Pack Value") when the
+        // order item is linked to one; the seller-side product_variants row is only
+        // a fallback for legacy items that predate the master-catalog link.
         $itemSummary = DB::table('order_items')
             ->select(
                 'order_items.product_name',
                 'order_items.variant_name',
                 DB::raw('SUM(order_items.quantity) as qty'),
-                'pv.secondary_unit_value',
-                'u2.short_code as secondary_unit_name',
+                DB::raw('COALESCE(mpv.secondary_unit_value, pv.secondary_unit_value) as secondary_unit_value'),
+                DB::raw('COALESCE(u2m.short_code, u2.short_code) as secondary_unit_name'),
                 'pv.measurement as primary_measurement',
-                'u1.short_code as primary_unit_name'
+                DB::raw('COALESCE(u1m.short_code, u1.short_code) as primary_unit_name')
             )
             ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
             ->leftJoin('units as u1', 'pv.stock_unit_id', '=', 'u1.id')
             ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
+            ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
+            ->leftJoin('units as u1m', 'mpv.unit_id', '=', 'u1m.id')
+            ->leftJoin('units as u2m', 'mpv.secondary_unit_id', '=', 'u2m.id')
             ->whereIn('order_items.order_id', $orders->pluck('id'))
             ->whereNotIn('order_items.active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
             ->groupBy(
                 'order_items.product_variant_id',
+                'order_items.master_product_variant_id',
                 'order_items.product_name',
                 'order_items.variant_name',
                 'pv.secondary_unit_value',
                 'u2.short_code',
                 'pv.measurement',
-                'u1.short_code'
+                'u1.short_code',
+                'mpv.secondary_unit_value',
+                'u2m.short_code',
+                'u1m.short_code'
             )
             ->get();
 
@@ -839,14 +850,17 @@ class LoadingSlipsApiController extends Controller
             $order->items = DB::table('order_items')
                 ->select(
                     'order_items.*',
-                    'pv.secondary_unit_value',
-                    'u2.short_code as secondary_unit_name',
+                    DB::raw('COALESCE(mpv.secondary_unit_value, pv.secondary_unit_value) as secondary_unit_value'),
+                    DB::raw('COALESCE(u2m.short_code, u2.short_code) as secondary_unit_name'),
                     'pv.measurement as primary_measurement',
-                    'u1.short_code as primary_unit_name'
+                    DB::raw('COALESCE(u1m.short_code, u1.short_code) as primary_unit_name')
                 )
                 ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
                 ->leftJoin('units as u1', 'pv.stock_unit_id', '=', 'u1.id')
                 ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
+                ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
+                ->leftJoin('units as u1m', 'mpv.unit_id', '=', 'u1m.id')
+                ->leftJoin('units as u2m', 'mpv.secondary_unit_id', '=', 'u2m.id')
                 ->where('order_items.order_id', $order->id)
                 ->whereNotIn('order_items.active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
                 ->get();

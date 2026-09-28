@@ -475,31 +475,17 @@
         <tbody>
             @foreach ($itemSummary as $index => $item)
                 @php
-                    $displayName = strtoupper($item->product_name);
-                    if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1) {
-                        $displayName .=
-                            ' ' . (int) $item->secondary_unit_value . ' X ' . strtoupper($item->variant_name);
-                    } else {
-                        $displayName .= ' ' . strtoupper($item->variant_name);
+                    $displayName = strtoupper($item->product_name) . ' ' . strtoupper($item->variant_name);
+                    if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1 && $item->secondary_unit_name) {
+                        $displayName .= ' | ' . (int) $item->secondary_unit_value . ' ' . strtoupper($item->secondary_unit_name);
                     }
 
-                    $boxQty = '';
-                    if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1) {
-                        $boxes = floor($item->qty / $item->secondary_unit_value);
-                        $loose = $item->qty % $item->secondary_unit_value;
-                        $secName = $item->secondary_unit_name ?: 'Box';
-
-                        if ($boxes > 0 && $loose > 0) {
-                            $boxQty = $boxes . ' ' . $secName . ' + ' . $loose . ' nos';
-                        } elseif ($boxes > 0) {
-                            $boxQty = $boxes . ' ' . $secName;
-                        } else {
-                            $boxQty = $loose . ' nos';
+                    $boxQty = $item->qty . ' nos';
+                    if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1 && $item->secondary_unit_name) {
+                        $outerCount = floor($item->qty / $item->secondary_unit_value);
+                        if ($outerCount > 0) {
+                            $boxQty = $outerCount . ' ' . strtoupper($item->secondary_unit_name) . ' (' . $item->qty . ' nos)';
                         }
-
-                        $boxQty .= ' (Total ' . $item->qty . ' nos)';
-                    } else {
-                        $boxQty = $item->qty . ' nos';
                     }
                 @endphp
                 <tr>
