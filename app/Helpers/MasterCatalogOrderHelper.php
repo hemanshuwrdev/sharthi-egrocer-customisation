@@ -129,7 +129,7 @@ class MasterCatalogOrderHelper
             $step   = 1;
             $minQty = $sp->min_qty ? (float) $sp->min_qty : 1;
         }
-        $secondaryUnit = $variant->secondaryUnit ? $variant->secondaryUnit->name : null;
+        $secondaryUnit = $variant->secondaryUnit ? ($variant->secondaryUnit->short_code ?: $variant->secondaryUnit->name) : null;
 
         return [
             'ok'             => true,

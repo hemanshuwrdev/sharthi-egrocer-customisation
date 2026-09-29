@@ -1408,8 +1408,8 @@ class CommonHelper
                         'mpv.sku',
                         'mpv.unit_id',
                         'mpv.secondary_unit_value',
-                        'u.short_code as stock_unit_name',
-                        'sec_u.name as secondary_unit_name'
+                        DB::raw("COALESCE(NULLIF(u.short_code, ''), u.name) as stock_unit_name"),
+                        DB::raw("COALESCE(NULLIF(sec_u.short_code, ''), sec_u.name) as secondary_unit_name")
                     )
                     ->where('mpv.master_product_id', $row->id)
                     ->whereIn('sp.seller_id', $seller_ids)

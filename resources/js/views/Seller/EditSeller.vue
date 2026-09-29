@@ -409,6 +409,9 @@
                                                                         class="text-danger">*</i></label>
                                                                 <input type="number" class="form-control"
                                                                     v-model="commission"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    step="any"
                                                                     :placeholder="__('enter_commission') + ' (%)'"
                                                                     @input="validateCommission">
 
@@ -423,7 +426,7 @@
                                                             </div>
                                                             <div class="form-group col-md-4" v-else>
                                                                 <label>{{ __('commission') }}</label>
-                                                                <input type="number" class="form-control" :value="commission" disabled>
+                                                                <input type="number" class="form-control" :value="commission" min="0" max="100" step="any" disabled>
                                                                 <small class="text-muted d-block mt-1">{{ __('commission_is_managed_by_admin') }}</small>
                                                             </div>
 

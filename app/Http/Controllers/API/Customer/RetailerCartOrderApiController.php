@@ -174,9 +174,9 @@ class RetailerCartOrderApiController extends Controller
                 'name' => $variant->masterProduct->name ?? '',
                 'brand' => $variant->masterProduct->brand->name ?? null,
                 'sku' => $variant->sku,
-                'unit' => $variant->unit->name ?? null,
+                'unit' => $variant->unit ? ($variant->unit->short_code ?: $variant->unit->name) : null,
                 'weight' => $variant->weight,
-                'weight_unit' => $variant->weightUnit->name ?? null,
+                'weight_unit' => $variant->weightUnit ? ($variant->weightUnit->short_code ?: $variant->weightUnit->name) : null,
                 'image' => (function($img) { return $img ? (str_starts_with($img, 'http') ? $img : asset('storage/'.$img)) : null; })($variant->image ?: ($variant->masterProduct->image ?? null)),
                 'qty'              => (float) $row->qty,
                 'price'            => (float) $sp->selling_price,
@@ -186,7 +186,7 @@ class RetailerCartOrderApiController extends Controller
                     'mrp' => (float) $sp->mrp,
                     'selling_price' => (float) $sp->selling_price,
                     'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
-                ], $variant->secondary_unit_value, $variant->unit ? $variant->unit->name : null, $variant->secondaryUnit ? $variant->secondaryUnit->name : null),
+                ], $variant->secondary_unit_value, $variant->unit ? ($variant->unit->short_code ?: $variant->unit->name) : null, $variant->secondaryUnit ? ($variant->secondaryUnit->short_code ?: $variant->secondaryUnit->name) : null),
                 'unit_price'       => $unitPrice,
                 'base_price'       => $line['base_price'],
                 'slab'             => $line['slab'],
@@ -697,7 +697,7 @@ class RetailerCartOrderApiController extends Controller
                             'variant_name' => implode(' | ', array_filter([
                                 $mv->sku ?? '',
                                 $mv->secondary_unit_value
-                                    ? ((int)$mv->secondary_unit_value . ' ' . ($mv->unit?->name ?? 'units') . '/' . ($mv->secondaryUnit?->name ?? 'pack'))
+                                    ? ((int)$mv->secondary_unit_value . ' ' . (($mv->unit?->short_code ?: $mv->unit?->name) ?? 'units') . '/' . (($mv->secondaryUnit?->short_code ?: $mv->secondaryUnit?->name) ?? 'pack'))
                                     : null,
                             ])),
                             'product_variant_id' => 0,

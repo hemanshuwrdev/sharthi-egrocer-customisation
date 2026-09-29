@@ -290,8 +290,8 @@ class LoadingSlipsApiController extends Controller
                     $variant = $item->master_product_variant_id ? $variants->get($item->master_product_variant_id) : null;
                     if ($variant && (float) $variant->secondary_unit_value > 0) {
                         $rows[$key]['pack_size']  = (float) $variant->secondary_unit_value;
-                        $rows[$key]['box_unit']   = $variant->secondaryUnit->name ?? null;
-                        $rows[$key]['piece_unit'] = $variant->unit->name ?? null;
+                        $rows[$key]['box_unit']   = $variant->secondaryUnit ? ($variant->secondaryUnit->short_code ?: $variant->secondaryUnit->name) : null;
+                        $rows[$key]['piece_unit'] = $variant->unit ? ($variant->unit->short_code ?: $variant->unit->name) : null;
                     }
                 }
 

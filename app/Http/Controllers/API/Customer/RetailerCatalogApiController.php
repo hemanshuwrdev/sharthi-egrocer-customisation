@@ -248,7 +248,7 @@ class RetailerCatalogApiController extends Controller
                         'mrp' => (float) $r->sp_mrp,
                         'selling_price' => (float) $r->sp_selling_price,
                         'discounted_price' => $r->sp_discounted_price !== null ? (float) $r->sp_discounted_price : null,
-                    ], $r->secondary_unit_value, $r->unit ? $r->unit->name : null, $r->secondaryUnit ? $r->secondaryUnit->name : null),
+                    ], $r->secondary_unit_value, $r->unit ? ($r->unit->short_code ?: $r->unit->name) : null, $r->secondaryUnit ? ($r->secondaryUnit->short_code ?: $r->secondaryUnit->name) : null),
                     'stock'            => (float) $r->sp_stock,
                     'allow_loose_qty'  => (bool) $r->sp_allow_loose_qty,
                     // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
@@ -283,13 +283,13 @@ class RetailerCatalogApiController extends Controller
                 'category' => $mp && $mp->category ? $mp->category->name : null,
                 'category_id' => $mp ? $mp->category_id : null,
                 'sku' => $first->sku,
-                'unit' => $first->unit ? $first->unit->name : null,
-                'secondary_unit' => $first->secondaryUnit ? $first->secondaryUnit->name : null,
+                'unit' => $first->unit ? ($first->unit->short_code ?: $first->unit->name) : null,
+                'secondary_unit' => $first->secondaryUnit ? ($first->secondaryUnit->short_code ?: $first->secondaryUnit->name) : null,
                 'secondary_unit_value' => $first->secondary_unit_value,
                 // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
                 // per-distributor — see each entry in `offers` (and `best_offer`).
                 'weight' => $first->weight,
-                'weight_unit' => $first->weightUnit ? $first->weightUnit->name : null,
+                'weight_unit' => $first->weightUnit ? ($first->weightUnit->short_code ?: $first->weightUnit->name) : null,
                 'image' => $first->image ?: ($mp ? $mp->image : null),
                 'overlap_allowed' => $overlapAllowed,
                 'is_favorite'   => $favoriteVariantIds->has($first->id),
@@ -429,7 +429,7 @@ class RetailerCatalogApiController extends Controller
                     'mrp' => (float) $sp->mrp,
                     'selling_price' => (float) $sp->selling_price,
                     'discounted_price' => $sp->discounted_price !== null ? (float) $sp->discounted_price : null,
-                ], $variant->secondary_unit_value, $variant->unit ? $variant->unit->name : null, $variant->secondaryUnit ? $variant->secondaryUnit->name : null),
+                ], $variant->secondary_unit_value, $variant->unit ? ($variant->unit->short_code ?: $variant->unit->name) : null, $variant->secondaryUnit ? ($variant->secondaryUnit->short_code ?: $variant->secondaryUnit->name) : null),
                 'stock' => (float) $sp->stock,
                 'allow_loose_qty' => (bool) $sp->allow_loose_qty,
                 // Stepper fields — qty_step = secondary_unit_value, min_qty = 1 box.
@@ -459,13 +459,13 @@ class RetailerCatalogApiController extends Controller
             'category_id' => $variant->masterProduct->category_id,
             'category' => $variant->masterProduct->category ? $variant->masterProduct->category->name : null,
             'sku' => $variant->sku,
-            'unit' => $variant->unit ? $variant->unit->name : null,
-            'secondary_unit' => $variant->secondaryUnit ? $variant->secondaryUnit->name : null,
+            'unit' => $variant->unit ? ($variant->unit->short_code ?: $variant->unit->name) : null,
+            'secondary_unit' => $variant->secondaryUnit ? ($variant->secondaryUnit->short_code ?: $variant->secondaryUnit->name) : null,
             'secondary_unit_value' => $variant->secondary_unit_value,
             // allow_loose_qty / qty_step / min_qty / max_qty_mode / max_qty_value are now
             // per-distributor — see each entry in `offers` (and `best_offer`).
             'weight' => $variant->weight,
-            'weight_unit' => $variant->weightUnit ? $variant->weightUnit->name : null,
+            'weight_unit' => $variant->weightUnit ? ($variant->weightUnit->short_code ?: $variant->weightUnit->name) : null,
             'image' => $variant->image ?: $variant->masterProduct->image,
             'description' => $variant->masterProduct->description,
             'short_description' => $variant->masterProduct->short_description,

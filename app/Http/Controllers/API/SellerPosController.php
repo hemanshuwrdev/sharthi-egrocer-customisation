@@ -175,7 +175,7 @@ class SellerPosController extends Controller
                     'variant_name'              => implode(' | ', array_filter([
                         $mv->sku ?? '',
                         $mv->secondary_unit_value
-                            ? ((int) $mv->secondary_unit_value . ' ' . ($mv->unit?->name ?? 'units') . '/' . ($mv->secondaryUnit?->name ?? 'pack'))
+                            ? ((int) $mv->secondary_unit_value . ' ' . (($mv->unit?->short_code ?: $mv->unit?->name) ?? 'units') . '/' . (($mv->secondaryUnit?->short_code ?: $mv->secondaryUnit?->name) ?? 'pack'))
                             : null,
                     ])),
                     'product_variant_id'        => 0,
@@ -286,7 +286,7 @@ class SellerPosController extends Controller
                             'id'                    => $variant->id,
                             'seller_product_id'     => $sp ? $sp->id : null,
                             'measurement'           => $variant->secondary_unit_value ?: $variant->weight,
-                            'measurement_unit_name' => $variant->unit ? $variant->unit->short_code : '',
+                            'measurement_unit_name' => $variant->unit ? ($variant->unit->short_code ?: $variant->unit->name) : '',
                             'sku'                   => $variant->sku,
                             'secondary_unit_value'  => (float) ($variant->secondary_unit_value > 0 ? $variant->secondary_unit_value : 1),
                             'price'                 => $sp ? (float) $sp->selling_price : 0,
@@ -470,7 +470,7 @@ class SellerPosController extends Controller
                     $payload['variant_name']  = implode(' | ', array_filter([
                         $mv->sku ?? '',
                         $mv->secondary_unit_value
-                            ? ((int) $mv->secondary_unit_value . ' ' . ($mv->unit?->name ?? 'units') . '/' . ($mv->secondaryUnit?->name ?? 'pack'))
+                            ? ((int) $mv->secondary_unit_value . ' ' . (($mv->unit?->short_code ?: $mv->unit?->name) ?? 'units') . '/' . (($mv->secondaryUnit?->short_code ?: $mv->secondaryUnit?->name) ?? 'pack'))
                             : null,
                     ]));
                     $payload['tax_amount']    = 0;

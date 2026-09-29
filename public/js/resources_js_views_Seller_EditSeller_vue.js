@@ -1195,6 +1195,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
 
 
 
@@ -5857,6 +5860,9 @@ var render = function () {
                                                               "form-control",
                                                             attrs: {
                                                               type: "number",
+                                                              min: "0",
+                                                              max: "100",
+                                                              step: "any",
                                                               placeholder:
                                                                 _vm.__(
                                                                   "enter_commission"
@@ -5963,6 +5969,9 @@ var render = function () {
                                                               "form-control",
                                                             attrs: {
                                                               type: "number",
+                                                              min: "0",
+                                                              max: "100",
+                                                              step: "any",
                                                               disabled: "",
                                                             },
                                                             domProps: {
