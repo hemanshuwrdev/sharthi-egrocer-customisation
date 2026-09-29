@@ -302,12 +302,11 @@ class RetailerCartOrderApiController extends Controller
             return ['ok' => false, 'error' => 'master_variant_not_found', 'seller_id' => null];
         }
         $brandId = $variant->masterProduct->brand_id;
+        $brandLineId = $variant->masterProduct->brand_line_id;
         $overlapAllowed = $variant->masterProduct->brand && (int) $variant->masterProduct->brand->is_overlap_allowed === 1;
 
         $sellerIds = CommonHelper::filterEligibleSellerIds(
-            BrandDistributorMapping::where('brand_id', $brandId)
-                ->whereIn('city_id', $cityIds)
-                ->pluck('seller_id')
+            BrandDistributorMapping::eligibleSellerIds($brandId, $brandLineId, $cityIds)
         );
 
         if ($sellerIds->isEmpty()) {
@@ -547,6 +546,16 @@ class RetailerCartOrderApiController extends Controller
             return CommonHelper::responseError('cart_is_empty');
         }
 
+        // Brand+line+city mapping re-check, at the moment of order placement — a cart line
+        // may have been added earlier (possibly with an explicit seller_id, which skips the
+        // add-to-cart mapping check entirely), and an admin may have since changed or removed
+        // that distributor's mapping. Re-resolving from the delivery address given right now
+        // (required on this endpoint) is the actual "before placing an order" checkpoint.
+        $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
+        if (empty($cityIds)) {
+            return CommonHelper::responseError('product_not_available_in_your_area');
+        }
+
         // Pre-validate every line before any write
         $resolved = [];
         foreach ($items as $row) {
@@ -554,6 +563,17 @@ class RetailerCartOrderApiController extends Controller
             if (!$line['ok']) {
                 return CommonHelper::responseError($line['error']);
             }
+
+            $masterProduct = $line['master_variant']->masterProduct;
+            $eligibleSellerIds = BrandDistributorMapping::eligibleSellerIds(
+                $masterProduct->brand_id,
+                $masterProduct->brand_line_id,
+                $cityIds
+            );
+            if (!$eligibleSellerIds->contains((int) $row->seller_id)) {
+                return CommonHelper::responseError('product_no_longer_available_from_this_distributor');
+            }
+
             $resolved[$row->id] = $line;
         }
 

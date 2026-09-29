@@ -79,6 +79,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('brand-mappings/get', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'getBrandSellerMapping']);
         Route::post('brand-mappings/delete', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'deleteBrandMapping']);
         Route::post('geo-fences', [\App\Http\Controllers\API\SuperAdminCustomApiController::class, 'saveGeoFences']);
+
+        Route::get('brands/{brand}/lines', [\App\Http\Controllers\API\BrandLineApiController::class, 'forBrand']);
+        Route::post('brands/{brand}/lines', [\App\Http\Controllers\API\BrandLineApiController::class, 'store']);
+        Route::put('brand-lines/{id}', [\App\Http\Controllers\API\BrandLineApiController::class, 'update']);
+        Route::delete('brand-lines/{id}', [\App\Http\Controllers\API\BrandLineApiController::class, 'destroy']);
     });
 
     Route::group(['prefix' => 'categories'], function () {

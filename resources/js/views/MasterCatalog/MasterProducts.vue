@@ -27,6 +27,18 @@
                 </button>
             </div>
 
+            <div class="list-toolbar">
+                <select class="form-control form-select" style="max-width: 220px;" v-model="brandFilter" @change="onBrandFilterChange">
+                    <option :value="null">{{ __('brand') }}: {{ __('all') }}</option>
+                    <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
+                </select>
+                <select class="form-control form-select" style="max-width: 220px;" v-model="brandLineFilter"
+                    :disabled="!brandFilter" @change="getRecords()">
+                    <option :value="null">{{ __('line') }}: {{ __('all') }}</option>
+                    <option v-for="l in brandLineFilterOptions" :key="l.id" :value="l.id">{{ l.name }}</option>
+                </select>
+            </div>
+
             <div class="table-responsive">
                 <b-table
                     :items="products"
@@ -54,6 +66,10 @@
 
                     <template #cell(brand)="row">
                         {{ row.item.brand ? row.item.brand.name : '-' }}
+                    </template>
+
+                    <template #cell(brand_line)="row">
+                        {{ row.item.brand_line ? row.item.brand_line.name : '-' }}
                     </template>
 
                     <template #cell(variants_count)="row">
@@ -119,6 +135,7 @@ export default {
                 { key: 'name', label: __('name'), class: 'text-center' },
                 { key: 'parent_company', label: __('parent_company'), class: 'text-center' },
                 { key: 'brand', label: __('brand') ? __('brand').charAt(0).toUpperCase() + __('brand').slice(1) : 'Brand', class: 'text-center' },
+                { key: 'brand_line', label: __('line'), class: 'text-center' },
                 { key: 'variants_count', label: __('variants') ? __('variants').charAt(0).toUpperCase() + __('variants').slice(1) : 'Variants', class: 'text-center' },
                 { key: 'status', label: __('status'), class: 'text-center' },
                 { key: 'actions', label: __('actions'), class: 'text-center' },
@@ -130,10 +147,21 @@ export default {
             filter: null,
             isLoading: false,
             products: [],
+
+            brands: [],
+            brandFilter: null,
+            brandLines: [],
+            brandLineFilter: null,
         };
+    },
+    computed: {
+        brandLineFilterOptions() {
+            return this.brandLines.filter(l => l.status == 1);
+        },
     },
     created() {
         this.getRecords();
+        this.fetchBrands();
     },
     watch: {
         currentPage() { this.getRecords(); },
@@ -147,6 +175,8 @@ export default {
                     page: this.currentPage,
                     per_page: this.perPage,
                     filter: this.filter,
+                    brand_id: this.brandFilter,
+                    brand_line_id: this.brandLineFilter,
                 },
             }).then((response) => {
                 this.isLoading = false;
@@ -155,6 +185,22 @@ export default {
             }).catch(() => {
                 this.isLoading = false;
             });
+        },
+        fetchBrands() {
+            axios.get(this.$apiUrl + '/products/brands/get').then(r => {
+                this.brands = r.data.data || [];
+            }).catch(() => {});
+        },
+        onBrandFilterChange() {
+            this.brandLineFilter = null;
+            this.brandLines = [];
+            if (!this.brandFilter) {
+                this.getRecords();
+                return;
+            }
+            axios.get(this.$apiUrl + '/admin/brands/' + this.brandFilter + '/lines').then(r => {
+                this.brandLines = r.data.data || [];
+            }).finally(() => this.getRecords());
         },
         deleteRecord(index, id) {
             this.$swal.fire({

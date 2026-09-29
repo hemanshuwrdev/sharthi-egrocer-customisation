@@ -442,6 +442,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -458,6 +471,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         slug: '',
         parent_company_id: null,
         brand_id: null,
+        brand_line_id: null,
         category_id: null,
         tax_id: null,
         tax_category_id: null,
@@ -479,6 +493,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       otherImageError: null,
       variants: [this.blankVariant()],
       brands: [],
+      brandLines: [],
       categories: [],
       taxes: [],
       taxCategories: [],
@@ -508,15 +523,24 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return this.pcResults.some(function (pc) {
         return (pc.name || '').toLowerCase() === q;
       });
+    },
+    // Active lines only, plus the currently-assigned line even if it's since been
+    // deactivated — deactivated lines disappear from the dropdown except on the
+    // record that already uses them.
+    visibleBrandLines: function visibleBrandLines() {
+      var _this = this;
+      return this.brandLines.filter(function (l) {
+        return l.status == 1 || l.id === _this.product.brand_line_id;
+      });
     }
   },
   created: function created() {
-    var _this = this;
+    var _this2 = this;
     this.isEdit = !!this.id;
     this.fetchActiveLanguages().then(function () {
-      _this.fetchLookups();
-      if (_this.isEdit) {
-        _this.fetchProduct();
+      _this2.fetchLookups();
+      if (_this2.isEdit) {
+        _this2.fetchProduct();
       }
     });
   },
@@ -525,29 +549,42 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     // the product doesn't already have one entered/saved — never
     // overwrite a value the user (or a loaded product) already has.
     onCategoryChange: function onCategoryChange() {
-      var _this2 = this;
+      var _this3 = this;
       if (this.product.hsn) return;
       var category = this.categories.find(function (c) {
-        return c.id === _this2.product.category_id;
+        return c.id === _this3.product.category_id;
       });
       if (category && category.hsn) {
         this.product.hsn = category.hsn;
       }
     },
+    // Brand Line is scoped to one brand — clear it and refetch whenever Brand changes.
+    onBrandChange: function onBrandChange() {
+      this.product.brand_line_id = null;
+      this.fetchBrandLines();
+    },
+    fetchBrandLines: function fetchBrandLines() {
+      var _this4 = this;
+      this.brandLines = [];
+      if (!this.product.brand_id) return;
+      axios.get(this.$apiUrl + '/admin/brands/' + this.product.brand_id + '/lines').then(function (r) {
+        _this4.brandLines = r.data.data || [];
+      })["catch"](function () {});
+    },
     // ---------- Languages / translations ----------
     fetchActiveLanguages: function fetchActiveLanguages() {
-      var _this3 = this;
+      var _this5 = this;
       this.isLoadingLanguages = true;
       return axios.get(this.$apiUrl + '/active_languages').then(function (r) {
-        _this3.languages = r.data.data || [];
-        var defaultLang = _this3.languages.find(function (l) {
+        _this5.languages = r.data.data || [];
+        var defaultLang = _this5.languages.find(function (l) {
           return l.is_default === 1;
         });
-        if (defaultLang) _this3.defaultLanguageId = defaultLang.id;
-        _this3.initializeTranslations();
-        _this3.isLoadingLanguages = false;
+        if (defaultLang) _this5.defaultLanguageId = defaultLang.id;
+        _this5.initializeTranslations();
+        _this5.isLoadingLanguages = false;
       })["catch"](function () {
-        _this3.isLoadingLanguages = false;
+        _this5.isLoadingLanguages = false;
       });
     },
     initializeTranslations: function initializeTranslations() {
@@ -565,19 +602,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.translations = all;
     },
     loadTranslationsFromRecord: function loadTranslationsFromRecord(record) {
-      var _this4 = this;
+      var _this6 = this;
       if (!record || !Array.isArray(record.translations)) return;
       this.languages.forEach(function (language) {
         var t = record.translations.find(function (tr) {
           return tr.language_id === language.id;
         });
         if (t) {
-          _this4.$set(_this4.translations[language.id], 'name', t.name || '');
-          _this4.$set(_this4.translations[language.id], 'description', t.description || '');
-          _this4.$set(_this4.translations[language.id], 'meta_title', t.meta_title || '');
-          _this4.$set(_this4.translations[language.id], 'meta_keywords', t.meta_keywords || '');
-          _this4.$set(_this4.translations[language.id], 'schema_markup', t.schema_markup || '');
-          _this4.$set(_this4.translations[language.id], 'meta_description', t.meta_description || '');
+          _this6.$set(_this6.translations[language.id], 'name', t.name || '');
+          _this6.$set(_this6.translations[language.id], 'description', t.description || '');
+          _this6.$set(_this6.translations[language.id], 'meta_title', t.meta_title || '');
+          _this6.$set(_this6.translations[language.id], 'meta_keywords', t.meta_keywords || '');
+          _this6.$set(_this6.translations[language.id], 'schema_markup', t.schema_markup || '');
+          _this6.$set(_this6.translations[language.id], 'meta_description', t.meta_description || '');
         }
       });
 
@@ -593,9 +630,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     switchToDefaultLanguageTab: function switchToDefaultLanguageTab() {
-      var _this5 = this;
+      var _this7 = this;
       var idx = this.languages.findIndex(function (l) {
-        return l.id === _this5.defaultLanguageId;
+        return l.id === _this7.defaultLanguageId;
       });
       if (idx !== -1) this.activeLanguageTab = idx;
     },
@@ -623,19 +660,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     // ---------- Lookups ----------
     fetchLookups: function fetchLookups() {
-      var _this6 = this;
+      var _this8 = this;
       axios.get(this.$apiUrl + '/products/brands/get').then(function (r) {
-        _this6.brands = r.data.data || [];
+        _this8.brands = r.data.data || [];
       });
       axios.get(this.$apiUrl + '/categories', {
         params: {
           per_page: 1000
         }
       }).then(function (r) {
-        _this6.categories = r.data.data || [];
+        _this8.categories = r.data.data || [];
       })["catch"](function () {});
       axios.get(this.$apiUrl + '/products/taxes').then(function (r) {
-        _this6.taxes = r.data.data || [];
+        _this8.taxes = r.data.data || [];
       })["catch"](function () {});
       axios.get(this.$apiUrl + '/tax-categories', {
         params: {
@@ -643,22 +680,23 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           status: 1
         }
       }).then(function (r) {
-        _this6.taxCategories = r.data.data || [];
+        _this8.taxCategories = r.data.data || [];
       })["catch"](function () {});
       axios.get(this.$apiUrl + '/units/get').then(function (r) {
-        _this6.units = r.data.data || [];
+        _this8.units = r.data.data || [];
       })["catch"](function () {});
     },
     fetchProduct: function fetchProduct() {
-      var _this7 = this;
+      var _this9 = this;
       axios.get(this.$apiUrl + '/master_catalog/products/edit/' + this.id).then(function (r) {
         var p = r.data.data;
         if (!p) return;
-        _this7.product = {
+        _this9.product = {
           id: p.id,
           slug: p.slug || '',
           parent_company_id: p.parent_company_id,
           brand_id: p.brand_id,
+          brand_line_id: p.brand_line_id || null,
           category_id: p.category_id,
           tax_id: p.tax_id,
           tax_category_id: p.tax_category_id || null,
@@ -666,13 +704,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           type: p.type || 'single',
           status: p.status
         };
-        _this7.pcQuery = p.parent_company ? p.parent_company.name : '';
+        _this9.pcQuery = p.parent_company ? p.parent_company.name : '';
         if (p.image) {
-          _this7.main_image_path = _this7.$storageUrl + p.image;
+          _this9.main_image_path = _this9.$storageUrl + p.image;
         }
-        _this7.other_images = Array.isArray(p.other_images) ? p.other_images.slice() : [];
+        _this9.other_images = Array.isArray(p.other_images) ? p.other_images.slice() : [];
+        _this9.fetchBrandLines();
         if (Array.isArray(p.variants) && p.variants.length) {
-          _this7.variants = p.variants.map(function (v) {
+          _this9.variants = p.variants.map(function (v) {
             return {
               _key: Math.random().toString(36).slice(2),
               id: v.id,
@@ -691,15 +730,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             };
           });
         }
-        _this7.loadTranslationsFromRecord(p);
+        _this9.loadTranslationsFromRecord(p);
       });
     },
     // ---------- Main image ----------
     triggerRefClick: function triggerRefClick(refName) {
-      var _this8 = this;
+      var _this10 = this;
       this.$nextTick(function () {
         try {
-          var ref = _this8.$refs[refName];
+          var ref = _this10.$refs[refName];
           if (!ref) return;
           if (Array.isArray(ref)) {
             for (var i = 0; i < ref.length; i++) {
@@ -837,22 +876,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     // ---------- Parent company picker ----------
     onPcInput: function onPcInput() {
-      var _this9 = this;
+      var _this11 = this;
       clearTimeout(this.pcDebounce);
       this.product.parent_company_id = null;
       this.pcDropdownOpen = true;
       this.pcDebounce = setTimeout(function () {
-        return _this9.searchPc();
+        return _this11.searchPc();
       }, 250);
     },
     searchPc: function searchPc() {
-      var _this10 = this;
+      var _this12 = this;
       axios.get(this.$apiUrl + '/master_catalog/parent_companies/search', {
         params: {
           q: this.pcQuery
         }
       }).then(function (r) {
-        _this10.pcResults = r.data.data || [];
+        _this12.pcResults = r.data.data || [];
       });
     },
     selectParentCompany: function selectParentCompany(pc) {
@@ -861,27 +900,27 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.pcDropdownOpen = false;
     },
     createParentCompany: function createParentCompany() {
-      var _this11 = this;
+      var _this13 = this;
       axios.post(this.$apiUrl + '/master_catalog/parent_companies/find_or_create', {
         name: this.pcQuery
       }).then(function (r) {
         var pc = r.data.data;
-        if (pc) _this11.selectParentCompany(pc);
+        if (pc) _this13.selectParentCompany(pc);
       });
     },
     onPcBlur: function onPcBlur() {
-      var _this12 = this;
+      var _this14 = this;
       setTimeout(function () {
-        _this12.pcDropdownOpen = false;
+        _this14.pcDropdownOpen = false;
       }, 150);
     },
     // ---------- Save ----------
     validateBeforeSave: function validateBeforeSave() {
-      var _this13 = this;
+      var _this15 = this;
       var form = this.$refs['my-form'];
       if (form && !form.reportValidity()) {
         this.$nextTick(function () {
-          return _this13.switchToDefaultLanguageTab();
+          return _this15.switchToDefaultLanguageTab();
         });
         return false;
       }
@@ -922,9 +961,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return true;
     },
     buildTranslationsPayload: function buildTranslationsPayload() {
-      var _this14 = this;
+      var _this16 = this;
       return this.languages.map(function (language) {
-        var t = _this14.translations[language.id] || {};
+        var t = _this16.translations[language.id] || {};
         return {
           language_id: language.id,
           name: t.name || '',
@@ -937,12 +976,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     },
     save: function save() {
-      var _this15 = this;
+      var _this17 = this;
       if (!this.validateBeforeSave()) return;
       this.isSaving = true;
       var fd = new FormData();
       if (this.product.parent_company_id) fd.append('parent_company_id', this.product.parent_company_id);
       if (this.product.brand_id) fd.append('brand_id', this.product.brand_id);
+      if (this.product.brand_line_id) fd.append('brand_line_id', this.product.brand_line_id);
       if (this.product.category_id) fd.append('category_id', this.product.category_id);
       if (this.product.tax_id) fd.append('tax_id', this.product.tax_id);
       if (this.product.tax_category_id) fd.append('tax_category_id', this.product.tax_category_id);
@@ -984,17 +1024,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           'Content-Type': 'multipart/form-data'
         }
       }).then(function (res) {
-        _this15.isSaving = false;
+        _this17.isSaving = false;
         if (res.data.status) {
-          _this15.showMessage('success', res.data.message || __(_this15.isEdit ? 'master_product_updated_successfully' : 'master_product_saved_successfully'));
-          _this15.$router.push('/master_catalog/products');
+          _this17.showMessage('success', res.data.message || __(_this17.isEdit ? 'master_product_updated_successfully' : 'master_product_saved_successfully'));
+          _this17.$router.push('/master_catalog/products');
         } else {
-          _this15.showError(res.data.message);
+          _this17.showError(res.data.message);
         }
       })["catch"](function (err) {
-        _this15.isSaving = false;
+        _this17.isSaving = false;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this15.showError(msg);
+        _this17.showError(msg);
       });
     }
   }
@@ -1583,33 +1623,37 @@ var render = function () {
                                                       "form-control form-select",
                                                     attrs: { required: "" },
                                                     on: {
-                                                      change: function (
-                                                        $event
-                                                      ) {
-                                                        var $$selectedVal =
-                                                          Array.prototype.filter
-                                                            .call(
-                                                              $event.target
-                                                                .options,
-                                                              function (o) {
-                                                                return o.selected
-                                                              }
-                                                            )
-                                                            .map(function (o) {
-                                                              var val =
-                                                                "_value" in o
-                                                                  ? o._value
-                                                                  : o.value
-                                                              return val
-                                                            })
-                                                        _vm.$set(
-                                                          _vm.product,
-                                                          "brand_id",
-                                                          $event.target.multiple
-                                                            ? $$selectedVal
-                                                            : $$selectedVal[0]
-                                                        )
-                                                      },
+                                                      change: [
+                                                        function ($event) {
+                                                          var $$selectedVal =
+                                                            Array.prototype.filter
+                                                              .call(
+                                                                $event.target
+                                                                  .options,
+                                                                function (o) {
+                                                                  return o.selected
+                                                                }
+                                                              )
+                                                              .map(function (
+                                                                o
+                                                              ) {
+                                                                var val =
+                                                                  "_value" in o
+                                                                    ? o._value
+                                                                    : o.value
+                                                                return val
+                                                              })
+                                                          _vm.$set(
+                                                            _vm.product,
+                                                            "brand_id",
+                                                            $event.target
+                                                              .multiple
+                                                              ? $$selectedVal
+                                                              : $$selectedVal[0]
+                                                          )
+                                                        },
+                                                        _vm.onBrandChange,
+                                                      ],
                                                     },
                                                   },
                                                   [
@@ -1654,6 +1698,133 @@ var render = function () {
                                                     ),
                                                   ],
                                                   2
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "div",
+                                              { staticClass: "col-md-6 mb-3" },
+                                              [
+                                                _c("label", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__("brand_line")
+                                                    ) +
+                                                      " (" +
+                                                      _vm._s(
+                                                        _vm.__("optional")
+                                                      ) +
+                                                      ")"
+                                                  ),
+                                                ]),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "select",
+                                                  {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          _vm.product
+                                                            .brand_line_id,
+                                                        expression:
+                                                          "product.brand_line_id",
+                                                      },
+                                                    ],
+                                                    staticClass:
+                                                      "form-control form-select",
+                                                    attrs: {
+                                                      disabled:
+                                                        !_vm.product.brand_id,
+                                                    },
+                                                    on: {
+                                                      change: function (
+                                                        $event
+                                                      ) {
+                                                        var $$selectedVal =
+                                                          Array.prototype.filter
+                                                            .call(
+                                                              $event.target
+                                                                .options,
+                                                              function (o) {
+                                                                return o.selected
+                                                              }
+                                                            )
+                                                            .map(function (o) {
+                                                              var val =
+                                                                "_value" in o
+                                                                  ? o._value
+                                                                  : o.value
+                                                              return val
+                                                            })
+                                                        _vm.$set(
+                                                          _vm.product,
+                                                          "brand_line_id",
+                                                          $event.target.multiple
+                                                            ? $$selectedVal
+                                                            : $$selectedVal[0]
+                                                        )
+                                                      },
+                                                    },
+                                                  },
+                                                  [
+                                                    _c(
+                                                      "option",
+                                                      {
+                                                        domProps: {
+                                                          value: null,
+                                                        },
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "-- " +
+                                                            _vm._s(
+                                                              _vm.__("no_line")
+                                                            ) +
+                                                            " --"
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _vm._l(
+                                                      _vm.visibleBrandLines,
+                                                      function (l) {
+                                                        return _c(
+                                                          "option",
+                                                          {
+                                                            key: l.id,
+                                                            domProps: {
+                                                              value: l.id,
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                                                    " +
+                                                                _vm._s(l.name) +
+                                                                "\n                                                "
+                                                            ),
+                                                          ]
+                                                        )
+                                                      }
+                                                    ),
+                                                  ],
+                                                  2
+                                                ),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "small",
+                                                  { staticClass: "text-muted" },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__(
+                                                          "only_active_lines_of_the_selected_brand_are_listed_changing_brand_clears_this_field"
+                                                        )
+                                                      )
+                                                    ),
+                                                  ]
                                                 ),
                                               ]
                                             ),

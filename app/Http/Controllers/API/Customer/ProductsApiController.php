@@ -1005,7 +1005,11 @@ class ProductsApiController extends Controller
 
         $limit = (int) $request->get('limit', 6);
 
-        // Optional area scope
+        // Optional area scope. $sellerIds here is a coarse, any-brand set used only to
+        // widen/narrow which candidate products even get suggested below — the actual
+        // brand+line-aware eligibility check happens later, per product, when picking
+        // each variant's best offer.
+        $cityIds = [];
         $sellerIds = collect();
         if ($request->filled('latitude') && $request->filled('longitude')) {
             $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
@@ -1049,15 +1053,41 @@ class ProductsApiController extends Controller
             ->groupBy('master_product_id');
 
         $variantIds = $variants->flatten()->pluck('id')->all();
-        $offersQuery = SellerProduct::whereIn('master_product_variant_id', $variantIds)
+        $allOffers = SellerProduct::whereIn('master_product_variant_id', $variantIds)
             ->where('status', 1)
-            ->where('selling_price', '>', 0);
-        if ($sellerIds->isNotEmpty()) {
-            $offersQuery->whereIn('seller_id', $sellerIds);
+            ->where('selling_price', '>', 0)
+            ->get()
+            ->groupBy('master_product_variant_id');
+
+        // Brand+line-aware eligibility, per product's own brand — a seller mapped to one
+        // line of a brand must not be treated as eligible for a different line's product.
+        $allowedLinesByBrandSeller = collect();
+        if (!empty($cityIds)) {
+            $brandIds = $products->pluck('brand_id')->unique()->filter()->values();
+            $allowedLinesByBrandSeller = BrandDistributorMapping::whereIn('brand_id', $brandIds)
+                ->whereIn('city_id', $cityIds)
+                ->get(['brand_id', 'brand_line_id', 'seller_id'])
+                ->groupBy(fn($m) => $m->brand_id . '_' . $m->seller_id)
+                ->map(fn($rows) => $rows->pluck('brand_line_id')->all());
         }
-        $bestOffer = $offersQuery->get()
-            ->groupBy('master_product_variant_id')
-            ->map(fn($g) => $g->sortBy('selling_price')->first());
+
+        $bestOffer = collect();
+        foreach ($variants as $mid => $variantList) {
+            $product = $products->get($mid);
+            foreach ($variantList as $v) {
+                $offersForVariant = $allOffers->get($v->id, collect());
+                if (!empty($cityIds)) {
+                    $offersForVariant = $offersForVariant->filter(function ($sp) use ($product, $allowedLinesByBrandSeller) {
+                        $lines = $allowedLinesByBrandSeller->get($product->brand_id . '_' . $sp->seller_id);
+                        return $lines !== null && BrandDistributorMapping::lineIsCovered($lines, $product->brand_line_id);
+                    });
+                }
+                $best = $offersForVariant->sortBy('selling_price')->first();
+                if ($best) {
+                    $bestOffer->put($v->id, $best);
+                }
+            }
+        }
 
         $rows = collect($masterIds)
             ->map(function ($mid) use ($products, $variants, $bestOffer) {
@@ -1449,15 +1479,10 @@ class ProductsApiController extends Controller
                 ->get()
                 ->keyBy('id');
 
-            // Resolve allowed seller_ids for the user's area (if lat/long sent).
+            // Resolve the user's area (if lat/long sent). Brand+line-aware eligibility is
+            // applied per product below, when picking each variant's best offer.
             $hasLocation = $request->filled('latitude') && $request->filled('longitude');
-            $sellerIds = collect();
-            if ($hasLocation) {
-                $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
-                $sellerIds = !empty($cityIds)
-                    ? BrandDistributorMapping::whereIn('city_id', $cityIds)->pluck('seller_id')->unique()
-                    : collect();
-            }
+            $cityIds = $hasLocation ? CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude) : [];
 
             $variants = MasterProductVariant::with('unit', 'secondaryUnit', 'weightUnit')
                 ->whereIn('master_product_id', $masterIds)
@@ -1466,17 +1491,42 @@ class ProductsApiController extends Controller
                 ->groupBy('master_product_id');
 
             $variantIds = $variants->flatten()->pluck('id')->all();
-            $offersQuery = SellerProduct::whereIn('master_product_variant_id', $variantIds)
+            $allOffers = SellerProduct::whereIn('master_product_variant_id', $variantIds)
                 ->where('status', 1)
-                ->where('selling_price', '>', 0);
-            if ($hasLocation) {
-                // Location given but no deliverable seller found: force an empty offer set
-                // instead of silently falling back to pricing from sellers outside this area.
-                $offersQuery->whereIn('seller_id', $sellerIds->isNotEmpty() ? $sellerIds->all() : [0]);
+                ->where('selling_price', '>', 0)
+                ->get()
+                ->groupBy('master_product_variant_id');
+
+            $allowedLinesByBrandSeller = collect();
+            if (!empty($cityIds)) {
+                $brandIds = $products->pluck('brand_id')->unique()->filter()->values();
+                $allowedLinesByBrandSeller = BrandDistributorMapping::whereIn('brand_id', $brandIds)
+                    ->whereIn('city_id', $cityIds)
+                    ->get(['brand_id', 'brand_line_id', 'seller_id'])
+                    ->groupBy(fn($m) => $m->brand_id . '_' . $m->seller_id)
+                    ->map(fn($rows) => $rows->pluck('brand_line_id')->all());
             }
-            $bestOffer = $offersQuery->get()
-                ->groupBy('master_product_variant_id')
-                ->map(fn($g) => $g->sortBy('selling_price')->first());
+
+            $bestOffer = collect();
+            foreach ($variants as $mid => $variantList) {
+                $product = $products->get($mid);
+                foreach ($variantList as $v) {
+                    $offersForVariant = $allOffers->get($v->id, collect());
+                    // Location given: only offers from a distributor whose mapping actually
+                    // covers this product's brand+line count — including "found none", which
+                    // must yield no offer rather than silently falling back to any seller.
+                    if ($hasLocation) {
+                        $offersForVariant = $offersForVariant->filter(function ($sp) use ($product, $allowedLinesByBrandSeller) {
+                            $lines = $allowedLinesByBrandSeller->get($product->brand_id . '_' . $sp->seller_id);
+                            return $lines !== null && BrandDistributorMapping::lineIsCovered($lines, $product->brand_line_id);
+                        });
+                    }
+                    $best = $offersForVariant->sortBy('selling_price')->first();
+                    if ($best) {
+                        $bestOffer->put($v->id, $best);
+                    }
+                }
+            }
 
             $isRatingEnabled = (int) (Setting::get_value('product_rating') ?? 0) === 1;
 

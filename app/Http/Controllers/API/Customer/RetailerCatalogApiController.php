@@ -57,7 +57,7 @@ class RetailerCatalogApiController extends Controller
         $filter = trim((string) $request->input('filter', ''));
 
         $mappings = BrandDistributorMapping::whereIn('city_id', $cityIds)
-            ->get(['brand_id', 'seller_id']);
+            ->get(['brand_id', 'brand_line_id', 'seller_id']);
 
         $sellers = \App\Models\Seller::whereIn('id', $mappings->pluck('seller_id')->unique())
             ->get(['id', 'name', 'logo'])
@@ -70,7 +70,10 @@ class RetailerCatalogApiController extends Controller
 
         $brandIds = $mappings->pluck('brand_id')->unique()->values();
         $sellerIds = CommonHelper::filterEligibleSellerIds($mappings->pluck('seller_id')->unique()->values());
-        $allowedPairs = $mappings->map(fn($m) => $m->brand_id . '_' . $m->seller_id)->unique()->flip();
+        // For each (brand, seller) pair, which lines they're allowed to sell — a NULL
+        // entry means "All Lines", so it matches every product of that brand.
+        $allowedLinesByPair = $mappings->groupBy(fn($m) => $m->brand_id . '_' . $m->seller_id)
+            ->map(fn($rows) => $rows->pluck('brand_line_id')->all());
 
         $brandOverlap = Brand::whereIn('id', $brandIds)
             ->pluck('is_overlap_allowed', 'id');
@@ -94,6 +97,7 @@ class RetailerCatalogApiController extends Controller
             ->select(
                 'master_product_variants.*',
                 'master_products.brand_id as mp_brand_id',
+                'master_products.brand_line_id as mp_brand_line_id',
                 'seller_products.id as sp_id',
                 'seller_products.seller_id as sp_seller_id',
                 'seller_products.mrp as sp_mrp',
@@ -196,7 +200,18 @@ class RetailerCatalogApiController extends Controller
             ->orderBy('master_product_variants.id')
             ->get();
 
-        $rows = $rows->filter(fn($r) => isset($allowedPairs[$r->mp_brand_id . '_' . $r->sp_seller_id]));
+        $rows = $rows->filter(function ($r) use ($allowedLinesByPair) {
+            $lines = $allowedLinesByPair[$r->mp_brand_id . '_' . $r->sp_seller_id] ?? null;
+            if ($lines === null) {
+                return false;
+            }
+            foreach ($lines as $lineId) {
+                if ($lineId === null || (int) $lineId === (int) $r->mp_brand_line_id) {
+                    return true;
+                }
+            }
+            return false;
+        });
 
         $slabsBySp = SellerProductSlabPrice::whereIn('seller_product_id', $rows->pluck('sp_id')->unique())
             ->orderBy('min_qty')
@@ -361,6 +376,7 @@ class RetailerCatalogApiController extends Controller
         }
 
         $brandId = $variant->masterProduct->brand_id;
+        $brandLineId = $variant->masterProduct->brand_line_id;
         $cityIds = CommonHelper::getDeliverableZoneCityIds($request->latitude, $request->longitude);
         if (empty($cityIds)) {
             return CommonHelper::responseError('product_not_available_in_your_area');
@@ -369,6 +385,12 @@ class RetailerCatalogApiController extends Controller
         $sellerIds = CommonHelper::filterEligibleSellerIds(
             BrandDistributorMapping::where('brand_id', $brandId)
                 ->whereIn('city_id', $cityIds)
+                ->where(function ($q) use ($brandLineId) {
+                    $q->whereNull('brand_line_id');
+                    if ($brandLineId) {
+                        $q->orWhere('brand_line_id', $brandLineId);
+                    }
+                })
                 ->pluck('seller_id')
         );
 

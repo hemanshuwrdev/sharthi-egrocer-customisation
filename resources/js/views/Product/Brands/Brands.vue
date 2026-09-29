@@ -58,8 +58,15 @@
                         <span v-else class="badge bg-danger">{{ __('deactive') }}</span>
                     </template>
 
+                    <template #cell(lines_count)="row">
+                        <span class="badge bg-info">{{ row.item.brand_lines_count || 0 }}</span>
+                    </template>
+
                     <template #cell(actions)="row">
                         <div class="list-actions">
+                            <button class="list-action-btn" @click="manage_lines_for = row.item" v-b-tooltip.hover :title="__('manage_lines')">
+                                <i class="fa fa-bars"></i>
+                            </button>
                             <button class="list-action-btn is-edit" @click="edit_record = row.item" v-b-tooltip.hover :title="__('edit')">
                                 <i class="fa fa-pencil-alt"></i>
                             </button>
@@ -106,17 +113,26 @@
             @modalClose="edit_record = null"
             @saved="onBrandSaved"
         ></app-edit-record>
+
+        <!-- Manage Lines -->
+        <app-manage-lines
+            v-if="manage_lines_for"
+            :brand="manage_lines_for"
+            @modalClose="manage_lines_for = null; getRecords();"
+        ></app-manage-lines>
     </div>
 </template>
 
 <script>
 import { VuejsDatatableFactory } from 'vuejs-datatable';
 import EditRecord from './Edit.vue';
+import ManageLines from './ManageLines.vue';
 
 export default {
     components: {
         VuejsDatatableFactory,
         'app-edit-record': EditRecord,
+        'app-manage-lines': ManageLines,
     },
     data() {
         return {
@@ -124,11 +140,13 @@ export default {
                 { key: 'id', label: __('id'), class: 'text-center', sortable: true, sortDirection: 'desc' },
                 { key: 'name', label: __('name'), class: 'text-center' },
                 { key: 'image', label: __('image'), class: 'text-center' },
+                { key: 'lines_count', label: __('lines'), class: 'text-center' },
                 { key: 'status', label: __('status'), class: 'text-center', formatter: (value) => {
                     return value == 1 ? __('active') : __('deactive');
                 }},
                 { key: 'actions', label: __('actions'), class: 'text-center' }
             ],
+            manage_lines_for: null,
             totalRows: 0,
             currentPage: 1,
             perPage: this.$perPage || 10,

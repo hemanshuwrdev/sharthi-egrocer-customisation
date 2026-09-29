@@ -279,11 +279,10 @@ class MasterCatalogOrderHelper
             return ['ok' => false, 'error' => 'master_variant_not_found', 'seller_id' => null, 'overlap_allowed' => false];
         }
         $brandId = $variant->masterProduct->brand_id;
+        $brandLineId = $variant->masterProduct->brand_line_id;
         $overlapAllowed = $variant->masterProduct->brand && (int) $variant->masterProduct->brand->is_overlap_allowed === 1;
 
-        $sellerIds = BrandDistributorMapping::where('brand_id', $brandId)
-            ->whereIn('city_id', $cityIds)
-            ->pluck('seller_id');
+        $sellerIds = BrandDistributorMapping::eligibleSellerIds($brandId, $brandLineId, $cityIds);
 
         if ($sellerIds->isEmpty()) {
             return ['ok' => false, 'error' => 'product_not_available_in_your_area', 'seller_id' => null, 'overlap_allowed' => $overlapAllowed];

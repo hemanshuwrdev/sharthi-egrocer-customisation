@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\BrandDistributorMapping;
+use App\Models\BrandLine;
 use App\Models\City;
 use App\Models\Seller;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class SuperAdminCustomApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'brand_id' => 'required|exists:brands,id',
+            'brand_line_id' => 'nullable|exists:brand_lines,id',
             'seller_id' => 'required|exists:sellers,id',
             'city_ids' => 'required|array',
             'city_ids.*' => 'exists:cities,id',
@@ -31,42 +33,58 @@ class SuperAdminCustomApiController extends Controller
         }
 
         $brand = Brand::find($request->brand_id);
-        if (!$brand->is_overlap_allowed) {
-            // Check if another seller already has this brand mapped to any of these cities
-            $existing = BrandDistributorMapping::where('brand_id', $brand->id)
-                ->where('seller_id', '!=', $request->seller_id)
-                ->whereIn('city_id', $request->city_ids)
-                ->first();
-            
-            if ($existing) {
-                return CommonHelper::responseError('Overlap not allowed for this brand in the selected territories.');
-            }
+        $lineId = $request->brand_line_id ?: null;
+
+        if ($lineId && !BrandLine::where('id', $lineId)->where('brand_id', $brand->id)->exists()) {
+            return CommonHelper::responseError(__('brand_line_does_not_belong_to_selected_brand'));
         }
 
-        // We can either append or sync. Let's just create new missing mappings.
-        // It's usually better to sync. Let's clear previous for this brand + seller and insert new.
-        BrandDistributorMapping::where('brand_id', $request->brand_id)
-            ->where('seller_id', $request->seller_id)
-            ->delete();
+        try {
+            DB::transaction(function () use ($request, $brand, $lineId) {
+                if (!$brand->is_overlap_allowed) {
+                    $conflict = BrandDistributorMapping::findConflict($brand->id, $lineId, $request->city_ids, $request->seller_id);
+                    if ($conflict) {
+                        throw new \RuntimeException($this->conflictMessage($brand, $lineId, $conflict));
+                    }
+                }
 
-        $mappings = [];
-        foreach ($request->city_ids as $city_id) {
-            $mappings[] = [
-                'brand_id' => $request->brand_id,
-                'seller_id' => $request->seller_id,
-                'city_id' => $city_id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+                // Sync this exact (brand, line, seller) group's cities to the submitted list.
+                BrandDistributorMapping::where('brand_id', $request->brand_id)
+                    ->where('brand_line_id', $lineId)
+                    ->where('seller_id', $request->seller_id)
+                    ->delete();
+
+                $mappings = [];
+                foreach ($request->city_ids as $city_id) {
+                    $mappings[] = [
+                        'brand_id' => $request->brand_id,
+                        'brand_line_id' => $lineId,
+                        'seller_id' => $request->seller_id,
+                        'city_id' => $city_id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                BrandDistributorMapping::insert($mappings);
+            });
+        } catch (\RuntimeException $e) {
+            return CommonHelper::responseError($e->getMessage());
         }
-
-        BrandDistributorMapping::insert($mappings);
 
         return CommonHelper::responseSuccess('Brand mappings updated successfully.');
     }
 
+    private function conflictMessage(Brand $brand, $lineId, BrandDistributorMapping $conflict): string
+    {
+        $lineLabel = $lineId ? BrandLine::find($lineId)?->name : __('all_lines');
+        $cityName = $conflict->city->name ?? $conflict->city_id;
+        $sellerName = $conflict->distributor->store_name ?? $conflict->seller_id;
+        return "{$brand->name} / {$lineLabel} is already mapped to {$sellerName} in {$cityName}.";
+    }
+
     /**
-     * List brand-distributor mappings grouped by (brand, seller), with city names attached.
+     * List brand-distributor mappings grouped by (brand, line, seller), with city names attached.
      */
     public function listBrandMappings(Request $request)
     {
@@ -76,11 +94,14 @@ class SuperAdminCustomApiController extends Controller
         $filter = trim((string) $request->input('filter', ''));
 
         $base = BrandDistributorMapping::query()
-            ->selectRaw('brand_id, seller_id, MIN(id) as id, COUNT(*) as city_count')
-            ->groupBy('brand_id', 'seller_id');
+            ->selectRaw('brand_id, brand_line_id, seller_id, MIN(id) as id, COUNT(*) as city_count')
+            ->groupBy('brand_id', 'brand_line_id', 'seller_id');
 
         if ($request->filled('brand_id')) {
             $base->where('brand_id', $request->brand_id);
+        }
+        if ($request->filled('brand_line_id')) {
+            $base->where('brand_line_id', $request->brand_line_id);
         }
         if ($request->filled('seller_id')) {
             $base->where('seller_id', $request->seller_id);
@@ -94,14 +115,16 @@ class SuperAdminCustomApiController extends Controller
 
         $brandIds = $groups->pluck('brand_id')->unique();
         $sellerIds = $groups->pluck('seller_id')->unique();
+        $lineIds = $groups->pluck('brand_line_id')->filter()->unique();
 
         $brands = Brand::whereIn('id', $brandIds)->get(['id', 'name', 'is_overlap_allowed'])->keyBy('id');
         $sellers = Seller::whereIn('id', $sellerIds)->get(['id', 'store_name'])->keyBy('id');
+        $lines = BrandLine::whereIn('id', $lineIds)->get(['id', 'name'])->keyBy('id');
 
         $cityMap = BrandDistributorMapping::whereIn('brand_id', $brandIds)
             ->whereIn('seller_id', $sellerIds)
-            ->get(['brand_id', 'seller_id', 'city_id'])
-            ->groupBy(fn($r) => $r->brand_id . '_' . $r->seller_id);
+            ->get(['brand_id', 'brand_line_id', 'seller_id', 'city_id'])
+            ->groupBy(fn($r) => $r->brand_id . '_' . ($r->brand_line_id ?? 'null') . '_' . $r->seller_id);
 
         $cityIdSet = collect();
         foreach ($cityMap as $rows) {
@@ -111,14 +134,16 @@ class SuperAdminCustomApiController extends Controller
         }
         $cityNames = City::whereIn('id', $cityIdSet->unique())->get(['id', 'name'])->keyBy('id');
 
-        $result = $groups->map(function ($g) use ($brands, $sellers, $cityMap, $cityNames) {
-            $key = $g->brand_id . '_' . $g->seller_id;
+        $result = $groups->map(function ($g) use ($brands, $sellers, $lines, $cityMap, $cityNames) {
+            $key = $g->brand_id . '_' . ($g->brand_line_id ?? 'null') . '_' . $g->seller_id;
             $rows = $cityMap[$key] ?? collect();
             $cityIds = $rows->pluck('city_id')->values();
             return [
                 'brand_id' => $g->brand_id,
+                'brand_line_id' => $g->brand_line_id,
                 'seller_id' => $g->seller_id,
                 'brand' => $brands[$g->brand_id] ?? null,
+                'brand_line_name' => $g->brand_line_id ? ($lines[$g->brand_line_id]->name ?? null) : __('all_lines'),
                 'seller' => $sellers[$g->seller_id] ?? null,
                 'city_ids' => $cityIds,
                 'cities' => $cityIds->map(fn($cid) => $cityNames[$cid] ?? null)->filter()->values(),
@@ -131,7 +156,8 @@ class SuperAdminCustomApiController extends Controller
             $result = $result->filter(function ($r) use ($needle) {
                 $brandName = strtolower($r['brand']->name ?? '');
                 $sellerName = strtolower($r['seller']->store_name ?? '');
-                return str_contains($brandName, $needle) || str_contains($sellerName, $needle);
+                $lineName = strtolower($r['brand_line_name'] ?? '');
+                return str_contains($brandName, $needle) || str_contains($sellerName, $needle) || str_contains($lineName, $needle);
             })->values();
         }
 
@@ -139,38 +165,44 @@ class SuperAdminCustomApiController extends Controller
     }
 
     /**
-     * Get current city_ids for a (brand, seller) so the edit modal can preselect.
+     * Get current city_ids for a (brand, line, seller) so the edit modal can preselect.
      */
     public function getBrandSellerMapping(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'brand_id' => 'required|exists:brands,id',
+            'brand_line_id' => 'nullable|exists:brand_lines,id',
             'seller_id' => 'required|exists:sellers,id',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $lineId = $request->brand_line_id ?: null;
+
         $cityIds = BrandDistributorMapping::where('brand_id', $request->brand_id)
+            ->where('brand_line_id', $lineId)
             ->where('seller_id', $request->seller_id)
             ->pluck('city_id');
 
         return CommonHelper::responseWithData([
             'brand_id' => (int) $request->brand_id,
+            'brand_line_id' => $lineId ? (int) $lineId : null,
             'seller_id' => (int) $request->seller_id,
             'city_ids' => $cityIds,
         ]);
     }
 
     /**
-     * Remove every city mapping for a (brand, seller) — the distributor loses all access
-     * to this brand's products. Existing seller_products rows are left parked (hidden from
-     * distributor's list because the brand is no longer assigned).
+     * Remove every city mapping for a (brand, line, seller) — the distributor loses access
+     * to that line (or the whole brand, for an "All Lines" row). Existing seller_products
+     * rows are left parked (hidden from distributor's list because the mapping is gone).
      */
     public function deleteBrandMapping(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'brand_id' => 'required|exists:brands,id',
+            'brand_line_id' => 'nullable|exists:brand_lines,id',
             'seller_id' => 'required|exists:sellers,id',
         ]);
         if ($validator->fails()) {
@@ -178,6 +210,7 @@ class SuperAdminCustomApiController extends Controller
         }
 
         BrandDistributorMapping::where('brand_id', $request->brand_id)
+            ->where('brand_line_id', $request->brand_line_id ?: null)
             ->where('seller_id', $request->seller_id)
             ->delete();
 

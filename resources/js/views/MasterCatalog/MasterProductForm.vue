@@ -94,12 +94,25 @@
 
                                             <div class="col-md-6 mb-3">
                                                 <label>{{ __('brand') }} <i class="text-danger">*</i></label>
-                                                <select class="form-control form-select" v-model="product.brand_id" required>
+                                                <select class="form-control form-select" v-model="product.brand_id"
+                                                    @change="onBrandChange" required>
                                                     <option :value="null">-- {{ __('select') }} --</option>
                                                     <option v-for="b in brands" :key="b.id" :value="b.id">
                                                         {{ b.name }}
                                                     </option>
                                                 </select>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label>{{ __('brand_line') }} ({{ __('optional') }})</label>
+                                                <select class="form-control form-select" v-model="product.brand_line_id"
+                                                    :disabled="!product.brand_id">
+                                                    <option :value="null">-- {{ __('no_line') }} --</option>
+                                                    <option v-for="l in visibleBrandLines" :key="l.id" :value="l.id">
+                                                        {{ l.name }}
+                                                    </option>
+                                                </select>
+                                                <small class="text-muted">{{ __('only_active_lines_of_the_selected_brand_are_listed_changing_brand_clears_this_field') }}</small>
                                             </div>
 
                                             <div class="col-md-6 mb-3">
@@ -441,6 +454,7 @@ export default {
                 slug: '',
                 parent_company_id: null,
                 brand_id: null,
+                brand_line_id: null,
                 category_id: null,
                 tax_id: null,
                 tax_category_id: null,
@@ -464,6 +478,7 @@ export default {
             variants: [this.blankVariant()],
 
             brands: [],
+            brandLines: [],
             categories: [],
             taxes: [],
             taxCategories: [],
@@ -492,6 +507,12 @@ export default {
             const q = (this.pcQuery || '').trim().toLowerCase();
             return this.pcResults.some(pc => (pc.name || '').toLowerCase() === q);
         },
+        // Active lines only, plus the currently-assigned line even if it's since been
+        // deactivated — deactivated lines disappear from the dropdown except on the
+        // record that already uses them.
+        visibleBrandLines() {
+            return this.brandLines.filter(l => l.status == 1 || l.id === this.product.brand_line_id);
+        },
     },
     created() {
         this.isEdit = !!this.id;
@@ -512,6 +533,19 @@ export default {
             if (category && category.hsn) {
                 this.product.hsn = category.hsn;
             }
+        },
+
+        // Brand Line is scoped to one brand — clear it and refetch whenever Brand changes.
+        onBrandChange() {
+            this.product.brand_line_id = null;
+            this.fetchBrandLines();
+        },
+        fetchBrandLines() {
+            this.brandLines = [];
+            if (!this.product.brand_id) return;
+            axios.get(this.$apiUrl + '/admin/brands/' + this.product.brand_id + '/lines').then(r => {
+                this.brandLines = r.data.data || [];
+            }).catch(() => {});
         },
 
         // ---------- Languages / translations ----------
@@ -629,6 +663,7 @@ export default {
                     slug: p.slug || '',
                     parent_company_id: p.parent_company_id,
                     brand_id: p.brand_id,
+                    brand_line_id: p.brand_line_id || null,
                     category_id: p.category_id,
                     tax_id: p.tax_id,
                     tax_category_id: p.tax_category_id || null,
@@ -641,6 +676,7 @@ export default {
                     this.main_image_path = this.$storageUrl + p.image;
                 }
                 this.other_images = Array.isArray(p.other_images) ? p.other_images.slice() : [];
+                this.fetchBrandLines();
 
                 if (Array.isArray(p.variants) && p.variants.length) {
                     this.variants = p.variants.map(v => ({
@@ -912,6 +948,7 @@ export default {
             const fd = new FormData();
             if (this.product.parent_company_id) fd.append('parent_company_id', this.product.parent_company_id);
             if (this.product.brand_id) fd.append('brand_id', this.product.brand_id);
+            if (this.product.brand_line_id) fd.append('brand_line_id', this.product.brand_line_id);
             if (this.product.category_id) fd.append('category_id', this.product.category_id);
             if (this.product.tax_id) fd.append('tax_id', this.product.tax_id);
             if (this.product.tax_category_id) fd.append('tax_category_id', this.product.tax_category_id);

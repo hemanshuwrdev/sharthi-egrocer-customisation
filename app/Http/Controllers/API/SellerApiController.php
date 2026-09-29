@@ -876,31 +876,26 @@ class SellerApiController extends Controller
 
     /**
      * Check whether $brandId is already mapped to a DIFFERENT seller in any of $cityIds,
-     * for a brand that does not allow overlap. Mirrors the check in SuperAdminCustomApiController::saveBrandMappings.
+     * for a brand that does not allow overlap. Uses the same conflict rule as the dedicated
+     * Brand Distributor Mappings screen (BrandDistributorMapping::findConflict), so a
+     * line-specific mapping made there is correctly seen here too — this screen only ever
+     * writes "All Lines" (brand_line_id = NULL) rows (see syncBrandZoneMappings() below),
+     * but must still check against existing line-specific rows, not just other "All Lines" ones.
      */
     private function getBrandCityConflict($brandId, array $cityIds, $excludeSellerId)
     {
-        if (empty($cityIds)) {
-            return null;
-        }
-
         $brand = Brand::find($brandId);
         if (!$brand || $brand->is_overlap_allowed) {
             return null;
         }
 
-        $conflict = BrandDistributorMapping::where('brand_id', $brandId)
-            ->whereIn('city_id', $cityIds)
-            ->when($excludeSellerId, fn($q) => $q->where('seller_id', '!=', $excludeSellerId))
-            ->with('city')
-            ->first();
-
-        if ($conflict) {
-            $cityName = $conflict->city->name ?? $conflict->city_id;
-            return "{$brand->name} is already assigned to another distributor in {$cityName}";
+        $conflict = BrandDistributorMapping::findConflict($brandId, null, $cityIds, $excludeSellerId);
+        if (!$conflict) {
+            return null;
         }
 
-        return null;
+        $cityName = $conflict->city->name ?? $conflict->city_id;
+        return "{$brand->name} is already assigned to another distributor in {$cityName}";
     }
 
     /**
@@ -912,8 +907,12 @@ class SellerApiController extends Controller
     {
         $keptBrandIds = array_column($mappings, 'brand_id');
 
+        // This form only ever manages "All Lines" (brand_line_id = NULL) mappings.
+        // Line-specific mappings are owned by the dedicated Brand Distributor Mappings
+        // screen and must never be deleted or recreated from here.
         // Drop mappings for brands no longer assigned at all
         BrandDistributorMapping::where('seller_id', $seller->id)
+            ->whereNull('brand_line_id')
             ->whereNotIn('brand_id', $keptBrandIds ?: [0])
             ->delete();
 
@@ -924,12 +923,14 @@ class SellerApiController extends Controller
             // Drop cities no longer assigned to this brand for this seller
             BrandDistributorMapping::where('seller_id', $seller->id)
                 ->where('brand_id', $brandId)
+                ->whereNull('brand_line_id')
                 ->whereNotIn('city_id', $cityIds ?: [0])
                 ->delete();
 
             foreach ($cityIds as $cityId) {
                 BrandDistributorMapping::firstOrCreate([
                     'brand_id' => $brandId,
+                    'brand_line_id' => null,
                     'seller_id' => $seller->id,
                     'city_id' => $cityId,
                 ]);

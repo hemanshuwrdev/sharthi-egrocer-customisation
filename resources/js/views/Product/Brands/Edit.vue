@@ -166,7 +166,9 @@ export default {
       this.$refs['my-modal'].show();
     },
     hideModal() {
-      this.$refs['my-modal'].hide();
+      if (this.$refs['my-modal']) {
+        this.$refs['my-modal'].hide();
+      }
     },
     dropFile(event) {
       event.preventDefault();
@@ -351,9 +353,13 @@ export default {
 
           const res = await axios.post(url, fd);
 
+          if (!res.data.status) {
+            throw new Error(res.data.message || __('something_went_wrong'));
+          }
+
           if (!brandId && res.data.data?.id) brandId = res.data.data.id;
         }
-        return brandId; //change 
+        return brandId; //change
       };
 
 
@@ -363,14 +369,16 @@ export default {
             ? __('brand_updated_successfully')
             : __('brand_saved_successfully');
 
-          this.$emit('saved', message);
-
           this.id = brandId;
           await this.loadBrandWithTranslations();
           this.tabsKey++;
           this.hideModal();
-        })
 
+          this.$emit('saved', message);
+        })
+        .catch((err) => {
+          this.showError(err.response?.data?.message || err.message || __('something_went_wrong'));
+        })
         .finally(() => this.isLoading = false);
     }
   },

@@ -12,7 +12,7 @@
             <div class="list-toolbar">
                 <div class="list-search">
                     <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
-                    <b-form-input v-model="filter" type="search" :placeholder="__('search')" @input="getRecords()"></b-form-input>
+                    <b-form-input v-model="filter" type="search" :placeholder="__('search_by_brand_distributor_or_line')" @input="getRecords()"></b-form-input>
                 </div>
                 <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
                     <i class="fa fa-refresh"></i>
@@ -43,6 +43,12 @@
 
                     <template #cell(seller)="row">
                         {{ row.item.seller ? row.item.seller.store_name : '-' }}
+                    </template>
+
+                    <template #cell(line)="row">
+                        <span class="badge" :class="row.item.brand_line_id ? 'bg-secondary' : 'bg-light text-dark border'">
+                            {{ row.item.brand_line_name }}
+                        </span>
                     </template>
 
                     <template #cell(cities)="row">
@@ -80,10 +86,18 @@
             <form @submit.prevent="save">
                 <div class="form-group mb-3">
                     <label class="required">{{ __('brand') }}</label>
-                    <select class="form-control" v-model="form.brand_id" :disabled="isEdit" required>
+                    <select class="form-control" v-model="form.brand_id" :disabled="isEdit" @change="onBrandChange" required>
                         <option :value="null">-- {{ __('select') }} --</option>
                         <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
                     </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label>{{ __('line') }}</label>
+                    <select class="form-control" v-model="form.brand_line_id" :disabled="isEdit || !form.brand_id">
+                        <option :value="null">{{ __('all_lines') }}</option>
+                        <option v-for="l in modalBrandLines" :key="l.id" :value="l.id">{{ l.name }}</option>
+                    </select>
+                    <small class="text-muted">{{ __('all_lines_distributor_supplies_every_product_of_this_brand') }}</small>
                 </div>
                 <div class="form-group mb-3">
                     <label class="required">{{ __('distributor') }}</label>
@@ -122,6 +136,7 @@ export default {
             fields: [
                 { key: 'brand', label: __('brand') ? __('brand').charAt(0).toUpperCase() + __('brand').slice(1) : 'Brand', class: 'text-center' },
                 { key: 'seller', label: __('distributor'), class: 'text-center' },
+                { key: 'line', label: __('line'), class: 'text-center' },
                 { key: 'cities', label: __('zones'), class: 'text-center' },
                 { key: 'actions', label: __('actions'), class: 'text-center' },
             ],
@@ -136,11 +151,12 @@ export default {
 
             modalOpen: false,
             isEdit: false,
-            form: { brand_id: null, seller_id: null, city_ids: [] },
+            form: { brand_id: null, brand_line_id: null, seller_id: null, city_ids: [] },
 
             brands: [],
             sellers: [],
             cities: [],
+            modalBrandLines: [],
         };
     },
     created() {
@@ -173,17 +189,31 @@ export default {
             });
         },
 
+        onBrandChange() {
+            this.form.brand_line_id = null;
+            this.modalBrandLines = [];
+            if (!this.form.brand_id) return;
+            axios.get(this.$apiUrl + '/admin/brands/' + this.form.brand_id + '/lines').then(r => {
+                this.modalBrandLines = (r.data.data || []).filter(l => l.status == 1);
+            }).catch(() => {});
+        },
         openCreate() {
             this.isEdit = false;
-            this.form = { brand_id: null, seller_id: null, city_ids: [] };
+            this.form = { brand_id: null, brand_line_id: null, seller_id: null, city_ids: [] };
+            this.modalBrandLines = [];
             this.modalOpen = true;
         },
         openEdit(row) {
             this.isEdit = true;
-            this.form = { brand_id: row.brand_id, seller_id: row.seller_id, city_ids: [] };
+            this.form = { brand_id: row.brand_id, brand_line_id: row.brand_line_id, seller_id: row.seller_id, city_ids: [] };
             this.modalOpen = true;
+            if (row.brand_id) {
+                axios.get(this.$apiUrl + '/admin/brands/' + row.brand_id + '/lines').then(r => {
+                    this.modalBrandLines = r.data.data || [];
+                }).catch(() => {});
+            }
             axios.get(this.$apiUrl + '/admin/brand-mappings/get', {
-                params: { brand_id: row.brand_id, seller_id: row.seller_id }
+                params: { brand_id: row.brand_id, brand_line_id: row.brand_line_id, seller_id: row.seller_id }
             }).then(r => {
                 this.form.city_ids = (r.data.data && r.data.data.city_ids) || [];
             });
@@ -223,6 +253,7 @@ export default {
                 if (result.value) {
                     axios.post(this.$apiUrl + '/admin/brand-mappings/delete', {
                         brand_id: item.brand_id,
+                        brand_line_id: item.brand_line_id,
                         seller_id: item.seller_id,
                     }).then(res => {
                         this.showMessage('success', res.data.message);

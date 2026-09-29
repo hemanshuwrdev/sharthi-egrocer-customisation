@@ -122,6 +122,22 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -148,6 +164,10 @@ __webpack_require__.r(__webpack_exports__);
         label: __('brand') ? __('brand').charAt(0).toUpperCase() + __('brand').slice(1) : 'Brand',
         "class": 'text-center'
       }, {
+        key: 'brand_line',
+        label: __('line'),
+        "class": 'text-center'
+      }, {
         key: 'variants_count',
         label: __('variants') ? __('variants').charAt(0).toUpperCase() + __('variants').slice(1) : 'Variants',
         "class": 'text-center'
@@ -166,11 +186,23 @@ __webpack_require__.r(__webpack_exports__);
       pageOptions: this.$pageOptions || [5, 10, 15, 20],
       filter: null,
       isLoading: false,
-      products: []
+      products: [],
+      brands: [],
+      brandFilter: null,
+      brandLines: [],
+      brandLineFilter: null
     };
+  },
+  computed: {
+    brandLineFilterOptions: function brandLineFilterOptions() {
+      return this.brandLines.filter(function (l) {
+        return l.status == 1;
+      });
+    }
   },
   created: function created() {
     this.getRecords();
+    this.fetchBrands();
   },
   watch: {
     currentPage: function currentPage() {
@@ -188,7 +220,9 @@ __webpack_require__.r(__webpack_exports__);
         params: {
           page: this.currentPage,
           per_page: this.perPage,
-          filter: this.filter
+          filter: this.filter,
+          brand_id: this.brandFilter,
+          brand_line_id: this.brandLineFilter
         }
       }).then(function (response) {
         _this.isLoading = false;
@@ -198,8 +232,28 @@ __webpack_require__.r(__webpack_exports__);
         _this.isLoading = false;
       });
     },
-    deleteRecord: function deleteRecord(index, id) {
+    fetchBrands: function fetchBrands() {
       var _this2 = this;
+      axios.get(this.$apiUrl + '/products/brands/get').then(function (r) {
+        _this2.brands = r.data.data || [];
+      })["catch"](function () {});
+    },
+    onBrandFilterChange: function onBrandFilterChange() {
+      var _this3 = this;
+      this.brandLineFilter = null;
+      this.brandLines = [];
+      if (!this.brandFilter) {
+        this.getRecords();
+        return;
+      }
+      axios.get(this.$apiUrl + '/admin/brands/' + this.brandFilter + '/lines').then(function (r) {
+        _this3.brandLines = r.data.data || [];
+      })["finally"](function () {
+        return _this3.getRecords();
+      });
+    },
+    deleteRecord: function deleteRecord(index, id) {
+      var _this4 = this;
       this.$swal.fire({
         title: __('are_you_sure'),
         text: __('you_want_be_able_to_revert_this'),
@@ -211,15 +265,15 @@ __webpack_require__.r(__webpack_exports__);
         cancelButtonColor: '#d33'
       }).then(function (result) {
         if (result.value) {
-          _this2.isLoading = true;
-          axios.post(_this2.$apiUrl + '/master_catalog/products/delete', {
+          _this4.isLoading = true;
+          axios.post(_this4.$apiUrl + '/master_catalog/products/delete', {
             id: id
           }).then(function (response) {
-            _this2.isLoading = false;
-            _this2.products.splice(index, 1);
-            _this2.showMessage('success', response.data.message);
+            _this4.isLoading = false;
+            _this4.products.splice(index, 1);
+            _this4.showMessage('success', response.data.message);
           })["catch"](function () {
-            _this2.isLoading = false;
+            _this4.isLoading = false;
           });
         }
       });
@@ -403,6 +457,103 @@ var render = function () {
         ),
       ]),
       _vm._v(" "),
+      _c("div", { staticClass: "list-toolbar" }, [
+        _c(
+          "select",
+          {
+            directives: [
+              {
+                name: "model",
+                rawName: "v-model",
+                value: _vm.brandFilter,
+                expression: "brandFilter",
+              },
+            ],
+            staticClass: "form-control form-select",
+            staticStyle: { "max-width": "220px" },
+            on: {
+              change: [
+                function ($event) {
+                  var $$selectedVal = Array.prototype.filter
+                    .call($event.target.options, function (o) {
+                      return o.selected
+                    })
+                    .map(function (o) {
+                      var val = "_value" in o ? o._value : o.value
+                      return val
+                    })
+                  _vm.brandFilter = $event.target.multiple
+                    ? $$selectedVal
+                    : $$selectedVal[0]
+                },
+                _vm.onBrandFilterChange,
+              ],
+            },
+          },
+          [
+            _c("option", { domProps: { value: null } }, [
+              _vm._v(_vm._s(_vm.__("brand")) + ": " + _vm._s(_vm.__("all"))),
+            ]),
+            _vm._v(" "),
+            _vm._l(_vm.brands, function (b) {
+              return _c("option", { key: b.id, domProps: { value: b.id } }, [
+                _vm._v(_vm._s(b.name)),
+              ])
+            }),
+          ],
+          2
+        ),
+        _vm._v(" "),
+        _c(
+          "select",
+          {
+            directives: [
+              {
+                name: "model",
+                rawName: "v-model",
+                value: _vm.brandLineFilter,
+                expression: "brandLineFilter",
+              },
+            ],
+            staticClass: "form-control form-select",
+            staticStyle: { "max-width": "220px" },
+            attrs: { disabled: !_vm.brandFilter },
+            on: {
+              change: [
+                function ($event) {
+                  var $$selectedVal = Array.prototype.filter
+                    .call($event.target.options, function (o) {
+                      return o.selected
+                    })
+                    .map(function (o) {
+                      var val = "_value" in o ? o._value : o.value
+                      return val
+                    })
+                  _vm.brandLineFilter = $event.target.multiple
+                    ? $$selectedVal
+                    : $$selectedVal[0]
+                },
+                function ($event) {
+                  return _vm.getRecords()
+                },
+              ],
+            },
+          },
+          [
+            _c("option", { domProps: { value: null } }, [
+              _vm._v(_vm._s(_vm.__("line")) + ": " + _vm._s(_vm.__("all"))),
+            ]),
+            _vm._v(" "),
+            _vm._l(_vm.brandLineFilterOptions, function (l) {
+              return _c("option", { key: l.id, domProps: { value: l.id } }, [
+                _vm._v(_vm._s(l.name)),
+              ])
+            }),
+          ],
+          2
+        ),
+      ]),
+      _vm._v(" "),
       _c(
         "div",
         { staticClass: "table-responsive" },
@@ -476,6 +627,20 @@ var render = function () {
                     _vm._v(
                       "\n                    " +
                         _vm._s(row.item.brand ? row.item.brand.name : "-") +
+                        "\n                "
+                    ),
+                  ]
+                },
+              },
+              {
+                key: "cell(brand_line)",
+                fn: function (row) {
+                  return [
+                    _vm._v(
+                      "\n                    " +
+                        _vm._s(
+                          row.item.brand_line ? row.item.brand_line.name : "-"
+                        ) +
                         "\n                "
                     ),
                   ]

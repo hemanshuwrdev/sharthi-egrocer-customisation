@@ -19,7 +19,7 @@ class MasterProductApiController extends Controller
     public function list(Request $request)
     {
         if ($request->filled('id')) {
-            $product = MasterProduct::with(['parentCompany', 'brand', 'category', 'variants.unit', 'variants.secondaryUnit'])
+            $product = MasterProduct::with(['parentCompany', 'brand', 'brandLine', 'category', 'variants.unit', 'variants.secondaryUnit'])
                 ->where('id', $request->id)
                 ->first();
             return CommonHelper::responseWithData($product);
@@ -30,7 +30,7 @@ class MasterProductApiController extends Controller
         $offset = ($page - 1) * $limit;
         $filter = $request->input('filter', '');
 
-        $query = MasterProduct::with(['parentCompany', 'brand', 'category'])
+        $query = MasterProduct::with(['parentCompany', 'brand', 'brandLine', 'category'])
             ->withCount('variants')
             ->orderBy('id', 'DESC');
 
@@ -42,7 +42,7 @@ class MasterProductApiController extends Controller
             });
         }
 
-        foreach (['brand_id', 'parent_company_id', 'category_id', 'status'] as $f) {
+        foreach (['brand_id', 'brand_line_id', 'parent_company_id', 'category_id', 'status'] as $f) {
             if ($request->filled($f)) {
                 $query->where($f, $request->input($f));
             }
@@ -59,6 +59,7 @@ class MasterProductApiController extends Controller
         $product = MasterProduct::with([
             'parentCompany',
             'brand',
+            'brandLine',
             'category',
             'variants.unit',
             'variants.secondaryUnit',
@@ -79,6 +80,7 @@ class MasterProductApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'brand_id' => 'required|exists:brands,id',
+            'brand_line_id' => 'nullable|exists:brand_lines,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             // 'tax_id' => 'nullable|exists:taxes,id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
@@ -99,6 +101,11 @@ class MasterProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $lineError = $this->ensureBrandLineBelongsToBrand($request);
+        if ($lineError) {
+            return CommonHelper::responseError($lineError);
+        }
+
         $nameError = $this->ensureDefaultLanguageName($request);
         if ($nameError) {
             return CommonHelper::responseError($nameError);
@@ -114,6 +121,7 @@ class MasterProductApiController extends Controller
                 $product->slug = Str::slug($defaults['name']) . '-' . substr(uniqid(), -5);
                 $product->parent_company_id = $request->parent_company_id;
                 $product->brand_id = $request->brand_id;
+                $product->brand_line_id = $request->brand_line_id ?: null;
                 $product->category_id = $request->category_id;
                 // legacy tax_id path disabled — use tax_category_id/TaxRule instead
                 // $product->tax_id = $request->tax_id;
@@ -186,6 +194,7 @@ class MasterProductApiController extends Controller
         $validator = Validator::make($request->all(), [
             'id' => 'required|exists:master_products,id',
             'brand_id' => 'required|exists:brands,id',
+            'brand_line_id' => 'nullable|exists:brand_lines,id',
             'parent_company_id' => 'nullable|exists:parent_companies,id',
             'category_id' => 'nullable|exists:categories,id',
             // 'tax_id' => 'nullable|exists:taxes,id', // legacy tax_id path disabled — use tax_category_id/TaxRule instead
@@ -206,6 +215,11 @@ class MasterProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $lineError = $this->ensureBrandLineBelongsToBrand($request);
+        if ($lineError) {
+            return CommonHelper::responseError($lineError);
+        }
+
         $nameError = $this->ensureDefaultLanguageName($request);
         if ($nameError) {
             return CommonHelper::responseError($nameError);
@@ -220,6 +234,7 @@ class MasterProductApiController extends Controller
                 $product->name = $defaults['name'];
                 $product->parent_company_id = $request->parent_company_id;
                 $product->brand_id = $request->brand_id;
+                $product->brand_line_id = $request->brand_line_id ?: null;
                 $product->category_id = $request->category_id;
                 // legacy tax_id path disabled — use tax_category_id/TaxRule instead
                 // $product->tax_id = $request->tax_id;
@@ -398,6 +413,20 @@ class MasterProductApiController extends Controller
         $rows = $query->skip($offset)->take($limit)->get();
 
         return CommonHelper::responseWithData($rows, $total);
+    }
+
+    /**
+     * brand_line_id must belong to the submitted brand_id (a line is scoped to one brand).
+     */
+    private function ensureBrandLineBelongsToBrand(Request $request): ?string
+    {
+        if (!$request->filled('brand_line_id')) {
+            return null;
+        }
+        $belongs = \App\Models\BrandLine::where('id', $request->brand_line_id)
+            ->where('brand_id', $request->brand_id)
+            ->exists();
+        return $belongs ? null : __('brand_line_does_not_belong_to_selected_brand');
     }
 
     private function storeImage($file, string $folder): string

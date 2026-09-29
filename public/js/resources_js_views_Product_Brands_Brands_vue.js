@@ -13,6 +13,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var vuejs_datatable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuejs-datatable */ "./node_modules/vuejs-datatable/dist/vuejs-datatable.esm.js");
 /* harmony import */ var _Edit_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Edit.vue */ "./resources/js/views/Product/Brands/Edit.vue");
+/* harmony import */ var _ManageLines_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ManageLines.vue */ "./resources/js/views/Product/Brands/ManageLines.vue");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -127,13 +128,29 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
     VuejsDatatableFactory: vuejs_datatable__WEBPACK_IMPORTED_MODULE_0__.VuejsDatatableFactory,
-    'app-edit-record': _Edit_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
+    'app-edit-record': _Edit_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    'app-manage-lines': _ManageLines_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
   data: function data() {
     return {
@@ -152,6 +169,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         label: __('image'),
         "class": 'text-center'
       }, {
+        key: 'lines_count',
+        label: __('lines'),
+        "class": 'text-center'
+      }, {
         key: 'status',
         label: __('status'),
         "class": 'text-center',
@@ -163,6 +184,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         label: __('actions'),
         "class": 'text-center'
       }],
+      manage_lines_for: null,
       totalRows: 0,
       currentPage: 1,
       perPage: this.$perPage || 10,
@@ -477,7 +499,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       this.$refs['my-modal'].show();
     },
     hideModal: function hideModal() {
-      this.$refs['my-modal'].hide();
+      if (this.$refs['my-modal']) {
+        this.$refs['my-modal'].hide();
+      }
     },
     dropFile: function dropFile(event) {
       event.preventDefault();
@@ -645,7 +669,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   _i = 0, _languagesToSave = languagesToSave;
                 case 2:
                   if (!(_i < _languagesToSave.length)) {
-                    _context.next = 19;
+                    _context.next = 21;
                     break;
                   }
                   lang = _languagesToSave[_i];
@@ -661,14 +685,20 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   return axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, fd);
                 case 14:
                   res = _context.sent;
+                  if (res.data.status) {
+                    _context.next = 17;
+                    break;
+                  }
+                  throw new Error(res.data.message || __('something_went_wrong'));
+                case 17:
                   if (!brandId && (_res$data$data = res.data.data) !== null && _res$data$data !== void 0 && _res$data$data.id) brandId = res.data.data.id;
-                case 16:
+                case 18:
                   _i++;
                   _context.next = 2;
                   break;
-                case 19:
+                case 21:
                   return _context.abrupt("return", brandId);
-                case 20:
+                case 22:
                 case "end":
                   return _context.stop();
               }
@@ -687,13 +717,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
               switch (_context2.prev = _context2.next) {
                 case 0:
                   message = isUpdate ? __('brand_updated_successfully') : __('brand_saved_successfully');
-                  _this7.$emit('saved', message);
                   _this7.id = brandId;
-                  _context2.next = 5;
+                  _context2.next = 4;
                   return _this7.loadBrandWithTranslations();
-                case 5:
+                case 4:
                   _this7.tabsKey++;
                   _this7.hideModal();
+                  _this7.$emit('saved', message);
                 case 7:
                 case "end":
                   return _context2.stop();
@@ -704,7 +734,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         return function (_x) {
           return _ref2.apply(this, arguments);
         };
-      }())["finally"](function () {
+      }())["catch"](function (err) {
+        var _err$response, _err$response$data;
+        _this7.showError(((_err$response = err.response) === null || _err$response === void 0 ? void 0 : (_err$response$data = _err$response.data) === null || _err$response$data === void 0 ? void 0 : _err$response$data.message) || err.message || __('something_went_wrong'));
+      })["finally"](function () {
         return _this7.isLoading = false;
       });
     }
@@ -712,6 +745,257 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
   mounted: function mounted() {
     this.loadLanguages();
     this.resetForm(); // here change 2 
+    this.showModal();
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/ManageLines.vue?vue&type=script&lang=js":
+/*!***************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/ManageLines.vue?vue&type=script&lang=js ***!
+  \***************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  props: ['brand'],
+  data: function data() {
+    return {
+      lines: [],
+      isLoading: false,
+      isSaving: false,
+      newLineName: '',
+      editingId: null,
+      editingName: ''
+    };
+  },
+  computed: {
+    brandOverlapAllowed: function brandOverlapAllowed() {
+      return !!(this.brand && this.brand.is_overlap_allowed == 1);
+    }
+  },
+  methods: {
+    showModal: function showModal() {
+      this.$refs['my-modal'].show();
+    },
+    hideModal: function hideModal() {
+      if (this.$refs['my-modal']) {
+        this.$refs['my-modal'].hide();
+      }
+    },
+    getLines: function getLines() {
+      var _this = this;
+      if (!this.brand) return;
+      this.isLoading = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/admin/brands/' + this.brand.id + '/lines').then(function (res) {
+        _this.lines = res.data.data || [];
+      })["finally"](function () {
+        _this.isLoading = false;
+      });
+    },
+    addLine: function addLine() {
+      var _this2 = this;
+      var name = this.newLineName.trim();
+      if (!name || !this.brand) return;
+      this.isSaving = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/admin/brands/' + this.brand.id + '/lines', {
+        name: name
+      }).then(function (res) {
+        if (res.data.status) {
+          _this2.newLineName = '';
+          _this2.getLines();
+        } else {
+          _this2.showError(res.data.message);
+        }
+      })["catch"](function (err) {
+        var _err$response, _err$response$data;
+        return _this2.showError(((_err$response = err.response) === null || _err$response === void 0 ? void 0 : (_err$response$data = _err$response.data) === null || _err$response$data === void 0 ? void 0 : _err$response$data.message) || __('something_went_wrong'));
+      })["finally"](function () {
+        _this2.isSaving = false;
+      });
+    },
+    startRename: function startRename(line) {
+      this.editingId = line.id;
+      this.editingName = line.name;
+    },
+    cancelRename: function cancelRename() {
+      this.editingId = null;
+      this.editingName = '';
+    },
+    saveRename: function saveRename(line) {
+      var _this3 = this;
+      var name = this.editingName.trim();
+      if (!name) return;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().put(this.$apiUrl + '/admin/brand-lines/' + line.id, {
+        name: name
+      }).then(function (res) {
+        if (res.data.status) {
+          _this3.cancelRename();
+          _this3.getLines();
+        } else {
+          _this3.showError(res.data.message);
+        }
+      })["catch"](function (err) {
+        var _err$response2, _err$response2$data;
+        return _this3.showError(((_err$response2 = err.response) === null || _err$response2 === void 0 ? void 0 : (_err$response2$data = _err$response2.data) === null || _err$response2$data === void 0 ? void 0 : _err$response2$data.message) || __('something_went_wrong'));
+      });
+    },
+    toggleStatus: function toggleStatus(line) {
+      var _this4 = this;
+      var newStatus = line.status == 1 ? 0 : 1;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().put(this.$apiUrl + '/admin/brand-lines/' + line.id, {
+        status: newStatus
+      }).then(function (res) {
+        if (res.data.status) {
+          line.status = newStatus;
+        } else {
+          _this4.showError(res.data.message);
+        }
+      })["catch"](function (err) {
+        var _err$response3, _err$response3$data;
+        return _this4.showError(((_err$response3 = err.response) === null || _err$response3 === void 0 ? void 0 : (_err$response3$data = _err$response3.data) === null || _err$response3$data === void 0 ? void 0 : _err$response3$data.message) || __('something_went_wrong'));
+      });
+    },
+    toggleOverlap: function toggleOverlap(line) {
+      var _this5 = this;
+      var newValue = line.is_overlap_allowed == 1 ? 0 : 1;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().put(this.$apiUrl + '/admin/brand-lines/' + line.id, {
+        is_overlap_allowed: newValue
+      }).then(function (res) {
+        if (res.data.status) {
+          line.is_overlap_allowed = newValue;
+        } else {
+          _this5.showError(res.data.message);
+        }
+      })["catch"](function (err) {
+        var _err$response4, _err$response4$data;
+        return _this5.showError(((_err$response4 = err.response) === null || _err$response4 === void 0 ? void 0 : (_err$response4$data = _err$response4.data) === null || _err$response4$data === void 0 ? void 0 : _err$response4$data.message) || __('something_went_wrong'));
+      });
+    },
+    deleteLine: function deleteLine(line, index) {
+      var _this6 = this;
+      this.$swal.fire({
+        title: __('are_you_sure'),
+        text: __('this_cannot_be_undone'),
+        confirmButtonText: __('yes_sure'),
+        cancelButtonText: __('cancel'),
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#37a279',
+        cancelButtonColor: '#d33'
+      }).then(function (result) {
+        if (result.value) {
+          axios__WEBPACK_IMPORTED_MODULE_0___default()["delete"](_this6.$apiUrl + '/admin/brand-lines/' + line.id).then(function (res) {
+            if (res.data.status) {
+              _this6.lines.splice(index, 1);
+              _this6.showMessage('success', res.data.message);
+            } else {
+              _this6.showError(res.data.message);
+            }
+          })["catch"](function (err) {
+            var _err$response5, _err$response5$data;
+            return _this6.showError(((_err$response5 = err.response) === null || _err$response5 === void 0 ? void 0 : (_err$response5$data = _err$response5.data) === null || _err$response5$data === void 0 ? void 0 : _err$response5$data.message) || __('something_went_wrong'));
+          });
+        }
+      });
+    }
+  },
+  mounted: function mounted() {
+    this.getLines();
     this.showModal();
   }
 });
@@ -1147,6 +1431,44 @@ component.options.__file = "resources/js/views/Product/Brands/Edit.vue"
 
 /***/ }),
 
+/***/ "./resources/js/views/Product/Brands/ManageLines.vue":
+/*!***********************************************************!*\
+  !*** ./resources/js/views/Product/Brands/ManageLines.vue ***!
+  \***********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _ManageLines_vue_vue_type_template_id_0d2032d6__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ManageLines.vue?vue&type=template&id=0d2032d6 */ "./resources/js/views/Product/Brands/ManageLines.vue?vue&type=template&id=0d2032d6");
+/* harmony import */ var _ManageLines_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ManageLines.vue?vue&type=script&lang=js */ "./resources/js/views/Product/Brands/ManageLines.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _ManageLines_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _ManageLines_vue_vue_type_template_id_0d2032d6__WEBPACK_IMPORTED_MODULE_0__.render,
+  _ManageLines_vue_vue_type_template_id_0d2032d6__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/views/Product/Brands/ManageLines.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/views/Product/Brands/Brands.vue?vue&type=script&lang=js":
 /*!******************************************************************************!*\
   !*** ./resources/js/views/Product/Brands/Brands.vue?vue&type=script&lang=js ***!
@@ -1174,6 +1496,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Edit_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Edit.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/Edit.vue?vue&type=script&lang=js");
  /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Edit_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/views/Product/Brands/ManageLines.vue?vue&type=script&lang=js":
+/*!***********************************************************************************!*\
+  !*** ./resources/js/views/Product/Brands/ManageLines.vue?vue&type=script&lang=js ***!
+  \***********************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ManageLines_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ManageLines.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/ManageLines.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ManageLines_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 
@@ -1217,6 +1554,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Edit_vue_vue_type_template_id_64f39104_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Edit_vue_vue_type_template_id_64f39104_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Edit.vue?vue&type=template&id=64f39104&scoped=true */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/Edit.vue?vue&type=template&id=64f39104&scoped=true");
+
+
+/***/ }),
+
+/***/ "./resources/js/views/Product/Brands/ManageLines.vue?vue&type=template&id=0d2032d6":
+/*!*****************************************************************************************!*\
+  !*** ./resources/js/views/Product/Brands/ManageLines.vue?vue&type=template&id=0d2032d6 ***!
+  \*****************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ManageLines_vue_vue_type_template_id_0d2032d6__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ManageLines_vue_vue_type_template_id_0d2032d6__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_ManageLines_vue_vue_type_template_id_0d2032d6__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ManageLines.vue?vue&type=template&id=0d2032d6 */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/ManageLines.vue?vue&type=template&id=0d2032d6");
 
 
 /***/ }),
@@ -1422,10 +1775,41 @@ var render = function () {
                   },
                 },
                 {
+                  key: "cell(lines_count)",
+                  fn: function (row) {
+                    return [
+                      _c("span", { staticClass: "badge bg-info" }, [
+                        _vm._v(_vm._s(row.item.brand_lines_count || 0)),
+                      ]),
+                    ]
+                  },
+                },
+                {
                   key: "cell(actions)",
                   fn: function (row) {
                     return [
                       _c("div", { staticClass: "list-actions" }, [
+                        _c(
+                          "button",
+                          {
+                            directives: [
+                              {
+                                name: "b-tooltip",
+                                rawName: "v-b-tooltip.hover",
+                                modifiers: { hover: true },
+                              },
+                            ],
+                            staticClass: "list-action-btn",
+                            attrs: { title: _vm.__("manage_lines") },
+                            on: {
+                              click: function ($event) {
+                                _vm.manage_lines_for = row.item
+                              },
+                            },
+                          },
+                          [_c("i", { staticClass: "fa fa-bars" })]
+                        ),
+                        _vm._v(" "),
                         _c(
                           "button",
                           {
@@ -1548,6 +1932,18 @@ var render = function () {
                 _vm.edit_record = null
               },
               saved: _vm.onBrandSaved,
+            },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.manage_lines_for
+        ? _c("app-manage-lines", {
+            attrs: { brand: _vm.manage_lines_for },
+            on: {
+              modalClose: function ($event) {
+                _vm.manage_lines_for = null
+                _vm.getRecords()
+              },
             },
           })
         : _vm._e(),
@@ -1959,6 +2355,450 @@ var render = function () {
         ],
         1
       ),
+    ]
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/ManageLines.vue?vue&type=template&id=0d2032d6":
+/*!********************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Product/Brands/ManageLines.vue?vue&type=template&id=0d2032d6 ***!
+  \********************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render),
+/* harmony export */   staticRenderFns: () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "b-modal",
+    {
+      ref: "my-modal",
+      attrs: {
+        title:
+          _vm.__("manage_lines") + " — " + (_vm.brand ? _vm.brand.name : ""),
+        scrollable: "",
+        "no-close-on-backdrop": "",
+        "no-fade": "",
+        static: "",
+        "hide-footer": "",
+        size: "lg",
+      },
+      on: {
+        hidden: function ($event) {
+          return _vm.$emit("modalClose")
+        },
+      },
+    },
+    [
+      _c("div", { staticClass: "d-flex gap-2 mb-3" }, [
+        _c("input", {
+          directives: [
+            {
+              name: "model",
+              rawName: "v-model",
+              value: _vm.newLineName,
+              expression: "newLineName",
+            },
+          ],
+          staticClass: "form-control",
+          attrs: { type: "text", placeholder: _vm.__("new_line_name_eg_bulk") },
+          domProps: { value: _vm.newLineName },
+          on: {
+            keyup: function ($event) {
+              if (
+                !$event.type.indexOf("key") &&
+                _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+              ) {
+                return null
+              }
+              return _vm.addLine.apply(null, arguments)
+            },
+            input: function ($event) {
+              if ($event.target.composing) {
+                return
+              }
+              _vm.newLineName = $event.target.value
+            },
+          },
+        }),
+        _vm._v(" "),
+        _c(
+          "button",
+          {
+            staticClass: "btn btn-primary text-nowrap",
+            attrs: { disabled: _vm.isSaving || !_vm.newLineName.trim() },
+            on: { click: _vm.addLine },
+          },
+          [
+            _c("i", { staticClass: "fa fa-plus" }),
+            _vm._v(" " + _vm._s(_vm.__("add_line")) + "\n        "),
+          ]
+        ),
+      ]),
+      _vm._v(" "),
+      _vm.isLoading
+        ? _c("div", { staticClass: "text-center my-3" }, [_c("b-spinner")], 1)
+        : _c("table", { staticClass: "table table-bordered" }, [
+            _c("thead", [
+              _c("tr", [
+                _c("th", [_vm._v(_vm._s(_vm.__("order")))]),
+                _vm._v(" "),
+                _c("th", [_vm._v(_vm._s(_vm.__("line_name")))]),
+                _vm._v(" "),
+                _c("th", { staticClass: "text-center" }, [
+                  _vm._v(_vm._s(_vm.__("products"))),
+                ]),
+                _vm._v(" "),
+                _c("th", { staticClass: "text-center" }, [
+                  _vm._v(_vm._s(_vm.__("mappings"))),
+                ]),
+                _vm._v(" "),
+                _c("th", { staticClass: "text-center" }, [
+                  _vm._v(_vm._s(_vm.__("status"))),
+                ]),
+                _vm._v(" "),
+                _c(
+                  "th",
+                  {
+                    directives: [
+                      {
+                        name: "b-tooltip",
+                        rawName: "v-b-tooltip.hover",
+                        modifiers: { hover: true },
+                      },
+                    ],
+                    staticClass: "text-center",
+                    attrs: { title: _vm.__("overlap_allowed_for_line_hint") },
+                  },
+                  [_vm._v(_vm._s(_vm.__("overlap")))]
+                ),
+                _vm._v(" "),
+                _c("th", { staticClass: "text-center" }, [
+                  _vm._v(_vm._s(_vm.__("actions"))),
+                ]),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c(
+              "tbody",
+              [
+                !_vm.lines.length
+                  ? _c("tr", [
+                      _c(
+                        "td",
+                        {
+                          staticClass: "text-center text-muted",
+                          attrs: { colspan: "7" },
+                        },
+                        [_vm._v(_vm._s(_vm.__("no_lines_yet")))]
+                      ),
+                    ])
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm._l(_vm.lines, function (line, index) {
+                  return _c("tr", { key: line.id }, [
+                    _c("td", [_vm._v(_vm._s(line.sort_order))]),
+                    _vm._v(" "),
+                    _c("td", [
+                      _vm.editingId === line.id
+                        ? _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.editingName,
+                                expression: "editingName",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "text" },
+                            domProps: { value: _vm.editingName },
+                            on: {
+                              keyup: [
+                                function ($event) {
+                                  if (
+                                    !$event.type.indexOf("key") &&
+                                    _vm._k(
+                                      $event.keyCode,
+                                      "enter",
+                                      13,
+                                      $event.key,
+                                      "Enter"
+                                    )
+                                  ) {
+                                    return null
+                                  }
+                                  return _vm.saveRename(line)
+                                },
+                                function ($event) {
+                                  if (
+                                    !$event.type.indexOf("key") &&
+                                    _vm._k(
+                                      $event.keyCode,
+                                      "esc",
+                                      27,
+                                      $event.key,
+                                      ["Esc", "Escape"]
+                                    )
+                                  ) {
+                                    return null
+                                  }
+                                  return _vm.cancelRename.apply(null, arguments)
+                                },
+                              ],
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.editingName = $event.target.value
+                              },
+                            },
+                          })
+                        : _c(
+                            "span",
+                            { staticClass: "badge bg-light text-dark border" },
+                            [_vm._v(_vm._s(line.name))]
+                          ),
+                    ]),
+                    _vm._v(" "),
+                    _c("td", { staticClass: "text-center" }, [
+                      _vm._v(_vm._s(line.products_count)),
+                    ]),
+                    _vm._v(" "),
+                    _c("td", { staticClass: "text-center" }, [
+                      _vm._v(_vm._s(line.mappings_count)),
+                    ]),
+                    _vm._v(" "),
+                    _c("td", { staticClass: "text-center" }, [
+                      _c(
+                        "span",
+                        {
+                          staticClass: "badge",
+                          class:
+                            line.status == 1 ? "bg-success" : "bg-secondary",
+                        },
+                        [
+                          _vm._v(
+                            "\n                        " +
+                              _vm._s(
+                                line.status == 1
+                                  ? _vm.__("active")
+                                  : _vm.__("deactive")
+                              ) +
+                              "\n                    "
+                          ),
+                        ]
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("td", { staticClass: "text-center" }, [
+                      _c(
+                        "button",
+                        {
+                          directives: [
+                            {
+                              name: "b-tooltip",
+                              rawName: "v-b-tooltip.hover",
+                              modifiers: { hover: true },
+                            },
+                          ],
+                          staticClass: "list-action-btn",
+                          class: { "opacity-50": _vm.brandOverlapAllowed },
+                          attrs: {
+                            disabled: _vm.brandOverlapAllowed,
+                            title: _vm.brandOverlapAllowed
+                              ? _vm.__(
+                                  "overlap_already_allowed_for_whole_brand"
+                                )
+                              : line.is_overlap_allowed == 1
+                              ? _vm.__("disallow_overlap")
+                              : _vm.__("allow_overlap"),
+                          },
+                          on: {
+                            click: function ($event) {
+                              return _vm.toggleOverlap(line)
+                            },
+                          },
+                        },
+                        [
+                          _c("i", {
+                            staticClass: "fa",
+                            class:
+                              line.is_overlap_allowed == 1 ||
+                              _vm.brandOverlapAllowed
+                                ? "fa-toggle-on"
+                                : "fa-toggle-off",
+                          }),
+                        ]
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("td", { staticClass: "text-center" }, [
+                      _c(
+                        "div",
+                        { staticClass: "list-actions justify-content-center" },
+                        [
+                          _vm.editingId === line.id
+                            ? [
+                                _c(
+                                  "button",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "list-action-btn is-edit",
+                                    attrs: { title: _vm.__("save") },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.saveRename(line)
+                                      },
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-check" })]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "button",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "list-action-btn",
+                                    attrs: { title: _vm.__("cancel") },
+                                    on: { click: _vm.cancelRename },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-times" })]
+                                ),
+                              ]
+                            : [
+                                _c(
+                                  "button",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "list-action-btn is-edit",
+                                    attrs: { title: _vm.__("rename") },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.startRename(line)
+                                      },
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-pencil-alt" })]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "button",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "list-action-btn",
+                                    attrs: {
+                                      title:
+                                        line.status == 1
+                                          ? _vm.__("deactivate")
+                                          : _vm.__("activate"),
+                                    },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.toggleStatus(line)
+                                      },
+                                    },
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass: "fa",
+                                      class:
+                                        line.status == 1
+                                          ? "fa-toggle-on"
+                                          : "fa-toggle-off",
+                                    }),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "button",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "b-tooltip",
+                                        rawName: "v-b-tooltip.hover",
+                                        modifiers: { hover: true },
+                                      },
+                                    ],
+                                    staticClass: "list-action-btn is-delete",
+                                    attrs: { title: _vm.__("delete") },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.deleteLine(line, index)
+                                      },
+                                    },
+                                  },
+                                  [_c("i", { staticClass: "fa fa-trash" })]
+                                ),
+                              ],
+                        ],
+                        2
+                      ),
+                    ]),
+                  ])
+                }),
+              ],
+              2
+            ),
+          ]),
+      _vm._v(" "),
+      _vm.brandOverlapAllowed
+        ? _c("div", { staticClass: "alert alert-info py-2 px-3 mb-2" }, [
+            _c("i", { staticClass: "fa fa-info-circle" }),
+            _vm._v(
+              "\n        " +
+                _vm._s(
+                  _vm.__("brand_overlap_already_allowed_lines_locked_hint")
+                ) +
+                "\n    "
+            ),
+          ])
+        : _vm._e(),
+      _vm._v(" "),
+      _c("small", { staticClass: "text-muted d-block" }, [
+        _vm._v(
+          _vm._s(
+            _vm.__(
+              "a_line_that_products_or_mappings_still_use_cannot_be_deleted_deactivate_it_instead"
+            )
+          )
+        ),
+      ]),
     ]
   )
 }

@@ -243,10 +243,11 @@ class BasicApiController extends Controller
             return CommonHelper::responseWithData([], 0);
         }
 
-        $mappings  = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->get(['brand_id', 'seller_id']);
+        $mappings  = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)->get(['brand_id', 'brand_line_id', 'seller_id']);
         $brandIds  = $mappings->pluck('brand_id')->unique()->values();
         $sellerIds = CommonHelper::filterEligibleSellerIds($mappings->pluck('seller_id')->unique()->values());
-        $allowedPairs = $mappings->map(fn($m) => $m->brand_id . '_' . $m->seller_id)->unique()->flip();
+        $allowedLinesByPair = $mappings->groupBy(fn($m) => $m->brand_id . '_' . $m->seller_id)
+            ->map(fn($rows) => $rows->pluck('brand_line_id')->all());
 
         $sellers     = \App\Models\Seller::whereIn('id', $sellerIds)->get(['id', 'name', 'logo'])->keyBy('id');
         $sellerNames = $sellers->pluck('name', 'id');
@@ -266,6 +267,7 @@ class BasicApiController extends Controller
             ->select(
                 'master_product_variants.*',
                 'master_products.brand_id as mp_brand_id',
+                'master_products.brand_line_id as mp_brand_line_id',
                 'seller_products.id as sp_id',
                 'seller_products.seller_id as sp_seller_id',
                 'seller_products.mrp as sp_mrp',
@@ -278,7 +280,18 @@ class BasicApiController extends Controller
                 'seller_products.max_qty_value as sp_max_qty_value'
             )
             ->get()
-            ->filter(fn($r) => isset($allowedPairs[$r->mp_brand_id . '_' . $r->sp_seller_id]))
+            ->filter(function ($r) use ($allowedLinesByPair) {
+                $lines = $allowedLinesByPair[$r->mp_brand_id . '_' . $r->sp_seller_id] ?? null;
+                if ($lines === null) {
+                    return false;
+                }
+                foreach ($lines as $lineId) {
+                    if ($lineId === null || (int) $lineId === (int) $r->mp_brand_line_id) {
+                        return true;
+                    }
+                }
+                return false;
+            })
             ->filter(function ($r) use ($favoritedSellersByVariant, $anySellerVariants) {
                 if (isset($anySellerVariants[$r->id])) {
                     return true;
@@ -847,7 +860,7 @@ class BasicApiController extends Controller
         }
 
         $mappings = \App\Models\BrandDistributorMapping::whereIn('city_id', $cityIds)
-            ->get(['brand_id', 'seller_id']);
+            ->get(['brand_id', 'brand_line_id', 'seller_id']);
 
         if ($mappings->isEmpty()) {
             return CommonHelper::responseError('No sellers found in this area.');
@@ -855,7 +868,8 @@ class BasicApiController extends Controller
 
         $brandIds = $mappings->pluck('brand_id')->unique()->values();
         $sellerIds = $mappings->pluck('seller_id')->unique()->values();
-        $allowedPairs = $mappings->map(fn($m) => $m->brand_id . '_' . $m->seller_id)->unique()->flip();
+        $allowedLinesByPair = $mappings->groupBy(fn($m) => $m->brand_id . '_' . $m->seller_id)
+            ->map(fn($rows) => $rows->pluck('brand_line_id')->all());
 
         // Which (brand, seller) pairs actually have a purchasable product?
         $existingPairs = \App\Models\SellerProduct::query()
@@ -873,12 +887,23 @@ class BasicApiController extends Controller
                     ->whereColumn('categories.id', 'master_products.category_id')
                     ->where('categories.status', 1);
             })
-            ->select('master_products.brand_id', 'seller_products.seller_id')
+            ->select('master_products.brand_id', 'master_products.brand_line_id', 'seller_products.seller_id')
             ->distinct()
             ->get();
 
         $qualifyingBrandIds = $existingPairs
-            ->filter(fn($p) => isset($allowedPairs[$p->brand_id . '_' . $p->seller_id]))
+            ->filter(function ($p) use ($allowedLinesByPair) {
+                $lines = $allowedLinesByPair[$p->brand_id . '_' . $p->seller_id] ?? null;
+                if ($lines === null) {
+                    return false;
+                }
+                foreach ($lines as $lineId) {
+                    if ($lineId === null || (int) $lineId === (int) $p->brand_line_id) {
+                        return true;
+                    }
+                }
+                return false;
+            })
             ->pluck('brand_id')
             ->unique()
             ->values();

@@ -18,6 +18,7 @@ class MasterProduct extends Model
         'slug',
         'parent_company_id',
         'brand_id',
+        'brand_line_id',
         'category_id',
         'tax_id',
         'tax_category_id',
@@ -59,6 +60,11 @@ class MasterProduct extends Model
     public function brand()
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    public function brandLine()
+    {
+        return $this->belongsTo(BrandLine::class);
     }
 
     public function category()

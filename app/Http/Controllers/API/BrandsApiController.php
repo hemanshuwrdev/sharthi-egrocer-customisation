@@ -6,6 +6,7 @@ use App\Services\LanguageService;
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
+use App\Models\BrandDistributorMapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -35,7 +36,7 @@ class BrandsApiController extends Controller
         $offset = ($page - 1) * $limit;
         $filter = $request->input('filter', '');
 
-        $query = Brand::withAllTranslations()->orderBy('id', 'DESC');
+        $query = Brand::withAllTranslations()->withCount('brandLines')->orderBy('id', 'DESC');
 
         if ($filter) {
             $query->where(function ($q) use ($filter) {
@@ -121,6 +122,19 @@ class BrandsApiController extends Controller
 
         /* UPDATE MAIN TABLE ONLY FOR DEFAULT LANGUAGE */
         if ($isDefaultLang) {
+            $turningOverlapOff = $request->has('is_overlap_allowed')
+                && !$request->is_overlap_allowed
+                && $brand->is_overlap_allowed;
+
+            if ($turningOverlapOff) {
+                $conflicts = $this->findOverlapConflicts($brand->id);
+                if ($conflicts->isNotEmpty()) {
+                    return CommonHelper::responseError(
+                        __('cannot_disable_overlap_conflicts_exist') . ' ' . $conflicts->implode(' | ')
+                    );
+                }
+            }
+
             $brand->name = $request->name;
             $brand->status = $request->status ?? $brand->status;
             $brand->is_overlap_allowed = $request->has('is_overlap_allowed') ? $request->is_overlap_allowed : $brand->is_overlap_allowed;
@@ -160,6 +174,45 @@ class BrandsApiController extends Controller
         $brand->delete();
 
         return CommonHelper::responseSuccess('brand_deleted_successfully');
+    }
+
+    /**
+     * Scan every mapping of a brand for cities where two DIFFERENT distributors would
+     * conflict under the "no overlap" rule (same line, or either side is "All Lines").
+     * Used to refuse turning Overlap Allowed off while such conflicts still exist.
+     */
+    private function findOverlapConflicts(int $brandId)
+    {
+        $rows = BrandDistributorMapping::where('brand_id', $brandId)
+            ->with(['city:id,name', 'distributor:id,store_name', 'brandLine:id,brand_id,name,is_overlap_allowed'])
+            ->get()
+            ->groupBy('city_id');
+
+        $conflicts = collect();
+
+        foreach ($rows as $cityId => $cityRows) {
+            $cityRows = $cityRows->values();
+            for ($i = 0; $i < $cityRows->count(); $i++) {
+                for ($j = $i + 1; $j < $cityRows->count(); $j++) {
+                    $a = $cityRows[$i];
+                    $b = $cityRows[$j];
+                    if ($a->seller_id === $b->seller_id) {
+                        continue;
+                    }
+                    if (!BrandDistributorMapping::linesConflict($a->brandLine, $b->brandLine)) {
+                        continue;
+                    }
+                    $cityName = $a->city->name ?? $cityId;
+                    $aLabel = $a->brandLine->name ?? __('all_lines');
+                    $bLabel = $b->brandLine->name ?? __('all_lines');
+                    $conflicts->push(
+                        "{$cityName}: {$a->distributor->store_name} ({$aLabel}) vs {$b->distributor->store_name} ({$bLabel})"
+                    );
+                }
+            }
+        }
+
+        return $conflicts->unique()->values();
     }
 
     public function sellerBrands(Request $request)

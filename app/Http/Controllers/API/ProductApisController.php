@@ -1548,7 +1548,14 @@ class ProductApisController extends Controller
         }
 
         $sellerId = $user->seller->id;
-        $assignedBrandIds = BrandDistributorMapping::where('seller_id', $sellerId)
+        // Keyed by "brand_id" (All Lines) and "brand_id_line_id" (line-specific) so a
+        // row can be checked against the exact line its product belongs to.
+        $assignedMappingKeys = BrandDistributorMapping::where('seller_id', $sellerId)
+            ->get(['brand_id', 'brand_line_id'])
+            ->map(fn($m) => $m->brand_line_id ? "{$m->brand_id}_{$m->brand_line_id}" : "{$m->brand_id}_all")
+            ->unique();
+        $assignedAllLinesBrandIds = BrandDistributorMapping::where('seller_id', $sellerId)
+            ->whereNull('brand_line_id')
             ->pluck('brand_id')
             ->unique()
             ->all();
@@ -1581,8 +1588,12 @@ class ProductApisController extends Controller
                 $variant = DB::table('master_product_variants as mpv')
                     ->join('master_products as mp', 'mp.id', '=', 'mpv.master_product_id')
                     ->where('mpv.id', $variantId)
-                    ->first(['mp.brand_id']);
-                if (!$variant || !in_array($variant->brand_id, $assignedBrandIds, false)) {
+                    ->first(['mp.brand_id', 'mp.brand_line_id']);
+                $variantAssigned = $variant && (
+                    in_array($variant->brand_id, $assignedAllLinesBrandIds, false)
+                    || ($variant->brand_line_id && $assignedMappingKeys->contains("{$variant->brand_id}_{$variant->brand_line_id}"))
+                );
+                if (!$variantAssigned) {
                     $skipped[] = ['row' => $rowNum + 2, 'reason' => 'brand_not_assigned'];
                     continue;
                 }
@@ -1634,12 +1645,6 @@ class ProductApisController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        $brandIds = BrandDistributorMapping::where('seller_id', $seller->id)
-            ->pluck('brand_id')
-            ->unique()
-            ->values()
-            ->all();
-
         $product = MasterProduct::with([
             'brand',
             'parentCompany',
@@ -1653,7 +1658,16 @@ class ProductApisController extends Controller
         ])
             ->where('id', $request->product_id)
             ->where('status', 1)
-            ->whereIn('brand_id', $brandIds)
+            ->whereExists(function ($q) use ($seller) {
+                $q->select(DB::raw(1))
+                    ->from('brand_distributor_mappings as bdm')
+                    ->whereColumn('bdm.brand_id', 'master_products.brand_id')
+                    ->where('bdm.seller_id', $seller->id)
+                    ->where(function ($q2) {
+                        $q2->whereNull('bdm.brand_line_id')
+                            ->orWhereColumn('bdm.brand_line_id', 'master_products.brand_line_id');
+                    });
+            })
             ->first();
 
         if (!$product) {

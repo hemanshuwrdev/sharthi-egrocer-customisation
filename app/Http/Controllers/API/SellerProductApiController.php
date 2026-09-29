@@ -38,12 +38,9 @@ class SellerProductApiController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        $brandIds = BrandDistributorMapping::where('seller_id', $seller->id)
-            ->pluck('brand_id')
-            ->unique()
-            ->values();
+        $hasAnyMapping = BrandDistributorMapping::where('seller_id', $seller->id)->exists();
 
-        if ($brandIds->isEmpty()) {
+        if (!$hasAnyMapping) {
             // Distinct from "this filter/search just matched nothing" — the frontend
             // can't tell those apart from an empty data array alone, so this is called
             // out as its own top-level flag alongside the (still-array) data field.
@@ -75,7 +72,16 @@ class SellerProductApiController extends Controller
                 $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
                     ->where('seller_products.seller_id', $seller->id);
             })
-            ->whereIn('master_products.brand_id', $brandIds)
+            ->whereExists(function ($q) use ($seller) {
+                $q->select(DB::raw(1))
+                    ->from('brand_distributor_mappings as bdm')
+                    ->whereColumn('bdm.brand_id', 'master_products.brand_id')
+                    ->where('bdm.seller_id', $seller->id)
+                    ->where(function ($q2) {
+                        $q2->whereNull('bdm.brand_line_id')
+                            ->orWhereColumn('bdm.brand_line_id', 'master_products.brand_line_id');
+                    });
+            })
             ->where('master_products.status', 1)
             ->where('master_product_variants.status', 1)
             ->select(
@@ -105,6 +111,9 @@ class SellerProductApiController extends Controller
 
         if ($request->filled('brand_id')) {
             $query->where('master_products.brand_id', $request->brand_id);
+        }
+        if ($request->filled('brand_line_id')) {
+            $query->where('master_products.brand_line_id', $request->brand_line_id);
         }
         if ($request->filled('active_only')) {
             // '1' = activated only. '0' = deactivated only, meaning "not currently
@@ -436,14 +445,20 @@ class SellerProductApiController extends Controller
 
     private function isVariantAssignedToSeller($variantId, $sellerId): bool
     {
-        $brandId = MasterProductVariant::where('master_product_variants.id', $variantId)
+        $product = MasterProductVariant::where('master_product_variants.id', $variantId)
             ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
-            ->value('master_products.brand_id');
-        if (!$brandId) {
+            ->first(['master_products.brand_id', 'master_products.brand_line_id']);
+        if (!$product || !$product->brand_id) {
             return false;
         }
         return BrandDistributorMapping::where('seller_id', $sellerId)
-            ->where('brand_id', $brandId)
+            ->where('brand_id', $product->brand_id)
+            ->where(function ($q) use ($product) {
+                $q->whereNull('brand_line_id');
+                if ($product->brand_line_id) {
+                    $q->orWhere('brand_line_id', $product->brand_line_id);
+                }
+            })
             ->exists();
     }
 }

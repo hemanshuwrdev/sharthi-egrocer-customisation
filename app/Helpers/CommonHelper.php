@@ -1354,12 +1354,17 @@ class CommonHelper
 
                         // Sarthi: only show this product if the exact (brand, seller, city) combo
                         // is a real distributor mapping — same fail-closed rule as listProducts.
+                        // NULL bdm.brand_line_id = distributor covers all lines of the brand.
                         $q->whereExists(function ($subquery) use ($cityIds) {
                             $subquery->select(DB::raw(1))
                                 ->from('brand_distributor_mappings as bdm')
                                 ->whereColumn('bdm.brand_id', 'mp.brand_id')
                                 ->whereIn('bdm.city_id', $cityIds)
-                                ->whereColumn('bdm.seller_id', 'sp.seller_id');
+                                ->whereColumn('bdm.seller_id', 'sp.seller_id')
+                                ->where(function ($q2) {
+                                    $q2->whereNull('bdm.brand_line_id')
+                                        ->orWhereColumn('bdm.brand_line_id', 'mp.brand_line_id');
+                                });
                         });
                     });
 
