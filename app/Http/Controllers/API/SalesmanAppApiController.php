@@ -843,13 +843,10 @@ class SalesmanAppApiController extends Controller
         $cart->qty = $qty;
         $cart->save();
 
-        return CommonHelper::responseWithData([
-            'cart_id'    => $cart->id,
-            'seller_id'  => $sellerId,
-            'unit_price' => $line['unit_price'],
-            'slab'       => $line['slab'],
-            'message'    => __('item_added_to_cart_successfully'),
-        ]);
+        return CommonHelper::responseWithData(array_merge(
+            $this->buildCartListPayload($retailer, $salesman),
+            ['cart_id' => $cart->id, 'message' => __('item_added_to_cart_successfully')]
+        ));
     }
 
     /**
@@ -875,6 +872,16 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('retailer_not_owned_or_not_active');
         }
 
+        return CommonHelper::responseWithData($this->buildCartListPayload($retailer, $salesman));
+    }
+
+    /**
+     * Same grouped/priced/scheme-evaluated cart payload as getCartItems — shared so
+     * add/remove return the fresh cart state in one call instead of making the app
+     * do a second round-trip to /cart/list after every mutation.
+     */
+    private function buildCartListPayload($retailer, $salesman)
+    {
         $items = Cart::where('user_id', $retailer->id)
             ->where('placed_by_salesman_id', $salesman->id)
             ->whereNotNull('master_product_variant_id')
@@ -882,7 +889,7 @@ class SalesmanAppApiController extends Controller
             ->get();
 
         if ($items->isEmpty()) {
-            return CommonHelper::responseWithData(['groups' => [], 'grand_total' => 0]);
+            return ['groups' => [], 'grand_total' => 0];
         }
 
         $variantIds = $items->pluck('master_product_variant_id')->unique();
@@ -987,10 +994,10 @@ class SalesmanAppApiController extends Controller
         unset($group);
 
         $groupsOut = collect($groups)->values();
-        return CommonHelper::responseWithData([
+        return [
             'groups'      => $groupsOut,
             'grand_total' => $groupsOut->sum('final_total'),
-        ]);
+        ];
     }
 
     /**
@@ -1012,14 +1019,24 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        $retailer = $this->ensureOwnedActiveRetailer($salesman, $request->retailer_id);
+        if (!$retailer) {
+            return CommonHelper::responseError('retailer_not_owned_or_not_active');
+        }
+
         $deleted = Cart::where('id', $request->cart_id)
-            ->where('user_id', $request->retailer_id)
+            ->where('user_id', $retailer->id)
             ->where('placed_by_salesman_id', $salesman->id)
             ->delete();
 
-        return $deleted
-            ? CommonHelper::responseSuccess('item_removed_from_cart')
-            : CommonHelper::responseError('item_not_found');
+        if (!$deleted) {
+            return CommonHelper::responseError('item_not_found');
+        }
+
+        return CommonHelper::responseWithData(array_merge(
+            $this->buildCartListPayload($retailer, $salesman),
+            ['message' => __('item_removed_from_cart')]
+        ));
     }
 
     /**

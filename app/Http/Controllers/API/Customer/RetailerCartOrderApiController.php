@@ -98,17 +98,10 @@ class RetailerCartOrderApiController extends Controller
         $cart->qty = $qty;
         $cart->save();
 
-        return CommonHelper::responseWithData([
-            'cart_id'          => $cart->id,
-            'seller_id'        => $sellerId,
-            'unit_price'       => $line['unit_price'],
-            'slab'             => $line['slab'],
-            // Stepper metadata — mobile app uses these to configure the qty widget
-            'step'             => $line['step'],           // e.g. 20 (packets per box)
-            'secondary_unit'   => $line['secondary_unit'], // e.g. "Box"
-            'min_qty'          => $line['min_qty'],         // e.g. 20 (start value)
-            'message'          => __('item_added_to_cart_successfully'),
-        ]);
+        return CommonHelper::responseWithData(array_merge(
+            $this->buildCartPayload($user),
+            ['cart_id' => $cart->id, 'message' => __('item_added_to_cart_successfully')]
+        ));
     }
 
     /**
@@ -119,6 +112,16 @@ class RetailerCartOrderApiController extends Controller
     {
         $user = auth()->user();
 
+        return CommonHelper::responseWithData($this->buildCartPayload($user));
+    }
+
+    /**
+     * Same grouped/priced/scheme-evaluated cart payload as getCart — shared so
+     * add/remove return the fresh cart state in one call instead of making the app
+     * do a second round-trip to /cart after every mutation.
+     */
+    private function buildCartPayload($user)
+    {
         $items = Cart::where('user_id', $user->id)
             ->whereNull('placed_by_salesman_id')
             ->whereNotNull('master_product_variant_id')
@@ -126,7 +129,13 @@ class RetailerCartOrderApiController extends Controller
             ->get();
 
         if ($items->isEmpty()) {
-            return CommonHelper::responseWithData(['groups' => [], 'grand_total' => 0]);
+            return [
+                'groups'                  => [],
+                'sub_total'               => 0,
+                'delivery_charge'         => 0,
+                'delivery_charge_details' => [],
+                'grand_total'             => 0,
+            ];
         }
 
         $variantIds = $items->pluck('master_product_variant_id')->unique();
@@ -273,13 +282,13 @@ class RetailerCartOrderApiController extends Controller
 
         $grandTotal = round($grand + $deliveryCharge, 2);
 
-        return CommonHelper::responseWithData([
+        return [
             'groups'                  => $groupsOut,
             'sub_total'               => round($grand, 2),
             'delivery_charge'         => (float) $deliveryCharge,
             'delivery_charge_details' => $deliveryChargeDetails,
             'grand_total'             => $grandTotal,
-        ]);
+        ];
     }
 
     /**
@@ -330,7 +339,10 @@ class RetailerCartOrderApiController extends Controller
             Cart::where('user_id', $user->id)
                 ->whereNull('placed_by_salesman_id')
                 ->delete();
-            return CommonHelper::responseSuccess('all_items_removed_from_users_cart_successfully');
+            return CommonHelper::responseWithData(array_merge(
+                $this->buildCartPayload($user),
+                ['message' => __('all_items_removed_from_users_cart_successfully')]
+            ));
         }
 
         $validator = Validator::make($request->all(), [
@@ -345,9 +357,14 @@ class RetailerCartOrderApiController extends Controller
             ->whereNull('placed_by_salesman_id')
             ->delete();
 
-        return $deleted
-            ? CommonHelper::responseSuccess('item_removed_from_cart')
-            : CommonHelper::responseError('item_not_found');
+        if (!$deleted) {
+            return CommonHelper::responseError('item_not_found');
+        }
+
+        return CommonHelper::responseWithData(array_merge(
+            $this->buildCartPayload($user),
+            ['message' => __('item_removed_from_cart')]
+        ));
     }
 
     /**
