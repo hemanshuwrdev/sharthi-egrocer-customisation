@@ -832,7 +832,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }],
       totalRows: 1,
       currentPage: 1,
-      perPage: this.$perPage,
+      perPage: 10,
       pageOptions: this.$pageOptions,
       sortBy: 'id',
       sortDesc: true,

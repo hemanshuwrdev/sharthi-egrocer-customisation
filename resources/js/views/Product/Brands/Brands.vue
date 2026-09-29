@@ -149,7 +149,7 @@ export default {
             manage_lines_for: null,
             totalRows: 0,
             currentPage: 1,
-            perPage: this.$perPage || 10,
+            perPage: 10,
             pageOptions: this.$pageOptions || [5, 10, 15, 20],
             sortBy: '',
             sortDesc: false,

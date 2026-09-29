@@ -94,7 +94,7 @@ class SuperAdminCustomApiController extends Controller
         $filter = trim((string) $request->input('filter', ''));
 
         $base = BrandDistributorMapping::query()
-            ->selectRaw('brand_id, brand_line_id, seller_id, MIN(id) as id, COUNT(*) as city_count')
+            ->selectRaw('brand_id, brand_line_id, seller_id, MAX(id) as id, COUNT(*) as city_count')
             ->groupBy('brand_id', 'brand_line_id', 'seller_id');
 
         if ($request->filled('brand_id')) {
@@ -111,7 +111,7 @@ class SuperAdminCustomApiController extends Controller
             ->mergeBindings($base->getQuery())
             ->count();
 
-        $groups = $base->orderBy('brand_id')->skip($offset)->take($limit)->get();
+        $groups = $base->orderByRaw('MAX(id) DESC')->skip($offset)->take($limit)->get();
 
         $brandIds = $groups->pluck('brand_id')->unique();
         $sellerIds = $groups->pluck('seller_id')->unique();

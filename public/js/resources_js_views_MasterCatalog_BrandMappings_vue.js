@@ -170,7 +170,7 @@ __webpack_require__.r(__webpack_exports__);
       mappings: [],
       totalRows: 0,
       currentPage: 1,
-      perPage: this.$perPage || 10,
+      perPage: 10,
       pageOptions: this.$pageOptions || [5, 10, 15, 20],
       filter: null,
       isLoading: false,
