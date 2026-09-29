@@ -136,12 +136,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
-//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -189,6 +183,25 @@ __webpack_require__.r(__webpack_exports__);
       modalBrandLines: []
     };
   },
+  computed: {
+    // A mapping always takes the selected distributor's whole geo-fenced territory
+    // (sellers.city_id) — manual zone picking is hidden for now, see save().
+    distributorCityOptions: function distributorCityOptions() {
+      var _this = this;
+      if (!this.form.seller_id) return [];
+      var seller = this.sellers.find(function (s) {
+        return s.id === _this.form.seller_id;
+      });
+      var territoryIds = seller && seller.city_id ? String(seller.city_id).split(',').map(function (id) {
+        return parseInt(id, 10);
+      }).filter(function (id) {
+        return id > 0;
+      }) : [];
+      return this.cities.filter(function (c) {
+        return territoryIds.includes(c.id);
+      });
+    }
+  },
   created: function created() {
     this.getRecords();
     this.fetchLookups();
@@ -203,7 +216,7 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     getRecords: function getRecords() {
-      var _this = this;
+      var _this2 = this;
       this.isLoading = true;
       axios.get(this.$apiUrl + '/admin/brand-mappings', {
         params: {
@@ -212,40 +225,47 @@ __webpack_require__.r(__webpack_exports__);
           filter: this.filter
         }
       }).then(function (res) {
-        _this.isLoading = false;
-        _this.mappings = res.data.data || [];
-        _this.totalRows = res.data.total || 0;
+        _this2.isLoading = false;
+        _this2.mappings = res.data.data || [];
+        _this2.totalRows = res.data.total || 0;
       })["catch"](function () {
-        _this.isLoading = false;
+        _this2.isLoading = false;
       });
     },
     fetchLookups: function fetchLookups() {
-      var _this2 = this;
+      var _this3 = this;
       axios.get(this.$apiUrl + '/products/brands/get').then(function (r) {
-        _this2.brands = r.data.data || [];
+        _this3.brands = r.data.data || [];
       });
       axios.get(this.$apiUrl + '/sellers', {
         params: {
           per_page: 1000
         }
       }).then(function (r) {
-        _this2.sellers = r.data.data || [];
+        _this3.sellers = r.data.data || [];
       })["catch"](function () {});
       axios.get(this.$apiUrl + '/cities').then(function (r) {
         var payload = r.data && r.data.data ? r.data.data : null;
-        _this2.cities = Array.isArray(payload) ? payload : payload && payload.cities ? payload.cities : [];
+        _this3.cities = Array.isArray(payload) ? payload : payload && payload.cities ? payload.cities : [];
       });
     },
     onBrandChange: function onBrandChange() {
-      var _this3 = this;
+      var _this4 = this;
       this.form.brand_line_id = null;
       this.modalBrandLines = [];
       if (!this.form.brand_id) return;
       axios.get(this.$apiUrl + '/admin/brands/' + this.form.brand_id + '/lines').then(function (r) {
-        _this3.modalBrandLines = (r.data.data || []).filter(function (l) {
+        _this4.modalBrandLines = (r.data.data || []).filter(function (l) {
           return l.status == 1;
         });
       })["catch"](function () {});
+    },
+    onDistributorChange: function onDistributorChange() {
+      // Zone picking is hidden for now — this just keeps distributorCityOptions'
+      // "no zones assigned" check reactive as soon as a distributor is picked.
+      this.form.city_ids = this.distributorCityOptions.map(function (c) {
+        return c.id;
+      });
     },
     openCreate: function openCreate() {
       this.isEdit = false;
@@ -259,7 +279,7 @@ __webpack_require__.r(__webpack_exports__);
       this.modalOpen = true;
     },
     openEdit: function openEdit(row) {
-      var _this4 = this;
+      var _this5 = this;
       this.isEdit = true;
       this.form = {
         brand_id: row.brand_id,
@@ -270,43 +290,43 @@ __webpack_require__.r(__webpack_exports__);
       this.modalOpen = true;
       if (row.brand_id) {
         axios.get(this.$apiUrl + '/admin/brands/' + row.brand_id + '/lines').then(function (r) {
-          _this4.modalBrandLines = r.data.data || [];
+          _this5.modalBrandLines = r.data.data || [];
         })["catch"](function () {});
       }
-      axios.get(this.$apiUrl + '/admin/brand-mappings/get', {
-        params: {
-          brand_id: row.brand_id,
-          brand_line_id: row.brand_line_id,
-          seller_id: row.seller_id
-        }
-      }).then(function (r) {
-        _this4.form.city_ids = r.data.data && r.data.data.city_ids || [];
-      });
     },
     save: function save() {
-      var _this5 = this;
-      if (!this.form.brand_id || !this.form.seller_id || !this.form.city_ids.length) {
-        this.showError(__('select_brand_distributor_and_cities'));
+      var _this6 = this;
+      if (!this.form.brand_id || !this.form.seller_id) {
+        this.showError(__('select_brand_and_distributor'));
+        return;
+      }
+      // Zone picking is hidden for now — always take the distributor's whole
+      // current territory rather than whatever was last loaded into the form.
+      this.form.city_ids = this.distributorCityOptions.map(function (c) {
+        return c.id;
+      });
+      if (!this.form.city_ids.length) {
+        this.showError(__('this_distributor_has_no_zones_assigned_set_up_geo_fences_first'));
         return;
       }
       this.isSaving = true;
       axios.post(this.$apiUrl + '/admin/brand-mappings', this.form).then(function (res) {
-        _this5.isSaving = false;
+        _this6.isSaving = false;
         if (res.data.status) {
-          _this5.showMessage('success', res.data.message);
-          _this5.modalOpen = false;
-          _this5.getRecords();
+          _this6.showMessage('success', res.data.message);
+          _this6.modalOpen = false;
+          _this6.getRecords();
         } else {
-          _this5.showError(res.data.message);
+          _this6.showError(res.data.message);
         }
       })["catch"](function (err) {
-        _this5.isSaving = false;
+        _this6.isSaving = false;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this5.showError(msg);
+        _this6.showError(msg);
       });
     },
     deleteRecord: function deleteRecord(index, item) {
-      var _this6 = this;
+      var _this7 = this;
       this.$swal.fire({
         title: __('are_you_sure'),
         text: __('this_will_remove_distributor_access_to_this_brand'),
@@ -318,13 +338,13 @@ __webpack_require__.r(__webpack_exports__);
         cancelButtonColor: '#d33'
       }).then(function (result) {
         if (result.value) {
-          axios.post(_this6.$apiUrl + '/admin/brand-mappings/delete', {
+          axios.post(_this7.$apiUrl + '/admin/brand-mappings/delete', {
             brand_id: item.brand_id,
             brand_line_id: item.brand_line_id,
             seller_id: item.seller_id
           }).then(function (res) {
-            _this6.showMessage('success', res.data.message);
-            _this6.mappings.splice(index, 1);
+            _this7.showMessage('success', res.data.message);
+            _this7.mappings.splice(index, 1);
           });
         }
       });
@@ -915,23 +935,26 @@ var render = function () {
                     staticClass: "form-control",
                     attrs: { disabled: _vm.isEdit, required: "" },
                     on: {
-                      change: function ($event) {
-                        var $$selectedVal = Array.prototype.filter
-                          .call($event.target.options, function (o) {
-                            return o.selected
-                          })
-                          .map(function (o) {
-                            var val = "_value" in o ? o._value : o.value
-                            return val
-                          })
-                        _vm.$set(
-                          _vm.form,
-                          "seller_id",
-                          $event.target.multiple
-                            ? $$selectedVal
-                            : $$selectedVal[0]
-                        )
-                      },
+                      change: [
+                        function ($event) {
+                          var $$selectedVal = Array.prototype.filter
+                            .call($event.target.options, function (o) {
+                              return o.selected
+                            })
+                            .map(function (o) {
+                              var val = "_value" in o ? o._value : o.value
+                              return val
+                            })
+                          _vm.$set(
+                            _vm.form,
+                            "seller_id",
+                            $event.target.multiple
+                              ? $$selectedVal
+                              : $$selectedVal[0]
+                          )
+                        },
+                        _vm.onDistributorChange,
+                      ],
                     },
                   },
                   [
@@ -951,102 +974,19 @@ var render = function () {
                 ),
               ]),
               _vm._v(" "),
-              _c("div", { staticClass: "form-group mb-3" }, [
-                _c("label", { staticClass: "required" }, [
-                  _vm._v(_vm._s(_vm.__("cities"))),
-                ]),
-                _vm._v(" "),
-                _c(
-                  "div",
-                  {
-                    staticStyle: {
-                      "max-height": "240px",
-                      "overflow-y": "auto",
-                      border: "1px solid #ddd",
-                      "border-radius": "4px",
-                      padding: "8px",
-                    },
-                  },
-                  [
-                    !_vm.cities.length
-                      ? _c("div", { staticClass: "text-muted" }, [
-                          _vm._v(_vm._s(_vm.__("loading")) + "..."),
-                        ])
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _vm._l(_vm.cities, function (c) {
-                      return _c(
-                        "div",
-                        { key: c.id, staticClass: "form-check" },
-                        [
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.form.city_ids,
-                                expression: "form.city_ids",
-                              },
-                            ],
-                            staticClass: "form-check-input",
-                            attrs: { type: "checkbox", id: "city_" + c.id },
-                            domProps: {
-                              value: c.id,
-                              checked: Array.isArray(_vm.form.city_ids)
-                                ? _vm._i(_vm.form.city_ids, c.id) > -1
-                                : _vm.form.city_ids,
-                            },
-                            on: {
-                              change: function ($event) {
-                                var $$a = _vm.form.city_ids,
-                                  $$el = $event.target,
-                                  $$c = $$el.checked ? true : false
-                                if (Array.isArray($$a)) {
-                                  var $$v = c.id,
-                                    $$i = _vm._i($$a, $$v)
-                                  if ($$el.checked) {
-                                    $$i < 0 &&
-                                      _vm.$set(
-                                        _vm.form,
-                                        "city_ids",
-                                        $$a.concat([$$v])
-                                      )
-                                  } else {
-                                    $$i > -1 &&
-                                      _vm.$set(
-                                        _vm.form,
-                                        "city_ids",
-                                        $$a
-                                          .slice(0, $$i)
-                                          .concat($$a.slice($$i + 1))
-                                      )
-                                  }
-                                } else {
-                                  _vm.$set(_vm.form, "city_ids", $$c)
-                                }
-                              },
-                            },
-                          }),
-                          _vm._v(" "),
-                          _c(
-                            "label",
-                            {
-                              staticClass: "form-check-label",
-                              attrs: { for: "city_" + c.id },
-                            },
-                            [_vm._v(_vm._s(c.name))]
-                          ),
-                        ]
-                      )
-                    }),
-                  ],
-                  2
-                ),
-                _vm._v(" "),
-                _c("small", { staticClass: "text-muted" }, [
-                  _vm._v(_vm._s(_vm.__("select_one_or_more_cities"))),
-                ]),
-              ]),
+              _vm.form.seller_id && !_vm.distributorCityOptions.length
+                ? _c("div", { staticClass: "form-group mb-3" }, [
+                    _c("div", { staticClass: "text-danger" }, [
+                      _vm._v(
+                        _vm._s(
+                          _vm.__(
+                            "this_distributor_has_no_zones_assigned_set_up_geo_fences_first"
+                          )
+                        )
+                      ),
+                    ]),
+                  ])
+                : _vm._e(),
               _vm._v(" "),
               _c("div", { staticClass: "text-end" }, [
                 _c(

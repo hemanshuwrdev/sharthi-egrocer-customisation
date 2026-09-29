@@ -477,17 +477,34 @@
                                                 <div class="card" v-if="!isSellerRole">
                                                     <div class="card-header d-flex align-items-center justify-content-between">
                                                         <h4 class="mb-0">{{ __('brand_zone_assignments') }}</h4>
-                                                        <button type="button" class="btn btn-sm btn-outline-primary"
-                                                            @click="openAddBrandZone" :disabled="showAddCityForm">
-                                                            <i class="fa fa-plus"></i>
-                                                            {{ __('add_brand_zone') }}
-                                                        </button>
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="row" v-if="!showAddCityForm">
                                                             <div class="col-md-12">
+                                                                <!-- Step 1: Service Zones -->
+                                                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                                                    <h5 class="mb-0">{{ __('step_1_service_zones') }}</h5>
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                                        @click="toggleAddCityForm" :disabled="showBrandZoneForm">
+                                                                        <i class="fa fa-map-marker-alt"></i> {{ __('define_new_zone') }}
+                                                                    </button>
+                                                                </div>
+                                                                <div class="mb-4">
+                                                                    <p class="text-muted mb-0" v-if="!cities_options.length">{{ __('no_zones_defined_yet') }}</p>
+                                                                    <span v-for="z in cities_options" :key="z.id" class="badge bg-secondary me-1 mb-1">{{ z.text }}</span>
+                                                                </div>
+
+                                                                <!-- Step 2: Brands per Zone -->
+                                                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                                                    <h5 class="mb-0" :class="{ 'text-muted': !cities_options.length }">{{ __('step_2_brands_per_zone') }}</h5>
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                                        @click="openAddBrandZone" :disabled="!cities_options.length || showBrandZoneForm"
+                                                                        v-b-tooltip.hover :title="!cities_options.length ? __('define_a_zone_first') : ''">
+                                                                        <i class="fa fa-plus"></i> {{ __('add_brand_zone') }}
+                                                                    </button>
+                                                                </div>
                                                                 <p class="text-muted mb-3" v-if="!brandZoneRows.length && !showBrandZoneForm">
-                                                                    {{ __('no_brand_zone_assignments_yet') }}
+                                                                    {{ cities_options.length ? __('no_brand_zone_assignments_yet') : __('define_a_zone_first') }}
                                                                 </p>
                                                                 <div v-for="(row, index) in brandZoneRows" :key="row.brand_id"
                                                                     class="d-flex align-items-start justify-content-between border rounded p-2 mb-2">
@@ -540,11 +557,6 @@
                                                                         </button>
                                                                     </div>
                                                                 </div>
-
-                                                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
-                                                                    @click="toggleAddCityForm" v-if="!showBrandZoneForm">
-                                                                    <i class="fa fa-map-marker-alt"></i> {{ __('define_new_zone') }}
-                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -1202,6 +1214,7 @@ export default {
             },
             city: "",
             cities: [],
+            createdCityIds: [],
             areas: [],
             area_ids: [],
 
@@ -1462,7 +1475,10 @@ export default {
             if (!Array.isArray(this.cities) || this.cities.length === 0) {
                 return [];
             }
-            return this.cities.map(city => ({
+            // Only zones defined on this page, plus ones already assigned to this seller
+            const allowed = new Set(this.createdCityIds.map(String));
+            this.brandZoneRows.forEach(r => r.city_ids.forEach(id => allowed.add(String(id))));
+            return this.cities.filter(city => allowed.has(String(city.id))).map(city => ({
                 id: city.id,
                 text: (city.name || '') + '-' + (city.zone || '')
             }));
@@ -1780,6 +1796,7 @@ export default {
                 if (newId) {
                     // Add to cities list so it's selectable in brand-zone assignment
                     this.cities.push({ id: newId, name: this.newCity.name, zone: this.newCity.zone });
+                    this.createdCityIds.push(String(newId));
 
                     // If zone is new, add it to zones list
                     const zone = this.newCity.zone;

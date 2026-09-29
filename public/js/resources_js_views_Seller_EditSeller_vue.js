@@ -1198,6 +1198,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1243,6 +1255,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       },
       city: "",
       cities: [],
+      createdCityIds: [],
       areas: [],
       area_ids: [],
       name: "",
@@ -1594,7 +1607,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (!Array.isArray(this.cities) || this.cities.length === 0) {
         return [];
       }
-      return this.cities.map(function (city) {
+      // Only zones defined on this page, plus ones already assigned to this seller
+      var allowed = new Set(this.createdCityIds.map(String));
+      this.brandZoneRows.forEach(function (r) {
+        return r.city_ids.forEach(function (id) {
+          return allowed.add(String(id));
+        });
+      });
+      return this.cities.filter(function (city) {
+        return allowed.has(String(city.id));
+      }).map(function (city) {
         return {
           id: city.id,
           text: (city.name || '') + '-' + (city.zone || '')
@@ -1962,6 +1984,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                     name: _this11.newCity.name,
                     zone: _this11.newCity.zone
                   });
+                  _this11.createdCityIds.push(String(newId));
 
                   // If zone is new, add it to zones list
                   zone = _this11.newCity.zone;
@@ -6305,38 +6328,6 @@ var render = function () {
                                                           ),
                                                         ]
                                                       ),
-                                                      _vm._v(" "),
-                                                      _c(
-                                                        "button",
-                                                        {
-                                                          staticClass:
-                                                            "btn btn-sm btn-outline-primary",
-                                                          attrs: {
-                                                            type: "button",
-                                                            disabled:
-                                                              _vm.showAddCityForm,
-                                                          },
-                                                          on: {
-                                                            click:
-                                                              _vm.openAddBrandZone,
-                                                          },
-                                                        },
-                                                        [
-                                                          _c("i", {
-                                                            staticClass:
-                                                              "fa fa-plus",
-                                                          }),
-                                                          _vm._v(
-                                                            "\n                                                        " +
-                                                              _vm._s(
-                                                                _vm.__(
-                                                                  "add_brand_zone"
-                                                                )
-                                                              ) +
-                                                              "\n                                                    "
-                                                          ),
-                                                        ]
-                                                      ),
                                                     ]
                                                   ),
                                                   _vm._v(" "),
@@ -6361,6 +6352,220 @@ var render = function () {
                                                                     "col-md-12",
                                                                 },
                                                                 [
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "d-flex align-items-center justify-content-between mb-2",
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "h5",
+                                                                        {
+                                                                          staticClass:
+                                                                            "mb-0",
+                                                                        },
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "step_1_service_zones"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "button",
+                                                                        {
+                                                                          staticClass:
+                                                                            "btn btn-sm btn-outline-primary",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "button",
+                                                                              disabled:
+                                                                                _vm.showBrandZoneForm,
+                                                                            },
+                                                                          on: {
+                                                                            click:
+                                                                              _vm.toggleAddCityForm,
+                                                                          },
+                                                                        },
+                                                                        [
+                                                                          _c(
+                                                                            "i",
+                                                                            {
+                                                                              staticClass:
+                                                                                "fa fa-map-marker-alt",
+                                                                            }
+                                                                          ),
+                                                                          _vm._v(
+                                                                            " " +
+                                                                              _vm._s(
+                                                                                _vm.__(
+                                                                                  "define_new_zone"
+                                                                                )
+                                                                              ) +
+                                                                              "\n                                                                "
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                  _vm._v(" "),
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "mb-4",
+                                                                    },
+                                                                    [
+                                                                      !_vm
+                                                                        .cities_options
+                                                                        .length
+                                                                        ? _c(
+                                                                            "p",
+                                                                            {
+                                                                              staticClass:
+                                                                                "text-muted mb-0",
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                _vm._s(
+                                                                                  _vm.__(
+                                                                                    "no_zones_defined_yet"
+                                                                                  )
+                                                                                )
+                                                                              ),
+                                                                            ]
+                                                                          )
+                                                                        : _vm._e(),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _vm._l(
+                                                                        _vm.cities_options,
+                                                                        function (
+                                                                          z
+                                                                        ) {
+                                                                          return _c(
+                                                                            "span",
+                                                                            {
+                                                                              key: z.id,
+                                                                              staticClass:
+                                                                                "badge bg-secondary me-1 mb-1",
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                _vm._s(
+                                                                                  z.text
+                                                                                )
+                                                                              ),
+                                                                            ]
+                                                                          )
+                                                                        }
+                                                                      ),
+                                                                    ],
+                                                                    2
+                                                                  ),
+                                                                  _vm._v(" "),
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "d-flex align-items-center justify-content-between mb-2",
+                                                                    },
+                                                                    [
+                                                                      _c(
+                                                                        "h5",
+                                                                        {
+                                                                          staticClass:
+                                                                            "mb-0",
+                                                                          class:
+                                                                            {
+                                                                              "text-muted":
+                                                                                !_vm
+                                                                                  .cities_options
+                                                                                  .length,
+                                                                            },
+                                                                        },
+                                                                        [
+                                                                          _vm._v(
+                                                                            _vm._s(
+                                                                              _vm.__(
+                                                                                "step_2_brands_per_zone"
+                                                                              )
+                                                                            )
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      _c(
+                                                                        "button",
+                                                                        {
+                                                                          directives:
+                                                                            [
+                                                                              {
+                                                                                name: "b-tooltip",
+                                                                                rawName:
+                                                                                  "v-b-tooltip.hover",
+                                                                                modifiers:
+                                                                                  {
+                                                                                    hover: true,
+                                                                                  },
+                                                                              },
+                                                                            ],
+                                                                          staticClass:
+                                                                            "btn btn-sm btn-outline-primary",
+                                                                          attrs:
+                                                                            {
+                                                                              type: "button",
+                                                                              disabled:
+                                                                                !_vm
+                                                                                  .cities_options
+                                                                                  .length ||
+                                                                                _vm.showBrandZoneForm,
+                                                                              title:
+                                                                                !_vm
+                                                                                  .cities_options
+                                                                                  .length
+                                                                                  ? _vm.__(
+                                                                                      "define_a_zone_first"
+                                                                                    )
+                                                                                  : "",
+                                                                            },
+                                                                          on: {
+                                                                            click:
+                                                                              _vm.openAddBrandZone,
+                                                                          },
+                                                                        },
+                                                                        [
+                                                                          _c(
+                                                                            "i",
+                                                                            {
+                                                                              staticClass:
+                                                                                "fa fa-plus",
+                                                                            }
+                                                                          ),
+                                                                          _vm._v(
+                                                                            " " +
+                                                                              _vm._s(
+                                                                                _vm.__(
+                                                                                  "add_brand_zone"
+                                                                                )
+                                                                              ) +
+                                                                              "\n                                                                "
+                                                                          ),
+                                                                        ]
+                                                                      ),
+                                                                    ]
+                                                                  ),
+                                                                  _vm._v(" "),
                                                                   !_vm
                                                                     .brandZoneRows
                                                                     .length &&
@@ -6375,9 +6580,15 @@ var render = function () {
                                                                           _vm._v(
                                                                             "\n                                                                " +
                                                                               _vm._s(
-                                                                                _vm.__(
-                                                                                  "no_brand_zone_assignments_yet"
-                                                                                )
+                                                                                _vm
+                                                                                  .cities_options
+                                                                                  .length
+                                                                                  ? _vm.__(
+                                                                                      "no_brand_zone_assignments_yet"
+                                                                                    )
+                                                                                  : _vm.__(
+                                                                                      "define_a_zone_first"
+                                                                                    )
                                                                               ) +
                                                                               "\n                                                            "
                                                                           ),
@@ -6893,42 +7104,6 @@ var render = function () {
                                                                                 ]
                                                                               ),
                                                                             ]
-                                                                          ),
-                                                                        ]
-                                                                      )
-                                                                    : _vm._e(),
-                                                                  _vm._v(" "),
-                                                                  !_vm.showBrandZoneForm
-                                                                    ? _c(
-                                                                        "button",
-                                                                        {
-                                                                          staticClass:
-                                                                            "btn btn-sm btn-outline-secondary mt-2",
-                                                                          attrs:
-                                                                            {
-                                                                              type: "button",
-                                                                            },
-                                                                          on: {
-                                                                            click:
-                                                                              _vm.toggleAddCityForm,
-                                                                          },
-                                                                        },
-                                                                        [
-                                                                          _c(
-                                                                            "i",
-                                                                            {
-                                                                              staticClass:
-                                                                                "fa fa-map-marker-alt",
-                                                                            }
-                                                                          ),
-                                                                          _vm._v(
-                                                                            " " +
-                                                                              _vm._s(
-                                                                                _vm.__(
-                                                                                  "define_new_zone"
-                                                                                )
-                                                                              ) +
-                                                                              "\n                                                            "
                                                                           ),
                                                                         ]
                                                                       )

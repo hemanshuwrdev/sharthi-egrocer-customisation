@@ -101,21 +101,15 @@
                 </div>
                 <div class="form-group mb-3">
                     <label class="required">{{ __('distributor') }}</label>
-                    <select class="form-control" v-model="form.seller_id" :disabled="isEdit" required>
+                    <select class="form-control" v-model="form.seller_id" :disabled="isEdit" @change="onDistributorChange" required>
                         <option :value="null">-- {{ __('select') }} --</option>
                         <option v-for="s in sellers" :key="s.id" :value="s.id">{{ s.store_name }}</option>
                     </select>
                 </div>
-                <div class="form-group mb-3">
-                    <label class="required">{{ __('cities') }}</label>
-                    <div style="max-height: 240px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px;">
-                        <div v-if="!cities.length" class="text-muted">{{ __('loading') }}...</div>
-                        <div v-for="c in cities" :key="c.id" class="form-check">
-                            <input class="form-check-input" type="checkbox" :id="'city_' + c.id" :value="c.id" v-model="form.city_ids" />
-                            <label class="form-check-label" :for="'city_' + c.id">{{ c.name }}</label>
-                        </div>
-                    </div>
-                    <small class="text-muted">{{ __('select_one_or_more_cities') }}</small>
+                <!-- Zones are taken directly from the distributor's own assigned territory
+                     (sellers.city_id) — no manual picking for now, see distributorCityOptions. -->
+                <div class="form-group mb-3" v-if="form.seller_id && !distributorCityOptions.length">
+                    <div class="text-danger">{{ __('this_distributor_has_no_zones_assigned_set_up_geo_fences_first') }}</div>
                 </div>
                 <div class="text-end">
                     <button type="button" class="btn btn-secondary me-2" @click="modalOpen = false">{{ __('cancel') }}</button>
@@ -159,6 +153,18 @@ export default {
             modalBrandLines: [],
         };
     },
+    computed: {
+        // A mapping always takes the selected distributor's whole geo-fenced territory
+        // (sellers.city_id) — manual zone picking is hidden for now, see save().
+        distributorCityOptions() {
+            if (!this.form.seller_id) return [];
+            const seller = this.sellers.find(s => s.id === this.form.seller_id);
+            const territoryIds = (seller && seller.city_id)
+                ? String(seller.city_id).split(',').map(id => parseInt(id, 10)).filter(id => id > 0)
+                : [];
+            return this.cities.filter(c => territoryIds.includes(c.id));
+        },
+    },
     created() {
         this.getRecords();
         this.fetchLookups();
@@ -197,6 +203,11 @@ export default {
                 this.modalBrandLines = (r.data.data || []).filter(l => l.status == 1);
             }).catch(() => {});
         },
+        onDistributorChange() {
+            // Zone picking is hidden for now — this just keeps distributorCityOptions'
+            // "no zones assigned" check reactive as soon as a distributor is picked.
+            this.form.city_ids = this.distributorCityOptions.map(c => c.id);
+        },
         openCreate() {
             this.isEdit = false;
             this.form = { brand_id: null, brand_line_id: null, seller_id: null, city_ids: [] };
@@ -212,15 +223,17 @@ export default {
                     this.modalBrandLines = r.data.data || [];
                 }).catch(() => {});
             }
-            axios.get(this.$apiUrl + '/admin/brand-mappings/get', {
-                params: { brand_id: row.brand_id, brand_line_id: row.brand_line_id, seller_id: row.seller_id }
-            }).then(r => {
-                this.form.city_ids = (r.data.data && r.data.data.city_ids) || [];
-            });
         },
         save() {
-            if (!this.form.brand_id || !this.form.seller_id || !this.form.city_ids.length) {
-                this.showError(__('select_brand_distributor_and_cities'));
+            if (!this.form.brand_id || !this.form.seller_id) {
+                this.showError(__('select_brand_and_distributor'));
+                return;
+            }
+            // Zone picking is hidden for now — always take the distributor's whole
+            // current territory rather than whatever was last loaded into the form.
+            this.form.city_ids = this.distributorCityOptions.map(c => c.id);
+            if (!this.form.city_ids.length) {
+                this.showError(__('this_distributor_has_no_zones_assigned_set_up_geo_fences_first'));
                 return;
             }
             this.isSaving = true;

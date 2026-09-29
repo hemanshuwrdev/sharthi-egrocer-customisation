@@ -39,6 +39,24 @@ class SuperAdminCustomApiController extends Controller
             return CommonHelper::responseError(__('brand_line_does_not_belong_to_selected_brand'));
         }
 
+        // A mapping can only cover cities the distributor is themselves geo-fenced into
+        // (sellers.city_id) — there's no point mapping them to a zone they don't operate
+        // in. Cities already on this exact (brand, line, seller) mapping are grandfathered
+        // in, so re-saving an existing mapping unchanged never breaks just because the
+        // distributor's own territory shrank since it was created.
+        $seller = Seller::find($request->seller_id);
+        $sellerCityIds = array_filter(array_map('intval', explode(',', (string) $seller->city_id)));
+        $existingCityIds = BrandDistributorMapping::where('brand_id', $request->brand_id)
+            ->where('brand_line_id', $lineId)
+            ->where('seller_id', $request->seller_id)
+            ->pluck('city_id')
+            ->all();
+        $allowedCityIds = array_unique(array_merge($sellerCityIds, $existingCityIds));
+        $outsideTerritory = array_diff($request->city_ids, $allowedCityIds);
+        if (!empty($outsideTerritory)) {
+            return CommonHelper::responseError(__('selected_zones_are_outside_this_distributors_own_territory'));
+        }
+
         try {
             DB::transaction(function () use ($request, $brand, $lineId) {
                 if (!$brand->is_overlap_allowed) {
