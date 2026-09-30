@@ -114,7 +114,7 @@ __webpack_require__.r(__webpack_exports__);
         var url = window.URL.createObjectURL(new Blob([response.data]));
         var link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'receipt_cash_' + param.startDate + '_to_' + param.endDate + '.csv');
+        link.setAttribute('download', 'ReceiptCashBank_' + param.startDate + '_to_' + param.endDate + '.xlsx');
         document.body.appendChild(link);
         link.click();
         link.parentNode.removeChild(link);

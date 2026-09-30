@@ -91,7 +91,7 @@ export default {
                 const url = window.URL.createObjectURL(new Blob([response.data]));
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', 'receipt_pdc_' + param.startDate + '_to_' + param.endDate + '.csv');
+                link.setAttribute('download', 'ReceiptPDC_' + param.startDate + '_to_' + param.endDate + '.xlsx');
                 document.body.appendChild(link);
                 link.click();
                 link.parentNode.removeChild(link);

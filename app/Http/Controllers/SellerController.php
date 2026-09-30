@@ -901,9 +901,17 @@ class SellerController extends BaseController
         return CommonHelper::responseWithData($data);
     }
 
+    /**
+     * Sales Invoice export — Tally "Sales Voucher" import template, one row per
+     * order item. Column layout matches the client's Sales.xlsx sample exactly.
+     * Only invoices with at least one verified payment are included (2026-09-30
+     * spec: exports 2-6 gate on settled + verified).
+     */
     public function exportOrdersCsv(Request $request)
     {
         $seller_id = auth()->user()->seller->id;
+        $seller = DB::table('sellers')->where('id', $seller_id)->first();
+        $sellerState = $seller->state ?? null;
 
         $startDate = $request->filled('startDate')
             ? Carbon::parse($request->input('startDate'))->startOfDay()
@@ -915,99 +923,235 @@ class SellerController extends BaseController
         $rows = OrderItem::select(
             'order_items.id as order_item_id',
             'order_items.order_id',
+            'order_items.master_product_variant_id',
+            'order_items.product_variant_id',
             'order_items.quantity',
             'order_items.price',
-            'order_items.sub_total',
-            'order_items.tax_amount',
+            'order_items.discount',
             'order_items.tax_percentage',
             'order_items.created_at as item_created_at',
             'order_items.product_name',
             'order_items.variant_name',
-            'orders.delivery_charge',
+            'orders.invoice_number',
+            'orders.placed_by_salesman_id',
+            'orders.discount as order_discount',
+            'orders.promo_discount as order_promo_discount',
+            'orders.scheme_discount as order_scheme_discount',
+            'orders.loading_slip_id',
             'retailer_profiles.party_name',
             'retailer_profiles.shop_name',
             'retailer_profiles.gst_no',
-            'cities.state as city_state',
-            'users.name as user_name'
+            'retailer_profiles.area_id as rp_area_id',
+            'users.name as user_name',
+            'ua.address as ua_address',
+            'ua.landmark as ua_landmark',
+            'ua.area as ua_area',
+            'ua.city as ua_city',
+            'ua.state as ua_state',
+            'ua.pincode as ua_pincode',
+            'salesman.name as salesman_name',
+            DB::raw('COALESCE(mpv.unit_id, pv.stock_unit_id) as unit_id'),
+            DB::raw('COALESCE(u.short_code, u2.short_code) as unit_symbol'),
+            DB::raw('(SELECT mp.hsn FROM master_products mp
+                      INNER JOIN master_product_variants mpv2 ON mpv2.master_product_id = mp.id
+                      WHERE mpv2.id = order_items.master_product_variant_id LIMIT 1) as hsn')
         )
             ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
-            ->leftJoin('cities', 'retailer_profiles.city_id', '=', 'cities.id')
+            ->leftJoin('user_addresses as ua', 'orders.address_id', '=', 'ua.id')
+            ->leftJoin('salesmen as salesman', 'orders.placed_by_salesman_id', '=', 'salesman.id')
+            ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
+            ->leftJoin('units as u', 'mpv.unit_id', '=', 'u.id')
+            ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
+            ->leftJoin('units as u2', 'pv.stock_unit_id', '=', 'u2.id')
             ->where('order_items.seller_id', $seller_id)
             ->where(function ($query) {
                 $query->where('orders.active_status', OrderStatusList::$delivered)
                     ->orWhere('orders.active_status', OrderStatusList::$selfPickupPicked);
+            })
+            // Only invoices with a distributor-verified payment are exportable.
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('order_payments')
+                    ->whereColumn('order_payments.order_id', 'orders.id')
+                    ->where('order_payments.status', 'verified');
             });
 
         if ($startDate && $endDate) {
             $rows = $rows->whereBetween('order_items.created_at', [$startDate, $endDate]);
         }
 
-        $rows = $rows->orderBy('order_items.order_id', 'DESC')->get();
+        $rows = $rows->orderBy('order_items.order_id')->orderBy('order_items.id')->get();
 
-        $csvData = [];
-        $csvData[] = [
-            'Invoice No', 'Invoice date', 'Party Name', 'Item', 'HSN Code', 'Quantity',
-            'Unit Price', 'Taxable Value', 'Transportation Charges', 'Postage Charges', 'Loading Charges',
-            'CGST', 'SGST', 'IGST', 'Invoice Total', 'GST Rate %', 'Sales Account',
-            'CGST Ledger', 'SGST Ledger', 'IGST Ledger', 'Country', 'State', 'Voucher Type', 'Units',
-            'GSTIN', 'Reg Type',
+        // Loading slip (vehicle/driver) is per-order, batched separately — cheaper
+        // than a join fanning out further, and most orders share few slips.
+        $slipIds = $rows->pluck('loading_slip_id')->filter()->unique();
+        $slips = $slipIds->isEmpty() ? collect() : DB::table('loading_slips as ls')
+            ->leftJoin('vehicles as v', 'ls.vehicle_id', '=', 'v.id')
+            ->leftJoin('delivery_boys as db', 'ls.driver_id', '=', 'db.id')
+            ->whereIn('ls.id', $slipIds)
+            ->get(['ls.id', 'ls.slip_no', 'v.vehicle_number', 'db.name as driver_name'])
+            ->keyBy('id');
+
+        $headers = [
+            "Voucher Type\n(exact Tally name)",
+            "Voucher Date\n(DD-MM-YYYY text)",
+            'Voucher No',
+            "Party Ledger\n(exact Tally name)",
+            "Party Alias\n(used if Party blank)",
+            'Party GSTIN',
+            "Place of Supply\n(STATE e.g. Gujarat)",
+            "Supply Type\nINTRA_STATE / INTER_STATE",
+            "Bill Ref No\nSales: blank = Voucher No\nCN: Against Invoice No",
+            "Bill Ref Date\nCN: Orig. Invoice Date",
+            'Sales / Sales Return Ledger',
+            "Stock Item Name\n(exact Tally name)",
+            "HSN/SAC\n(needed for new item)",
+            'Quantity',
+            "Unit\n(Tally unit symbol;\nneeded for new item)",
+            'Rate',
+            "Item Discount %\n(negative, 2 = -2%)",
+            "Invoice Discount (amt)\n(negative, first row\nof the order)(negative, 100 = -100)",
+            "GST Rate %\n(5 = 5%)",
+            "Godown\n(blank = Main Location)",
+            'Order Ref',
+            'Party Address Line 1',
+            'Party Address Line 2',
+            'Party Address Line 3\n(City, State, PIN)',
+            'Party Pincode (6 digits)',
+            'Vehicle No',
+            'Loading Slip No',
+            'Destination (Area)',
+            'Dispatched Through\n(Salesman / Self - Retailer App Order)',
+            'Driver Name\n(Carrier Name/Agent)',
+            'Narration',
         ];
 
+        $sheetRows = [];
+        $seenOrders = [];
         foreach ($rows as $row) {
-            $taxAmount = (float) $row->tax_amount;
-            $cgst = round($taxAmount / 2, 2);
-            $sgst = round($taxAmount / 2, 2);
-            $taxableValue = (float) $row->sub_total;
-            $invoiceTotal = round($taxableValue + $taxAmount, 2);
             $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
-            // Same "Product (Variant)" format the app itself displays — variant_name
-            // is already a stored column on order_items, not something computed live.
+            $voucherNo = $row->invoice_number ?: ('#' . $row->order_id);
             $itemName = $row->variant_name ? $row->product_name . ' (' . $row->variant_name . ')' : $row->product_name;
+            $slip = $row->loading_slip_id ? ($slips[$row->loading_slip_id] ?? null) : null;
 
-            $csvData[] = [
-                'INV' . $row->order_id,
-                Carbon::parse($row->item_created_at)->format('j/M/Y'),
+            $partyState = $row->ua_state ?: null;
+            $supplyType = ($partyState && $sellerState && strcasecmp($partyState, $sellerState) === 0)
+                ? 'INTRA_STATE' : 'INTER_STATE';
+
+            $isFirstRowOfOrder = !isset($seenOrders[$row->order_id]);
+            $seenOrders[$row->order_id] = true;
+            $invoiceDiscountAmt = '';
+            if ($isFirstRowOfOrder) {
+                $orderDiscount = (float) $row->order_discount + (float) $row->order_promo_discount + (float) $row->order_scheme_discount;
+                $invoiceDiscountAmt = $orderDiscount > 0 ? -$orderDiscount : '';
+            }
+
+            $dispatchedThrough = $row->placed_by_salesman_id && $row->salesman_name
+                ? $row->salesman_name . ' (Salesman)'
+                : 'Self - Retailer App Order';
+
+            $addressLine3 = trim(($row->ua_city ?: '') . ($row->ua_state ? ', ' . $row->ua_state : '')
+                . ($row->ua_pincode ? ' - ' . $row->ua_pincode : ''), ', ');
+
+            $sheetRows[] = [
+                'Sales',
+                Carbon::parse($row->item_created_at)->format('d-m-Y'),
+                $voucherNo,
                 $partyName,
-                $itemName,
                 '',
-                $row->quantity,
-                $row->price,
-                $taxableValue,
-                '',
-                '',
-                '',
-                $cgst,
-                $sgst,
-                '',
-                $invoiceTotal,
-                $row->tax_percentage,
-                'Sales',
-                'CGST',
-                'SGST',
-                'IGST',
-                'India',
-                $row->city_state ?: 'Maharashtra',
-                'Sales',
-                'Nos',
                 $row->gst_no,
-                $row->gst_no ? 'Regular' : 'Unregistered',
+                $partyState,
+                $supplyType,
+                '',
+                '',
+                'Sales',
+                $itemName,
+                $row->hsn,
+                $row->quantity,
+                $row->unit_symbol,
+                $row->price,
+                $row->discount ? -abs($row->discount) : 0,
+                $invoiceDiscountAmt,
+                $row->tax_percentage,
+                '',
+                'Order ' . $row->order_id,
+                $row->ua_address,
+                $row->ua_landmark,
+                $addressLine3,
+                $row->ua_pincode,
+                $slip->vehicle_number ?? '',
+                $slip->slip_no ?? '',
+                $row->ua_area,
+                $dispatchedThrough,
+                $slip->driver_name ?? '',
+                'Online order #' . $row->order_id,
             ];
         }
 
-        $csvFileName = 'distributor_orders_' . Str::random(10) . '.csv';
-        $csvFile = fopen('php://temp', 'w');
-        foreach ($csvData as $csvRow) {
-            fputcsv($csvFile, $csvRow);
-        }
-        rewind($csvFile);
-        $csvContent = stream_get_contents($csvFile);
-        fclose($csvFile);
+        return $this->downloadXlsx($headers, $sheetRows, 'Sales.xlsx');
+    }
 
-        return response()->streamDownload(function () use ($csvContent) {
-            echo $csvContent;
-        }, $csvFileName);
+    /**
+     * Product Master export — Tally "Sarthi Excel Import > Import Items / Products"
+     * template. Column layout matches the client's Products.xlsx sample exactly.
+     * One row per master-catalog variant this distributor has listed (seller_products).
+     * Not gated on settled/verified — this is a catalog export, not a transaction one.
+     */
+    public function exportProductMasterXlsx(Request $request)
+    {
+        $seller_id = auth()->user()->seller->id;
+
+        $rows = DB::table('seller_products as sp')
+            ->join('master_product_variants as mpv', 'mpv.id', '=', 'sp.master_product_variant_id')
+            ->join('master_products as mp', 'mp.id', '=', 'mpv.master_product_id')
+            ->leftJoin('categories as c', 'mp.category_id', '=', 'c.id')
+            ->leftJoin('units as u1', 'mpv.unit_id', '=', 'u1.id')
+            ->leftJoin('units as u2', 'mpv.secondary_unit_id', '=', 'u2.id')
+            ->leftJoin('taxes as t', 'mp.tax_id', '=', 't.id')
+            ->where('sp.seller_id', $seller_id)
+            ->where('sp.status', 1)
+            ->select(
+                'mp.name as product_name',
+                'c.name as category_name',
+                'u1.short_code as base_unit',
+                'u2.short_code as alt_unit',
+                'mpv.secondary_unit_value',
+                'mp.hsn',
+                't.percentage as gst_rate',
+                'mp.short_description'
+            )
+            ->distinct()
+            ->orderBy('mp.name')
+            ->get();
+
+        $headers = [
+            'Item Name (exact Tally name)',
+            'Stock Group (inside Sarthi Stock; blank = Sarthi Stock)',
+            'Base Unit (e.g. Pcs)',
+            'Alternate Unit (blank = none)',
+            'Conversion (Base units in 1 Alternate unit)',
+            'HSN/SAC',
+            'GST Rate % (5 = 5%)',
+            'Description (HSN/SAC goods description)',
+        ];
+
+        $sheetRows = [];
+        foreach ($rows as $row) {
+            $sheetRows[] = [
+                $row->product_name,
+                $row->category_name,
+                $row->base_unit,
+                $row->alt_unit,
+                $row->alt_unit ? $row->secondary_unit_value : '',
+                $row->hsn,
+                $row->gst_rate,
+                $row->short_description,
+            ];
+        }
+
+        return $this->downloadXlsx($headers, $sheetRows, 'Products.xlsx');
     }
 
     /**
@@ -1025,9 +1169,14 @@ class SellerController extends BaseController
             ? Carbon::parse($request->input('endDate'))->endOfDay()
             : null;
 
+        // Cash + Bank(UPI) together, one file — client wants a single Receipt Voucher
+        // import for both, not split like the cheque/PDC one. UTR/Payer VPA/bank
+        // ledger name stay blank for UPI rows: order_payments has no columns for
+        // those (method is a bare enum, no txn reference is captured anywhere).
         $rows = OrderPayment::select(
             'order_payments.id',
             'order_payments.order_id',
+            'order_payments.method',
             'order_payments.amount',
             'order_payments.created_at as payment_created_at',
             'orders.invoice_number',
@@ -1050,7 +1199,10 @@ class SellerController extends BaseController
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->where('order_items.seller_id', $seller_id);
             })
-            ->where('order_payments.method', 'cash');
+            ->whereIn('order_payments.method', ['cash', 'upi'])
+            // Only export payments the distributor has actually verified — an
+            // unverified collection isn't a real receipt yet.
+            ->where('order_payments.status', 'verified');
 
         if ($startDate && $endDate) {
             $rows = $rows->whereBetween('order_payments.created_at', [$startDate, $endDate]);
@@ -1058,8 +1210,7 @@ class SellerController extends BaseController
 
         $rows = $rows->orderBy('order_payments.created_at')->get();
 
-        $csvData = [];
-        $csvData[] = [
+        $headers = [
             "Voucher Type\n(exact Tally name)",
             "Voucher Date\n(DD-MM-YYYY text)",
             'Receipt No',
@@ -1078,20 +1229,22 @@ class SellerController extends BaseController
             'Received By',
         ];
 
+        $sheetRows = [];
         foreach ($rows as $row) {
             $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
             $invoiceNo = $row->invoice_number ?: ('#' . $row->order_id);
             $receivedBy = $row->delivery_boy_name ?: ($row->salesman_name ?: '');
+            $isCash = $row->method === 'cash';
 
-            $csvData[] = [
+            $sheetRows[] = [
                 'Receipt',
                 Carbon::parse($row->payment_created_at)->format('d-m-Y'),
                 'RC-' . $row->id,
                 $partyName,
                 '',
                 (float) $row->amount,
-                'Cash',
-                'Cash',
+                $isCash ? 'Cash' : '',
+                $isCash ? 'Cash' : 'UPI',
                 '',
                 '',
                 $invoiceNo,
@@ -1103,18 +1256,7 @@ class SellerController extends BaseController
             ];
         }
 
-        $csvFileName = 'receipt_cash_' . Str::random(10) . '.csv';
-        $csvFile = fopen('php://temp', 'w');
-        foreach ($csvData as $csvRow) {
-            fputcsv($csvFile, $csvRow);
-        }
-        rewind($csvFile);
-        $csvContent = stream_get_contents($csvFile);
-        fclose($csvFile);
-
-        return response()->streamDownload(function () use ($csvContent) {
-            echo $csvContent;
-        }, $csvFileName);
+        return $this->downloadXlsx($headers, $sheetRows, 'ReceiptCashBank.xlsx');
     }
 
     /**
@@ -1159,7 +1301,10 @@ class SellerController extends BaseController
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->where('order_items.seller_id', $seller_id);
             })
-            ->where('order_payments.method', 'cheque');
+            ->where('order_payments.method', 'cheque')
+            // Only export payments the distributor has actually verified — an
+            // unverified collection isn't a real receipt yet.
+            ->where('order_payments.status', 'verified');
 
         if ($startDate && $endDate) {
             $rows = $rows->whereBetween('order_payments.created_at', [$startDate, $endDate]);
@@ -1167,8 +1312,7 @@ class SellerController extends BaseController
 
         $rows = $rows->orderBy('order_payments.created_at')->get();
 
-        $csvData = [];
-        $csvData[] = [
+        $headers = [
             "Voucher Type\n(exact Tally name)",
             "Voucher Date\n(DD-MM-YYYY text)",
             'Receipt No',
@@ -1191,6 +1335,7 @@ class SellerController extends BaseController
             'Post Dated\n(Yes / No)',
         ];
 
+        $sheetRows = [];
         foreach ($rows as $row) {
             $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
             $invoiceNo = $row->invoice_number ?: ('#' . $row->order_id);
@@ -1199,7 +1344,7 @@ class SellerController extends BaseController
             $voucherDate = Carbon::parse($row->payment_created_at);
             $postDated = $chequeDate && $chequeDate->gt($voucherDate) ? 'Yes' : 'No';
 
-            $csvData[] = [
+            $sheetRows[] = [
                 'Receipt',
                 $voucherDate->format('d-m-Y'),
                 'RP-' . $row->id,
@@ -1224,18 +1369,38 @@ class SellerController extends BaseController
             ];
         }
 
-        $csvFileName = 'receipt_pdc_' . Str::random(10) . '.csv';
-        $csvFile = fopen('php://temp', 'w');
-        foreach ($csvData as $csvRow) {
-            fputcsv($csvFile, $csvRow);
-        }
-        rewind($csvFile);
-        $csvContent = stream_get_contents($csvFile);
-        fclose($csvFile);
+        return $this->downloadXlsx($headers, $sheetRows, 'ReceiptPDC.xlsx');
+    }
 
-        return response()->streamDownload(function () use ($csvContent) {
-            echo $csvContent;
-        }, $csvFileName);
+    /**
+     * Shared writer for the receipt-voucher/Tally-import exports — one header row
+     * (each \n becomes a wrapped line, matching the multi-line headers in the
+     * client's sample workbooks) plus data rows, streamed as a real .xlsx file.
+     */
+    private function downloadXlsx(array $headers, array $rows, string $filename)
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        foreach ($headers as $i => $h) {
+            $cell = $sheet->getCellByColumnAndRow($i + 1, 1);
+            $cell->setValue($h);
+            $cell->getStyle()->getAlignment()->setWrapText(true);
+        }
+
+        foreach ($rows as $rowNum => $row) {
+            foreach ($row as $i => $v) {
+                $sheet->setCellValueByColumnAndRow($i + 1, $rowNum + 2, $v);
+            }
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $tempFile = tempnam(sys_get_temp_dir(), 'sarthi_export_');
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     public function getReports(Request $request)

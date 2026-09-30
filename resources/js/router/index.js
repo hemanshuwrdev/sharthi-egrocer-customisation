@@ -224,6 +224,8 @@ const SellerSalesReports = () => import("../views/Sellers/SalesReports");
 const SellerOrdersExport = () => import("../views/Sellers/OrdersExport");
 const SellerReceiptCashExport = () => import("../views/Sellers/ReceiptCashExport");
 const SellerReceiptPdcExport = () => import("../views/Sellers/ReceiptPdcExport");
+const SellerProductMasterExport = () => import("../views/Sellers/ProductMasterExport");
+const SellerExportCenter = () => import("../views/Sellers/ExportCenter");
 const SellerCommissionBilling = () => import("../views/Sellers/CommissionBilling");
 const SellerTripsList = () => import("../views/Sellers/TripsList");
 const SellerTripReconciliation = () => import("../views/Sellers/TripReconciliation");
@@ -2137,6 +2139,26 @@ function configRoutes() {
                         permission: 'order_list',
                         role: sellerRoles,
                         title: 'Receipt PDC Export'
+                    }
+                },
+                {
+                    path: "product_master_export",
+                    name: "SellerProductMasterExport",
+                    component: SellerProductMasterExport,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Product Master Export'
+                    }
+                },
+                {
+                    path: "export_center",
+                    name: "SellerExportCenter",
+                    component: SellerExportCenter,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Export Center'
                     }
                 },
                 {

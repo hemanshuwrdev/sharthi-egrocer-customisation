@@ -653,6 +653,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('orders/export_csv', [\App\Http\Controllers\SellerController::class, 'exportOrdersCsv']);
         Route::get('receipts/cash/export_csv', [\App\Http\Controllers\SellerController::class, 'exportCashReceiptCsv']);
         Route::get('receipts/pdc/export_csv', [\App\Http\Controllers\SellerController::class, 'exportPdcReceiptCsv']);
+        Route::get('products/export_xlsx', [\App\Http\Controllers\SellerController::class, 'exportProductMasterXlsx']);
         Route::get('self_pickup_orders', [\App\Http\Controllers\SellerController::class, 'getSelfPickupOrders']);
         Route::post('update_self_pickup_status', [\App\Http\Controllers\API\OrdersApiController::class, 'updateSelfPickupOrderStatus'])->name('orders.update_self_pickup_status');
 

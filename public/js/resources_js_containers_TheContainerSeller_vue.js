@@ -492,23 +492,8 @@ __webpack_require__.r(__webpack_exports__);
       }, {
         name: __('export_center'),
         icon: 'download',
-        permission: 'order_list',
-        submenu: [{
-          name: __('orders_export'),
-          icon: 'grid-fill',
-          url: '/seller/orders_export',
-          permission: 'order_list'
-        }, {
-          name: __('receipt_cash_export'),
-          icon: 'grid-fill',
-          url: '/seller/receipt_cash_export',
-          permission: 'order_list'
-        }, {
-          name: __('receipt_pdc_export'),
-          icon: 'grid-fill',
-          url: '/seller/receipt_pdc_export',
-          permission: 'order_list'
-        }]
+        url: '/seller/export_center',
+        permission: 'order_list'
       }, {
         name: __('settings'),
         icon: 'cog',
