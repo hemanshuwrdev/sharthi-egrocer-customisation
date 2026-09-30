@@ -1117,6 +1117,127 @@ class SellerController extends BaseController
         }, $csvFileName);
     }
 
+    /**
+     * PDC (post-dated cheque) Receipt export — Tally "Receipt Voucher" import
+     * template, cheque payments only. Column layout matches ReceiptPDC.xlsx sample.
+     */
+    public function exportPdcReceiptCsv(Request $request)
+    {
+        $seller_id = auth()->user()->seller->id;
+
+        $startDate = $request->filled('startDate')
+            ? Carbon::parse($request->input('startDate'))->startOfDay()
+            : null;
+        $endDate = $request->filled('endDate')
+            ? Carbon::parse($request->input('endDate'))->endOfDay()
+            : null;
+
+        $rows = OrderPayment::select(
+            'order_payments.id',
+            'order_payments.order_id',
+            'order_payments.amount',
+            'order_payments.cheque_number',
+            'order_payments.cheque_date',
+            'order_payments.created_at as payment_created_at',
+            'orders.invoice_number',
+            'retailer_profiles.party_name',
+            'retailer_profiles.shop_name',
+            'users.name as user_name',
+            'delivery_boys.name as delivery_boy_name',
+            'salesmen.name as salesman_name'
+        )
+            ->join('orders', 'order_payments.order_id', '=', 'orders.id')
+            ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('delivery_boys', 'order_payments.delivery_boy_id', '=', 'delivery_boys.id')
+            ->leftJoin('salesmen', 'order_payments.salesman_id', '=', 'salesmen.id')
+            // orders carry no seller_id of their own — an order can hold items from
+            // several distributors, so scoping is via order_items.seller_id instead.
+            ->whereExists(function ($q) use ($seller_id) {
+                $q->select(DB::raw(1))
+                    ->from('order_items')
+                    ->whereColumn('order_items.order_id', 'orders.id')
+                    ->where('order_items.seller_id', $seller_id);
+            })
+            ->where('order_payments.method', 'cheque');
+
+        if ($startDate && $endDate) {
+            $rows = $rows->whereBetween('order_payments.created_at', [$startDate, $endDate]);
+        }
+
+        $rows = $rows->orderBy('order_payments.created_at')->get();
+
+        $csvData = [];
+        $csvData[] = [
+            "Voucher Type\n(exact Tally name)",
+            "Voucher Date\n(DD-MM-YYYY text)",
+            'Receipt No',
+            "Party Ledger\n(exact Tally name)",
+            'Party Alias',
+            'Receipt Amount',
+            "Bank Ledger\n(where cheque is deposited)",
+            "Payment Mode\n(Cheque)",
+            "UTR / Txn ID\n(blank for cheque)",
+            "Payer VPA\n(blank for cheque)",
+            'Against Invoice No',
+            "Bill-wise Amount\n(blank = full amount)",
+            'On Account Amount',
+            'Narration',
+            'Order Ref',
+            'Received By',
+            'Cheque No',
+            "Cheque Date\n(DD-MM-YYYY text)",
+            "Drawee Bank\n(party's bank)",
+            'Post Dated\n(Yes / No)',
+        ];
+
+        foreach ($rows as $row) {
+            $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
+            $invoiceNo = $row->invoice_number ?: ('#' . $row->order_id);
+            $receivedBy = $row->delivery_boy_name ?: ($row->salesman_name ?: '');
+            $chequeDate = $row->cheque_date ? Carbon::parse($row->cheque_date) : null;
+            $voucherDate = Carbon::parse($row->payment_created_at);
+            $postDated = $chequeDate && $chequeDate->gt($voucherDate) ? 'Yes' : 'No';
+
+            $csvData[] = [
+                'Receipt',
+                $voucherDate->format('d-m-Y'),
+                'RP-' . $row->id,
+                $partyName,
+                '',
+                (float) $row->amount,
+                'PDC CHQ',
+                'Cheque',
+                '',
+                '',
+                $invoiceNo,
+                '',
+                '',
+                'PDC against ' . $invoiceNo . ' - cheque ' . $row->cheque_number
+                    . ($chequeDate ? ' dated ' . $chequeDate->format('d-m-Y') : ''),
+                'Order ' . $row->order_id,
+                $receivedBy,
+                $row->cheque_number,
+                $chequeDate ? $chequeDate->format('d-m-Y') : '',
+                '',
+                $postDated,
+            ];
+        }
+
+        $csvFileName = 'receipt_pdc_' . Str::random(10) . '.csv';
+        $csvFile = fopen('php://temp', 'w');
+        foreach ($csvData as $csvRow) {
+            fputcsv($csvFile, $csvRow);
+        }
+        rewind($csvFile);
+        $csvContent = stream_get_contents($csvFile);
+        fclose($csvFile);
+
+        return response()->streamDownload(function () use ($csvContent) {
+            echo $csvContent;
+        }, $csvFileName);
+    }
+
     public function getReports(Request $request)
     {
         try {

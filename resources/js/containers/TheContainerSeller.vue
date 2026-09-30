@@ -480,6 +480,12 @@ export default {
                             url: '/seller/receipt_cash_export',
                             permission: 'order_list',
                         },
+                        {
+                            name: __('receipt_pdc_export'),
+                            icon: 'grid-fill',
+                            url: '/seller/receipt_pdc_export',
+                            permission: 'order_list',
+                        },
                     ]
                 },
                 {
