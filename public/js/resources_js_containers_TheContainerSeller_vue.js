@@ -498,6 +498,11 @@ __webpack_require__.r(__webpack_exports__);
           icon: 'grid-fill',
           url: '/seller/orders_export',
           permission: 'order_list'
+        }, {
+          name: __('receipt_cash_export'),
+          icon: 'grid-fill',
+          url: '/seller/receipt_cash_export',
+          permission: 'order_list'
         }]
       }, {
         name: __('settings'),

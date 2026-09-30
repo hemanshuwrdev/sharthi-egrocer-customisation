@@ -222,6 +222,7 @@ const SellerWithdrawalRequests = () => import("../views/Sellers/WithdrawalReques
 const SellerProductSalesReports = () => import("../views/Sellers/ProductSalesReports");
 const SellerSalesReports = () => import("../views/Sellers/SalesReports");
 const SellerOrdersExport = () => import("../views/Sellers/OrdersExport");
+const SellerReceiptCashExport = () => import("../views/Sellers/ReceiptCashExport");
 const SellerCommissionBilling = () => import("../views/Sellers/CommissionBilling");
 const SellerTripsList = () => import("../views/Sellers/TripsList");
 const SellerTripReconciliation = () => import("../views/Sellers/TripReconciliation");
@@ -2115,6 +2116,16 @@ function configRoutes() {
                         permission: 'order_list',
                         role: sellerRoles,
                         title: 'Orders Export'
+                    }
+                },
+                {
+                    path: "receipt_cash_export",
+                    name: "SellerReceiptCashExport",
+                    component: SellerReceiptCashExport,
+                    meta: {
+                        permission: 'order_list',
+                        role: sellerRoles,
+                        title: 'Receipt Cash Export'
                     }
                 },
                 {
