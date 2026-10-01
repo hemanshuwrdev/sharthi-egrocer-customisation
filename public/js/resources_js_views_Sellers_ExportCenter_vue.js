@@ -146,6 +146,36 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -171,11 +201,16 @@ __webpack_require__.r(__webpack_exports__);
         startDate: null,
         endDate: null
       },
+      creditNoteDateRange: {
+        startDate: null,
+        endDate: null
+      },
       downloading: {
         sales: false,
         cashBank: false,
         pdc: false,
-        products: false
+        products: false,
+        creditNote: false
       }
     };
   },
@@ -943,6 +978,125 @@ var render = function () {
                         ]
                       ),
                     ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-tab",
+                    { attrs: { title: _vm.__("credit_note_export") } },
+                    [
+                      _c(
+                        "b-row",
+                        { staticClass: "mb-2 ms-1" },
+                        [
+                          _c("b-col", { attrs: { md: "4" } }, [
+                            _c("h6", { staticClass: "box-title" }, [
+                              _vm._v(_vm._s(_vm.__("from_and_to_date"))),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "d-flex justify-content-center align-items-center",
+                              },
+                              [
+                                _c("date-range-picker", {
+                                  attrs: {
+                                    "append-to-body": true,
+                                    "single-date-picker": "range",
+                                    "locale-data": _vm.dateRangePickerLocale,
+                                    ranges: _vm.dateRangePickerRanges,
+                                    autoApply: false,
+                                    showDropdowns: true,
+                                    maxDate: _vm.maxDate,
+                                  },
+                                  model: {
+                                    value: _vm.creditNoteDateRange,
+                                    callback: function ($$v) {
+                                      _vm.creditNoteDateRange = $$v
+                                    },
+                                    expression: "creditNoteDateRange",
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-sm btn-danger ml-1",
+                                    on: {
+                                      click: function ($event) {
+                                        ;(_vm.creditNoteDateRange.startDate =
+                                          null),
+                                          (_vm.creditNoteDateRange.endDate =
+                                            null)
+                                      },
+                                    },
+                                  },
+                                  [
+                                    _vm._v(
+                                      "\n                                            " +
+                                        _vm._s(_vm.__("clear")) +
+                                        "\n                                        "
+                                    ),
+                                  ]
+                                ),
+                              ],
+                              1
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "b-col",
+                            {
+                              staticClass: "d-flex align-items-end",
+                              attrs: { md: "2" },
+                            },
+                            [
+                              _c(
+                                "button",
+                                {
+                                  staticClass: "btn btn-primary",
+                                  attrs: {
+                                    disabled:
+                                      !_vm.creditNoteDateRange.startDate ||
+                                      !_vm.creditNoteDateRange.endDate ||
+                                      _vm.downloading.creditNote,
+                                  },
+                                  on: {
+                                    click: function ($event) {
+                                      return _vm.downloadXlsx(
+                                        "/credit-notes/export_csv",
+                                        _vm.creditNoteDateRange,
+                                        "CreditNote",
+                                        _vm.downloading,
+                                        "creditNote"
+                                      )
+                                    },
+                                  },
+                                },
+                                [
+                                  _c("i", {
+                                    staticClass: "fa fa-download",
+                                    attrs: { "aria-hidden": "true" },
+                                  }),
+                                  _vm._v(
+                                    "\n                                        " +
+                                      _vm._s(
+                                        _vm.downloading.creditNote
+                                          ? _vm.__("loading") + "..."
+                                          : _vm.__("download_xlsx")
+                                      ) +
+                                      "\n                                    "
+                                  ),
+                                ]
+                              ),
+                            ]
+                          ),
+                        ],
+                        1
+                      ),
+                    ],
+                    1
                   ),
                 ],
                 1

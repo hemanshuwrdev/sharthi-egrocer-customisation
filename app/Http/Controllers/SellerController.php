@@ -6,12 +6,14 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\API\OrderStatusApiController;
 use App\Models\Category;
 use App\Models\City;
+use App\Models\CreditNoteItem;
 use App\Models\DeliveryBoy;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\OrderStatusList;
 use App\Models\PanelNotification;
+use App\Models\ReturnStatusList;
 use App\Models\SellerProduct;
 use App\Models\MasterProductVariant;
 use App\Models\ReturnRequest;
@@ -1091,6 +1093,209 @@ class SellerController extends BaseController
         }
 
         return $this->downloadXlsx($headers, $sheetRows, 'Sales.xlsx');
+    }
+
+    /**
+     * Credit Note export — Tally "Credit Note" voucher import template, one row per
+     * credit note line item. Column layout is identical to exportOrdersCsv()'s Sales
+     * export (those headers already reserve Bill Ref No/Date for this), sourced from
+     * credit_notes / credit_note_items — generated automatically at trip close for
+     * approved returns and cancelled orders (see SettlementController::generateCreditNotesForTripClose).
+     *
+     * Quantity/Rate/Discount/Tax come straight from the original order_item, not from
+     * credit_note_items.quantity (which is hardcoded to 1 for returns) — returns are
+     * always all-or-nothing per line item, so the original order_item's quantity is
+     * always the correct returned quantity.
+     */
+    public function exportCreditNotesCsv(Request $request)
+    {
+        $seller_id = auth()->user()->seller->id;
+        $seller = DB::table('sellers')->where('id', $seller_id)->first();
+        $sellerState = $seller->state ?? null;
+
+        $startDate = $request->filled('startDate')
+            ? Carbon::parse($request->input('startDate'))->startOfDay()
+            : null;
+        $endDate = $request->filled('endDate')
+            ? Carbon::parse($request->input('endDate'))->endOfDay()
+            : null;
+
+        $rows = CreditNoteItem::select(
+            'credit_notes.id as credit_note_id',
+            'credit_notes.credit_note_no',
+            'credit_notes.generated_at',
+            'credit_notes.reason_type',
+            'order_items.order_id',
+            'order_items.quantity',
+            'order_items.price',
+            'order_items.discount',
+            'order_items.tax_percentage',
+            'orders.discount as order_discount',
+            'orders.promo_discount as order_promo_discount',
+            'orders.scheme_discount as order_scheme_discount',
+            'order_items.created_at as item_created_at',
+            'order_items.product_name',
+            'order_items.variant_name',
+            'orders.invoice_number',
+            'orders.placed_by_salesman_id',
+            'orders.loading_slip_id',
+            'retailer_profiles.party_name',
+            'retailer_profiles.shop_name',
+            'retailer_profiles.gst_no',
+            'users.name as user_name',
+            'ua.address as ua_address',
+            'ua.landmark as ua_landmark',
+            'ua.area as ua_area',
+            'ua.city as ua_city',
+            'ua.state as ua_state',
+            'ua.pincode as ua_pincode',
+            'salesman.name as salesman_name',
+            DB::raw('COALESCE(mpv.unit_id, pv.stock_unit_id) as unit_id'),
+            DB::raw('COALESCE(u.short_code, u2.short_code) as unit_symbol'),
+            DB::raw('(SELECT mp.hsn FROM master_products mp
+                      INNER JOIN master_product_variants mpv2 ON mpv2.master_product_id = mp.id
+                      WHERE mpv2.id = order_items.master_product_variant_id LIMIT 1) as hsn'),
+            DB::raw('(SELECT rr.reason FROM return_requests rr
+                      WHERE rr.order_item_id = credit_note_items.order_item_id
+                      AND rr.status = ' . ReturnStatusList::$rApproved . '
+                      ORDER BY rr.id DESC LIMIT 1) as return_reason')
+        )
+            ->join('credit_notes', 'credit_note_items.credit_note_id', '=', 'credit_notes.id')
+            ->leftJoin('order_items', 'credit_note_items.order_item_id', '=', 'order_items.id')
+            ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
+            ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('user_addresses as ua', 'orders.address_id', '=', 'ua.id')
+            ->leftJoin('salesmen as salesman', 'orders.placed_by_salesman_id', '=', 'salesman.id')
+            ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
+            ->leftJoin('units as u', 'mpv.unit_id', '=', 'u.id')
+            ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
+            ->leftJoin('units as u2', 'pv.stock_unit_id', '=', 'u2.id')
+            ->where('credit_notes.seller_id', $seller_id);
+
+        if ($startDate && $endDate) {
+            $rows = $rows->whereBetween('credit_notes.generated_at', [$startDate, $endDate]);
+        }
+
+        $rows = $rows->orderBy('credit_notes.id')->orderBy('credit_note_items.id')->get();
+
+        // Loading slip (vehicle/driver) is per-order, batched separately — same approach
+        // as the Sales export.
+        $slipIds = $rows->pluck('loading_slip_id')->filter()->unique();
+        $slips = $slipIds->isEmpty() ? collect() : DB::table('loading_slips as ls')
+            ->leftJoin('vehicles as v', 'ls.vehicle_id', '=', 'v.id')
+            ->leftJoin('delivery_boys as db', 'ls.driver_id', '=', 'db.id')
+            ->whereIn('ls.id', $slipIds)
+            ->get(['ls.id', 'ls.slip_no', 'v.vehicle_number', 'db.name as driver_name'])
+            ->keyBy('id');
+
+        // Column layout + wording matches the client's CreditNote.xlsx sample exactly
+        // (verbatim header text, including which columns use \n vs a plain space) —
+        // a few of these intentionally differ from exportOrdersCsv()'s Sales headers,
+        // which use a different (negative) discount sign convention than this sample.
+        $headers = [
+            "Voucher Type\n(exact Tally name)",
+            "Voucher Date\n(DD-MM-YYYY text)",
+            'Voucher No',
+            "Party Ledger\n(exact Tally name)",
+            "Party Alias\n(used if Party blank)",
+            'Party GSTIN',
+            "Place of Supply\n(STATE e.g. Gujarat)",
+            "Supply Type\nINTRA_STATE / INTER_STATE",
+            "Bill Ref No\nSales: blank = Voucher No\nCN: Against Invoice No",
+            "Bill Ref Date\nCN: Orig. Invoice Date",
+            'Sales / Sales Return Ledger',
+            "Stock Item Name\n(exact Tally name)",
+            "HSN/SAC\n(needed for new item)",
+            'Quantity',
+            "Unit\n(Tally unit symbol;\nneeded for new item)",
+            'Rate',
+            "Item Discount %\n(2 = 2% off)",
+            "Invoice Discount (amt)\n(first row of the order;\n100 = Rs 100 off)",
+            "GST Rate %\n(5 = 5%)",
+            "Godown\n(blank = Main Location)",
+            'Order Ref',
+            'Party Address Line 1',
+            'Party Address Line 2',
+            "Party Address Line 3\n(City, State, PIN)",
+            'Party Pincode (6 digits)',
+            'Vehicle No',
+            'Loading Slip No',
+            'Destination (Area)',
+            'Dispatched Through (Salesman / Self - Retailer App Order)',
+            'Driver Name (Carrier Name/Agent)',
+            'Narration',
+        ];
+
+        $sheetRows = [];
+        $seenCreditNotes = [];
+        foreach ($rows as $row) {
+            $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
+            $itemName = $row->variant_name ? $row->product_name . ' (' . $row->variant_name . ')' : $row->product_name;
+            $slip = $row->loading_slip_id ? ($slips[$row->loading_slip_id] ?? null) : null;
+
+            $partyState = $row->ua_state ?: null;
+            $supplyType = ($partyState && $sellerState && strcasecmp($partyState, $sellerState) === 0)
+                ? 'INTRA_STATE' : 'INTER_STATE';
+
+            // "first row of the order" per the header — here that's the first row of
+            // this credit note (the voucher being built), mirroring exportOrdersCsv()'s
+            // own first-row-only dedup so the amount isn't repeated on every line.
+            $isFirstRowOfCreditNote = !isset($seenCreditNotes[$row->credit_note_id]);
+            $seenCreditNotes[$row->credit_note_id] = true;
+            $invoiceDiscountAmt = '';
+            if ($isFirstRowOfCreditNote) {
+                $orderDiscount = (float) $row->order_discount + (float) $row->order_promo_discount + (float) $row->order_scheme_discount;
+                $invoiceDiscountAmt = $orderDiscount > 0 ? $orderDiscount : '';
+            }
+
+            $dispatchedThrough = $row->placed_by_salesman_id && $row->salesman_name
+                ? $row->salesman_name . ' (Salesman)'
+                : 'Self - Retailer App Order';
+
+            $addressLine3 = trim(($row->ua_city ?: '') . ($row->ua_state ? ', ' . $row->ua_state : '')
+                . ($row->ua_pincode ? ' - ' . $row->ua_pincode : ''), ', ');
+
+            $narration = $row->reason_type === 'return'
+                ? ($row->return_reason ?: ('Sales Return - Order #' . $row->order_id))
+                : ('Order Cancelled - Order #' . $row->order_id);
+
+            $sheetRows[] = [
+                'Credit Note',
+                Carbon::parse($row->generated_at)->format('d-m-Y'),
+                $row->credit_note_no,
+                $partyName,
+                '',
+                $row->gst_no,
+                $partyState,
+                $supplyType,
+                $row->invoice_number ?: ('#' . $row->order_id),
+                $row->item_created_at ? Carbon::parse($row->item_created_at)->format('d-m-Y') : '',
+                'Sales Returns',
+                $itemName,
+                $row->hsn,
+                $row->quantity,
+                $row->unit_symbol,
+                $row->price,
+                $row->discount ?: 0,
+                $invoiceDiscountAmt,
+                $row->tax_percentage,
+                '',
+                'Order ' . $row->order_id,
+                $row->ua_address,
+                $row->ua_landmark,
+                $addressLine3,
+                $row->ua_pincode,
+                $slip->vehicle_number ?? '',
+                $slip->slip_no ?? '',
+                $row->ua_area,
+                $dispatchedThrough,
+                $slip->driver_name ?? '',
+                $narration,
+            ];
+        }
+
+        return $this->downloadXlsx($headers, $sheetRows, 'CreditNote.xlsx');
     }
 
     /**

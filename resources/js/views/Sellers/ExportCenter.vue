@@ -121,6 +121,36 @@
                                 </button>
                             </b-tab>
 
+                            <b-tab :title="__('credit_note_export')">
+                                <b-row class="mb-2 ms-1">
+                                    <b-col md="4">
+                                        <h6 class="box-title">{{ __('from_and_to_date') }}</h6>
+                                        <div class="d-flex justify-content-center align-items-center">
+                                            <date-range-picker
+                                                :append-to-body="true"
+                                                :single-date-picker="'range'"
+                                                :locale-data="dateRangePickerLocale"
+                                                :ranges="dateRangePickerRanges"
+                                                :autoApply=false
+                                                :showDropdowns="true"
+                                                v-model="creditNoteDateRange"
+                                                :maxDate="maxDate"
+                                            ></date-range-picker>
+                                            <button class="btn btn-sm btn-danger ml-1" @click="creditNoteDateRange.startDate = null, creditNoteDateRange.endDate = null">
+                                                {{ __('clear') }}
+                                            </button>
+                                        </div>
+                                    </b-col>
+                                    <b-col md="2" class="d-flex align-items-end">
+                                        <button class="btn btn-primary" :disabled="!creditNoteDateRange.startDate || !creditNoteDateRange.endDate || downloading.creditNote"
+                                            @click="downloadXlsx('/credit-notes/export_csv', creditNoteDateRange, 'CreditNote', downloading, 'creditNote')">
+                                            <i class="fa fa-download" aria-hidden="true"></i>
+                                            {{ downloading.creditNote ? __('loading') + '...' : __('download_xlsx') }}
+                                        </button>
+                                    </b-col>
+                                </b-row>
+                            </b-tab>
+
                         </b-tabs>
                     </div>
                 </div>
@@ -143,7 +173,8 @@ export default {
             salesDateRange: {startDate: null, endDate: null},
             cashBankDateRange: {startDate: null, endDate: null},
             pdcDateRange: {startDate: null, endDate: null},
-            downloading: {sales: false, cashBank: false, pdc: false, products: false},
+            creditNoteDateRange: {startDate: null, endDate: null},
+            downloading: {sales: false, cashBank: false, pdc: false, products: false, creditNote: false},
         }
     },
     methods: {

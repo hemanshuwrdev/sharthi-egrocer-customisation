@@ -173,6 +173,7 @@
     "receipt_pdc_export": "Receipt PDC Export",
     "product_master_export": "Product Master Export",
     "product_master_export_hint": "Import this file FIRST in Tally, before Sales / Credit Notes, so items carry their groups and units.",
+    "credit_note_export": "Credit Note Export",
     "download_xlsx": "Download XLSX",
     "export_center": "Export Center",
     "download_csv": "Download CSV",
