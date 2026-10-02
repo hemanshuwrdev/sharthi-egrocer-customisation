@@ -307,6 +307,34 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -320,6 +348,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       id: null,
       order: [],
       order_items: [],
+      credit_notes: [],
+      isDownloadingCreditNote: false,
       pickup_date: null,
       discount_in_rupees: 0,
       whatsapp_message: "",
@@ -467,6 +497,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         if (data.status === 1) {
           _this2.order = response.data.data.order;
           _this2.order_items = response.data.data.order_items;
+          _this2.credit_notes = response.data.data.credit_notes || [];
           _this2.pickup_date = response.data.data.pickup_date;
           _this2.order_status_id = _this2.order.active_status != 0 && _this2.order.active_status != "" ? _this2.order.active_status : "";
         } else {
@@ -593,6 +624,72 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _this4.isLoading = false;
       });
     },
+    downloadCreditNote: function downloadCreditNote() {
+      var _this5 = this;
+      var creditNoteId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      this.isDownloadingCreditNote = true;
+      var postData = {
+        order_id: this.id
+      };
+      if (creditNoteId) {
+        postData.credit_note_id = creditNoteId;
+      }
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: this.$apiUrl + '/orders/credit_note_download',
+        method: 'post',
+        responseType: 'blob',
+        data: postData
+      }).then(function (response) {
+        if (response.data && response.data.type === 'application/json') {
+          var reader = new FileReader();
+          reader.onload = function () {
+            try {
+              var res = JSON.parse(reader.result);
+              _this5.showError(res.message || "Failed to download credit note!");
+            } catch (e) {
+              _this5.showError("Failed to download credit note!");
+            }
+            _this5.isDownloadingCreditNote = false;
+          };
+          reader.readAsText(response.data);
+          return;
+        }
+        var blob = new Blob([response.data], {
+          type: 'application/pdf'
+        });
+        var fileURL = window.URL.createObjectURL(blob);
+        var fileLink = document.createElement('a');
+        fileLink.href = fileURL;
+        var filename = 'Credit-Note-#' + _this5.id + '.pdf';
+        if (creditNoteId && _this5.credit_notes) {
+          var found = _this5.credit_notes.find(function (c) {
+            return c.id === creditNoteId;
+          });
+          if (found && found.credit_note_no) {
+            filename = 'CreditNote-' + found.credit_note_no.replace(/[/\\?%*:|"<>]/g, '_') + '.pdf';
+          }
+        }
+        fileLink.setAttribute('download', filename);
+        document.body.appendChild(fileLink);
+        fileLink.click();
+        setTimeout(function () {
+          if (fileLink.parentNode) {
+            fileLink.parentNode.removeChild(fileLink);
+          }
+          window.URL.revokeObjectURL(fileURL);
+        }, 200);
+        _this5.isDownloadingCreditNote = false;
+      })["catch"](function (error) {
+        if (error.request && error.request.statusText) {
+          _this5.showError(error.request.statusText);
+        } else if (error.message) {
+          _this5.showError(error.message);
+        } else {
+          _this5.showError("Failed to download Credit Note PDF!");
+        }
+        _this5.isDownloadingCreditNote = false;
+      });
+    },
     getPickupAddress: function getPickupAddress(pickupAddress) {
       if (!pickupAddress) return 'Not specified';
       try {
@@ -632,11 +729,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     allSelectCheckBox: function allSelectCheckBox() {
-      var _this5 = this;
+      var _this6 = this;
       if (this.all_select == false) {
         this.all_select = true;
         this.order_items.forEach(function (item) {
-          _this5.selectedItems.push(item.id);
+          _this6.selectedItems.push(item.id);
         });
       } else {
         this.all_select = false;
@@ -652,7 +749,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     updateItemsStatus: function updateItemsStatus() {
-      var _this6 = this;
+      var _this7 = this;
       var vm = this;
       var uniqueSelectedItems = _toConsumableArray(new Set(this.selectedItems));
       if (uniqueSelectedItems.length !== 0) {
@@ -668,20 +765,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }).then(function (result) {
           if (result.value) {
             var ids = uniqueSelectedItems.toString();
-            _this6.isLoading = true;
+            _this7.isLoading = true;
             var postData = {
               ids: ids,
-              status_id: _this6.status_id
+              status_id: _this7.status_id
             };
-            axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this6.$apiUrl + '/orders/update_items_status', postData).then(function (response) {
-              _this6.isLoading = false;
+            axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this7.$apiUrl + '/orders/update_items_status', postData).then(function (response) {
+              _this7.isLoading = false;
               var data = response.data;
               if (data.status === 1) {
-                _this6.getOrder();
-                _this6.status_id = '';
-                _this6.selectedItems = [];
-                _this6.all_select = false;
-                _this6.showMessage("success", data.message);
+                _this7.getOrder();
+                _this7.status_id = '';
+                _this7.selectedItems = [];
+                _this7.all_select = false;
+                _this7.showMessage("success", data.message);
                 setTimeout(function () {
                   vm.$swal.close();
                 }, 2000);
@@ -691,7 +788,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               }
             })["catch"](function (error) {
               vm.isLoading = false;
-              _this6.showError("Something went wrong!");
+              _this7.showError("Something went wrong!");
             });
           }
         });
@@ -738,7 +835,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return item.active_status != 6 && item.active_status != 7 && item.active_status != 8 && item.active_status != 11;
     },
     cancelOrderItem: function cancelOrderItem(item) {
-      var _this7 = this;
+      var _this8 = this;
       this.$swal.fire({
         title: this.__('are_you_sure'),
         input: 'textarea',
@@ -752,32 +849,32 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         icon: 'warning',
         inputValidator: function inputValidator(value) {
           if (!value || !value.trim()) {
-            return _this7.__('cancellation_reason') + ' ' + _this7.__('is_required');
+            return _this8.__('cancellation_reason') + ' ' + _this8.__('is_required');
           }
         },
         showLoaderOnConfirm: true,
         allowOutsideClick: function allowOutsideClick() {
-          return !_this7.$swal.isLoading();
+          return !_this8.$swal.isLoading();
         },
         preConfirm: function preConfirm(reason) {
           var postData = {
             order_item_id: item.id,
             cancellation_reason: reason
           };
-          return axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this7.$apiUrl + '/orders/cancel_order_item', postData).then(function (response) {
+          return axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this8.$apiUrl + '/orders/cancel_order_item', postData).then(function (response) {
             return response.data;
           })["catch"](function (error) {
-            _this7.$swal.showValidationMessage('Something went wrong!');
+            _this8.$swal.showValidationMessage('Something went wrong!');
           });
         }
       }).then(function (result) {
         if (result.isConfirmed) {
           var data = result.value;
           if (data.status === 1) {
-            _this7.getOrder();
-            _this7.showMessage("success", data.message);
+            _this8.getOrder();
+            _this8.showMessage("success", data.message);
           } else {
-            _this7.showError(data.message);
+            _this8.showError(data.message);
           }
         }
       });
@@ -1275,7 +1372,7 @@ var render = function () {
                     _vm._v(" "),
                     _c(
                       "span",
-                      { staticClass: "pull-right" },
+                      { staticClass: "pull-right d-flex align-items-center" },
                       [
                         _c(
                           "button",
@@ -1318,6 +1415,110 @@ var render = function () {
                           2
                         ),
                         _vm._v(" "),
+                        _vm.credit_notes && _vm.credit_notes.length > 0
+                          ? [
+                              _vm.credit_notes.length === 1
+                                ? _c(
+                                    "button",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "b-tooltip",
+                                          rawName: "v-b-tooltip.hover",
+                                          modifiers: { hover: true },
+                                        },
+                                      ],
+                                      staticClass:
+                                        "btn btn-secondary btn-sm ms-2",
+                                      attrs: {
+                                        disabled: _vm.isDownloadingCreditNote,
+                                        title:
+                                          "Download Credit Note " +
+                                          _vm.credit_notes[0].credit_note_no,
+                                      },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.downloadCreditNote(
+                                            _vm.credit_notes[0].id
+                                          )
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _vm.isDownloadingCreditNote
+                                        ? [
+                                            _c("b-spinner", {
+                                              attrs: {
+                                                small: "",
+                                                label: "Spinning",
+                                              },
+                                            }),
+                                            _vm._v(
+                                              " " +
+                                                _vm._s(_vm.__("downloading")) +
+                                                "...\n                                    "
+                                            ),
+                                          ]
+                                        : [
+                                            _c("i", {
+                                              staticClass: "fa fa-download",
+                                            }),
+                                            _vm._v(
+                                              " Download Credit Note\n                                    "
+                                            ),
+                                          ],
+                                    ],
+                                    2
+                                  )
+                                : _c(
+                                    "b-dropdown",
+                                    {
+                                      staticClass: "ms-2",
+                                      attrs: {
+                                        text: "Download Credit Note",
+                                        variant: "secondary",
+                                        size: "sm",
+                                      },
+                                    },
+                                    _vm._l(_vm.credit_notes, function (cn) {
+                                      return _c(
+                                        "b-dropdown-item",
+                                        {
+                                          key: cn.id,
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.downloadCreditNote(
+                                                cn.id
+                                              )
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _c("i", {
+                                            staticClass: "fa fa-download me-1",
+                                          }),
+                                          _vm._v(
+                                            " " +
+                                              _vm._s(cn.credit_note_no) +
+                                              " (" +
+                                              _vm._s(
+                                                cn.reason_type === "return"
+                                                  ? "Return"
+                                                  : "Cancel"
+                                              ) +
+                                              ") - " +
+                                              _vm._s(_vm.$currency) +
+                                              _vm._s(cn.total_amount) +
+                                              "\n                                    "
+                                          ),
+                                        ]
+                                      )
+                                    }),
+                                    1
+                                  ),
+                            ]
+                          : _vm._e(),
+                        _vm._v(" "),
                         _c(
                           "router-link",
                           {
@@ -1328,7 +1529,7 @@ var render = function () {
                                 modifiers: { hover: true },
                               },
                             ],
-                            staticClass: "btn btn-primary btn-sm",
+                            staticClass: "btn btn-primary btn-sm ms-2",
                             attrs: {
                               to: _vm.invoiceRoute,
                               title: _vm.__("generate_invoice"),
@@ -1347,7 +1548,7 @@ var render = function () {
                           ]
                         ),
                       ],
-                      1
+                      2
                     ),
                   ]),
                   _vm._v(" "),
@@ -1495,6 +1696,44 @@ var render = function () {
                               _vm._v(_vm._s(_vm.order.payment_method)),
                             ]),
                           ]),
+                          _vm._v(" "),
+                          _vm.credit_notes && _vm.credit_notes.length > 0
+                            ? _c("tr", [
+                                _c("th", { staticClass: "th-width" }, [
+                                  _vm._v("Credit Note"),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "td",
+                                  _vm._l(_vm.credit_notes, function (cn) {
+                                    return _c(
+                                      "span",
+                                      {
+                                        key: cn.id,
+                                        staticClass: "badge bg-secondary me-1",
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                                " +
+                                            _vm._s(cn.credit_note_no) +
+                                            " (" +
+                                            _vm._s(
+                                              cn.reason_type === "return"
+                                                ? "Sales Return"
+                                                : "Order Cancelled"
+                                            ) +
+                                            " — " +
+                                            _vm._s(_vm.$currency) +
+                                            _vm._s(cn.total_amount) +
+                                            ")\n                                            "
+                                        ),
+                                      ]
+                                    )
+                                  }),
+                                  0
+                                ),
+                              ])
+                            : _vm._e(),
                         ]),
                       ]),
                     ]),

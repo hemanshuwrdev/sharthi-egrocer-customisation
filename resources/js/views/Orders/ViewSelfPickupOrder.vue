@@ -108,7 +108,7 @@
                     <div class="card h-100">
                         <div class="card-header">
                             <h4>{{ __('billing_details') }}</h4>
-                            <span class="pull-right">
+                            <span class="pull-right d-flex align-items-center">
                                 <button @click="downloadInvoice" v-b-tooltip.hover :title="__('download_invoice')"
                                     class="btn btn-secondary btn-sm" :disabled="isLoading">
                                     <template v-if="isLoading">
@@ -119,8 +119,28 @@
                                     </template>
                                 </button>
 
+                                <template v-if="credit_notes && credit_notes.length > 0">
+                                    <button v-if="credit_notes.length === 1"
+                                        @click="downloadCreditNote(credit_notes[0].id)"
+                                        class="btn btn-secondary btn-sm ms-2"
+                                        :disabled="isDownloadingCreditNote"
+                                        v-b-tooltip.hover :title="'Download Credit Note ' + credit_notes[0].credit_note_no">
+                                        <template v-if="isDownloadingCreditNote">
+                                            <b-spinner small label="Spinning"></b-spinner> {{ __('downloading') }}...
+                                        </template>
+                                        <template v-else>
+                                            <i class="fa fa-download"></i> Download Credit Note
+                                        </template>
+                                    </button>
+                                    <b-dropdown v-else text="Download Credit Note" variant="secondary" size="sm" class="ms-2">
+                                        <b-dropdown-item v-for="cn in credit_notes" :key="cn.id" @click="downloadCreditNote(cn.id)">
+                                            <i class="fa fa-download me-1"></i> {{ cn.credit_note_no }} ({{ cn.reason_type === 'return' ? 'Return' : 'Cancel' }}) - {{ $currency }}{{ cn.total_amount }}
+                                        </b-dropdown-item>
+                                    </b-dropdown>
+                                </template>
+
                                 <router-link :to="invoiceRoute" v-b-tooltip.hover :title="__('generate_invoice')"
-                                    class="btn btn-primary btn-sm">
+                                    class="btn btn-primary btn-sm ms-2">
                                     <i class="fa fa-file" aria-hidden="true"></i> {{ __('generate_invoice') }}
                                 </router-link>
                             </span>
@@ -173,6 +193,14 @@
                                         <tr>
                                             <th class="th-width">{{ __('payment_method') }}</th>
                                             <td>{{ order.payment_method }}</td>
+                                        </tr>
+                                        <tr v-if="credit_notes && credit_notes.length > 0">
+                                            <th class="th-width">Credit Note</th>
+                                            <td>
+                                                <span v-for="cn in credit_notes" :key="cn.id" class="badge bg-secondary me-1">
+                                                    {{ cn.credit_note_no }} ({{ cn.reason_type === 'return' ? 'Sales Return' : 'Order Cancelled' }} — {{ $currency }}{{ cn.total_amount }})
+                                                </span>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -299,6 +327,8 @@ export default {
             id: null,
             order: [],
             order_items: [],
+            credit_notes: [],
+            isDownloadingCreditNote: false,
             pickup_date: null,
 
             discount_in_rupees: 0,
@@ -443,6 +473,7 @@ export default {
                     if (data.status === 1) {
                         this.order = response.data.data.order;
                         this.order_items = response.data.data.order_items;
+                        this.credit_notes = response.data.data.credit_notes || [];
 
                         this.pickup_date = response.data.data.pickup_date;
 
@@ -579,6 +610,67 @@ export default {
                     this.showError("Something went wrong!");
                 }
                 this.isLoading = false;
+            });
+        },
+        downloadCreditNote(creditNoteId = null) {
+            this.isDownloadingCreditNote = true;
+            let postData = {
+                order_id: this.id,
+            };
+            if (creditNoteId) {
+                postData.credit_note_id = creditNoteId;
+            }
+            axios({
+                url: this.$apiUrl + '/orders/credit_note_download',
+                method: 'post',
+                responseType: 'blob',
+                data: postData
+            }).then((response) => {
+                if (response.data && response.data.type === 'application/json') {
+                    let reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            let res = JSON.parse(reader.result);
+                            this.showError(res.message || "Failed to download credit note!");
+                        } catch (e) {
+                            this.showError("Failed to download credit note!");
+                        }
+                        this.isDownloadingCreditNote = false;
+                    };
+                    reader.readAsText(response.data);
+                    return;
+                }
+
+                let blob = new Blob([response.data], { type: 'application/pdf' });
+                var fileURL = window.URL.createObjectURL(blob);
+                var fileLink = document.createElement('a');
+                fileLink.href = fileURL;
+                let filename = 'Credit-Note-#' + this.id + '.pdf';
+                if (creditNoteId && this.credit_notes) {
+                    let found = this.credit_notes.find(c => c.id === creditNoteId);
+                    if (found && found.credit_note_no) {
+                        filename = 'CreditNote-' + found.credit_note_no.replace(/[/\\?%*:|"<>]/g, '_') + '.pdf';
+                    }
+                }
+                fileLink.setAttribute('download', filename);
+                document.body.appendChild(fileLink);
+                fileLink.click();
+                setTimeout(() => {
+                    if (fileLink.parentNode) {
+                        fileLink.parentNode.removeChild(fileLink);
+                    }
+                    window.URL.revokeObjectURL(fileURL);
+                }, 200);
+                this.isDownloadingCreditNote = false;
+            }).catch(error => {
+                if (error.request && error.request.statusText) {
+                    this.showError(error.request.statusText);
+                } else if (error.message) {
+                    this.showError(error.message);
+                } else {
+                    this.showError("Failed to download Credit Note PDF!");
+                }
+                this.isDownloadingCreditNote = false;
             });
         },
         getPickupAddress(pickupAddress) {

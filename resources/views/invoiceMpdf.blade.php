@@ -6,10 +6,11 @@
 
     $logo = \App\Models\Setting::get_value('logo') ?? "";
     $logo_url = '';
-    if($logo !== ""){
-        $logo_url = url('/').'/storage/'.$logo;
-    }else{
-        $logo_url = asset('images/favicon.png');
+    if ($logo !== "" && file_exists(public_path('storage/' . $logo))) {
+        $ext = pathinfo($logo, PATHINFO_EXTENSION);
+        $logo_url = 'data:image/' . ($ext === 'svg' ? 'svg+xml' : $ext) . ';base64,' . base64_encode(file_get_contents(public_path('storage/' . $logo)));
+    } elseif (file_exists(public_path('images/favicon.png'))) {
+        $logo_url = 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/favicon.png')));
     }
 
     $currency = \App\Models\Setting::get_value('currency') ?? '₹';
@@ -43,11 +44,10 @@
 <html>
     <head>
         <title>Invoice Order - {{ $app_name }}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
             body {
-                font-family: 'Inter', sans-serif;
+                font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif;
                 color: #111;
                 font-size: 11px;
                 background: #fff;

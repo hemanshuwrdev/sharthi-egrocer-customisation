@@ -439,12 +439,41 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
-    return _defineProperty({
+    var _ref;
+    return _ref = {
       login_user: _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].user,
       isLoading: false,
       isLoadingDboy: false,
@@ -465,9 +494,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       itemModalShow: false,
       item: '',
       userRole: ''
-    }, "order", {
+    }, _defineProperty(_ref, "order", {
       order_id: '' // Replace with the actual order ID
-    });
+    }), _defineProperty(_ref, "credit_notes", []), _defineProperty(_ref, "isDownloadingCreditNote", false), _ref;
   },
   computed: {
     isSellerRoute: function isSellerRoute() {
@@ -615,6 +644,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           _this2.order = response.data.data.order;
           _this2.order_items = response.data.data.order_items;
           _this2.deliveryBoys = response.data.data.deliveryBoys;
+          _this2.credit_notes = response.data.data.credit_notes || [];
           _this2.delivery_boy_id = _this2.order.delivery_boy_id != 0 && _this2.order.delivery_boy_id != "" ? _this2.order.delivery_boy_id : "";
           _this2.order_status_id = _this2.order.active_status != 0 && _this2.order.active_status != "" ? _this2.order.active_status : "";
         } else {
@@ -738,12 +768,75 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         _this5.isLoading = false;
       });
     },
-    allSelectCheckBox: function allSelectCheckBox() {
+    downloadCreditNote: function downloadCreditNote(creditNoteId) {
       var _this6 = this;
+      this.isDownloadingCreditNote = true;
+      var postData = {
+        order_id: this.id,
+        credit_note_id: creditNoteId
+      };
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: this.$apiUrl + '/orders/credit_note_download',
+        method: 'post',
+        responseType: 'blob',
+        data: postData
+      }).then(function (response) {
+        if (response.data && response.data.type === 'application/json') {
+          var reader = new FileReader();
+          reader.onload = function () {
+            try {
+              var res = JSON.parse(reader.result);
+              _this6.showError(res.message || "Failed to download credit note!");
+            } catch (e) {
+              _this6.showError("Failed to download credit note!");
+            }
+            _this6.isDownloadingCreditNote = false;
+          };
+          reader.readAsText(response.data);
+          return;
+        }
+        var blob = new Blob([response.data], {
+          type: 'application/pdf'
+        });
+        var fileURL = window.URL.createObjectURL(blob);
+        var fileLink = document.createElement('a');
+        fileLink.href = fileURL;
+        var filename = 'CreditNote-Order-#' + _this6.id + '.pdf';
+        if (creditNoteId && _this6.credit_notes) {
+          var found = _this6.credit_notes.find(function (c) {
+            return c.id === creditNoteId;
+          });
+          if (found && found.credit_note_no) {
+            filename = 'CreditNote-' + found.credit_note_no.replace(/[/\\?%*:|"<>]/g, '_') + '.pdf';
+          }
+        }
+        fileLink.setAttribute('download', filename);
+        document.body.appendChild(fileLink);
+        fileLink.click();
+        setTimeout(function () {
+          if (fileLink.parentNode) {
+            fileLink.parentNode.removeChild(fileLink);
+          }
+          window.URL.revokeObjectURL(fileURL);
+        }, 200);
+        _this6.isDownloadingCreditNote = false;
+      })["catch"](function (error) {
+        if (error.request && error.request.statusText) {
+          _this6.showError(error.request.statusText);
+        } else if (error.message) {
+          _this6.showError(error.message);
+        } else {
+          _this6.showError("Failed to download credit note!");
+        }
+        _this6.isDownloadingCreditNote = false;
+      });
+    },
+    allSelectCheckBox: function allSelectCheckBox() {
+      var _this7 = this;
       if (this.all_select == false) {
         this.all_select = true;
         this.order_items.forEach(function (item) {
-          _this6.selectedItems.push(item.id);
+          _this7.selectedItems.push(item.id);
         });
       } else {
         this.all_select = false;
@@ -759,7 +852,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     updateItemsStatus: function updateItemsStatus() {
-      var _this7 = this;
+      var _this8 = this;
       var vm = this;
       var uniqueSelectedItems = _toConsumableArray(new Set(this.selectedItems));
       if (uniqueSelectedItems.length !== 0) {
@@ -775,20 +868,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }).then(function (result) {
           if (result.value) {
             var ids = uniqueSelectedItems.toString();
-            _this7.isLoading = true;
+            _this8.isLoading = true;
             var postData = {
               ids: ids,
-              status_id: _this7.status_id
+              status_id: _this8.status_id
             };
-            axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this7.$apiUrl + '/orders/update_items_status', postData).then(function (response) {
-              _this7.isLoading = false;
+            axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this8.$apiUrl + '/orders/update_items_status', postData).then(function (response) {
+              _this8.isLoading = false;
               var data = response.data;
               if (data.status === 1) {
-                _this7.getOrder();
-                _this7.status_id = '';
-                _this7.selectedItems = [];
-                _this7.all_select = false;
-                _this7.showMessage("success", data.message);
+                _this8.getOrder();
+                _this8.status_id = '';
+                _this8.selectedItems = [];
+                _this8.all_select = false;
+                _this8.showMessage("success", data.message);
                 setTimeout(function () {
                   vm.$swal.close();
                 }, 2000);
@@ -798,7 +891,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
               }
             })["catch"](function (error) {
               vm.isLoading = false;
-              _this7.showError("Something went wrong!");
+              _this8.showError("Something went wrong!");
             });
           }
         });
@@ -817,7 +910,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return item.active_status != 6 && item.active_status != 7 && item.active_status != 8 && item.active_status != 11; // 11=selfPickupPicked
     },
     cancelOrderItem: function cancelOrderItem(item) {
-      var _this8 = this;
+      var _this9 = this;
       this.$swal.fire({
         title: this.__('are_you_sure'),
         input: 'textarea',
@@ -831,32 +924,32 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         icon: 'warning',
         inputValidator: function inputValidator(value) {
           if (!value || !value.trim()) {
-            return _this8.__('cancellation_reason') + ' ' + _this8.__('is_required');
+            return _this9.__('cancellation_reason') + ' ' + _this9.__('is_required');
           }
         },
         showLoaderOnConfirm: true,
         allowOutsideClick: function allowOutsideClick() {
-          return !_this8.$swal.isLoading();
+          return !_this9.$swal.isLoading();
         },
         preConfirm: function preConfirm(reason) {
           var postData = {
             order_item_id: item.id,
             cancellation_reason: reason
           };
-          return axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this8.$apiUrl + '/orders/cancel_order_item', postData).then(function (response) {
+          return axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this9.$apiUrl + '/orders/cancel_order_item', postData).then(function (response) {
             return response.data;
           })["catch"](function (error) {
-            _this8.$swal.showValidationMessage('Something went wrong!');
+            _this9.$swal.showValidationMessage('Something went wrong!');
           });
         }
       }).then(function (result) {
         if (result.isConfirmed) {
           var data = result.value;
           if (data.status === 1) {
-            _this8.getOrder();
-            _this8.showMessage("success", data.message);
+            _this9.getOrder();
+            _this9.showMessage("success", data.message);
           } else {
-            _this8.showError(data.message);
+            _this9.showError(data.message);
           }
         }
       });
@@ -1319,51 +1412,162 @@ var render = function () {
                   _c("div", { staticClass: "card-header" }, [
                     _c("h4", [_vm._v(_vm._s(_vm.__("billing_details")))]),
                     _vm._v(" "),
-                    _c("span", { staticClass: "pull-right" }, [
-                      _vm.order.active_status == _vm.$delivered ||
-                      _vm.order.active_status == 6
-                        ? _c(
-                            "button",
-                            {
-                              directives: [
-                                {
-                                  name: "b-tooltip",
-                                  rawName: "v-b-tooltip.hover",
-                                  modifiers: { hover: true },
+                    _c(
+                      "span",
+                      { staticClass: "pull-right d-flex align-items-center" },
+                      [
+                        _vm.order.active_status == _vm.$delivered ||
+                        _vm.order.active_status == 6
+                          ? _c(
+                              "button",
+                              {
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.hover",
+                                    modifiers: { hover: true },
+                                  },
+                                ],
+                                staticClass: "btn btn-secondary btn-sm",
+                                attrs: {
+                                  title: _vm.__("download_invoice"),
+                                  disabled: _vm.isLoading,
                                 },
-                              ],
-                              staticClass: "btn btn-secondary btn-sm",
-                              attrs: {
-                                title: _vm.__("download_invoice"),
-                                disabled: _vm.isLoading,
+                                on: { click: _vm.downloadInvoice },
                               },
-                              on: { click: _vm.downloadInvoice },
-                            },
-                            [
-                              _vm.isLoading
-                                ? [
-                                    _c("b-spinner", {
-                                      attrs: { small: "", label: "Spinning" },
+                              [
+                                _vm.isLoading
+                                  ? [
+                                      _c("b-spinner", {
+                                        attrs: { small: "", label: "Spinning" },
+                                      }),
+                                      _vm._v(
+                                        " " +
+                                          _vm._s(_vm.__("downloading")) +
+                                          "...\n                                "
+                                      ),
+                                    ]
+                                  : [
+                                      _c("i", {
+                                        staticClass: "fa fa-download",
+                                      }),
+                                      _vm._v(
+                                        " " +
+                                          _vm._s(_vm.__("download_invoice")) +
+                                          "\n                                "
+                                      ),
+                                    ],
+                              ],
+                              2
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.credit_notes && _vm.credit_notes.length > 0
+                          ? [
+                              _vm.credit_notes.length === 1
+                                ? _c(
+                                    "button",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "b-tooltip",
+                                          rawName: "v-b-tooltip.hover",
+                                          modifiers: { hover: true },
+                                        },
+                                      ],
+                                      staticClass:
+                                        "btn btn-secondary btn-sm ms-2",
+                                      attrs: {
+                                        disabled: _vm.isDownloadingCreditNote,
+                                        title:
+                                          "Download Credit Note " +
+                                          _vm.credit_notes[0].credit_note_no,
+                                      },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.downloadCreditNote(
+                                            _vm.credit_notes[0].id
+                                          )
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _vm.isDownloadingCreditNote
+                                        ? [
+                                            _c("b-spinner", {
+                                              attrs: {
+                                                small: "",
+                                                label: "Spinning",
+                                              },
+                                            }),
+                                            _vm._v(
+                                              " " +
+                                                _vm._s(_vm.__("downloading")) +
+                                                "...\n                                    "
+                                            ),
+                                          ]
+                                        : [
+                                            _c("i", {
+                                              staticClass: "fa fa-download",
+                                            }),
+                                            _vm._v(
+                                              " Download Credit Note\n                                    "
+                                            ),
+                                          ],
+                                    ],
+                                    2
+                                  )
+                                : _c(
+                                    "b-dropdown",
+                                    {
+                                      staticClass: "ms-2",
+                                      attrs: {
+                                        text: "Download Credit Note",
+                                        variant: "secondary",
+                                        size: "sm",
+                                      },
+                                    },
+                                    _vm._l(_vm.credit_notes, function (cn) {
+                                      return _c(
+                                        "b-dropdown-item",
+                                        {
+                                          key: cn.id,
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.downloadCreditNote(
+                                                cn.id
+                                              )
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _c("i", {
+                                            staticClass: "fa fa-download me-1",
+                                          }),
+                                          _vm._v(
+                                            " " +
+                                              _vm._s(cn.credit_note_no) +
+                                              " (" +
+                                              _vm._s(
+                                                cn.reason_type === "return"
+                                                  ? "Return"
+                                                  : "Cancel"
+                                              ) +
+                                              ") - " +
+                                              _vm._s(_vm.$currency) +
+                                              _vm._s(cn.total_amount) +
+                                              "\n                                    "
+                                          ),
+                                        ]
+                                      )
                                     }),
-                                    _vm._v(
-                                      " " +
-                                        _vm._s(_vm.__("downloading")) +
-                                        "...\n                                "
-                                    ),
-                                  ]
-                                : [
-                                    _c("i", { staticClass: "fa fa-download" }),
-                                    _vm._v(
-                                      " " +
-                                        _vm._s(_vm.__("download_invoice")) +
-                                        "\n                                "
-                                    ),
-                                  ],
-                            ],
-                            2
-                          )
-                        : _vm._e(),
-                    ]),
+                                    1
+                                  ),
+                            ]
+                          : _vm._e(),
+                      ],
+                      2
+                    ),
                   ]),
                   _vm._v(" "),
                   _c("div", { staticClass: "card-body" }, [
@@ -1563,6 +1767,50 @@ var render = function () {
                               _vm._v(_vm._s(_vm.order.payment_method)),
                             ]),
                           ]),
+                          _vm._v(" "),
+                          _vm.credit_notes && _vm.credit_notes.length > 0
+                            ? _c("tr", [
+                                _c("th", { staticClass: "th-width" }, [
+                                  _vm._v(
+                                    _vm._s(
+                                      _vm.__("credit_note")
+                                        ? "Credit Note"
+                                        : "Credit Note"
+                                    )
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "td",
+                                  _vm._l(_vm.credit_notes, function (cn) {
+                                    return _c(
+                                      "span",
+                                      {
+                                        key: cn.id,
+                                        staticClass: "badge bg-secondary me-1",
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n                                                " +
+                                            _vm._s(cn.credit_note_no) +
+                                            " (" +
+                                            _vm._s(
+                                              cn.reason_type === "return"
+                                                ? "Sales Return"
+                                                : "Order Cancelled"
+                                            ) +
+                                            " — " +
+                                            _vm._s(_vm.$currency) +
+                                            _vm._s(cn.total_amount) +
+                                            ")\n                                            "
+                                        ),
+                                      ]
+                                    )
+                                  }),
+                                  0
+                                ),
+                              ])
+                            : _vm._e(),
                         ]),
                       ]),
                     ]),

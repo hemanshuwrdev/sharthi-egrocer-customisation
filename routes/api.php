@@ -536,6 +536,7 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('invoice', [\App\Http\Controllers\API\OrdersApiController::class, 'generateOrderInvoice']);
         Route::post('invoice_download', [\App\Http\Controllers\API\OrdersApiController::class, 'downloadOrderInvoice']);
+        Route::post('credit_note_download', [\App\Http\Controllers\API\OrdersApiController::class, 'downloadCreditNote']);
 
         Route::post('/delete', [\App\Http\Controllers\API\OrdersApiController::class, 'delete'])->name('orders.delete');
         Route::post('/delete_item', [\App\Http\Controllers\API\OrdersApiController::class, 'deleteItem'])->name('orders.deleteItem');

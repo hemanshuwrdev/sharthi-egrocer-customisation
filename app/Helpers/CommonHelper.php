@@ -3177,6 +3177,79 @@ class CommonHelper
             return CommonHelper::responseError("Invoice generation error: " . $e->getMessage() . " in " . basename($e->getFile()) . ":" . $e->getLine());
         }
     }
+
+    public static function downloadCreditNotePdf($credit_note_id)
+    {
+        try {
+            $creditNote = \App\Models\CreditNote::find($credit_note_id);
+            if (!$creditNote) {
+                return CommonHelper::responseError("Credit Note not found!");
+            }
+
+            $orderData = CommonHelper::getOrderDetails($creditNote->order_id, false);
+            $order = $orderData["order"] ?? null;
+            if (!$order) {
+                return CommonHelper::responseError("Order not found!");
+            }
+
+            $seller = \App\Models\Seller::with('city')->find($creditNote->seller_id);
+            $retailer = \DB::table('retailer_profiles')->where('user_id', $creditNote->retailer_id)->first();
+            $distributorInvoiceNumber = CommonHelper::resolveDistributorInvoiceNumber($creditNote->order_id);
+
+            $items = \DB::table('credit_note_items as cni')
+                ->leftJoin('order_items as oi', 'cni.order_item_id', '=', 'oi.id')
+                ->leftJoin('master_product_variants as mpv', 'oi.master_product_variant_id', '=', 'mpv.id')
+                ->leftJoin('product_variants as pv', 'oi.product_variant_id', '=', 'pv.id')
+                ->leftJoin('units as u', 'mpv.unit_id', '=', 'u.id')
+                ->leftJoin('units as u2', 'pv.stock_unit_id', '=', 'u2.id')
+                ->select(
+                    'cni.*',
+                    'oi.tax_percentage',
+                    'oi.price as item_price',
+                    'oi.tax_amount as item_tax_amount',
+                    'oi.discount as item_discount',
+                    \DB::raw('COALESCE(u.short_code, u2.short_code, "PCS") as unit_symbol'),
+                    \DB::raw('(SELECT mp.hsn FROM master_products mp
+                              INNER JOIN master_product_variants mpv2 ON mpv2.master_product_id = mp.id
+                              WHERE mpv2.id = oi.master_product_variant_id LIMIT 1) as hsn')
+                )
+                ->where('cni.credit_note_id', $credit_note_id)
+                ->get();
+
+            $data = [
+                'creditNote' => $creditNote,
+                'order' => $order,
+                'items' => $items,
+                'seller' => $seller,
+                'retailer' => $retailer,
+                'distributor_invoice_number' => $distributorInvoiceNumber,
+            ];
+
+            $creditNoteHtml = view('creditNoteMpdf', $data)->render();
+
+            $tempDir = storage_path('app/mpdf');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+            $mpdf = new Mpdf([
+                'tempDir' => $tempDir
+            ]);
+            $stylesheet = file_get_contents(public_path('assets/css/custom/bootstrap/bootstrap.min.css'));
+            $mpdf->WriteHTML($stylesheet, 1);
+            $mpdf->WriteHTML($creditNoteHtml);
+
+            $safeNo = str_replace(['/', '\\'], '_', ($creditNote->credit_note_no ?: $creditNote->id));
+            $fileName = 'CreditNote_' . $safeNo . '.pdf';
+            $pdfContent = $mpdf->Output($fileName, Destination::STRING_RETURN);
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error("Credit Note PDF download error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine() . "\n" . $e->getTraceAsString());
+            return CommonHelper::responseError("Credit Note generation error: " . $e->getMessage() . " in " . basename($e->getFile()) . ":" . $e->getLine());
+        }
+    }
     public static function getFirebaseKeys()
     {
         $firebase_array = array(

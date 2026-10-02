@@ -182,6 +182,10 @@ Route::get('/order_invoice/{order_id}', function ($order_id) {
     echo $invoice;
 });
 
+Route::get('/credit_note_pdf/{credit_note_id}', function ($credit_note_id) {
+    return CommonHelper::downloadCreditNotePdf($credit_note_id);
+});
+
 Route::get('get-google-key', function () {
     return response()->json(['key' => \App\Models\Setting::get_value('google_place_api_key')]);
 });

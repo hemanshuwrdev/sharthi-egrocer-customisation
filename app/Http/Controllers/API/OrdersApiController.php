@@ -337,6 +337,10 @@ class OrdersApiController extends Controller
             ];
         }
 
+        $data['credit_notes'] = \App\Models\CreditNote::with('items')
+            ->where('order_id', $id)
+            ->get();
+
         return CommonHelper::responseWithData($data);
     }
 
@@ -366,6 +370,19 @@ class OrdersApiController extends Controller
         CommonHelper::AdditionalChargesArray($data['order']);
         $distributorInvoiceNumber = CommonHelper::resolveDistributorInvoiceNumber($request->order_id);
         return CommonHelper::downloadOrderInvoice($request->order_id, $distributorInvoiceNumber);
+    }
+
+    public function downloadCreditNote(Request $request)
+    {
+        $creditNoteId = $request->credit_note_id;
+        if (!$creditNoteId && $request->order_id) {
+            $cn = \App\Models\CreditNote::where('order_id', $request->order_id)->first();
+            $creditNoteId = $cn ? $cn->id : null;
+        }
+        if (!$creditNoteId) {
+            return CommonHelper::responseError("Credit Note not found!");
+        }
+        return CommonHelper::downloadCreditNotePdf($creditNoteId);
     }
 
     public function delete(Request $request)
