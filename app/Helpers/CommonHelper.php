@@ -43,6 +43,7 @@ use App\Models\SellerWalletTransaction;
 use App\Models\AdminCommissionTransaction;
 use App\Models\SmsTemplate;
 use App\Helpers\TwilioHelper;
+use App\Helpers\SmsHelper;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Support\Facades\DB;
@@ -3410,7 +3411,7 @@ class CommonHelper
 
                 $message = self::getReturnRequestSmsMessage($returnRequest, $status_name);
 
-                $success = TwilioHelper::sendSms($phone, $message);
+                $success = SmsHelper::sendSms($phone, $message);
 
                 if ($success) {
                     Log::info("Return request SMS sent successfully for request #{$returnRequest->id}");
@@ -4692,7 +4693,7 @@ class CommonHelper
                 $phone =  User::where('id', $order->user_id)->selectRaw("CONCAT(country_code, mobile) as phone")->value('phone');
 
                 if ($phone) {
-                    $success = TwilioHelper::sendSms($phone, $message);
+                    $success = SmsHelper::sendSms($phone, $message);
                 } else {
                     Log::warning("SMS not sent for order #{$order->id}: User phone number is missing.");
                 }

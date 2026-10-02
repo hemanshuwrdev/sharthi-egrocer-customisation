@@ -90,6 +90,56 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -98,10 +148,15 @@ __webpack_require__.r(__webpack_exports__);
       isLoading: false,
       sms_settings: {
         sms_method_settings: 0,
+        sms_gateway: 'twilio',
         twilio_method: 0,
         twilio_sid: '',
         twilio_auth_token: '',
-        twilio_phone_number: ''
+        twilio_phone_number: '',
+        msg91_method: 0,
+        msg91_auth_key: '',
+        msg91_sender_id: '',
+        msg91_otp_template_id: ''
       },
       record: null
     };
@@ -110,16 +165,46 @@ __webpack_require__.r(__webpack_exports__);
     this.getSmsMethods();
   },
   methods: {
+    toggleGateway: function toggleGateway(key, enabled) {
+      if (enabled) {
+        if (key === 'msg91') {
+          this.sms_settings.msg91_method = 1;
+          this.sms_settings.twilio_method = 0;
+          this.sms_settings.sms_gateway = 'msg91';
+        } else if (key === 'twilio') {
+          this.sms_settings.twilio_method = 1;
+          this.sms_settings.msg91_method = 0;
+          this.sms_settings.sms_gateway = 'twilio';
+        }
+      } else {
+        if (key === 'msg91') {
+          this.sms_settings.msg91_method = 0;
+          if (this.sms_settings.sms_gateway === 'msg91') {
+            this.sms_settings.sms_gateway = '';
+          }
+        } else if (key === 'twilio') {
+          this.sms_settings.twilio_method = 0;
+          if (this.sms_settings.sms_gateway === 'twilio') {
+            this.sms_settings.sms_gateway = '';
+          }
+        }
+      }
+    },
     getSmsMethods: function getSmsMethods() {
       var _this = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/sms_settings').then(function (response) {
         if (response.data.data) {
-          var _this$record$twilio_m, _this$record$twilio_s, _this$record$twilio_p;
+          var _this$record$sms_gate, _this$record$twilio_m, _this$record$twilio_s, _this$record$twilio_p, _this$record$msg91_me, _this$record$msg91_au, _this$record$msg91_se, _this$record$msg91_ot;
           _this.record = response.data.data;
+          _this.sms_settings.sms_gateway = (_this$record$sms_gate = _this.record.sms_gateway) !== null && _this$record$sms_gate !== void 0 ? _this$record$sms_gate : _this.record.msg91_method == 1 ? 'msg91' : 'twilio';
           _this.sms_settings.twilio_method = (_this$record$twilio_m = _this.record.twilio_method) !== null && _this$record$twilio_m !== void 0 ? _this$record$twilio_m : 0;
           _this.sms_settings.twilio_sid = (_this$record$twilio_s = _this.record.twilio_sid) !== null && _this$record$twilio_s !== void 0 ? _this$record$twilio_s : "";
           _this.sms_settings.twilio_auth_token = _this.record.twilio_auth_token;
           _this.sms_settings.twilio_phone_number = (_this$record$twilio_p = _this.record.twilio_phone_number) !== null && _this$record$twilio_p !== void 0 ? _this$record$twilio_p : "";
+          _this.sms_settings.msg91_method = (_this$record$msg91_me = _this.record.msg91_method) !== null && _this$record$msg91_me !== void 0 ? _this$record$msg91_me : 0;
+          _this.sms_settings.msg91_auth_key = (_this$record$msg91_au = _this.record.msg91_auth_key) !== null && _this$record$msg91_au !== void 0 ? _this$record$msg91_au : "";
+          _this.sms_settings.msg91_sender_id = (_this$record$msg91_se = _this.record.msg91_sender_id) !== null && _this$record$msg91_se !== void 0 ? _this$record$msg91_se : "";
+          _this.sms_settings.msg91_otp_template_id = (_this$record$msg91_ot = _this.record.msg91_otp_template_id) !== null && _this$record$msg91_ot !== void 0 ? _this$record$msg91_ot : "";
         }
       });
     },
@@ -138,7 +223,7 @@ __webpack_require__.r(__webpack_exports__);
         }
       }
       var vm = this;
-      if (this.sms_settings.twilio_method == 1) {
+      if (this.sms_settings.twilio_method == 1 || this.sms_settings.msg91_method == 1) {
         var url = this.$apiUrl + '/sms_settings/save';
         axios__WEBPACK_IMPORTED_MODULE_0___default().post(url, formData).then(function (res) {
           var data = res.data;
@@ -323,11 +408,41 @@ var render = function () {
             _c("div", { staticClass: "row" }, [
               _c("div", { staticClass: "col-6 mb-4" }, [
                 _c("div", { staticClass: "card h-100" }, [
-                  _c("div", { staticClass: "card-header" }, [
-                    _c("h4", { staticClass: "card-title" }, [
-                      _vm._v(_vm._s(_vm.__("twilio"))),
-                    ]),
-                  ]),
+                  _c(
+                    "div",
+                    {
+                      staticClass:
+                        "card-header d-flex justify-content-between align-items-center",
+                    },
+                    [
+                      _c("h4", { staticClass: "card-title" }, [
+                        _vm._v(_vm._s(_vm.__("twilio"))),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "a",
+                        {
+                          staticClass: "small text-muted",
+                          attrs: {
+                            href: "https://console.twilio.com/",
+                            target: "_blank",
+                            rel: "noopener",
+                          },
+                        },
+                        [
+                          _c("i", {
+                            staticClass: "fa fa-external-link",
+                            attrs: { "aria-hidden": "true" },
+                          }),
+                          _vm._v(
+                            " " +
+                              _vm._s(_vm.__("setup_sms_gateway_hint")) +
+                              "\n                                "
+                          ),
+                        ]
+                      ),
+                    ]
+                  ),
                   _vm._v(" "),
                   _c("div", { staticClass: "card-body" }, [
                     _c("input", {
@@ -405,38 +520,46 @@ var render = function () {
                                 : _vm._q(_vm.sms_settings.twilio_method, "1"),
                             },
                             on: {
-                              change: function ($event) {
-                                var $$a = _vm.sms_settings.twilio_method,
-                                  $$el = $event.target,
-                                  $$c = $$el.checked ? "1" : "0"
-                                if (Array.isArray($$a)) {
-                                  var $$v = null,
-                                    $$i = _vm._i($$a, $$v)
-                                  if ($$el.checked) {
-                                    $$i < 0 &&
-                                      _vm.$set(
-                                        _vm.sms_settings,
-                                        "twilio_method",
-                                        $$a.concat([$$v])
-                                      )
+                              change: [
+                                function ($event) {
+                                  var $$a = _vm.sms_settings.twilio_method,
+                                    $$el = $event.target,
+                                    $$c = $$el.checked ? "1" : "0"
+                                  if (Array.isArray($$a)) {
+                                    var $$v = null,
+                                      $$i = _vm._i($$a, $$v)
+                                    if ($$el.checked) {
+                                      $$i < 0 &&
+                                        _vm.$set(
+                                          _vm.sms_settings,
+                                          "twilio_method",
+                                          $$a.concat([$$v])
+                                        )
+                                    } else {
+                                      $$i > -1 &&
+                                        _vm.$set(
+                                          _vm.sms_settings,
+                                          "twilio_method",
+                                          $$a
+                                            .slice(0, $$i)
+                                            .concat($$a.slice($$i + 1))
+                                        )
+                                    }
                                   } else {
-                                    $$i > -1 &&
-                                      _vm.$set(
-                                        _vm.sms_settings,
-                                        "twilio_method",
-                                        $$a
-                                          .slice(0, $$i)
-                                          .concat($$a.slice($$i + 1))
-                                      )
+                                    _vm.$set(
+                                      _vm.sms_settings,
+                                      "twilio_method",
+                                      $$c
+                                    )
                                   }
-                                } else {
-                                  _vm.$set(
-                                    _vm.sms_settings,
-                                    "twilio_method",
-                                    $$c
+                                },
+                                function ($event) {
+                                  return _vm.toggleGateway(
+                                    "twilio",
+                                    $event.target.checked
                                   )
-                                }
-                              },
+                                },
+                              ],
                             },
                           }),
                         ]),
@@ -601,11 +724,313 @@ var render = function () {
                 ]),
               ]),
               _vm._v(" "),
+              _c("div", { staticClass: "col-6 mb-4" }, [
+                _c("div", { staticClass: "card h-100" }, [
+                  _c(
+                    "div",
+                    {
+                      staticClass:
+                        "card-header d-flex justify-content-between align-items-center",
+                    },
+                    [
+                      _c("h4", { staticClass: "card-title" }, [
+                        _vm._v(_vm._s(_vm.__("msg91"))),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "a",
+                        {
+                          staticClass: "small text-muted",
+                          attrs: {
+                            href: "https://control.msg91.com/",
+                            target: "_blank",
+                            rel: "noopener",
+                          },
+                        },
+                        [
+                          _c("i", {
+                            staticClass: "fa fa-external-link",
+                            attrs: { "aria-hidden": "true" },
+                          }),
+                          _vm._v(
+                            " " +
+                              _vm._s(_vm.__("setup_sms_gateway_hint")) +
+                              "\n                                "
+                          ),
+                        ]
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "card-body" }, [
+                    _c("div", {}, [
+                      _c("div", { staticClass: "form-group" }, [
+                        _c("label", { attrs: { for: "msg91_method" } }, [
+                          _vm._v(_vm._s(_vm.__("msg91")) + " "),
+                          _c("small", [
+                            _vm._v(
+                              "[ " +
+                                _vm._s(_vm.__("enable")) +
+                                " / " +
+                                _vm._s(_vm.__("disable")) +
+                                " ] "
+                            ),
+                          ]),
+                        ]),
+                        _c("br"),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "form-check form-switch" }, [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.sms_settings.msg91_method,
+                                expression: "sms_settings.msg91_method",
+                              },
+                            ],
+                            staticClass: "form-check-input",
+                            attrs: {
+                              id: "msg91_settings",
+                              type: "checkbox",
+                              "true-value": "1",
+                              "false-value": "0",
+                            },
+                            domProps: {
+                              checked: _vm.sms_settings.msg91_method,
+                              checked: Array.isArray(
+                                _vm.sms_settings.msg91_method
+                              )
+                                ? _vm._i(_vm.sms_settings.msg91_method, null) >
+                                  -1
+                                : _vm._q(_vm.sms_settings.msg91_method, "1"),
+                            },
+                            on: {
+                              change: [
+                                function ($event) {
+                                  var $$a = _vm.sms_settings.msg91_method,
+                                    $$el = $event.target,
+                                    $$c = $$el.checked ? "1" : "0"
+                                  if (Array.isArray($$a)) {
+                                    var $$v = null,
+                                      $$i = _vm._i($$a, $$v)
+                                    if ($$el.checked) {
+                                      $$i < 0 &&
+                                        _vm.$set(
+                                          _vm.sms_settings,
+                                          "msg91_method",
+                                          $$a.concat([$$v])
+                                        )
+                                    } else {
+                                      $$i > -1 &&
+                                        _vm.$set(
+                                          _vm.sms_settings,
+                                          "msg91_method",
+                                          $$a
+                                            .slice(0, $$i)
+                                            .concat($$a.slice($$i + 1))
+                                        )
+                                    }
+                                  } else {
+                                    _vm.$set(
+                                      _vm.sms_settings,
+                                      "msg91_method",
+                                      $$c
+                                    )
+                                  }
+                                },
+                                function ($event) {
+                                  return _vm.toggleGateway(
+                                    "msg91",
+                                    $event.target.checked
+                                  )
+                                },
+                              ],
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _vm.sms_settings.msg91_method == 1
+                        ? _c("div", { staticClass: "row" }, [
+                            _c("div", { staticClass: "col-md-12" }, [
+                              _c("div", { staticClass: "form-group" }, [
+                                _c(
+                                  "label",
+                                  { attrs: { for: "msg91_auth_key" } },
+                                  [
+                                    _vm._v(_vm._s(_vm.__("msg91_auth_key"))),
+                                    _c(
+                                      "span",
+                                      { staticClass: "text-danger text-xs" },
+                                      [_vm._v("*")]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.sms_settings.msg91_auth_key,
+                                      expression: "sms_settings.msg91_auth_key",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "text",
+                                    name: "msg91_auth_key",
+                                    id: "msg91_auth_key",
+                                    placeholder: "Enter MSG91 Auth Key",
+                                  },
+                                  domProps: {
+                                    value: _vm.sms_settings.msg91_auth_key,
+                                  },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.sms_settings,
+                                        "msg91_auth_key",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-6" }, [
+                              _c("div", { staticClass: "form-group" }, [
+                                _c(
+                                  "label",
+                                  { attrs: { for: "msg91_sender_id" } },
+                                  [
+                                    _vm._v(_vm._s(_vm.__("msg91_sender_id"))),
+                                    _c(
+                                      "span",
+                                      { staticClass: "text-danger text-xs" },
+                                      [_vm._v("*")]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.sms_settings.msg91_sender_id,
+                                      expression:
+                                        "sms_settings.msg91_sender_id",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "text",
+                                    name: "msg91_sender_id",
+                                    id: "msg91_sender_id",
+                                    placeholder:
+                                      "Enter MSG91 Sender ID (DLT Header)",
+                                  },
+                                  domProps: {
+                                    value: _vm.sms_settings.msg91_sender_id,
+                                  },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.sms_settings,
+                                        "msg91_sender_id",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-6" }, [
+                              _c("div", { staticClass: "form-group" }, [
+                                _c(
+                                  "label",
+                                  { attrs: { for: "msg91_otp_template_id" } },
+                                  [
+                                    _vm._v(
+                                      _vm._s(_vm.__("msg91_otp_template_id"))
+                                    ),
+                                    _c(
+                                      "span",
+                                      { staticClass: "text-danger text-xs" },
+                                      [_vm._v("*")]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value:
+                                        _vm.sms_settings.msg91_otp_template_id,
+                                      expression:
+                                        "sms_settings.msg91_otp_template_id",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: {
+                                    type: "text",
+                                    name: "msg91_otp_template_id",
+                                    id: "msg91_otp_template_id",
+                                    placeholder:
+                                      "Enter MSG91 OTP Template / Flow ID",
+                                  },
+                                  domProps: {
+                                    value:
+                                      _vm.sms_settings.msg91_otp_template_id,
+                                  },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.sms_settings,
+                                        "msg91_otp_template_id",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-12" }, [
+                              _c(
+                                "p",
+                                { staticClass: "text-muted small mb-0" },
+                                [_vm._v(_vm._s(_vm.__("msg91_dlt_hint")))]
+                              ),
+                            ]),
+                          ])
+                        : _vm._e(),
+                    ]),
+                  ]),
+                ]),
+              ]),
+              _vm._v(" "),
               _c(
                 "div",
                 { staticClass: "form-group" },
                 [
-                  _vm.$can("manage_payment_methods")
+                  _vm.$can("manage_payment_methods") ||
+                  _vm.$can("manage_sms_settings")
                     ? _c(
                         "b-button",
                         {

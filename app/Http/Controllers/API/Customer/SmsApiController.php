@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use App\Helpers\TwilioHelper;
+use App\Helpers\SmsHelper;
 use App\Helpers\CommonHelper;
 use Illuminate\Support\Facades\Validator;
 class SmsApiController extends Controller
@@ -56,7 +57,11 @@ class SmsApiController extends Controller
         $appName     = Setting::where('variable', 'app_name')->value('value');
         $message     = "$otp is your verification code from $appName";
 
-        $success = TwilioHelper::sendSms($phone, $message);
+        $activeGateway = SmsHelper::activeGateway();
+        $success = SmsHelper::sendOtp($phone, $otp, [
+            'app_name' => $appName,
+            'message'  => $message,
+        ]);
         if (!$success) {
             return CommonHelper::responseError('sms_gateway_error');
         }
@@ -72,7 +77,7 @@ class SmsApiController extends Controller
             'updated_at' => Carbon::now(),
         ]);
 
-        return CommonHelper::responseWithData(['otp_provider' => 'twilio']);
+        return CommonHelper::responseWithData(['otp_provider' => $activeGateway ?: 'sms']);
     }
     public function verifyContact(Request $request)
     {

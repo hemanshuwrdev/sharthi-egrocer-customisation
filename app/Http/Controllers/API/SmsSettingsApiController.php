@@ -24,12 +24,12 @@ class SmsSettingsApiController extends Controller
             $setting = Setting::where('variable', $key)->first();
             if ($setting) {
                 $setting->variable = $key;
-                $setting->value = $item;
+                $setting->value = $item ?? '';
                 $setting->save();
             } else {
                 $setting = new Setting();
                 $setting->variable = $key;
-                $setting->value = $item;
+                $setting->value = $item ?? '';
                 $setting->save();
             }
         }
