@@ -1671,6 +1671,42 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1745,7 +1781,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       Logoerror: null,
       Panel_login_background_imgerror: null,
       Fssaierror: null,
-      tabs: [__('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'), __('seller_setting'), __('login_setting'),
+      tabs: [__('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('salesman_setting'), __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'), __('seller_setting'), __('login_setting'),
       // __('cart_setting'), // Sarthi: hidden per request — not deleted, just unreachable.
       __('refer_earn_setting')]
     }, _defineProperty(_ref, "activeTab", __('store_setting')), _defineProperty(_ref, "dateFormatDefs", [{
@@ -2447,17 +2483,50 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
+    // Sarthi: save salesman settings
+    saveSalesmanSetting: function saveSalesmanSetting() {
+      var _this8 = this;
+      this.isLoading = true;
+      var formData = new FormData();
+      formData.append('retailer_verification_radius_meters', this.store_settings.retailer_verification_radius_meters);
+      var url = this.$apiUrl + '/store_settings/save_salesman_setting';
+      var vm = this;
+      axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
+        var data = res.data;
+        if (data.status === 1) {
+          _this8.showMessage("success", data.message);
+          _this8.getStoreSetting();
+          setTimeout(function () {
+            vm.$swal.close();
+            vm.isLoading = false;
+          }, 2000);
+        } else {
+          vm.showError(data.message);
+          vm.isLoading = false;
+        }
+      })["catch"](function (error) {
+        _this8.isLoading = false;
+        if (error.request.statusText) {
+          _this8.showError(error.request.statusText);
+        } else if (error.message) {
+          _this8.showError(error.message);
+        } else {
+          _this8.showError("Something went wrong!");
+        }
+        vm.isLoading = false;
+      });
+    },
     // Save app settings
     saveStoreBasicSetting: function saveStoreBasicSetting() {
-      var _this8 = this;
+      var _this9 = this;
       this.isLoading = true;
       var formData = new FormData();
 
       // Normal fields (default only)
       var normalFields = ['app_name', 'system_configurations', 'system_timezone_gmt', 'system_configurations_id', 'support_number', 'support_email'];
       normalFields.forEach(function (field) {
-        if (_this8.store_settings[field] !== undefined) {
-          formData.append(field, _this8.store_settings[field]);
+        if (_this9.store_settings[field] !== undefined) {
+          formData.append(field, _this9.store_settings[field]);
         }
       });
 
@@ -2494,21 +2563,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (this.panel_login_background_img_file) formData.append('panel_login_background_img', this.panel_login_background_img_file);
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(this.$apiUrl + '/store_settings/save_store_basic_setting', formData).then(function (res) {
         if (res.data.status === 1) {
-          _this8.showMessage('success', res.data.message);
-          _this8.getStoreSetting();
+          _this9.showMessage('success', res.data.message);
+          _this9.getStoreSetting();
         } else {
-          _this8.showError(res.data.message);
+          _this9.showError(res.data.message);
         }
-        _this8.isLoading = false;
+        _this9.isLoading = false;
       })["catch"](function (err) {
         var _err$response, _err$response$data;
-        _this8.isLoading = false;
-        _this8.showError((err === null || err === void 0 ? void 0 : (_err$response = err.response) === null || _err$response === void 0 ? void 0 : (_err$response$data = _err$response.data) === null || _err$response$data === void 0 ? void 0 : _err$response$data.message) || err.message || __('something_went_wrong'));
+        _this9.isLoading = false;
+        _this9.showError((err === null || err === void 0 ? void 0 : (_err$response = err.response) === null || _err$response === void 0 ? void 0 : (_err$response$data = _err$response.data) === null || _err$response$data === void 0 ? void 0 : _err$response$data.message) || err.message || __('something_went_wrong'));
       });
     },
     // Save address settings (store address, map, currency, timezone, default city)
     saveAddressSetting: function saveAddressSetting() {
-      var _this9 = this;
+      var _this10 = this;
       this.isLoading = true;
       var vm = this;
 
@@ -2534,81 +2603,38 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       // Non-translatable address fields
       var addressFields = ['map_latitude', 'map_longitude', 'currency', 'currency_code', 'decimal_point', 'system_timezone', 'default_city_id'];
       addressFields.forEach(function (field) {
-        if (_this9.store_settings[field] !== undefined) {
-          formData.append(field, _this9.store_settings[field]);
+        if (_this10.store_settings[field] !== undefined) {
+          formData.append(field, _this10.store_settings[field]);
         }
       });
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(this.$apiUrl + '/store_settings/save_address_setting', formData).then(function (res) {
         if (res.data.status === 1) {
-          _this9.showMessage('success', res.data.message);
-          _this9.getStoreSetting();
+          _this10.showMessage('success', res.data.message);
+          _this10.getStoreSetting();
         } else {
-          _this9.showError(res.data.message);
+          _this10.showError(res.data.message);
         }
         vm.isLoading = false;
       })["catch"](function (err) {
         var _err$response2, _err$response2$data;
         vm.isLoading = false;
-        _this9.showError((err === null || err === void 0 ? void 0 : (_err$response2 = err.response) === null || _err$response2 === void 0 ? void 0 : (_err$response2$data = _err$response2.data) === null || _err$response2$data === void 0 ? void 0 : _err$response2$data.message) || err.message || __('something_went_wrong'));
+        _this10.showError((err === null || err === void 0 ? void 0 : (_err$response2 = err.response) === null || _err$response2 === void 0 ? void 0 : (_err$response2$data = _err$response2.data) === null || _err$response2$data === void 0 ? void 0 : _err$response2$data.message) || err.message || __('something_went_wrong'));
       });
     },
     // Save frontend home settings
     saveFrontendHomeSetting: function saveFrontendHomeSetting() {
-      var _this10 = this;
+      var _this11 = this;
       this.isLoading = true;
       var formData = new FormData();
 
       // Add only frontend home settings
       var frontendHomeFields = ['is_category_section_in_homepage', 'count_category_section_in_homepage', 'is_brand_section_in_homepage', 'count_brand_section_in_homepage', 'is_seller_section_in_homepage', 'count_seller_section_in_homepage', 'is_country_section_in_homepage', 'count_country_section_in_homepage'];
       frontendHomeFields.forEach(function (field) {
-        if (_this10.store_settings[field] !== undefined) {
-          formData.append(field, _this10.store_settings[field]);
-        }
-      });
-      var url = this.$apiUrl + '/store_settings/save_frontend_home_setting';
-      var vm = this;
-      axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
-        var data = res.data;
-        if (data.status === 1) {
-          _this10.showMessage("success", data.message);
-          _this10.getStoreSetting();
-          setTimeout(function () {
-            vm.$swal.close();
-            vm.isLoading = false;
-            vm.$router.push({
-              path: '/store_settings'
-            });
-          }, 2000);
-        } else {
-          vm.showError(data.message);
-          vm.isLoading = false;
-        }
-      })["catch"](function (error) {
-        _this10.isLoading = false;
-        if (error.request.statusText) {
-          _this10.showError(error.request.statusText);
-        } else if (error.message) {
-          _this10.showError(error.message);
-        } else {
-          _this10.showError("Something went wrong!");
-        }
-        vm.isLoading = false;
-      });
-    },
-    // Save SMTP mail settings
-    saveSmtpMailSetting: function saveSmtpMailSetting() {
-      var _this11 = this;
-      this.isLoading = true;
-      var formData = new FormData();
-
-      // Add only SMTP mail settings
-      var smtpFields = ['mailer', 'smtp_from_mail', 'smtp_reply_to', 'smtp_email_password', 'smtp_host', 'smtp_port', 'smtp_content_type', 'smtp_encryption_type'];
-      smtpFields.forEach(function (field) {
         if (_this11.store_settings[field] !== undefined) {
           formData.append(field, _this11.store_settings[field]);
         }
       });
-      var url = this.$apiUrl + '/store_settings/save_smtp_mail_setting';
+      var url = this.$apiUrl + '/store_settings/save_frontend_home_setting';
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
         var data = res.data;
@@ -2638,26 +2664,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
-    // Save third party API settings
-    saveThirdPartyApiSetting: function saveThirdPartyApiSetting() {
+    // Save SMTP mail settings
+    saveSmtpMailSetting: function saveSmtpMailSetting() {
       var _this12 = this;
       this.isLoading = true;
       var formData = new FormData();
-      var apiFields = ['google_place_api_key', 'google_map_api_key', 'apiKey', 'googleMapApiKey', 'text_gen_key'];
-      apiFields.forEach(function (field) {
-        if (_this12.store_settings[field] !== undefined) {
-          var value = _this12.store_settings[field];
 
-          // Only encrypt google_place_api_key and google_map_api_key
-          // apiKey and googleMapApiKey should remain unencrypted (original values)
-          if ((field === "google_place_api_key" || field === "google_map_api_key") && value) {
-            var secretKey = "ewgrrtoecaemr";
-            value = crypto_js__WEBPACK_IMPORTED_MODULE_6___default().AES.encrypt(value, secretKey).toString();
-          }
-          formData.append(field, value);
+      // Add only SMTP mail settings
+      var smtpFields = ['mailer', 'smtp_from_mail', 'smtp_reply_to', 'smtp_email_password', 'smtp_host', 'smtp_port', 'smtp_content_type', 'smtp_encryption_type'];
+      smtpFields.forEach(function (field) {
+        if (_this12.store_settings[field] !== undefined) {
+          formData.append(field, _this12.store_settings[field]);
         }
       });
-      var url = this.$apiUrl + '/store_settings/save_third_party_api_setting';
+      var url = this.$apiUrl + '/store_settings/save_smtp_mail_setting';
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
         var data = res.data;
@@ -2687,21 +2707,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
-    // Save seller settings
-    saveSellerSetting: function saveSellerSetting() {
+    // Save third party API settings
+    saveThirdPartyApiSetting: function saveThirdPartyApiSetting() {
       var _this13 = this;
       this.isLoading = true;
       var formData = new FormData();
-
-      // Add only seller settings
-      // 'distributor_trial_days' no longer sent from this form (field hidden); DB value stays untouched.
-      var sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode' /*, 'distributor_trial_days'*/];
-      sellerFields.forEach(function (field) {
+      var apiFields = ['google_place_api_key', 'google_map_api_key', 'apiKey', 'googleMapApiKey', 'text_gen_key'];
+      apiFields.forEach(function (field) {
         if (_this13.store_settings[field] !== undefined) {
-          formData.append(field, _this13.store_settings[field]);
+          var value = _this13.store_settings[field];
+
+          // Only encrypt google_place_api_key and google_map_api_key
+          // apiKey and googleMapApiKey should remain unencrypted (original values)
+          if ((field === "google_place_api_key" || field === "google_map_api_key") && value) {
+            var secretKey = "ewgrrtoecaemr";
+            value = crypto_js__WEBPACK_IMPORTED_MODULE_6___default().AES.encrypt(value, secretKey).toString();
+          }
+          formData.append(field, value);
         }
       });
-      var url = this.$apiUrl + '/store_settings/save_seller_setting';
+      var url = this.$apiUrl + '/store_settings/save_third_party_api_setting';
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
         var data = res.data;
@@ -2731,20 +2756,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
-    // Save cart settings
-    saveCartSetting: function saveCartSetting() {
+    // Save seller settings
+    saveSellerSetting: function saveSellerSetting() {
       var _this14 = this;
       this.isLoading = true;
       var formData = new FormData();
 
-      // Add only cart settings
-      var cartFields = ['cart_notification', 'notification_delay_after_cart_addition', 'notification_interval', 'notification_stop_time'];
-      cartFields.forEach(function (field) {
+      // Add only seller settings
+      // 'distributor_trial_days' no longer sent from this form (field hidden); DB value stays untouched.
+      var sellerFields = ['one_seller_cart', 'seller_commission', 'self_pickup_mode' /*, 'distributor_trial_days'*/];
+      sellerFields.forEach(function (field) {
         if (_this14.store_settings[field] !== undefined) {
           formData.append(field, _this14.store_settings[field]);
         }
       });
-      var url = this.$apiUrl + '/store_settings/save_cart_setting';
+      var url = this.$apiUrl + '/store_settings/save_seller_setting';
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
         var data = res.data;
@@ -2774,15 +2800,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
-    saveRecordLoginSetting: function saveRecordLoginSetting() {
+    // Save cart settings
+    saveCartSetting: function saveCartSetting() {
       var _this15 = this;
       this.isLoading = true;
-      var login_settingsObject = this.login_settings;
       var formData = new FormData();
-      for (var key in login_settingsObject) {
-        formData.append(key, login_settingsObject[key]);
-      }
-      var url = this.$apiUrl + '/store_settings/save_login_setting';
+
+      // Add only cart settings
+      var cartFields = ['cart_notification', 'notification_delay_after_cart_addition', 'notification_interval', 'notification_stop_time'];
+      cartFields.forEach(function (field) {
+        if (_this15.store_settings[field] !== undefined) {
+          formData.append(field, _this15.store_settings[field]);
+        }
+      });
+      var url = this.$apiUrl + '/store_settings/save_cart_setting';
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
         var data = res.data;
@@ -2792,7 +2823,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           setTimeout(function () {
             vm.$swal.close();
             vm.isLoading = false;
-            window.location.reload();
             vm.$router.push({
               path: '/store_settings'
             });
@@ -2813,15 +2843,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
-    saveReferEarnSetting: function saveReferEarnSetting() {
+    saveRecordLoginSetting: function saveRecordLoginSetting() {
       var _this16 = this;
       this.isLoading = true;
-      var refer_earn_settingsObject = this.refer_earn_settings;
+      var login_settingsObject = this.login_settings;
       var formData = new FormData();
-      for (var key in refer_earn_settingsObject) {
-        formData.append(key, refer_earn_settingsObject[key]);
+      for (var key in login_settingsObject) {
+        formData.append(key, login_settingsObject[key]);
       }
-      var url = this.$apiUrl + '/store_settings/save_refer_earn_setting';
+      var url = this.$apiUrl + '/store_settings/save_login_setting';
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
         var data = res.data;
@@ -2852,9 +2882,48 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
+    saveReferEarnSetting: function saveReferEarnSetting() {
+      var _this17 = this;
+      this.isLoading = true;
+      var refer_earn_settingsObject = this.refer_earn_settings;
+      var formData = new FormData();
+      for (var key in refer_earn_settingsObject) {
+        formData.append(key, refer_earn_settingsObject[key]);
+      }
+      var url = this.$apiUrl + '/store_settings/save_refer_earn_setting';
+      var vm = this;
+      axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
+        var data = res.data;
+        if (data.status === 1) {
+          _this17.showMessage("success", data.message);
+          _this17.getStoreSetting();
+          setTimeout(function () {
+            vm.$swal.close();
+            vm.isLoading = false;
+            window.location.reload();
+            vm.$router.push({
+              path: '/store_settings'
+            });
+          }, 2000);
+        } else {
+          vm.showError(data.message);
+          vm.isLoading = false;
+        }
+      })["catch"](function (error) {
+        _this17.isLoading = false;
+        if (error.request.statusText) {
+          _this17.showError(error.request.statusText);
+        } else if (error.message) {
+          _this17.showError(error.message);
+        } else {
+          _this17.showError("Something went wrong!");
+        }
+        vm.isLoading = false;
+      });
+    },
     // Test mail uses smtp_from_mail as SMTP username. For Gmail that must be your Gmail address; for SendGrid use host smtp.sendgrid.net and username "apikey".
     testMail: function testMail() {
-      var _this17 = this;
+      var _this18 = this;
       var data = {
         'mailer': this.store_settings.mailer,
         'email': this.store_settings.test_email,
@@ -2873,7 +2942,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isSendingTestEmail = false;
         var data = res.data;
         if (data.status === 1) {
-          _this17.showMessage("success", data.message);
+          _this18.showMessage("success", data.message);
         } else {
           vm.showError(data.message);
           vm.isLoading = false;
@@ -2881,46 +2950,46 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       })["catch"](function (error) {
         vm.isSendingTestEmail = false;
         if (error.request.statusText) {
-          _this17.showError(error.request.statusText);
+          _this18.showError(error.request.statusText);
         } else if (error.message) {
-          _this17.showError(error.message);
+          _this18.showError(error.message);
         } else {
-          _this17.showError("Something went wrong!");
+          _this18.showError("Something went wrong!");
         }
       });
     },
     fetchActiveLanguages: function fetchActiveLanguages() {
-      var _this18 = this;
+      var _this19 = this;
       if (this.languages.length) {
         return Promise.resolve(this.languages);
       }
       this.isLoadingLanguages = true;
       return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/active_languages').then(function (res) {
-        _this18.languages = res.data.data || [];
-        var def = _this18.languages.find(function (l) {
+        _this19.languages = res.data.data || [];
+        var def = _this19.languages.find(function (l) {
           return l.is_default == 1;
         });
-        _this18.defaultLanguageId = def ? def.id : null;
+        _this19.defaultLanguageId = def ? def.id : null;
 
         // init empty translation shells ONCE
-        _this18.initTranslationShells();
-        return _this18.languages;
+        _this19.initTranslationShells();
+        return _this19.languages;
       })["finally"](function () {
-        _this18.isLoadingLanguages = false;
+        _this19.isLoadingLanguages = false;
       });
     },
     initTranslationShells: function initTranslationShells() {
-      var _this19 = this;
+      var _this20 = this;
       this.languages.forEach(function (lang) {
-        _this19.$set(_this19.storeTranslations.app_name, lang.code, '');
-        _this19.$set(_this19.storeTranslations.copyright_details, lang.code, '');
-        _this19.$set(_this19.appTranslations.app_mode_customer_remark, lang.code, '');
-        _this19.$set(_this19.appTranslations.app_mode_seller_remark, lang.code, '');
-        _this19.$set(_this19.appTranslations.app_mode_delivery_boy_remark, lang.code, '');
+        _this20.$set(_this20.storeTranslations.app_name, lang.code, '');
+        _this20.$set(_this20.storeTranslations.copyright_details, lang.code, '');
+        _this20.$set(_this20.appTranslations.app_mode_customer_remark, lang.code, '');
+        _this20.$set(_this20.appTranslations.app_mode_seller_remark, lang.code, '');
+        _this20.$set(_this20.appTranslations.app_mode_delivery_boy_remark, lang.code, '');
       });
     },
     _translateCodeKeyed: function _translateCodeKeyed(sourceData, applyTo, fields, emptyOnly) {
-      var _this20 = this;
+      var _this21 = this;
       var defaultLang = this.languages.find(function (l) {
         return l.is_default;
       });
@@ -2977,7 +3046,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         data: sourceData
       }).then(function (res) {
         var allTranslations = res.data.data || {};
-        _this20.languages.forEach(function (lang) {
+        _this21.languages.forEach(function (lang) {
           if (lang.is_default) return;
           var translated = allTranslations[lang.code];
           if (!translated) return;
@@ -2986,21 +3055,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             if (val == null) return;
             if (applyTo[field] && _typeof(applyTo[field]) === 'object') {
               if (emptyOnly && applyTo[field][lang.code]) return;
-              _this20.$set(applyTo[field], lang.code, val);
+              _this21.$set(applyTo[field], lang.code, val);
             }
           });
         });
-        _this20.translateSuccessMessage = emptyOnly ? __('translation_completed_successfully') || 'Translation completed successfully' : __('translation_overwritten_successfully') || 'Translation overwritten successfully';
+        _this21.translateSuccessMessage = emptyOnly ? __('translation_completed_successfully') || 'Translation completed successfully' : __('translation_overwritten_successfully') || 'Translation overwritten successfully';
         setTimeout(function () {
-          _this20.translateSuccessMessage = '';
+          _this21.translateSuccessMessage = '';
         }, 5000);
       })["catch"](function (err) {
         var _err$response3, _err$response3$data;
         var msg = ((_err$response3 = err.response) === null || _err$response3 === void 0 ? void 0 : (_err$response3$data = _err$response3.data) === null || _err$response3$data === void 0 ? void 0 : _err$response3$data.message) || err.message || __('something_went_wrong');
-        _this20.showError(msg);
+        _this21.showError(msg);
         throw err;
       })["finally"](function () {
-        if (emptyOnly) _this20.loadingEmpty = false;else _this20.loadingOverwrite = false;
+        if (emptyOnly) _this21.loadingEmpty = false;else _this21.loadingOverwrite = false;
       });
     },
     translateEmptyStoreSetting: function translateEmptyStoreSetting(language) {
@@ -6888,6 +6957,159 @@ var render = function () {
                                   ],
                                   2
                                 ),
+                                _vm._v(" "),
+                                _c("div", { staticClass: "row" }, [
+                                  _c(
+                                    "div",
+                                    { staticClass: "form-group col-md-6" },
+                                    [
+                                      _vm.$can("manage_store_settings")
+                                        ? _c(
+                                            "b-button",
+                                            {
+                                              attrs: {
+                                                type: "submit",
+                                                variant: "primary",
+                                                disabled: _vm.isLoading,
+                                              },
+                                            },
+                                            [
+                                              _vm._v(
+                                                _vm._s(_vm.__("update")) +
+                                                  "\n                                                            "
+                                              ),
+                                              _vm.isLoading
+                                                ? _c("b-spinner", {
+                                                    attrs: {
+                                                      small: "",
+                                                      label: "Spinning",
+                                                    },
+                                                  })
+                                                : _vm._e(),
+                                            ],
+                                            1
+                                          )
+                                        : _vm._e(),
+                                    ],
+                                    1
+                                  ),
+                                ]),
+                              ]
+                            ),
+                          ]),
+                        ]),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm.activeTab === _vm.__("salesman_setting")
+                    ? _c("div", [
+                        _c("div", { staticClass: "card" }, [
+                          _c("div", { staticClass: "card-header" }, [
+                            _c("h4", { staticClass: "card-title" }, [
+                              _vm._v(_vm._s(_vm.__("salesman_setting"))),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "card-body" }, [
+                            _c(
+                              "form",
+                              {
+                                attrs: { method: "post" },
+                                on: {
+                                  submit: function ($event) {
+                                    $event.preventDefault()
+                                    return _vm.saveSalesmanSetting.apply(
+                                      null,
+                                      arguments
+                                    )
+                                  },
+                                },
+                              },
+                              [
+                                _c("div", { staticClass: "row" }, [
+                                  _c(
+                                    "div",
+                                    { staticClass: "form-group col-md-6" },
+                                    [
+                                      _c(
+                                        "label",
+                                        {
+                                          attrs: {
+                                            for: "retailer_verification_radius_meters",
+                                          },
+                                        },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.__(
+                                                "retailer_verification_radius"
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value:
+                                              _vm.store_settings
+                                                .retailer_verification_radius_meters,
+                                            expression:
+                                              "store_settings.retailer_verification_radius_meters",
+                                          },
+                                        ],
+                                        staticClass: "form-control",
+                                        attrs: {
+                                          type: "number",
+                                          min: "0",
+                                          max: "10000",
+                                          step: "1",
+                                          required: "",
+                                          name: "retailer_verification_radius_meters",
+                                          id: "retailer_verification_radius_meters",
+                                          placeholder: "50",
+                                        },
+                                        domProps: {
+                                          value:
+                                            _vm.store_settings
+                                              .retailer_verification_radius_meters,
+                                        },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              _vm.store_settings,
+                                              "retailer_verification_radius_meters",
+                                              $event.target.value
+                                            )
+                                          },
+                                        },
+                                      }),
+                                      _vm._v(" "),
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass:
+                                            "text text-primary font-size-13",
+                                        },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.__(
+                                                "retailer_verification_radius_help"
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                    ]
+                                  ),
+                                ]),
                                 _vm._v(" "),
                                 _c("div", { staticClass: "row" }, [
                                   _c(

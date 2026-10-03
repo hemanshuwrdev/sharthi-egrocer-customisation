@@ -71,6 +71,41 @@ class SalesmanAppApiController extends Controller
     }
 
     /**
+     * Retailers a salesman can see and work with (My Retailers, detail, QR scan, assisted orders).
+     *
+     * Verification only confirms the shop is legitimate. Once a retailer is verified (by any salesman
+     * of any distributor) it is shared with every salesman whose distributor covers its area —
+     * `users.salesman_id` only records who verified it. A retailer is visible when it is either:
+     *   - one this salesman verified (kept visible even if the territory config changes later), or
+     *   - already verified (not pending) and located in the distributor's cities / assigned areas.
+     *
+     * Returns a query on `users` left-joined to `retailer_profiles`; callers add selects/filters.
+     */
+    private function visibleRetailersQuery(Salesman $salesman)
+    {
+        $cityIds = $this->territoryCityIds((int) $salesman->seller_id);
+        $areaIds = $this->territoryAreaIds((int) $salesman->seller_id);
+
+        return User::query()
+            ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
+            ->where(function ($q) use ($salesman, $cityIds, $areaIds) {
+                $q->where('users.salesman_id', $salesman->id);
+                if (!empty($cityIds)) {
+                    $q->orWhere(function ($sub) use ($cityIds, $areaIds) {
+                        $sub->where('users.verification_status', '!=', 'pending')
+                            ->whereIn('retailer_profiles.city_id', $cityIds)
+                            ->when($areaIds, fn ($s) => $s->whereIn('retailer_profiles.area_id', $areaIds));
+                    });
+                }
+            });
+    }
+
+    private function canAccessRetailer(Salesman $salesman, int $retailerId): bool
+    {
+        return $this->visibleRetailersQuery($salesman)->where('users.id', $retailerId)->exists();
+    }
+
+    /**
      * GET /api/salesman/settings  (public — no auth)
      * App bootstrap settings for the salesman mobile app.
      */
@@ -224,6 +259,12 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('not_in_your_territory');
         }
 
+        // The salesman must be at the shop: reported location vs. the shop's registered location.
+        $tooFar = CommonHelper::retailerVerificationDistanceViolation($profile->gps_lat, $profile->gps_lng, $request->verified_lat, $request->verified_lng);
+        if ($tooFar) {
+            return CommonHelper::responseErrorWithData('too_far_to_verify_retailer', $tooFar);
+        }
+
         // Handle photo: multipart upload OR pre-uploaded path.
         $photoPath = null;
         if ($request->hasFile('storefront_photo')) {
@@ -306,7 +347,8 @@ class SalesmanAppApiController extends Controller
 
     /**
      * GET /api/salesman/retailers/my
-     * "My Retailers" — every retailer this salesman owns (claimed via verify).
+     * "My Retailers" — every verified retailer in this salesman's area (shared by all salesmen
+     * of the area; see visibleRetailersQuery).
      * Returns shop info + status + last_order_at to feed the doc's Active/Pending/Inactive badges.
      */
     public function myRetailers(Request $request)
@@ -316,7 +358,7 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('salesman_not_found');
         }
 
-        $rows = User::query()
+        $rows = $this->visibleRetailersQuery($salesman)
             ->select(
                 'users.id as user_id',
                 'users.name',
@@ -363,9 +405,7 @@ class SalesmanAppApiController extends Controller
                       ) < op.amount
                 ) as due_payments_count')
             )
-            ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
-            ->where('users.salesman_id', $salesman->id)
             ->orderByDesc('users.id')
             ->get();
 
@@ -377,7 +417,7 @@ class SalesmanAppApiController extends Controller
 
     /**
      * GET /api/salesman/retailers/{id}
-     * Retailer detail screen. STRICT owner check — salesman can only view retailers they own.
+     * Retailer detail screen. Any salesman of the retailer's area can open it (see visibleRetailersQuery).
      */
     public function retailerDetail(Request $request, $id)
     {
@@ -391,8 +431,7 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('retailer_not_found');
         }
 
-        // Strict ownership: only the owning salesman can view detail.
-        if ((int) $retailer->salesman_id !== (int) $salesman->id) {
+        if (!$this->canAccessRetailer($salesman, (int) $retailer->id)) {
             return CommonHelper::responseError('retailer_not_owned_by_you');
         }
 
@@ -505,7 +544,7 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('retailer_not_found');
         }
 
-        if ((int) $retailer->salesman_id !== (int) $salesman->id) {
+        if (!$this->canAccessRetailer($salesman, (int) $retailer->id)) {
             return CommonHelper::responseError('retailer_not_owned_by_you');
         }
 
@@ -528,9 +567,9 @@ class SalesmanAppApiController extends Controller
     /**
      * GET /api/salesman/retailers/overview
      *
-     * Returns two flat lists for the distributor's territory:
-     *   verified — retailers THIS salesman owns (salesman_id = me)
-     *   pending  — unclaimed retailers in the distributor's cities (salesman_id IS NULL, status = pending)
+     * Returns every retailer in the distributor's territory, shared by all salesmen of the area:
+     *   verified — verification_status != pending (whoever verified them)
+     *   pending  — unclaimed retailers awaiting verification (first salesman to verify claims them)
      *
      * Optional query param: search (name / shop_name / mobile substring)
      */
@@ -570,17 +609,9 @@ class SalesmanAppApiController extends Controller
             )
             ->join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
-            ->whereIn('retailer_profiles.city_id', $cityIds)
-            ->where(function ($q) use ($salesman) {
-                // my verified retailers OR unclaimed pending retailers in territory
-                $q->where('users.salesman_id', $salesman->id)
-                  ->orWhere(function ($sub) {
-                      $sub->whereNull('users.salesman_id')
-                          ->where('users.verification_status', 'pending');
-                  });
-            });
+            ->whereIn('retailer_profiles.city_id', $cityIds);
 
-        // Distributor's assigned areas narrow the list; own retailers always stay visible.
+        // Distributor's assigned areas narrow the list; retailers this salesman verified always stay visible.
         $areaIds = $this->territoryAreaIds((int) $salesman->seller_id);
         if (!empty($areaIds)) {
             $query->where(function ($q) use ($areaIds, $salesman) {
@@ -632,21 +663,21 @@ class SalesmanAppApiController extends Controller
 
     // ─────────────────────────────────────────────────────────────────────────
     //  Phase C — Salesman assisted-order endpoints (cart + place)
-    //  Strict ownership: salesman can only operate on retailers where users.salesman_id = me.
+    //  Salesman can operate on any retailer visible to them (see visibleRetailersQuery).
     //  Cart rows are tagged with placed_by_salesman_id = me so they don't leak into the
     //  retailer's own cart view (retailer-side filters out salesman drafts).
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Strict ownership: the retailer must be claimed by this salesman AND active.
+     * The retailer must be visible to this salesman (same area) AND active.
      * Returns the User row on success; null if not allowed (caller responds with an error).
      */
-    private function ensureOwnedActiveRetailer(Salesman $salesman, $retailerId): ?User
+    private function ensureAccessibleActiveRetailer(Salesman $salesman, $retailerId): ?User
     {
         $retailer = User::find($retailerId);
         if (!$retailer) return null;
-        if ((int) $retailer->salesman_id !== (int) $salesman->id) return null;
         if ($retailer->verification_status !== 'active') return null;
+        if (!$this->canAccessRetailer($salesman, (int) $retailer->id)) return null;
         return $retailer;
     }
 
@@ -809,9 +840,14 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $retailer = $this->ensureOwnedActiveRetailer($salesman, $request->retailer_id);
+        $retailer = $this->ensureAccessibleActiveRetailer($salesman, $request->retailer_id);
         if (!$retailer) {
             return CommonHelper::responseError('retailer_not_owned_or_not_active');
+        }
+
+        // Retailers are shared across distributors, but a salesman can only order from their own distributor's stock.
+        if ((int) $request->seller_id !== (int) $salesman->seller_id) {
+            return CommonHelper::responseError('seller_not_your_distributor');
         }
 
         $variantId = (int) $request->product_variant_id;
@@ -867,7 +903,7 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $retailer = $this->ensureOwnedActiveRetailer($salesman, $request->retailer_id);
+        $retailer = $this->ensureAccessibleActiveRetailer($salesman, $request->retailer_id);
         if (!$retailer) {
             return CommonHelper::responseError('retailer_not_owned_or_not_active');
         }
@@ -1019,7 +1055,7 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $retailer = $this->ensureOwnedActiveRetailer($salesman, $request->retailer_id);
+        $retailer = $this->ensureAccessibleActiveRetailer($salesman, $request->retailer_id);
         if (!$retailer) {
             return CommonHelper::responseError('retailer_not_owned_or_not_active');
         }
@@ -1076,7 +1112,7 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $retailer = $this->ensureOwnedActiveRetailer($salesman, $request->retailer_id);
+        $retailer = $this->ensureAccessibleActiveRetailer($salesman, $request->retailer_id);
         if (!$retailer) {
             return CommonHelper::responseError('retailer_not_owned_or_not_active');
         }
@@ -1107,6 +1143,10 @@ class SalesmanAppApiController extends Controller
             ->get();
         if ($items->isEmpty()) {
             return CommonHelper::responseError('cart_is_empty');
+        }
+        // Same rule as addCartItem — also covers draft rows saved before it was enforced.
+        if ($items->contains(fn ($row) => (int) $row->seller_id !== (int) $salesman->seller_id)) {
+            return CommonHelper::responseError('seller_not_your_distributor');
         }
 
         // Pre-resolve every line before any write.
@@ -1572,8 +1612,8 @@ class SalesmanAppApiController extends Controller
 
         $today = Carbon::today();
 
-        // Total retailers assigned to this salesman (visit target)
-        $totalRetailers = User::where('salesman_id', $salesman->id)->count();
+        // Total retailers in this salesman's area (visit target)
+        $totalRetailers = $this->visibleRetailersQuery($salesman)->count();
 
         // Retailers this salesman placed at least one order for today (proxy for visited)
         $visitedToday = DB::table('orders')

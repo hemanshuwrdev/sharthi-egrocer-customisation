@@ -678,6 +678,42 @@
 
                                         </div>
                                     </div>
+                                    <!-- Sarthi: Salesman settings -->
+                                    <div v-if="activeTab === __('salesman_setting')">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h4 class="card-title">{{ __('salesman_setting') }}</h4>
+                                            </div>
+                                            <div class="card-body">
+                                                <form method="post" @submit.prevent="saveSalesmanSetting">
+                                                    <div class="row">
+                                                        <div class="form-group col-md-6">
+                                                            <label for="retailer_verification_radius_meters">{{
+                                                                __('retailer_verification_radius') }}</label>
+                                                            <input type="number" min="0" max="10000" step="1" required
+                                                                class="form-control"
+                                                                name="retailer_verification_radius_meters"
+                                                                id="retailer_verification_radius_meters"
+                                                                v-model="store_settings.retailer_verification_radius_meters"
+                                                                placeholder="50" />
+                                                            <span class="text text-primary font-size-13">{{
+                                                                __('retailer_verification_radius_help') }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="form-group col-md-6">
+                                                            <b-button type="submit" variant="primary"
+                                                                :disabled="isLoading"
+                                                                v-if="$can('manage_store_settings')">{{ __('update') }}
+                                                                <b-spinner v-if="isLoading" small
+                                                                    label="Spinning"></b-spinner>
+                                                            </b-button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div v-if="activeTab === __('app_setting')">
                                         <div class="card">
                                             <div class="card-header">
@@ -1719,7 +1755,7 @@ export default {
             Panel_login_background_imgerror: null,
             Fssaierror: null,
             tabs: [
-                __('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'),
+                __('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('salesman_setting'),
                 __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'),
                 __('seller_setting'), __('login_setting'),
                 // __('cart_setting'), // Sarthi: hidden per request — not deleted, just unreachable.
@@ -2449,6 +2485,42 @@ export default {
                             vm.$swal.close();
                             vm.isLoading = false;
                             vm.$router.push({ path: '/store_settings' });
+                        }, 2000);
+                } else {
+                    vm.showError(data.message);
+                    vm.isLoading = false;
+                }
+            }).catch(error => {
+                this.isLoading = false;
+                if (error.request.statusText) {
+                    this.showError(error.request.statusText);
+                } else if (error.message) {
+                    this.showError(error.message);
+                } else {
+                    this.showError("Something went wrong!");
+                }
+                vm.isLoading = false;
+            });
+        },
+
+        // Sarthi: save salesman settings
+        saveSalesmanSetting: function () {
+            this.isLoading = true;
+
+            let formData = new FormData();
+            formData.append('retailer_verification_radius_meters', this.store_settings.retailer_verification_radius_meters);
+
+            let url = this.$apiUrl + '/store_settings/save_salesman_setting';
+            let vm = this;
+            axios.post(url, formData).then(res => {
+                let data = res.data;
+                if (data.status === 1) {
+                    this.showMessage("success", data.message);
+                    this.getStoreSetting();
+                    setTimeout(
+                        function () {
+                            vm.$swal.close();
+                            vm.isLoading = false;
                         }, 2000);
                 } else {
                     vm.showError(data.message);

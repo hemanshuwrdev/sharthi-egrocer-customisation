@@ -822,6 +822,51 @@ class CommonHelper
 
         return $distance <= $radius;
     }
+
+    /**
+     * Great-circle (haversine) distance between two lat/lng points, in meters.
+     */
+    public static function distanceInMeters($latFrom, $lngFrom, $latTo, $lngTo): float
+    {
+        $latFrom = deg2rad((float) $latFrom);
+        $latTo   = deg2rad((float) $latTo);
+        $latDelta = $latTo - $latFrom;
+        $lngDelta = deg2rad((float) $lngTo) - deg2rad((float) $lngFrom);
+
+        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+            cos($latFrom) * cos($latTo) * pow(sin($lngDelta / 2), 2)));
+
+        return $angle * 6371000;
+    }
+
+    /**
+     * A salesman must be at the shop to verify it. Compares where the salesman is (from the app)
+     * with the shop's registered location.
+     *
+     * Allowed radius (meters) comes from the `retailer_verification_radius_meters` setting
+     * (default 50; 0 disables the check). The check is skipped when the shop has no usable location.
+     *
+     * @return array|null null when verification is allowed, else ['distance_meters' => int, 'allowed_meters' => int]
+     */
+    public static function retailerVerificationDistanceViolation($shopLat, $shopLng, $salesmanLat, $salesmanLng): ?array
+    {
+        $setting = Setting::get_value('retailer_verification_radius_meters');
+        $allowed = ($setting === '' || $setting === null) ? 50 : (float) $setting;
+        if ($allowed <= 0) {
+            return null;
+        }
+        if (!is_numeric($shopLat) || !is_numeric($shopLng) || ((float) $shopLat == 0 && (float) $shopLng == 0)) {
+            return null;
+        }
+
+        $distance = self::distanceInMeters($shopLat, $shopLng, $salesmanLat, $salesmanLng);
+        if ($distance <= $allowed) {
+            return null;
+        }
+
+        return ['distance_meters' => (int) round($distance), 'allowed_meters' => (int) round($allowed)];
+    }
+
     public static function getSellerIdsfromCityIds(array $cityIds)
     {
         if (empty($cityIds)) {

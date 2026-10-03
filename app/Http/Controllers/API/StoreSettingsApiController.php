@@ -63,6 +63,9 @@ class StoreSettingsApiController extends Controller
             "delivery_boy_bonus_min_amount" => 0,
             "delivery_boy_bonus_max_amount" => 0,
 
+            // Sarthi: max distance (meters) between salesman and shop when verifying a retailer (0 = off)
+            "retailer_verification_radius_meters" => 50,
+
             // "area_wise_delivery_charge" => 0, // delivery charge disabled — client does not want it
             "min_amount" => "",
             // "delivery_charge" => "", // delivery charge disabled — client does not want it
@@ -453,6 +456,33 @@ class StoreSettingsApiController extends Controller
         }
 
         return CommonHelper::responseSuccess('delivery_boy_settings_saved_successfully');
+    }
+
+    /**
+     * Save salesman settings (distance allowed between salesman and shop when verifying a retailer).
+     */
+    public function save_salesman_setting(Request $request)
+    {
+        // Enforced server-side: this value gates salesman verification, so salesman/distributor logins
+        // must not be able to change it by calling the API directly.
+        $admin = auth()->user();
+        if (!$admin || !in_array('manage_store_settings', $admin->allPermissions ?? [], true)) {
+            return CommonHelper::responseError('unauthorized_access');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'retailer_verification_radius_meters' => 'required|numeric|min:0|max:10000',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $setting = Setting::where('variable', 'retailer_verification_radius_meters')->first() ?? new Setting();
+        $setting->variable = 'retailer_verification_radius_meters';
+        $setting->value = (string) $request->retailer_verification_radius_meters;
+        $setting->save();
+
+        return CommonHelper::responseSuccess('salesman_settings_saved_successfully');
     }
 
     /**

@@ -274,6 +274,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('save_address_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_address_setting'])->name('store_settings.save_address_setting');
         Route::post('save_other_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_other_setting'])->name('store_settings.save_other_setting');
         Route::post('save_delivery_boy_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_delivery_boy_setting'])->name('store_settings.save_delivery_boy_setting');
+        Route::post('save_salesman_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_salesman_setting'])->name('store_settings.save_salesman_setting');
         // Sarthi: admin-level payment collection method toggles
         Route::get('payment_methods',      [\App\Http\Controllers\API\SettlementController::class, 'adminGetPaymentMethods'])->name('store_settings.payment_methods.get');
         Route::post('payment_methods/save',[\App\Http\Controllers\API\SettlementController::class, 'adminSavePaymentMethods'])->name('store_settings.payment_methods.save');

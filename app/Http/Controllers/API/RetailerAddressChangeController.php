@@ -189,6 +189,12 @@ class RetailerAddressChangeController extends Controller
             return CommonHelper::responseError('address_change_request_not_found');
         }
 
+        // The salesman must be at the retailer's NEW location to verify it.
+        $tooFar = CommonHelper::retailerVerificationDistanceViolation($changeRequest->new_gps_lat, $changeRequest->new_gps_lng, $request->verified_lat, $request->verified_lng);
+        if ($tooFar) {
+            return CommonHelper::responseErrorWithData('too_far_to_verify_retailer', $tooFar);
+        }
+
         // Atomic claim — only one salesman can verify
         $claimed = RetailerAddressChangeRequest::where('id', $id)
             ->whereIn('status', ['pending', 'assigned'])
