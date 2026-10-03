@@ -38,6 +38,13 @@
                                         {{ __('buy') }} {{ row.item.buy_qty }} × {{ row.item.buy_product }}<br>
                                         <strong>{{ __('get') }} {{ row.item.free_qty }} × {{ row.item.free_product }} {{ __('free') }}</strong>
                                     </template>
+                                    <template v-else-if="row.item.products_detail && row.item.products_detail.length">
+                                        <div v-for="(p, i) in row.item.products_detail" :key="'pd' + i" class="small mb-1 text-start">
+                                            <strong>{{ p.product }}</strong>
+                                            <span class="text-muted" v-if="p.conditions"> ({{ p.conditions }})</span>
+                                            <span class="badge bg-success ms-1" v-if="p.reward">{{ p.reward }}</span>
+                                        </div>
+                                    </template>
                                     <template v-else>
                                         <span class="badge bg-secondary me-1" v-for="(p, i) in row.item.products" :key="i">{{ p }}</span><br>
                                         <small v-for="(s, i) in row.item.slabs" :key="'s' + i" class="d-block">

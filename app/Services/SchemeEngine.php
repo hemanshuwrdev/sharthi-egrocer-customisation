@@ -44,17 +44,31 @@ class SchemeEngine
 
         $schemes = Scheme::active()
             ->where('seller_id', $sellerId)
-            ->with(['schemeProducts', 'schemeSlabs'])
+            ->with([
+                'schemeProducts.sellerProduct.masterProductVariant.masterProduct',
+                'schemeProducts.sellerProduct.masterProductVariant.unit',
+                'schemeProducts.sellerProduct.masterProductVariant.secondaryUnit',
+                'schemeSlabs',
+            ])
             ->get();
 
         $best = null;
         foreach ($schemes as $scheme) {
-            $result = match ($scheme->type) {
-                Scheme::TYPE_BUY_X_GET_Y         => self::evaluateBuyXGetY($scheme, $qtyByProduct),
-                Scheme::TYPE_GROUP_DISCOUNT_PRICE => self::evaluateGroupDiscountPrice($scheme, $totalByProduct, $actualTotalByProduct),
-                Scheme::TYPE_GROUP_DISCOUNT_QTY   => self::evaluateGroupDiscountQty($scheme, $qtyByProduct, $totalByProduct, $actualTotalByProduct),
-                default                           => null,
-            };
+            $hasRowConditions = ($scheme->type === Scheme::TYPE_PRODUCT_CONDITIONS)
+                || $scheme->schemeProducts->contains(function ($sp) {
+                    return $sp->min_qty !== null || $sp->discount_type !== null;
+                });
+
+            if ($hasRowConditions) {
+                $result = self::evaluateProductConditionsScheme($scheme, $qtyByProduct, $totalByProduct, $actualTotalByProduct);
+            } else {
+                $result = match ($scheme->type) {
+                    Scheme::TYPE_BUY_X_GET_Y         => self::evaluateBuyXGetY($scheme, $qtyByProduct),
+                    Scheme::TYPE_GROUP_DISCOUNT_PRICE => self::evaluateGroupDiscountPrice($scheme, $totalByProduct, $actualTotalByProduct),
+                    Scheme::TYPE_GROUP_DISCOUNT_QTY   => self::evaluateGroupDiscountQty($scheme, $qtyByProduct, $totalByProduct, $actualTotalByProduct),
+                    default                           => null,
+                };
+            }
 
             if ($result !== null && ($best === null || $result['benefit'] > $best['benefit'])) {
                 $best = $result;
@@ -235,6 +249,53 @@ class SchemeEngine
                         'minimumGroupQty'    => $minimumGroupQty,
                     ];
                 }
+            } elseif ($scheme->id !== $appliedSchemeId && ($scheme->type === Scheme::TYPE_PRODUCT_CONDITIONS || $scheme->schemeProducts->contains(fn ($sp) => $sp->min_qty !== null))) {
+                foreach ($scheme->schemeProducts as $sp) {
+                    if (!$sp->min_qty || (float) $sp->min_qty <= 0) {
+                        continue;
+                    }
+                    $spId = (int) $sp->seller_product_id;
+                    $cartQty = (float) ($qtyByProduct[$spId] ?? 0);
+                    if ($cartQty <= 0) {
+                        continue;
+                    }
+
+                    $sellerProduct = $sp->sellerProduct;
+                    if (!$sellerProduct) {
+                        continue;
+                    }
+                    $variant = $sellerProduct->masterProductVariant;
+                    $secVal = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
+
+                    $effectiveQty = ($sp->qty_basis === 'outer') ? floor($cartQty / $secVal) : $cartQty;
+                    $minQty = (float) $sp->min_qty;
+                    if ($effectiveQty >= $minQty) {
+                        continue;
+                    }
+
+                    $qtyNeededInBasis = $minQty - $effectiveQty;
+                    $unitsNeeded = ($sp->qty_basis === 'outer') ? ($qtyNeededInBasis * $secVal) : $qtyNeededInBasis;
+                    $unitPrice = (float) ($sellerProduct->discounted_price && (float) $sellerProduct->discounted_price > 0
+                        ? $sellerProduct->discounted_price
+                        : $sellerProduct->selling_price);
+                    $amountNeeded = round($unitsNeeded * $unitPrice, 2);
+
+                    if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
+                        $nearest = [
+                            'type'               => 'group_discount',
+                            'amountNeeded'       => $amountNeeded,
+                            'minimumAmount'      => round($minQty * ($sp->qty_basis === 'outer' ? $secVal * $unitPrice : $unitPrice), 2),
+                            'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
+                            'scheme'             => $scheme,
+                            'nextSlab'           => null,
+                            'currentBuyQty'      => $effectiveQty,
+                            'currentGroupTotal'  => null,
+                            'currentGroupQty'    => null,
+                            'groupQtyNeeded'     => null,
+                            'minimumGroupQty'    => null,
+                        ];
+                    }
+                }
             }
         }
 
@@ -297,13 +358,13 @@ class SchemeEngine
             'id'                  => $s->id,
             'name'                => $s->name,
             'offer_type'          => $type,
-            // BXGY fields
-            'amount_needed'       => $isBxgy ? $nearest['amountNeeded'] : ($type === Scheme::TYPE_GROUP_DISCOUNT_PRICE ? $nearest['amountNeeded'] : null),
-            'minimum_amount'      => $isBxgy ? $nearest['minimumAmount'] : ($type === Scheme::TYPE_GROUP_DISCOUNT_PRICE ? $nearest['minimumAmount'] : null),
+            // BXGY / Group fields
+            'amount_needed'       => $nearest['amountNeeded'] ?? null,
+            'minimum_amount'      => $nearest['minimumAmount'] ?? null,
             'buy_qty'             => $isBxgy ? (int) $s->buy_qty  : null,
             'get_qty'             => $isBxgy ? (int) $s->free_qty : null,
-            'current_buy_qty'     => $isBxgy ? $nearest['currentBuyQty'] : null,
-            'qty_needed'          => $isBxgy ? $nearest['qtyNeeded'] : null,
+            'current_buy_qty'     => $nearest['currentBuyQty'] ?? null,
+            'qty_needed'          => $nearest['qtyNeeded'] ?? null,
             'buy_product'         => $buyProductData,
             'free_product'        => $freeProductData,
             // group_discount_price fields
@@ -489,5 +550,128 @@ class SchemeEngine
         }
 
         return min($discount, $groupTotal);
+    }
+
+    private static function evaluateProductConditionsScheme(Scheme $scheme, array $qtyByProduct, array $totalByProduct, array $actualTotalByProduct = []): ?array
+    {
+        $schemeDiscount = 0.0;
+        $freeItems      = [];
+        $hasAnyMatch    = false;
+
+        $isPreTax = ($scheme->tax_option ?? 'inclusive') === 'inclusive';
+
+        foreach ($scheme->schemeProducts as $sp) {
+            $spId = (int) $sp->seller_product_id;
+            $cartQty = (float) ($qtyByProduct[$spId] ?? 0);
+            if ($cartQty <= 0) {
+                continue;
+            }
+
+            $sellerProduct = $sp->sellerProduct;
+            if (!$sellerProduct || (int) $sellerProduct->status !== 1) {
+                continue;
+            }
+
+            $variant = $sellerProduct->masterProductVariant;
+            $secVal  = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
+
+            // Check trigger basis (outer vs inner)
+            $effectiveQty = ($sp->qty_basis === 'outer')
+                ? floor($cartQty / $secVal)
+                : $cartQty;
+
+            $minQty = (float) ($sp->min_qty ?? 0);
+            if ($minQty > 0 && $effectiveQty < $minQty) {
+                continue;
+            }
+
+            $maxQty = $sp->max_qty !== null ? (float) $sp->max_qty : null;
+            if ($maxQty !== null && $maxQty > 0 && $effectiveQty > $maxQty) {
+                $effectiveQty = $maxQty;
+            }
+
+            $hasAnyMatch = true;
+            $lineTotal   = (float) ($totalByProduct[$spId] ?? 0);
+            $actualLine  = (float) ($actualTotalByProduct[$spId] ?? $lineTotal);
+
+            $cappedUnits = ($sp->qty_basis === 'outer') ? ($effectiveQty * $secVal) : $effectiveQty;
+            $eligibleRatio = ($cartQty > 0) ? min(1.0, $cappedUnits / $cartQty) : 1.0;
+
+            $unitPrice = (float) ($sellerProduct->discounted_price && (float) $sellerProduct->discounted_price > 0
+                ? $sellerProduct->discounted_price
+                : $sellerProduct->selling_price);
+
+            $discType = $sp->discount_type ?: 'percentage';
+
+            if ($discType === 'percentage') {
+                $base = ($isPreTax ? $actualLine : $lineTotal) * $eligibleRatio;
+                $pct = (float) ($sp->discount_value ?? 0);
+                if ($pct > 0) {
+                    $rowDisc = round($base * min($pct, 100) / 100, 2);
+                    $schemeDiscount += min($rowDisc, $lineTotal);
+                }
+            } elseif ($discType === 'flat') {
+                $flat = (float) ($sp->discount_value ?? 0);
+                if ($flat > 0) {
+                    if ($isPreTax && $actualLine > 0 && $lineTotal > $actualLine) {
+                        $avgTaxPct = ($lineTotal - $actualLine) / $actualLine * 100;
+                        $flat = round($flat * (1 + $avgTaxPct / 100), 2);
+                    }
+                    $schemeDiscount += min($flat, $lineTotal);
+                }
+            } elseif ($discType === 'free_product') {
+                $rawFree = (float) ($sp->free_qty ?? 1);
+                $freeUnits = ($sp->free_qty_basis === 'outer')
+                    ? ($rawFree * $secVal)
+                    : $rawFree;
+
+                if ($freeUnits > 0) {
+                    if ((float) $sellerProduct->stock >= $freeUnits + $cartQty) {
+                        $freeItems[] = [
+                            'seller_product_id'         => $sellerProduct->id,
+                            'master_product_variant_id' => $variant->id ?? null,
+                            'qty'                       => (int) $freeUnits,
+                            'product_name'              => $variant->masterProduct->name ?? '',
+                            'variant_name'              => $variant->sku ?? '',
+                            'unit_value'                => $unitPrice,
+                        ];
+                    }
+                }
+            } elseif ($discType === 'discounted_product') {
+                $discUnits = (float) ($sp->free_qty ?? 1);
+                $freeUnitCount = ($sp->free_qty_basis === 'outer')
+                    ? ($discUnits * $secVal)
+                    : $discUnits;
+
+                $pct = (float) ($sp->discount_value ?? 0);
+                if ($pct > 0 && $freeUnitCount > 0) {
+                    $discountedAmount = round($freeUnitCount * $unitPrice * min($pct, 100) / 100, 2);
+                    $schemeDiscount += min($discountedAmount, $lineTotal);
+                }
+            }
+        }
+
+        if (!$hasAnyMatch) {
+            return null;
+        }
+
+        $freeBenefit = 0.0;
+        foreach ($freeItems as $fi) {
+            $freeBenefit += (float) $fi['qty'] * (float) $fi['unit_value'];
+        }
+
+        $totalBenefit = $schemeDiscount + $freeBenefit;
+        if ($totalBenefit <= 0) {
+            return null;
+        }
+
+        return [
+            'scheme_id'       => $scheme->id,
+            'name'            => $scheme->name,
+            'type'            => $scheme->type,
+            'benefit'         => $totalBenefit,
+            'scheme_discount' => $schemeDiscount,
+            'free_items'      => $freeItems,
+        ];
     }
 }

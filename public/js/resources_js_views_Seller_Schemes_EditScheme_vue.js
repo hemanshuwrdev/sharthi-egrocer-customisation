@@ -17,12 +17,174 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue-multiselect */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.js");
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_2__);
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -195,25 +357,35 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       id: this.$route.params.id,
       record: {
         name: '',
-        type: 'buy_x_get_y',
+        type: 'group_discount',
+        description: '',
+        tax_option: 'inclusive',
         buy_product: null,
         buy_qty: null,
         free_product: null,
         free_qty: null,
         products: [],
-        slabs: [{
-          min_value: null,
-          discount_type: 'percentage',
-          discount_value: null,
-          tax_option: 'inclusive'
-        }],
         start_date: '',
         end_date: '',
         status: 1
       },
       availableProducts: [],
-      isLoading: false
+      isLoading: false,
+      showProductModal: false,
+      productSearch: '',
+      selectedModalProductIds: []
     };
+  },
+  computed: {
+    filteredModalProducts: function filteredModalProducts() {
+      if (!this.productSearch) {
+        return this.availableProducts;
+      }
+      var q = this.productSearch.toLowerCase();
+      return this.availableProducts.filter(function (p) {
+        return p.name && p.name.toLowerCase().includes(q) || p.sku && p.sku.toLowerCase().includes(q);
+      });
+    }
   },
   created: function () {
     var _created = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
@@ -240,6 +412,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     return created;
   }(),
   methods: {
+    onImgError: function onImgError(e) {
+      e.target.src = '/images/default_product.png';
+    },
     getProducts: function getProducts() {
       var _this = this;
       return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$sellerApiUrl + '/schemes/products').then(function (response) {
@@ -259,7 +434,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         if (data.status === 1) {
           var r = data.data;
           _this2.record.name = r.name;
-          _this2.record.type = r.type;
+          _this2.record.description = r.description || '';
+          _this2.record.type = r.type === 'buy_x_get_y' ? 'buy_x_get_y' : 'group_discount';
+          _this2.record.tax_option = r.tax_option || 'inclusive';
           _this2.record.buy_qty = r.buy_qty;
           _this2.record.free_qty = r.free_qty;
           _this2.record.start_date = r.start_date ? r.start_date.substring(0, 10) : '';
@@ -271,106 +448,221 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           _this2.record.free_product = _this2.availableProducts.find(function (p) {
             return p.id == r.free_seller_product_id;
           }) || null;
-          _this2.record.products = _this2.availableProducts.filter(function (p) {
-            return (r.product_ids || []).includes(p.id);
-          });
-          _this2.record.slabs = r.slabs && r.slabs.length ? r.slabs.map(function (s) {
-            return _objectSpread({
-              tax_option: 'inclusive'
-            }, s);
-          }) : [{
-            min_value: null,
-            discount_type: 'percentage',
-            discount_value: null,
-            tax_option: 'inclusive'
-          }];
+          if (r.products && r.products.length > 0) {
+            _this2.record.products = r.products.map(function (p) {
+              var match = _this2.availableProducts.find(function (ap) {
+                return ap.id == (p.seller_product_id || p.id);
+              });
+              return {
+                id: p.seller_product_id || p.id,
+                seller_product_id: p.seller_product_id || p.id,
+                name: p.name || (match ? match.name : ''),
+                sku: p.sku || (match ? match.sku : ''),
+                image: p.image || (match ? match.image : ''),
+                uom: p.uom || (match ? match.uom : 'Unit'),
+                secondary_unit: p.secondary_unit || (match ? match.secondary_unit : 'Pack'),
+                secondary_unit_value: p.secondary_unit_value || (match ? match.secondary_unit_value : null),
+                price: p.price || (match ? match.price : 0),
+                outer_price: p.outer_price || (match ? match.outer_price : 0),
+                qty_basis: p.qty_basis || 'outer',
+                min_qty: p.min_qty,
+                max_qty: p.max_qty,
+                discount_type: p.discount_type || 'percentage',
+                discount_value: p.discount_value !== null ? p.discount_value : 10,
+                free_qty: p.free_qty !== null ? p.free_qty : 1,
+                free_qty_basis: p.free_qty_basis || 'inner'
+              };
+            });
+          } else if (r.product_ids && r.product_ids.length > 0) {
+            // Fallback from legacy scheme
+            _this2.record.products = _this2.availableProducts.filter(function (p) {
+              return r.product_ids.includes(p.id);
+            }).map(function (p) {
+              return {
+                id: p.id,
+                seller_product_id: p.id,
+                name: p.name,
+                sku: p.sku,
+                image: p.image,
+                uom: p.uom,
+                secondary_unit: p.secondary_unit,
+                secondary_unit_value: p.secondary_unit_value,
+                price: p.price,
+                outer_price: p.outer_price,
+                qty_basis: 'outer',
+                min_qty: 1,
+                max_qty: null,
+                discount_type: 'percentage',
+                discount_value: 10,
+                free_qty: 1,
+                free_qty_basis: 'inner'
+              };
+            });
+          }
         }
       })["catch"](function () {
         _this2.isLoading = false;
         _this2.showError("Something went wrong");
       });
     },
-    addSlab: function addSlab() {
-      this.record.slabs.push({
-        min_value: null,
-        discount_type: 'percentage',
-        discount_value: null,
-        tax_option: 'inclusive'
+    openProductModal: function openProductModal() {
+      this.selectedModalProductIds = this.record.products.map(function (p) {
+        return p.id || p.seller_product_id;
+      });
+      this.productSearch = '';
+      this.showProductModal = true;
+    },
+    selectAllModalProducts: function selectAllModalProducts() {
+      this.selectedModalProductIds = this.filteredModalProducts.map(function (p) {
+        return p.id;
       });
     },
-    removeSlab: function removeSlab(index) {
-      this.record.slabs.splice(index, 1);
+    deselectAllModalProducts: function deselectAllModalProducts() {
+      this.selectedModalProductIds = [];
     },
-    isGroupType: function isGroupType() {
-      return this.record.type === 'group_discount_price' || this.record.type === 'group_discount_qty';
+    addSelectedModalProducts: function addSelectedModalProducts() {
+      var _this3 = this;
+      var existingMap = {};
+      this.record.products.forEach(function (p) {
+        existingMap[p.id || p.seller_product_id] = p;
+      });
+      var newProducts = [];
+      this.selectedModalProductIds.forEach(function (id) {
+        if (existingMap[id]) {
+          newProducts.push(existingMap[id]);
+        } else {
+          var p = _this3.availableProducts.find(function (ap) {
+            return ap.id == id;
+          });
+          if (p) {
+            newProducts.push({
+              id: p.id,
+              seller_product_id: p.id,
+              name: p.name,
+              sku: p.sku,
+              image: p.image,
+              uom: p.uom,
+              secondary_unit: p.secondary_unit,
+              secondary_unit_value: p.secondary_unit_value,
+              price: p.price,
+              outer_price: p.outer_price,
+              qty_basis: 'outer',
+              min_qty: 1,
+              max_qty: null,
+              discount_type: 'percentage',
+              discount_value: 10,
+              free_qty: 1,
+              free_qty_basis: 'inner'
+            });
+          }
+        }
+      });
+      this.record.products = newProducts;
+      this.showProductModal = false;
+    },
+    onDiscountTypeChange: function onDiscountTypeChange(item) {
+      if (item.discount_type === 'discounted_product') {
+        if (!item.free_qty || item.free_qty < 1) item.free_qty = 1;
+        if (!item.free_qty_basis) item.free_qty_basis = 'outer';
+        if (!item.discount_value || item.discount_value > 100) item.discount_value = 50;
+      } else if (item.discount_type === 'free_product') {
+        if (!item.free_qty || item.free_qty < 1) item.free_qty = 1;
+        if (!item.free_qty_basis) item.free_qty_basis = 'inner';
+      } else if (item.discount_type === 'percentage') {
+        if (!item.discount_value || item.discount_value > 100) item.discount_value = 10;
+      } else if (item.discount_type === 'flat') {
+        if (!item.discount_value) item.discount_value = 50;
+      }
+    },
+    removeProductRow: function removeProductRow(index) {
+      this.record.products.splice(index, 1);
     },
     saveRecord: function saveRecord() {
-      var _this3 = this;
-      if (this.record.type === 'buy_x_get_y' && (!this.record.buy_product || !this.record.free_product)) {
-        this.showError("Please select buy and free products.");
-        return;
-      }
-      if (this.isGroupType() && this.record.products.length === 0) {
-        this.showError("Please select at least one product.");
-        return;
-      }
-      if (this.isGroupType()) {
-        var invalidSlab = this.record.slabs.find(function (s) {
-          return s.discount_type === 'percentage' && Number(s.discount_value) > 100;
-        });
-        if (invalidSlab) {
-          this.showError(__('percentage_discount_cannot_exceed_100'));
+      var _this4 = this;
+      if (this.record.type === 'buy_x_get_y') {
+        if (!this.record.buy_product || !this.record.free_product) {
+          this.showError("Please select buy and free products.");
           return;
+        }
+      } else {
+        if (this.record.products.length === 0) {
+          this.showError("Please add at least one product with quantity conditions.");
+          return;
+        }
+        for (var i = 0; i < this.record.products.length; i++) {
+          var p = this.record.products[i];
+          if (!p.min_qty || Number(p.min_qty) <= 0) {
+            this.showError("Please enter a valid Min Quantity for " + p.name);
+            return;
+          }
+          if (p.max_qty && Number(p.max_qty) < Number(p.min_qty)) {
+            this.showError("Max Quantity cannot be less than Min Quantity for " + p.name);
+            return;
+          }
+          if (p.discount_type === 'percentage' && Number(p.discount_value) > 100) {
+            this.showError("Percentage discount cannot exceed 100% for " + p.name);
+            return;
+          }
+          if (p.discount_type === 'discounted_product' && Number(p.discount_value) > 100) {
+            this.showError("Discount percentage cannot exceed 100% for " + p.name);
+            return;
+          }
         }
       }
       this.isLoading = true;
       var url = this.$sellerApiUrl + '/schemes/' + (this.id ? 'update' : 'save');
-      var formData = new FormData();
+      var payload = {
+        name: this.record.name,
+        type: this.record.type,
+        description: this.record.description,
+        tax_option: this.record.tax_option,
+        start_date: this.record.start_date,
+        end_date: this.record.end_date,
+        status: this.record.status
+      };
       if (this.id) {
-        formData.append('id', this.id);
+        payload.id = this.id;
       }
-      formData.append('name', this.record.name);
-      formData.append('type', this.record.type);
-      formData.append('start_date', this.record.start_date);
-      formData.append('end_date', this.record.end_date);
-      formData.append('status', this.record.status);
       if (this.record.type === 'buy_x_get_y') {
-        formData.append('buy_seller_product_id', this.record.buy_product.id);
-        formData.append('buy_qty', this.record.buy_qty);
-        formData.append('free_seller_product_id', this.record.free_product.id);
-        formData.append('free_qty', this.record.free_qty);
-      } else if (this.isGroupType()) {
-        this.record.products.forEach(function (p, index) {
-          formData.append('product_ids[' + index + ']', p.id);
-        });
-        this.record.slabs.forEach(function (s, index) {
-          formData.append('slabs[' + index + '][min_value]', s.min_value);
-          formData.append('slabs[' + index + '][discount_type]', s.discount_type);
-          formData.append('slabs[' + index + '][discount_value]', s.discount_value);
-          formData.append('slabs[' + index + '][tax_option]', s.tax_option || 'inclusive');
+        payload.buy_seller_product_id = this.record.buy_product.id;
+        payload.buy_qty = this.record.buy_qty;
+        payload.free_seller_product_id = this.record.free_product.id;
+        payload.free_qty = this.record.free_qty;
+      } else {
+        payload.products = this.record.products.map(function (p) {
+          return {
+            seller_product_id: p.seller_product_id || p.id,
+            qty_basis: p.qty_basis,
+            min_qty: p.min_qty,
+            max_qty: p.max_qty,
+            discount_type: p.discount_type,
+            discount_value: p.discount_value,
+            free_qty: p.free_qty,
+            free_qty_basis: p.free_qty_basis
+          };
         });
       }
-      axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, payload).then(function (response) {
         var data = response.data;
         if (data.status === 1) {
-          _this3.showMessage("success", data.message);
+          _this4.showMessage("success", data.message);
           setTimeout(function () {
-            _this3.$router.push({
+            _this4.$router.push({
               path: '/seller/schemes'
             });
           }, 1000);
         } else {
-          _this3.showError(data.message);
-          _this3.isLoading = false;
+          _this4.showError(data.message);
+          _this4.isLoading = false;
         }
       })["catch"](function (error) {
-        _this3.isLoading = false;
-        if (error.request && error.request.statusText) {
-          _this3.showError(error.request.statusText);
+        _this4.isLoading = false;
+        if (error.response && error.response.data && error.response.data.message) {
+          _this4.showError(error.response.data.message);
         } else if (error.message) {
-          _this3.showError(error.message);
+          _this4.showError(error.message);
         } else {
-          _this3.showError("Something went wrong!");
+          _this4.showError("Something went wrong!");
         }
       });
     }
@@ -379,9 +671,33 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 /***/ }),
 
-/***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external":
+/***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__);
+// Imports
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, "\n.scheme-form-page[data-v-82b5b35e] {\n    padding-bottom: 30px;\n}\n.scheme-card[data-v-82b5b35e] {\n    border: 1px solid #e2e8f0;\n    border-radius: 12px;\n    background-color: #ffffff;\n}\n.step-num-badge[data-v-82b5b35e] {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    width: 28px;\n    height: 28px;\n    border-radius: 50%;\n    background-color: #2563eb;\n    color: #ffffff;\n    font-size: 14px;\n    font-weight: 700;\n}\n.product-thumb[data-v-82b5b35e] {\n    width: 42px;\n    height: 42px;\n    -o-object-fit: cover;\n       object-fit: cover;\n}\n.product-name-text[data-v-82b5b35e] {\n    font-size: 13.5px;\n    line-height: 1.25;\n}\n.scheme-products-table th[data-v-82b5b35e] {\n    font-size: 12px;\n    text-transform: uppercase;\n    letter-spacing: 0.5px;\n    padding: 12px 10px;\n}\n.scheme-products-table td[data-v-82b5b35e] {\n    padding: 10px 8px;\n    vertical-align: middle;\n}\n.cursor-pointer[data-v-82b5b35e] {\n    cursor: pointer;\n}\n.hover-bg[data-v-82b5b35e]:hover {\n    background-color: #f8fafc;\n}\n.action-trash-btn[data-v-82b5b35e] {\n    width: 32px;\n    height: 32px;\n    padding: 0;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border-radius: 6px;\n}\n", ""]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ }),
+
+/***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external":
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external ***!
+  !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ ((module, __webpack_exports__, __webpack_require__) => {
 
@@ -403,9 +719,39 @@ ___CSS_LOADER_EXPORT___.push([module.id, "fieldset[disabled] .multiselect{pointe
 
 /***/ }),
 
-/***/ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external":
+/***/ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css":
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_style_index_0_id_82b5b35e_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../../../../node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css */ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css");
+
+            
+
+var options = {};
+
+options.insert = "head";
+options.singleton = false;
+
+var update = _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_style_index_0_id_82b5b35e_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__["default"], options);
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_style_index_0_id_82b5b35e_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__["default"].locals || {});
+
+/***/ }),
+
+/***/ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external":
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external ***!
+  !*** ./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external ***!
   \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -416,7 +762,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_0_lang_css_external__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../vue-loader/lib/loaders/stylePostLoader.js!../../postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./vue-multiselect.min.css?vue&type=style&index=0&lang=css&external */ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external");
+/* harmony import */ var _css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_1_lang_css_external__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../vue-loader/lib/loaders/stylePostLoader.js!../../postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./vue-multiselect.min.css?vue&type=style&index=1&lang=css&external */ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external");
 
             
 
@@ -425,11 +771,11 @@ var options = {};
 options.insert = "head";
 options.singleton = false;
 
-var update = _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_0_lang_css_external__WEBPACK_IMPORTED_MODULE_1__["default"], options);
+var update = _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_1_lang_css_external__WEBPACK_IMPORTED_MODULE_1__["default"], options);
 
 
 
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_0_lang_css_external__WEBPACK_IMPORTED_MODULE_1__["default"].locals || {});
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_1_lang_css_external__WEBPACK_IMPORTED_MODULE_1__["default"].locals || {});
 
 /***/ }),
 
@@ -444,25 +790,27 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _EditScheme_vue_vue_type_template_id_82b5b35e__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./EditScheme.vue?vue&type=template&id=82b5b35e */ "./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e");
+/* harmony import */ var _EditScheme_vue_vue_type_template_id_82b5b35e_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true */ "./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true");
 /* harmony import */ var _EditScheme_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./EditScheme.vue?vue&type=script&lang=js */ "./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=script&lang=js");
-/* harmony import */ var vue_multiselect_dist_vue_multiselect_min_css_vue_type_style_index_0_lang_css_external__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external");
-/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+/* harmony import */ var _EditScheme_vue_vue_type_style_index_0_id_82b5b35e_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css */ "./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css");
+/* harmony import */ var vue_multiselect_dist_vue_multiselect_min_css_vue_type_style_index_1_lang_css_external__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! !../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
 
 ;
 
 
+
 /* normalize component */
 
-var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_4__["default"])(
   _EditScheme_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
-  _EditScheme_vue_vue_type_template_id_82b5b35e__WEBPACK_IMPORTED_MODULE_0__.render,
-  _EditScheme_vue_vue_type_template_id_82b5b35e__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  _EditScheme_vue_vue_type_template_id_82b5b35e_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _EditScheme_vue_vue_type_template_id_82b5b35e_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
   false,
   null,
-  null,
+  "82b5b35e",
   null
   
 )
@@ -490,40 +838,53 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external":
+/***/ "./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external":
 /*!************************************************************************************************************!*\
-  !*** ./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external ***!
+  !*** ./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external ***!
   \************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _style_loader_dist_cjs_js_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_0_lang_css_external__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../style-loader/dist/cjs.js!../../css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../vue-loader/lib/loaders/stylePostLoader.js!../../postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./vue-multiselect.min.css?vue&type=style&index=0&lang=css&external */ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=0&lang=css&external");
+/* harmony import */ var _style_loader_dist_cjs_js_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_vue_loader_lib_loaders_stylePostLoader_js_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_vue_multiselect_min_css_vue_type_style_index_1_lang_css_external__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../style-loader/dist/cjs.js!../../css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../vue-loader/lib/loaders/stylePostLoader.js!../../postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./vue-multiselect.min.css?vue&type=style&index=1&lang=css&external */ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-multiselect/dist/vue-multiselect.min.css?vue&type=style&index=1&lang=css&external");
 
 
 /***/ }),
 
-/***/ "./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e":
-/*!****************************************************************************************!*\
-  !*** ./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e ***!
-  \****************************************************************************************/
+/***/ "./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css":
+/*!******************************************************************************************************************!*\
+  !*** ./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css ***!
+  \******************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_style_loader_dist_cjs_js_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_style_index_0_id_82b5b35e_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/style-loader/dist/cjs.js!../../../../../node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css */ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=style&index=0&id=82b5b35e&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true":
+/*!****************************************************************************************************!*\
+  !*** ./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true ***!
+  \****************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   render: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_template_id_82b5b35e__WEBPACK_IMPORTED_MODULE_0__.render),
-/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_template_id_82b5b35e__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_template_id_82b5b35e_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_template_id_82b5b35e_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
-/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_template_id_82b5b35e__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./EditScheme.vue?vue&type=template&id=82b5b35e */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e");
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditScheme_vue_vue_type_template_id_82b5b35e_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true");
 
 
 /***/ }),
 
-/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e":
-/*!*******************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e ***!
-  \*******************************************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true":
+/*!*******************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/Schemes/EditScheme.vue?vue&type=template&id=82b5b35e&scoped=true ***!
+  \*******************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -536,442 +897,1010 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-          _c("h3", [
-            _vm._v(
-              _vm._s(_vm.id ? _vm.__("edit_scheme") : _vm.__("add_scheme"))
+  return _c(
+    "div",
+    { staticClass: "scheme-form-page" },
+    [
+      _c("div", { staticClass: "page-heading mb-3" }, [
+        _c("div", { staticClass: "row align-items-center" }, [
+          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
+            _c("h3", { staticClass: "mb-1" }, [
+              _vm._v(
+                _vm._s(_vm.id ? _vm.__("edit_scheme") : _vm.__("add_scheme"))
+              ),
+            ]),
+            _vm._v(" "),
+            _c("p", { staticClass: "text-muted small mb-0" }, [
+              _vm._v(
+                _vm._s(
+                  _vm.__(
+                    "create_scheme_subtitle",
+                    "Create a new scheme for selected products with qty based discounts or free products."
+                  )
+                )
+              ),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
+            _c(
+              "nav",
+              {
+                staticClass: "breadcrumb-header float-start float-lg-end",
+                attrs: { "aria-label": "breadcrumb" },
+              },
+              [
+                _c("ol", { staticClass: "breadcrumb mb-0" }, [
+                  _c(
+                    "li",
+                    { staticClass: "breadcrumb-item" },
+                    [
+                      _c(
+                        "router-link",
+                        { attrs: { to: "/seller/dashboard" } },
+                        [_vm._v(_vm._s(_vm.__("dashboard")))]
+                      ),
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "li",
+                    { staticClass: "breadcrumb-item" },
+                    [
+                      _c("router-link", { attrs: { to: "/seller/schemes" } }, [
+                        _vm._v(_vm._s(_vm.__("schemes"))),
+                      ]),
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "li",
+                    {
+                      staticClass: "breadcrumb-item active",
+                      attrs: { "aria-current": "page" },
+                    },
+                    [
+                      _vm._v(
+                        _vm._s(
+                          _vm.id ? _vm.__("edit_scheme") : _vm.__("add_scheme")
+                        )
+                      ),
+                    ]
+                  ),
+                ]),
+              ]
             ),
           ]),
         ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-          _c(
-            "nav",
-            {
-              staticClass: "breadcrumb-header float-start float-lg-end",
-              attrs: { "aria-label": "breadcrumb" },
-            },
-            [
-              _c("ol", { staticClass: "breadcrumb" }, [
-                _c(
-                  "li",
-                  { staticClass: "breadcrumb-item" },
-                  [
-                    _c("router-link", { attrs: { to: "/seller/dashboard" } }, [
-                      _vm._v(_vm._s(_vm.__("dashboard"))),
-                    ]),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "li",
-                  { staticClass: "breadcrumb-item" },
-                  [
-                    _c("router-link", { attrs: { to: "/seller/schemes" } }, [
-                      _vm._v(_vm._s(_vm.__("schemes"))),
-                    ]),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "li",
-                  {
-                    staticClass: "breadcrumb-item active",
-                    attrs: { "aria-current": "page" },
-                  },
-                  [_vm._v(_vm._s(_vm.id ? _vm.__("edit") : _vm.__("add")))]
-                ),
-              ]),
-            ]
-          ),
-        ]),
       ]),
-    ]),
-    _vm._v(" "),
-    _c("div", { staticClass: "row" }, [
-      _c("div", { staticClass: "col-12 col-md-12 col-lg-12" }, [
-        _c("div", { staticClass: "card" }, [
-          _c("div", { staticClass: "card-header" }, [
-            _c("h4", [_vm._v(_vm._s(_vm.__("scheme_details")))]),
+      _vm._v(" "),
+      _c(
+        "form",
+        {
+          ref: "my-form",
+          on: {
+            submit: function ($event) {
+              $event.preventDefault()
+              return _vm.saveRecord.apply(null, arguments)
+            },
+          },
+        },
+        [
+          _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
+            _c("div", { staticClass: "card-body p-4" }, [
+              _c("div", { staticClass: "d-flex align-items-center mb-3" }, [
+                _c("span", { staticClass: "step-num-badge me-2" }, [
+                  _vm._v("1"),
+                ]),
+                _vm._v(" "),
+                _c("h5", { staticClass: "mb-0 font-weight-bold" }, [
+                  _vm._v(_vm._s(_vm.__("scheme_details"))),
+                ]),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "row g-3" }, [
+                _c("div", { staticClass: "col-md-6 mb-3" }, [
+                  _c("label", { staticClass: "form-label font-weight-bold" }, [
+                    _vm._v(_vm._s(_vm.__("scheme_name")) + " "),
+                    _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+                  ]),
+                  _vm._v(" "),
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.record.name,
+                        expression: "record.name",
+                      },
+                    ],
+                    staticClass: "form-control",
+                    attrs: {
+                      type: "text",
+                      placeholder: _vm.__(
+                        "enter_scheme_name_placeholder",
+                        "Enter scheme name (e.g. Festival Offer)"
+                      ),
+                      required: "",
+                    },
+                    domProps: { value: _vm.record.name },
+                    on: {
+                      input: function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.$set(_vm.record, "name", $event.target.value)
+                      },
+                    },
+                  }),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-md-3 mb-3" }, [
+                  _c("label", { staticClass: "form-label font-weight-bold" }, [
+                    _vm._v(_vm._s(_vm.__("scheme_type")) + " "),
+                    _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "select",
+                    {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.record.type,
+                          expression: "record.type",
+                        },
+                      ],
+                      staticClass: "form-control form-select",
+                      attrs: { required: "" },
+                      on: {
+                        change: function ($event) {
+                          var $$selectedVal = Array.prototype.filter
+                            .call($event.target.options, function (o) {
+                              return o.selected
+                            })
+                            .map(function (o) {
+                              var val = "_value" in o ? o._value : o.value
+                              return val
+                            })
+                          _vm.$set(
+                            _vm.record,
+                            "type",
+                            $event.target.multiple
+                              ? $$selectedVal
+                              : $$selectedVal[0]
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("option", { attrs: { value: "group_discount" } }, [
+                        _vm._v(
+                          _vm._s(_vm.__("group_discount", "Group Discount"))
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c("option", { attrs: { value: "buy_x_get_y" } }, [
+                        _vm._v(
+                          _vm._s(_vm.__("buy_x_get_y", "Buy X Get Y (Direct)"))
+                        ),
+                      ]),
+                    ]
+                  ),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-md-3 mb-3" }, [
+                  _c("label", { staticClass: "form-label font-weight-bold" }, [
+                    _vm._v(
+                      _vm._s(_vm.__("discount_option", "Discount Option"))
+                    ),
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "select",
+                    {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.record.tax_option,
+                          expression: "record.tax_option",
+                        },
+                      ],
+                      staticClass: "form-control form-select",
+                      on: {
+                        change: function ($event) {
+                          var $$selectedVal = Array.prototype.filter
+                            .call($event.target.options, function (o) {
+                              return o.selected
+                            })
+                            .map(function (o) {
+                              var val = "_value" in o ? o._value : o.value
+                              return val
+                            })
+                          _vm.$set(
+                            _vm.record,
+                            "tax_option",
+                            $event.target.multiple
+                              ? $$selectedVal
+                              : $$selectedVal[0]
+                          )
+                        },
+                      },
+                    },
+                    [
+                      _c("option", { attrs: { value: "inclusive" } }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.__("discount_inclusive", "Discount Inclusive")
+                          )
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c("option", { attrs: { value: "exclusive" } }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.__("discount_exclusive", "Discount Exclusive")
+                          )
+                        ),
+                      ]),
+                    ]
+                  ),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-12" }, [
+                  _c("label", { staticClass: "form-label font-weight-bold" }, [
+                    _vm._v(_vm._s(_vm.__("description", "Description"))),
+                  ]),
+                  _vm._v(" "),
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.record.description,
+                        expression: "record.description",
+                      },
+                    ],
+                    staticClass: "form-control",
+                    attrs: {
+                      type: "text",
+                      placeholder: _vm.__(
+                        "enter_scheme_description_placeholder",
+                        "Enter scheme description (optional)"
+                      ),
+                    },
+                    domProps: { value: _vm.record.description },
+                    on: {
+                      input: function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.$set(_vm.record, "description", $event.target.value)
+                      },
+                    },
+                  }),
+                ]),
+              ]),
+            ]),
           ]),
           _vm._v(" "),
-          _c("div", { staticClass: "card-body" }, [
-            _c(
-              "form",
-              {
-                ref: "my-form",
-                on: {
-                  submit: function ($event) {
-                    $event.preventDefault()
-                    return _vm.saveRecord.apply(null, arguments)
-                  },
-                },
-              },
-              [
-                _c(
-                  "div",
-                  { staticClass: "row" },
-                  [
-                    _c("div", { staticClass: "col-md-6" }, [
-                      _c("div", { staticClass: "form-group" }, [
-                        _c("label", { attrs: { for: "name" } }, [
-                          _vm._v(_vm._s(_vm.__("scheme_name"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.record.name,
-                              expression: "record.name",
-                            },
-                          ],
-                          staticClass: "form-control",
-                          attrs: {
-                            type: "text",
-                            id: "name",
-                            placeholder: _vm.__("enter_scheme_name"),
-                            required: "",
-                          },
-                          domProps: { value: _vm.record.name },
-                          on: {
-                            input: function ($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(_vm.record, "name", $event.target.value)
-                            },
-                          },
-                        }),
-                      ]),
+          _vm.record.type === "buy_x_get_y"
+            ? _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
+                _c("div", { staticClass: "card-body p-4" }, [
+                  _c("div", { staticClass: "d-flex align-items-center mb-3" }, [
+                    _c("span", { staticClass: "step-num-badge me-2" }, [
+                      _vm._v("2"),
                     ]),
                     _vm._v(" "),
-                    _c("div", { staticClass: "col-md-6" }, [
-                      _c("div", { staticClass: "form-group" }, [
-                        _c("label", { attrs: { for: "type" } }, [
-                          _vm._v(_vm._s(_vm.__("scheme_type"))),
-                        ]),
-                        _vm._v(" "),
-                        _c(
-                          "select",
-                          {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.record.type,
-                                expression: "record.type",
-                              },
-                            ],
-                            staticClass: "form-control",
-                            attrs: { required: "" },
-                            on: {
-                              change: function ($event) {
-                                var $$selectedVal = Array.prototype.filter
-                                  .call($event.target.options, function (o) {
-                                    return o.selected
-                                  })
-                                  .map(function (o) {
-                                    var val = "_value" in o ? o._value : o.value
-                                    return val
-                                  })
-                                _vm.$set(
-                                  _vm.record,
-                                  "type",
-                                  $event.target.multiple
-                                    ? $$selectedVal
-                                    : $$selectedVal[0]
-                                )
-                              },
-                            },
-                          },
-                          [
-                            _c("option", { attrs: { value: "buy_x_get_y" } }, [
-                              _vm._v(_vm._s(_vm.__("buy_x_get_y"))),
-                            ]),
-                            _vm._v(" "),
-                            _c(
-                              "option",
-                              { attrs: { value: "group_discount_price" } },
-                              [_vm._v(_vm._s(_vm.__("group_discount_price")))]
-                            ),
-                            _vm._v(" "),
-                            _c(
-                              "option",
-                              { attrs: { value: "group_discount_qty" } },
-                              [_vm._v(_vm._s(_vm.__("group_discount_qty")))]
-                            ),
-                          ]
+                    _c("div", [
+                      _c("h5", { staticClass: "mb-0 font-weight-bold" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.__(
+                              "buy_x_get_y_conditions",
+                              "Buy X Get Y Conditions"
+                            )
+                          )
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c("p", { staticClass: "text-muted small mb-0" }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.__(
+                              "buy_x_get_y_subtitle",
+                              "Choose the trigger product and free product."
+                            )
+                          )
                         ),
                       ]),
                     ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "row g-3" }, [
+                    _c(
+                      "div",
+                      { staticClass: "col-md-6 mb-3" },
+                      [
+                        _c(
+                          "label",
+                          { staticClass: "form-label font-weight-bold" },
+                          [
+                            _vm._v(_vm._s(_vm.__("buy_product")) + " "),
+                            _c("span", { staticClass: "text-danger" }, [
+                              _vm._v("*"),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c("multiselect", {
+                          attrs: {
+                            options: _vm.availableProducts,
+                            placeholder: "Select Product",
+                            label: "full_name",
+                            "track-by": "id",
+                          },
+                          model: {
+                            value: _vm.record.buy_product,
+                            callback: function ($$v) {
+                              _vm.$set(_vm.record, "buy_product", $$v)
+                            },
+                            expression: "record.buy_product",
+                          },
+                        }),
+                      ],
+                      1
+                    ),
                     _vm._v(" "),
-                    _vm.record.type === "buy_x_get_y"
-                      ? [
-                          _c("div", { staticClass: "col-md-6" }, [
-                            _c(
-                              "div",
-                              { staticClass: "form-group" },
-                              [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("buy_product"))),
-                                ]),
-                                _vm._v(" "),
-                                _c("multiselect", {
-                                  attrs: {
-                                    options: _vm.availableProducts,
-                                    placeholder: "Select Product",
-                                    label: "name",
-                                    "track-by": "id",
-                                  },
-                                  model: {
-                                    value: _vm.record.buy_product,
-                                    callback: function ($$v) {
-                                      _vm.$set(_vm.record, "buy_product", $$v)
-                                    },
-                                    expression: "record.buy_product",
-                                  },
-                                }),
-                              ],
-                              1
-                            ),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-6" }, [
-                            _c("div", { staticClass: "form-group" }, [
-                              _c("label", { attrs: { for: "buy_qty" } }, [
-                                _vm._v(_vm._s(_vm.__("buy_quantity"))),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.record.buy_qty,
-                                    expression: "record.buy_qty",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: {
-                                  type: "number",
-                                  min: "1",
-                                  id: "buy_qty",
-                                  required: "",
-                                },
-                                domProps: { value: _vm.record.buy_qty },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.record,
-                                      "buy_qty",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-6" }, [
-                            _c(
-                              "div",
-                              { staticClass: "form-group" },
-                              [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("free_product"))),
-                                ]),
-                                _vm._v(" "),
-                                _c("multiselect", {
-                                  attrs: {
-                                    options: _vm.availableProducts,
-                                    placeholder: "Select Product",
-                                    label: "name",
-                                    "track-by": "id",
-                                  },
-                                  model: {
-                                    value: _vm.record.free_product,
-                                    callback: function ($$v) {
-                                      _vm.$set(_vm.record, "free_product", $$v)
-                                    },
-                                    expression: "record.free_product",
-                                  },
-                                }),
-                              ],
-                              1
-                            ),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "col-md-6" }, [
-                            _c("div", { staticClass: "form-group" }, [
-                              _c("label", { attrs: { for: "free_qty" } }, [
-                                _vm._v(_vm._s(_vm.__("free_quantity"))),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.record.free_qty,
-                                    expression: "record.free_qty",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: {
-                                  type: "number",
-                                  min: "1",
-                                  id: "free_qty",
-                                  required: "",
-                                },
-                                domProps: { value: _vm.record.free_qty },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.record,
-                                      "free_qty",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                            ]),
+                    _c("div", { staticClass: "col-md-6 mb-3" }, [
+                      _c(
+                        "label",
+                        { staticClass: "form-label font-weight-bold" },
+                        [
+                          _vm._v(
+                            _vm._s(_vm.__("buy_quantity")) +
+                              " (" +
+                              _vm._s(
+                                _vm.record.buy_product &&
+                                  _vm.record.buy_product.uom
+                                  ? _vm.record.buy_product.uom
+                                  : "Units"
+                              ) +
+                              ") "
+                          ),
+                          _c("span", { staticClass: "text-danger" }, [
+                            _vm._v("*"),
                           ]),
                         ]
-                      : [
-                          _c("div", { staticClass: "col-md-12" }, [
-                            _c(
-                              "div",
-                              { staticClass: "form-group" },
-                              [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("group_products"))),
-                                ]),
-                                _vm._v(" "),
-                                _c("multiselect", {
-                                  attrs: {
-                                    options: _vm.availableProducts,
-                                    multiple: true,
-                                    "close-on-select": false,
-                                    "clear-on-select": false,
-                                    "preserve-search": true,
-                                    placeholder: "Select Products",
-                                    label: "name",
-                                    "track-by": "id",
-                                  },
-                                  model: {
-                                    value: _vm.record.products,
-                                    callback: function ($$v) {
-                                      _vm.$set(_vm.record, "products", $$v)
-                                    },
-                                    expression: "record.products",
-                                  },
-                                }),
-                              ],
-                              1
+                      ),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.record.buy_qty,
+                            expression: "record.buy_qty",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: { type: "number", min: "1", required: "" },
+                        domProps: { value: _vm.record.buy_qty },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(_vm.record, "buy_qty", $event.target.value)
+                          },
+                        },
+                      }),
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      { staticClass: "col-md-6 mb-3" },
+                      [
+                        _c(
+                          "label",
+                          { staticClass: "form-label font-weight-bold" },
+                          [
+                            _vm._v(_vm._s(_vm.__("free_product")) + " "),
+                            _c("span", { staticClass: "text-danger" }, [
+                              _vm._v("*"),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c("multiselect", {
+                          attrs: {
+                            options: _vm.availableProducts,
+                            placeholder: "Select Product",
+                            label: "full_name",
+                            "track-by": "id",
+                          },
+                          model: {
+                            value: _vm.record.free_product,
+                            callback: function ($$v) {
+                              _vm.$set(_vm.record, "free_product", $$v)
+                            },
+                            expression: "record.free_product",
+                          },
+                        }),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-6 mb-3" }, [
+                      _c(
+                        "label",
+                        { staticClass: "form-label font-weight-bold" },
+                        [
+                          _vm._v(
+                            _vm._s(_vm.__("free_quantity")) +
+                              " (" +
+                              _vm._s(
+                                _vm.record.free_product &&
+                                  _vm.record.free_product.uom
+                                  ? _vm.record.free_product.uom
+                                  : "Units"
+                              ) +
+                              ") "
+                          ),
+                          _c("span", { staticClass: "text-danger" }, [
+                            _vm._v("*"),
+                          ]),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.record.free_qty,
+                            expression: "record.free_qty",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: { type: "number", min: "1", required: "" },
+                        domProps: { value: _vm.record.free_qty },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(
+                              _vm.record,
+                              "free_qty",
+                              $event.target.value
+                            )
+                          },
+                        },
+                      }),
+                    ]),
+                  ]),
+                ]),
+              ])
+            : _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
+                _c("div", { staticClass: "card-body p-4" }, [
+                  _c(
+                    "div",
+                    {
+                      staticClass:
+                        "d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3",
+                    },
+                    [
+                      _c("div", { staticClass: "d-flex align-items-center" }, [
+                        _c("span", { staticClass: "step-num-badge me-2" }, [
+                          _vm._v("2"),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", [
+                          _c("h5", { staticClass: "mb-0 font-weight-bold" }, [
+                            _vm._v(
+                              _vm._s(
+                                _vm.__(
+                                  "select_products_qty_conditions",
+                                  "Select Products & Qty Conditions"
+                                )
+                              )
                             ),
                           ]),
                           _vm._v(" "),
-                          _c("div", { staticClass: "col-md-12" }, [
+                          _c("p", { staticClass: "text-muted small mb-0" }, [
+                            _vm._v(
+                              _vm._s(
+                                _vm.__(
+                                  "select_products_subtitle",
+                                  "Add products and define scheme quantity (inner or outer) with minimum and maximum quantity."
+                                )
+                              )
+                            ),
+                          ]),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass:
+                            "btn btn-outline-primary btn-sm px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2",
+                          attrs: { type: "button" },
+                          on: { click: _vm.openProductModal },
+                        },
+                        [
+                          _c("i", { staticClass: "fa fa-plus" }),
+                          _vm._v(" "),
+                          _c("span", [
+                            _vm._v(
+                              _vm._s(_vm.__("add_products", "Add Products"))
+                            ),
+                          ]),
+                        ]
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "table-responsive" }, [
+                    _c(
+                      "table",
+                      {
+                        staticClass:
+                          "table table-bordered align-middle scheme-products-table mb-0",
+                        staticStyle: { "min-width": "1200px" },
+                      },
+                      [
+                        _c("thead", { staticClass: "bg-light text-muted" }, [
+                          _c("tr", [
                             _c(
-                              "div",
-                              { staticClass: "form-group" },
+                              "th",
+                              {
+                                staticClass: "text-center",
+                                staticStyle: { width: "40px" },
+                              },
+                              [_vm._v("#")]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "th",
+                              { staticStyle: { "min-width": "230px" } },
+                              [_vm._v(_vm._s(_vm.__("product", "Product")))]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "th",
+                              {
+                                staticClass: "text-center",
+                                staticStyle: { width: "80px" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("uom", "UOM")))]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "th",
+                              {
+                                staticClass: "text-center",
+                                staticStyle: { width: "190px" },
+                              },
                               [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("discount_slabs"))),
-                                ]),
-                                _vm._v(" "),
-                                _vm._l(
-                                  _vm.record.slabs,
-                                  function (slab, index) {
-                                    return _c(
+                                _vm._v(
+                                  _vm._s(
+                                    _vm.__(
+                                      "scheme_qty_basis",
+                                      "Scheme Qty Basis"
+                                    )
+                                  )
+                                ),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "th",
+                              {
+                                staticClass: "text-center",
+                                staticStyle: { width: "135px" },
+                              },
+                              [
+                                _vm._v(
+                                  _vm._s(_vm.__("min_quantity", "Min Quantity"))
+                                ),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "th",
+                              {
+                                staticClass: "text-center",
+                                staticStyle: { width: "135px" },
+                              },
+                              [
+                                _vm._v(
+                                  _vm._s(_vm.__("max_quantity", "Max Quantity"))
+                                ),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "th",
+                              {
+                                staticClass: "text-center",
+                                staticStyle: { width: "440px" },
+                              },
+                              [
+                                _vm._v(
+                                  _vm._s(
+                                    _vm.__(
+                                      "discount_or_free",
+                                      "Discount / Free"
+                                    )
+                                  )
+                                ),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "th",
+                              {
+                                staticClass: "text-center",
+                                staticStyle: { width: "60px" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("actions", "Actions")))]
+                            ),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "tbody",
+                          [
+                            _vm._l(_vm.record.products, function (item, index) {
+                              return _c(
+                                "tr",
+                                {
+                                  key:
+                                    item.id || item.seller_product_id || index,
+                                },
+                                [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass:
+                                        "text-center font-weight-bold text-muted",
+                                    },
+                                    [_vm._v(_vm._s(index + 1))]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c(
                                       "div",
                                       {
-                                        key: index,
-                                        staticClass: "row mb-2 align-items-end",
+                                        staticClass:
+                                          "d-flex align-items-center",
                                       },
                                       [
-                                        _c("div", { staticClass: "col-md-3" }, [
+                                        _c("img", {
+                                          staticClass:
+                                            "product-thumb rounded border me-2",
+                                          attrs: {
+                                            src:
+                                              item.image ||
+                                              "/images/default_product.png",
+                                            alt: "product",
+                                          },
+                                          on: { error: _vm.onImgError },
+                                        }),
+                                        _vm._v(" "),
+                                        _c("div", [
                                           _c(
-                                            "label",
-                                            { staticClass: "small" },
-                                            [
-                                              _vm.record.type ===
-                                              "group_discount_qty"
-                                                ? _c("span", [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.__("minimum_units")
-                                                      )
-                                                    ),
-                                                  ])
-                                                : _c("span", [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.__(
-                                                          "minimum_basket_value"
-                                                        )
-                                                      ) + " (₹)"
-                                                    ),
-                                                  ]),
-                                            ]
+                                            "div",
+                                            {
+                                              staticClass:
+                                                "fw-bold product-name-text",
+                                            },
+                                            [_vm._v(_vm._s(item.name))]
                                           ),
                                           _vm._v(" "),
-                                          _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value: slab.min_value,
-                                                expression: "slab.min_value",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              type: "number",
-                                              step: "1",
-                                              min: "1",
-                                              required: "",
-                                            },
-                                            domProps: { value: slab.min_value },
-                                            on: {
-                                              input: function ($event) {
-                                                if ($event.target.composing) {
-                                                  return
-                                                }
-                                                _vm.$set(
-                                                  slab,
-                                                  "min_value",
-                                                  $event.target.value
-                                                )
-                                              },
-                                            },
-                                          }),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-2" }, [
                                           _c(
-                                            "label",
-                                            { staticClass: "small" },
+                                            "small",
+                                            {
+                                              staticClass: "text-muted d-block",
+                                            },
                                             [
                                               _vm._v(
-                                                _vm._s(_vm.__("discount_type"))
+                                                "SKU: " +
+                                                  _vm._s(item.sku || "N/A")
                                               ),
                                             ]
                                           ),
-                                          _vm._v(" "),
+                                        ]),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    _c(
+                                      "span",
+                                      {
+                                        staticClass:
+                                          "badge bg-light text-dark border px-2 py-1",
+                                      },
+                                      [_vm._v(_vm._s(item.uom || "Unit"))]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "d-inline-flex align-items-center gap-3",
+                                      },
+                                      [
+                                        _c(
+                                          "div",
+                                          {
+                                            staticClass:
+                                              "form-check form-check-inline m-0",
+                                          },
+                                          [
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: item.qty_basis,
+                                                  expression: "item.qty_basis",
+                                                },
+                                              ],
+                                              staticClass: "form-check-input",
+                                              attrs: {
+                                                type: "radio",
+                                                name: "qty_basis_" + index,
+                                                id: "basis_outer_" + index,
+                                                value: "outer",
+                                              },
+                                              domProps: {
+                                                checked: _vm._q(
+                                                  item.qty_basis,
+                                                  "outer"
+                                                ),
+                                              },
+                                              on: {
+                                                change: function ($event) {
+                                                  return _vm.$set(
+                                                    item,
+                                                    "qty_basis",
+                                                    "outer"
+                                                  )
+                                                },
+                                              },
+                                            }),
+                                            _vm._v(" "),
+                                            _c(
+                                              "label",
+                                              {
+                                                staticClass:
+                                                  "form-check-label ms-1 cursor-pointer",
+                                                attrs: {
+                                                  for: "basis_outer_" + index,
+                                                },
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.__(
+                                                      "outer_qty",
+                                                      "Outer Qty"
+                                                    )
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          {
+                                            staticClass:
+                                              "form-check form-check-inline m-0 ms-2",
+                                          },
+                                          [
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: item.qty_basis,
+                                                  expression: "item.qty_basis",
+                                                },
+                                              ],
+                                              staticClass: "form-check-input",
+                                              attrs: {
+                                                type: "radio",
+                                                name: "qty_basis_" + index,
+                                                id: "basis_inner_" + index,
+                                                value: "inner",
+                                              },
+                                              domProps: {
+                                                checked: _vm._q(
+                                                  item.qty_basis,
+                                                  "inner"
+                                                ),
+                                              },
+                                              on: {
+                                                change: function ($event) {
+                                                  return _vm.$set(
+                                                    item,
+                                                    "qty_basis",
+                                                    "inner"
+                                                  )
+                                                },
+                                              },
+                                            }),
+                                            _vm._v(" "),
+                                            _c(
+                                              "label",
+                                              {
+                                                staticClass:
+                                                  "form-check-label ms-1 cursor-pointer",
+                                                attrs: {
+                                                  for: "basis_inner_" + index,
+                                                },
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.__(
+                                                      "inner_qty",
+                                                      "Inner Qty"
+                                                    )
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                          ]
+                                        ),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                      },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: item.min_qty,
+                                              expression: "item.min_qty",
+                                            },
+                                          ],
+                                          staticClass:
+                                            "form-control text-center",
+                                          attrs: {
+                                            type: "number",
+                                            min: "0.01",
+                                            step: "any",
+                                            placeholder: "Min",
+                                            required: "",
+                                          },
+                                          domProps: { value: item.min_qty },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                item,
+                                                "min_qty",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v(" "),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "input-group-text bg-light text-muted px-2 small",
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                item.qty_basis === "outer"
+                                                  ? _vm.__("outer", "Outer")
+                                                  : _vm.__("inner", "Inner")
+                                              )
+                                            ),
+                                          ]
+                                        ),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("td", [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                      },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: item.max_qty,
+                                              expression: "item.max_qty",
+                                            },
+                                          ],
+                                          staticClass:
+                                            "form-control text-center",
+                                          attrs: {
+                                            type: "number",
+                                            min: "0.01",
+                                            step: "any",
+                                            placeholder: "Max",
+                                          },
+                                          domProps: { value: item.max_qty },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                item,
+                                                "max_qty",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v(" "),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "input-group-text bg-light text-muted px-2 small",
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                item.qty_basis === "outer"
+                                                  ? _vm.__("outer", "Outer")
+                                                  : _vm.__("inner", "Inner")
+                                              )
+                                            ),
+                                          ]
+                                        ),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "td",
+                                    { staticStyle: { width: "440px" } },
+                                    [
+                                      _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "d-flex align-items-center gap-2 flex-nowrap",
+                                        },
+                                        [
                                           _c(
                                             "select",
                                             {
@@ -979,38 +1908,50 @@ var render = function () {
                                                 {
                                                   name: "model",
                                                   rawName: "v-model",
-                                                  value: slab.discount_type,
+                                                  value: item.discount_type,
                                                   expression:
-                                                    "slab.discount_type",
+                                                    "item.discount_type",
                                                 },
                                               ],
-                                              staticClass: "form-control",
+                                              staticClass:
+                                                "form-control form-select form-select-sm",
+                                              staticStyle: {
+                                                width: "155px",
+                                                "flex-shrink": "0",
+                                              },
                                               attrs: { required: "" },
                                               on: {
-                                                change: function ($event) {
-                                                  var $$selectedVal =
-                                                    Array.prototype.filter
-                                                      .call(
-                                                        $event.target.options,
-                                                        function (o) {
-                                                          return o.selected
-                                                        }
-                                                      )
-                                                      .map(function (o) {
-                                                        var val =
-                                                          "_value" in o
-                                                            ? o._value
-                                                            : o.value
-                                                        return val
-                                                      })
-                                                  _vm.$set(
-                                                    slab,
-                                                    "discount_type",
-                                                    $event.target.multiple
-                                                      ? $$selectedVal
-                                                      : $$selectedVal[0]
-                                                  )
-                                                },
+                                                change: [
+                                                  function ($event) {
+                                                    var $$selectedVal =
+                                                      Array.prototype.filter
+                                                        .call(
+                                                          $event.target.options,
+                                                          function (o) {
+                                                            return o.selected
+                                                          }
+                                                        )
+                                                        .map(function (o) {
+                                                          var val =
+                                                            "_value" in o
+                                                              ? o._value
+                                                              : o.value
+                                                          return val
+                                                        })
+                                                    _vm.$set(
+                                                      item,
+                                                      "discount_type",
+                                                      $event.target.multiple
+                                                        ? $$selectedVal
+                                                        : $$selectedVal[0]
+                                                    )
+                                                  },
+                                                  function ($event) {
+                                                    return _vm.onDiscountTypeChange(
+                                                      item
+                                                    )
+                                                  },
+                                                ],
                                               },
                                             },
                                             [
@@ -1023,7 +1964,12 @@ var render = function () {
                                                 },
                                                 [
                                                   _vm._v(
-                                                    _vm._s(_vm.__("percentage"))
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "discount_percentage",
+                                                        "Discount %"
+                                                      )
+                                                    )
                                                   ),
                                                 ]
                                               ),
@@ -1031,414 +1977,1197 @@ var render = function () {
                                               _c(
                                                 "option",
                                                 { attrs: { value: "flat" } },
-                                                [_vm._v(_vm._s(_vm.__("flat")))]
-                                              ),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-2" }, [
-                                          _c(
-                                            "label",
-                                            { staticClass: "small" },
-                                            [
-                                              _vm._v(
-                                                _vm._s(_vm.__("discount_value"))
-                                              ),
-                                            ]
-                                          ),
-                                          _vm._v(" "),
-                                          _c("input", {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value: slab.discount_value,
-                                                expression:
-                                                  "slab.discount_value",
-                                              },
-                                            ],
-                                            staticClass: "form-control",
-                                            attrs: {
-                                              type: "number",
-                                              step: "0.01",
-                                              min: "0.01",
-                                              max:
-                                                slab.discount_type ===
-                                                "percentage"
-                                                  ? 100
-                                                  : null,
-                                              required: "",
-                                            },
-                                            domProps: {
-                                              value: slab.discount_value,
-                                            },
-                                            on: {
-                                              input: function ($event) {
-                                                if ($event.target.composing) {
-                                                  return
-                                                }
-                                                _vm.$set(
-                                                  slab,
-                                                  "discount_value",
-                                                  $event.target.value
-                                                )
-                                              },
-                                            },
-                                          }),
-                                          _vm._v(" "),
-                                          slab.discount_type === "percentage" &&
-                                          slab.discount_value > 100
-                                            ? _c(
-                                                "small",
-                                                { staticClass: "text-danger" },
                                                 [
                                                   _vm._v(
-                                                    "\n                                                    " +
-                                                      _vm._s(
-                                                        _vm.__(
-                                                          "percentage_discount_cannot_exceed_100"
-                                                        )
-                                                      ) +
-                                                      "\n                                                "
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "flat_amount",
+                                                        "Flat (₹)"
+                                                      )
+                                                    )
                                                   ),
                                                 ]
-                                              )
-                                            : _vm._e(),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-3" }, [
-                                          _c(
-                                            "label",
-                                            {
-                                              directives: [
+                                              ),
+                                              _vm._v(" "),
+                                              _c(
+                                                "option",
                                                 {
-                                                  name: "b-tooltip",
-                                                  rawName: "v-b-tooltip.hover",
-                                                  modifiers: { hover: true },
+                                                  attrs: {
+                                                    value: "free_product",
+                                                  },
                                                 },
-                                              ],
-                                              staticClass: "small",
-                                              attrs: {
-                                                title: _vm.__(
-                                                  "discount_tax_option_hint"
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "free_product",
+                                                        "Free Product"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                              _vm._v(" "),
+                                              _c(
+                                                "option",
+                                                {
+                                                  attrs: {
+                                                    value: "discounted_product",
+                                                  },
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "discounted_product",
+                                                        "Discounted Product"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          item.discount_type === "percentage"
+                                            ? [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "input-group input-group-sm flex-nowrap",
+                                                    staticStyle: {
+                                                      width: "110px",
+                                                      "flex-shrink": "0",
+                                                    },
+                                                  },
+                                                  [
+                                                    _c("input", {
+                                                      directives: [
+                                                        {
+                                                          name: "model",
+                                                          rawName: "v-model",
+                                                          value:
+                                                            item.discount_value,
+                                                          expression:
+                                                            "item.discount_value",
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "form-control text-center",
+                                                      attrs: {
+                                                        type: "number",
+                                                        step: "0.01",
+                                                        min: "0.01",
+                                                        max: "100",
+                                                        placeholder: "10",
+                                                        required: "",
+                                                      },
+                                                      domProps: {
+                                                        value:
+                                                          item.discount_value,
+                                                      },
+                                                      on: {
+                                                        input: function (
+                                                          $event
+                                                        ) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            item,
+                                                            "discount_value",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                      },
+                                                    }),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "span",
+                                                      {
+                                                        staticClass:
+                                                          "input-group-text bg-light text-muted px-2",
+                                                      },
+                                                      [_vm._v("%")]
+                                                    ),
+                                                  ]
                                                 ),
-                                              },
-                                            },
-                                            [
-                                              _vm._v(
-                                                "\n                                                    " +
-                                                  _vm._s(
-                                                    _vm.__(
-                                                      "discount_tax_option"
-                                                    )
-                                                  ) +
-                                                  "\n                                                "
-                                              ),
-                                            ]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "select",
-                                            {
-                                              directives: [
-                                                {
-                                                  name: "model",
-                                                  rawName: "v-model",
-                                                  value: slab.tax_option,
-                                                  expression: "slab.tax_option",
-                                                },
-                                              ],
-                                              staticClass: "form-control",
-                                              on: {
-                                                change: function ($event) {
-                                                  var $$selectedVal =
-                                                    Array.prototype.filter
-                                                      .call(
-                                                        $event.target.options,
-                                                        function (o) {
-                                                          return o.selected
-                                                        }
-                                                      )
-                                                      .map(function (o) {
-                                                        var val =
-                                                          "_value" in o
-                                                            ? o._value
-                                                            : o.value
-                                                        return val
-                                                      })
-                                                  _vm.$set(
-                                                    slab,
-                                                    "tax_option",
-                                                    $event.target.multiple
-                                                      ? $$selectedVal
-                                                      : $$selectedVal[0]
-                                                  )
-                                                },
-                                              },
-                                            },
-                                            [
-                                              _c(
-                                                "option",
-                                                {
-                                                  attrs: { value: "inclusive" },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "discount_inclusive"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c(
-                                                "option",
-                                                {
-                                                  attrs: { value: "exclusive" },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "discount_exclusive"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
-                                              ),
-                                            ]
-                                          ),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c("div", { staticClass: "col-md-2" }, [
-                                          _c(
-                                            "button",
-                                            {
-                                              staticClass:
-                                                "btn btn-danger btn-sm",
-                                              attrs: {
-                                                type: "button",
-                                                disabled:
-                                                  _vm.record.slabs.length === 1,
-                                              },
-                                              on: {
-                                                click: function ($event) {
-                                                  return _vm.removeSlab(index)
-                                                },
-                                              },
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass: "fa fa-trash",
-                                              }),
-                                            ]
-                                          ),
-                                        ]),
-                                      ]
-                                    )
-                                  }
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "button",
-                                  {
-                                    staticClass: "btn btn-secondary btn-sm",
-                                    attrs: { type: "button" },
-                                    on: { click: _vm.addSlab },
-                                  },
-                                  [
-                                    _c("i", { staticClass: "fa fa-plus" }),
-                                    _vm._v(
-                                      " " +
-                                        _vm._s(_vm.__("add_slab")) +
-                                        "\n                                        "
+                                              ]
+                                            : item.discount_type === "flat"
+                                            ? [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "input-group input-group-sm flex-nowrap",
+                                                    staticStyle: {
+                                                      width: "120px",
+                                                      "flex-shrink": "0",
+                                                    },
+                                                  },
+                                                  [
+                                                    _c("input", {
+                                                      directives: [
+                                                        {
+                                                          name: "model",
+                                                          rawName: "v-model",
+                                                          value:
+                                                            item.discount_value,
+                                                          expression:
+                                                            "item.discount_value",
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "form-control text-center",
+                                                      attrs: {
+                                                        type: "number",
+                                                        step: "0.01",
+                                                        min: "0.01",
+                                                        placeholder: "100",
+                                                        required: "",
+                                                      },
+                                                      domProps: {
+                                                        value:
+                                                          item.discount_value,
+                                                      },
+                                                      on: {
+                                                        input: function (
+                                                          $event
+                                                        ) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            item,
+                                                            "discount_value",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                      },
+                                                    }),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "span",
+                                                      {
+                                                        staticClass:
+                                                          "input-group-text bg-light text-muted px-2",
+                                                      },
+                                                      [_vm._v("₹")]
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            : item.discount_type ===
+                                              "free_product"
+                                            ? [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "d-flex align-items-center gap-1 flex-nowrap flex-shrink-0",
+                                                  },
+                                                  [
+                                                    _c("input", {
+                                                      directives: [
+                                                        {
+                                                          name: "model",
+                                                          rawName: "v-model",
+                                                          value: item.free_qty,
+                                                          expression:
+                                                            "item.free_qty",
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "form-control form-control-sm text-center",
+                                                      staticStyle: {
+                                                        width: "55px",
+                                                        "flex-shrink": "0",
+                                                      },
+                                                      attrs: {
+                                                        type: "number",
+                                                        step: "1",
+                                                        min: "1",
+                                                        placeholder: "1",
+                                                        required: "",
+                                                      },
+                                                      domProps: {
+                                                        value: item.free_qty,
+                                                      },
+                                                      on: {
+                                                        input: function (
+                                                          $event
+                                                        ) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            item,
+                                                            "free_qty",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                      },
+                                                    }),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "select",
+                                                      {
+                                                        directives: [
+                                                          {
+                                                            name: "model",
+                                                            rawName: "v-model",
+                                                            value:
+                                                              item.free_qty_basis,
+                                                            expression:
+                                                              "item.free_qty_basis",
+                                                          },
+                                                        ],
+                                                        staticClass:
+                                                          "form-control form-select form-select-sm",
+                                                        staticStyle: {
+                                                          width: "85px",
+                                                          "flex-shrink": "0",
+                                                        },
+                                                        on: {
+                                                          change: function (
+                                                            $event
+                                                          ) {
+                                                            var $$selectedVal =
+                                                              Array.prototype.filter
+                                                                .call(
+                                                                  $event.target
+                                                                    .options,
+                                                                  function (o) {
+                                                                    return o.selected
+                                                                  }
+                                                                )
+                                                                .map(function (
+                                                                  o
+                                                                ) {
+                                                                  var val =
+                                                                    "_value" in
+                                                                    o
+                                                                      ? o._value
+                                                                      : o.value
+                                                                  return val
+                                                                })
+                                                            _vm.$set(
+                                                              item,
+                                                              "free_qty_basis",
+                                                              $event.target
+                                                                .multiple
+                                                                ? $$selectedVal
+                                                                : $$selectedVal[0]
+                                                            )
+                                                          },
+                                                        },
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "option",
+                                                          {
+                                                            attrs: {
+                                                              value: "inner",
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "inner",
+                                                                  "Inner"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "option",
+                                                          {
+                                                            attrs: {
+                                                              value: "outer",
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "outer",
+                                                                  "Outer"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "span",
+                                                      {
+                                                        staticClass:
+                                                          "badge bg-success text-white ms-1",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            _vm.__(
+                                                              "free",
+                                                              "FREE"
+                                                            )
+                                                          )
+                                                        ),
+                                                      ]
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            : item.discount_type ===
+                                              "discounted_product"
+                                            ? [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "d-flex align-items-center gap-1 flex-nowrap flex-shrink-0",
+                                                  },
+                                                  [
+                                                    _c("input", {
+                                                      directives: [
+                                                        {
+                                                          name: "model",
+                                                          rawName: "v-model",
+                                                          value: item.free_qty,
+                                                          expression:
+                                                            "item.free_qty",
+                                                        },
+                                                      ],
+                                                      staticClass:
+                                                        "form-control form-control-sm text-center",
+                                                      staticStyle: {
+                                                        width: "50px",
+                                                        "flex-shrink": "0",
+                                                      },
+                                                      attrs: {
+                                                        type: "number",
+                                                        step: "1",
+                                                        min: "1",
+                                                        placeholder: "1",
+                                                        required: "",
+                                                        title:
+                                                          "Number of discounted units",
+                                                      },
+                                                      domProps: {
+                                                        value: item.free_qty,
+                                                      },
+                                                      on: {
+                                                        input: function (
+                                                          $event
+                                                        ) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            item,
+                                                            "free_qty",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                      },
+                                                    }),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "select",
+                                                      {
+                                                        directives: [
+                                                          {
+                                                            name: "model",
+                                                            rawName: "v-model",
+                                                            value:
+                                                              item.free_qty_basis,
+                                                            expression:
+                                                              "item.free_qty_basis",
+                                                          },
+                                                        ],
+                                                        staticClass:
+                                                          "form-control form-select form-select-sm",
+                                                        staticStyle: {
+                                                          width: "85px",
+                                                          "flex-shrink": "0",
+                                                        },
+                                                        on: {
+                                                          change: function (
+                                                            $event
+                                                          ) {
+                                                            var $$selectedVal =
+                                                              Array.prototype.filter
+                                                                .call(
+                                                                  $event.target
+                                                                    .options,
+                                                                  function (o) {
+                                                                    return o.selected
+                                                                  }
+                                                                )
+                                                                .map(function (
+                                                                  o
+                                                                ) {
+                                                                  var val =
+                                                                    "_value" in
+                                                                    o
+                                                                      ? o._value
+                                                                      : o.value
+                                                                  return val
+                                                                })
+                                                            _vm.$set(
+                                                              item,
+                                                              "free_qty_basis",
+                                                              $event.target
+                                                                .multiple
+                                                                ? $$selectedVal
+                                                                : $$selectedVal[0]
+                                                            )
+                                                          },
+                                                        },
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "option",
+                                                          {
+                                                            attrs: {
+                                                              value: "outer",
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "outer",
+                                                                  "Outer"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "option",
+                                                          {
+                                                            attrs: {
+                                                              value: "inner",
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "inner",
+                                                                  "Inner"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "span",
+                                                      {
+                                                        staticClass:
+                                                          "text-muted fw-bold small px-1 flex-shrink-0",
+                                                      },
+                                                      [_vm._v("@")]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "input-group input-group-sm flex-nowrap flex-shrink-0",
+                                                        staticStyle: {
+                                                          width: "85px",
+                                                        },
+                                                      },
+                                                      [
+                                                        _c("input", {
+                                                          directives: [
+                                                            {
+                                                              name: "model",
+                                                              rawName:
+                                                                "v-model",
+                                                              value:
+                                                                item.discount_value,
+                                                              expression:
+                                                                "item.discount_value",
+                                                            },
+                                                          ],
+                                                          staticClass:
+                                                            "form-control text-center px-1",
+                                                          attrs: {
+                                                            type: "number",
+                                                            step: "0.01",
+                                                            min: "0.01",
+                                                            max: "100",
+                                                            placeholder: "50",
+                                                            required: "",
+                                                            title:
+                                                              "Discount percentage",
+                                                          },
+                                                          domProps: {
+                                                            value:
+                                                              item.discount_value,
+                                                          },
+                                                          on: {
+                                                            input: function (
+                                                              $event
+                                                            ) {
+                                                              if (
+                                                                $event.target
+                                                                  .composing
+                                                              ) {
+                                                                return
+                                                              }
+                                                              _vm.$set(
+                                                                item,
+                                                                "discount_value",
+                                                                $event.target
+                                                                  .value
+                                                              )
+                                                            },
+                                                          },
+                                                        }),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "input-group-text bg-light text-muted px-2",
+                                                          },
+                                                          [_vm._v("%")]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "span",
+                                                      {
+                                                        staticClass:
+                                                          "text-muted small fw-semibold flex-shrink-0 ms-1",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            _vm.__("off", "off")
+                                                          )
+                                                        ),
+                                                      ]
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            : _vm._e(),
+                                        ],
+                                        2
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("td", { staticClass: "text-center" }, [
+                                    _c(
+                                      "button",
+                                      {
+                                        staticClass:
+                                          "btn btn-sm btn-outline-danger action-trash-btn",
+                                        attrs: {
+                                          type: "button",
+                                          title: "Remove Product",
+                                        },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.removeProductRow(index)
+                                          },
+                                        },
+                                      },
+                                      [_c("i", { staticClass: "fa fa-trash" })]
                                     ),
-                                  ]
-                                ),
-                              ],
-                              2
-                            ),
-                          ]),
-                        ],
-                    _vm._v(" "),
-                    _c("div", { staticClass: "col-md-6" }, [
-                      _c("div", { staticClass: "form-group" }, [
-                        _c("label", { attrs: { for: "start_date" } }, [
-                          _vm._v(_vm._s(_vm.__("start_date"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.record.start_date,
-                              expression: "record.start_date",
-                            },
-                          ],
-                          staticClass: "form-control",
-                          attrs: {
-                            type: "date",
-                            id: "start_date",
-                            required: "",
-                          },
-                          domProps: { value: _vm.record.start_date },
-                          on: {
-                            input: function ($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(
-                                _vm.record,
-                                "start_date",
-                                $event.target.value
+                                  ]),
+                                ]
                               )
-                            },
-                          },
-                        }),
-                      ]),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "col-md-6" }, [
-                      _c("div", { staticClass: "form-group" }, [
-                        _c("label", { attrs: { for: "end_date" } }, [
-                          _vm._v(_vm._s(_vm.__("end_date"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.record.end_date,
-                              expression: "record.end_date",
-                            },
-                          ],
-                          staticClass: "form-control",
-                          attrs: { type: "date", id: "end_date", required: "" },
-                          domProps: { value: _vm.record.end_date },
-                          on: {
-                            input: function ($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(
-                                _vm.record,
-                                "end_date",
-                                $event.target.value
-                              )
-                            },
-                          },
-                        }),
-                      ]),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "col-md-6" }, [
-                      _c("div", { staticClass: "form-group" }, [
-                        _c("label", { attrs: { for: "status" } }, [
-                          _vm._v(_vm._s(_vm.__("status"))),
-                        ]),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "form-check form-switch mt-2" },
-                          [
-                            _c("input", {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model",
-                                  value: _vm.record.status,
-                                  expression: "record.status",
-                                },
-                              ],
-                              staticClass: "form-check-input",
-                              attrs: {
-                                type: "checkbox",
-                                role: "switch",
-                                id: "status",
-                                "true-value": 1,
-                                "false-value": 0,
-                              },
-                              domProps: {
-                                checked: Array.isArray(_vm.record.status)
-                                  ? _vm._i(_vm.record.status, null) > -1
-                                  : _vm._q(_vm.record.status, 1),
-                              },
-                              on: {
-                                change: function ($event) {
-                                  var $$a = _vm.record.status,
-                                    $$el = $event.target,
-                                    $$c = $$el.checked ? 1 : 0
-                                  if (Array.isArray($$a)) {
-                                    var $$v = null,
-                                      $$i = _vm._i($$a, $$v)
-                                    if ($$el.checked) {
-                                      $$i < 0 &&
-                                        _vm.$set(
-                                          _vm.record,
-                                          "status",
-                                          $$a.concat([$$v])
-                                        )
-                                    } else {
-                                      $$i > -1 &&
-                                        _vm.$set(
-                                          _vm.record,
-                                          "status",
-                                          $$a
-                                            .slice(0, $$i)
-                                            .concat($$a.slice($$i + 1))
-                                        )
-                                    }
-                                  } else {
-                                    _vm.$set(_vm.record, "status", $$c)
-                                  }
-                                },
-                              },
                             }),
                             _vm._v(" "),
-                            _c(
-                              "label",
-                              {
-                                staticClass: "form-check-label ms-2",
-                                attrs: { for: "status" },
-                              },
-                              [
-                                _vm._v(
-                                  _vm._s(
-                                    _vm.record.status == 1
-                                      ? _vm.__("active")
-                                      : _vm.__("deactive")
+                            _vm.record.products.length === 0
+                              ? _c("tr", [
+                                  _c(
+                                    "td",
+                                    {
+                                      staticClass:
+                                        "text-center py-5 text-muted",
+                                      attrs: { colspan: "8" },
+                                    },
+                                    [
+                                      _c("i", {
+                                        staticClass:
+                                          "fa fa-box-open fa-3x mb-3 text-secondary opacity-50 d-block",
+                                      }),
+                                      _vm._v(" "),
+                                      _c(
+                                        "p",
+                                        {
+                                          staticClass: "mb-2 font-weight-bold",
+                                        },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.__(
+                                                "no_products_added_yet",
+                                                "No products added yet."
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                      _vm._v(" "),
+                                      _c(
+                                        "button",
+                                        {
+                                          staticClass:
+                                            "btn btn-primary btn-sm px-3",
+                                          attrs: { type: "button" },
+                                          on: { click: _vm.openProductModal },
+                                        },
+                                        [
+                                          _c("i", {
+                                            staticClass: "fa fa-plus me-1",
+                                          }),
+                                          _vm._v(
+                                            " " +
+                                              _vm._s(
+                                                _vm.__(
+                                                  "add_products",
+                                                  "Add Products"
+                                                )
+                                              ) +
+                                              "\n                                    "
+                                          ),
+                                        ]
+                                      ),
+                                    ]
+                                  ),
+                                ])
+                              : _vm._e(),
+                          ],
+                          2
+                        ),
+                      ]
+                    ),
+                  ]),
+                ]),
+              ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
+            _c("div", { staticClass: "card-body p-4" }, [
+              _c("div", { staticClass: "d-flex align-items-center mb-3" }, [
+                _c("span", { staticClass: "step-num-badge me-2" }, [
+                  _vm._v("3"),
+                ]),
+                _vm._v(" "),
+                _c("h5", { staticClass: "mb-0 font-weight-bold" }, [
+                  _vm._v(
+                    _vm._s(_vm.__("validity_and_status", "Validity & Status"))
+                  ),
+                ]),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "row align-items-center g-3" }, [
+                _c("div", { staticClass: "col-md-4 mb-3" }, [
+                  _c("label", { staticClass: "form-label font-weight-bold" }, [
+                    _vm._v(_vm._s(_vm.__("start_date")) + " "),
+                    _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+                  ]),
+                  _vm._v(" "),
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.record.start_date,
+                        expression: "record.start_date",
+                      },
+                    ],
+                    staticClass: "form-control",
+                    attrs: { type: "date", required: "" },
+                    domProps: { value: _vm.record.start_date },
+                    on: {
+                      input: function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.$set(_vm.record, "start_date", $event.target.value)
+                      },
+                    },
+                  }),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-md-4 mb-3" }, [
+                  _c("label", { staticClass: "form-label font-weight-bold" }, [
+                    _vm._v(_vm._s(_vm.__("end_date")) + " "),
+                    _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+                  ]),
+                  _vm._v(" "),
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.record.end_date,
+                        expression: "record.end_date",
+                      },
+                    ],
+                    staticClass: "form-control",
+                    attrs: { type: "date", required: "" },
+                    domProps: { value: _vm.record.end_date },
+                    on: {
+                      input: function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.$set(_vm.record, "end_date", $event.target.value)
+                      },
+                    },
+                  }),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-md-4 mb-3" }, [
+                  _c(
+                    "label",
+                    { staticClass: "form-label font-weight-bold d-block" },
+                    [_vm._v(_vm._s(_vm.__("status")))]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    {
+                      staticClass:
+                        "form-check form-switch mt-2 d-inline-flex align-items-center",
+                    },
+                    [
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.record.status,
+                            expression: "record.status",
+                          },
+                        ],
+                        staticClass: "form-check-input",
+                        attrs: {
+                          type: "checkbox",
+                          role: "switch",
+                          id: "scheme-status",
+                          "true-value": 1,
+                          "false-value": 0,
+                        },
+                        domProps: {
+                          checked: Array.isArray(_vm.record.status)
+                            ? _vm._i(_vm.record.status, null) > -1
+                            : _vm._q(_vm.record.status, 1),
+                        },
+                        on: {
+                          change: function ($event) {
+                            var $$a = _vm.record.status,
+                              $$el = $event.target,
+                              $$c = $$el.checked ? 1 : 0
+                            if (Array.isArray($$a)) {
+                              var $$v = null,
+                                $$i = _vm._i($$a, $$v)
+                              if ($$el.checked) {
+                                $$i < 0 &&
+                                  _vm.$set(
+                                    _vm.record,
+                                    "status",
+                                    $$a.concat([$$v])
                                   )
+                              } else {
+                                $$i > -1 &&
+                                  _vm.$set(
+                                    _vm.record,
+                                    "status",
+                                    $$a.slice(0, $$i).concat($$a.slice($$i + 1))
+                                  )
+                              }
+                            } else {
+                              _vm.$set(_vm.record, "status", $$c)
+                            }
+                          },
+                        },
+                      }),
+                      _vm._v(" "),
+                      _c(
+                        "label",
+                        {
+                          staticClass: "form-check-label ms-2 font-weight-bold",
+                          attrs: { for: "scheme-status" },
+                        },
+                        [
+                          _vm.record.status == 1
+                            ? _c("span", { staticClass: "text-success" }, [
+                                _vm._v(_vm._s(_vm.__("active"))),
+                              ])
+                            : _c("span", { staticClass: "text-danger" }, [
+                                _vm._v(_vm._s(_vm.__("deactive"))),
+                              ]),
+                        ]
+                      ),
+                    ]
+                  ),
+                ]),
+              ]),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            {
+              staticClass:
+                "d-flex align-items-center justify-content-between mb-5",
+            },
+            [
+              _c(
+                "router-link",
+                {
+                  staticClass:
+                    "btn btn-light border px-4 py-2 text-muted fw-semibold",
+                  attrs: { to: "/seller/schemes" },
+                },
+                [
+                  _vm._v(
+                    "\n                " +
+                      _vm._s(_vm.__("cancel", "Cancel")) +
+                      "\n            "
+                  ),
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "button",
+                {
+                  staticClass:
+                    "btn btn-success px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2",
+                  attrs: { type: "submit", disabled: _vm.isLoading },
+                },
+                [
+                  _c("i", { staticClass: "fa fa-save" }),
+                  _vm._v(" "),
+                  _c("span", [
+                    _vm._v(
+                      _vm._s(
+                        _vm.isLoading
+                          ? _vm.__("saving", "Saving...")
+                          : _vm.__("save_scheme", "Save Scheme")
+                      )
+                    ),
+                  ]),
+                ]
+              ),
+            ],
+            1
+          ),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            title: _vm.__("select_products", "Select Products"),
+            size: "lg",
+            "hide-footer": "",
+            centered: "",
+          },
+          model: {
+            value: _vm.showProductModal,
+            callback: function ($$v) {
+              _vm.showProductModal = $$v
+            },
+            expression: "showProductModal",
+          },
+        },
+        [
+          _c("div", { staticClass: "p-2" }, [
+            _c("div", { staticClass: "mb-3" }, [
+              _c("div", { staticClass: "input-group" }, [
+                _c(
+                  "span",
+                  { staticClass: "input-group-text bg-white border-end-0" },
+                  [_c("i", { staticClass: "fa fa-search text-muted" })]
+                ),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.productSearch,
+                      expression: "productSearch",
+                    },
+                  ],
+                  staticClass: "form-control border-start-0",
+                  attrs: {
+                    type: "search",
+                    placeholder: _vm.__(
+                      "search_by_name_or_sku",
+                      "Search by name or SKU..."
+                    ),
+                  },
+                  domProps: { value: _vm.productSearch },
+                  on: {
+                    input: function ($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.productSearch = $event.target.value
+                    },
+                  },
+                }),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              {
+                staticClass:
+                  "d-flex justify-content-between align-items-center mb-2 px-1 text-muted small",
+              },
+              [
+                _c("span", [
+                  _vm._v(
+                    _vm._s(_vm.filteredModalProducts.length) +
+                      " " +
+                      _vm._s(_vm.__("products_found", "products found"))
+                  ),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "d-flex gap-2" }, [
+                  _c(
+                    "a",
+                    {
+                      staticClass: "text-decoration-none me-3",
+                      attrs: { href: "javascript:void(0)" },
+                      on: { click: _vm.selectAllModalProducts },
+                    },
+                    [_vm._v(_vm._s(_vm.__("select_all", "Select All")))]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "a",
+                    {
+                      staticClass: "text-decoration-none",
+                      attrs: { href: "javascript:void(0)" },
+                      on: { click: _vm.deselectAllModalProducts },
+                    },
+                    [_vm._v(_vm._s(_vm.__("deselect_all", "Deselect All")))]
+                  ),
+                ]),
+              ]
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              {
+                staticClass: "modal-products-list border rounded p-2",
+                staticStyle: { "max-height": "380px", "overflow-y": "auto" },
+              },
+              [
+                _vm._l(_vm.filteredModalProducts, function (p) {
+                  return _c(
+                    "div",
+                    {
+                      key: p.id,
+                      staticClass:
+                        "d-flex align-items-center justify-content-between p-2 border-bottom hover-bg",
+                    },
+                    [
+                      _c("div", { staticClass: "d-flex align-items-center" }, [
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.selectedModalProductIds,
+                              expression: "selectedModalProductIds",
+                            },
+                          ],
+                          staticClass: "form-check-input me-3",
+                          attrs: { type: "checkbox", id: "prod_" + p.id },
+                          domProps: {
+                            value: p.id,
+                            checked: Array.isArray(_vm.selectedModalProductIds)
+                              ? _vm._i(_vm.selectedModalProductIds, p.id) > -1
+                              : _vm.selectedModalProductIds,
+                          },
+                          on: {
+                            change: function ($event) {
+                              var $$a = _vm.selectedModalProductIds,
+                                $$el = $event.target,
+                                $$c = $$el.checked ? true : false
+                              if (Array.isArray($$a)) {
+                                var $$v = p.id,
+                                  $$i = _vm._i($$a, $$v)
+                                if ($$el.checked) {
+                                  $$i < 0 &&
+                                    (_vm.selectedModalProductIds = $$a.concat([
+                                      $$v,
+                                    ]))
+                                } else {
+                                  $$i > -1 &&
+                                    (_vm.selectedModalProductIds = $$a
+                                      .slice(0, $$i)
+                                      .concat($$a.slice($$i + 1)))
+                                }
+                              } else {
+                                _vm.selectedModalProductIds = $$c
+                              }
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c(
+                          "label",
+                          {
+                            staticClass:
+                              "d-flex align-items-center mb-0 cursor-pointer",
+                            attrs: { for: "prod_" + p.id },
+                          },
+                          [
+                            _c("img", {
+                              staticClass: "product-thumb rounded border me-2",
+                              attrs: {
+                                src: p.image || "/images/default_product.png",
+                                alt: "product",
+                              },
+                              on: { error: _vm.onImgError },
+                            }),
+                            _vm._v(" "),
+                            _c("div", [
+                              _c(
+                                "div",
+                                { staticClass: "fw-bold product-name-text" },
+                                [_vm._v(_vm._s(p.name))]
+                              ),
+                              _vm._v(" "),
+                              _c("small", { staticClass: "text-muted" }, [
+                                _vm._v(
+                                  "SKU: " +
+                                    _vm._s(p.sku || "N/A") +
+                                    " | " +
+                                    _vm._s(_vm.__("uom", "UOM")) +
+                                    ": " +
+                                    _vm._s(p.uom || "Unit")
                                 ),
-                              ]
-                            ),
+                              ]),
+                            ]),
                           ]
                         ),
                       ]),
-                    ]),
-                  ],
-                  2
+                      _vm._v(" "),
+                      _c("div", { staticClass: "text-end" }, [
+                        _c("div", { staticClass: "fw-bold text-primary" }, [
+                          _vm._v("₹" + _vm._s(p.price)),
+                        ]),
+                        _vm._v(" "),
+                        p.secondary_unit && p.secondary_unit_value
+                          ? _c("small", { staticClass: "text-muted" }, [
+                              _vm._v(
+                                "1 " +
+                                  _vm._s(p.secondary_unit) +
+                                  " = " +
+                                  _vm._s(p.secondary_unit_value) +
+                                  " " +
+                                  _vm._s(p.uom)
+                              ),
+                            ])
+                          : _vm._e(),
+                      ]),
+                    ]
+                  )
+                }),
+                _vm._v(" "),
+                _vm.filteredModalProducts.length === 0
+                  ? _c("div", { staticClass: "text-center py-4 text-muted" }, [
+                      _vm._v(
+                        "\n                    " +
+                          _vm._s(
+                            _vm.__(
+                              "no_products_match_search",
+                              "No products match your search."
+                            )
+                          ) +
+                          "\n                "
+                      ),
+                    ])
+                  : _vm._e(),
+              ],
+              2
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "d-flex justify-content-end gap-2 mt-3" },
+              [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-light border px-3",
+                    attrs: { type: "button" },
+                    on: {
+                      click: function ($event) {
+                        _vm.showProductModal = false
+                      },
+                    },
+                  },
+                  [_vm._v(_vm._s(_vm.__("cancel")))]
                 ),
                 _vm._v(" "),
                 _c(
                   "button",
                   {
-                    staticClass: "btn btn-primary",
-                    attrs: { type: "submit", disabled: _vm.isLoading },
+                    staticClass: "btn btn-primary px-3",
+                    attrs: { type: "button" },
+                    on: { click: _vm.addSelectedModalProducts },
                   },
-                  [_vm._v(_vm._s(_vm.__("save")))]
+                  [
+                    _vm._v(
+                      "\n                    " +
+                        _vm._s(_vm.__("add_selected", "Add Selected")) +
+                        " (" +
+                        _vm._s(_vm.selectedModalProductIds.length) +
+                        ")\n                "
+                    ),
+                  ]
                 ),
               ]
             ),
           ]),
-        ]),
-      ]),
-    ]),
-  ])
+        ]
+      ),
+    ],
+    1
+  )
 }
 var staticRenderFns = []
 render._withStripped = true

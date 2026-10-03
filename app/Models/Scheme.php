@@ -13,6 +13,7 @@ class Scheme extends Model
     public const TYPE_BUY_X_GET_Y          = 'buy_x_get_y';
     public const TYPE_GROUP_DISCOUNT_PRICE  = 'group_discount_price';
     public const TYPE_GROUP_DISCOUNT_QTY    = 'group_discount_qty';
+    public const TYPE_PRODUCT_CONDITIONS    = 'product_conditions';
 
     protected $table = 'schemes';
 
@@ -27,6 +28,8 @@ class Scheme extends Model
         'start_date',
         'end_date',
         'status',
+        'description',
+        'tax_option',
     ];
 
     public function schemeProducts()

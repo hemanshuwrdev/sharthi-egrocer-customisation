@@ -15,6 +15,13 @@ class SchemeProduct extends Model
     protected $fillable = [
         'scheme_id',
         'seller_product_id',
+        'qty_basis',
+        'min_qty',
+        'max_qty',
+        'discount_type',
+        'discount_value',
+        'free_qty',
+        'free_qty_basis',
     ];
 
     public function scheme()

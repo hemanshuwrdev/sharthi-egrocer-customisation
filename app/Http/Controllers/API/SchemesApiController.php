@@ -44,7 +44,12 @@ class SchemesApiController extends Controller
     public function edit($id)
     {
         $sellerId = $this->currentSellerId();
-        $scheme = Scheme::with(['schemeProducts', 'schemeSlabs'])
+        $scheme = Scheme::with([
+            'schemeProducts.sellerProduct.masterProductVariant.masterProduct',
+            'schemeProducts.sellerProduct.masterProductVariant.unit',
+            'schemeProducts.sellerProduct.masterProductVariant.secondaryUnit',
+            'schemeSlabs',
+        ])
             ->where('id', $id)->where('seller_id', $sellerId)->first();
         if (!$scheme) {
             return CommonHelper::responseError('scheme_not_found');
@@ -53,7 +58,9 @@ class SchemesApiController extends Controller
         return CommonHelper::responseWithData([
             'id'                     => $scheme->id,
             'name'                   => $scheme->name,
+            'description'            => $scheme->description,
             'type'                   => $scheme->type,
+            'tax_option'             => $scheme->tax_option ?? 'inclusive',
             'buy_seller_product_id'  => $scheme->buy_seller_product_id,
             'buy_qty'                => $scheme->buy_qty,
             'free_seller_product_id' => $scheme->free_seller_product_id,
@@ -61,6 +68,34 @@ class SchemesApiController extends Controller
             'start_date'             => $scheme->start_date,
             'end_date'               => $scheme->end_date,
             'status'                 => $scheme->status,
+            'products'               => $scheme->schemeProducts->map(function ($sp) {
+                $sellerProd = $sp->sellerProduct;
+                $mv = $sellerProd ? $sellerProd->masterProductVariant : null;
+                $mp = $mv ? $mv->masterProduct : null;
+                $rawImg = $mv ? ($mv->image ?: ($mp ? $mp->image : null)) : null;
+                $price = (float) ($sellerProd && $sellerProd->discounted_price && (float) $sellerProd->discounted_price > 0 ? $sellerProd->discounted_price : ($sellerProd->selling_price ?? 0));
+                $secVal = $mv && $mv->secondary_unit_value > 0 ? (float) $mv->secondary_unit_value : null;
+
+                return [
+                    'id'                   => $sellerProd ? $sellerProd->id : $sp->seller_product_id,
+                    'seller_product_id'    => $sp->seller_product_id,
+                    'name'                 => $mp ? $mp->name : '',
+                    'sku'                  => $mv ? ($mv->sku ?? '') : '',
+                    'image'                => $rawImg ? CommonHelper::getImage($rawImg) : '',
+                    'uom'                  => $mv && $mv->unit ? ($mv->unit->short_code ?: $mv->unit->name) : 'Unit',
+                    'secondary_unit'       => $mv && $mv->secondaryUnit ? ($mv->secondaryUnit->short_code ?: $mv->secondaryUnit->name) : 'Pack',
+                    'secondary_unit_value' => $secVal,
+                    'price'                => $price,
+                    'outer_price'          => $secVal ? round($price * $secVal, 2) : $price,
+                    'qty_basis'            => $sp->qty_basis ?: 'inner',
+                    'min_qty'              => $sp->min_qty !== null ? (float) $sp->min_qty : null,
+                    'max_qty'              => $sp->max_qty !== null ? (float) $sp->max_qty : null,
+                    'discount_type'        => $sp->discount_type ?: 'percentage',
+                    'discount_value'       => $sp->discount_value !== null ? (float) $sp->discount_value : null,
+                    'free_qty'             => $sp->free_qty !== null ? (float) $sp->free_qty : 1,
+                    'free_qty_basis'       => $sp->free_qty_basis ?: 'inner',
+                ];
+            })->values(),
             'product_ids'            => $scheme->schemeProducts->pluck('seller_product_id'),
             'slabs'                  => $scheme->schemeSlabs->map(fn ($sl) => [
                 'min_value'      => $sl->min_value,
@@ -112,16 +147,35 @@ class SchemesApiController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        $products = SellerProduct::with('masterProductVariant.masterProduct')
+        $products = SellerProduct::with([
+            'masterProductVariant.masterProduct',
+            'masterProductVariant.unit',
+            'masterProductVariant.secondaryUnit',
+        ])
             ->where('seller_id', $sellerId)
             ->where('status', 1)
             ->get()
-            ->map(fn ($sp) => [
-                'id'    => $sp->id,
-                'name'  => trim(($sp->masterProductVariant->masterProduct->name ?? '') . ' — ' . ($sp->masterProductVariant->sku ?? '')),
-                'price' => (float) ($sp->discounted_price && (float) $sp->discounted_price > 0 ? $sp->discounted_price : $sp->selling_price),
-                'stock' => (float) $sp->stock,
-            ])->values();
+            ->map(function ($sp) {
+                $mv = $sp->masterProductVariant;
+                $mp = $mv ? $mv->masterProduct : null;
+                $price = (float) ($sp->discounted_price && (float) $sp->discounted_price > 0 ? $sp->discounted_price : $sp->selling_price);
+                $secVal = $mv && $mv->secondary_unit_value > 0 ? (float) $mv->secondary_unit_value : null;
+                $rawImg = $mv ? ($mv->image ?: ($mp ? $mp->image : null)) : null;
+
+                return [
+                    'id'                   => $sp->id,
+                    'name'                 => $mp ? $mp->name : '',
+                    'full_name'            => trim(($mp->name ?? '') . ' — ' . ($mv->sku ?? '')),
+                    'sku'                  => $mv ? ($mv->sku ?? '') : '',
+                    'image'                => $rawImg ? CommonHelper::getImage($rawImg) : '',
+                    'uom'                  => $mv && $mv->unit ? ($mv->unit->short_code ?: $mv->unit->name) : 'Unit',
+                    'secondary_unit'       => $mv && $mv->secondaryUnit ? ($mv->secondaryUnit->short_code ?: $mv->secondaryUnit->name) : 'Pack',
+                    'secondary_unit_value' => $secVal,
+                    'price'                => $price,
+                    'outer_price'          => $secVal ? round($price * $secVal, 2) : $price,
+                    'stock'                => (float) $sp->stock,
+                ];
+            })->values();
 
         return CommonHelper::responseWithData($products);
     }
@@ -134,28 +188,23 @@ class SchemesApiController extends Controller
         }
 
         $rules = [
-            'name'       => 'required|string|max:255',
-            'type'       => 'required|in:buy_x_get_y,group_discount_price,group_discount_qty',
-            'start_date' => 'required|date',
-            'end_date'   => 'required|date|after_or_equal:start_date',
-            'status'     => 'required|integer|in:0,1',
+            'name'        => 'required|string|max:255',
+            'type'        => 'required|string',
+            'description' => 'nullable|string',
+            'tax_option'  => 'nullable|in:inclusive,exclusive',
+            'start_date'  => 'required|date',
+            'end_date'    => 'required|date|after_or_equal:start_date',
+            'status'      => 'required|integer|in:0,1',
         ];
-        if ($request->type === 'buy_x_get_y') {
+
+        $isBxgy = $request->type === 'buy_x_get_y';
+
+        if ($isBxgy) {
             $rules += [
                 'buy_seller_product_id'  => 'required|integer|exists:seller_products,id',
                 'buy_qty'                => 'required|integer|min:1',
                 'free_seller_product_id' => 'required|integer|exists:seller_products,id',
                 'free_qty'               => 'required|integer|min:1',
-            ];
-        } else {
-            $rules += [
-                'product_ids'            => 'required|array|min:1',
-                'product_ids.*'          => 'integer|exists:seller_products,id',
-                'slabs'                  => 'required|array|min:1',
-                'slabs.*.min_value'      => 'required|numeric|min:1',
-                'slabs.*.discount_type'  => 'required|in:percentage,flat',
-                'slabs.*.discount_value' => 'required|numeric|min:0.01',
-                'slabs.*.tax_option'     => 'nullable|in:inclusive,exclusive',
             ];
         }
 
@@ -164,8 +213,26 @@ class SchemesApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        // A percentage discount can't exceed 100% — the DB column has no such
-        // constraint (it's shared with 'flat', which has no natural upper bound).
+        $productsInput = $request->input('products');
+        if (is_string($productsInput)) {
+            $productsInput = json_decode($productsInput, true);
+        }
+
+        if (!$isBxgy) {
+            if ((!is_array($productsInput) || count($productsInput) === 0) && !$request->filled('product_ids')) {
+                return CommonHelper::responseError('Please select at least one product.');
+            }
+        }
+
+        // Percentage discount cannot exceed 100%
+        if (is_array($productsInput)) {
+            foreach ($productsInput as $p) {
+                $dt = $p['discount_type'] ?? null;
+                if (($dt === 'percentage' || $dt === 'discounted_product') && (float) ($p['discount_value'] ?? 0) > 100) {
+                    return CommonHelper::responseError('percentage_discount_cannot_exceed_100');
+                }
+            }
+        }
         if ($request->type !== 'buy_x_get_y' && is_array($request->slabs)) {
             foreach ($request->slabs as $slab) {
                 if (($slab['discount_type'] ?? null) === 'percentage' && (float) ($slab['discount_value'] ?? 0) > 100) {
@@ -175,22 +242,32 @@ class SchemesApiController extends Controller
         }
 
         // Every referenced product must belong to this distributor.
-        $isBxgy = $request->type === 'buy_x_get_y';
-        $referenced = $isBxgy
-            ? [(int) $request->buy_seller_product_id, (int) $request->free_seller_product_id]
-            : array_map('intval', $request->product_ids);
-        $owned = SellerProduct::where('seller_id', $sellerId)->whereIn('id', $referenced)->count();
-        if ($owned !== count(array_unique($referenced))) {
-            return CommonHelper::responseError('product_not_owned_by_seller');
+        if ($isBxgy) {
+            $referenced = [(int) $request->buy_seller_product_id, (int) $request->free_seller_product_id];
+        } elseif (is_array($productsInput) && count($productsInput) > 0) {
+            $referenced = array_map(fn ($p) => (int) ($p['seller_product_id'] ?? $p['id'] ?? 0), $productsInput);
+        } elseif ($request->filled('product_ids')) {
+            $referenced = array_map('intval', (array) $request->product_ids);
+        } else {
+            $referenced = [];
+        }
+
+        $referenced = array_filter(array_unique($referenced));
+        if (!empty($referenced)) {
+            $owned = SellerProduct::where('seller_id', $sellerId)->whereIn('id', $referenced)->count();
+            if ($owned !== count($referenced)) {
+                return CommonHelper::responseError('product_not_owned_by_seller');
+            }
         }
 
         try {
-            DB::transaction(function () use ($request, $sellerId, &$scheme) {
-                $isBxgy = $request->type === 'buy_x_get_y';
+            DB::transaction(function () use ($request, $sellerId, $isBxgy, $productsInput, &$scheme) {
                 $data = [
                     'seller_id'              => $sellerId,
                     'name'                   => $request->name,
+                    'description'            => $request->description,
                     'type'                   => $request->type,
+                    'tax_option'             => $request->tax_option ?? 'inclusive',
                     'buy_seller_product_id'  => $isBxgy ? $request->buy_seller_product_id : null,
                     'buy_qty'                => $isBxgy ? $request->buy_qty : null,
                     'free_seller_product_id' => $isBxgy ? $request->free_seller_product_id : null,
@@ -209,17 +286,39 @@ class SchemesApiController extends Controller
                 }
 
                 if (!$isBxgy) {
-                    foreach (array_unique(array_map('intval', $request->product_ids)) as $spId) {
-                        SchemeProduct::create(['scheme_id' => $scheme->id, 'seller_product_id' => $spId]);
+                    if (is_array($productsInput) && count($productsInput) > 0) {
+                        foreach ($productsInput as $p) {
+                            $spId = (int) ($p['seller_product_id'] ?? $p['id'] ?? 0);
+                            if ($spId > 0) {
+                                SchemeProduct::create([
+                                    'scheme_id'         => $scheme->id,
+                                    'seller_product_id' => $spId,
+                                    'qty_basis'         => in_array($p['qty_basis'] ?? '', ['inner', 'outer']) ? $p['qty_basis'] : 'inner',
+                                    'min_qty'           => isset($p['min_qty']) && $p['min_qty'] !== '' ? (float) $p['min_qty'] : null,
+                                    'max_qty'           => isset($p['max_qty']) && $p['max_qty'] !== '' ? (float) $p['max_qty'] : null,
+                                    'discount_type'     => $p['discount_type'] ?? 'percentage',
+                                    'discount_value'    => isset($p['discount_value']) && $p['discount_value'] !== '' ? (float) $p['discount_value'] : null,
+                                    'free_qty'          => isset($p['free_qty']) && $p['free_qty'] !== '' ? (float) $p['free_qty'] : null,
+                                    'free_qty_basis'    => in_array($p['free_qty_basis'] ?? '', ['inner', 'outer']) ? $p['free_qty_basis'] : 'inner',
+                                ]);
+                            }
+                        }
+                    } elseif ($request->filled('product_ids')) {
+                        foreach (array_unique(array_map('intval', (array) $request->product_ids)) as $spId) {
+                            SchemeProduct::create(['scheme_id' => $scheme->id, 'seller_product_id' => $spId]);
+                        }
                     }
-                    foreach ($request->slabs as $slab) {
-                        SchemeSlab::create([
-                            'scheme_id'      => $scheme->id,
-                            'min_value'      => $slab['min_value'],
-                            'discount_type'  => $slab['discount_type'],
-                            'discount_value' => $slab['discount_value'],
-                            'tax_option'     => $slab['tax_option'] ?? 'inclusive',
-                        ]);
+
+                    if ($request->filled('slabs') && is_array($request->slabs)) {
+                        foreach ($request->slabs as $slab) {
+                            SchemeSlab::create([
+                                'scheme_id'      => $scheme->id,
+                                'min_value'      => $slab['min_value'],
+                                'discount_type'  => $slab['discount_type'],
+                                'discount_value' => $slab['discount_value'],
+                                'tax_option'     => $slab['tax_option'] ?? 'inclusive',
+                            ]);
+                        }
                     }
                 }
             });
@@ -241,21 +340,57 @@ class SchemesApiController extends Controller
 
         $isBxgy = $s->type === Scheme::TYPE_BUY_X_GET_Y;
 
+        $productsDetail = [];
+        if (!$isBxgy) {
+            $productsDetail = $s->schemeProducts->map(function ($p) use ($productName) {
+                $name = $productName($p->sellerProduct);
+                if (!$name) {
+                    return null;
+                }
+                $cond = [];
+                if ($p->min_qty !== null) {
+                    $cond[] = "≥ {$p->min_qty} {$p->qty_basis}";
+                }
+                if ($p->max_qty !== null) {
+                    $cond[] = "≤ {$p->max_qty} {$p->qty_basis}";
+                }
+                $reward = '';
+                if ($p->discount_type === 'percentage') {
+                    $reward = "{$p->discount_value}% off";
+                } elseif ($p->discount_type === 'flat') {
+                    $reward = "₹{$p->discount_value} off";
+                } elseif ($p->discount_type === 'free_product') {
+                    $reward = "Get {$p->free_qty} {$p->free_qty_basis} free";
+                } elseif ($p->discount_type === 'discounted_product') {
+                    $reward = "Get {$p->free_qty} {$p->free_qty_basis} @ {$p->discount_value}% off";
+                }
+                return [
+                    'product'    => $name,
+                    'conditions' => implode(', ', $cond),
+                    'reward'     => $reward,
+                    'summary'    => trim($name . ($cond ? ' (' . implode(', ', $cond) . ')' : '') . ($reward ? ' → ' . $reward : '')),
+                ];
+            })->filter()->values();
+        }
+
         return [
-            'id'         => $s->id,
-            'name'       => $s->name,
-            'type'       => $s->type,
-            'start_date' => $s->start_date,
-            'end_date'   => $s->end_date,
-            'status'     => $s->status,
+            'id'              => $s->id,
+            'name'            => $s->name,
+            'description'     => $s->description,
+            'type'            => $s->type,
+            'tax_option'      => $s->tax_option ?? 'inclusive',
+            'start_date'      => $s->start_date,
+            'end_date'        => $s->end_date,
+            'status'          => $s->status,
             // BXGY fields (null for group types)
-            'buy_product'  => $isBxgy ? $productName($s->buyProduct)  : null,
-            'buy_qty'      => $isBxgy ? $s->buy_qty                   : null,
-            'free_product' => $isBxgy ? $productName($s->freeProduct) : null,
-            'free_qty'     => $isBxgy ? $s->free_qty                  : null,
+            'buy_product'     => $isBxgy ? $productName($s->buyProduct)  : null,
+            'buy_qty'         => $isBxgy ? $s->buy_qty                   : null,
+            'free_product'    => $isBxgy ? $productName($s->freeProduct) : null,
+            'free_qty'        => $isBxgy ? $s->free_qty                  : null,
             // Group fields (null for BXGY)
-            'products'     => !$isBxgy ? $s->schemeProducts->map(fn ($p) => $productName($p->sellerProduct))->filter()->values() : [],
-            'slabs'        => !$isBxgy ? $s->schemeSlabs->map(fn ($sl) => [
+            'products'        => !$isBxgy ? $s->schemeProducts->map(fn ($p) => $productName($p->sellerProduct))->filter()->values() : [],
+            'products_detail' => $productsDetail,
+            'slabs'           => !$isBxgy ? $s->schemeSlabs->map(fn ($sl) => [
                 'min_value'      => (float) $sl->min_value,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => (float) $sl->discount_value,

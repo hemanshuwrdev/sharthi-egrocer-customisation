@@ -95,6 +95,13 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -458,6 +465,34 @@ var render = function () {
                             ),
                           ]),
                         ]
+                      : row.item.products_detail &&
+                        row.item.products_detail.length
+                      ? _vm._l(row.item.products_detail, function (p, i) {
+                          return _c(
+                            "div",
+                            {
+                              key: "pd" + i,
+                              staticClass: "small mb-1 text-start",
+                            },
+                            [
+                              _c("strong", [_vm._v(_vm._s(p.product))]),
+                              _vm._v(" "),
+                              p.conditions
+                                ? _c("span", { staticClass: "text-muted" }, [
+                                    _vm._v(" (" + _vm._s(p.conditions) + ")"),
+                                  ])
+                                : _vm._e(),
+                              _vm._v(" "),
+                              p.reward
+                                ? _c(
+                                    "span",
+                                    { staticClass: "badge bg-success ms-1" },
+                                    [_vm._v(_vm._s(p.reward))]
+                                  )
+                                : _vm._e(),
+                            ]
+                          )
+                        })
                       : [
                           _vm._l(row.item.products, function (p, i) {
                             return _c(
