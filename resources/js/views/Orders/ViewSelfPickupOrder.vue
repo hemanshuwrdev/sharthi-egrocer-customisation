@@ -198,7 +198,7 @@
                                             <th class="th-width">Credit Note</th>
                                             <td>
                                                 <span v-for="cn in credit_notes" :key="cn.id" class="badge bg-secondary me-1">
-                                                    {{ cn.credit_note_no }} ({{ cn.reason_type === 'return' ? 'Sales Return' : 'Order Cancelled' }} — {{ $currency }}{{ cn.total_amount }})
+                                                    {{ cn.credit_note_no }} ({{ cn.reason_type === 'return' ? 'Sales Return' : (cn.reason_type === 'partial' ? 'Partial Delivery' : 'Order Cancelled') }} — {{ $currency }}{{ cn.total_amount }})
                                                 </span>
                                             </td>
                                         </tr>

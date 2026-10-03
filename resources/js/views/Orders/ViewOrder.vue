@@ -205,7 +205,7 @@
                                     </button>
                                     <b-dropdown v-else text="Download Credit Note" variant="secondary" size="sm" class="ms-2">
                                         <b-dropdown-item v-for="cn in credit_notes" :key="cn.id" @click="downloadCreditNote(cn.id)">
-                                            <i class="fa fa-download me-1"></i> {{ cn.credit_note_no }} ({{ cn.reason_type === 'return' ? 'Return' : 'Cancel' }}) - {{ $currency }}{{ cn.total_amount }}
+                                            <i class="fa fa-download me-1"></i> {{ cn.credit_note_no }} ({{ cn.reason_type === 'return' ? 'Return' : (cn.reason_type === 'partial' ? 'Partial' : 'Cancel') }}) - {{ $currency }}{{ cn.total_amount }}
                                         </b-dropdown-item>
                                     </b-dropdown>
                                 </template>

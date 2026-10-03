@@ -1551,6 +1551,8 @@ var render = function () {
                                               _vm._s(
                                                 cn.reason_type === "return"
                                                   ? "Return"
+                                                  : cn.reason_type === "partial"
+                                                  ? "Partial"
                                                   : "Cancel"
                                               ) +
                                               ") - " +

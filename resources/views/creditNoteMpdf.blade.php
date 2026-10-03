@@ -37,7 +37,7 @@
     $customerState = $order->customer_state ?? ($order->ua_state ?? '');
     $isIntraState = (empty($sellerState) || empty($customerState) || strcasecmp($sellerState, $customerState) === 0);
 
-    $reasonLabel = $creditNote->reason_type === 'return' ? 'Sales Return' : 'Order Cancellation';
+    $reasonLabel = $creditNote->reason_type === 'return' ? 'Sales Return' : ($creditNote->reason_type === 'partial' ? 'Partial Delivery Shortfall' : 'Order Cancellation');
 @endphp
 <html>
     <head>

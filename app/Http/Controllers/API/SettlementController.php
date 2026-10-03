@@ -2152,6 +2152,66 @@ class SettlementController extends Controller
 
                 $generatedNos[] = $cn->credit_note_no;
             }
+
+            // Partial invoices (shortfalls) — driver trips with a loading slip where shortfalls were verified.
+            $ordersWithShortfall = Order::with(['items' => function ($q) {
+                $q->whereNotNull('delivered_quantity')
+                  ->whereNotNull('shortfall_verified_at');
+            }])->whereIn('id', $tripOrderIds)->get();
+
+            foreach ($ordersWithShortfall as $order) {
+                $shortfallItems = $order->items->filter(
+                    fn ($i) => (float) $i->delivered_quantity < (float) $i->quantity
+                );
+                if ($shortfallItems->isEmpty()) continue;
+                if (CreditNote::where('order_id', $order->id)->where('reason_type', 'partial')->exists()) continue;
+
+                $totalAmount = 0.0;
+                $cnItemsData = [];
+                foreach ($shortfallItems as $item) {
+                    $shortQty = round((float) $item->quantity - (float) $item->delivered_quantity, 2);
+                    if ($shortQty <= 0) continue;
+
+                    $unitPrice = (float) ($item->discounted_price ?: $item->price);
+                    $shortVal = round($shortQty * $unitPrice, 2);
+                    $totalAmount += $shortVal;
+
+                    $cnItemsData[] = [
+                        'order_item_id' => $item->id,
+                        'product_name'  => $item->product_name,
+                        'variant_name'  => $item->variant_name,
+                        'quantity'      => $shortQty,
+                        'amount'        => $shortVal,
+                    ];
+                }
+
+                if ($totalAmount <= 0 || empty($cnItemsData)) continue;
+
+                $cn = CreditNote::create([
+                    'credit_note_no'      => CommonHelper::nextCreditNoteNumber($seller),
+                    'seller_id'           => $seller->id,
+                    'driver_settlement_id'=> $settlement->id,
+                    'order_id'            => $order->id,
+                    'retailer_id'         => $order->user_id,
+                    'reason_type'         => 'partial',
+                    'total_amount'        => round($totalAmount, 2),
+                    'generated_at'        => Carbon::now(),
+                    'generated_by'        => auth()->id(),
+                ]);
+
+                foreach ($cnItemsData as $ci) {
+                    CreditNoteItem::create([
+                        'credit_note_id' => $cn->id,
+                        'order_item_id'  => $ci['order_item_id'],
+                        'product_name'   => $ci['product_name'],
+                        'variant_name'   => $ci['variant_name'],
+                        'quantity'       => $ci['quantity'],
+                        'amount'         => $ci['amount'],
+                    ]);
+                }
+
+                $generatedNos[] = $cn->credit_note_no;
+            }
         }
 
         return $generatedNos;
