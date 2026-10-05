@@ -251,7 +251,7 @@
                                             <span v-else class="text-muted">—</span>
                                         </td>
                                         <td class="text-center">
-                                            <button type="button" class="review-order-remove-btn" v-b-tooltip.hover :title="__('Remove this order from the slip')" @click="removeOrderFromReview(o.orderId)">
+                                            <button type="button" class="review-order-remove-btn" v-b-tooltip.hover.right.noninteractive :title="__('Remove this order from the slip')" @click="removeOrderFromReview(o.orderId)">
                                                 <i class="fa fa-times"></i>
                                             </button>
                                         </td>

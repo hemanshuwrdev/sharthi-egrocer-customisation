@@ -2097,8 +2097,13 @@ var render = function () {
                                             directives: [
                                               {
                                                 name: "b-tooltip",
-                                                rawName: "v-b-tooltip.hover",
-                                                modifiers: { hover: true },
+                                                rawName:
+                                                  "v-b-tooltip.hover.right.noninteractive",
+                                                modifiers: {
+                                                  hover: true,
+                                                  right: true,
+                                                  noninteractive: true,
+                                                },
                                               },
                                             ],
                                             staticClass:
