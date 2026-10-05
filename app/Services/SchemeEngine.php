@@ -118,13 +118,9 @@ class SchemeEngine
                     continue;
                 }
 
-                $currentQty   = (float) ($qtyByProduct[(int) $scheme->buy_seller_product_id] ?? 0);
+                $currentQty = (float) ($qtyByProduct[(int) $scheme->buy_seller_product_id] ?? 0);
                 // Only surface if the scheme's buy product is in the cart
                 if ($currentQty <= 0) {
-                    continue;
-                }
-                $rawQtyNeeded = (float) $scheme->buy_qty - $currentQty;
-                if ($rawQtyNeeded <= 0) {
                     continue;
                 }
 
@@ -132,6 +128,17 @@ class SchemeEngine
                 if (!$buyProduct) {
                     continue;
                 }
+
+                $buyVariant = $buyProduct->masterProductVariant;
+                $buySecVal = ($buyVariant && (float) $buyVariant->secondary_unit_value > 0) ? (float) $buyVariant->secondary_unit_value : 1.0;
+                $buyBasis = $scheme->buy_qty_basis ?: 'inner';
+
+                $effectiveCartQty = ($buyBasis === 'outer') ? floor($currentQty / $buySecVal) : $currentQty;
+                $rawQtyNeeded = (float) $scheme->buy_qty - $effectiveCartQty;
+                if ($rawQtyNeeded <= 0) {
+                    continue;
+                }
+
                 $unitPrice = (float) ($buyProduct->discounted_price && (float) $buyProduct->discounted_price > 0
                     ? $buyProduct->discounted_price
                     : $buyProduct->selling_price);
@@ -139,19 +146,20 @@ class SchemeEngine
                     continue;
                 }
 
-                $qtyNeeded    = (int) ceil($rawQtyNeeded);
-                $amountNeeded = round($qtyNeeded * $unitPrice, 2);
-                $minimumAmount = round((float) $scheme->buy_qty * $unitPrice, 2);
+                $qtyNeededInBasis = (int) ceil($rawQtyNeeded);
+                $unitsNeeded = ($buyBasis === 'outer') ? ($qtyNeededInBasis * $buySecVal) : $qtyNeededInBasis;
+                $amountNeeded = round($unitsNeeded * $unitPrice, 2);
+                $minimumAmount = round(($buyBasis === 'outer' ? (float) $scheme->buy_qty * $buySecVal : (float) $scheme->buy_qty) * $unitPrice, 2);
 
                 if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
                     $nearest = [
                         'type'               => Scheme::TYPE_BUY_X_GET_Y,
                         'amountNeeded'       => $amountNeeded,
                         'minimumAmount'      => $minimumAmount,
-                        'qtyNeeded'          => $qtyNeeded,
+                        'qtyNeeded'          => $qtyNeededInBasis,
                         'scheme'             => $scheme,
                         'nextSlab'           => null,
-                        'currentBuyQty'      => $currentQty,
+                        'currentBuyQty'      => $effectiveCartQty,
                         'currentGroupTotal'  => null,
                         'currentGroupQty'    => null,
                         'groupQtyNeeded'     => null,
@@ -250,50 +258,101 @@ class SchemeEngine
                     ];
                 }
             } elseif ($scheme->id !== $appliedSchemeId && ($scheme->type === Scheme::TYPE_PRODUCT_CONDITIONS || $scheme->schemeProducts->contains(fn ($sp) => $sp->min_qty !== null))) {
-                foreach ($scheme->schemeProducts as $sp) {
-                    if (!$sp->min_qty || (float) $sp->min_qty <= 0) {
-                        continue;
-                    }
-                    $spId = (int) $sp->seller_product_id;
-                    $cartQty = (float) ($qtyByProduct[$spId] ?? 0);
-                    if ($cartQty <= 0) {
-                        continue;
-                    }
+                if ($scheme->schemeProducts->count() > 1) {
+                    $firstSp = $scheme->schemeProducts->first();
+                    $minQty = (float) ($firstSp->min_qty ?? 0);
+                    if ($minQty > 0) {
+                        $combinedEffective = 0.0;
+                        $hasAnyInCart = false;
+                        $sampleUnitPrice = 0.0;
+                        $sampleSecVal = 1.0;
 
-                    $sellerProduct = $sp->sellerProduct;
-                    if (!$sellerProduct) {
-                        continue;
+                        foreach ($scheme->schemeProducts as $sp) {
+                            $spId = (int) $sp->seller_product_id;
+                            $cQty = (float) ($qtyByProduct[$spId] ?? 0);
+                            if ($cQty > 0) {
+                                $hasAnyInCart = true;
+                            }
+                            $sellerProduct = $sp->sellerProduct;
+                            $variant = $sellerProduct?->masterProductVariant;
+                            $secVal = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
+                            $eff = ($sp->qty_basis === 'outer') ? floor($cQty / $secVal) : $cQty;
+                            $combinedEffective += $eff;
+
+                            if ($sampleUnitPrice <= 0 && $sellerProduct) {
+                                $sampleUnitPrice = (float) ($sellerProduct->discounted_price && (float) $sellerProduct->discounted_price > 0 ? $sellerProduct->discounted_price : $sellerProduct->selling_price);
+                                $sampleSecVal = $secVal;
+                            }
+                        }
+
+                        if ($hasAnyInCart && $combinedEffective < $minQty) {
+                            $qtyNeededInBasis = $minQty - $combinedEffective;
+                            $unitsNeeded = ($firstSp->qty_basis === 'outer') ? ($qtyNeededInBasis * $sampleSecVal) : $qtyNeededInBasis;
+                            $amountNeeded = round($unitsNeeded * $sampleUnitPrice, 2);
+
+                            if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
+                                $nearest = [
+                                    'type'               => 'group_discount',
+                                    'amountNeeded'       => $amountNeeded,
+                                    'minimumAmount'      => round($minQty * ($firstSp->qty_basis === 'outer' ? $sampleSecVal * $sampleUnitPrice : $sampleUnitPrice), 2),
+                                    'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
+                                    'scheme'             => $scheme,
+                                    'nextSlab'           => null,
+                                    'currentBuyQty'      => $combinedEffective,
+                                    'currentGroupTotal'  => null,
+                                    'currentGroupQty'    => null,
+                                    'groupQtyNeeded'     => null,
+                                    'minimumGroupQty'    => null,
+                                ];
+                            }
+                        }
                     }
-                    $variant = $sellerProduct->masterProductVariant;
-                    $secVal = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
+                } else {
+                    foreach ($scheme->schemeProducts as $sp) {
+                        if (!$sp->min_qty || (float) $sp->min_qty <= 0) {
+                            continue;
+                        }
+                        $spId = (int) $sp->seller_product_id;
+                        $cartQty = (float) ($qtyByProduct[$spId] ?? 0);
+                        if ($cartQty <= 0) {
+                            continue;
+                        }
 
-                    $effectiveQty = ($sp->qty_basis === 'outer') ? floor($cartQty / $secVal) : $cartQty;
-                    $minQty = (float) $sp->min_qty;
-                    if ($effectiveQty >= $minQty) {
-                        continue;
-                    }
+                        $sellerProduct = $sp->sellerProduct;
+                        if (!$sellerProduct) {
+                            continue;
+                        }
+                        $variant = $sellerProduct->masterProductVariant;
+                        $secVal = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
 
-                    $qtyNeededInBasis = $minQty - $effectiveQty;
-                    $unitsNeeded = ($sp->qty_basis === 'outer') ? ($qtyNeededInBasis * $secVal) : $qtyNeededInBasis;
-                    $unitPrice = (float) ($sellerProduct->discounted_price && (float) $sellerProduct->discounted_price > 0
-                        ? $sellerProduct->discounted_price
-                        : $sellerProduct->selling_price);
-                    $amountNeeded = round($unitsNeeded * $unitPrice, 2);
+                        $effectiveQty = ($sp->qty_basis === 'outer') ? floor($cartQty / $secVal) : $cartQty;
+                        $minQty = (float) $sp->min_qty;
+                        if ($effectiveQty >= $minQty) {
+                            continue;
+                        }
 
-                    if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
-                        $nearest = [
-                            'type'               => 'group_discount',
-                            'amountNeeded'       => $amountNeeded,
-                            'minimumAmount'      => round($minQty * ($sp->qty_basis === 'outer' ? $secVal * $unitPrice : $unitPrice), 2),
-                            'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
-                            'scheme'             => $scheme,
-                            'nextSlab'           => null,
-                            'currentBuyQty'      => $effectiveQty,
-                            'currentGroupTotal'  => null,
-                            'currentGroupQty'    => null,
-                            'groupQtyNeeded'     => null,
-                            'minimumGroupQty'    => null,
-                        ];
+                        $qtyNeededInBasis = $minQty - $effectiveQty;
+                        $unitsNeeded = ($sp->qty_basis === 'outer') ? ($qtyNeededInBasis * $secVal) : $qtyNeededInBasis;
+                        $unitPrice = (float) ($sellerProduct->discounted_price && (float) $sellerProduct->discounted_price > 0
+                            ? $sellerProduct->discounted_price
+                            : $sellerProduct->selling_price);
+                        $amountNeeded = round($unitsNeeded * $unitPrice, 2);
+
+                        if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
+                            $nearest = [
+                                'type'               => 'group_discount',
+                                'amountNeeded'       => $amountNeeded,
+                                'minimumAmount'      => round($minQty * ($sp->qty_basis === 'outer' ? $secVal * $unitPrice : $unitPrice), 2),
+                                'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
+                                'scheme'             => $scheme,
+                                'nextSlab'           => null,
+                                'currentBuyQty'      => $effectiveQty,
+                                'currentGroupTotal'  => null,
+                                'currentGroupQty'    => null,
+                                'groupQtyNeeded'     => null,
+                                'minimumGroupQty'    => null,
+                            ];
+                        }
                     }
                 }
             }
@@ -391,13 +450,23 @@ class SchemeEngine
             return null;
         }
 
-        $cartQty = $qtyByProduct[(int) $scheme->buy_seller_product_id] ?? 0;
-        if ($cartQty < $scheme->buy_qty) {
+        $cartQty = (float) ($qtyByProduct[(int) $scheme->buy_seller_product_id] ?? 0);
+        if ($cartQty <= 0) {
             return null;
         }
 
-        $multiples = (int) floor($cartQty / $scheme->buy_qty);
-        $freeQty   = $multiples * (int) $scheme->free_qty;
+        $buyProduct = SellerProduct::with('masterProductVariant')->find($scheme->buy_seller_product_id);
+        $buyVariant = $buyProduct?->masterProductVariant;
+        $buySecVal = ($buyVariant && (float) $buyVariant->secondary_unit_value > 0) ? (float) $buyVariant->secondary_unit_value : 1.0;
+
+        $buyBasis = $scheme->buy_qty_basis ?: 'inner';
+        $effectiveBuyCartQty = ($buyBasis === 'outer') ? floor($cartQty / $buySecVal) : $cartQty;
+
+        if ($effectiveBuyCartQty < (float) $scheme->buy_qty) {
+            return null;
+        }
+
+        $multiples = (int) floor($effectiveBuyCartQty / (float) $scheme->buy_qty);
 
         $freeProduct = SellerProduct::with('masterProductVariant.masterProduct')
             ->find($scheme->free_seller_product_id);
@@ -405,8 +474,15 @@ class SchemeEngine
             return null;
         }
 
-        $alreadyInCart = $qtyByProduct[(int) $freeProduct->id] ?? 0;
-        if ((float) $freeProduct->stock < $freeQty + $alreadyInCart) {
+        $freeVariant = $freeProduct->masterProductVariant;
+        $freeSecVal = ($freeVariant && (float) $freeVariant->secondary_unit_value > 0) ? (float) $freeVariant->secondary_unit_value : 1.0;
+
+        $freeBasis = $scheme->free_qty_basis ?: 'inner';
+        $freeUnitsPerMultiple = ($freeBasis === 'outer') ? ((float) $scheme->free_qty * $freeSecVal) : (float) $scheme->free_qty;
+        $totalFreeUnits = (int) ($multiples * $freeUnitsPerMultiple);
+
+        $alreadyInCart = (float) ($qtyByProduct[(int) $freeProduct->id] ?? 0);
+        if ((float) $freeProduct->stock < $totalFreeUnits + $alreadyInCart) {
             return null;
         }
 
@@ -414,20 +490,18 @@ class SchemeEngine
             ? (float) $freeProduct->discounted_price
             : (float) $freeProduct->selling_price;
 
-        $variant = $freeProduct->masterProductVariant;
-
         return [
             'scheme_id'       => $scheme->id,
             'name'            => $scheme->name,
             'type'            => Scheme::TYPE_BUY_X_GET_Y,
-            'benefit'         => $freeQty * $unitValue,
+            'benefit'         => $totalFreeUnits * $unitValue,
             'scheme_discount' => 0.0,
             'free_items'      => [[
                 'seller_product_id'         => $freeProduct->id,
-                'master_product_variant_id' => $variant->id ?? null,
-                'qty'                       => $freeQty,
-                'product_name'              => $variant->masterProduct->name ?? '',
-                'variant_name'              => $variant->sku ?? '',
+                'master_product_variant_id' => $freeVariant->id ?? null,
+                'qty'                       => $totalFreeUnits,
+                'product_name'              => $freeVariant->masterProduct->name ?? '',
+                'variant_name'              => $freeVariant->sku ?? '',
                 'unit_value'                => $unitValue,
             ]],
         ];
@@ -559,94 +633,215 @@ class SchemeEngine
         $hasAnyMatch    = false;
 
         $isPreTax = ($scheme->tax_option ?? 'inclusive') === 'inclusive';
+        $isMultiProduct = $scheme->schemeProducts->count() > 1;
 
-        foreach ($scheme->schemeProducts as $sp) {
-            $spId = (int) $sp->seller_product_id;
-            $cartQty = (float) ($qtyByProduct[$spId] ?? 0);
-            if ($cartQty <= 0) {
-                continue;
+        if ($isMultiProduct) {
+            // Multi-product scheme: combined quantity condition across all products in the scheme
+            $firstSp = $scheme->schemeProducts->first();
+            $minQty = (float) ($firstSp->min_qty ?? 0);
+            $maxQty = $firstSp->max_qty !== null ? (float) $firstSp->max_qty : null;
+            $discType = $firstSp->discount_type ?: 'percentage';
+            $discVal = (float) ($firstSp->discount_value ?? 0);
+            $freeQty = (float) ($firstSp->free_qty ?? 1);
+            $freeQtyBasis = $firstSp->free_qty_basis ?: 'inner';
+
+            $combinedEffectiveQty = 0.0;
+            $matchingLines = [];
+            $totalGroupSpend = 0.0;
+
+            foreach ($scheme->schemeProducts as $sp) {
+                $spId = (int) $sp->seller_product_id;
+                $cartQty = (float) ($qtyByProduct[$spId] ?? 0);
+                if ($cartQty <= 0) {
+                    continue;
+                }
+
+                $sellerProduct = $sp->sellerProduct;
+                if (!$sellerProduct || (int) $sellerProduct->status !== 1) {
+                    continue;
+                }
+
+                $variant = $sellerProduct->masterProductVariant;
+                $secVal  = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
+
+                $effectiveQty = ($sp->qty_basis === 'outer')
+                    ? floor($cartQty / $secVal)
+                    : $cartQty;
+
+                if ($effectiveQty <= 0) {
+                    continue;
+                }
+
+                $combinedEffectiveQty += $effectiveQty;
+                $lineTotal   = (float) ($totalByProduct[$spId] ?? 0);
+                $actualLine  = (float) ($actualTotalByProduct[$spId] ?? $lineTotal);
+                $totalGroupSpend += $lineTotal;
+
+                $matchingLines[] = [
+                    'sp'            => $sp,
+                    'sellerProduct' => $sellerProduct,
+                    'variant'       => $variant,
+                    'cartQty'       => $cartQty,
+                    'effectiveQty'  => $effectiveQty,
+                    'secVal'        => $secVal,
+                    'lineTotal'     => $lineTotal,
+                    'actualLine'    => $actualLine,
+                ];
             }
 
-            $sellerProduct = $sp->sellerProduct;
-            if (!$sellerProduct || (int) $sellerProduct->status !== 1) {
-                continue;
+            if ($minQty > 0 && $combinedEffectiveQty < $minQty) {
+                return null;
             }
 
-            $variant = $sellerProduct->masterProductVariant;
-            $secVal  = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
-
-            // Check trigger basis (outer vs inner)
-            $effectiveQty = ($sp->qty_basis === 'outer')
-                ? floor($cartQty / $secVal)
-                : $cartQty;
-
-            $minQty = (float) ($sp->min_qty ?? 0);
-            if ($minQty > 0 && $effectiveQty < $minQty) {
-                continue;
-            }
-
-            $maxQty = $sp->max_qty !== null ? (float) $sp->max_qty : null;
-            if ($maxQty !== null && $maxQty > 0 && $effectiveQty > $maxQty) {
-                $effectiveQty = $maxQty;
+            if (empty($matchingLines) || $combinedEffectiveQty <= 0) {
+                return null;
             }
 
             $hasAnyMatch = true;
-            $lineTotal   = (float) ($totalByProduct[$spId] ?? 0);
-            $actualLine  = (float) ($actualTotalByProduct[$spId] ?? $lineTotal);
-
-            $cappedUnits = ($sp->qty_basis === 'outer') ? ($effectiveQty * $secVal) : $effectiveQty;
-            $eligibleRatio = ($cartQty > 0) ? min(1.0, $cappedUnits / $cartQty) : 1.0;
-
-            $unitPrice = (float) ($sellerProduct->discounted_price && (float) $sellerProduct->discounted_price > 0
-                ? $sellerProduct->discounted_price
-                : $sellerProduct->selling_price);
-
-            $discType = $sp->discount_type ?: 'percentage';
+            $eligibleRatio = 1.0;
+            if ($maxQty !== null && $maxQty > 0 && $combinedEffectiveQty > $maxQty) {
+                $eligibleRatio = min(1.0, $maxQty / $combinedEffectiveQty);
+            }
 
             if ($discType === 'percentage') {
-                $base = ($isPreTax ? $actualLine : $lineTotal) * $eligibleRatio;
-                $pct = (float) ($sp->discount_value ?? 0);
-                if ($pct > 0) {
-                    $rowDisc = round($base * min($pct, 100) / 100, 2);
-                    $schemeDiscount += min($rowDisc, $lineTotal);
+                foreach ($matchingLines as $line) {
+                    $base = ($isPreTax ? $line['actualLine'] : $line['lineTotal']) * $eligibleRatio;
+                    if ($discVal > 0) {
+                        $rowDisc = round($base * min($discVal, 100) / 100, 2);
+                        $schemeDiscount += min($rowDisc, $line['lineTotal']);
+                    }
                 }
             } elseif ($discType === 'flat') {
-                $flat = (float) ($sp->discount_value ?? 0);
+                $flat = $discVal;
                 if ($flat > 0) {
-                    if ($isPreTax && $actualLine > 0 && $lineTotal > $actualLine) {
-                        $avgTaxPct = ($lineTotal - $actualLine) / $actualLine * 100;
-                        $flat = round($flat * (1 + $avgTaxPct / 100), 2);
-                    }
-                    $schemeDiscount += min($flat, $lineTotal);
+                    $schemeDiscount += min($flat, $totalGroupSpend);
                 }
             } elseif ($discType === 'free_product') {
-                $rawFree = (float) ($sp->free_qty ?? 1);
-                $freeUnits = ($sp->free_qty_basis === 'outer')
-                    ? ($rawFree * $secVal)
-                    : $rawFree;
+                $freeSellerProduct = $firstSp->sellerProduct;
+                $freeVariant = $freeSellerProduct?->masterProductVariant;
+                $freeSecVal = ($freeVariant && (float) $freeVariant->secondary_unit_value > 0) ? (float) $freeVariant->secondary_unit_value : 1.0;
+                $freeUnits = ($freeQtyBasis === 'outer') ? ($freeQty * $freeSecVal) : $freeQty;
+                if ($freeUnits > 0 && $freeSellerProduct) {
+                    $unitPrice = (float) ($freeSellerProduct->discounted_price && (float) $freeSellerProduct->discounted_price > 0
+                        ? $freeSellerProduct->discounted_price
+                        : $freeSellerProduct->selling_price);
 
-                if ($freeUnits > 0) {
-                    if ((float) $sellerProduct->stock >= $freeUnits + $cartQty) {
+                    if ((float) $freeSellerProduct->stock >= $freeUnits) {
                         $freeItems[] = [
-                            'seller_product_id'         => $sellerProduct->id,
-                            'master_product_variant_id' => $variant->id ?? null,
+                            'seller_product_id'         => $freeSellerProduct->id,
+                            'master_product_variant_id' => $freeVariant->id ?? null,
                             'qty'                       => (int) $freeUnits,
-                            'product_name'              => $variant->masterProduct->name ?? '',
-                            'variant_name'              => $variant->sku ?? '',
+                            'product_name'              => $freeVariant->masterProduct->name ?? '',
+                            'variant_name'              => $freeVariant->sku ?? '',
                             'unit_value'                => $unitPrice,
                         ];
                     }
                 }
             } elseif ($discType === 'discounted_product') {
-                $discUnits = (float) ($sp->free_qty ?? 1);
-                $freeUnitCount = ($sp->free_qty_basis === 'outer')
-                    ? ($discUnits * $secVal)
+                $firstLine = $matchingLines[0];
+                $discUnits = (float) ($firstSp->free_qty ?? 1);
+                $freeUnitCount = ($firstSp->free_qty_basis === 'outer')
+                    ? ($discUnits * $firstLine['secVal'])
                     : $discUnits;
+                $unitPrice = (float) ($firstLine['sellerProduct']->discounted_price && (float) $firstLine['sellerProduct']->discounted_price > 0
+                    ? $firstLine['sellerProduct']->discounted_price
+                    : $firstLine['sellerProduct']->selling_price);
 
-                $pct = (float) ($sp->discount_value ?? 0);
-                if ($pct > 0 && $freeUnitCount > 0) {
-                    $discountedAmount = round($freeUnitCount * $unitPrice * min($pct, 100) / 100, 2);
-                    $schemeDiscount += min($discountedAmount, $lineTotal);
+                if ($discVal > 0 && $freeUnitCount > 0) {
+                    $discountedAmount = round($freeUnitCount * $unitPrice * min($discVal, 100) / 100, 2);
+                    $schemeDiscount += min($discountedAmount, $totalGroupSpend);
+                }
+            }
+        } else {
+            // Single product row scheme — evaluate each product row independently (existing logic)
+            foreach ($scheme->schemeProducts as $sp) {
+                $spId = (int) $sp->seller_product_id;
+                $cartQty = (float) ($qtyByProduct[$spId] ?? 0);
+                if ($cartQty <= 0) {
+                    continue;
+                }
+
+                $sellerProduct = $sp->sellerProduct;
+                if (!$sellerProduct || (int) $sellerProduct->status !== 1) {
+                    continue;
+                }
+
+                $variant = $sellerProduct->masterProductVariant;
+                $secVal  = ($variant && (float) $variant->secondary_unit_value > 0) ? (float) $variant->secondary_unit_value : 1.0;
+
+                // Check trigger basis (outer vs inner)
+                $effectiveQty = ($sp->qty_basis === 'outer')
+                    ? floor($cartQty / $secVal)
+                    : $cartQty;
+
+                $minQty = (float) ($sp->min_qty ?? 0);
+                if ($minQty > 0 && $effectiveQty < $minQty) {
+                    continue;
+                }
+
+                $maxQty = $sp->max_qty !== null ? (float) $sp->max_qty : null;
+                if ($maxQty !== null && $maxQty > 0 && $effectiveQty > $maxQty) {
+                    $effectiveQty = $maxQty;
+                }
+
+                $hasAnyMatch = true;
+                $lineTotal   = (float) ($totalByProduct[$spId] ?? 0);
+                $actualLine  = (float) ($actualTotalByProduct[$spId] ?? $lineTotal);
+
+                $cappedUnits = ($sp->qty_basis === 'outer') ? ($effectiveQty * $secVal) : $effectiveQty;
+                $eligibleRatio = ($cartQty > 0) ? min(1.0, $cappedUnits / $cartQty) : 1.0;
+
+                $unitPrice = (float) ($sellerProduct->discounted_price && (float) $sellerProduct->discounted_price > 0
+                    ? $sellerProduct->discounted_price
+                    : $sellerProduct->selling_price);
+
+                $discType = $sp->discount_type ?: 'percentage';
+
+                if ($discType === 'percentage') {
+                    $base = ($isPreTax ? $actualLine : $lineTotal) * $eligibleRatio;
+                    $pct = (float) ($sp->discount_value ?? 0);
+                    if ($pct > 0) {
+                        $rowDisc = round($base * min($pct, 100) / 100, 2);
+                        $schemeDiscount += min($rowDisc, $lineTotal);
+                    }
+                } elseif ($discType === 'flat') {
+                    $flat = (float) ($sp->discount_value ?? 0);
+                    if ($flat > 0) {
+                        if ($isPreTax && $actualLine > 0 && $lineTotal > $actualLine) {
+                            $avgTaxPct = ($lineTotal - $actualLine) / $actualLine * 100;
+                            $flat = round($flat * (1 + $avgTaxPct / 100), 2);
+                        }
+                        $schemeDiscount += min($flat, $lineTotal);
+                    }
+                } elseif ($discType === 'free_product') {
+                    $rawFree = (float) ($sp->free_qty ?? 1);
+                    $freeUnits = ($sp->free_qty_basis === 'outer')
+                        ? ($rawFree * $secVal)
+                        : $rawFree;
+
+                    if ($freeUnits > 0) {
+                        if ((float) $sellerProduct->stock >= $freeUnits + $cartQty) {
+                            $freeItems[] = [
+                                'seller_product_id'         => $sellerProduct->id,
+                                'master_product_variant_id' => $variant->id ?? null,
+                                'qty'                       => (int) $freeUnits,
+                                'product_name'              => $variant->masterProduct->name ?? '',
+                                'variant_name'              => $variant->sku ?? '',
+                                'unit_value'                => $unitPrice,
+                            ];
+                        }
+                    }
+                } elseif ($discType === 'discounted_product') {
+                    $discUnits = (float) ($sp->free_qty ?? 1);
+                    $freeUnitCount = ($sp->free_qty_basis === 'outer')
+                        ? ($discUnits * $secVal)
+                        : $discUnits;
+
+                    $pct = (float) ($sp->discount_value ?? 0);
+                    if ($pct > 0 && $freeUnitCount > 0) {
+                        $discountedAmount = round($freeUnitCount * $unitPrice * min($pct, 100) / 100, 2);
+                        $schemeDiscount += min($discountedAmount, $lineTotal);
+                    }
                 }
             }
         }

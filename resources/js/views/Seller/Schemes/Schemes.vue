@@ -35,8 +35,15 @@
 
                                 <template #cell(offer)="row">
                                     <template v-if="row.item.type === 'buy_x_get_y'">
-                                        {{ __('buy') }} {{ row.item.buy_qty }} × {{ row.item.buy_product }}<br>
-                                        <strong>{{ __('get') }} {{ row.item.free_qty }} × {{ row.item.free_product }} {{ __('free') }}</strong>
+                                        {{ t('buy', 'Buy') }} {{ row.item.buy_qty }} {{ row.item.buy_qty_basis === 'outer' ? 'Outer' : (row.item.buy_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.buy_product }}<br>
+                                        <strong>{{ t('get', 'Get') }} {{ row.item.free_qty }} {{ row.item.free_qty_basis === 'outer' ? 'Outer' : (row.item.free_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.free_product }} {{ t('free', 'Free') }}</strong>
+                                    </template>
+                                    <template v-else-if="row.item.is_multi_combo">
+                                        <div class="small mb-1 text-start">
+                                            <span class="badge bg-primary text-white mb-1"><i class="fa fa-layer-group me-1"></i> {{ t('multi_product_combo', 'Multi-Product Combo') }}</span>
+                                            <div><strong>{{ row.item.combo_condition }}</strong> <span class="badge bg-success ms-1">{{ row.item.combo_reward }}</span></div>
+                                            <div class="text-muted small mt-1">{{ t('any_mix_of', 'Any mix of') }}: {{ row.item.products.join(', ') }}</div>
+                                        </div>
                                     </template>
                                     <template v-else-if="row.item.products_detail && row.item.products_detail.length">
                                         <div v-for="(p, i) in row.item.products_detail" :key="'pd' + i" class="small mb-1 text-start">
@@ -116,6 +123,10 @@ export default {
         this.getSchemes();
     },
     methods: {
+        t(key, fallback) {
+            const val = this.__(key);
+            return (val && val !== key) ? val : (fallback || key);
+        },
         getSchemes() {
             this.isLoading = true;
             axios.get(this.$sellerApiUrl + '/schemes')

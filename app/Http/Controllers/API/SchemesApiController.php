@@ -63,8 +63,10 @@ class SchemesApiController extends Controller
             'tax_option'             => $scheme->tax_option ?? 'inclusive',
             'buy_seller_product_id'  => $scheme->buy_seller_product_id,
             'buy_qty'                => $scheme->buy_qty,
+            'buy_qty_basis'          => $scheme->buy_qty_basis ?: 'outer',
             'free_seller_product_id' => $scheme->free_seller_product_id,
             'free_qty'               => $scheme->free_qty,
+            'free_qty_basis'         => $scheme->free_qty_basis ?: 'outer',
             'start_date'             => $scheme->start_date,
             'end_date'               => $scheme->end_date,
             'status'                 => $scheme->status,
@@ -203,8 +205,10 @@ class SchemesApiController extends Controller
             $rules += [
                 'buy_seller_product_id'  => 'required|integer|exists:seller_products,id',
                 'buy_qty'                => 'required|integer|min:1',
+                'buy_qty_basis'          => 'nullable|in:inner,outer',
                 'free_seller_product_id' => 'required|integer|exists:seller_products,id',
                 'free_qty'               => 'required|integer|min:1',
+                'free_qty_basis'         => 'nullable|in:inner,outer',
             ];
         }
 
@@ -270,8 +274,10 @@ class SchemesApiController extends Controller
                     'tax_option'             => $request->tax_option ?? 'inclusive',
                     'buy_seller_product_id'  => $isBxgy ? $request->buy_seller_product_id : null,
                     'buy_qty'                => $isBxgy ? $request->buy_qty : null,
+                    'buy_qty_basis'          => $isBxgy ? ($request->buy_qty_basis ?: 'outer') : null,
                     'free_seller_product_id' => $isBxgy ? $request->free_seller_product_id : null,
                     'free_qty'               => $isBxgy ? $request->free_qty : null,
+                    'free_qty_basis'         => $isBxgy ? ($request->free_qty_basis ?: 'outer') : null,
                     'start_date'             => $request->start_date,
                     'end_date'               => $request->end_date,
                     'status'                 => $request->status,
@@ -373,6 +379,30 @@ class SchemesApiController extends Controller
             })->filter()->values();
         }
 
+        $isMultiCombo = !$isBxgy && $s->schemeProducts->count() > 1;
+        $comboCondition = '';
+        $comboReward = '';
+        if ($isMultiCombo) {
+            $firstSp = $s->schemeProducts->first();
+            $cond = [];
+            if ($firstSp->min_qty !== null) {
+                $cond[] = "Combined ≥ {$firstSp->min_qty} {$firstSp->qty_basis}";
+            }
+            if ($firstSp->max_qty !== null) {
+                $cond[] = "≤ {$firstSp->max_qty} {$firstSp->qty_basis}";
+            }
+            $comboCondition = implode(', ', $cond);
+            if ($firstSp->discount_type === 'percentage') {
+                $comboReward = "{$firstSp->discount_value}% off";
+            } elseif ($firstSp->discount_type === 'flat') {
+                $comboReward = "₹{$firstSp->discount_value} off";
+            } elseif ($firstSp->discount_type === 'free_product') {
+                $comboReward = "Get {$firstSp->free_qty} {$firstSp->free_qty_basis} free";
+            } elseif ($firstSp->discount_type === 'discounted_product') {
+                $comboReward = "Get {$firstSp->free_qty} {$firstSp->free_qty_basis} @ {$firstSp->discount_value}% off";
+            }
+        }
+
         return [
             'id'              => $s->id,
             'name'            => $s->name,
@@ -382,11 +412,16 @@ class SchemesApiController extends Controller
             'start_date'      => $s->start_date,
             'end_date'        => $s->end_date,
             'status'          => $s->status,
+            'is_multi_combo'  => $isMultiCombo,
+            'combo_condition' => $comboCondition,
+            'combo_reward'    => $comboReward,
             // BXGY fields (null for group types)
             'buy_product'     => $isBxgy ? $productName($s->buyProduct)  : null,
             'buy_qty'         => $isBxgy ? $s->buy_qty                   : null,
+            'buy_qty_basis'   => $isBxgy ? ($s->buy_qty_basis ?: 'outer') : null,
             'free_product'    => $isBxgy ? $productName($s->freeProduct) : null,
             'free_qty'        => $isBxgy ? $s->free_qty                  : null,
+            'free_qty_basis'  => $isBxgy ? ($s->free_qty_basis ?: 'outer') : null,
             // Group fields (null for BXGY)
             'products'        => !$isBxgy ? $s->schemeProducts->map(fn ($p) => $productName($p->sellerProduct))->filter()->values() : [],
             'products_detail' => $productsDetail,

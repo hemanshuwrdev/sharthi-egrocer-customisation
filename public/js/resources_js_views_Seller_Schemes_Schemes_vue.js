@@ -102,6 +102,13 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -152,6 +159,10 @@ __webpack_require__.r(__webpack_exports__);
     this.getSchemes();
   },
   methods: {
+    t: function t(key, fallback) {
+      var val = this.__(key);
+      return val && val !== key ? val : fallback || key;
+    },
     getSchemes: function getSchemes() {
       var _this = this;
       this.isLoading = true;
@@ -445,9 +456,17 @@ var render = function () {
                       ? [
                           _vm._v(
                             "\n                                    " +
-                              _vm._s(_vm.__("buy")) +
+                              _vm._s(_vm.t("buy", "Buy")) +
                               " " +
                               _vm._s(row.item.buy_qty) +
+                              " " +
+                              _vm._s(
+                                row.item.buy_qty_basis === "outer"
+                                  ? "Outer"
+                                  : row.item.buy_qty_basis === "inner"
+                                  ? "Inner"
+                                  : ""
+                              ) +
                               " × " +
                               _vm._s(row.item.buy_product)
                           ),
@@ -455,13 +474,70 @@ var render = function () {
                           _vm._v(" "),
                           _c("strong", [
                             _vm._v(
-                              _vm._s(_vm.__("get")) +
+                              _vm._s(_vm.t("get", "Get")) +
                                 " " +
                                 _vm._s(row.item.free_qty) +
+                                " " +
+                                _vm._s(
+                                  row.item.free_qty_basis === "outer"
+                                    ? "Outer"
+                                    : row.item.free_qty_basis === "inner"
+                                    ? "Inner"
+                                    : ""
+                                ) +
                                 " × " +
                                 _vm._s(row.item.free_product) +
                                 " " +
-                                _vm._s(_vm.__("free"))
+                                _vm._s(_vm.t("free", "Free"))
+                            ),
+                          ]),
+                        ]
+                      : row.item.is_multi_combo
+                      ? [
+                          _c("div", { staticClass: "small mb-1 text-start" }, [
+                            _c(
+                              "span",
+                              {
+                                staticClass: "badge bg-primary text-white mb-1",
+                              },
+                              [
+                                _c("i", {
+                                  staticClass: "fa fa-layer-group me-1",
+                                }),
+                                _vm._v(
+                                  " " +
+                                    _vm._s(
+                                      _vm.t(
+                                        "multi_product_combo",
+                                        "Multi-Product Combo"
+                                      )
+                                    )
+                                ),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c("div", [
+                              _c("strong", [
+                                _vm._v(_vm._s(row.item.combo_condition)),
+                              ]),
+                              _vm._v(" "),
+                              _c(
+                                "span",
+                                { staticClass: "badge bg-success ms-1" },
+                                [_vm._v(_vm._s(row.item.combo_reward))]
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              { staticClass: "text-muted small mt-1" },
+                              [
+                                _vm._v(
+                                  _vm._s(_vm.t("any_mix_of", "Any mix of")) +
+                                    ": " +
+                                    _vm._s(row.item.products.join(", "))
+                                ),
+                              ]
                             ),
                           ]),
                         ]

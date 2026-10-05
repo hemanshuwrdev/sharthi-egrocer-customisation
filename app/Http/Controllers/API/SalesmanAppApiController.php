@@ -454,11 +454,13 @@ class SalesmanAppApiController extends Controller
             ->where('o.user_id', $retailer->id)
             ->select(
                 'o.id as order_id',
+                'o.invoice_number',
                 'o.active_status',
                 'o.final_total',
                 'o.created_at as order_date',
                 'op.amount as due_amount',
                 'op.id as payment_id',
+                'op.proof_photo',
                 DB::raw('(
                     SELECT COALESCE(SUM(op2.amount), 0)
                     FROM order_payments op2
@@ -470,6 +472,13 @@ class SalesmanAppApiController extends Controller
             ->get()
             ->map(function ($row) {
                 $row->remaining_due = max(0, round((float)$row->due_amount - (float)$row->already_collected, 2));
+                // Invoice numbers are assigned lazily on first view (same as the settlement screens).
+                $row->invoice_number = $row->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($row->order_id);
+                // Proof attached when the driver recorded this due (signature) — full URLs, empty when none.
+                $row->proof_photos = $row->proof_photo
+                    ? [str_starts_with($row->proof_photo, 'http') ? $row->proof_photo : asset('storage/' . $row->proof_photo)]
+                    : [];
+                unset($row->proof_photo);
                 return $row;
             })
             ->filter(fn ($row) => $row->remaining_due > 0)
