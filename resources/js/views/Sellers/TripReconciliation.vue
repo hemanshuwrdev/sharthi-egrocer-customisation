@@ -902,9 +902,13 @@
                                         <td>
                                             <div class="fw-semibold">{{ row.product_name }}</div>
                                             <div class="text-muted small" v-if="row.variant_name">{{ row.variant_name }}</div>
+                                            <div v-if="row.source === 'partial_delivery'" class="mt-1">
+                                                <span class="badge bg-warning text-dark">{{ __('partial_delivery') }}</span>
+                                                <span class="text-muted small ms-1">{{ __('qty') }}: {{ row.quantity }}</span>
+                                            </div>
                                         </td>
                                         <td class="text-end fw-bold">{{ $currency }} {{ fmt(row.refund_amount) }}</td>
-                                        <td>{{ row.reason || '-' }}</td>
+                                        <td>{{ returnReason(row) }}</td>
                                         <td>{{ fmtDateTime(row.returned_at) }}</td>
                                     </tr>
                                 </tbody>
@@ -1690,7 +1694,8 @@ export default {
                     head: [['Invoice #', 'Retailer', 'Product', 'Refund Amount', 'Reason', 'Returned At']],
                     body: this.returnItemSummary.map(r => [
                         r.invoice_number || ('#' + r.order_id), r.retailer ? r.retailer.name : '-',
-                        r.product_name, money(r.refund_amount), r.reason || '-', this.fmtDateTime(r.returned_at),
+                        r.product_name + (r.source === 'partial_delivery' ? ' (' + __('partial_delivery') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''),
+                        money(r.refund_amount), this.returnReason(r), this.fmtDateTime(r.returned_at),
                     ]),
                     styles: { fontSize: 8, cellPadding: 2 },
                     headStyles: { fillColor: [234, 88, 12] },
@@ -1720,6 +1725,12 @@ export default {
             if (!val) return '-';
             const m = moment(val);
             return m.isValid() ? m.format('DD-MM-YYYY hh:mm A') : val;
+        },
+        // Return-request reasons are free text from the retailer; partial-delivery
+        // reasons are driver picklist keys (e.g. product_damaged) that need translating.
+        returnReason(row) {
+            if (!row.reason) return '-';
+            return row.source === 'partial_delivery' ? __(row.reason) : row.reason;
         },
         methodTotal(rows, field) {
             return rows.reduce((s, r) => s + parseFloat(r[field] || 0), 0);

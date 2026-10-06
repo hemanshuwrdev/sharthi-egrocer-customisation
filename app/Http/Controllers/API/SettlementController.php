@@ -1704,6 +1704,21 @@ class SettlementController extends Controller
             ->filter()
             ->values();
 
+        // Undelivered value per order, from the same item rows the Partial Invoices tab
+        // lists. Two different paths write a shortfall: the "Partial Delivery" status
+        // rewrites order.final_total down to what was actually delivered, but the normal
+        // "Delivered" path only records delivered_quantity and leaves final_total at the
+        // ordered value — so only orders NOT in Partial Delivery still carry the
+        // shortfall inside final_total and need it taken off ($deliveredValue below).
+        $shortfallValueByOrder = $partialInvoices->mapWithKeys(
+            fn ($inv) => [$inv['order_id'] => round(collect($inv['items'])->sum('shortfall_value'), 2)]
+        );
+        $deliveredValue = function ($o) use ($shortfallValueByOrder) {
+            $final = (float) $o->final_total;
+            if ((int) $o->active_status === \App\Models\OrderStatusList::$partialDelivery) return $final;
+            return max(0, round($final - (float) ($shortfallValueByOrder->get($o->id) ?? 0), 2));
+        };
+
         // Cancelled orders came in via the broader $tripOrderIds above (a cancel
         // doesn't touch loading_slip_id, unlike reschedule) — their final_total is
         // never zeroed out, so they must stay out of the money totals below or
@@ -1778,9 +1793,36 @@ class SettlementController extends Controller
                     'reason'         => $r->reason,
                     'retailer'       => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'mobile' => $r->user->mobile] : null,
                     'returned_at'    => $r->updated_at,
+                    'source'         => 'return_request',
                 ];
             })
             ->values();
+
+        // Partial-delivery shortfalls are goods that came back to the distributor
+        // undelivered, so the Returns tab lists them too (flagged by 'source') —
+        // otherwise a short-delivered item shows up under Partial Invoices only and
+        // the distributor never sees it as stock returned from the trip.
+        $deliveredAtMap = \App\Models\OrderStatus::whereIn('order_id', $shortfallValueByOrder->keys())
+            ->whereIn('status', ['Delivered', 'Partial Delivery', (string) \App\Models\OrderStatusList::$delivered, (string) \App\Models\OrderStatusList::$partialDelivery])
+            ->get()
+            ->groupBy('order_id')
+            ->map(fn ($rows) => $rows->sortByDesc('created_at')->first()->created_at);
+
+        $shortfallReturnRows = $partialInvoices->flatMap(fn ($inv) => collect($inv['items'])->map(fn ($i) => [
+            'order_id'       => $inv['order_id'],
+            'invoice_number' => $inv['invoice_number'],
+            'product_name'   => $i['product_name'],
+            'variant_name'   => $i['variant_name'],
+            'quantity'       => $i['shortfall_qty'],
+            'refund_amount'  => $i['shortfall_value'],
+            'reason'         => $i['shortfall_reason'],
+            'retailer'       => $inv['retailer'],
+            'returned_at'    => $deliveredAtMap->get($inv['order_id']),
+            'source'         => 'partial_delivery',
+        ]));
+
+        $returnItemSummary = $returnItemSummary->concat($shortfallReturnRows)->values();
+        $totalReturns      = round($totalReturns + (float) $shortfallValueByOrder->sum(), 2);
 
         // A salesman is only ever sent to collect on a driver's "signature" IOU for an
         // order (see salesmanCollectPayment's own guard: it requires that signature
@@ -1790,7 +1832,7 @@ class SettlementController extends Controller
         // shortfall equal to whatever the driver had already collected.
         $totalExpected = $type === 'salesman'
             ? round(OrderPayment::whereIn('order_id', $orderIds)->where('method', 'signature')->sum('amount'), 2)
-            : round($orders->where('active_status', '!=', \App\Models\OrderStatusList::$cancelled)->sum('final_total'), 2);
+            : round($orders->where('active_status', '!=', \App\Models\OrderStatusList::$cancelled)->sum(fn ($o) => $deliveredValue($o)), 2);
 
         // Same fix, per order: the "Order Value" / shortfall columns on the per-order
         // table must compare against the same baseline as $totalExpected above, or a
@@ -1892,7 +1934,7 @@ class SettlementController extends Controller
                 // per-row "Order Value"/shortfall columns should use this, not final_total.
                 'expected_amount' => $type === 'salesman'
                     ? (float) ($signatureAmountByOrder->get($o->id) ?? 0)
-                    : (float) $o->final_total,
+                    : $deliveredValue($o),
                 'active_status'   => $o->active_status,
                 'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
                 'invoice_number'  => $o->invoice_number,

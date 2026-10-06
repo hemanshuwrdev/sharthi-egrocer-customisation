@@ -336,9 +336,13 @@
             color: #222;
         }
 
+        /* Fixed layout + percentage widths on the <th>s: with auto layout the fixed
+           numeric columns (plus cell padding) used up nearly the whole table and squeezed
+           Description to ~13% of the width, so one item wrapped onto 5+ lines. */
         .udaan-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
             margin-bottom: 12px;
         }
 
@@ -352,8 +356,9 @@
 
         .udaan-table th,
         .udaan-table td {
+            box-sizing: border-box;
             border: 1px solid #777;
-            padding: 6px 8px;
+            padding: 6px 6px;
             font-size: 11px;
             vertical-align: top;
             text-align: left;
@@ -522,7 +527,7 @@
                         <br><span
                             style="font-size: 10.5px; color: #555; font-weight: normal;">{{ $order->customer_address }}</span>
                     </td>
-                    <td class="center">{{ $slip->slip_no }}</td>
+                    <td class="center">{{ $order->invoice_number ?: '-' }}</td>
                     <td class="right" style="font-weight: bold; font-size: 13px;">
                         ₹{{ number_format($order->final_total, 2) }}</td>
                 </tr>
@@ -611,8 +616,12 @@
                         <p>{{ $seller->city_name }}, {{ $seller->state }}</p>
                         <p>Place of Supply: {{ strtoupper($seller->city_name) }}</p>
                         <p>Supply Type: INTRA_STATE</p>
-                        <p>GSTIN: {{ $seller->tax_number }}</p>
-                        <p>PAN: {{ $seller->pan_number }}</p>
+                        @if (!empty($seller->tax_number))
+                            <p>GSTIN: {{ $seller->tax_number }}</p>
+                        @endif
+                        @if (!empty($seller->pan_number))
+                            <p>PAN: {{ $seller->pan_number }}</p>
+                        @endif
                     </div>
 
                     <!-- Bill to / Ship to -->
@@ -621,7 +630,9 @@
                         <p><strong>{{ $order->customer_name }}</strong></p>
                         <p>{{ $order->customer_address }}</p>
                         <p>Mobile: {{ $order->customer_mobile }}</p>
-                        <p>GSTIN: {{ $order->customer_gst }}</p>
+                        @if (!empty($order->customer_gst))
+                            <p>GSTIN: {{ $order->customer_gst }}</p>
+                        @endif
                     </div>
 
                     <!-- QR Code Box -->
@@ -663,16 +674,13 @@
                 <table class="udaan-table">
                     <thead>
                         <tr>
-                            <th style="width: 35px; text-align: center;">Sr No.</th>
+                            <th style="width: 5%; text-align: center;">Sr No.</th>
                             <th>Description</th>
-                            <th style="width: 60px; text-align: center;">HSN</th>
-                            <th style="width: 45px; text-align: center;">Qty</th>
-                            <th style="width: 70px; text-align: right;">Rate</th>
-                            <th style="width: 60px; text-align: right;">Disc. Rate</th>
-                            <th style="width: 80px; text-align: right;">Net Taxable Amt.</th>
-                            <th style="width: 80px; text-align: center;">Tax Type</th>
-                            <th style="width: 70px; text-align: right;">Tax</th>
-                            <th style="width: 80px; text-align: right;">Total Amt.</th>
+                            <th style="width: 7%; text-align: center;">Qty</th>
+                            <th style="width: 12%; text-align: right;">Rate</th>
+                            <th style="width: 14%; text-align: right;">Net Taxable Amt.</th>
+                            <th style="width: 15%; text-align: right;">Tax (GST)</th>
+                            <th style="width: 14%; text-align: right;">Total Amt.</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -716,7 +724,6 @@
                                 $sgstAmt = $itemTax / 2;
 
                                 $rate = $item->discounted_price ?: $item->price;
-                                $discountRate = 0.0;
 
                                 $totalBillQty += $item->quantity;
                                 $totalNetTaxable += $netTaxable;
@@ -738,37 +745,27 @@
                                             style="color: #df2029; font-weight: bold; margin-left: 10px; font-size: 10px;">({{ $boxQty }})</span>
                                     @endif
                                 </td>
-                                <td style="text-align: center;">{{ $hsn }}</td>
                                 <td style="text-align: center; font-weight: bold;">
                                     {{ number_format($item->quantity, 1) }}</td>
-                                <td style="text-align: right;">₹{{ number_format($rate, 2) }}</td>
-                                <td style="text-align: right;">₹{{ number_format($discountRate, 2) }}</td>
-                                <td style="text-align: right;">₹{{ number_format($netTaxable, 2) }}</td>
-                                <td style="text-align: center; font-size: 8.5px; line-height: 1.25;">
-                                    CGST({{ number_format($cgstPct, 1) }}%)<br>
-                                    SGST({{ number_format($sgstPct, 1) }}%)<br>
-                                    <strong>Tax</strong>
+                                <td style="text-align: right; white-space: nowrap;">₹{{ number_format($rate, 2) }}</td>
+                                <td style="text-align: right; white-space: nowrap;">₹{{ number_format($netTaxable, 2) }}</td>
+                                <td style="font-size: 8.5px; line-height: 1.25; white-space: nowrap;">
+                                    <div style="display: flex; justify-content: space-between;"><span>CGST {{ number_format($cgstPct, 1) }}%</span><span>{{ number_format($cgstAmt, 2) }}</span></div>
+                                    <div style="display: flex; justify-content: space-between;"><span>SGST {{ number_format($sgstPct, 1) }}%</span><span>{{ number_format($sgstAmt, 2) }}</span></div>
+                                    <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>Tax</span><span>{{ number_format($itemTax, 2) }}</span></div>
                                 </td>
-                                <td style="text-align: right; font-size: 8.5px; line-height: 1.25;">
-                                    {{ number_format($cgstAmt, 2) }}<br>
-                                    {{ number_format($sgstAmt, 2) }}<br>
-                                    <strong>{{ number_format($itemTax, 2) }}</strong>
-                                </td>
-                                <td style="text-align: right; font-weight: bold;">₹{{ number_format($itemTotal, 2) }}
+                                <td style="text-align: right; font-weight: bold; white-space: nowrap;">₹{{ number_format($itemTotal, 2) }}
                                 </td>
                             </tr>
                         @endforeach
                         <tr style="font-weight: bold; background-color: #f2f2f2;">
                             <td></td>
                             <td>Total</td>
-                            <td></td>
                             <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
                             <td></td>
-                            <td></td>
-                            <td style="text-align: right;">₹{{ number_format($totalNetTaxable, 2) }}</td>
-                            <td></td>
-                            <td style="text-align: right;">₹{{ number_format($totalTaxAmount, 2) }}</td>
-                            <td style="text-align: right;">₹{{ number_format($totalBillAmt, 2) }}</td>
+                            <td style="text-align: right; white-space: nowrap;">₹{{ number_format($totalNetTaxable, 2) }}</td>
+                            <td style="text-align: right; white-space: nowrap;">₹{{ number_format($totalTaxAmount, 2) }}</td>
+                            <td style="text-align: right; white-space: nowrap;">₹{{ number_format($totalBillAmt, 2) }}</td>
                         </tr>
                     </tbody>
                 </table>

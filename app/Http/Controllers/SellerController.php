@@ -907,7 +907,8 @@ class SellerController extends BaseController
      * Sales Invoice export — Tally "Sales Voucher" import template, one row per
      * order item. Column layout matches the client's Sales.xlsx sample exactly.
      * Only invoices with at least one verified payment are included (2026-09-30
-     * spec: exports 2-6 gate on settled + verified).
+     * spec: exports 2-6 gate on settled + verified); a cash payment counts as
+     * verified, see the gate below.
      */
     public function exportOrdersCsv(Request $request)
     {
@@ -972,12 +973,19 @@ class SellerController extends BaseController
                 $query->where('orders.active_status', OrderStatusList::$delivered)
                     ->orWhere('orders.active_status', OrderStatusList::$selfPickupPicked);
             })
-            // Only invoices with a distributor-verified payment are exportable.
+            // Only invoices with a distributor-verified payment are exportable. Cash
+            // counts as verified without being flagged: it never goes through the Verify
+            // action (reconciled at trip level instead), so its status stays 'pending' —
+            // gating on it would hide every cash-paid invoice while its cash receipt
+            // still exports, leaving a receipt in Tally with no invoice to settle.
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))
                     ->from('order_payments')
                     ->whereColumn('order_payments.order_id', 'orders.id')
-                    ->where('order_payments.status', 'verified');
+                    ->where(function ($q2) {
+                        $q2->where('order_payments.status', 'verified')
+                            ->orWhere('order_payments.method', 'cash');
+                    });
             });
 
         if ($startDate && $endDate) {
@@ -1105,7 +1113,9 @@ class SellerController extends BaseController
      * Quantity/Rate/Discount/Tax come straight from the original order_item, not from
      * credit_note_items.quantity (which is hardcoded to 1 for returns) — returns are
      * always all-or-nothing per line item, so the original order_item's quantity is
-     * always the correct returned quantity.
+     * always the correct returned quantity. The exception is a 'partial' credit note
+     * (delivery shortfall): it covers only the undelivered units, so its quantity is
+     * credit_note_items.quantity — the order_item's quantity would be the full ordered qty.
      */
     public function exportCreditNotesCsv(Request $request)
     {
@@ -1127,6 +1137,7 @@ class SellerController extends BaseController
             'credit_notes.reason_type',
             'order_items.order_id',
             'order_items.quantity',
+            'credit_note_items.quantity as credit_note_quantity',
             'order_items.price',
             'order_items.discount',
             'order_items.tax_percentage',
@@ -1256,9 +1267,13 @@ class SellerController extends BaseController
             $addressLine3 = trim(($row->ua_city ?: '') . ($row->ua_state ? ', ' . $row->ua_state : '')
                 . ($row->ua_pincode ? ' - ' . $row->ua_pincode : ''), ', ');
 
-            $narration = $row->reason_type === 'return'
-                ? ($row->return_reason ?: ('Sales Return - Order #' . $row->order_id))
-                : ('Order Cancelled - Order #' . $row->order_id);
+            $narration = match ($row->reason_type) {
+                'return'  => $row->return_reason ?: ('Sales Return - Order #' . $row->order_id),
+                'partial' => 'Partial Delivery Shortfall - Order #' . $row->order_id,
+                default   => 'Order Cancelled - Order #' . $row->order_id,
+            };
+
+            $quantity = $row->reason_type === 'partial' ? $row->credit_note_quantity : $row->quantity;
 
             $sheetRows[] = [
                 'Credit Note',
@@ -1274,7 +1289,7 @@ class SellerController extends BaseController
                 'Sales Returns',
                 $itemName,
                 $row->hsn,
-                $row->quantity,
+                $quantity,
                 $row->unit_symbol,
                 $row->price,
                 $row->discount ?: 0,
@@ -1375,8 +1390,8 @@ class SellerController extends BaseController
             : null;
 
         // Cash + Bank(UPI) together, one file — client wants a single Receipt Voucher
-        // import for both, not split like the cheque/PDC one. UTR/Payer VPA/bank
-        // ledger name stay blank for UPI rows: order_payments has no columns for
+        // import for both, not split like the cheque/PDC one. UPI rows go to the "Bank"
+        // ledger; UTR/Payer VPA stay blank for them: order_payments has no columns for
         // those (method is a bare enum, no txn reference is captured anywhere).
         $rows = OrderPayment::select(
             'order_payments.id',
@@ -1404,10 +1419,18 @@ class SellerController extends BaseController
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->where('order_items.seller_id', $seller_id);
             })
-            ->whereIn('order_payments.method', ['cash', 'upi'])
-            // Only export payments the distributor has actually verified — an
-            // unverified collection isn't a real receipt yet.
-            ->where('order_payments.status', 'verified');
+            // UPI is only a real receipt once the distributor has verified it. Cash never
+            // goes through that verification — it's reconciled at trip level via
+            // cash_received, and SettlementController treats it as implicitly verified —
+            // so its order_payments.status stays 'pending' forever and must not be
+            // filtered on, or every cash receipt silently drops out of this export.
+            ->where(function ($q) {
+                $q->where('order_payments.method', 'cash')
+                    ->orWhere(function ($q2) {
+                        $q2->where('order_payments.method', 'upi')
+                            ->where('order_payments.status', 'verified');
+                    });
+            });
 
         if ($startDate && $endDate) {
             $rows = $rows->whereBetween('order_payments.created_at', [$startDate, $endDate]);
@@ -1448,7 +1471,7 @@ class SellerController extends BaseController
                 $partyName,
                 '',
                 (float) $row->amount,
-                $isCash ? 'Cash' : '',
+                $isCash ? 'Cash' : 'Bank',
                 $isCash ? 'Cash' : 'UPI',
                 '',
                 '',

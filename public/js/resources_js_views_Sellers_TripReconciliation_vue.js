@@ -1031,6 +1031,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -1956,7 +1960,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           startY: doc.lastAutoTable.finalY + 13,
           head: [['Invoice #', 'Retailer', 'Product', 'Refund Amount', 'Reason', 'Returned At']],
           body: this.returnItemSummary.map(function (r) {
-            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', r.product_name, money(r.refund_amount), r.reason || '-', _this13.fmtDateTime(r.returned_at)];
+            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', r.product_name + (r.source === 'partial_delivery' ? ' (' + __('partial_delivery') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''), money(r.refund_amount), _this13.returnReason(r), _this13.fmtDateTime(r.returned_at)];
           }),
           styles: {
             fontSize: 8,
@@ -2014,6 +2018,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       if (!val) return '-';
       var m = moment__WEBPACK_IMPORTED_MODULE_0___default()(val);
       return m.isValid() ? m.format('DD-MM-YYYY hh:mm A') : val;
+    },
+    // Return-request reasons are free text from the retailer; partial-delivery
+    // reasons are driver picklist keys (e.g. product_damaged) that need translating.
+    returnReason: function returnReason(row) {
+      if (!row.reason) return '-';
+      return row.source === 'partial_delivery' ? __(row.reason) : row.reason;
     },
     methodTotal: function methodTotal(rows, field) {
       return rows.reduce(function (s, r) {
@@ -12274,6 +12284,51 @@ var render = function () {
                                                       ]
                                                     )
                                                   : _vm._e(),
+                                                _vm._v(" "),
+                                                row.source ===
+                                                "partial_delivery"
+                                                  ? _c(
+                                                      "div",
+                                                      { staticClass: "mt-1" },
+                                                      [
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "badge bg-warning text-dark",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "partial_delivery"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "text-muted small ms-1",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__("qty")
+                                                              ) +
+                                                                ": " +
+                                                                _vm._s(
+                                                                  row.quantity
+                                                                )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
                                               ]),
                                               _vm._v(" "),
                                               _c(
@@ -12297,7 +12352,7 @@ var render = function () {
                                               _vm._v(" "),
                                               _c("td", [
                                                 _vm._v(
-                                                  _vm._s(row.reason || "-")
+                                                  _vm._s(_vm.returnReason(row))
                                                 ),
                                               ]),
                                               _vm._v(" "),
