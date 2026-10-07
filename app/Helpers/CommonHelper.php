@@ -1916,6 +1916,41 @@ class CommonHelper
     }
 
     /**
+     * Country whose tax rules apply to a buyer: the country of their default address when
+     * that resolves, otherwise the country their phone number was registered under
+     * (users.country_code, e.g. "+91" -> countries.dial_code -> India).
+     *
+     * The fallback matters because a retailer registered through register_retailer gets no
+     * user_addresses row at all (only retailer_profiles.address text), and an address whose
+     * country text doesn't match a countries.name resolves to nothing either — both used to
+     * leave tax silently at 0% on every order. Null only when there is no address country
+     * AND no usable phone country code.
+     *
+     * @param mixed $address pass the already-loaded address to save a query; null = look it up
+     */
+    public static function resolveTaxCountryId($userId, $address = null): ?int
+    {
+        if (!$userId) {
+            return null;
+        }
+
+        $countryId = self::resolveCountryIdForAddress($address ?? self::resolveDefaultAddressForUser($userId));
+        if ($countryId) {
+            return $countryId;
+        }
+
+        $dialCode = trim((string) User::where('id', $userId)->value('country_code'));
+        if ($dialCode === '') {
+            return null;
+        }
+        $dialCode = '+' . ltrim($dialCode, '+');
+
+        $id = Country::where('dial_code', $dialCode)->where('status', 1)->orderBy('id')->value('id');
+
+        return $id ? (int) $id : null;
+    }
+
+    /**
      * A user's default address (falling back to their first address), or null.
      */
     public static function resolveDefaultAddressForUser($userId): ?UserAddress
@@ -3113,6 +3148,65 @@ class CommonHelper
     public static function formatDistributorSequenceNumber($prefix, $number, $suffix)
     {
         return ($prefix ?? '') . str_pad((string) $number, 4, '0', STR_PAD_LEFT) . ($suffix ?? '');
+    }
+
+    /**
+     * The orders.scheme_tax_option / scheme_discount_pretax values for a new order, to be
+     * merged into the order insert — or an empty array when those columns don't exist yet.
+     * That keeps placing an order independent of the migration: if the code is deployed
+     * before `php artisan migrate`, orders still go through and the invoice simply keeps its
+     * plain layout until the columns exist.
+     *
+     * @param  array|null $scheme         result of SchemeEngine::evaluate()
+     * @param  float      $schemeDiscount ₹ taken off by the scheme (0 = no scheme applied)
+     */
+    public static function schemeSnapshotColumns(?array $scheme, float $schemeDiscount): array
+    {
+        static $columnsExist = null;
+        if ($columnsExist === null) {
+            $columnsExist = \Illuminate\Support\Facades\Schema::hasColumn('orders', 'scheme_tax_option')
+                && \Illuminate\Support\Facades\Schema::hasColumn('orders', 'scheme_discount_pretax');
+        }
+        if (!$columnsExist) {
+            return [];
+        }
+
+        return [
+            'scheme_tax_option'      => $schemeDiscount > 0 ? ($scheme['tax_option'] ?? null) : null,
+            'scheme_discount_pretax' => $schemeDiscount > 0 ? ($scheme['scheme_discount_pretax'] ?? null) : null,
+        ];
+    }
+
+    /**
+     * Before-tax breakdown of an order's scheme discount, for the invoice totals block — or
+     * null when the plain layout should print (no scheme, an 'exclusive' scheme, a
+     * percentage discount, or an order placed before this snapshot existed).
+     *
+     * An 'inclusive' flat discount is measured before tax: it comes off Net Taxable, and the
+     * tax is lower by the tax no longer charged on it (scheme_discount minus the before-tax
+     * part). Net Taxable + Tax therefore still add up to the same Grand Total as before — the
+     * amount payable isn't changed here, only how the invoice shows it.
+     *
+     * @param  object $order       needs scheme_discount, scheme_tax_option, scheme_discount_pretax
+     * @param  float  $netTaxable  Net Taxable total of the line items, before the discount
+     * @param  float  $tax         Tax total of the line items, before the discount
+     */
+    public static function schemeBeforeTaxBreakdown($order, float $netTaxable, float $tax): ?array
+    {
+        $pretax   = (float) ($order->scheme_discount_pretax ?? 0);
+        $discount = (float) ($order->scheme_discount ?? 0);
+        if (($order->scheme_tax_option ?? null) !== 'inclusive' || $pretax <= 0 || $discount < $pretax) {
+            return null;
+        }
+
+        return [
+            'before_discount' => round($netTaxable, 2),
+            'pretax_discount' => round($pretax, 2),
+            'net_taxable'     => round(max(0, $netTaxable - $pretax), 2),
+            'tax'             => round(max(0, $tax - ($discount - $pretax)), 2),
+            // Salesman / promo discounts are separate from the scheme and stay as a plain row.
+            'other_discount'  => round((float) ($order->discount ?? 0) + (float) ($order->promo_discount ?? 0), 2),
+        ];
     }
 
     /**

@@ -1273,7 +1273,9 @@ class SalesmanAppApiController extends Controller
                         'area_id'                 => $areaId,
                         'created_at'              => now(),
                         'updated_at'              => now(),
-                    ]);
+                    // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
+                    // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
+                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount));
 
                     // Insert initial order_status row so customer order tracking works
                     \App\Models\OrderStatus::create([

@@ -680,7 +680,9 @@ class RetailerCartOrderApiController extends Controller
                         'address_id' => $request->address_id ?? 0,
                         'created_at' => now(),
                         'updated_at' => now(),
-                    ]);
+                    // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
+                    // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
+                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount));
 
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];

@@ -580,8 +580,11 @@
 
                     <div class="udaan-meta-grid">
                         <span class="udaan-meta-label">Invoice ID:</span>
+                        {{-- The real distributor invoice number (same one the "Bill No." column on the first page shows).
+                             It is only assigned once the order is delivered and its invoice generated, so until then say so
+                             rather than printing a made-up INV/year/order-id number that would never match it. --}}
                         <span
-                            class="udaan-meta-val">INV/{{ date('Y') }}/{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</span>
+                            class="udaan-meta-val">{{ $order->invoice_number ?: 'Pending (after delivery)' }}</span>
 
                         <span class="udaan-meta-label">Invoice Date:</span>
                         <span class="udaan-meta-val">{{ $order->created_at->format('Y-m-d') }}</span>
@@ -778,8 +781,30 @@
                             // a flat ₹ amount, and scheme_discount was missing entirely, so a
                             // scheme discount never showed on this particular print view.
                             $totalDiscount = $order->discount + $order->promo_discount + ($order->scheme_discount ?? 0);
+
+                            // "Inclusive" (before-tax) scheme discount: shown as a deduction from
+                            // Net Taxable with tax recalculated, instead of one lump subtracted
+                            // from the Grand Total. Null = print the plain layout.
+                            $beforeTax = \App\Helpers\CommonHelper::schemeBeforeTaxBreakdown($order, $totalNetTaxable, $totalTaxAmount);
+                            $netTaxableShown = $beforeTax ? $beforeTax['net_taxable'] : $totalNetTaxable;
+                            $taxShown        = $beforeTax ? $beforeTax['tax'] : $totalTaxAmount;
                         @endphp
-                        @if ($totalDiscount > 0)
+                        @if ($beforeTax)
+                            <tr>
+                                <td style="text-align: left; color: #555;">Taxable Amount</td>
+                                <td style="text-align: right; font-weight: 500;">₹{{ number_format($beforeTax['before_discount'], 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; color: #555;">Less: Scheme Discount (before tax)</td>
+                                <td style="text-align: right; font-weight: 500;">-₹{{ number_format($beforeTax['pretax_discount'], 2) }}</td>
+                            </tr>
+                            @if ($beforeTax['other_discount'] > 0)
+                                <tr>
+                                    <td style="text-align: left; color: #555;">Other Discount</td>
+                                    <td style="text-align: right; font-weight: 500;">-₹{{ number_format($beforeTax['other_discount'], 2) }}</td>
+                                </tr>
+                            @endif
+                        @elseif ($totalDiscount > 0)
                             <tr>
                                 <td style="text-align: left; color: #555;">Total Discount</td>
                                 <td style="text-align: right; font-weight: 500;">
@@ -789,12 +814,12 @@
                         @endif
                         <tr>
                             <td style="text-align: left; color: #555;">Net Taxable Amount</td>
-                            <td style="text-align: right; font-weight: bold;">₹{{ number_format($totalNetTaxable, 2) }}
+                            <td style="text-align: right; font-weight: bold;">₹{{ number_format($netTaxableShown, 2) }}
                             </td>
                         </tr>
                         <tr>
                             <td style="text-align: left; color: #555;">Total Tax</td>
-                            <td style="text-align: right; font-weight: bold;">₹{{ number_format($totalTaxAmount, 2) }}
+                            <td style="text-align: right; font-weight: bold;">₹{{ number_format($taxShown, 2) }}
                             </td>
                         </tr>
                         @if ($order->delivery_charge > 0)

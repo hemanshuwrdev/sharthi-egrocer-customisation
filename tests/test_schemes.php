@@ -339,6 +339,56 @@ try {
     $scheme->update(['tax_option' => 'inclusive']); // reset
 
     // -------------------------------------------------------------
+    // TEST SUITE 9c: Flat discount honours the option for single AND multi-product schemes
+    // (multi-product flat used to ignore it and always take the flat amount off the total)
+    // 18% GST: line total 1180, pre-tax 1000, per product. Flat ₹100.
+    //   inclusive = ₹100 before tax -> 100 * 1.18 = ₹118 off the total, before-tax part ₹100
+    //   exclusive = ₹100 straight off the total, no before-tax part
+    // -------------------------------------------------------------
+    echo "\n--- Test Suite 9c: Flat discount + Tax Option (single vs multi-product) ---\n";
+
+    $makeFlatScheme = function (array $sellerProducts, string $taxOption) use ($sellerId) {
+        $s = Scheme::create([
+            'seller_id'   => $sellerId,
+            'name'        => 'Unit Test Flat Tax Option',
+            'type'        => 'group_discount',
+            'tax_option'  => $taxOption,
+            'start_date'  => date('Y-m-d', strtotime('-1 day')),
+            'end_date'    => date('Y-m-d', strtotime('+30 days')),
+            'status'      => 1,
+        ]);
+        foreach ($sellerProducts as $i => $sp) {
+            SchemeProduct::create([
+                'scheme_id'         => $s->id,
+                'seller_product_id' => $sp->id,
+            ] + ($i === 0 ? ['qty_basis' => 'inner', 'min_qty' => 1, 'discount_type' => 'flat', 'discount_value' => 100] : []));
+        }
+        return $s;
+    };
+    $flatCart = fn (array $sellerProducts) => array_map(fn ($sp) => [
+        'seller_product_id' => $sp->id, 'qty' => 10, 'line_total' => 1180.00, 'actual_line_total' => 1000.00,
+    ], $sellerProducts);
+
+    $scheme->update(['status' => 0]); // isolate: only the flat scheme under test may win
+    foreach (['single' => [$sp1], 'multi' => [$sp1, $sp2]] as $shape => $sps) {
+        // multi: one combined condition across both products, so the group is worth 2360 / 2000 pre-tax
+        foreach (['inclusive' => 118.00, 'exclusive' => 100.00] as $opt => $expectedOff) {
+            $flatScheme = $makeFlatScheme($sps, $opt);
+            $flatResult = SchemeEngine::evaluate($sellerId, $flatCart($sps));
+            assertTest($flatResult !== null && abs($flatResult['scheme_discount'] - $expectedOff) < 0.05, "Flat ₹100 ($shape-product, $opt): ₹$expectedOff off the total (Got: ₹" . ($flatResult['scheme_discount'] ?? 'null') . ")");
+            $expectedPre = $opt === 'inclusive' ? 100.00 : null;
+            $gotPre = $flatResult['scheme_discount_pretax'] ?? null;
+            assertTest($expectedPre === null ? $gotPre === null : ($gotPre !== null && abs($gotPre - $expectedPre) < 0.05), "Flat ₹100 ($shape-product, $opt): before-tax part is " . ($expectedPre === null ? 'null' : "₹$expectedPre") . " (Got: " . var_export($gotPre, true) . ")");
+            $flatScheme->delete();
+        }
+    }
+
+    // A percentage discount has no before-tax part — the invoice keeps its plain layout for it
+    $scheme->update(['status' => 1, 'tax_option' => 'inclusive']);
+    $pctResult = SchemeEngine::evaluate($sellerId, $taxTestCart);
+    assertTest(($pctResult['scheme_discount_pretax'] ?? null) === null, "Percentage discount (inclusive) has no before-tax part");
+
+    // -------------------------------------------------------------
     // TEST SUITE 10: Multi-Product Combined Combo Scheme
     // Global Scheme: Outer, Min 5, Max 50, 10% Discount
     // Products: P1 and P2 can be purchased in any combination (e.g., 3 P1 + 2 P2 = 5)

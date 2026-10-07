@@ -544,6 +544,8 @@ class SchemeEngine
             'type'            => Scheme::TYPE_GROUP_DISCOUNT_PRICE,
             'benefit'         => $discount,
             'scheme_discount' => $discount,
+            'tax_option'      => $matched->tax_option ?? 'inclusive',
+            'scheme_discount_pretax' => self::slabPretaxPortion($matched, $discount, $groupTotal, $groupActualTotal),
             'free_items'      => [],
         ];
     }
@@ -589,8 +591,60 @@ class SchemeEngine
             'type'            => Scheme::TYPE_GROUP_DISCOUNT_QTY,
             'benefit'         => $discount,
             'scheme_discount' => $discount,
+            'tax_option'      => $matched->tax_option ?? 'inclusive',
+            'scheme_discount_pretax' => self::slabPretaxPortion($matched, $discount, $groupTotal, $groupActualTotal),
             'free_items'      => [],
         ];
+    }
+
+    /**
+     * A flat discount's effect on the tax-inclusive total, plus the before-tax part of it.
+     *
+     * 'inclusive' (pre-tax): $flat is measured before tax, so the total drops by $flat plus
+     *   the tax that would have been charged on it — grossed up by the group's own average
+     *   tax rate. e.g. flat ₹105 on 5% GST lines: total drops ₹110.25, of which ₹105 is the
+     *   before-tax part (Net Taxable) and ₹5.25 is tax no longer charged.
+     * 'exclusive': $flat comes straight off the total; there is no before-tax part.
+     * Both are capped at what the lines are actually worth ($lineTotal).
+     *
+     * Every flat path (single product, multi-product, slab) goes through here so the option
+     * can't be honoured in one and silently ignored in another.
+     *
+     * @return array{0: float, 1: float} [₹ off the total, before-tax part of that]
+     */
+    private static function flatDiscount(float $flat, float $lineTotal, float $actualTotal, bool $isPreTax): array
+    {
+        $gross = $flat;
+        if ($isPreTax && $actualTotal > 0 && $lineTotal > $actualTotal) {
+            $avgTaxPct = ($lineTotal - $actualTotal) / $actualTotal * 100;
+            $gross = round($flat * (1 + $avgTaxPct / 100), 2);
+        }
+        $off = min($gross, $lineTotal);
+        $pretax = 0.0;
+        if ($isPreTax && $gross > 0) {
+            $pretax = $off >= $gross ? $flat : round($flat * $off / $gross, 2);
+        }
+
+        return [$off, $pretax];
+    }
+
+    /**
+     * Before-tax part of a slab discount, for invoice display. Only a flat 'inclusive' slab
+     * has one — a percentage slab isn't grossed up (see computeSlabDiscount), so it can't be
+     * shown as a before-tax deduction without misstating what was actually taken off.
+     */
+    private static function slabPretaxPortion(SchemeSlab $matched, float $discount, float $groupTotal, float $groupActualTotal): ?float
+    {
+        if (($matched->tax_option ?? 'inclusive') !== 'inclusive' || $matched->discount_type === 'percentage') {
+            return null;
+        }
+        $flat = (float) $matched->discount_value;
+        if ($flat <= 0 || $discount <= 0) {
+            return null;
+        }
+        [, $pretax] = self::flatDiscount($flat, $groupTotal, $groupActualTotal, true);
+
+        return $pretax > 0 ? $pretax : null;
     }
 
     /**
@@ -616,11 +670,7 @@ class SchemeEngine
             $base = $isPreTax ? $groupActualTotal : $groupTotal;
             $discount = round($base * (float) $matched->discount_value / 100, 2);
         } else {
-            $discount = (float) $matched->discount_value;
-            if ($isPreTax && $groupActualTotal > 0) {
-                $avgTaxPercent = ($groupTotal - $groupActualTotal) / $groupActualTotal * 100;
-                $discount = round($discount * (1 + $avgTaxPercent / 100), 2);
-            }
+            [$discount] = self::flatDiscount((float) $matched->discount_value, $groupTotal, $groupActualTotal, $isPreTax);
         }
 
         return min($discount, $groupTotal);
@@ -634,6 +684,12 @@ class SchemeEngine
 
         $isPreTax = ($scheme->tax_option ?? 'inclusive') === 'inclusive';
         $isMultiProduct = $scheme->schemeProducts->count() > 1;
+
+        // Split of the ₹ discount for invoice display: what came off as a before-tax flat
+        // amount vs everything else (percentage / discounted_product). The invoice can only
+        // show a before-tax breakdown when the whole discount is the former.
+        $pretaxPart = 0.0;
+        $otherPart  = 0.0;
 
         if ($isMultiProduct) {
             // Multi-product scheme: combined quantity condition across all products in the scheme
@@ -708,13 +764,25 @@ class SchemeEngine
                     $base = ($isPreTax ? $line['actualLine'] : $line['lineTotal']) * $eligibleRatio;
                     if ($discVal > 0) {
                         $rowDisc = round($base * min($discVal, 100) / 100, 2);
-                        $schemeDiscount += min($rowDisc, $line['lineTotal']);
+                        $piece = min($rowDisc, $line['lineTotal']);
+                        $schemeDiscount += $piece;
+                        $otherPart += $piece;
                     }
                 }
             } elseif ($discType === 'flat') {
                 $flat = $discVal;
                 if ($flat > 0) {
-                    $schemeDiscount += min($flat, $totalGroupSpend);
+                    // Same rule as a single product's flat discount — this branch used to take
+                    // $flat straight off the total whatever the option, so an 'inclusive'
+                    // (before-tax) multi-product scheme under-discounted by the tax.
+                    $groupActual = array_sum(array_column($matchingLines, 'actualLine'));
+                    [$off, $pre] = self::flatDiscount($flat, $totalGroupSpend, $groupActual, $isPreTax);
+                    $schemeDiscount += $off;
+                    if ($isPreTax) {
+                        $pretaxPart += $pre;
+                    } else {
+                        $otherPart += $off;
+                    }
                 }
             } elseif ($discType === 'free_product') {
                 $freeSellerProduct = $firstSp->sellerProduct;
@@ -749,7 +817,9 @@ class SchemeEngine
 
                 if ($discVal > 0 && $freeUnitCount > 0) {
                     $discountedAmount = round($freeUnitCount * $unitPrice * min($discVal, 100) / 100, 2);
-                    $schemeDiscount += min($discountedAmount, $totalGroupSpend);
+                    $piece = min($discountedAmount, $totalGroupSpend);
+                    $schemeDiscount += $piece;
+                    $otherPart += $piece;
                 }
             }
         } else {
@@ -802,16 +872,20 @@ class SchemeEngine
                     $pct = (float) ($sp->discount_value ?? 0);
                     if ($pct > 0) {
                         $rowDisc = round($base * min($pct, 100) / 100, 2);
-                        $schemeDiscount += min($rowDisc, $lineTotal);
+                        $piece = min($rowDisc, $lineTotal);
+                        $schemeDiscount += $piece;
+                        $otherPart += $piece;
                     }
                 } elseif ($discType === 'flat') {
                     $flat = (float) ($sp->discount_value ?? 0);
                     if ($flat > 0) {
-                        if ($isPreTax && $actualLine > 0 && $lineTotal > $actualLine) {
-                            $avgTaxPct = ($lineTotal - $actualLine) / $actualLine * 100;
-                            $flat = round($flat * (1 + $avgTaxPct / 100), 2);
+                        [$off, $pre] = self::flatDiscount($flat, $lineTotal, $actualLine, $isPreTax);
+                        $schemeDiscount += $off;
+                        if ($isPreTax) {
+                            $pretaxPart += $pre;
+                        } else {
+                            $otherPart += $off;
                         }
-                        $schemeDiscount += min($flat, $lineTotal);
                     }
                 } elseif ($discType === 'free_product') {
                     $rawFree = (float) ($sp->free_qty ?? 1);
@@ -840,7 +914,9 @@ class SchemeEngine
                     $pct = (float) ($sp->discount_value ?? 0);
                     if ($pct > 0 && $freeUnitCount > 0) {
                         $discountedAmount = round($freeUnitCount * $unitPrice * min($pct, 100) / 100, 2);
-                        $schemeDiscount += min($discountedAmount, $lineTotal);
+                        $piece = min($discountedAmount, $lineTotal);
+                        $schemeDiscount += $piece;
+                        $otherPart += $piece;
                     }
                 }
             }
@@ -866,6 +942,11 @@ class SchemeEngine
             'type'            => $scheme->type,
             'benefit'         => $totalBenefit,
             'scheme_discount' => $schemeDiscount,
+            'tax_option'      => $scheme->tax_option ?? 'inclusive',
+            // Before-tax part of scheme_discount — set only when the whole discount is a
+            // flat 'inclusive' one, so the invoice can show it as a deduction from Net
+            // Taxable (and the tax saved = scheme_discount - this). Otherwise null.
+            'scheme_discount_pretax' => ($isPreTax && $pretaxPart > 0 && $otherPart <= 0) ? round($pretaxPart, 2) : null,
             'free_items'      => $freeItems,
         ];
     }

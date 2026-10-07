@@ -99,12 +99,13 @@ class MasterCatalogOrderHelper
         $taxPercentage = 0;
 
         // Prefer a matching tax_rule: country from the buyer's own registered
-        // address, same/different-state (place of supply) from comparing the
-        // distributor's seller.state against the buyer's address state. Falls
-        // back to the flat tax above whenever any of that is unresolvable.
+        // address (or, when they have no usable address, the country of their phone
+        // number — see resolveTaxCountryId), same/different-state (place of supply)
+        // from comparing the distributor's seller.state against the buyer's address
+        // state. Falls back to the flat tax above whenever any of that is unresolvable.
         $buyerAddress = self::resolveBuyerAddress($buyerUserId ?? $userId);
-        if ($buyerAddress) {
-            $countryId = CommonHelper::resolveCountryIdForAddress($buyerAddress);
+        $countryId    = CommonHelper::resolveTaxCountryId($buyerUserId ?? $userId, $buyerAddress);
+        if ($countryId) {
             $distributor = Seller::find($sellerId);
             $isSameRegion = CommonHelper::isSameRegion($distributor->state ?? null, $buyerAddress->state ?? null);
             $resolvedTaxPercentage = TaxRule::resolvePercentage($countryId, $variant->masterProduct->tax_category_id ?? null, $isSameRegion);

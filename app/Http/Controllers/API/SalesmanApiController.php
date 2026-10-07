@@ -55,7 +55,7 @@ class SalesmanApiController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Validation error',
+                'message' => $validator->errors()->first(),
                 'data' => $validator->errors()
             ]);
         }
@@ -159,7 +159,7 @@ class SalesmanApiController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Validation error',
+                'message' => $validator->errors()->first(),
                 'data' => $validator->errors()
             ]);
         }

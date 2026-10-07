@@ -39,11 +39,14 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="form-label font-weight-bold">{{ __('discount_option', 'Discount Option') }}</label>
+                            <label class="form-label font-weight-bold">{{ tr('discount_option', 'Discount Option') }}</label>
                             <select class="form-control form-select" v-model="record.tax_option">
-                                <option value="inclusive">{{ __('discount_inclusive', 'Discount Inclusive') }}</option>
-                                <option value="exclusive">{{ __('discount_exclusive', 'Discount Exclusive') }}</option>
+                                <option value="inclusive">{{ tr('discount_before_tax', 'Before tax (Net Taxable Amount)') }}</option>
+                                <option value="exclusive">{{ tr('discount_after_tax', 'After tax (Total incl. GST)') }}</option>
                             </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <small class="text-muted"><i class="fa fa-info-circle me-1"></i>{{ tr('discount_option_hint', discountOptionHint) }}</small>
                         </div>
                         <div class="col-12">
                             <label class="form-label font-weight-bold">{{ __('description', 'Description') }}</label>
@@ -540,6 +543,14 @@ export default {
         };
     },
     computed: {
+        // English text for the Discount Option explanation (used until the language JSON has the key).
+        discountOptionHint() {
+            return 'Discount Option decides what amount the discount value is measured on. '
+                + 'Before tax: measured on the price before GST (Net Taxable Amount), and GST is then calculated on the reduced amount '
+                + '- e.g. a flat \u20b9100 discount at 5% GST saves the customer \u20b9105 in total. '
+                + 'After tax: measured on the final Total that already includes GST, and GST is not changed '
+                + '- e.g. a flat \u20b9100 discount saves the customer \u20b9100.';
+        },
         filteredModalProducts() {
             if (!this.productSearch) {
                 return this.availableProducts;
@@ -558,6 +569,13 @@ export default {
         }
     },
     methods: {
+        // __() hands back the key itself when the language DB has no entry for it yet,
+        // so new wording would show as a raw key until someone edits the language JSON.
+        // Fall back to the English text instead.
+        tr(key, fallback) {
+            const t = this.__(key);
+            return t && t !== key ? t : fallback;
+        },
         t(key, fallback) {
             const val = this.__(key);
             return (val && val !== key) ? val : (fallback || key);

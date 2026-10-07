@@ -347,8 +347,26 @@
                         // it subtracted at order-creation time, so only this displayed total
                         // was under-reporting, not the amount actually charged.
                         $totalDiscount = $order->discount + $order->promo_discount + ($order->scheme_discount ?? 0);
+
+                        // "Inclusive" (before-tax) scheme discount: shown as a deduction from
+                        // Net Taxable with tax recalculated, instead of one lump subtracted
+                        // from the Grand Total. Null = print the plain layout.
+                        $beforeTax = \App\Helpers\CommonHelper::schemeBeforeTaxBreakdown($order, $totalNetTaxable, $totalTaxAmount);
+                        $netTaxableShown = $beforeTax ? $beforeTax['net_taxable'] : $totalNetTaxable;
+                        $taxShown        = $beforeTax ? $beforeTax['tax'] : $totalTaxAmount;
                     @endphp
-                    @if ($totalDiscount > 0)
+                    @if ($beforeTax)
+                        <tr>
+                            <td align="left" style="color: #555;">Less: Scheme Discount (before tax)</td>
+                            <td align="right" style="font-weight: 500;">-{{ $currency }}{{ number_format($beforeTax['pretax_discount'], 2) }}</td>
+                        </tr>
+                        @if ($beforeTax['other_discount'] > 0)
+                            <tr>
+                                <td align="left" style="color: #555;">Other Discount</td>
+                                <td align="right" style="font-weight: 500;">-{{ $currency }}{{ number_format($beforeTax['other_discount'], 2) }}</td>
+                            </tr>
+                        @endif
+                    @elseif ($totalDiscount > 0)
                         <tr>
                             <td align="left" style="color: #555;">Total Discount</td>
                             <td align="right" style="font-weight: 500;">
@@ -358,11 +376,11 @@
                     @endif
                     <tr>
                         <td align="left" style="color: #555;">Net Taxable Amount</td>
-                        <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($totalNetTaxable, 2) }}</td>
+                        <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($netTaxableShown, 2) }}</td>
                     </tr>
                     <tr>
                         <td align="left" style="color: #555;">Total Tax</td>
-                        <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($totalTaxAmount, 2) }}</td>
+                        <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($taxShown, 2) }}</td>
                     </tr>
                     @if ($order->delivery_charge > 0)
                         <tr>

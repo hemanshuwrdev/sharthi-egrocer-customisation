@@ -522,6 +522,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
 
 
 
@@ -563,6 +566,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     };
   },
   computed: {
+    // English text for the Discount Option explanation (used until the language JSON has the key).
+    discountOptionHint: function discountOptionHint() {
+      return 'Discount Option decides what amount the discount value is measured on. ' + 'Before tax: measured on the price before GST (Net Taxable Amount), and GST is then calculated on the reduced amount ' + "- e.g. a flat \u20B9100 discount at 5% GST saves the customer \u20B9105 in total. " + 'After tax: measured on the final Total that already includes GST, and GST is not changed ' + "- e.g. a flat \u20B9100 discount saves the customer \u20B9100.";
+    },
     filteredModalProducts: function filteredModalProducts() {
       if (!this.productSearch) {
         return this.availableProducts;
@@ -598,6 +605,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     return created;
   }(),
   methods: {
+    // __() hands back the key itself when the language DB has no entry for it yet,
+    // so new wording would show as a raw key until someone edits the language JSON.
+    // Fall back to the English text instead.
+    tr: function tr(key, fallback) {
+      var t = this.__(key);
+      return t && t !== key ? t : fallback;
+    },
     t: function t(key, fallback) {
       var val = this.__(key);
       return val && val !== key ? val : fallback || key;
@@ -1372,7 +1386,7 @@ var render = function () {
                 _c("div", { staticClass: "col-md-3 mb-3" }, [
                   _c("label", { staticClass: "form-label font-weight-bold" }, [
                     _vm._v(
-                      _vm._s(_vm.__("discount_option", "Discount Option"))
+                      _vm._s(_vm.tr("discount_option", "Discount Option"))
                     ),
                   ]),
                   _vm._v(" "),
@@ -1412,7 +1426,10 @@ var render = function () {
                       _c("option", { attrs: { value: "inclusive" } }, [
                         _vm._v(
                           _vm._s(
-                            _vm.__("discount_inclusive", "Discount Inclusive")
+                            _vm.tr(
+                              "discount_before_tax",
+                              "Before tax (Net Taxable Amount)"
+                            )
                           )
                         ),
                       ]),
@@ -1420,12 +1437,26 @@ var render = function () {
                       _c("option", { attrs: { value: "exclusive" } }, [
                         _vm._v(
                           _vm._s(
-                            _vm.__("discount_exclusive", "Discount Exclusive")
+                            _vm.tr(
+                              "discount_after_tax",
+                              "After tax (Total incl. GST)"
+                            )
                           )
                         ),
                       ]),
                     ]
                   ),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-12 mb-3" }, [
+                  _c("small", { staticClass: "text-muted" }, [
+                    _c("i", { staticClass: "fa fa-info-circle me-1" }),
+                    _vm._v(
+                      _vm._s(
+                        _vm.tr("discount_option_hint", _vm.discountOptionHint)
+                      )
+                    ),
+                  ]),
                 ]),
                 _vm._v(" "),
                 _c("div", { staticClass: "col-12" }, [
