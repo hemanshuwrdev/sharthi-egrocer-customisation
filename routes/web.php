@@ -245,6 +245,28 @@ Route::get('/js/lang', function () {
 
 Route::get('firebase-messaging-sw.js', [\App\Http\Controllers\API\FirebaseApiController::class, 'firebaseMessagingJsCode'])->name('assets.firebase-messaging-sw');
 
+// Deeplink fallback: reached in browser when Android App Links did not open the app directly.
+Route::get('{type}/{id}', function ($type, $id) {
+    $package = 'com.sarthiwholesale.customer';
+    $playStoreUrl = 'https://play.google.com/store/apps/details?id=' . $package;
+    $userAgent = request()->userAgent() ?? '';
+
+    if (stripos($userAgent, 'android') !== false) {
+        // intent:// launches the installed app with this URL (opens product/seller screen);
+        // if the app is missing, Chrome goes to browser_fallback_url (Play Store).
+        $query = request()->getQueryString();
+        $intentUrl = 'intent://' . request()->getHost() . '/' . $type . '/' . $id . ($query ? '?' . $query : '')
+            . '#Intent;scheme=https;package=' . $package
+            . ';S.browser_fallback_url=' . rawurlencode($playStoreUrl) . ';end';
+        return response()->view('app_download', ['playStoreUrl' => $playStoreUrl, 'intentUrl' => $intentUrl]);
+    }
+
+    if (!preg_match('/iphone|ipad|ipod/i', $userAgent)) {
+        return redirect()->away($playStoreUrl);
+    }
+    return response()->view('app_download', ['playStoreUrl' => $playStoreUrl, 'intentUrl' => null]);
+})->where(['type' => 'product|seller|order', 'id' => '[0-9]+']);
+
 Route::get('{all}', function () {
     return view('welcome');
 })->where('all', '^(?!customer).*$');
