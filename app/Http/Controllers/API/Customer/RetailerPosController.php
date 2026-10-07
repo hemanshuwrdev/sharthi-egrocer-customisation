@@ -69,6 +69,7 @@ class RetailerPosController extends Controller
             ->where('master_product_variants.status', 1)
             ->where('seller_products.status', 1)
             ->where('seller_products.selling_price', '>', 0)
+            ->when(\App\Models\SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('seller_products.is_free_only', 0))
             ->where('seller_products.stock', '>', 0)
             ->select(
                 'master_product_variants.*',

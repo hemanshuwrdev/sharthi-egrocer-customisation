@@ -94,6 +94,7 @@ class RetailerCatalogApiController extends Controller
             ->where('master_product_variants.status', 1)
             ->where('seller_products.status', 1)
             ->where('seller_products.selling_price', '>', 0)
+            ->when(\App\Models\SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('seller_products.is_free_only', 0))
             ->select(
                 'master_product_variants.*',
                 'master_products.brand_id as mp_brand_id',
@@ -403,6 +404,7 @@ class RetailerCatalogApiController extends Controller
             ->whereIn('seller_id', $sellerIds)
             ->where('status', 1)
             ->where('selling_price', '>', 0)
+            ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('is_free_only', 0))
             ->get();
 
         if ($sellerProducts->isEmpty()) {

@@ -321,10 +321,22 @@ class RetailerCartOrderApiController extends Controller
             ->where('master_product_variant_id', $variantId)
             ->where('status', 1)
             ->where('selling_price', '>', 0)
+            // a free-item-only row can't be bought, so it must not win the "cheapest distributor" pick
+            ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('is_free_only', 0))
             ->orderByRaw('CASE WHEN discounted_price > 0 THEN discounted_price ELSE selling_price END ASC')
             ->first();
 
         if (!$sp) {
+            // Nothing buyable. If that is only because the distributors serving this retailer keep it as a
+            // free-item-only product (a scheme gift), say so — "not available in your area" would mislead.
+            if (SellerProduct::hasFreeOnlyColumn()
+                && SellerProduct::whereIn('seller_id', $sellerIds)
+                    ->where('master_product_variant_id', $variantId)
+                    ->where('status', 1)
+                    ->where('is_free_only', 1)
+                    ->exists()) {
+                return ['ok' => false, 'error' => 'product_not_purchasable', 'seller_id' => null];
+            }
             return ['ok' => false, 'error' => 'product_not_available_in_your_area', 'seller_id' => null];
         }
         return ['ok' => true, 'error' => null, 'seller_id' => (int) $sp->seller_id];

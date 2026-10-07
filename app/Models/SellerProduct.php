@@ -20,11 +20,27 @@ class SellerProduct extends Model
         'discounted_price',
         'stock',
         'status',
+        'is_free_only',
         'allow_loose_qty',
         'max_qty_mode',
         'max_qty_value',
         'min_qty',
     ];
+
+    /**
+     * Whether seller_products.is_free_only exists yet. Code can be deployed before
+     * `php artisan migrate`; every read/write of the flag goes through this so that a
+     * missing column degrades to "nothing is free-only" instead of a SQL error.
+     */
+    public static function hasFreeOnlyColumn(): bool
+    {
+        static $exists = null;
+        if ($exists === null) {
+            $exists = \Illuminate\Support\Facades\Schema::hasColumn('seller_products', 'is_free_only');
+        }
+
+        return $exists;
+    }
 
     public function seller()
     {

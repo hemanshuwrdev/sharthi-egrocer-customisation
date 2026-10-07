@@ -51,6 +51,14 @@ class MasterCatalogOrderHelper
             return self::fail('seller_product_not_active');
         }
 
+        // A "free item only" product (a scheme gift, e.g. a free jar) can be given away by a
+        // scheme but never bought. Cart-add, place-order, the retailer POS and the salesman
+        // flow all price a line through here, so refusing it here also covers a product that
+        // was flagged while it was already sitting in someone's cart.
+        if ((int) ($sp->is_free_only ?? 0) === 1) {
+            return self::fail('product_not_purchasable');
+        }
+
         // ── Secondary-unit (box) step validation ──────────────────────────────
         $qtyError = self::validateSecondaryQty($variant, $sp, $qty);
         if ($qtyError) {
@@ -302,6 +310,7 @@ class MasterCatalogOrderHelper
             ->where('master_product_variant_id', $masterProductVariantId)
             ->where('status', 1)
             ->where('selling_price', '>', 0)
+            ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('is_free_only', 0))
             ->orderByRaw('CASE WHEN discounted_price > 0 THEN discounted_price ELSE selling_price END ASC')
             ->first();
 

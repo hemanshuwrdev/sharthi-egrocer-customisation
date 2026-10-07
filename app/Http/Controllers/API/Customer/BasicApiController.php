@@ -264,6 +264,7 @@ class BasicApiController extends Controller
             ->where('master_product_variants.status', 1)
             ->where('seller_products.status', 1)
             ->where('seller_products.selling_price', '>', 0)
+            ->when(\App\Models\SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('seller_products.is_free_only', 0))
             ->select(
                 'master_product_variants.*',
                 'master_products.brand_id as mp_brand_id',
@@ -879,6 +880,7 @@ class BasicApiController extends Controller
             ->whereIn('master_products.brand_id', $brandIds)
             ->where('seller_products.status', 1)
             ->where('seller_products.selling_price', '>', 0)
+            ->when(\App\Models\SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('seller_products.is_free_only', 0))
             ->where('master_product_variants.status', 1)
             ->where('master_products.status', 1)
             ->whereExists(function ($categoryQuery) {

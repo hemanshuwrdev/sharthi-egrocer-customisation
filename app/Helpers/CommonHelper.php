@@ -1297,7 +1297,9 @@ class CommonHelper
                 ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
                 ->whereColumn('mpv.master_product_id', 'mp.id')
                 ->whereIn('sp.seller_id', $seller_ids)
-                ->where('sp.status', 1);
+                ->where('sp.status', 1)
+                // free-item-only products (scheme gifts) are never shown to buyers
+                ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('sp.is_free_only', 0));
         };
 
         if (in_array($section->product_type, ['all_products', 'new_added_products', 'most_selling_products'])) {
@@ -1320,6 +1322,7 @@ class CommonHelper
                     ->whereColumn('mpv.master_product_id', 'mp.id')
                     ->whereIn('sp.seller_id', $seller_ids)
                     ->where('sp.status', 1)
+                    ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('sp.is_free_only', 0))
                     ->where('sp.discounted_price', '>', 0)
                     ->whereColumn('sp.discounted_price', '<', 'sp.selling_price');
             };
@@ -1396,7 +1399,8 @@ class CommonHelper
                             ->join('master_product_variants as mpv', 'sp.master_product_variant_id', '=', 'mpv.id')
                             ->whereColumn('mpv.master_product_id', 'mp.id')
                             ->whereIn('sp.seller_id', $seller_ids)
-                            ->where('sp.status', 1);
+                            ->where('sp.status', 1)
+                            ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('sp.is_free_only', 0));
 
                         // Sarthi: only show this product if the exact (brand, seller, city) combo
                         // is a real distributor mapping — same fail-closed rule as listProducts.
@@ -1460,6 +1464,7 @@ class CommonHelper
                     ->where('mpv.master_product_id', $row->id)
                     ->whereIn('sp.seller_id', $seller_ids)
                     ->where('sp.status', 1)
+                    ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('sp.is_free_only', 0))
                     ->orderBy('sp.id', 'ASC')
                     ->get();
 

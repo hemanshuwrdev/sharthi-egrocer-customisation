@@ -321,9 +321,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
+
+// __() hands back the key itself when the language DB has no entry for it yet, so new
+// wording would show as a raw key until someone edits the language JSON — fall back to English.
+var tr = function tr(key, fallback) {
+  var t = __(key);
+  return t && t !== key ? t : fallback;
+};
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
     FsLightbox: (fslightbox_vue__WEBPACK_IMPORTED_MODULE_1___default())
@@ -440,6 +456,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           width: '90px'
         }
       }, {
+        key: 'is_free_only',
+        label: tr('free_item', 'Free item'),
+        visible: true,
+        "class": 'text-center',
+        thStyle: {
+          width: '90px'
+        }
+      }, {
         key: 'actions',
         label: __('actions'),
         visible: true,
@@ -495,6 +519,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
   },
   methods: {
+    tr: tr,
+    // Ticking "Free item": the product is never sold, so it has no price. Zero MRP and selling price
+    // right away (the server enforces the same on save) and remember what was there, so ticking it
+    // by mistake and unticking again before Save puts the prices back.
+    onFreeItemToggle: function onFreeItemToggle(row, event) {
+      var on = event.target.checked;
+      this.$set(row, 'is_free_only', on);
+      if (on) {
+        this.$set(row, '_pricesBeforeFree', {
+          mrp: row.mrp,
+          selling_price: row.selling_price
+        });
+        row.mrp = 0;
+        row.selling_price = 0;
+      } else if (row._pricesBeforeFree) {
+        row.mrp = row._pricesBeforeFree.mrp;
+        row.selling_price = row._pricesBeforeFree.selling_price;
+        row._pricesBeforeFree = null;
+      }
+    },
     innerPackPriceHint: function innerPackPriceHint(item) {
       var step = parseFloat(item.secondary_unit_value) || 0;
       var price = parseFloat(item.selling_price) || 0;
@@ -580,6 +624,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         selling_price: row.selling_price,
         stock: row.stock,
         status: row.status,
+        is_free_only: row.is_free_only ? 1 : 0,
         allow_loose_qty: row.allow_loose_qty ? 1 : 0,
         min_qty: row.min_qty != null && row.min_qty !== '' ? row.min_qty : null,
         max_qty_mode: row.max_qty_mode || '',
@@ -1483,7 +1528,12 @@ var render = function () {
                           },
                         ],
                         staticClass: "form-control form-control-sm",
-                        attrs: { type: "number", min: "0", step: "0.01" },
+                        attrs: {
+                          type: "number",
+                          min: "0",
+                          step: "0.01",
+                          disabled: row.item.is_free_only,
+                        },
                         domProps: { value: row.item.mrp },
                         on: {
                           input: function ($event) {
@@ -1523,7 +1573,12 @@ var render = function () {
                               },
                             ],
                             staticClass: "form-control form-control-sm",
-                            attrs: { type: "number", min: "0", step: "0.01" },
+                            attrs: {
+                              type: "number",
+                              min: "0",
+                              step: "0.01",
+                              disabled: row.item.is_free_only,
+                            },
                             domProps: { value: row.item.selling_price },
                             on: {
                               input: function ($event) {
@@ -1622,6 +1677,7 @@ var render = function () {
                             attrs: {
                               type: "checkbox",
                               role: "switch",
+                              disabled: row.item.is_free_only,
                               title: _vm.__("allow_loose_qty_hint"),
                             },
                             domProps: {
@@ -1689,6 +1745,7 @@ var render = function () {
                             attrs: {
                               type: "checkbox",
                               role: "switch",
+                              disabled: row.item.is_free_only,
                               title: _vm.__("cancelable_hint"),
                             },
                             domProps: {
@@ -1757,6 +1814,7 @@ var render = function () {
                               attrs: {
                                 type: "checkbox",
                                 role: "switch",
+                                disabled: row.item.is_free_only,
                                 title: _vm.__("returnable_hint"),
                               },
                               domProps: {
@@ -1821,6 +1879,7 @@ var render = function () {
                                       type: "number",
                                       min: "1",
                                       step: "1",
+                                      disabled: row.item.is_free_only,
                                     },
                                     domProps: { value: row.item.return_days },
                                     on: {
@@ -1900,6 +1959,7 @@ var render = function () {
                               },
                             ],
                             staticClass: "form-control max-qty-select",
+                            attrs: { disabled: row.item.is_free_only },
                             on: {
                               change: [
                                 function ($event) {
@@ -1954,7 +2014,12 @@ var render = function () {
                                 },
                               ],
                               staticClass: "form-control max-qty-input",
-                              attrs: { type: "number", min: "1", step: "1" },
+                              attrs: {
+                                type: "number",
+                                disabled: row.item.is_free_only,
+                                min: "1",
+                                step: "1",
+                              },
                               domProps: { value: row.item.max_qty_value },
                               on: {
                                 input: function ($event) {
@@ -2004,6 +2069,7 @@ var render = function () {
                         "button",
                         {
                           staticClass: "btn btn-sm btn-outline-secondary",
+                          attrs: { disabled: row.item.is_free_only },
                           on: {
                             click: function ($event) {
                               return _vm.openSlabs(row.item)
@@ -2046,6 +2112,7 @@ var render = function () {
                           min: "1",
                           step: "1",
                           placeholder: "—",
+                          disabled: row.item.is_free_only,
                         },
                         domProps: { value: row.item.min_qty },
                         on: {
@@ -2085,6 +2152,39 @@ var render = function () {
                             on: {
                               change: function ($event) {
                                 return _vm.toggleStatus(row.item, $event)
+                              },
+                            },
+                          }),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "cell(is_free_only)",
+                  fn: function (row) {
+                    return [
+                      _c(
+                        "div",
+                        {
+                          staticClass:
+                            "form-check form-switch d-flex justify-content-center",
+                        },
+                        [
+                          _c("input", {
+                            staticClass: "form-check-input",
+                            attrs: {
+                              type: "checkbox",
+                              role: "switch",
+                              title: _vm.tr(
+                                "free_item_hint",
+                                "Free item only: schemes can give it away, but it is hidden from the app and cannot be bought separately, so it has no price (prices are set to 0 on Save)."
+                              ),
+                            },
+                            domProps: { checked: row.item.is_free_only },
+                            on: {
+                              change: function ($event) {
+                                return _vm.onFreeItemToggle(row.item, $event)
                               },
                             },
                           }),

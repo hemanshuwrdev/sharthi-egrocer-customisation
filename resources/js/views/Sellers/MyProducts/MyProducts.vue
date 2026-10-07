@@ -118,13 +118,13 @@
                                     </template>
 
                                     <template #cell(mrp)="row">
-                                        <input type="number" min="0" step="0.01"
+                                        <input type="number" min="0" step="0.01" :disabled="row.item.is_free_only"
                                             class="form-control form-control-sm" v-model.number="row.item.mrp" />
                                     </template>
 
                                     <template #cell(selling_price)="row">
                                         <div class="d-flex align-items-center gap-1">
-                                            <input type="number" min="0" step="0.01"
+                                            <input type="number" min="0" step="0.01" :disabled="row.item.is_free_only"
                                                 class="form-control form-control-sm" v-model.number="row.item.selling_price" />
                                             <i v-if="innerPackPriceHint(row.item)" class="fa fa-info-circle text-muted"
                                                 v-b-tooltip.hover :title="innerPackPriceHint(row.item)"></i>
@@ -139,7 +139,7 @@
                                     <template #cell(allow_loose_qty)="row">
                                         <div class="form-check form-switch d-flex justify-content-center">
                                             <input class="form-check-input" type="checkbox" role="switch"
-                                                v-model="row.item.allow_loose_qty"
+                                                v-model="row.item.allow_loose_qty" :disabled="row.item.is_free_only"
                                                 :title="__('allow_loose_qty_hint')" />
                                         </div>
                                     </template>
@@ -147,7 +147,7 @@
                                     <template #cell(cancelable_status)="row">
                                         <div class="form-check form-switch d-flex justify-content-center">
                                             <input class="form-check-input" type="checkbox" role="switch"
-                                                v-model="row.item.cancelable_status"
+                                                v-model="row.item.cancelable_status" :disabled="row.item.is_free_only"
                                                 :title="__('cancelable_hint')" />
                                         </div>
                                     </template>
@@ -156,12 +156,12 @@
                                         <div class="d-flex flex-column align-items-center gap-1">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch"
-                                                    v-model="row.item.return_status"
+                                                    v-model="row.item.return_status" :disabled="row.item.is_free_only"
                                                     :title="__('returnable_hint')" />
                                             </div>
                                             <div v-if="row.item.return_status" class="d-flex align-items-center gap-1">
                                                 <input type="number" min="1" step="1"
-                                                    class="form-control form-control-sm" style="width:70px"
+                                                    class="form-control form-control-sm" style="width:70px" :disabled="row.item.is_free_only"
                                                     v-model.number="row.item.return_days" />
                                                 <span class="text-muted small">{{ __('days') }}</span>
                                             </div>
@@ -180,13 +180,13 @@
 
                                     <template #cell(max_qty)="row">
                                         <div class="max-qty-cell">
-                                            <select class="form-control max-qty-select" v-model="row.item.max_qty_mode"
+                                            <select class="form-control max-qty-select" :disabled="row.item.is_free_only" v-model="row.item.max_qty_mode"
                                                 @change="row.item.max_qty_mode || (row.item.max_qty_value = null)">
                                                 <option :value="null">{{ __('no_limit') }}</option>
                                                 <option value="per_order">{{ __('per_order') }}</option>
                                                 <option value="per_day">{{ __('per_day') }}</option>
                                             </select>
-                                            <input v-if="row.item.max_qty_mode" type="number" class="form-control max-qty-input"
+                                            <input v-if="row.item.max_qty_mode" type="number" class="form-control max-qty-input" :disabled="row.item.is_free_only"
                                                 min="1" step="1" v-model.number="row.item.max_qty_value" />
                                             <div v-if="row.item.max_qty_mode" class="max-qty-hint">
                                                 {{ __('max_quantity_allowed') }}<br>
@@ -196,7 +196,7 @@
                                     </template>
 
                                     <template #cell(slab_count)="row">
-                                        <button class="btn btn-sm btn-outline-secondary" @click="openSlabs(row.item)">
+                                        <button class="btn btn-sm btn-outline-secondary" @click="openSlabs(row.item)" :disabled="row.item.is_free_only">
                                             <i class="fa fa-list"></i>
                                             {{ row.item.slab_prices ? row.item.slab_prices.length : 0 }}
                                         </button>
@@ -205,7 +205,7 @@
                                     <template #cell(min_qty)="row">
                                         <input type="number" min="1" step="1"
                                             class="form-control form-control-sm text-center"
-                                            placeholder="—"
+                                            placeholder="—" :disabled="row.item.is_free_only"
                                             v-model.number="row.item.min_qty" />
                                     </template>
 
@@ -214,6 +214,15 @@
                                             <input class="form-check-input" type="checkbox" role="switch"
                                                 :checked="row.item.status == 1"
                                                 @change="toggleStatus(row.item, $event)">
+                                        </div>
+                                    </template>
+
+                                    <template #cell(is_free_only)="row">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                :checked="row.item.is_free_only"
+                                                @change="onFreeItemToggle(row.item, $event)"
+                                                :title="tr('free_item_hint', 'Free item only: schemes can give it away, but it is hidden from the app and cannot be bought separately, so it has no price (prices are set to 0 on Save).')" />
                                         </div>
                                     </template>
 
@@ -302,6 +311,13 @@
 import axios from "axios";
 import FsLightbox from "fslightbox-vue";
 
+// __() hands back the key itself when the language DB has no entry for it yet, so new
+// wording would show as a raw key until someone edits the language JSON — fall back to English.
+const tr = (key, fallback) => {
+    const t = __(key);
+    return t && t !== key ? t : fallback;
+};
+
 export default {
     components: { FsLightbox },
     data() {
@@ -323,6 +339,7 @@ export default {
                 { key: 'slab_count', label: __('slabs'), visible: true, class: 'text-center', thStyle: { width: '80px' } },
                 { key: 'min_qty', label: __('min_quantity'), visible: true, class: 'text-center', thStyle: { minWidth: '95px', width: '95px' } },
                 { key: 'status', label: __('status'), visible: true, class: 'text-center', thStyle: { width: '90px' } },
+                { key: 'is_free_only', label: tr('free_item', 'Free item'), visible: true, class: 'text-center', thStyle: { width: '90px' } },
                 { key: 'actions', label: __('actions'), visible: true, class: 'text-center', thStyle: { width: '80px' } },
             ],
             rows: [],
@@ -368,6 +385,23 @@ export default {
         perPage() { this.getRecords(); },
     },
     methods: {
+        tr,
+        // Ticking "Free item": the product is never sold, so it has no price. Zero MRP and selling price
+        // right away (the server enforces the same on save) and remember what was there, so ticking it
+        // by mistake and unticking again before Save puts the prices back.
+        onFreeItemToggle(row, event) {
+            const on = event.target.checked;
+            this.$set(row, 'is_free_only', on);
+            if (on) {
+                this.$set(row, '_pricesBeforeFree', { mrp: row.mrp, selling_price: row.selling_price });
+                row.mrp = 0;
+                row.selling_price = 0;
+            } else if (row._pricesBeforeFree) {
+                row.mrp = row._pricesBeforeFree.mrp;
+                row.selling_price = row._pricesBeforeFree.selling_price;
+                row._pricesBeforeFree = null;
+            }
+        },
         innerPackPriceHint(item) {
             const step = parseFloat(item.secondary_unit_value) || 0;
             const price = parseFloat(item.selling_price) || 0;
@@ -442,6 +476,7 @@ export default {
                 selling_price: row.selling_price,
                 stock: row.stock,
                 status: row.status,
+                is_free_only: row.is_free_only ? 1 : 0,
                 allow_loose_qty: row.allow_loose_qty ? 1 : 0,
                 min_qty: row.min_qty != null && row.min_qty !== '' ? row.min_qty : null,
                 max_qty_mode: row.max_qty_mode || '',

@@ -1031,7 +1031,8 @@ class ProductsApiController extends Controller
                     ->join('seller_products as sp', 'sp.master_product_variant_id', '=', 'mpv.id')
                     ->whereIn('sp.seller_id', $sellerIds)
                     ->where('sp.status', 1)
-                    ->where('sp.selling_price', '>', 0);
+                    ->where('sp.selling_price', '>', 0)
+                    ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('sp.is_free_only', 0));
             });
         }
 
@@ -1056,6 +1057,7 @@ class ProductsApiController extends Controller
         $allOffers = SellerProduct::whereIn('master_product_variant_id', $variantIds)
             ->where('status', 1)
             ->where('selling_price', '>', 0)
+            ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('is_free_only', 0))
             ->get()
             ->groupBy('master_product_variant_id');
 
@@ -1088,6 +1090,10 @@ class ProductsApiController extends Controller
                 }
             }
         }
+
+        // Drop free-item-only variants (scheme gifts) instead of printing them as a "₹0.00" card.
+        [$variants, $masterIds] = $this->withoutFreeOnlyVariants($variantIds, $products, $variants, $masterIds, $allowedLinesByBrandSeller, !empty($cityIds), $bestOffer);
+        $total = $masterIds->count();
 
         $rows = collect($masterIds)
             ->map(function ($mid) use ($products, $variants, $bestOffer) {
@@ -1127,6 +1133,70 @@ class ProductsApiController extends Controller
             ->values();
 
         return CommonHelper::responseWithData(['total' => $total, 'data' => $rows]);
+    }
+
+    /**
+     * "Free item only" products (scheme gifts) must never be shown to a retailer. These two lists —
+     * similar and recently visited — are product-first: they print every variant of a product and
+     * fall back to price 0 / no distributor when no purchasable offer is found, which is how a free
+     * gift came out as a "₹0.00 + Add" card.
+     *
+     * Drops a variant when this retailer has no purchasable offer for it but does have a
+     * free-item-only one (same distributor-coverage rule as the offers themselves), and drops a
+     * product whose variants were all dropped. Variants that are unavailable for any other reason
+     * are left exactly as before.
+     *
+     * @return array{0: \Illuminate\Support\Collection, 1: \Illuminate\Support\Collection} [variants grouped by master id, master ids]
+     */
+    private function withoutFreeOnlyVariants($variantIds, $products, $variants, $masterIds, $allowedLinesByBrandSeller, bool $coverageRequired, $bestOffer): array
+    {
+        $masterIds = collect($masterIds);
+        if (!SellerProduct::hasFreeOnlyColumn() || empty($variantIds)) {
+            return [$variants, $masterIds];
+        }
+
+        $freeOnlyOffers = SellerProduct::whereIn('master_product_variant_id', $variantIds)
+            ->where('status', 1)
+            ->where('is_free_only', 1)
+            ->get()
+            ->groupBy('master_product_variant_id');
+        if ($freeOnlyOffers->isEmpty()) {
+            return [$variants, $masterIds];
+        }
+
+        $hidden = [];
+        foreach ($variants as $mid => $variantList) {
+            $product = $products->get($mid);
+            foreach ($variantList as $v) {
+                if ($bestOffer->has($v->id)) {
+                    continue; // some distributor sells it normally to this retailer
+                }
+                $offers = $freeOnlyOffers->get($v->id, collect());
+                if ($coverageRequired && $product) {
+                    $offers = $offers->filter(function ($sp) use ($product, $allowedLinesByBrandSeller) {
+                        $lines = $allowedLinesByBrandSeller->get($product->brand_id . '_' . $sp->seller_id);
+                        return $lines !== null && BrandDistributorMapping::lineIsCovered($lines, $product->brand_line_id);
+                    });
+                }
+                if ($offers->isNotEmpty()) {
+                    $hidden[$v->id] = true;
+                }
+            }
+        }
+        if (empty($hidden)) {
+            return [$variants, $masterIds];
+        }
+
+        $dropMasters = [];
+        $variants = $variants->map(function ($list, $mid) use ($hidden, &$dropMasters) {
+            $kept = $list->reject(fn ($v) => isset($hidden[$v->id]))->values();
+            if ($list->isNotEmpty() && $kept->isEmpty()) {
+                $dropMasters[$mid] = true;
+            }
+            return $kept;
+        });
+
+        return [$variants, $masterIds->reject(fn ($mid) => isset($dropMasters[$mid]))->values()];
     }
 
     public function getSearchProducts(Request $request)
@@ -1494,6 +1564,7 @@ class ProductsApiController extends Controller
             $allOffers = SellerProduct::whereIn('master_product_variant_id', $variantIds)
                 ->where('status', 1)
                 ->where('selling_price', '>', 0)
+                ->when(SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('is_free_only', 0))
                 ->get()
                 ->groupBy('master_product_variant_id');
 
@@ -1527,6 +1598,9 @@ class ProductsApiController extends Controller
                     }
                 }
             }
+
+            // Drop free-item-only variants (scheme gifts) instead of printing them as a "₹0.00" card.
+            [$variants, $masterIds] = $this->withoutFreeOnlyVariants($variantIds, $products, $variants, $masterIds, $allowedLinesByBrandSeller, $hasLocation, $bestOffer);
 
             $isRatingEnabled = (int) (Setting::get_value('product_rating') ?? 0) === 1;
 

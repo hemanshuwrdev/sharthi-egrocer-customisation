@@ -570,12 +570,20 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     discountOptionHint: function discountOptionHint() {
       return 'Discount Option decides what amount the discount value is measured on. ' + 'Before tax: measured on the price before GST (Net Taxable Amount), and GST is then calculated on the reduced amount ' + "- e.g. a flat \u20B9100 discount at 5% GST saves the customer \u20B9105 in total. " + 'After tax: measured on the final Total that already includes GST, and GST is not changed ' + "- e.g. a flat \u20B9100 discount saves the customer \u20B9100.";
     },
+    // Products a retailer can actually buy. A "free item only" product can't be bought, so it can
+    // never trigger a scheme — keep it out of the Buy picker and the group-discount modal. (The
+    // full availableProducts list stays for lookups and for the Free product picker.)
+    purchasableProducts: function purchasableProducts() {
+      return this.availableProducts.filter(function (p) {
+        return !p.is_free_only;
+      });
+    },
     filteredModalProducts: function filteredModalProducts() {
       if (!this.productSearch) {
-        return this.availableProducts;
+        return this.purchasableProducts;
       }
       var q = this.productSearch.toLowerCase();
-      return this.availableProducts.filter(function (p) {
+      return this.purchasableProducts.filter(function (p) {
         return p.name && p.name.toLowerCase().includes(q) || p.sku && p.sku.toLowerCase().includes(q);
       });
     }
@@ -611,6 +619,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     tr: function tr(key, fallback) {
       var t = this.__(key);
       return t && t !== key ? t : fallback;
+    },
+    // Free product dropdown: mark the products that exist only to be given away.
+    freeProductLabel: function freeProductLabel(p) {
+      return p.full_name + (p.is_free_only ? ' — ' + this.tr('free_item', 'Free item') : '');
     },
     t: function t(key, fallback) {
       var val = this.__(key);
@@ -1549,7 +1561,7 @@ var render = function () {
                         _vm._v(" "),
                         _c("multiselect", {
                           attrs: {
-                            options: _vm.availableProducts,
+                            options: _vm.purchasableProducts,
                             placeholder: "Select Product",
                             label: "full_name",
                             "track-by": "id",
@@ -1771,6 +1783,7 @@ var render = function () {
                         _c("multiselect", {
                           attrs: {
                             options: _vm.availableProducts,
+                            "custom-label": _vm.freeProductLabel,
                             placeholder: "Select Product",
                             label: "full_name",
                             "track-by": "id",

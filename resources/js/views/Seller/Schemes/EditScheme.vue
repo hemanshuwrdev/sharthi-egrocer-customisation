@@ -69,7 +69,7 @@
                     <div class="row g-3">
                         <div class="col-md-6 mb-3">
                             <label class="form-label font-weight-bold">{{ t('buy_product', 'Buy Product') }} <span class="text-danger">*</span></label>
-                            <multiselect v-model="record.buy_product" :options="availableProducts" placeholder="Select Product" label="full_name" track-by="id"></multiselect>
+                            <multiselect v-model="record.buy_product" :options="purchasableProducts" placeholder="Select Product" label="full_name" track-by="id"></multiselect>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label font-weight-bold">{{ t('buy_quantity', 'Buy Quantity') }} <span class="text-danger">*</span></label>
@@ -90,7 +90,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label font-weight-bold">{{ t('free_product', 'Free Product') }} <span class="text-danger">*</span></label>
-                            <multiselect v-model="record.free_product" :options="availableProducts" placeholder="Select Product" label="full_name" track-by="id"></multiselect>
+                            <multiselect v-model="record.free_product" :options="availableProducts" :custom-label="freeProductLabel" placeholder="Select Product" label="full_name" track-by="id"></multiselect>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label font-weight-bold">{{ t('free_quantity', 'Free Quantity') }} <span class="text-danger">*</span></label>
@@ -551,12 +551,18 @@ export default {
                 + 'After tax: measured on the final Total that already includes GST, and GST is not changed '
                 + '- e.g. a flat \u20b9100 discount saves the customer \u20b9100.';
         },
+        // Products a retailer can actually buy. A "free item only" product can't be bought, so it can
+        // never trigger a scheme — keep it out of the Buy picker and the group-discount modal. (The
+        // full availableProducts list stays for lookups and for the Free product picker.)
+        purchasableProducts() {
+            return this.availableProducts.filter(p => !p.is_free_only);
+        },
         filteredModalProducts() {
             if (!this.productSearch) {
-                return this.availableProducts;
+                return this.purchasableProducts;
             }
             let q = this.productSearch.toLowerCase();
-            return this.availableProducts.filter(p => {
+            return this.purchasableProducts.filter(p => {
                 return (p.name && p.name.toLowerCase().includes(q)) ||
                        (p.sku && p.sku.toLowerCase().includes(q));
             });
@@ -575,6 +581,10 @@ export default {
         tr(key, fallback) {
             const t = this.__(key);
             return t && t !== key ? t : fallback;
+        },
+        // Free product dropdown: mark the products that exist only to be given away.
+        freeProductLabel(p) {
+            return p.full_name + (p.is_free_only ? ' — ' + this.tr('free_item', 'Free item') : '');
         },
         t(key, fallback) {
             const val = this.__(key);

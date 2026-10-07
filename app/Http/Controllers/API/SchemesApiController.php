@@ -176,6 +176,9 @@ class SchemesApiController extends Controller
                     'price'                => $price,
                     'outer_price'          => $secVal ? round($price * $secVal, 2) : $price,
                     'stock'                => (float) $sp->stock,
+                    // Free-item-only products are offered as a scheme's free product but not as a
+                    // buy / group product (they can't be purchased, so can never trigger a scheme).
+                    'is_free_only'         => (bool) ($sp->is_free_only ?? false),
                 ];
             })->values();
 

@@ -101,6 +101,12 @@ class SellerProductApiController extends Controller
                 'seller_products.return_days as sp_return_days'
             );
 
+        // Added only once the column exists, so this list keeps working if the code is
+        // deployed before `php artisan migrate`.
+        if (SellerProduct::hasFreeOnlyColumn()) {
+            $query->addSelect('seller_products.is_free_only as sp_is_free_only');
+        }
+
         if ($filter !== '') {
             $query->where(function ($w) use ($filter) {
                 $w->where('master_products.name', 'like', "%{$filter}%")
@@ -214,6 +220,7 @@ class SellerProductApiController extends Controller
                 'discounted_price' => $v->sp_discounted_price !== null ? (float) $v->sp_discounted_price : null,
                 'stock' => $v->sp_stock !== null ? (float) $v->sp_stock : 0,
                 'status' => $v->sp_status !== null ? (int) $v->sp_status : 0,
+                'is_free_only' => (bool) ($v->sp_is_free_only ?? false),
                 'slab_prices' => $v->sp_id && isset($slabsBySp[$v->sp_id])
                     ? $slabsBySp[$v->sp_id]->map(fn($s) => [
                         'id' => $s->id,
@@ -307,6 +314,7 @@ class SellerProductApiController extends Controller
             'discounted_price' => 'nullable|numeric|min:0',
             'stock' => 'nullable|numeric|min:0',
             'status' => 'nullable|in:0,1',
+            'is_free_only' => 'nullable|boolean',
             'allow_loose_qty' => 'nullable|boolean',
             'min_qty' => 'nullable|integer|min:1',
             'max_qty_mode' => 'nullable|in:per_order,per_day',
@@ -339,6 +347,7 @@ class SellerProductApiController extends Controller
         if ($request->has('stock')) $sp->stock = $request->stock ?: 0;
         if ($request->has('status')) $sp->status = $request->status;
         elseif (!$sp->exists) $sp->status = 0;
+        if ($request->has('is_free_only') && SellerProduct::hasFreeOnlyColumn()) $sp->is_free_only = (bool) $request->is_free_only;
         if ($request->has('allow_loose_qty')) $sp->allow_loose_qty = (bool) $request->allow_loose_qty;
         if ($request->has('min_qty')) $sp->min_qty = $request->min_qty ? (int) $request->min_qty : null;
         if ($request->has('max_qty_mode')) $sp->max_qty_mode = $request->max_qty_mode ?: null;
@@ -346,6 +355,14 @@ class SellerProductApiController extends Controller
         if ($request->has('cancelable_status')) $sp->cancelable_status = (bool) $request->cancelable_status;
         if ($request->has('return_status')) $sp->return_status = (bool) $request->return_status;
         if ($request->has('return_days')) $sp->return_days = $request->return_days ?: 1;
+
+        // A free-item-only product is never sold, so it has no price of its own — whatever the
+        // screen (or an API call) sent, store zero rather than a price that means nothing.
+        if (SellerProduct::hasFreeOnlyColumn() && (int) $sp->is_free_only === 1) {
+            $sp->mrp = 0;
+            $sp->selling_price = 0;
+            $sp->discounted_price = null;
+        }
 
         $sp->save();
 
