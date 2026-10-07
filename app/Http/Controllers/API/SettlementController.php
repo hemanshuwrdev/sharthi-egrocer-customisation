@@ -1170,6 +1170,7 @@ class SettlementController extends Controller
             ->where('active_status', 6)
             ->first();
         if (!$order) return CommonHelper::responseError('order_not_delivered');
+        if ($order->payment_lock_status === 'locked') return CommonHelper::responseError('order_already_locked');
 
         // Confirm driver already collected signature for this order
         $driverSignature = OrderPayment::where('order_id', $order->id)
@@ -1283,6 +1284,106 @@ class SettlementController extends Controller
         );
 
         return CommonHelper::responseWithData(['settlement_id' => $settlement->id, 'settlement_date' => $today->toDateString(), 'status' => 'locked']);
+    }
+
+    /**
+     * GET /salesman/orders/active-lock
+     * Order-wise replacement for the whole-day EOD lock — same idea as
+     * driverActiveLoadingSlips(), but a salesman has no loading-slip/trip grouping,
+     * so the lock unit here is the order itself. Lists this salesman's orders that
+     * still have an open payment lock, with a per-order lock readiness flag.
+     */
+    public function salesmanActiveOrders(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) return CommonHelper::responseError('salesman_not_found');
+
+        $orders = Order::where('placed_by_salesman_id', $salesman->id)
+            ->where('payment_lock_status', 'open')
+            ->when($request->filled('search'), fn ($q) => $q->where('id', 'like', '%' . $request->input('search') . '%'))
+            ->orderByDesc('id')
+            ->get();
+
+        $orderIds = $orders->pluck('id');
+        $paymentsByOrder = OrderPayment::whereIn('order_id', $orderIds)->get()->groupBy('order_id');
+
+        $data = $orders->map(function (Order $order) use ($paymentsByOrder) {
+            $payments = $paymentsByOrder->get($order->id, collect());
+            // Cash needs no distributor verification to lock — only digital methods do.
+            $pendingPayments = $payments->where('method', '!=', 'cash')->where('status', 'pending')->count();
+            $isDelivered     = (int) $order->active_status === 6;
+
+            $canLock = $isDelivered && $payments->isNotEmpty() && $pendingPayments === 0;
+            $reason  = null;
+            if (!$canLock) {
+                $reason = !$isDelivered
+                    ? 'order_pending_delivery'
+                    : ($payments->isEmpty() ? 'no_payment_collected' : 'payment_verification_pending');
+            }
+
+            return [
+                'order_id'           => $order->id,
+                'active_status'      => $order->active_status,
+                'payment_lock_status'=> $order->payment_lock_status,
+                'pending_payments'   => $pendingPayments,
+                'can_lock'           => $canLock,
+                'lock_blocked_reason'=> $reason,
+                'total_collected'    => round($payments->whereIn('method', ['cash', 'upi', 'cheque'])->sum('amount'), 2),
+                'payments' => $payments->map(fn (OrderPayment $p) => [
+                    'id'         => $p->id,
+                    'method'     => $p->method,
+                    'amount'     => (float) $p->amount,
+                    'status'     => $p->method === 'cash' ? 'verified' : $p->status,
+                    'verified_at'=> $p->verified_at,
+                ])->values(),
+            ];
+        });
+
+        return CommonHelper::responseWithData(['total' => $data->count(), 'data' => $data->values()]);
+    }
+
+    /**
+     * POST /salesman/orders/{id}/lock
+     * Locks one order's payment. Requires the order to be delivered and every
+     * OrderPayment for it to already be manually verified by the distributor —
+     * nothing here auto-verifies anything.
+     */
+    public function salesmanLockOrder(int $id)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) return CommonHelper::responseError('salesman_not_found');
+
+        $order = Order::where('id', $id)->where('placed_by_salesman_id', $salesman->id)->first();
+        if (!$order) return CommonHelper::responseError('order_not_found');
+
+        if ($order->payment_lock_status === 'locked') {
+            return CommonHelper::responseError('order_already_locked');
+        }
+
+        if ((int) $order->active_status !== 6) {
+            return CommonHelper::responseError('order_pending_delivery');
+        }
+
+        $payments = OrderPayment::where('order_id', $order->id)->get();
+        if ($payments->isEmpty()) {
+            return CommonHelper::responseError('no_payment_collected');
+        }
+
+        $pendingPayments = $payments->where('method', '!=', 'cash')->where('status', 'pending')->count();
+        if ($pendingPayments > 0) {
+            return CommonHelper::responseError('payment_verification_pending');
+        }
+
+        $order->payment_lock_status = 'locked';
+        $order->payment_locked_at   = Carbon::now();
+        $order->payment_locked_by   = $salesman->id;
+        $order->save();
+
+        return CommonHelper::responseWithData([
+            'order_id'           => $order->id,
+            'payment_lock_status'=> $order->payment_lock_status,
+            'payment_locked_at'  => $order->payment_locked_at,
+        ]);
     }
 
     // ──────────────────────────────────────────────────────────────────────────

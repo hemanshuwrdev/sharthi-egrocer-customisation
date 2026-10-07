@@ -926,6 +926,10 @@ Route::middleware('auth:api')->group(function () {
         });
         Route::post('orders/place', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'placeOrder'])->name('salesman.orders.place');
         Route::get('orders', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'orderList'])->name('salesman.orders.list');
+        // Order-wise payment lock — salesman equivalent of the driver's per-loading-slip
+        // lock. Literal route must precede the {order_id} wildcard below.
+        Route::get('orders/active-lock', [\App\Http\Controllers\API\SettlementController::class, 'salesmanActiveOrders'])->name('salesman.orders.active_lock');
+        Route::post('orders/{id}/lock',  [\App\Http\Controllers\API\SettlementController::class, 'salesmanLockOrder'])->name('salesman.orders.lock');
         Route::get('orders/{order_id}', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'orderDetail'])->name('salesman.orders.detail');
 
         Route::get('dashboard', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'dashboard'])->name('salesman.dashboard');
