@@ -1901,6 +1901,10 @@ class OrderApiController extends Controller
             "orders.placed_by_salesman_id",
             "placing_salesman.name as salesman_name",
             "placing_salesman.mobile as salesman_mobile",
+            // Only used to build the "+<code><number>" mobiles below; hidden from the response.
+            "dboys.country_code as delivery_boy_country_code",
+            "placing_salesman.country_code as salesman_country_code",
+            DB::raw('(select country_code from users as u where u.id = orders.user_id) as user_country_code'),
 
             DB::raw('(select name from users as u where u.id = orders.user_id) as user_name'),
             'address.address',
@@ -1941,7 +1945,7 @@ class OrderApiController extends Controller
         $productRatingSetting = (int) (Setting::get_value('product_rating') ?? 0);
         $isProductRatingEnabled = $productRatingSetting === 1;
         $deliveryEstimateDays = (int) (Setting::get_value('delivery_estimate_days') ?? 0);
-        $res = $res->makeHidden(['image', 'updated_at', 'deleted_at', 'current_status']);
+        $res = $res->makeHidden(['image', 'updated_at', 'deleted_at', 'current_status', 'delivery_boy_country_code', 'salesman_country_code', 'user_country_code']);
 
         $langCode = app('lang_code') ?? 'en';
         app()->setLocale($langCode);
@@ -1950,6 +1954,11 @@ class OrderApiController extends Controller
         foreach ($res as $key => $row) {
             $res[$key]->order_status_name = OrderStatusList::getTranslatedName((int) $row->active_status);
             $res[$key]->placed_by = $row->placed_by_salesman_id ? 'salesman' : 'retailer';
+            // Stored numbers are bare; return them with their country code ("+916359021290").
+            $res[$key]->mobile = CommonHelper::mobileWithCountryCode($row->mobile, $row->user_country_code);
+            $res[$key]->order_mobile = CommonHelper::mobileWithCountryCode($row->order_mobile, $row->user_country_code);
+            $res[$key]->delivery_boy_mobile = CommonHelper::mobileWithCountryCode($row->delivery_boy_mobile, $row->delivery_boy_country_code);
+            $res[$key]->salesman_mobile = CommonHelper::mobileWithCountryCode($row->salesman_mobile, $row->salesman_country_code);
             $res[$key]->address = $row->address . " " . $row->landmark . " " . $row->area . " " . $row->city . " " . $row->state . "-" . $row->pincode . " " . $row->country;
             if (is_string($row->additional_charges)) {
                 $res[$i]['additional_charges'] = json_decode($row->additional_charges, true) ?? [];
@@ -2002,14 +2011,15 @@ class OrderApiController extends Controller
                     $pickupAddress = $row->pickup_address;
                 }
 
-                if (empty($pickupAddress['seller_mobile'])) {
-                    $sellerMobile = OrderItem::where('order_id', $row->id)
-                        ->join('sellers', 'order_items.seller_id', '=', 'sellers.id')
-                        ->value('sellers.mobile');
+                $pickupSeller = OrderItem::where('order_id', $row->id)
+                    ->join('sellers', 'order_items.seller_id', '=', 'sellers.id')
+                    ->first(['sellers.mobile', 'sellers.country_code']);
 
-                    if ($sellerMobile) {
-                        $pickupAddress['seller_mobile'] = $sellerMobile;
-                    }
+                if (empty($pickupAddress['seller_mobile']) && !empty($pickupSeller->mobile)) {
+                    $pickupAddress['seller_mobile'] = $pickupSeller->mobile;
+                }
+                if (!empty($pickupAddress['seller_mobile'])) {
+                    $pickupAddress['seller_mobile'] = CommonHelper::mobileWithCountryCode($pickupAddress['seller_mobile'], $pickupSeller->country_code ?? null);
                 }
 
                 $res[$i]['pickup_address'] = $pickupAddress;
@@ -2051,11 +2061,16 @@ class OrderApiController extends Controller
                 DB::raw('COALESCE(v.sku, mpv.sku) as sku'),
                 DB::raw('(select short_code from units as u where u.id = COALESCE(v.stock_unit_id, mpv.unit_id)) as inner_pack_unit'),
                 'co.name as country_made_in',
-                's.name as seller_name',
+                // Deleted distributors leave order_items.seller_id dangling, so the LEFT JOIN yields NULL —
+                // never hand the app a null name for a past order.
+                DB::raw("COALESCE(NULLIF(TRIM(s.name), ''), NULLIF(TRIM(s.store_name), ''), 'Unavailable seller') as seller_name"),
                 's.formatted_address as seller_address',
                 's.place_name as seller_place_name',
                 's.latitude as seller_latitude',
                 's.longitude as seller_longitude',
+                's.mobile as seller_mobile',
+                // Only used to build the "+<code><number>" seller_mobile below; hidden from the response.
+                's.country_code as seller_country_code',
                 DB::raw('COALESCE(mpv.image, mp.image) as master_image'),
                 DB::raw('(SELECT status FROM return_requests WHERE order_item_id = oi.id) as return_requested'),
                 DB::raw('(SELECT reason FROM return_requests WHERE order_item_id = oi.id) as return_reason'),
@@ -2078,6 +2093,8 @@ class OrderApiController extends Controller
                 $taxed = ProductHelper::getTaxableAmount($item->product_variant_id);
 
                 $items[$subkey]->made_in = $item->country_made_in ?? "";
+                // Stored numbers are bare; return them with their country code ("+916359021290").
+                $items[$subkey]->seller_mobile = CommonHelper::mobileWithCountryCode($item->seller_mobile, $item->seller_country_code);
                 $items[$subkey]->created_at = $item->created_at;
 
                 $tax_amount = (float) ($item->tax_amount ?? 0);
@@ -2129,7 +2146,7 @@ class OrderApiController extends Controller
                     $item->image = $item->master_image;
                 }
             }
-            $items = $items->makeHidden(['images', 'master_image', 'updated_at', 'deleted_at', 'status', 'current_status', 'country_made_in']);
+            $items = $items->makeHidden(['images', 'master_image', 'updated_at', 'deleted_at', 'status', 'current_status', 'country_made_in', 'seller_country_code']);
 
             $res[$i]['items'] = $items;
             $res[$i]['product_rating'] = $isProductRatingEnabled;

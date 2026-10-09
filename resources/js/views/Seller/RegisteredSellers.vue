@@ -404,6 +404,10 @@ export default {
                         .then((response) => {
                             this.isLoading = false
                             let data = response.data;
+                            if (data.status !== 1) {
+                                this.showError(data.message);
+                                return;
+                            }
                             this.records.splice(index, 1)
                             this.showSuccess(data.message)
                         });

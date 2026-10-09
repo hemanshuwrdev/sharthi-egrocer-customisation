@@ -169,7 +169,7 @@
                                 </li>
 
                                 <li>
-                                    <router-link class="dropdown-item" to="/seller/profile"
+                                    <router-link class="dropdown-item" to="/seller/setting?tab=profile"
                                         v-if="role == this.$roleSeller">
                                         <span class="icon-mid me-2" v-html="navIcon('person')"></span> {{ __('my_profile') }}
                                     </router-link>

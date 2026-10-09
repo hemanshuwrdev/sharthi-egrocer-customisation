@@ -164,7 +164,7 @@
                                                     </div>
                                                     <input type="number" name="mobile" id="mobile"
                                                         v-model="deliveryBoys.mobile" class="form-control"
-                                                        :placeholder="__('mobile_no')" @input="validateMobileNumber">
+                                                        :placeholder="__('mobile_no')" @input="validateMobileNumber" @blur="checkExistingDriver">
                                                 </div>
                                                 <span v-if="mobilevalidationError" class="error">{{
                                                     mobilevalidationError }}</span>
@@ -182,8 +182,8 @@
                                         </div>
                                     </div>
 
-                                    <!-- City Section -->
-                                    <div class="row">
+                                    <!-- City Section (distributors' drivers report directly to the distributor, no zones) -->
+                                    <div class="row" v-if="!isSellerRole">
                                         <!-- Select or Search City -->
                                         <div class="col-md-12">
                                             <div class="form-group">
@@ -442,6 +442,63 @@
                 </div>
             </div>
         </div>
+
+        <!-- A driver with this mobile number already exists (added by another distributor): confirm and link.
+             The body sits in .ui-modern because modals mount outside the seller layout root. -->
+        <b-modal v-model="showExistingDriverModal" hide-header hide-footer centered no-close-on-backdrop size="md" body-class="p-0">
+            <div class="ui-modern driver-link" v-if="existingDriver">
+                <div class="driver-link__head">
+                    <span class="ui-tile ui-tone--blue"><i class="fa fa-user-check"></i></span>
+                    <div class="driver-link__title">
+                        <h5>{{ __('driver_already_exists') }}</h5>
+                        <p>{{ __('is_this_the_driver_you_want_to_add') }}</p>
+                    </div>
+                    <button type="button" class="driver-link__close" @click="showExistingDriverModal = false" aria-label="Close">&times;</button>
+                </div>
+
+                <div class="driver-link__card">
+                    <div class="ui-person">
+                        <span class="ui-avatar ui-tone--green driver-link__avatar">{{ driverInitials(existingDriver.driver.name) }}</span>
+                        <div class="driver-link__who">
+                            <strong>{{ existingDriver.driver.name }}</strong>
+                            <span class="ui-pill ui-pill--dot ui-tone--green driver-link__status" v-if="existingDriver.driver.status === 1">
+                                <i class="ui-dot"></i>{{ __('active') }}
+                            </span>
+                            <span class="ui-pill ui-pill--dot ui-tone--amber driver-link__status" v-else>
+                                <i class="ui-dot"></i>{{ __('inactive') }}
+                            </span>
+                        </div>
+                    </div>
+                    <ul class="driver-link__details">
+                        <li>
+                            <i class="fa fa-phone-alt"></i>
+                            <span>{{ existingDriver.driver.country_code }} {{ existingDriver.driver.mobile }}</span>
+                        </li>
+                        <li v-if="existingDriver.driver.address">
+                            <i class="fa fa-map-marker-alt"></i>
+                            <span>{{ existingDriver.driver.address }}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div v-if="!existingDriver.linkable" class="driver-link__notice ui-tone--red">
+                    <i class="fa fa-info-circle"></i>
+                    <span v-if="existingDriver.already_linked">{{ __('this_driver_is_already_in_your_drivers') }}</span>
+                    <span v-else>{{ __('this_driver_is_not_active_and_cannot_be_added') }}</span>
+                </div>
+
+                <div class="driver-link__actions">
+                    <button type="button" class="btn btn-light border" @click="showExistingDriverModal = false">
+                        {{ existingDriver.linkable ? __('cancel') : __('close') }}
+                    </button>
+                    <button v-if="existingDriver.linkable" type="button" class="btn btn-primary" :disabled="isLinkingDriver" @click="confirmLinkDriver">
+                        <b-spinner small v-if="isLinkingDriver"></b-spinner>
+                        <i class="fa fa-plus" v-else></i>
+                        {{ __('yes_add_this_driver') }}
+                    </button>
+                </div>
+            </div>
+        </b-modal>
     </div>
 </template>
 <script>
@@ -515,6 +572,9 @@ export default {
                 bonus_max_amount: 0,
             },
             mobilevalidationError: null,
+            showExistingDriverModal: false,
+            existingDriver: null,
+            isLinkingDriver: false,
             dobvalidationError: null,
             account_numbervalidationError: null,
             drivingLicencevalidationerror: null,
@@ -531,6 +591,11 @@ export default {
             countries: [],
             countryDropdownOpen: false,
         };
+    },
+    computed: {
+        isSellerRole() {
+            return this.$roleSeller === this.login_user.role.name;
+        },
     },
     created: function () {
 
@@ -688,6 +753,45 @@ export default {
                 this.deliveryBoys.dob = null;
             } else {
                 this.dobvalidationError = null;
+            }
+        },
+        // Distributor adding a new driver: if the mobile number already belongs to a driver (added by another
+        // distributor), offer to link that driver instead. Returns true when the confirmation was opened.
+        async lookupExistingDriver() {
+            if (!this.isSellerRole || this.deliveryBoys.id || !this.deliveryBoys.mobile) return false;
+            try {
+                const res = await axios.post(this.$apiUrl + '/seller/delivery_boys/lookup', { mobile: String(this.deliveryBoys.mobile) });
+                const data = res.data && res.data.data;
+                if (!data || !data.found) return false;
+                this.existingDriver = data;
+                this.showExistingDriverModal = true;
+                return true;
+            } catch (e) {
+                return false; // the save itself still rejects a duplicate mobile
+            }
+        },
+        checkExistingDriver() {
+            this.lookupExistingDriver();
+        },
+        driverInitials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+        },
+        async confirmLinkDriver() {
+            this.isLinkingDriver = true;
+            try {
+                const res = await axios.post(this.$apiUrl + '/seller/delivery_boys/link', { mobile: String(this.deliveryBoys.mobile) });
+                if (!res.data || res.data.status !== 1) {
+                    throw new Error(res.data?.message || __('something_went_wrong'));
+                }
+                this.showExistingDriverModal = false;
+                this.showMessage('success', __('driver_added_successfully'));
+                this.$router.push({ path: '/seller/delivery_boys' });
+            } catch (error) {
+                this.showError(error.message || error?.response?.data?.message || __('something_went_wrong'));
+            } finally {
+                this.isLinkingDriver = false;
             }
         },
         validateMobileNumber() {
@@ -914,9 +1018,12 @@ export default {
                 switchToDefault();
                 return;
             }
-            if (!this.deliveryBoys.city_id) {
+            if (!this.isSellerRole && !this.deliveryBoys.city_id) {
                 this.showError(__('please_select_city') || 'Please select a city.');
                 switchToDefault();
+                return;
+            }
+            if (await this.lookupExistingDriver()) {
                 return;
             }
 
@@ -950,8 +1057,10 @@ export default {
                 fd.append('bank_name', this.deliveryBoys.bank_name);
                 fd.append('bank_account_number', this.deliveryBoys.bank_account_number);
                 fd.append('account_name', this.deliveryBoys.account_name);
-                fd.append('city_id', this.deliveryBoys.city_id);
-                (this.deliveryBoys.city_ids || []).forEach((id, i) => fd.append('city_ids[' + i + ']', id));
+                if (!this.isSellerRole) {
+                    fd.append('city_id', this.deliveryBoys.city_id);
+                    (this.deliveryBoys.city_ids || []).forEach((id, i) => fd.append('city_ids[' + i + ']', id));
+                }
                 fd.append('status', this.deliveryBoys.status);
                 fd.append('remark', this.deliveryBoys.remark ?? '');
                 fd.append('bonus_type', this.deliveryBoys.bonus_type || 0);
@@ -1047,6 +1156,40 @@ export default {
 };
 </script>
 <style scoped>
+/* "driver already exists" confirmation modal */
+.driver-link { color: var(--ui-text); }
+.driver-link__head { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px; }
+.driver-link__title { flex: 1 1 auto; min-width: 0; }
+.driver-link__title h5 { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text); }
+.driver-link__title p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted); }
+.driver-link__close {
+    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;
+    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;
+}
+.driver-link__close:hover { background: var(--ui-soft); color: var(--ui-text); }
+.driver-link__card {
+    margin: 4px 22px 0; padding: 16px; border: 1px solid var(--ui-border); border-radius: 14px; background: var(--ui-soft);
+}
+.driver-link .driver-link__avatar { width: 48px; height: 48px; font-size: 16px; }
+.driver-link .driver-link__card .ui-person { min-width: 0; }
+.driver-link__who { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.driver-link__who strong { font-size: 16px; font-weight: 700; color: var(--ui-text); }
+.driver-link .driver-link__status { font-size: 11.5px; padding: 3px 10px; }
+.driver-link__details { list-style: none; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--ui-border); display: grid; gap: 8px; }
+.driver-link__details li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ui-text); }
+.driver-link__details li i { width: 16px; margin-top: 3px; text-align: center; color: var(--ui-muted); }
+.driver-link__notice {
+    display: flex; align-items: flex-start; gap: 10px; margin: 14px 22px 0; padding: 10px 14px; border-radius: 12px;
+    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);
+}
+.driver-link__notice i { margin-top: 2px; }
+.driver-link__actions { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px; }
+.driver-link__actions .btn { min-width: 110px; border-radius: 10px; font-weight: 600; }
+@media (max-width: 575px) {
+    .driver-link__actions { flex-direction: column-reverse; }
+    .driver-link__actions .btn { width: 100%; }
+}
+
 @import "../../../../node_modules/vue-multiselect/dist/vue-multiselect.min.css";
 
 .input-group.mobile-input-group {

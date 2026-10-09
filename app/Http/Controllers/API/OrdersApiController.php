@@ -329,10 +329,13 @@ class OrdersApiController extends Controller
             $cashDiscountPercent = (float) (Seller::find($sellerId)->cash_discount_percent ?? 0);
             $alreadyCollected    = (float) OrderPayment::where('order_id', $id)->sum('amount');
             $outstanding         = max(0, (float) $data["order"]->final_total - $alreadyCollected);
+            // One instant-payment % covers both cash and bank (paid in full, in one go) — so both
+            // get the same discounted price; "other" (cheque / signature / split) gets none.
             $data['payment_price_preview'] = [
                 'cash_discount_percent' => $cashDiscountPercent,
                 'outstanding_amount'    => round($outstanding, 2),
                 'cash'                  => round($outstanding * (1 - $cashDiscountPercent / 100), 2),
+                'upi'                   => round($outstanding * (1 - $cashDiscountPercent / 100), 2),
                 'other'                 => round($outstanding, 2),
             ];
         }
@@ -340,6 +343,21 @@ class OrdersApiController extends Controller
         $data['credit_notes'] = \App\Models\CreditNote::with('items')
             ->where('order_id', $id)
             ->get();
+
+        // Retailer shop name / party name / area and the loading slip number, for the order page.
+        // Looked up by order id: the shared order query joins user_addresses.*, whose columns
+        // overwrite orders.user_id with NULL when the order has no saved delivery address.
+        $link = DB::table('orders')->where('id', $id)->first(['user_id', 'loading_slip_id']);
+        $profile = $link ? DB::table('retailer_profiles as rp')
+            ->leftJoin('areas as a', 'a.id', '=', 'rp.area_id')
+            ->where('rp.user_id', $link->user_id)
+            ->first(['rp.shop_name', 'rp.party_name', 'a.name as retailer_area_name']) : null;
+        $data['order']->shop_name = $profile->shop_name ?? null;
+        $data['order']->party_name = $profile->party_name ?? null;
+        $data['order']->retailer_area_name = $profile->retailer_area_name ?? null;
+        $data['order']->loading_slip_no = ($link && $link->loading_slip_id)
+            ? DB::table('loading_slips')->where('id', $link->loading_slip_id)->value('slip_no')
+            : null;
 
         return CommonHelper::responseWithData($data);
     }

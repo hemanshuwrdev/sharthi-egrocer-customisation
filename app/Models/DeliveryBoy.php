@@ -7,6 +7,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use App\Models\DeliveryBoyTranslation;
 class DeliveryBoy extends Model
 {
@@ -107,6 +108,54 @@ class DeliveryBoy extends Model
     public function cities()
     {
         return $this->belongsToMany(City::class, 'delivery_boy_cities', 'delivery_boy_id', 'city_id');
+    }
+
+    /** Distributors this driver works for (a driver can be shared by several). */
+    public function sellers()
+    {
+        return $this->belongsToMany(Seller::class, 'delivery_boy_sellers', 'delivery_boy_id', 'seller_id')->withTimestamps();
+    }
+
+    /** Drivers linked to the given distributor. */
+    public function scopeForSeller($query, $sellerId)
+    {
+        return $query->whereIn('delivery_boys.id', DB::table('delivery_boy_sellers')
+            ->where('seller_id', $sellerId)
+            ->select('delivery_boy_id'));
+    }
+
+    /**
+     * delivery_boys.cash_received is one running total across every distributor a driver works for.
+     * For drivers shared with other distributors, replace it (on these in-memory models only) with the
+     * COD collected on $sellerId's own orders, so one distributor never sees another's cash.
+     */
+    public static function limitCashToSeller($deliveryBoys, $sellerId)
+    {
+        $sharedDriverIds = DB::table('delivery_boy_sellers')
+            ->whereIn('delivery_boy_id', collect($deliveryBoys)->pluck('id'))
+            ->groupBy('delivery_boy_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('delivery_boy_id');
+        if ($sharedDriverIds->isEmpty()) {
+            return $deliveryBoys;
+        }
+
+        $ownCod = DB::table('delivery_boy_transactions as t')
+            ->whereIn('t.delivery_boy_id', $sharedDriverIds)
+            ->where('t.type', DeliveryBoyTransaction::$paymentTypeCod)
+            ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('order_items as oi')
+                ->whereColumn('oi.order_id', 't.order_id')
+                ->where('oi.seller_id', $sellerId))
+            ->groupBy('t.delivery_boy_id')
+            ->selectRaw('t.delivery_boy_id, SUM(t.amount) as total')
+            ->pluck('total', 'delivery_boy_id');
+
+        foreach ($deliveryBoys as $db) {
+            if ($sharedDriverIds->contains($db->id)) {
+                $db->cash_received = round((float) ($ownCod[$db->id] ?? 0), 2);
+            }
+        }
+        return $deliveryBoys;
     }
 
     /** Drivers serving any of the given zones (pivot, or legacy primary city_id). */

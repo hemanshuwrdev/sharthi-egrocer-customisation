@@ -653,7 +653,7 @@
                                                             <small class="text-muted">{{ __('Distributors can only enable methods you turn on here') }}</small>
                                                         </div>
                                                         <div class="form-group col-md-3" v-for="method in ['cash','upi','cheque','signature']" :key="method">
-                                                            <label :for="'pm_'+method">{{ __(method.charAt(0).toUpperCase()+method.slice(1)) }}</label><br>
+                                                            <label :for="'pm_'+method">{{ method === 'upi' ? __('Bank') : __(method.charAt(0).toUpperCase()+method.slice(1)) }}</label><br>
                                                             <div class="form-check form-switch">
                                                                 <input type="checkbox" true-value="1" false-value="0"
                                                                     class="form-check-input"

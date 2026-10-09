@@ -36,6 +36,22 @@ class Seller extends Model
     public static $Removed = "Removed";
     public static $Blocked = "Blocked";
 
+    protected static function booted()
+    {
+        // order_items has no FK to sellers, so a hard delete silently orphans every past order
+        // (seller_name comes back NULL). Backstop for any code path that calls ->delete().
+        static::deleting(function (Seller $seller) {
+            if ($seller->hasOrderHistory()) {
+                throw new \RuntimeException(__('seller_has_orders_cannot_delete'));
+            }
+        });
+    }
+
+    public function hasOrderHistory(): bool
+    {
+        return OrderItem::where('seller_id', $this->id)->exists();
+    }
+
     public function getLogoUrlAttribute()
     {
         if ($this->logo) {

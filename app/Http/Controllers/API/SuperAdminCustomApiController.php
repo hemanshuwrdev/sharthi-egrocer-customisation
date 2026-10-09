@@ -23,6 +23,8 @@ class SuperAdminCustomApiController extends Controller
         $validator = Validator::make($request->all(), [
             'brand_id' => 'required|exists:brands,id',
             'brand_line_id' => 'nullable|exists:brand_lines,id',
+            'is_edit' => 'nullable|boolean',
+            'original_brand_line_id' => 'nullable|exists:brand_lines,id',
             'seller_id' => 'required|exists:sellers,id',
             'city_ids' => 'required|array',
             'city_ids.*' => 'exists:cities,id',
@@ -35,6 +37,11 @@ class SuperAdminCustomApiController extends Controller
         $brand = Brand::find($request->brand_id);
         $lineId = $request->brand_line_id ?: null;
 
+        // Editing an existing mapping can change its line: the mapping being edited is identified
+        // by its original line (null = "All Lines"), and it is replaced by the new line's rows.
+        $originalLineId = $request->boolean('is_edit') ? ($request->original_brand_line_id ?: null) : $lineId;
+        $isLineChange = $originalLineId !== $lineId;
+
         if ($lineId && !BrandLine::where('id', $lineId)->where('brand_id', $brand->id)->exists()) {
             return CommonHelper::responseError(__('brand_line_does_not_belong_to_selected_brand'));
         }
@@ -44,6 +51,14 @@ class SuperAdminCustomApiController extends Controller
         // in. Cities already on this exact (brand, line, seller) mapping are grandfathered
         // in, so re-saving an existing mapping unchanged never breaks just because the
         // distributor's own territory shrank since it was created.
+        // Moving to a line this distributor already has a mapping for would silently merge the two.
+        if ($isLineChange && BrandDistributorMapping::where('brand_id', $request->brand_id)
+                ->where('brand_line_id', $lineId)
+                ->where('seller_id', $request->seller_id)
+                ->exists()) {
+            return CommonHelper::responseError(__('this_distributor_is_already_mapped_to_that_line_of_this_brand'));
+        }
+
         $seller = Seller::find($request->seller_id);
         $sellerCityIds = array_filter(array_map('intval', explode(',', (string) $seller->city_id)));
         $existingCityIds = BrandDistributorMapping::where('brand_id', $request->brand_id)
@@ -58,12 +73,21 @@ class SuperAdminCustomApiController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $brand, $lineId) {
+            DB::transaction(function () use ($request, $brand, $lineId, $originalLineId, $isLineChange) {
                 if (!$brand->is_overlap_allowed) {
                     $conflict = BrandDistributorMapping::findConflict($brand->id, $lineId, $request->city_ids, $request->seller_id);
                     if ($conflict) {
                         throw new \RuntimeException($this->conflictMessage($brand, $lineId, $conflict));
                     }
+                }
+
+                // Edit that changed the line: drop the old line's rows (after the conflict check, so a
+                // refused change leaves the existing mapping untouched).
+                if ($isLineChange) {
+                    BrandDistributorMapping::where('brand_id', $request->brand_id)
+                        ->where('brand_line_id', $originalLineId)
+                        ->where('seller_id', $request->seller_id)
+                        ->delete();
                 }
 
                 // Sync this exact (brand, line, seller) group's cities to the submitted list.

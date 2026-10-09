@@ -5346,4 +5346,22 @@ JSON:
     {
         \App\Models\MobileRegistry::where('role', $role)->where('role_id', $roleId)->delete();
     }
+
+    /**
+     * Prefix a stored bare mobile number with its country code ("+91" + "6359021290" => "+916359021290").
+     * country_code is stored inconsistently ("+91" / "91"), so it's normalised to "+<digits>".
+     * Blank numbers, numbers already starting with "+", and missing codes are returned untouched.
+     */
+    public static function mobileWithCountryCode($mobile, $countryCode)
+    {
+        if ($mobile === null) {
+            return null;
+        }
+        $mobile = trim((string) $mobile);
+        if ($mobile === '' || str_starts_with($mobile, '+')) {
+            return $mobile;
+        }
+        $code = preg_replace('/\D/', '', (string) $countryCode);
+        return $code === '' ? $mobile : '+' . $code . $mobile;
+    }
 }

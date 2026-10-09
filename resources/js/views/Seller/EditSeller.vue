@@ -2,7 +2,7 @@
     <div>
         <div class="page-heading">
 
-            <div class="row">
+            <div class="row" v-if="!embedded">
                 <div class="col-12 col-md-6 order-md-1 order-last">
                     <h3 v-if="isSellerRole">
                         {{ __('my_profile') }}
@@ -506,10 +506,13 @@
                                                                 <p class="text-muted mb-3" v-if="!brandZoneRows.length && !showBrandZoneForm">
                                                                     {{ cities_options.length ? __('no_brand_zone_assignments_yet') : __('define_a_zone_first') }}
                                                                 </p>
-                                                                <div v-for="(row, index) in brandZoneRows" :key="row.brand_id"
+                                                                <div v-for="(row, index) in brandZoneRows" :key="row.brand_id + '_' + (row.brand_line_id || 'all')"
                                                                     class="d-flex align-items-start justify-content-between border rounded p-2 mb-2">
                                                                     <div>
                                                                         <strong>{{ row.brand_name }}</strong>
+                                                                        <span class="badge ml-1" :class="row.brand_line_id ? 'bg-secondary' : 'bg-light text-dark border'">
+                                                                            {{ row.brand_line_id ? row.brand_line_name : __('all_lines') }}
+                                                                        </span>
                                                                         <div class="mt-1">
                                                                             <span v-for="c in row.cities" :key="c.id" class="badge bg-secondary me-1 mb-1">
                                                                                 {{ c.name }}<template v-if="c.zone"> - {{ c.zone }}</template>
@@ -531,17 +534,27 @@
                                                                 <!-- Add/Edit Brand Zone Row Form -->
                                                                 <div v-if="showBrandZoneForm" class="border rounded p-3 mb-2 bg-light">
                                                                     <div class="row">
-                                                                        <div class="form-group col-md-5">
+                                                                        <div class="form-group col-md-4">
                                                                             <label>{{ __('brand') }}<i class="text-danger">*</i></label>
                                                                             <select class="form-control" v-model="brandZoneForm.brand_id"
-                                                                                :disabled="editingBrandZoneIndex !== null">
+                                                                                :disabled="editingBrandZoneIndex !== null" @change="onBrandZoneBrandChange">
                                                                                 <option :value="null">-- {{ __('select') }} --</option>
-                                                                                <option v-for="b in availableBrandsForZoneForm" :key="b.id" :value="b.id">
+                                                                                <option v-for="b in brands" :key="b.id" :value="b.id">
                                                                                     {{ b.name }}
                                                                                 </option>
                                                                             </select>
                                                                         </div>
-                                                                        <div class="form-group col-md-7">
+                                                                        <div class="form-group col-md-3">
+                                                                            <label>{{ __('line') }}</label>
+                                                                            <select class="form-control" v-model="brandZoneForm.brand_line_id"
+                                                                                :disabled="!brandZoneForm.brand_id || editingBrandZoneIndex !== null">
+                                                                                <option :value="null">{{ __('all_lines') }}</option>
+                                                                                <option v-for="l in brandZoneFormLines" :key="l.id" :value="l.id">
+                                                                                    {{ l.name }}
+                                                                                </option>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="form-group col-md-5">
                                                                             <label>{{ __('select_zones') }}<i class="text-danger">*</i></label>
                                                                             <Select2 v-model="brandZoneForm.city_ids" :placeholder="__('select_cities')"
                                                                                 :options="cities_options"
@@ -578,7 +591,7 @@
                                                                     </div>
                                                                     <div class="form-group mt-0">
                                                                         <div class="form-group">
-                                                                            <label>{{ __('search_location') }}</label>
+                                                                            <label>{{ __('search_location') }}<i class="text-danger">*</i></label>
                                                                             <GmapAutocomplete type="search" class="form-control"
                                                                                 :placeholder="__('search_your_location_on_map')"
                                                                                 @place_changed="setCityPlace"
@@ -1184,6 +1197,11 @@ import TranslationHelper from '../../mixins/TranslationHelper.js';
 
 export default {
     mixins: [TranslationHelper],
+    // embedded: shown inside the seller Settings page's "My Profile" tab, which already has a page
+    // title, so the form hides its own title/breadcrumb and stays on the tab after saving.
+    props: {
+        embedded: { type: Boolean, default: false },
+    },
     components: {
         VuejsDatatableFactory,
         Select2,
@@ -1245,7 +1263,8 @@ export default {
             brandZoneRows: [],
             showBrandZoneForm: false,
             editingBrandZoneIndex: null,
-            brandZoneForm: { brand_id: null, city_ids: [] },
+            brandZoneForm: { brand_id: null, brand_line_id: null, city_ids: [] },
+            brandZoneFormLines: [],
             state: "",
             remark: "",
             bank_name: "",
@@ -1450,12 +1469,6 @@ export default {
                 });
             }
             return temp;
-        },
-        availableBrandsForZoneForm: function () {
-            const usedIds = this.brandZoneRows
-                .filter((r, idx) => idx !== this.editingBrandZoneIndex)
-                .map(r => String(r.brand_id));
-            return this.brands.filter(b => !usedIds.includes(String(b.id)));
         },
         assignedBrands: function () {
             if (!Array.isArray(this.brand_ids) || this.brand_ids.length === 0) {
@@ -1766,9 +1779,9 @@ export default {
         },
 
         async saveNewCity() {
-            if (!this.newCity.name) return this.showError(__('city_name') + ' ' + __('is_required'));
             if (!this.newCity.zone) return this.showError(__('zone_name') + ' ' + __('is_required'));
-            if (!this.newCity.latitude || !this.newCity.longitude) return this.showError(__('please_search_and_select_city_on_map'));
+            // name, lat/lng and formatted_address are only filled by picking a place in Search Location.
+            if (!this.newCity.name || !this.newCity.latitude || !this.newCity.longitude) return this.showError(__('please_search_and_select_city_on_map'));
             if (!this.cityVertices) return this.showError(__('draw_city_boundary_on_map_required'));
 
             this.isSavingCity = true;
@@ -1841,6 +1854,8 @@ export default {
                     this.brandZoneRows = rows.map(r => ({
                         brand_id: r.brand_id,
                         brand_name: r.brand ? r.brand.name : '',
+                        brand_line_id: r.brand_line_id || null,
+                        brand_line_name: r.brand_line_id ? r.brand_line_name : '',
                         city_ids: (r.city_ids || []).map(String),
                         cities: r.cities || [],
                     }));
@@ -1849,20 +1864,34 @@ export default {
                 .catch(() => { this.brandZoneRows = []; });
         },
         syncDerivedFromBrandZoneRows() {
-            this.brand_ids = this.brandZoneRows.map(r => String(r.brand_id));
+            this.brand_ids = [...new Set(this.brandZoneRows.map(r => String(r.brand_id)))];
             const cityIds = new Set();
             this.brandZoneRows.forEach(r => r.city_ids.forEach(id => cityIds.add(String(id))));
             this.city_id = [...cityIds];
         },
         openAddBrandZone() {
             this.editingBrandZoneIndex = null;
-            this.brandZoneForm = { brand_id: null, city_ids: [] };
+            this.brandZoneForm = { brand_id: null, brand_line_id: null, city_ids: [] };
+            this.brandZoneFormLines = [];
             this.showBrandZoneForm = true;
+        },
+        onBrandZoneBrandChange() {
+            this.brandZoneForm.brand_line_id = null;
+            this.brandZoneFormLines = [];
+            if (!this.brandZoneForm.brand_id) return;
+            const brandId = this.brandZoneForm.brand_id;
+            axios.get(this.$apiUrl + '/admin/brands/' + brandId + '/lines').then(r => {
+                // ignore a slow response for a brand that is no longer selected
+                if (this.brandZoneForm.brand_id !== brandId) return;
+                this.brandZoneFormLines = (r.data.data || []).filter(l => l.status == 1);
+            }).catch(() => {});
         },
         editBrandZoneRow(index) {
             this.editingBrandZoneIndex = index;
             const row = this.brandZoneRows[index];
-            this.brandZoneForm = { brand_id: row.brand_id, city_ids: [...row.city_ids] };
+            this.brandZoneForm = { brand_id: row.brand_id, brand_line_id: row.brand_line_id || null, city_ids: [...row.city_ids] };
+            // brand and line identify the row while editing, so only the zones change — just show the current line
+            this.brandZoneFormLines = row.brand_line_id ? [{ id: row.brand_line_id, name: row.brand_line_name }] : [];
             this.showBrandZoneForm = true;
         },
         saveBrandZoneRow() {
@@ -1872,12 +1901,22 @@ export default {
             if (!Array.isArray(this.brandZoneForm.city_ids) || !this.brandZoneForm.city_ids.length) {
                 return this.showError(__('select_zones') + ' ' + __('is_required'));
             }
+            const lineId = this.brandZoneForm.brand_line_id || null;
+            const duplicate = this.brandZoneRows.some((r, idx) => idx !== this.editingBrandZoneIndex
+                && String(r.brand_id) === String(this.brandZoneForm.brand_id)
+                && (r.brand_line_id || null) === lineId);
+            if (duplicate) {
+                return this.showError(__('this_distributor_is_already_mapped_to_that_line_of_this_brand'));
+            }
             const brand = this.brands.find(b => String(b.id) === String(this.brandZoneForm.brand_id));
+            const line = lineId ? this.brandZoneFormLines.find(l => l.id === lineId) : null;
             const cityIds = this.brandZoneForm.city_ids.map(String);
             const cities = this.cities.filter(c => cityIds.includes(String(c.id)));
             const row = {
                 brand_id: this.brandZoneForm.brand_id,
                 brand_name: brand ? brand.name : '',
+                brand_line_id: lineId,
+                brand_line_name: line ? line.name : '',
                 city_ids: cityIds,
                 cities,
             };
@@ -2667,7 +2706,7 @@ export default {
                 formData.append('pincode_id', this.pincode_id);
                 if (!this.isSellerRole) {
                     formData.append('brand_zone_mappings', JSON.stringify(
-                        this.brandZoneRows.map(r => ({ brand_id: r.brand_id, city_ids: r.city_ids }))
+                        this.brandZoneRows.map(r => ({ brand_id: r.brand_id, brand_line_id: r.brand_line_id || null, city_ids: r.city_ids }))
                     ));
                     formData.append('area_ids', JSON.stringify(this.area_ids));
                 }
@@ -2745,7 +2784,9 @@ export default {
                     // Then redirect after a short delay to ensure toast is visible
                     setTimeout(
                         function () {
-                            if (vm.isSellerRole) {
+                            if (vm.isSellerRole && vm.embedded) {
+                                vm.getSeller();      // stay on the Settings tab, show the saved values
+                            } else if (vm.isSellerRole) {
                                 vm.$router.push({ path: '/seller/profile' })
                             } else {
                                 vm.$router.push({ path: '/sellers' })

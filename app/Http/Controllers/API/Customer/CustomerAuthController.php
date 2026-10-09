@@ -613,19 +613,32 @@ class CustomerAuthController extends Controller
             Log::error('registerRetailer fan-out failed: ' . $e->getMessage());
         }
 
+        // The salesman needs this QR to find the retailer for verification, so it's created
+        // right at signup. Best-effort: a failure here must never break the registration —
+        // get_retailer_qr builds it on demand if it's missing.
+        $qr = ['qr_code' => (string) $user->id, 'qr_image_url' => null];
+        try {
+            $qr = $this->ensureRetailerQr($user);
+        } catch (\Throwable $e) {
+            Log::error('registerRetailer QR generate failed for user_id=' . $user->id . ': ' . $e->getMessage());
+        }
+
         return CommonHelper::responseWithData([
             'user'            => $user->load('retailerProfile.area'),
             'access_token'    => $accessToken,
+            'qr_code'         => $qr['qr_code'],
+            'qr_image_url'    => $qr['qr_image_url'],
             'message'         => __('registration_pending_verification'),
         ]);
     }
 
     /**
      * Sarthi: GET /api/customer/get_retailer_qr
-     * Backend-generated QR for the logged-in retailer. Available only after salesman
-     * verification (status approved/active) — per spec "retailer QR after approval".
+     * Backend-generated QR for the logged-in retailer. Available from the moment the account
+     * is created (status pending included): the salesman scans it to find the retailer and
+     * verify them, then keeps using it for assisted orders.
      * QR encodes the plain user_id, which is what POST /api/salesman/retailers/scan resolves.
-     * Image is generated once and cached on the public disk; pass regenerate=1 to force rebuild.
+     * Image is generated once (at signup) and cached on the public disk; pass regenerate=1 to force rebuild.
      */
     public function getRetailerQr(Request $request)
     {
@@ -634,31 +647,42 @@ class CustomerAuthController extends Controller
         if (!$profile) {
             return CommonHelper::responseError('retailer_not_found');
         }
-        if (!in_array($user->verification_status, ['approved', 'active'], true)) {
-            return CommonHelper::responseError('retailer_pending_verification');
-        }
 
-        $path = 'retailer_qr/' . $user->id . '.svg';
         try {
-            if ($request->boolean('regenerate') || !Storage::disk('public')->exists($path)) {
-                $svg = QrCode::format('svg')
-                    ->size(400)
-                    ->margin(1)
-                    ->errorCorrection('M')
-                    ->generate((string) $user->id);
-                Storage::disk('public')->put($path, $svg);
-            }
+            $qr = $this->ensureRetailerQr($user, $request->boolean('regenerate'));
         } catch (\Throwable $e) {
             Log::error('getRetailerQr generate failed for user_id=' . $user->id . ': ' . $e->getMessage());
             return CommonHelper::responseError('something_went_wrong');
         }
 
         return CommonHelper::responseWithData([
-            'qr_code'      => (string) $user->id,
-            'qr_image_url' => Storage::disk('public')->url($path),
+            'qr_code'      => $qr['qr_code'],
+            'qr_image_url' => $qr['qr_image_url'],
             'shop_name'    => $profile->shop_name,
             'party_name'   => $profile->party_name,
         ]);
+    }
+
+    /**
+     * Builds (once) and returns the retailer's QR image — shared by signup and get_retailer_qr
+     * so both always produce the same file. Throws if the image can't be generated or stored.
+     */
+    private function ensureRetailerQr(User $user, bool $regenerate = false): array
+    {
+        $path = 'retailer_qr/' . $user->id . '.svg';
+        if ($regenerate || !Storage::disk('public')->exists($path)) {
+            $svg = QrCode::format('svg')
+                ->size(400)
+                ->margin(1)
+                ->errorCorrection('M')
+                ->generate((string) $user->id);
+            Storage::disk('public')->put($path, $svg);
+        }
+
+        return [
+            'qr_code'      => (string) $user->id,
+            'qr_image_url' => Storage::disk('public')->url($path),
+        ];
     }
 
     /**

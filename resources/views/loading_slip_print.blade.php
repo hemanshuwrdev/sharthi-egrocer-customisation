@@ -580,9 +580,9 @@
 
                     <div class="udaan-meta-grid">
                         <span class="udaan-meta-label">Invoice ID:</span>
-                        {{-- The real distributor invoice number (same one the "Bill No." column on the first page shows).
-                             It is only assigned once the order is delivered and its invoice generated, so until then say so
-                             rather than printing a made-up INV/year/order-id number that would never match it. --}}
+                        {{-- The real distributor invoice number (same one the "Bill No." column on the first page shows),
+                             assigned when the loading slip is created. Slips made before that was added can still have
+                             orders without one, so say so rather than printing a made-up INV/year/order-id number. --}}
                         <span
                             class="udaan-meta-val">{{ $order->invoice_number ?: 'Pending (after delivery)' }}</span>
 

@@ -219,7 +219,7 @@ export default {
             paymentMethodOptions: [
                 { value: null, text: 'All Payment Methods' },
                 { value: 'cash', text: 'Cash' },
-                { value: 'upi', text: 'UPI' },
+                { value: 'upi', text: 'Bank' },
                 { value: 'card', text: 'Card' }
             ],
             storeOptions: [

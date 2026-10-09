@@ -1064,6 +1064,10 @@ class BasicApiController extends Controller
             if (floatval($seller->balance ?? 0) > 0) {
                 return CommonHelper::responseError('cannot_delete_account_with_balance');
             }
+            // Must run before the admin row is deleted, or a refused seller delete leaves a login-less seller.
+            if ($seller->hasOrderHistory()) {
+                return CommonHelper::responseError('seller_has_orders_cannot_delete');
+            }
             $admin = Admin::where('id', $seller_admin_id)->first();
             $admin->delete();
             $seller->delete();

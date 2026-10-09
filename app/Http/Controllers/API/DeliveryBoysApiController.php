@@ -47,7 +47,7 @@ class DeliveryBoysApiController extends Controller
         if (!$seller) {
             return true;
         }
-        return (int) $deliveryBoy->seller_id === (int) $seller->id;
+        return DeliveryBoy::where('id', $deliveryBoy->id)->forSeller($seller->id)->exists();
     }
 
     /**
@@ -92,7 +92,7 @@ class DeliveryBoysApiController extends Controller
         // platform. Admins (not tied to a seller) still see the full list.
         $seller = \App\Models\Seller::where('admin_id', auth()->id())->first();
         if ($seller) {
-            $query->where('seller_id', $seller->id);
+            $query->forSeller($seller->id);
         }
 
         if ($request->filled('filterStatus')) {
@@ -107,6 +107,9 @@ class DeliveryBoysApiController extends Controller
         $deliveryBoys = $query->get();
         foreach ($deliveryBoys as $db) {
             $db->email = $db->admin ? $db->admin->email : '';
+        }
+        if ($seller) {
+            DeliveryBoy::limitCashToSeller($deliveryBoys, $seller->id);
         }
 
         $deliveryBoysForResponse = $deliveryBoys->map(function (DeliveryBoy $db) {
@@ -166,9 +169,10 @@ class DeliveryBoysApiController extends Controller
                 'bank_name' => 'nullable',
                 'bank_account_number' => 'nullable',
                 'account_name' => 'nullable',
-                'city_ids' => 'required_without:city_id|array|min:1',
+                // Zones are optional: a distributor's drivers report directly to the distributor.
+                'city_ids' => 'nullable|array',
                 'city_ids.*' => 'integer|exists:cities,id',
-                'city_id' => 'required_without:city_ids',
+                'city_id' => 'nullable',
                 'driving_license' => 'nullable|file',
                 'national_identity_card' => 'nullable|file',
                 'bonus_percentage' => 'nullable|numeric'
@@ -237,7 +241,10 @@ class DeliveryBoysApiController extends Controller
             }
 
             $deliveryBoy->save(); // save files
-            $zoneOverlaps = $this->syncZones($deliveryBoy, $cityIds);
+            if ($sellerForDriver) {
+                $deliveryBoy->sellers()->syncWithoutDetaching([$sellerForDriver]);
+            }
+            $zoneOverlaps = !empty($cityIds) ? $this->syncZones($deliveryBoy, $cityIds) : [];
 
             /* Save Translation */
             $deliveryBoy->saveTranslation($request->language_id, [
@@ -412,6 +419,76 @@ class DeliveryBoysApiController extends Controller
         return $overlaps;
     }
 
+    /**
+     * Distributor adding a driver: is there already a driver with this mobile number (added by
+     * another distributor)? Returns just enough for the "is this the one?" confirmation.
+     */
+    public function lookupByMobile(Request $request)
+    {
+        $seller = Seller::where('admin_id', auth()->id())->first();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $mobile = trim((string) $request->mobile);
+        $deliveryBoy = $mobile === '' ? null : DeliveryBoy::where('mobile', $mobile)->first();
+        if (!$deliveryBoy) {
+            return CommonHelper::responseWithData(['found' => false]);
+        }
+
+        $alreadyLinked = DeliveryBoy::where('id', $deliveryBoy->id)->forSeller($seller->id)->exists();
+        $isActive = (int) $deliveryBoy->status === DeliveryBoy::$statusActive;
+
+        return CommonHelper::responseWithData([
+            'found' => true,
+            'already_linked' => $alreadyLinked,
+            'linkable' => $isActive && !$alreadyLinked,
+            'driver' => [
+                'id' => $deliveryBoy->id,
+                'name' => $deliveryBoy->name,
+                'mobile' => $deliveryBoy->mobile,
+                'country_code' => $deliveryBoy->country_code,
+                'address' => $deliveryBoy->address,
+                'status' => (int) $deliveryBoy->status,
+            ],
+        ]);
+    }
+
+    /**
+     * Link an existing driver (found by mobile number) to the calling distributor, so the same
+     * driver can deliver for several distributors.
+     */
+    public function linkToSeller(Request $request)
+    {
+        $seller = Seller::where('admin_id', auth()->id())->first();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $mobile = trim((string) $request->mobile);
+        $deliveryBoy = $mobile === '' ? null : DeliveryBoy::where('mobile', $mobile)->first();
+        if (!$deliveryBoy) {
+            return CommonHelper::responseError('delivery_boy_not_found');
+        }
+        if ((int) $deliveryBoy->status !== DeliveryBoy::$statusActive) {
+            return CommonHelper::responseError('this_driver_is_not_active_and_cannot_be_added');
+        }
+        if (DeliveryBoy::where('id', $deliveryBoy->id)->forSeller($seller->id)->exists()) {
+            return CommonHelper::responseError('this_driver_is_already_in_your_drivers');
+        }
+
+        $deliveryBoy->sellers()->attach($seller->id);
+        if (empty($deliveryBoy->seller_id)) {
+            $deliveryBoy->seller_id = $seller->id;
+            $deliveryBoy->save();
+        }
+
+        return CommonHelper::responseWithData([
+            'id' => $deliveryBoy->id,
+            'message' => __('driver_added_successfully'),
+        ]);
+    }
+
     public function updateStatus(Request $request)
     {
         if (isset($request->id)) {
@@ -451,6 +528,20 @@ class DeliveryBoysApiController extends Controller
             $blockReason = $this->deliveryBoyDeletionBlockReason($deliveryBoy->id);
             if ($blockReason) {
                 return CommonHelper::responseError(__($blockReason));
+            }
+
+            // A driver shared with other distributors is only unlinked from this one.
+            $seller = Seller::where('admin_id', auth()->id())->first();
+            if ($seller) {
+                $deliveryBoy->sellers()->detach($seller->id);
+                $remainingSellerId = DB::table('delivery_boy_sellers')->where('delivery_boy_id', $deliveryBoy->id)->value('seller_id');
+                if ($remainingSellerId) {
+                    if ((int) $deliveryBoy->seller_id === (int) $seller->id) {
+                        $deliveryBoy->seller_id = $remainingSellerId;
+                        $deliveryBoy->save();
+                    }
+                    return CommonHelper::responseSuccess('delivery_boy_deleted_successfully');
+                }
             }
 
             $deliveryBoy->delete();
@@ -502,7 +593,7 @@ class DeliveryBoysApiController extends Controller
                 ->orderBy('s.id', 'DESC');
 
             if ($seller) {
-                $query->where('d.seller_id', $seller->id);
+                $query->whereIn('d.id', DB::table('delivery_boy_sellers')->where('seller_id', $seller->id)->select('delivery_boy_id'));
             }
 
             if ($request->filled('startDate')) {

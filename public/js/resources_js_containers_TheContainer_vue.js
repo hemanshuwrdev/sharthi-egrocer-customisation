@@ -3582,7 +3582,7 @@ var render = function () {
                                 "router-link",
                                 {
                                   staticClass: "dropdown-item",
-                                  attrs: { to: "/seller/profile" },
+                                  attrs: { to: "/seller/setting?tab=profile" },
                                 },
                                 [
                                   _c("span", {

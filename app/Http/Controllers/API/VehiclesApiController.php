@@ -34,7 +34,7 @@ class VehiclesApiController extends Controller
         $offset = ($page - 1) * $limit;
         $filter = $request->input('filter', '');
 
-        $query = $this->scopeToSeller(Vehicle::orderBy('id', 'DESC'));
+        $query = $this->scopeToSeller(Vehicle::query());
 
         if ($filter) {
             $query->where(function ($q) use ($filter) {
@@ -44,10 +44,39 @@ class VehiclesApiController extends Controller
             });
         }
 
-        $total = $query->count();
-        $vehicles = $query->skip($offset)->take($limit)->get();
+        if (in_array((string) $request->input('status', ''), ['0', '1'], true)) {
+            $query->where('status', (int) $request->input('status'));
+        }
 
-        return CommonHelper::responseWithData($vehicles, $total);
+        $total = (clone $query)->count();
+
+        // loading_slips_count = every slip this vehicle was ever put on (a vehicle with any
+        // can't be deleted); active_trips_count = slips currently dispatched (status 1), i.e.
+        // the vehicle is on the road right now.
+        $vehicles = $query
+            ->withCount([
+                'loadingSlips',
+                'loadingSlips as active_trips_count' => fn ($q) => $q->where('status', 1),
+            ])
+            ->orderBy('id', 'DESC')
+            ->skip($offset)->take($limit)
+            ->get();
+
+        // Whole-fleet numbers for the page's stat cards — deliberately ignores the search /
+        // status filter and the current page, so they don't change as the list is browsed.
+        $fleet = fn () => $this->scopeToSeller(Vehicle::query());
+        $summary = [
+            'total'           => $fleet()->count(),
+            'active'          => $fleet()->where('status', 1)->count(),
+            'inactive'        => $fleet()->where('status', 0)->count(),
+            'on_route'        => $fleet()->whereHas('loadingSlips', fn ($q) => $q->where('status', 1))->count(),
+            'active_capacity' => round((float) $fleet()->where('status', 1)->sum('capacity'), 2),
+        ];
+
+        $payload = CommonHelper::responseWithData($vehicles, $total)->getData(true);
+        $payload['summary'] = $summary;
+
+        return response()->json($payload);
     }
 
     public function save(Request $request)

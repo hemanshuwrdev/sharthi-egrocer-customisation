@@ -6837,12 +6837,14 @@ var render = function () {
                                               [
                                                 _vm._v(
                                                   _vm._s(
-                                                    _vm.__(
-                                                      method
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                        method.slice(1)
-                                                    )
+                                                    method === "upi"
+                                                      ? _vm.__("Bank")
+                                                      : _vm.__(
+                                                          method
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            method.slice(1)
+                                                        )
                                                   )
                                                 ),
                                               ]

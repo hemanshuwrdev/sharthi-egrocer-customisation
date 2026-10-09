@@ -1210,6 +1210,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1221,6 +1234,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   mixins: [_mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_8__["default"]],
+  // embedded: shown inside the seller Settings page's "My Profile" tab, which already has a page
+  // title, so the form hides its own title/breadcrumb and stays on the tab after saving.
+  props: {
+    embedded: {
+      type: Boolean,
+      "default": false
+    }
+  },
   components: {
     VuejsDatatableFactory: vuejs_datatable__WEBPACK_IMPORTED_MODULE_1__.VuejsDatatableFactory,
     Select2: v_select2_component__WEBPACK_IMPORTED_MODULE_3__["default"],
@@ -1284,8 +1305,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       editingBrandZoneIndex: null,
       brandZoneForm: {
         brand_id: null,
+        brand_line_id: null,
         city_ids: []
       },
+      brandZoneFormLines: [],
       state: "",
       remark: "",
       bank_name: "",
@@ -1574,17 +1597,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
       return temp;
     },
-    availableBrandsForZoneForm: function availableBrandsForZoneForm() {
-      var _this2 = this;
-      var usedIds = this.brandZoneRows.filter(function (r, idx) {
-        return idx !== _this2.editingBrandZoneIndex;
-      }).map(function (r) {
-        return String(r.brand_id);
-      });
-      return this.brands.filter(function (b) {
-        return !usedIds.includes(String(b.id));
-      });
-    },
     assignedBrands: function assignedBrands() {
       if (!Array.isArray(this.brand_ids) || this.brand_ids.length === 0) {
         return [];
@@ -1670,11 +1682,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
      * Uses $nextTick to ensure refs are available after DOM updates.
      */
     triggerRefClick: function triggerRefClick(refName) {
-      var _this3 = this;
+      var _this2 = this;
       // Use $nextTick to ensure refs are available after Vue updates DOM
       this.$nextTick(function () {
         try {
-          var ref = _this3.$refs[refName];
+          var ref = _this2.$refs[refName];
 
           // If ref doesn't exist, exit silently
           if (!ref) {
@@ -1716,25 +1728,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }, this.$tinymceImageUploadOptions());
     },
     fetchActiveLanguages: function fetchActiveLanguages() {
-      var _this4 = this;
+      var _this3 = this;
       this.isLoadingLanguages = true;
       return axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/active_languages').then(function (response) {
         if (response.data.data) {
-          _this4.languages = response.data.data;
-          var defaultLang = _this4.languages.find(function (lang) {
+          _this3.languages = response.data.data;
+          var defaultLang = _this3.languages.find(function (lang) {
             return lang.is_default === 1;
           });
           if (defaultLang) {
-            _this4.defaultLanguageId = defaultLang.id;
+            _this3.defaultLanguageId = defaultLang.id;
           }
-          _this4.initializeTranslations();
-          _this4.isLoadingLanguages = false;
+          _this3.initializeTranslations();
+          _this3.isLoadingLanguages = false;
         } else {
-          _this4.isLoadingLanguages = false;
+          _this3.isLoadingLanguages = false;
         }
       })["catch"](function (error) {
         console.error('Error loading languages:', error);
-        _this4.isLoadingLanguages = false;
+        _this3.isLoadingLanguages = false;
       });
     },
     initializeTranslations: function initializeTranslations() {
@@ -1755,35 +1767,35 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return this.defaultLanguageId || (this.languages.length > 0 ? this.languages[0].id : null);
     },
     getCities: function getCities() {
-      var _this5 = this;
+      var _this4 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/cities').then(function (response) {
-        _this5.isLoading = false;
+        _this4.isLoading = false;
         var data = response.data;
         var raw = data.data;
         var list = raw && raw.cities ? raw.cities : raw;
-        _this5.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
+        _this4.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
       })["catch"](function (error) {
         var _error$request;
-        _this5.isLoading = false;
+        _this4.isLoading = false;
         if (error !== null && error !== void 0 && (_error$request = error.request) !== null && _error$request !== void 0 && _error$request.statusText) {
-          _this5.showError(error.request.statusText);
+          _this4.showError(error.request.statusText);
         } else if (error.message) {
-          _this5.showError(error.message);
+          _this4.showError(error.message);
         } else {
-          _this5.showError(__('something_went_wrong'));
+          _this4.showError(__('something_went_wrong'));
         }
       });
     },
     getAreas: function getAreas() {
-      var _this6 = this;
+      var _this5 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/areas').then(function (response) {
         var data = response.data;
         var raw = data.data;
         var list = raw && raw.areas ? raw.areas : raw;
-        _this6.areas = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
+        _this5.areas = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
       })["catch"](function () {
-        _this6.areas = [];
+        _this5.areas = [];
       });
     },
     handleCountryDropdownOutsideClick: function handleCountryDropdownOutsideClick(event) {
@@ -1792,48 +1804,48 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     getCountries: function getCountries() {
-      var _this7 = this;
+      var _this6 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/countries', {
         params: {
           limit: 250
         }
       }).then(function (response) {
-        _this7.countries = response.data.data || [];
-        if (!_this7.countries.some(function (c) {
-          return c.dial_code === _this7.country_code;
+        _this6.countries = response.data.data || [];
+        if (!_this6.countries.some(function (c) {
+          return c.dial_code === _this6.country_code;
         })) {
-          var india = _this7.countries.find(function (c) {
+          var india = _this6.countries.find(function (c) {
             return c.dial_code === '+91';
           });
-          if (india) _this7.country_code = india.dial_code;
+          if (india) _this6.country_code = india.dial_code;
         }
       })["catch"](function () {
-        _this7.countries = [];
+        _this6.countries = [];
       });
     },
     getZones: function getZones() {
-      var _this8 = this;
+      var _this7 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/loading_slips/zones').then(function (response) {
         var data = response.data;
-        _this8.zones = data.data && Array.isArray(data.data) ? data.data : [];
+        _this7.zones = data.data && Array.isArray(data.data) ? data.data : [];
       })["catch"](function () {
-        _this8.zones = [];
+        _this7.zones = [];
       });
     },
     toggleAddCityForm: function toggleAddCityForm() {
-      var _this9 = this;
+      var _this8 = this;
       this.showAddCityForm = !this.showAddCityForm;
       if (this.showAddCityForm) {
         this.newCity.zone = '';
         this.$nextTick(function () {
-          _this9.initCityMap();
+          _this8.initCityMap();
         });
       } else {
         this.resetNewCityForm();
       }
     },
     initCityMap: function initCityMap() {
-      var _this10 = this;
+      var _this9 = this;
       // cityMapRef is inside v-for (language tabs), so Vue gives us an array
       var mapRef = this.$refs.cityMapRef;
       if (!mapRef) return;
@@ -1863,22 +1875,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
         });
         drawingManager.setMap(map);
-        _this10.cityDrawingManager = drawingManager;
+        _this9.cityDrawingManager = drawingManager;
         google.maps.event.addListener(drawingManager, 'overlaycomplete', function (event) {
-          if (_this10.cityCurrentOverlay) {
-            _this10.cityCurrentOverlay.setMap(null);
+          if (_this9.cityCurrentOverlay) {
+            _this9.cityCurrentOverlay.setMap(null);
           }
-          _this10.cityCurrentOverlay = event.overlay;
+          _this9.cityCurrentOverlay = event.overlay;
           if (event.type === 'circle') {
-            _this10.cityGeolocationType = 'circle';
-            _this10.cityRadius = event.overlay.getRadius();
-            _this10.cityVertices = JSON.stringify([{
+            _this9.cityGeolocationType = 'circle';
+            _this9.cityRadius = event.overlay.getRadius();
+            _this9.cityVertices = JSON.stringify([{
               lat: event.overlay.getCenter().lat(),
               lng: event.overlay.getCenter().lng()
             }]);
           } else {
-            _this10.cityGeolocationType = 'polygon';
-            _this10.cityVertices = event.overlay.getPath().getArray();
+            _this9.cityGeolocationType = 'polygon';
+            _this9.cityVertices = event.overlay.getPath().getArray();
           }
         });
       });
@@ -1922,107 +1934,101 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       };
     },
     saveNewCity: function saveNewCity() {
-      var _this11 = this;
+      var _this10 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-        var _response$data, _response$data$data, formData, key, _this11$newCity$key, response, newId, zone, zoneExists, _error$response, _error$response$data, msg;
+        var _response$data, _response$data$data, formData, key, _this10$newCity$key, response, newId, zone, zoneExists, _error$response, _error$response$data, msg;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (_this11.newCity.name) {
+                if (_this10.newCity.zone) {
                   _context.next = 2;
                   break;
                 }
-                return _context.abrupt("return", _this11.showError(__('city_name') + ' ' + __('is_required')));
+                return _context.abrupt("return", _this10.showError(__('zone_name') + ' ' + __('is_required')));
               case 2:
-                if (_this11.newCity.zone) {
+                if (!(!_this10.newCity.name || !_this10.newCity.latitude || !_this10.newCity.longitude)) {
                   _context.next = 4;
                   break;
                 }
-                return _context.abrupt("return", _this11.showError(__('zone_name') + ' ' + __('is_required')));
+                return _context.abrupt("return", _this10.showError(__('please_search_and_select_city_on_map')));
               case 4:
-                if (!(!_this11.newCity.latitude || !_this11.newCity.longitude)) {
+                if (_this10.cityVertices) {
                   _context.next = 6;
                   break;
                 }
-                return _context.abrupt("return", _this11.showError(__('please_search_and_select_city_on_map')));
+                return _context.abrupt("return", _this10.showError(__('draw_city_boundary_on_map_required')));
               case 6:
-                if (_this11.cityVertices) {
-                  _context.next = 8;
-                  break;
-                }
-                return _context.abrupt("return", _this11.showError(__('draw_city_boundary_on_map_required')));
-              case 8:
-                _this11.isSavingCity = true;
-                _context.prev = 9;
+                _this10.isSavingCity = true;
+                _context.prev = 7;
                 formData = new FormData();
-                for (key in _this11.newCity) {
-                  formData.append(key, (_this11$newCity$key = _this11.newCity[key]) !== null && _this11$newCity$key !== void 0 ? _this11$newCity$key : '');
+                for (key in _this10.newCity) {
+                  formData.append(key, (_this10$newCity$key = _this10.newCity[key]) !== null && _this10$newCity$key !== void 0 ? _this10$newCity$key : '');
                 }
-                formData.append('language_id', _this11.defaultLanguageId || 1);
-                formData.append('zone', _this11.newCity.zone);
+                formData.append('language_id', _this10.defaultLanguageId || 1);
+                formData.append('zone', _this10.newCity.zone);
                 formData.append('time_to_travel', 0);
                 formData.append('min_amount_for_free_delivery', 0);
                 formData.append('delivery_charge_method', 'fixed_charge');
                 formData.append('fixed_charge', 0);
-                formData.append('geolocation_type', _this11.cityGeolocationType);
-                formData.append('radius', _this11.cityRadius || '');
-                if (_this11.cityGeolocationType === 'circle') {
-                  formData.append('boundary_points', _this11.cityVertices);
+                formData.append('geolocation_type', _this10.cityGeolocationType);
+                formData.append('radius', _this10.cityRadius || '');
+                if (_this10.cityGeolocationType === 'circle') {
+                  formData.append('boundary_points', _this10.cityVertices);
                 } else {
-                  formData.append('boundary_points', JSON.stringify(_this11.cityVertices));
+                  formData.append('boundary_points', JSON.stringify(_this10.cityVertices));
                 }
-                _context.next = 23;
-                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this11.$apiUrl + '/cities/save', formData);
-              case 23:
+                _context.next = 21;
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this10.$apiUrl + '/cities/save', formData);
+              case 21:
                 response = _context.sent;
                 newId = (_response$data = response.data) === null || _response$data === void 0 ? void 0 : (_response$data$data = _response$data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 if (newId) {
                   // Add to cities list so it's selectable in brand-zone assignment
-                  _this11.cities.push({
+                  _this10.cities.push({
                     id: newId,
-                    name: _this11.newCity.name,
-                    zone: _this11.newCity.zone
+                    name: _this10.newCity.name,
+                    zone: _this10.newCity.zone
                   });
-                  _this11.createdCityIds.push(String(newId));
+                  _this10.createdCityIds.push(String(newId));
 
                   // If zone is new, add it to zones list
-                  zone = _this11.newCity.zone;
-                  zoneExists = _this11.zones.find(function (z) {
+                  zone = _this10.newCity.zone;
+                  zoneExists = _this10.zones.find(function (z) {
                     return z.zone === zone;
                   });
                   if (!zoneExists) {
-                    _this11.zones.push({
+                    _this10.zones.push({
                       zone: zone,
                       city_count: 1
                     });
                   } else {
                     zoneExists.city_count = (zoneExists.city_count || 0) + 1;
                   }
-                  _this11.showMessage('success', __('city_saved_successfully'));
-                  _this11.resetNewCityForm();
-                  _this11.showAddCityForm = false;
-                  _this11.getCities();
+                  _this10.showMessage('success', __('city_saved_successfully'));
+                  _this10.resetNewCityForm();
+                  _this10.showAddCityForm = false;
+                  _this10.getCities();
                 } else {
-                  _this11.showError(__('something_went_wrong'));
+                  _this10.showError(__('something_went_wrong'));
                 }
-                _context.next = 32;
+                _context.next = 30;
                 break;
-              case 28:
-                _context.prev = 28;
-                _context.t0 = _context["catch"](9);
+              case 26:
+                _context.prev = 26;
+                _context.t0 = _context["catch"](7);
                 msg = ((_error$response = _context.t0.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || _context.t0.message || __('something_went_wrong');
-                _this11.showError(msg);
-              case 32:
-                _context.prev = 32;
-                _this11.isSavingCity = false;
-                return _context.finish(32);
-              case 35:
+                _this10.showError(msg);
+              case 30:
+                _context.prev = 30;
+                _this10.isSavingCity = false;
+                return _context.finish(30);
+              case 33:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[9, 28, 32, 35]]);
+        }, _callee, null, [[7, 26, 30, 33]]);
       }))();
     },
     resetNewCityForm: function resetNewCityForm() {
@@ -2053,7 +2059,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.clearCityDrawing();
     },
     loadBrandZoneMappings: function loadBrandZoneMappings() {
-      var _this12 = this;
+      var _this11 = this;
       if (!this.id) return;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/admin/brand-mappings', {
         params: {
@@ -2062,23 +2068,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       }).then(function (response) {
         var rows = response.data && response.data.data ? response.data.data : [];
-        _this12.brandZoneRows = rows.map(function (r) {
+        _this11.brandZoneRows = rows.map(function (r) {
           return {
             brand_id: r.brand_id,
             brand_name: r.brand ? r.brand.name : '',
+            brand_line_id: r.brand_line_id || null,
+            brand_line_name: r.brand_line_id ? r.brand_line_name : '',
             city_ids: (r.city_ids || []).map(String),
             cities: r.cities || []
           };
         });
-        _this12.syncDerivedFromBrandZoneRows();
+        _this11.syncDerivedFromBrandZoneRows();
       })["catch"](function () {
-        _this12.brandZoneRows = [];
+        _this11.brandZoneRows = [];
       });
     },
     syncDerivedFromBrandZoneRows: function syncDerivedFromBrandZoneRows() {
-      this.brand_ids = this.brandZoneRows.map(function (r) {
+      this.brand_ids = _toConsumableArray(new Set(this.brandZoneRows.map(function (r) {
         return String(r.brand_id);
-      });
+      })));
       var cityIds = new Set();
       this.brandZoneRows.forEach(function (r) {
         return r.city_ids.forEach(function (id) {
@@ -2091,17 +2099,39 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.editingBrandZoneIndex = null;
       this.brandZoneForm = {
         brand_id: null,
+        brand_line_id: null,
         city_ids: []
       };
+      this.brandZoneFormLines = [];
       this.showBrandZoneForm = true;
+    },
+    onBrandZoneBrandChange: function onBrandZoneBrandChange() {
+      var _this12 = this;
+      this.brandZoneForm.brand_line_id = null;
+      this.brandZoneFormLines = [];
+      if (!this.brandZoneForm.brand_id) return;
+      var brandId = this.brandZoneForm.brand_id;
+      axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/admin/brands/' + brandId + '/lines').then(function (r) {
+        // ignore a slow response for a brand that is no longer selected
+        if (_this12.brandZoneForm.brand_id !== brandId) return;
+        _this12.brandZoneFormLines = (r.data.data || []).filter(function (l) {
+          return l.status == 1;
+        });
+      })["catch"](function () {});
     },
     editBrandZoneRow: function editBrandZoneRow(index) {
       this.editingBrandZoneIndex = index;
       var row = this.brandZoneRows[index];
       this.brandZoneForm = {
         brand_id: row.brand_id,
+        brand_line_id: row.brand_line_id || null,
         city_ids: _toConsumableArray(row.city_ids)
       };
+      // brand and line identify the row while editing, so only the zones change — just show the current line
+      this.brandZoneFormLines = row.brand_line_id ? [{
+        id: row.brand_line_id,
+        name: row.brand_line_name
+      }] : [];
       this.showBrandZoneForm = true;
     },
     saveBrandZoneRow: function saveBrandZoneRow() {
@@ -2112,9 +2142,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (!Array.isArray(this.brandZoneForm.city_ids) || !this.brandZoneForm.city_ids.length) {
         return this.showError(__('select_zones') + ' ' + __('is_required'));
       }
+      var lineId = this.brandZoneForm.brand_line_id || null;
+      var duplicate = this.brandZoneRows.some(function (r, idx) {
+        return idx !== _this13.editingBrandZoneIndex && String(r.brand_id) === String(_this13.brandZoneForm.brand_id) && (r.brand_line_id || null) === lineId;
+      });
+      if (duplicate) {
+        return this.showError(__('this_distributor_is_already_mapped_to_that_line_of_this_brand'));
+      }
       var brand = this.brands.find(function (b) {
         return String(b.id) === String(_this13.brandZoneForm.brand_id);
       });
+      var line = lineId ? this.brandZoneFormLines.find(function (l) {
+        return l.id === lineId;
+      }) : null;
       var cityIds = this.brandZoneForm.city_ids.map(String);
       var cities = this.cities.filter(function (c) {
         return cityIds.includes(String(c.id));
@@ -2122,6 +2162,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var row = {
         brand_id: this.brandZoneForm.brand_id,
         brand_name: brand ? brand.name : '',
+        brand_line_id: lineId,
+        brand_line_name: line ? line.name : '',
         city_ids: cityIds,
         cities: cities
       };
@@ -3000,6 +3042,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                     formData.append('brand_zone_mappings', JSON.stringify(_this24.brandZoneRows.map(function (r) {
                       return {
                         brand_id: r.brand_id,
+                        brand_line_id: r.brand_line_id || null,
                         city_ids: r.city_ids
                       };
                     })));
@@ -3091,7 +3134,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
         // Then redirect after a short delay to ensure toast is visible
         setTimeout(function () {
-          if (vm.isSellerRole) {
+          if (vm.isSellerRole && vm.embedded) {
+            vm.getSeller(); // stay on the Settings tab, show the saved values
+          } else if (vm.isSellerRole) {
             vm.$router.push({
               path: '/seller/profile'
             });
@@ -3697,111 +3742,127 @@ var render = function () {
     "div",
     [
       _c("div", { staticClass: "page-heading" }, [
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-            _vm.isSellerRole
-              ? _c("h3", [
-                  _vm._v(
-                    "\n                    " +
-                      _vm._s(_vm.__("my_profile")) +
-                      "\n                "
-                  ),
-                ])
-              : _c(
-                  "h3",
-                  [
-                    _vm.id
-                      ? [_vm._v(_vm._s(_vm.__("edit")))]
-                      : [_vm._v(_vm._s(_vm.__("add")))],
-                    _vm._v(
-                      "\n                    " +
-                        _vm._s(_vm.__("seller")) +
-                        "\n                "
-                    ),
-                  ],
-                  2
-                ),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-            _c(
-              "nav",
-              {
-                staticClass: "breadcrumb-header float-start float-lg-end",
-                attrs: { "aria-label": "breadcrumb" },
-              },
-              [
-                _c(
-                  "ol",
-                  { staticClass: "breadcrumb" },
-                  [
-                    _c(
-                      "li",
-                      { staticClass: "breadcrumb-item" },
-                      [
-                        _vm.isSellerRole
-                          ? _c("router-link", { attrs: { to: "/seller" } }, [
-                              _vm._v(_vm._s(_vm.__("dashboard"))),
-                            ])
-                          : _c("router-link", { attrs: { to: "/dashboard" } }, [
-                              _vm._v(_vm._s(_vm.__("dashboard"))),
-                            ]),
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _vm.isSellerRole
-                      ? [
-                          _c(
-                            "li",
-                            {
-                              staticClass: "breadcrumb-item",
-                              attrs: { "aria-current": "page" },
-                            },
-                            [_vm._v(_vm._s(_vm.__("my_profile")))]
+        !_vm.embedded
+          ? _c("div", { staticClass: "row" }, [
+              _c(
+                "div",
+                { staticClass: "col-12 col-md-6 order-md-1 order-last" },
+                [
+                  _vm.isSellerRole
+                    ? _c("h3", [
+                        _vm._v(
+                          "\n                    " +
+                            _vm._s(_vm.__("my_profile")) +
+                            "\n                "
+                        ),
+                      ])
+                    : _c(
+                        "h3",
+                        [
+                          _vm.id
+                            ? [_vm._v(_vm._s(_vm.__("edit")))]
+                            : [_vm._v(_vm._s(_vm.__("add")))],
+                          _vm._v(
+                            "\n                    " +
+                              _vm._s(_vm.__("seller")) +
+                              "\n                "
                           ),
-                        ]
-                      : [
+                        ],
+                        2
+                      ),
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "col-12 col-md-6 order-md-2 order-first" },
+                [
+                  _c(
+                    "nav",
+                    {
+                      staticClass: "breadcrumb-header float-start float-lg-end",
+                      attrs: { "aria-label": "breadcrumb" },
+                    },
+                    [
+                      _c(
+                        "ol",
+                        { staticClass: "breadcrumb" },
+                        [
                           _c(
                             "li",
-                            {
-                              staticClass: "breadcrumb-item",
-                              attrs: { "aria-current": "page" },
-                            },
+                            { staticClass: "breadcrumb-item" },
                             [
-                              _c("router-link", { attrs: { to: "/sellers" } }, [
-                                _vm._v(_vm._s(_vm.__("manage_sellers"))),
-                              ]),
+                              _vm.isSellerRole
+                                ? _c(
+                                    "router-link",
+                                    { attrs: { to: "/seller" } },
+                                    [_vm._v(_vm._s(_vm.__("dashboard")))]
+                                  )
+                                : _c(
+                                    "router-link",
+                                    { attrs: { to: "/dashboard" } },
+                                    [_vm._v(_vm._s(_vm.__("dashboard")))]
+                                  ),
                             ],
                             1
                           ),
                           _vm._v(" "),
-                          _c(
-                            "li",
-                            {
-                              staticClass: "breadcrumb-item active",
-                              attrs: { "aria-current": "page" },
-                            },
-                            [
-                              _vm.id
-                                ? [_vm._v(_vm._s(_vm.__("edit")))]
-                                : [_vm._v(_vm._s(_vm.__("add")))],
-                              _vm._v(
-                                "\n                                " +
-                                  _vm._s(_vm.__("seller")) +
-                                  "\n                            "
-                              ),
-                            ],
-                            2
-                          ),
+                          _vm.isSellerRole
+                            ? [
+                                _c(
+                                  "li",
+                                  {
+                                    staticClass: "breadcrumb-item",
+                                    attrs: { "aria-current": "page" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("my_profile")))]
+                                ),
+                              ]
+                            : [
+                                _c(
+                                  "li",
+                                  {
+                                    staticClass: "breadcrumb-item",
+                                    attrs: { "aria-current": "page" },
+                                  },
+                                  [
+                                    _c(
+                                      "router-link",
+                                      { attrs: { to: "/sellers" } },
+                                      [_vm._v(_vm._s(_vm.__("manage_sellers")))]
+                                    ),
+                                  ],
+                                  1
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "li",
+                                  {
+                                    staticClass: "breadcrumb-item active",
+                                    attrs: { "aria-current": "page" },
+                                  },
+                                  [
+                                    _vm.id
+                                      ? [_vm._v(_vm._s(_vm.__("edit")))]
+                                      : [_vm._v(_vm._s(_vm.__("add")))],
+                                    _vm._v(
+                                      "\n                                " +
+                                        _vm._s(_vm.__("seller")) +
+                                        "\n                            "
+                                    ),
+                                  ],
+                                  2
+                                ),
+                              ],
                         ],
-                  ],
-                  2
-                ),
-              ]
-            ),
-          ]),
-        ]),
+                        2
+                      ),
+                    ]
+                  ),
+                ]
+              ),
+            ])
+          : _vm._e(),
         _vm._v(" "),
         _c("div", { staticClass: "row" }, [
           _c("div", { staticClass: "col-12 col-md-12 order-md-1 order-last" }, [
@@ -6605,7 +6666,11 @@ var render = function () {
                                                                       return _c(
                                                                         "div",
                                                                         {
-                                                                          key: row.brand_id,
+                                                                          key:
+                                                                            row.brand_id +
+                                                                            "_" +
+                                                                            (row.brand_line_id ||
+                                                                              "all"),
                                                                           staticClass:
                                                                             "d-flex align-items-start justify-content-between border rounded p-2 mb-2",
                                                                         },
@@ -6620,6 +6685,33 @@ var render = function () {
                                                                                     _vm._s(
                                                                                       row.brand_name
                                                                                     )
+                                                                                  ),
+                                                                                ]
+                                                                              ),
+                                                                              _vm._v(
+                                                                                " "
+                                                                              ),
+                                                                              _c(
+                                                                                "span",
+                                                                                {
+                                                                                  staticClass:
+                                                                                    "badge ml-1",
+                                                                                  class:
+                                                                                    row.brand_line_id
+                                                                                      ? "bg-secondary"
+                                                                                      : "bg-light text-dark border",
+                                                                                },
+                                                                                [
+                                                                                  _vm._v(
+                                                                                    "\n                                                                        " +
+                                                                                      _vm._s(
+                                                                                        row.brand_line_id
+                                                                                          ? row.brand_line_name
+                                                                                          : _vm.__(
+                                                                                              "all_lines"
+                                                                                            )
+                                                                                      ) +
+                                                                                      "\n                                                                    "
                                                                                   ),
                                                                                 ]
                                                                               ),
@@ -6801,7 +6893,7 @@ var render = function () {
                                                                                 "div",
                                                                                 {
                                                                                   staticClass:
-                                                                                    "form-group col-md-5",
+                                                                                    "form-group col-md-4",
                                                                                 },
                                                                                 [
                                                                                   _c(
@@ -6858,43 +6950,46 @@ var render = function () {
                                                                                         },
                                                                                       on: {
                                                                                         change:
-                                                                                          function (
-                                                                                            $event
-                                                                                          ) {
-                                                                                            var $$selectedVal =
-                                                                                              Array.prototype.filter
-                                                                                                .call(
-                                                                                                  $event
-                                                                                                    .target
-                                                                                                    .options,
-                                                                                                  function (
-                                                                                                    o
-                                                                                                  ) {
-                                                                                                    return o.selected
-                                                                                                  }
-                                                                                                )
-                                                                                                .map(
-                                                                                                  function (
-                                                                                                    o
-                                                                                                  ) {
-                                                                                                    var val =
-                                                                                                      "_value" in
-                                                                                                      o
-                                                                                                        ? o._value
-                                                                                                        : o.value
-                                                                                                    return val
-                                                                                                  }
-                                                                                                )
-                                                                                            _vm.$set(
-                                                                                              _vm.brandZoneForm,
-                                                                                              "brand_id",
+                                                                                          [
+                                                                                            function (
                                                                                               $event
-                                                                                                .target
-                                                                                                .multiple
-                                                                                                ? $$selectedVal
-                                                                                                : $$selectedVal[0]
-                                                                                            )
-                                                                                          },
+                                                                                            ) {
+                                                                                              var $$selectedVal =
+                                                                                                Array.prototype.filter
+                                                                                                  .call(
+                                                                                                    $event
+                                                                                                      .target
+                                                                                                      .options,
+                                                                                                    function (
+                                                                                                      o
+                                                                                                    ) {
+                                                                                                      return o.selected
+                                                                                                    }
+                                                                                                  )
+                                                                                                  .map(
+                                                                                                    function (
+                                                                                                      o
+                                                                                                    ) {
+                                                                                                      var val =
+                                                                                                        "_value" in
+                                                                                                        o
+                                                                                                          ? o._value
+                                                                                                          : o.value
+                                                                                                      return val
+                                                                                                    }
+                                                                                                  )
+                                                                                              _vm.$set(
+                                                                                                _vm.brandZoneForm,
+                                                                                                "brand_id",
+                                                                                                $event
+                                                                                                  .target
+                                                                                                  .multiple
+                                                                                                  ? $$selectedVal
+                                                                                                  : $$selectedVal[0]
+                                                                                              )
+                                                                                            },
+                                                                                            _vm.onBrandZoneBrandChange,
+                                                                                          ],
                                                                                       },
                                                                                     },
                                                                                     [
@@ -6923,7 +7018,7 @@ var render = function () {
                                                                                         " "
                                                                                       ),
                                                                                       _vm._l(
-                                                                                        _vm.availableBrandsForZoneForm,
+                                                                                        _vm.brands,
                                                                                         function (
                                                                                           b
                                                                                         ) {
@@ -6961,7 +7056,156 @@ var render = function () {
                                                                                 "div",
                                                                                 {
                                                                                   staticClass:
-                                                                                    "form-group col-md-7",
+                                                                                    "form-group col-md-3",
+                                                                                },
+                                                                                [
+                                                                                  _c(
+                                                                                    "label",
+                                                                                    [
+                                                                                      _vm._v(
+                                                                                        _vm._s(
+                                                                                          _vm.__(
+                                                                                            "line"
+                                                                                          )
+                                                                                        )
+                                                                                      ),
+                                                                                    ]
+                                                                                  ),
+                                                                                  _vm._v(
+                                                                                    " "
+                                                                                  ),
+                                                                                  _c(
+                                                                                    "select",
+                                                                                    {
+                                                                                      directives:
+                                                                                        [
+                                                                                          {
+                                                                                            name: "model",
+                                                                                            rawName:
+                                                                                              "v-model",
+                                                                                            value:
+                                                                                              _vm
+                                                                                                .brandZoneForm
+                                                                                                .brand_line_id,
+                                                                                            expression:
+                                                                                              "brandZoneForm.brand_line_id",
+                                                                                          },
+                                                                                        ],
+                                                                                      staticClass:
+                                                                                        "form-control",
+                                                                                      attrs:
+                                                                                        {
+                                                                                          disabled:
+                                                                                            !_vm
+                                                                                              .brandZoneForm
+                                                                                              .brand_id ||
+                                                                                            _vm.editingBrandZoneIndex !==
+                                                                                              null,
+                                                                                        },
+                                                                                      on: {
+                                                                                        change:
+                                                                                          function (
+                                                                                            $event
+                                                                                          ) {
+                                                                                            var $$selectedVal =
+                                                                                              Array.prototype.filter
+                                                                                                .call(
+                                                                                                  $event
+                                                                                                    .target
+                                                                                                    .options,
+                                                                                                  function (
+                                                                                                    o
+                                                                                                  ) {
+                                                                                                    return o.selected
+                                                                                                  }
+                                                                                                )
+                                                                                                .map(
+                                                                                                  function (
+                                                                                                    o
+                                                                                                  ) {
+                                                                                                    var val =
+                                                                                                      "_value" in
+                                                                                                      o
+                                                                                                        ? o._value
+                                                                                                        : o.value
+                                                                                                    return val
+                                                                                                  }
+                                                                                                )
+                                                                                            _vm.$set(
+                                                                                              _vm.brandZoneForm,
+                                                                                              "brand_line_id",
+                                                                                              $event
+                                                                                                .target
+                                                                                                .multiple
+                                                                                                ? $$selectedVal
+                                                                                                : $$selectedVal[0]
+                                                                                            )
+                                                                                          },
+                                                                                      },
+                                                                                    },
+                                                                                    [
+                                                                                      _c(
+                                                                                        "option",
+                                                                                        {
+                                                                                          domProps:
+                                                                                            {
+                                                                                              value:
+                                                                                                null,
+                                                                                            },
+                                                                                        },
+                                                                                        [
+                                                                                          _vm._v(
+                                                                                            _vm._s(
+                                                                                              _vm.__(
+                                                                                                "all_lines"
+                                                                                              )
+                                                                                            )
+                                                                                          ),
+                                                                                        ]
+                                                                                      ),
+                                                                                      _vm._v(
+                                                                                        " "
+                                                                                      ),
+                                                                                      _vm._l(
+                                                                                        _vm.brandZoneFormLines,
+                                                                                        function (
+                                                                                          l
+                                                                                        ) {
+                                                                                          return _c(
+                                                                                            "option",
+                                                                                            {
+                                                                                              key: l.id,
+                                                                                              domProps:
+                                                                                                {
+                                                                                                  value:
+                                                                                                    l.id,
+                                                                                                },
+                                                                                            },
+                                                                                            [
+                                                                                              _vm._v(
+                                                                                                "\n                                                                                " +
+                                                                                                  _vm._s(
+                                                                                                    l.name
+                                                                                                  ) +
+                                                                                                  "\n                                                                            "
+                                                                                              ),
+                                                                                            ]
+                                                                                          )
+                                                                                        }
+                                                                                      ),
+                                                                                    ],
+                                                                                    2
+                                                                                  ),
+                                                                                ]
+                                                                              ),
+                                                                              _vm._v(
+                                                                                " "
+                                                                              ),
+                                                                              _c(
+                                                                                "div",
+                                                                                {
+                                                                                  staticClass:
+                                                                                    "form-group col-md-5",
                                                                                 },
                                                                                 [
                                                                                   _c(
@@ -7282,6 +7526,18 @@ var render = function () {
                                                                                       "search_location"
                                                                                     )
                                                                                   )
+                                                                                ),
+                                                                                _c(
+                                                                                  "i",
+                                                                                  {
+                                                                                    staticClass:
+                                                                                      "text-danger",
+                                                                                  },
+                                                                                  [
+                                                                                    _vm._v(
+                                                                                      "*"
+                                                                                    ),
+                                                                                  ]
                                                                                 ),
                                                                               ]
                                                                             ),

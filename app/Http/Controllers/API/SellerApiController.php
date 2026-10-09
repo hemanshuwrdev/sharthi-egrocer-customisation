@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Models\Area;
 use App\Models\Brand;
 use App\Models\BrandDistributorMapping;
+use App\Models\BrandLine;
 use App\Models\City;
 use App\Models\DistributorArea;
 use App\Models\OrderItem;
@@ -139,7 +140,7 @@ class SellerApiController extends Controller
             return CommonHelper::responseError('Please assign at least one brand to a zone');
         }
         foreach ($mappings as $mapping) {
-            $conflict = $this->getBrandCityConflict($mapping['brand_id'], $mapping['city_ids'], null);
+            $conflict = $this->validateBrandZoneMapping($mapping, null);
             if ($conflict) {
                 return CommonHelper::responseError($conflict);
             }
@@ -407,7 +408,7 @@ class SellerApiController extends Controller
                         return CommonHelper::responseError('Please assign at least one brand to a zone');
                     }
                     foreach ($mappings as $mapping) {
-                        $conflict = $this->getBrandCityConflict($mapping['brand_id'], $mapping['city_ids'], $record->id);
+                        $conflict = $this->validateBrandZoneMapping($mapping, $record->id);
                         if ($conflict) {
                             return CommonHelper::responseError($conflict);
                         }
@@ -766,6 +767,10 @@ class SellerApiController extends Controller
         if (isset($request->id)) {
             $seller = Seller::find($request->id);
             if ($seller) {
+                // Check before touching any files — deleting a seller with orders orphans them.
+                if ($seller->hasOrderHistory()) {
+                    return CommonHelper::responseError('seller_has_orders_cannot_delete');
+                }
                 @Storage::disk('public')->delete($seller->logo);
                 @Storage::disk('public')->delete($seller->national_identity_card);
                 @Storage::disk('public')->delete($seller->address_proof);
@@ -850,7 +855,9 @@ class SellerApiController extends Controller
 
     /**
      * Parse the 'brand_zone_mappings' request field (JSON string or array) of
-     * [{brand_id, city_ids: []}, ...] rows into a clean, deduped array.
+     * [{brand_id, brand_line_id?, city_ids: []}, ...] rows into a clean array, one entry per
+     * (brand, line) with its cities merged. brand_line_id null/absent = "All Lines".
+     * 'line_aware' records whether the client sent brand_line_id at all (see syncBrandZoneMappings()).
      */
     private function parseBrandZoneMappings($raw)
     {
@@ -865,72 +872,108 @@ class SellerApiController extends Controller
         $out = [];
         foreach ($raw as $row) {
             $brandId = (int) ($row['brand_id'] ?? 0);
+            $lineId = (int) ($row['brand_line_id'] ?? 0) ?: null;
             $cityIds = collect($row['city_ids'] ?? [])
                 ->map(fn($id) => (int) $id)->filter(fn($id) => $id > 0)->unique()->values()->all();
-            if ($brandId && $cityIds) {
-                $out[] = ['brand_id' => $brandId, 'city_ids' => $cityIds];
+            if (!$brandId || !$cityIds) {
+                continue;
             }
+
+            $key = $brandId . '_' . ($lineId ?? 'all');
+            if (isset($out[$key])) {
+                $out[$key]['city_ids'] = array_values(array_unique(array_merge($out[$key]['city_ids'], $cityIds)));
+                continue;
+            }
+            $out[$key] = [
+                'brand_id' => $brandId,
+                'brand_line_id' => $lineId,
+                'city_ids' => $cityIds,
+                'line_aware' => is_array($row) && array_key_exists('brand_line_id', $row),
+            ];
         }
-        return $out;
+        return array_values($out);
     }
 
     /**
-     * Check whether $brandId is already mapped to a DIFFERENT seller in any of $cityIds,
-     * for a brand that does not allow overlap. Uses the same conflict rule as the dedicated
-     * Brand Distributor Mappings screen (BrandDistributorMapping::findConflict), so a
-     * line-specific mapping made there is correctly seen here too — this screen only ever
-     * writes "All Lines" (brand_line_id = NULL) rows (see syncBrandZoneMappings() below),
-     * but must still check against existing line-specific rows, not just other "All Lines" ones.
+     * Validate one parsed brand/line/zones row: the line must belong to the brand, and the
+     * brand+line must not already be mapped to another seller in one of the zones.
+     * Returns an error message, or null when the row is fine.
      */
-    private function getBrandCityConflict($brandId, array $cityIds, $excludeSellerId)
+    private function validateBrandZoneMapping(array $mapping, $excludeSellerId)
+    {
+        $lineId = $mapping['brand_line_id'];
+        if ($lineId && !BrandLine::where('id', $lineId)->where('brand_id', $mapping['brand_id'])->exists()) {
+            return __('brand_line_does_not_belong_to_selected_brand');
+        }
+
+        return $this->getBrandCityConflict($mapping['brand_id'], $lineId, $mapping['city_ids'], $excludeSellerId);
+    }
+
+    /**
+     * Check whether $brandId (optionally scoped to $lineId, null = "All Lines") is already mapped
+     * to a DIFFERENT seller in any of $cityIds, for a brand that does not allow overlap. Uses the
+     * same conflict rule as the dedicated Brand Distributor Mappings screen
+     * (BrandDistributorMapping::findConflict), including its per-line overrides.
+     */
+    private function getBrandCityConflict($brandId, $lineId, array $cityIds, $excludeSellerId)
     {
         $brand = Brand::find($brandId);
         if (!$brand || $brand->is_overlap_allowed) {
             return null;
         }
 
-        $conflict = BrandDistributorMapping::findConflict($brandId, null, $cityIds, $excludeSellerId);
+        $conflict = BrandDistributorMapping::findConflict($brandId, $lineId, $cityIds, $excludeSellerId);
         if (!$conflict) {
             return null;
         }
 
         $cityName = $conflict->city->name ?? $conflict->city_id;
-        return "{$brand->name} is already assigned to another distributor in {$cityName}";
+        $lineName = $lineId ? (BrandLine::find($lineId)?->name) : null;
+        $label = $lineName ? "{$brand->name} / {$lineName}" : $brand->name;
+        return "{$label} is already assigned to another distributor in {$cityName}";
     }
 
     /**
      * Sync brand_distributor_mappings rows for this seller to exactly match the submitted
-     * per-brand zone rows. Each brand keeps its own independent set of cities (unlike the
-     * old flat brand_ids x city_ids cross product). Assumes conflicts were already checked.
+     * per-(brand, line) zone rows. Each brand/line keeps its own independent set of cities.
+     * Assumes conflicts were already checked.
+     *
+     * Clients that don't send brand_line_id (older forms) only ever manage "All Lines"
+     * (brand_line_id = NULL) rows: line-specific mappings are then left untouched, as they are
+     * owned by the dedicated Brand Distributor Mappings screen.
      */
     private function syncBrandZoneMappings(Seller $seller, array $mappings)
     {
-        $keptBrandIds = array_column($mappings, 'brand_id');
+        $manageLines = collect($mappings)->contains('line_aware', true);
+        $groupKey = fn($brandId, $lineId) => $brandId . '_' . ($lineId ?? 'all');
+        $keptKeys = array_map(fn($m) => $groupKey($m['brand_id'], $m['brand_line_id']), $mappings);
 
-        // This form only ever manages "All Lines" (brand_line_id = NULL) mappings.
-        // Line-specific mappings are owned by the dedicated Brand Distributor Mappings
-        // screen and must never be deleted or recreated from here.
-        // Drop mappings for brands no longer assigned at all
-        BrandDistributorMapping::where('seller_id', $seller->id)
-            ->whereNull('brand_line_id')
-            ->whereNotIn('brand_id', $keptBrandIds ?: [0])
-            ->delete();
+        // Drop brand/line groups that are no longer assigned at all
+        $staleIds = BrandDistributorMapping::where('seller_id', $seller->id)
+            ->when(!$manageLines, fn($q) => $q->whereNull('brand_line_id'))
+            ->get(['id', 'brand_id', 'brand_line_id'])
+            ->reject(fn($row) => in_array($groupKey($row->brand_id, $row->brand_line_id), $keptKeys, true))
+            ->pluck('id');
+        if ($staleIds->isNotEmpty()) {
+            BrandDistributorMapping::whereIn('id', $staleIds)->delete();
+        }
 
         foreach ($mappings as $mapping) {
             $brandId = $mapping['brand_id'];
+            $lineId = $mapping['brand_line_id'];
             $cityIds = $mapping['city_ids'];
 
-            // Drop cities no longer assigned to this brand for this seller
+            // Drop cities no longer assigned to this brand/line for this seller
             BrandDistributorMapping::where('seller_id', $seller->id)
                 ->where('brand_id', $brandId)
-                ->whereNull('brand_line_id')
+                ->where('brand_line_id', $lineId)
                 ->whereNotIn('city_id', $cityIds ?: [0])
                 ->delete();
 
             foreach ($cityIds as $cityId) {
                 BrandDistributorMapping::firstOrCreate([
                     'brand_id' => $brandId,
-                    'brand_line_id' => null,
+                    'brand_line_id' => $lineId,
                     'seller_id' => $seller->id,
                     'city_id' => $cityId,
                 ]);

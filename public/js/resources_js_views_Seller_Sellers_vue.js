@@ -406,6 +406,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           axios.post(_this6.$apiUrl + '/sellers/delete', postData).then(function (response) {
             _this6.isLoading = false;
             var data = response.data;
+            if (data.status !== 1) {
+              _this6.showError(data.message);
+              return;
+            }
             _this6.records.splice(index, 1);
             _this6.showMessage('success', data.message);
           });

@@ -657,6 +657,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('receipts/pdc/export_csv', [\App\Http\Controllers\SellerController::class, 'exportPdcReceiptCsv']);
         Route::get('products/export_xlsx', [\App\Http\Controllers\SellerController::class, 'exportProductMasterXlsx']);
         Route::get('credit-notes/export_csv', [\App\Http\Controllers\SellerController::class, 'exportCreditNotesCsv']);
+        Route::get('credit-notes/preview', [\App\Http\Controllers\SellerController::class, 'previewCreditNotes']);
         Route::get('self_pickup_orders', [\App\Http\Controllers\SellerController::class, 'getSelfPickupOrders']);
         Route::post('update_self_pickup_status', [\App\Http\Controllers\API\OrdersApiController::class, 'updateSelfPickupOrderStatus'])->name('orders.update_self_pickup_status');
 
@@ -702,6 +703,8 @@ Route::middleware('auth:api')->group(function () {
             Route::post('save', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'save'])->name('seller.delivery_boys.save');
             Route::post('update', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'update'])->name('seller.delivery_boys.update');
             Route::post('delete', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'delete'])->name('seller.delivery_boys.delete');
+            Route::post('lookup', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'lookupByMobile'])->name('seller.delivery_boys.lookup');
+            Route::post('link', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'linkToSeller'])->name('seller.delivery_boys.link');
         });
 
         // Sarthi: distributor payment method settings + payment verification + settlements

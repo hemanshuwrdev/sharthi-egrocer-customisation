@@ -63,7 +63,7 @@ class SellerController extends BaseController
 
         $data['salesman_count'] = \App\Models\Salesman::where('seller_id', $seller_id)->count() ?? 0;
 
-        $data['driver_count'] = DeliveryBoy::where('seller_id', $seller_id)->count() ?? 0;
+        $data['driver_count'] = DeliveryBoy::forSeller($seller_id)->count() ?? 0;
 
         // Retailer count is unique users ordering from this seller
         $data['retailer_count'] = DB::table('order_items')
@@ -386,12 +386,13 @@ class SellerController extends BaseController
             'orders.id as order_id',
             'delivery_boys.name as delivery_boy_name',
             'sellers.name as seller_name',
-            'users.name as user_name',
+            DB::raw("COALESCE(NULLIF(TRIM(retailer_profiles.shop_name), ''), users.name) as user_name"),
             'order_items.active_status as order_status'
         )
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('user_addresses as address', 'orders.address_id', '=', 'address.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
             ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
             ->leftJoin('delivery_boys', 'orders.delivery_boy_id', '=', 'delivery_boys.id')
@@ -432,6 +433,7 @@ class SellerController extends BaseController
                 'orders.delivery_time',
                 'sellers.name',
                 'users.name',
+                'retailer_profiles.shop_name',
                 'order_items.active_status',
                 'products.name'
                 // Add more columns as needed
@@ -473,12 +475,13 @@ class SellerController extends BaseController
             'orders.address',
             'orders.delivery_time',
             'orders.delivery_date',
-            'users.name as user_name',
+            DB::raw("COALESCE(NULLIF(TRIM(retailer_profiles.shop_name), ''), users.name) as user_name"),
             'order_items.status as order_status',
             'sellers.name as seller_name'
         )
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
             ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
             ->leftJoin('delivery_boys', 'orders.delivery_boy_id', '=', 'delivery_boys.id')
@@ -517,6 +520,7 @@ class SellerController extends BaseController
                 'orders.delivery_time',
                 'sellers.name',
                 'users.name',
+                'retailer_profiles.shop_name',
                 'order_items.active_status',
                 'products.name',
                 'order_items.id',
@@ -940,9 +944,13 @@ class SellerController extends BaseController
             'orders.discount as order_discount',
             'orders.promo_discount as order_promo_discount',
             'orders.scheme_discount as order_scheme_discount',
+            'orders.cash_discount_amount as order_cash_discount',
             'orders.loading_slip_id',
             'retailer_profiles.party_name',
             'retailer_profiles.shop_name',
+            'rp_area.name as rp_area_name',
+            'users.mobile as user_mobile',
+            'orders.mobile as order_mobile',
             'retailer_profiles.gst_no',
             'retailer_profiles.area_id as rp_area_id',
             'users.name as user_name',
@@ -951,6 +959,8 @@ class SellerController extends BaseController
             'ua.area as ua_area',
             'ua.city as ua_city',
             'ua.state as ua_state',
+            'rp_city.state as rp_city_state',
+            'rp_area.state as rp_area_state',
             'ua.pincode as ua_pincode',
             'salesman.name as salesman_name',
             DB::raw('COALESCE(mpv.unit_id, pv.stock_unit_id) as unit_id'),
@@ -962,6 +972,8 @@ class SellerController extends BaseController
             ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('areas as rp_area', 'retailer_profiles.area_id', '=', 'rp_area.id')
+            ->leftJoin('cities as rp_city', 'retailer_profiles.city_id', '=', 'rp_city.id')
             ->leftJoin('user_addresses as ua', 'orders.address_id', '=', 'ua.id')
             ->leftJoin('salesmen as salesman', 'orders.placed_by_salesman_id', '=', 'salesman.id')
             ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
@@ -969,8 +981,11 @@ class SellerController extends BaseController
             ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
             ->leftJoin('units as u2', 'pv.stock_unit_id', '=', 'u2.id')
             ->where('order_items.seller_id', $seller_id)
+            // Partial Delivery is a delivered invoice too: its receipt and short-delivery credit
+            // note are exported, so leaving it out would import both against a missing invoice.
             ->where(function ($query) {
                 $query->where('orders.active_status', OrderStatusList::$delivered)
+                    ->orWhere('orders.active_status', OrderStatusList::$partialDelivery)
                     ->orWhere('orders.active_status', OrderStatusList::$selfPickupPicked);
             })
             // Only invoices with a distributor-verified payment are exportable. Cash
@@ -1010,6 +1025,7 @@ class SellerController extends BaseController
             'Voucher No',
             "Party Ledger\n(exact Tally name)",
             "Party Alias\n(used if Party blank)",
+            'MOBILE NO',
             'Party GSTIN',
             "Place of Supply\n(STATE e.g. Gujarat)",
             "Supply Type\nINTRA_STATE / INTER_STATE",
@@ -1023,6 +1039,7 @@ class SellerController extends BaseController
             'Rate',
             "Item Discount %\n(negative, 2 = -2%)",
             "Invoice Discount (amt)\n(negative, first row\nof the order)(negative, 100 = -100)",
+            'COD DISCOUNT',
             "GST Rate %\n(5 = 5%)",
             "Godown\n(blank = Main Location)",
             'Order Ref',
@@ -1038,24 +1055,33 @@ class SellerController extends BaseController
             'Narration',
         ];
 
+        $itemNames = $this->tallyItemNames($rows->pluck('master_product_variant_id')->all());
+
         $sheetRows = [];
         $seenOrders = [];
         foreach ($rows as $row) {
-            $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
+            $partyName = $this->tallyPartyLedgerName($row);
             $voucherNo = $row->invoice_number ?: ('#' . $row->order_id);
-            $itemName = $row->variant_name ? $row->product_name . ' (' . $row->variant_name . ')' : $row->product_name;
+            $itemName = $this->tallyLineItemName($row, $itemNames);
             $slip = $row->loading_slip_id ? ($slips[$row->loading_slip_id] ?? null) : null;
 
-            $partyState = $row->ua_state ?: null;
+            $partyState = $this->tallyPartyState($row);
             $supplyType = ($partyState && $sellerState && strcasecmp($partyState, $sellerState) === 0)
                 ? 'INTRA_STATE' : 'INTER_STATE';
 
             $isFirstRowOfOrder = !isset($seenOrders[$row->order_id]);
             $seenOrders[$row->order_id] = true;
             $invoiceDiscountAmt = '';
+            $codDiscountAmt = '';
             if ($isFirstRowOfOrder) {
                 $orderDiscount = (float) $row->order_discount + (float) $row->order_promo_discount + (float) $row->order_scheme_discount;
                 $invoiceDiscountAmt = $orderDiscount > 0 ? -$orderDiscount : '';
+
+                // Cash discount is booked at collection and already taken off final_total, so it
+                // must be exported (own column, as in the client's sheet, positive amount) or the
+                // invoice in Tally stays higher than the receipt against it.
+                $codDiscount = (float) $row->order_cash_discount;
+                $codDiscountAmt = $codDiscount > 0 ? $codDiscount : '';
             }
 
             $dispatchedThrough = $row->placed_by_salesman_id && $row->salesman_name
@@ -1070,7 +1096,8 @@ class SellerController extends BaseController
                 Carbon::parse($row->item_created_at)->format('d-m-Y'),
                 $voucherNo,
                 $partyName,
-                '',
+                $this->tallyPartyMobile($row),
+                $this->tallyPartyMobile($row),
                 $row->gst_no,
                 $partyState,
                 $supplyType,
@@ -1084,6 +1111,7 @@ class SellerController extends BaseController
                 $row->price,
                 $row->discount ? -abs($row->discount) : 0,
                 $invoiceDiscountAmt,
+                $codDiscountAmt,
                 $row->tax_percentage,
                 '',
                 'Order ' . $row->order_id,
@@ -1119,16 +1147,44 @@ class SellerController extends BaseController
      */
     public function exportCreditNotesCsv(Request $request)
     {
-        $seller_id = auth()->user()->seller->id;
-        $seller = DB::table('sellers')->where('id', $seller_id)->first();
-        $sellerState = $seller->state ?? null;
-
         $startDate = $request->filled('startDate')
             ? Carbon::parse($request->input('startDate'))->startOfDay()
             : null;
         $endDate = $request->filled('endDate')
             ? Carbon::parse($request->input('endDate'))->endOfDay()
             : null;
+
+        [$headers, $sheetRows] = $this->buildCreditNoteSheet(auth()->user()->seller->id, $startDate, $endDate);
+
+        return $this->downloadXlsx($headers, $sheetRows, 'CreditNote.xlsx');
+    }
+
+    /**
+     * GET seller/credit-notes/preview?order_id=
+     * The exact header + rows the Credit Note Excel export would contain for one order's
+     * credit notes, so the order page can show them without downloading the file.
+     */
+    public function previewCreditNotes(Request $request)
+    {
+        $orderId = (int) $request->input('order_id');
+        if ($orderId <= 0) {
+            return CommonHelper::responseError('order_id_required');
+        }
+
+        [$headers, $rows] = $this->buildCreditNoteSheet(auth()->user()->seller->id, null, null, $orderId);
+
+        return CommonHelper::responseWithData(['headers' => $headers, 'rows' => $rows]);
+    }
+
+    /**
+     * Header + data rows of the Credit Note sheet (see exportCreditNotesCsv for the
+     * column rules). Shared by the Excel download and the order-page preview so both
+     * always show identical data. $orderId narrows it to one order's credit notes.
+     */
+    private function buildCreditNoteSheet(int $seller_id, ?Carbon $startDate, ?Carbon $endDate, ?int $orderId = null): array
+    {
+        $seller = DB::table('sellers')->where('id', $seller_id)->first();
+        $sellerState = $seller->state ?? null;
 
         $rows = CreditNoteItem::select(
             'credit_notes.id as credit_note_id',
@@ -1138,6 +1194,9 @@ class SellerController extends BaseController
             'order_items.order_id',
             'order_items.quantity',
             'credit_note_items.quantity as credit_note_quantity',
+            'credit_note_items.amount as credit_note_amount',
+            'order_items.master_product_variant_id',
+            'order_items.discounted_price',
             'order_items.price',
             'order_items.discount',
             'order_items.tax_percentage',
@@ -1152,6 +1211,9 @@ class SellerController extends BaseController
             'orders.loading_slip_id',
             'retailer_profiles.party_name',
             'retailer_profiles.shop_name',
+            'rp_area.name as rp_area_name',
+            'users.mobile as user_mobile',
+            'orders.mobile as order_mobile',
             'retailer_profiles.gst_no',
             'users.name as user_name',
             'ua.address as ua_address',
@@ -1159,6 +1221,8 @@ class SellerController extends BaseController
             'ua.area as ua_area',
             'ua.city as ua_city',
             'ua.state as ua_state',
+            'rp_city.state as rp_city_state',
+            'rp_area.state as rp_area_state',
             'ua.pincode as ua_pincode',
             'salesman.name as salesman_name',
             DB::raw('COALESCE(mpv.unit_id, pv.stock_unit_id) as unit_id'),
@@ -1176,6 +1240,8 @@ class SellerController extends BaseController
             ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('areas as rp_area', 'retailer_profiles.area_id', '=', 'rp_area.id')
+            ->leftJoin('cities as rp_city', 'retailer_profiles.city_id', '=', 'rp_city.id')
             ->leftJoin('user_addresses as ua', 'orders.address_id', '=', 'ua.id')
             ->leftJoin('salesmen as salesman', 'orders.placed_by_salesman_id', '=', 'salesman.id')
             ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
@@ -1183,6 +1249,10 @@ class SellerController extends BaseController
             ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
             ->leftJoin('units as u2', 'pv.stock_unit_id', '=', 'u2.id')
             ->where('credit_notes.seller_id', $seller_id);
+
+        if ($orderId) {
+            $rows = $rows->where('credit_notes.order_id', $orderId);
+        }
 
         if ($startDate && $endDate) {
             $rows = $rows->whereBetween('credit_notes.generated_at', [$startDate, $endDate]);
@@ -1210,6 +1280,7 @@ class SellerController extends BaseController
             'Voucher No',
             "Party Ledger\n(exact Tally name)",
             "Party Alias\n(used if Party blank)",
+            'MOBILE NO',
             'Party GSTIN',
             "Place of Supply\n(STATE e.g. Gujarat)",
             "Supply Type\nINTRA_STATE / INTER_STATE",
@@ -1223,6 +1294,7 @@ class SellerController extends BaseController
             'Rate',
             "Item Discount %\n(2 = 2% off)",
             "Invoice Discount (amt)\n(first row of the order;\n100 = Rs 100 off)",
+            'COD DISCOUNT',
             "GST Rate %\n(5 = 5%)",
             "Godown\n(blank = Main Location)",
             'Order Ref',
@@ -1238,14 +1310,28 @@ class SellerController extends BaseController
             'Narration',
         ];
 
+        // A short-delivery credit note is stored net of the cash discount share on the missing
+        // goods (qty x unit price - stored amount). That share goes in the COD DISCOUNT column,
+        // keeping the export equal to the stored credit note. Credit notes saved before this rule
+        // have amount = qty x price, so they get 0.
+        $itemNames = $this->tallyItemNames($rows->pluck('master_product_variant_id')->all());
+
+        $cashShareByCreditNote = [];
+        foreach ($rows as $r) {
+            if ($r->reason_type !== 'partial') continue;
+            $gross = (float) $r->credit_note_quantity * (float) ($r->discounted_price ?: $r->price);
+            $cashShareByCreditNote[$r->credit_note_id] = ($cashShareByCreditNote[$r->credit_note_id] ?? 0)
+                + max(0, round($gross - (float) $r->credit_note_amount, 2));
+        }
+
         $sheetRows = [];
         $seenCreditNotes = [];
         foreach ($rows as $row) {
-            $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
-            $itemName = $row->variant_name ? $row->product_name . ' (' . $row->variant_name . ')' : $row->product_name;
+            $partyName = $this->tallyPartyLedgerName($row);
+            $itemName = $this->tallyLineItemName($row, $itemNames);
             $slip = $row->loading_slip_id ? ($slips[$row->loading_slip_id] ?? null) : null;
 
-            $partyState = $row->ua_state ?: null;
+            $partyState = $this->tallyPartyState($row);
             $supplyType = ($partyState && $sellerState && strcasecmp($partyState, $sellerState) === 0)
                 ? 'INTRA_STATE' : 'INTER_STATE';
 
@@ -1255,9 +1341,13 @@ class SellerController extends BaseController
             $isFirstRowOfCreditNote = !isset($seenCreditNotes[$row->credit_note_id]);
             $seenCreditNotes[$row->credit_note_id] = true;
             $invoiceDiscountAmt = '';
+            $codDiscountAmt = '';
             if ($isFirstRowOfCreditNote) {
                 $orderDiscount = (float) $row->order_discount + (float) $row->order_promo_discount + (float) $row->order_scheme_discount;
                 $invoiceDiscountAmt = $orderDiscount > 0 ? $orderDiscount : '';
+
+                $codShare = (float) ($cashShareByCreditNote[$row->credit_note_id] ?? 0);
+                $codDiscountAmt = $codShare > 0 ? $codShare : '';
             }
 
             $dispatchedThrough = $row->placed_by_salesman_id && $row->salesman_name
@@ -1280,7 +1370,8 @@ class SellerController extends BaseController
                 Carbon::parse($row->generated_at)->format('d-m-Y'),
                 $row->credit_note_no,
                 $partyName,
-                '',
+                $this->tallyPartyMobile($row),
+                $this->tallyPartyMobile($row),
                 $row->gst_no,
                 $partyState,
                 $supplyType,
@@ -1294,6 +1385,7 @@ class SellerController extends BaseController
                 $row->price,
                 $row->discount ?: 0,
                 $invoiceDiscountAmt,
+                $codDiscountAmt,
                 $row->tax_percentage,
                 '',
                 'Order ' . $row->order_id,
@@ -1310,13 +1402,15 @@ class SellerController extends BaseController
             ];
         }
 
-        return $this->downloadXlsx($headers, $sheetRows, 'CreditNote.xlsx');
+        return [$headers, $sheetRows];
     }
 
     /**
      * Product Master export — Tally "Sarthi Excel Import > Import Items / Products"
      * template. Column layout matches the client's Products.xlsx sample exactly.
-     * One row per master-catalog variant this distributor has listed (seller_products).
+     * One row per master-catalog variant this distributor has listed (seller_products),
+     * named like "Product (4 NOS/CTN)" — the same name the Sales / Credit Note vouchers use
+     * for that variant, so imported invoice lines find their stock item in Tally.
      * Not gated on settled/verified — this is a catalog export, not a transaction one.
      */
     public function exportProductMasterXlsx(Request $request)
@@ -1333,7 +1427,10 @@ class SellerController extends BaseController
             ->where('sp.seller_id', $seller_id)
             ->where('sp.status', 1)
             ->select(
+                'mpv.id as variant_id',
                 'mp.name as product_name',
+                'mpv.sku',
+                'mp.category_id',
                 'c.name as category_name',
                 'u1.short_code as base_unit',
                 'u2.short_code as alt_unit',
@@ -1344,6 +1441,7 @@ class SellerController extends BaseController
             )
             ->distinct()
             ->orderBy('mp.name')
+            ->orderBy('mpv.sku')
             ->get();
 
         $headers = [
@@ -1357,17 +1455,23 @@ class SellerController extends BaseController
             'Description (HSN/SAC goods description)',
         ];
 
+        $itemNames = $this->tallyItemNames($rows->pluck('variant_id')->all());
+
+        // Stock Group = the top-level (global) category; the product's own category goes in the
+        // description column, so the group stays broad (e.g. "OIL /GHEE") and the detail is kept.
+        $categories = DB::table('categories')->get(['id', 'name', 'parent_id'])->keyBy('id');
+
         $sheetRows = [];
         foreach ($rows as $row) {
             $sheetRows[] = [
-                $row->product_name,
-                $row->category_name,
+                $itemNames[$row->variant_id] ?? $row->product_name,
+                $this->rootCategoryName($row->category_id, $categories),
                 $row->base_unit,
                 $row->alt_unit,
                 $row->alt_unit ? $row->secondary_unit_value : '',
                 $row->hsn,
                 $row->gst_rate,
-                $row->short_description,
+                $row->category_name,
             ];
         }
 
@@ -1402,6 +1506,7 @@ class SellerController extends BaseController
             'orders.invoice_number',
             'retailer_profiles.party_name',
             'retailer_profiles.shop_name',
+            'rp_area.name as rp_area_name',
             'users.name as user_name',
             'delivery_boys.name as delivery_boy_name',
             'salesmen.name as salesman_name'
@@ -1409,6 +1514,7 @@ class SellerController extends BaseController
             ->join('orders', 'order_payments.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('areas as rp_area', 'retailer_profiles.area_id', '=', 'rp_area.id')
             ->leftJoin('delivery_boys', 'order_payments.delivery_boy_id', '=', 'delivery_boys.id')
             ->leftJoin('salesmen', 'order_payments.salesman_id', '=', 'salesmen.id')
             // orders carry no seller_id of their own — an order can hold items from
@@ -1459,7 +1565,7 @@ class SellerController extends BaseController
 
         $sheetRows = [];
         foreach ($rows as $row) {
-            $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
+            $partyName = $this->tallyPartyLedgerName($row);
             $invoiceNo = $row->invoice_number ?: ('#' . $row->order_id);
             $receivedBy = $row->delivery_boy_name ?: ($row->salesman_name ?: '');
             $isCash = $row->method === 'cash';
@@ -1512,6 +1618,9 @@ class SellerController extends BaseController
             'orders.invoice_number',
             'retailer_profiles.party_name',
             'retailer_profiles.shop_name',
+            'rp_area.name as rp_area_name',
+            'users.mobile as user_mobile',
+            'orders.mobile as order_mobile',
             'users.name as user_name',
             'delivery_boys.name as delivery_boy_name',
             'salesmen.name as salesman_name'
@@ -1519,6 +1628,7 @@ class SellerController extends BaseController
             ->join('orders', 'order_payments.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('areas as rp_area', 'retailer_profiles.area_id', '=', 'rp_area.id')
             ->leftJoin('delivery_boys', 'order_payments.delivery_boy_id', '=', 'delivery_boys.id')
             ->leftJoin('salesmen', 'order_payments.salesman_id', '=', 'salesmen.id')
             // orders carry no seller_id of their own — an order can hold items from
@@ -1546,6 +1656,7 @@ class SellerController extends BaseController
             'Receipt No',
             "Party Ledger\n(exact Tally name)",
             'Party Alias',
+            'MOBILE NO',
             'Receipt Amount',
             "Bank Ledger\n(where cheque is deposited)",
             "Payment Mode\n(Cheque)",
@@ -1565,7 +1676,7 @@ class SellerController extends BaseController
 
         $sheetRows = [];
         foreach ($rows as $row) {
-            $partyName = $row->party_name ?: ($row->shop_name ?: $row->user_name);
+            $partyName = $this->tallyPartyLedgerName($row);
             $invoiceNo = $row->invoice_number ?: ('#' . $row->order_id);
             $receivedBy = $row->delivery_boy_name ?: ($row->salesman_name ?: '');
             $chequeDate = $row->cheque_date ? Carbon::parse($row->cheque_date) : null;
@@ -1577,7 +1688,8 @@ class SellerController extends BaseController
                 $voucherDate->format('d-m-Y'),
                 'RP-' . $row->id,
                 $partyName,
-                '',
+                $this->tallyPartyMobile($row),
+                $this->tallyPartyMobile($row),
                 (float) $row->amount,
                 'PDC CHQ',
                 'Cheque',
@@ -1598,6 +1710,146 @@ class SellerController extends BaseController
         }
 
         return $this->downloadXlsx($headers, $sheetRows, 'ReceiptPDC.xlsx');
+    }
+
+    /**
+     * Retailer's mobile number for the Party Alias column: digits only, the account's own number
+     * first, then the one on the order. Blank when neither is known.
+     */
+    private function tallyPartyMobile($row): string
+    {
+        foreach ([$row->user_mobile ?? null, $row->order_mobile ?? null] as $mobile) {
+            $digits = preg_replace('/\D+/', '', (string) $mobile);
+            if ($digits !== '') {
+                return $digits;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Place of Supply state for the Sales / Credit Note vouchers. Retailers usually have no saved
+     * delivery address (the retailer app doesn't create one), so after the order's address the
+     * state of the retailer's city is used, then of their area. Supply Type is derived from it,
+     * so an unknown state used to export every invoice as INTER_STATE.
+     */
+    private function tallyPartyState($row): ?string
+    {
+        foreach ([$row->ua_state ?? null, $row->rp_city_state ?? null, $row->rp_area_state ?? null] as $state) {
+            $state = trim((string) $state);
+            if ($state !== '') {
+                return $state;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Party ledger name for every Tally export: "Shop name - Area" (just the shop name when the
+     * retailer has no area). Falls back to the party name, then the user's name, when there is
+     * no shop name. Area is the retailer's profile area, not the order's, so one retailer is
+     * always the same ledger across Sales, Credit Note and Receipts.
+     */
+    private function tallyPartyLedgerName($row): string
+    {
+        $name = trim((string) ($row->shop_name ?: ($row->party_name ?: $row->user_name)));
+        $area = trim((string) ($row->rp_area_name ?? ''));
+
+        return $area !== '' ? $name . ' - ' . $area : $name;
+    }
+
+    /**
+     * Name of the top-level category a category sits under (the category itself when it has no
+     * parent). $categories is id => {name, parent_id}. The step limit just guards a bad parent loop.
+     */
+    private function rootCategoryName($categoryId, $categories): ?string
+    {
+        $node = $categories->get($categoryId);
+        for ($i = 0; $node && $i < 10; $i++) {
+            $parent = $node->parent_id ? $categories->get($node->parent_id) : null;
+            if (!$parent) {
+                break;
+            }
+            $node = $parent;
+        }
+
+        return $node->name ?? null;
+    }
+
+    /**
+     * Tally stock-item names for master variants, keyed by variant id: "Product (4 NOS/CTN)" —
+     * the product name plus pieces / base unit / outer-pack unit, the way the client's own item
+     * list reads. Product Master, Sales and Credit Note all take the name from here so a voucher
+     * line always matches the item created from the master. A variant with no outer pack is just
+     * the product name; where two variants of one product would get the same name, the SKU is
+     * added to each so Tally keeps them as separate items.
+     */
+    private function tallyItemNames(array $variantIds): array
+    {
+        $variantIds = array_values(array_unique(array_filter($variantIds)));
+        if (!$variantIds) {
+            return [];
+        }
+
+        $productIds = DB::table('master_product_variants')->whereIn('id', $variantIds)->pluck('master_product_id')->unique();
+
+        // All sibling variants, not just the exported ones, so a name is the same whichever
+        // export asks for it.
+        $variants = DB::table('master_product_variants as v')
+            ->join('master_products as p', 'p.id', '=', 'v.master_product_id')
+            ->leftJoin('units as u1', 'u1.id', '=', 'v.unit_id')
+            ->leftJoin('units as u2', 'u2.id', '=', 'v.secondary_unit_id')
+            ->whereIn('v.master_product_id', $productIds)
+            ->get([
+                'v.id', 'v.master_product_id', 'v.sku', 'v.unit_id', 'v.secondary_unit_id', 'v.secondary_unit_value',
+                'p.name as product_name', 'u1.short_code as unit_code', 'u1.name as unit_name',
+                'u2.short_code as unit2_code', 'u2.name as unit2_name',
+            ]);
+
+        $names = [];
+        $byName = [];
+        foreach ($variants as $v) {
+            $name  = trim((string) $v->product_name);
+            $count = (float) $v->secondary_unit_value;
+
+            // An outer pack only means something when it is a different unit from the base one.
+            if ($count > 0 && $v->unit_id && $v->secondary_unit_id && (int) $v->unit_id !== (int) $v->secondary_unit_id) {
+                $name .= ' (' . rtrim(rtrim(number_format($count, 2, '.', ''), '0'), '.') . ' '
+                    . ($v->unit_code ?: $v->unit_name) . '/' . ($v->unit2_code ?: $v->unit2_name) . ')';
+            }
+
+            $names[$v->id] = $name;
+            $byName[$v->master_product_id][$name][] = $v;
+        }
+
+        foreach ($byName as $sameName) {
+            foreach ($sameName as $group) {
+                if (count($group) < 2) continue;
+                foreach ($group as $v) {
+                    $names[$v->id] .= ' - ' . (trim((string) $v->sku) !== '' ? trim((string) $v->sku) : '#' . $v->id);
+                }
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * Item name for an order / credit-note line, from the master variant's name (see
+     * tallyItemNames) rather than the one saved on the line: retailer-app orders save
+     * "SKU | 20 Nos/Bag" there and salesman orders just the SKU, so the same product would
+     * export under two names.
+     */
+    private function tallyLineItemName($row, array $itemNames): string
+    {
+        if (!empty($row->master_product_variant_id) && isset($itemNames[$row->master_product_variant_id])) {
+            return $itemNames[$row->master_product_variant_id];
+        }
+
+        // Older lines pre-date the master catalog: no variant to read from, use what was saved.
+        return $row->variant_name ? $row->product_name . ' (' . $row->variant_name . ')' : $row->product_name;
     }
 
     /**
@@ -1980,30 +2232,13 @@ class SellerController extends BaseController
         $offset = ($request->offset) ?? 0;
 
         $seller_id = auth()->user()->seller->id;
-        $city_id = auth()->user()->seller->city_id;
-
-        if ($request->order_id) {
-            $order = Order::find($request->order_id);
-            if ($order && $order->address_id) {
-                $address = UserAddress::find($order->address_id);
-                if ($address && $address->city_id) {
-                    $city_id = $address->city_id;
-                }
-            }
-        }
 
         // Strictly this distributor's own drivers only — unassigned drivers
         // (seller_id null/0) used to leak into every distributor's dropdown here.
-        // City filter only applies when fetching drivers for a specific order delivery.
         $deliveryBoys = DeliveryBoy::with(['admin', 'translations'])
-            ->where('seller_id', $seller_id);
+            ->forSeller($seller_id);
 
-        if ($request->order_id) {
-            $cityIds = array_filter(array_map('trim', explode(',', $city_id)));
-            if (!empty($cityIds)) {
-                $deliveryBoys->servingCities($cityIds);
-            }
-        }
+        // No zone filter: a distributor's drivers report directly to them, not to a zone.
 
         // Filter by status if specified in the request
         if ($request->has('filterStatus') && $request->input('filterStatus') !== '') {
@@ -2032,6 +2267,8 @@ class SellerController extends BaseController
         foreach ($deliveryBoys as $db) {
             $db->email = $db->admin ? $db->admin->email : '';
         }
+
+        DeliveryBoy::limitCashToSeller($deliveryBoys, $seller_id);
 
         return CommonHelper::responseWithData($deliveryBoys, $totalDeliveryBoys);
     }

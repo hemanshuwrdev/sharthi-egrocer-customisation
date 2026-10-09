@@ -1,0 +1,231 @@
+/* ============================================================
+   Modern list look — shared layer on top of common.css.
+
+   Scope: everything below lives under `.ui-modern`, a class set on the
+   seller layout root (TheContainerSeller.vue). Pages outside it (the admin
+   panel, delivery-boy panel) are untouched. To roll it out to another
+   panel later, add `ui-modern` to that layout's root element.
+
+   Two parts:
+   1. Restyles the existing `.list-*` / `.page-head` / `.badge` system, so
+      every list page in the seller panel picks it up with no template change.
+   2. New `ui-*` building blocks (pill, avatar, stat card, chips, ...) that
+      pages opt into for the richer cells shown on the Orders page.
+
+   Surfaces, borders and text come from the app's own --app-* variables, so
+   dark mode follows the app. Load order: after common.css and app-dark.css.
+   ============================================================ */
+
+/* ---------- tokens ---------- */
+.ui-modern {
+    --ui-card: var(--app-card-bg, #ffffff);
+    --ui-border: var(--app-border, #e9edf5);
+    --ui-text: var(--app-ink, #25396f);
+    --ui-muted: var(--app-muted, #67748e);
+    --ui-soft: var(--app-thead-bg, #f7f9fc);
+    --ui-primary: #37a279;
+    --ui-primary-soft: rgba(55, 162, 121, 0.14);
+    --ui-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.04);
+
+    --ui-green-bg: #e7f7ef;  --ui-green-fg: #047857;  --ui-green: #10b981;
+    --ui-amber-bg: #fff6e0;  --ui-amber-fg: #b45309;  --ui-amber: #f59e0b;
+    --ui-red-bg: #fdecec;    --ui-red-fg: #b91c1c;    --ui-red: #ef4444;
+    --ui-blue-bg: #e8f0fe;   --ui-blue-fg: #1d4ed8;   --ui-blue: #3b82f6;
+    --ui-purple-bg: #f1eafe; --ui-purple-fg: #6d28d9; --ui-purple: #8b5cf6;
+    --ui-slate-bg: #eef1f6;  --ui-slate-fg: #475569;  --ui-slate: #94a3b8;
+}
+body.theme-dark .ui-modern {
+    --ui-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --ui-green-bg: rgba(16, 185, 129, 0.16);  --ui-green-fg: #4ade9f;
+    --ui-amber-bg: rgba(245, 158, 11, 0.16);  --ui-amber-fg: #fbbf4a;
+    --ui-red-bg: rgba(239, 68, 68, 0.16);     --ui-red-fg: #f87171;
+    --ui-blue-bg: rgba(59, 130, 246, 0.18);   --ui-blue-fg: #7fb0ff;
+    --ui-purple-bg: rgba(139, 92, 246, 0.18); --ui-purple-fg: #b69cff;
+    --ui-slate-bg: rgba(148, 163, 184, 0.14); --ui-slate-fg: #b6c0d1;
+}
+
+/* tone helpers: set --tone-* once, reused by pills, tiles, avatars and badges */
+.ui-modern .ui-tone--green  { --tone-bg: var(--ui-green-bg);  --tone-fg: var(--ui-green-fg); }
+.ui-modern .ui-tone--amber  { --tone-bg: var(--ui-amber-bg);  --tone-fg: var(--ui-amber-fg); }
+.ui-modern .ui-tone--red    { --tone-bg: var(--ui-red-bg);    --tone-fg: var(--ui-red-fg); }
+.ui-modern .ui-tone--blue   { --tone-bg: var(--ui-blue-bg);   --tone-fg: var(--ui-blue-fg); }
+.ui-modern .ui-tone--purple { --tone-bg: var(--ui-purple-bg); --tone-fg: var(--ui-purple-fg); }
+.ui-modern .ui-tone--slate  { --tone-bg: var(--ui-slate-bg);  --tone-fg: var(--ui-slate-fg); }
+
+/* ============================================================
+   1. Existing list system, restyled
+   ============================================================ */
+
+/* ---- page head ---- */
+.ui-modern .page-head { margin-bottom: 18px; }
+.ui-modern .page-head-title { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; color: var(--ui-text); }
+.ui-modern .list-add-btn { height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 600; }
+
+/* ---- surface + toolbar ---- */
+.ui-modern .list-surface { border-radius: 18px; border-color: var(--ui-border); box-shadow: var(--ui-shadow); overflow: hidden; }
+.ui-modern .list-toolbar { padding: 14px 18px; gap: 12px; border-bottom: 1px solid var(--ui-border); }
+.ui-modern .list-filter-label { font-size: 11.5px; letter-spacing: 0.06em; }
+
+.ui-modern .list-search { max-width: 340px; }
+.ui-modern .list-search .form-control {
+    height: 42px; border-radius: 12px; padding-left: 40px;
+    background-color: var(--ui-soft); border: 1px solid var(--ui-border) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.ui-modern .list-search .form-control:focus { background-color: var(--ui-card); border-color: var(--ui-primary) !important; box-shadow: 0 0 0 3px var(--ui-primary-soft); }
+.ui-modern .list-search-icon { left: 14px; }
+
+.ui-modern .list-filter select,
+.ui-modern .list-filter .form-control,
+.ui-modern .list-filter .form-select {
+    height: 42px; border-radius: 12px; background-color: var(--ui-soft); border: 1px solid var(--ui-border) !important;
+}
+.ui-modern .list-icon-btn { width: 42px; height: 42px; border-radius: 12px; border-color: var(--ui-border); }
+.ui-modern .list-toolbar .btn { height: 42px; padding: 0 16px; border-radius: 12px; font-weight: 600; }
+
+/* ---- table (bootstrap-vue b-table inside .list-surface) ---- */
+.ui-modern .list-surface table.b-table thead th {
+    padding: 12px 16px !important; background: var(--ui-soft) !important; color: var(--ui-muted) !important;
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; white-space: nowrap; vertical-align: middle;
+    border: 0 !important; border-bottom: 1px solid var(--ui-border) !important;
+}
+.ui-modern .list-surface table.b-table tbody td {
+    padding: 14px 16px !important; vertical-align: middle; font-size: 14px;
+    border: 0 !important; border-top: 1px solid var(--ui-border) !important;
+}
+.ui-modern .list-surface table.b-table tbody tr:first-child > td { border-top: 0 !important; }
+/* bootstrap draws a 2px currentColor rule between thead and tbody; the header's own bottom border replaces it */
+.ui-modern .list-surface table.b-table > :not(:first-child) { border-top: 0 !important; }
+.ui-modern .list-surface table.b-table tbody tr:hover > td { background-color: var(--ui-soft) !important; }
+/* centred text everywhere reads as basic: text columns left-align, numbers opt in via .ui-num */
+.ui-modern .list-surface table.b-table th.text-center,
+.ui-modern .list-surface table.b-table td.text-center { text-align: left !important; }
+.ui-modern .list-surface table.b-table .ui-num { text-align: right !important; white-space: nowrap; }
+.ui-modern .list-surface table.b-table tbody tr.b-table-empty td { padding: 56px 16px !important; text-align: center !important; }
+.ui-modern .list-surface table.b-table tbody td img { border-radius: 10px; }
+/* many cells wrap text in <p>, whose default bottom margin skews row height and vertical alignment */
+.ui-modern .list-surface table.b-table tbody td p { margin: 0; }
+
+/* ---- status badges -> soft pills with a dot (all existing bg-* classes) ---- */
+.ui-modern .list-surface .badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border: 0 !important; border-radius: 999px;
+    font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap;
+    background-color: var(--tone-bg, var(--ui-slate-bg)) !important; color: var(--tone-fg, var(--ui-slate-fg)) !important;
+}
+.ui-modern .list-surface .badge::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
+/* grey badges are used as neutral tags (e.g. assigned brands), not statuses: no dot, so several still fit on a line */
+.ui-modern .list-surface .badge.bg-secondary::before { display: none; }
+.ui-modern .list-surface .badge { margin-top: 2px; margin-bottom: 2px; }
+.ui-modern .list-surface .badge.bg-primary   { --tone-bg: var(--ui-blue-bg);   --tone-fg: var(--ui-blue-fg); }
+.ui-modern .list-surface .badge.bg-secondary { --tone-bg: var(--ui-slate-bg);  --tone-fg: var(--ui-slate-fg); }
+.ui-modern .list-surface .badge.bg-success   { --tone-bg: var(--ui-green-bg);  --tone-fg: var(--ui-green-fg); }
+.ui-modern .list-surface .badge.bg-info      { --tone-bg: var(--ui-purple-bg); --tone-fg: var(--ui-purple-fg); }
+.ui-modern .list-surface .badge.bg-warning   { --tone-bg: var(--ui-amber-bg);  --tone-fg: var(--ui-amber-fg); }
+.ui-modern .list-surface .badge.bg-danger    { --tone-bg: var(--ui-red-bg);    --tone-fg: var(--ui-red-fg); }
+.ui-modern .list-surface .badge.bg-dark,
+.ui-modern .list-surface .badge.bg-black     { --tone-bg: var(--ui-slate-bg);  --tone-fg: var(--ui-text); }
+
+/* ---- row actions (keeps the existing icon set; only shape and spacing change) ---- */
+.ui-modern .list-actions { justify-content: flex-start; gap: 8px; }
+.ui-modern .list-action-btn { width: 36px !important; height: 36px !important; border-radius: 10px !important; border-color: var(--ui-border) !important; }
+.ui-modern .list-action-btn:hover { background: var(--ui-soft) !important; }
+
+/* ---- footer / pagination ---- */
+.ui-modern .list-footer { padding: 14px 20px; border-top: 1px solid var(--ui-border); }
+.ui-modern .list-perpage .form-select,
+.ui-modern .list-perpage select { border-radius: 10px !important; border-color: var(--ui-border) !important; }
+.ui-modern .list-pagination .page-item .page-link,
+.ui-modern .list-footer .page-item .page-link { border-radius: 10px !important; border-color: var(--ui-border) !important; }
+
+/* ---- phones: each stacked table row becomes a card ---- */
+@media (max-width: 767px) {
+    .ui-modern .page-head-title { font-size: 1.5rem; }
+    .ui-modern .list-surface table.b-table.b-table-stacked-md > tbody > tr {
+        display: block; margin: 12px; border: 1px solid var(--ui-border); border-radius: 14px; overflow: hidden; background: var(--ui-card);
+    }
+    .ui-modern .list-surface table.b-table.b-table-stacked-md > tbody > tr > [data-label] { padding: 9px 14px !important; border-top: 1px dashed var(--ui-border) !important; }
+    .ui-modern .list-surface table.b-table.b-table-stacked-md > tbody > tr > [data-label]:first-child { border-top: 0 !important; padding-top: 14px !important; }
+    .ui-modern .list-surface table.b-table.b-table-stacked-md > tbody > tr > [data-label]::before {
+        text-align: left; font-weight: 600; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ui-muted);
+    }
+    .ui-modern .list-toolbar { padding: 12px; }
+    .ui-modern .list-search { flex: 1 1 0; width: auto; min-width: 0; max-width: none; }
+}
+
+/* ============================================================
+   2. Building blocks pages can opt into
+   ============================================================ */
+
+/* ---- pill: <span class="ui-pill ui-pill--dot ui-tone--green">Active</span> ---- */
+.ui-modern .ui-pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap;
+    background: var(--tone-bg, var(--ui-slate-bg)); color: var(--tone-fg, var(--ui-slate-fg));
+}
+.ui-modern .ui-dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
+.ui-modern .ui-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    background: var(--ui-soft); color: var(--ui-muted); border: 1px solid var(--ui-border);
+}
+
+/* ---- two-line cell + avatar: <div class="ui-person"><span class="ui-avatar ui-tone--blue">AB</span><div class="ui-cell"><strong>Name</strong><span>detail</span></div></div> ---- */
+.ui-modern .ui-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ui-modern .ui-cell strong { font-size: 14px; font-weight: 700; color: var(--ui-text); }
+.ui-modern .ui-cell span { font-size: 12px; color: var(--ui-muted); }
+.ui-modern .ui-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 280px; }
+.ui-modern .ui-person { display: flex; align-items: center; gap: 12px; min-width: 190px; }
+.ui-modern .ui-avatar {
+    width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; background: var(--tone-bg); color: var(--tone-fg);
+}
+.ui-modern .ui-thumb {
+    width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; object-fit: cover; background: var(--ui-soft); border: 1px solid var(--ui-border);
+}
+.ui-modern .ui-nowrap { white-space: nowrap; }
+.ui-modern .ui-money { font-weight: 700; white-space: nowrap; }
+.ui-modern .ui-dash { color: var(--ui-slate); }
+.ui-modern .ui-hint { border-bottom: 1px dotted currentColor; cursor: help; }
+
+/* ---- stat cards (optionally clickable filters) ---- */
+.ui-modern .ui-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+.ui-modern .ui-stat {
+    display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 18px; text-align: left; font: inherit; color: inherit;
+    background: var(--ui-card); border: 1px solid var(--ui-border); border-radius: 18px; box-shadow: var(--ui-shadow);
+}
+.ui-modern button.ui-stat { cursor: pointer; transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease; }
+.ui-modern button.ui-stat:hover { box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08); transform: translateY(-2px); }
+.ui-modern .ui-stat--on { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft), var(--ui-shadow); }
+.ui-modern .ui-tile {
+    width: 46px; height: 46px; flex-shrink: 0; border-radius: 13px; display: flex; align-items: center; justify-content: center;
+    font-size: 19px; background: var(--tone-bg); color: var(--tone-fg);
+}
+.ui-modern .ui-stat__body { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.ui-modern .ui-stat__label { font-size: 13px; color: var(--ui-muted); }
+.ui-modern .ui-stat__value { font-size: 26px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; color: var(--ui-text); }
+.ui-modern .ui-stat__hint { font-size: 12.5px; color: var(--ui-muted); }
+
+/* ---- filter chips with counts ---- */
+.ui-modern .ui-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ui-modern .ui-chip {
+    display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px;
+    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+}
+.ui-modern .ui-chip span { padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--ui-slate-bg); color: var(--ui-slate-fg); }
+.ui-modern .ui-chip:hover { border-color: var(--ui-primary); color: var(--ui-text); }
+.ui-modern .ui-chip--on { background: var(--ui-primary); border-color: var(--ui-primary); color: #fff; }
+.ui-modern .ui-chip--on span { background: rgba(255, 255, 255, 0.22); color: #fff; }
+
+/* ---- empty state ---- */
+.ui-modern .ui-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 36px 24px; }
+.ui-modern .ui-empty__icon { width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; background: var(--ui-green-bg); color: var(--ui-green-fg); }
+.ui-modern .ui-empty h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--ui-text); }
+.ui-modern .ui-empty p { margin: 0; max-width: 340px; font-size: 14px; color: var(--ui-muted); }
+
+/* ---- responsive ---- */
+@media (max-width: 1199px) { .ui-modern .ui-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+    .ui-modern .ui-cards { gap: 10px; }
+    .ui-modern .ui-stat { padding: 12px; gap: 10px; }
+    .ui-modern .ui-tile { width: 38px; height: 38px; font-size: 16px; }
+    .ui-modern .ui-stat__value { font-size: 22px; }
+}

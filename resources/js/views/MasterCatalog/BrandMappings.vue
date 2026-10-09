@@ -93,7 +93,7 @@
                 </div>
                 <div class="form-group mb-3">
                     <label>{{ __('line') }}</label>
-                    <select class="form-control" v-model="form.brand_line_id" :disabled="isEdit || !form.brand_id">
+                    <select class="form-control" v-model="form.brand_line_id" :disabled="!form.brand_id">
                         <option :value="null">{{ __('all_lines') }}</option>
                         <option v-for="l in modalBrandLines" :key="l.id" :value="l.id">{{ l.name }}</option>
                     </select>
@@ -145,7 +145,7 @@ export default {
 
             modalOpen: false,
             isEdit: false,
-            form: { brand_id: null, brand_line_id: null, seller_id: null, city_ids: [] },
+            form: { brand_id: null, brand_line_id: null, seller_id: null, city_ids: [], is_edit: false, original_brand_line_id: null },
 
             brands: [],
             sellers: [],
@@ -210,17 +210,23 @@ export default {
         },
         openCreate() {
             this.isEdit = false;
-            this.form = { brand_id: null, brand_line_id: null, seller_id: null, city_ids: [] };
+            this.form = { brand_id: null, brand_line_id: null, seller_id: null, city_ids: [], is_edit: false, original_brand_line_id: null };
             this.modalBrandLines = [];
             this.modalOpen = true;
         },
         openEdit(row) {
             this.isEdit = true;
-            this.form = { brand_id: row.brand_id, brand_line_id: row.brand_line_id, seller_id: row.seller_id, city_ids: [] };
+            // The line can be changed here; brand and distributor identify the mapping, so they stay
+            // fixed. original_brand_line_id tells the server which mapping is being replaced.
+            this.form = {
+                brand_id: row.brand_id, brand_line_id: row.brand_line_id, seller_id: row.seller_id, city_ids: [],
+                is_edit: true, original_brand_line_id: row.brand_line_id,
+            };
             this.modalOpen = true;
             if (row.brand_id) {
                 axios.get(this.$apiUrl + '/admin/brands/' + row.brand_id + '/lines').then(r => {
-                    this.modalBrandLines = r.data.data || [];
+                    // active lines to pick from, plus the mapping's current one even if since deactivated
+                    this.modalBrandLines = (r.data.data || []).filter(l => l.status == 1 || l.id === row.brand_line_id);
                 }).catch(() => {});
             }
         },

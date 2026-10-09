@@ -199,7 +199,9 @@ class SettlementController extends Controller
                 'is_enabled'  => $adminOn && (int) ($seller->{'payment_method_' . $m} ?? 0) === 1,
                 'is_editable' => $adminOn, // false = admin disabled, shown greyed-out
             ];
-            if ($m === 'cash') {
+            if ($m === 'cash' || $m === 'upi') {
+                // One instant-payment % shared by cash and bank ("upi" is shown as "Bank" in the UI;
+                // the key itself never changes), so both rows carry the same value.
                 $row['discount_percent'] = (float) ($seller->cash_discount_percent ?? 0);
             }
             return $row;
@@ -212,6 +214,8 @@ class SettlementController extends Controller
      * POST /seller/payment_methods/save
      * Body: { cash: 0|1, upi: 0|1, cheque: 0|1, signature: 0|1, cash_discount_percent?: 0-100 }
      * Silently ignores values for methods admin has disabled.
+     * cash_discount_percent is the ONE instant-payment discount shared by cash and bank; left out of the
+     * body it keeps its saved value, sent blank it clears to 0.
      */
     public function sellerSavePaymentMethods(Request $request)
     {
@@ -238,7 +242,9 @@ class SettlementController extends Controller
             $value = in_array($method, $adminEnabled, true) ? (int) $request->input($method, 0) : 0;
             $seller->{'payment_method_' . $method} = $value;
         }
-        $seller->cash_discount_percent = $request->filled('cash_discount_percent') ? $request->cash_discount_percent : 0;
+        if ($request->has('cash_discount_percent')) {
+            $seller->cash_discount_percent = $request->filled('cash_discount_percent') ? $request->cash_discount_percent : 0;
+        }
         $seller->save();
 
         return CommonHelper::responseSuccess('payment_methods_saved');
@@ -507,7 +513,7 @@ class SettlementController extends Controller
 
         $meta = [
             'cash'      => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
-            'upi'       => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
+            'upi'       => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Bank screenshot', 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
             'cheque'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
             'signature' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Customer signature'],
         ];
@@ -515,6 +521,24 @@ class SettlementController extends Controller
         $data = array_map(fn ($m) => array_merge(['method' => $m], $meta[$m]), $enabled);
 
         return CommonHelper::responseWithData(['methods' => array_values($data)]);
+    }
+
+    /**
+     * Value of goods the driver did not deliver on this order (items with delivered_quantity < quantity),
+     * priced like the credit-note maths does. Orders already in "Partial Delivery" status had their total
+     * cut to the delivered goods, so there is nothing further to take off.
+     */
+    private function undeliveredValue(Order $order): float
+    {
+        if ((int) $order->active_status === \App\Models\OrderStatusList::$partialDelivery) {
+            return 0.0;
+        }
+
+        return round((float) OrderItem::where('order_id', $order->id)
+            ->whereNotNull('delivered_quantity')
+            ->whereColumn('delivered_quantity', '<', 'quantity')
+            ->selectRaw('SUM((quantity - delivered_quantity) * IF(discounted_price > 0, discounted_price, price)) as v')
+            ->value('v'), 2);
     }
 
     /**
@@ -569,25 +593,41 @@ class SettlementController extends Controller
             return CommonHelper::responseError('payment_method_already_collected_for_this_order');
         }
 
-        // Cash-vs-other-methods incentive: applied once, at the point cash is actually
-        // collected — order.final_total was fixed at placement without knowing which
-        // collection method the customer would pick, so the discount books here instead.
-        $cashDiscountAmount = 0;
-        if ($method === 'cash' && (float) ($order->cash_discount_amount ?? 0) === 0.0) {
-            $cashDiscountPercent = (float) ($seller->cash_discount_percent ?? 0);
-            if ($cashDiscountPercent > 0) {
-                $alreadyCollected = (float) OrderPayment::where('order_id', $order->id)->sum('amount');
-                $outstanding = max(0, (float) $order->final_total - $alreadyCollected);
-                $cashDiscountAmount = round($outstanding * ($cashDiscountPercent / 100), 2);
-                if ($cashDiscountAmount > 0) {
-                    $order->final_total = max(0, (float) $order->final_total - $cashDiscountAmount);
-                    if ($order->remaining_final !== null) {
-                        $order->remaining_final = max(0, (float) $order->remaining_final - $cashDiscountAmount);
-                    }
-                    $order->cash_discount_amount = $cashDiscountAmount;
-                    $order->save();
+        // Instant-payment incentive (cash or bank, ONE shared %): the point is money in hand at delivery,
+        // so it is only given when the retailer settles the WHOLE order in ONE payment of ONE type.
+        // A split across types, or a part payment, gets no discount. It books here, at collection —
+        // order.final_total was fixed at placement without knowing which method the customer would pick.
+        $cashDiscountAmount  = 0;
+        $revokedDiscount     = 0;
+        $discountPercent     = in_array($method, ['cash', 'upi'], true) ? (float) ($seller->cash_discount_percent ?? 0) : 0.0;
+        $hasEarlierPayment   = OrderPayment::where('order_id', $order->id)->exists();
+        $alreadyDiscounted   = (float) ($order->cash_discount_amount ?? 0) > 0;
+
+        if ($discountPercent > 0 && !$alreadyDiscounted && !$hasEarlierPayment) {
+            // Discount base stays the whole order (as before); what must be paid to qualify is the
+            // delivered goods at the discounted price (goods short-delivered are not owed).
+            $outstanding   = (float) $order->final_total;
+            $discountAmt   = round($outstanding * ($discountPercent / 100), 2);
+            $requiredToPay = round(($outstanding - $this->undeliveredValue($order)) * (1 - $discountPercent / 100), 2);
+            // ₹1 slack so a rounded-down amount typed by the driver doesn't silently lose the discount.
+            if ($discountAmt > 0 && $requiredToPay > 0 && (float) $request->amount + 1 >= $requiredToPay) {
+                $order->final_total = max(0, $outstanding - $discountAmt);
+                if ($order->remaining_final !== null) {
+                    $order->remaining_final = max(0, (float) $order->remaining_final - $discountAmt);
                 }
+                $order->cash_discount_amount = $cashDiscountAmount = $discountAmt;
+                $order->save();
             }
+        } elseif ($hasEarlierPayment && $alreadyDiscounted && !$order->placed_by_salesman_id) {
+            // A second payment means the retailer split across types: forfeit a discount that was
+            // booked at collection. (Salesman-placed orders book theirs at placement and keep it for now.)
+            $revokedDiscount = (float) $order->cash_discount_amount;
+            $order->final_total = (float) $order->final_total + $revokedDiscount;
+            if ($order->remaining_final !== null) {
+                $order->remaining_final = (float) $order->remaining_final + $revokedDiscount;
+            }
+            $order->cash_discount_amount = 0;
+            $order->save();
         }
 
         // Handle proof photo upload
@@ -632,7 +672,9 @@ class SettlementController extends Controller
         return CommonHelper::responseWithData([
             'payment_id'           => $payment->id,
             'status'               => 'pending',
+            // For both cash and bank — it is the one instant-payment discount.
             'cash_discount_amount' => $cashDiscountAmount,
+            'cash_discount_revoked' => $revokedDiscount,
             'order_final_total'    => (float) $order->final_total,
             'message'              => 'payment_collected_pending_verification',
         ]);
@@ -1125,7 +1167,7 @@ class SettlementController extends Controller
 
         $allMeta = [
             'cash'   => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
-            'upi'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'UPI screenshot'],
+            'upi'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Bank screenshot', 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
             'cheque' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
         ];
 
@@ -1414,7 +1456,7 @@ class SettlementController extends Controller
         if ($type !== 'salesman') {
             // Aggregate real payment totals directly from order_payments.
             // settlement.total_cash stays 0 until driver locks EOD, so we can't use it here.
-            $driverIds = DeliveryBoy::where('seller_id', $seller->id)->pluck('id');
+            $driverIds = DeliveryBoy::forSeller($seller->id)->pluck('id');
 
             // Grouped by loading slip so two trips a driver runs on the same day stay
             // two rows, not one merged row. Orders never assigned a slip (legacy/edge
@@ -1424,6 +1466,10 @@ class SettlementController extends Controller
                 ->join('orders', 'orders.id', '=', 'order_payments.order_id')
                 ->leftJoin('loading_slips', 'loading_slips.id', '=', 'orders.loading_slip_id')
                 ->whereIn('order_payments.delivery_boy_id', $driverIds)
+                // a driver can be shared with other distributors — only this distributor's own orders
+                ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('order_items')
+                    ->whereColumn('order_items.order_id', 'order_payments.order_id')
+                    ->where('order_items.seller_id', $seller->id))
                 ->when($fromDate, fn ($q) => $q->whereDate('order_payments.created_at', '>=', $fromDate))
                 ->when($toDate, fn ($q) => $q->whereDate('order_payments.created_at', '<=', $toDate))
                 ->selectRaw('
@@ -1447,6 +1493,42 @@ class SettlementController extends Controller
                     (CASE WHEN orders.loading_slip_id IS NULL THEN DATE(order_payments.created_at) ELSE NULL END)
                 ')
                 ->get();
+
+            // A slip whose orders were all cancelled (or otherwise never paid) has no
+            // order_payments row, so the aggregate above never sees it — no trip row,
+            // nothing to verify the cancellation in or close, and so no credit note.
+            // Surface those slips too, dated by the slip itself since there's no payment date.
+            $paidSlipIds = $driverAgg->pluck('loading_slip_id')->filter()->unique()->values();
+
+            $cancelOnlyAgg = DB::table('orders')
+                ->join('loading_slips', 'loading_slips.id', '=', 'orders.loading_slip_id')
+                ->join('delivery_boys', 'delivery_boys.id', '=', 'loading_slips.driver_id')
+                ->whereIn('loading_slips.driver_id', $driverIds)
+                ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('order_items')
+                    ->whereColumn('order_items.order_id', 'orders.id')
+                    ->where('order_items.seller_id', $seller->id))
+                ->where('orders.active_status', \App\Models\OrderStatusList::$cancelled)
+                ->whereNotIn('orders.loading_slip_id', $paidSlipIds)
+                ->when($fromDate, fn ($q) => $q->whereDate('loading_slips.created_at', '>=', $fromDate))
+                ->when($toDate, fn ($q) => $q->whereDate('loading_slips.created_at', '<=', $toDate))
+                ->selectRaw('
+                    loading_slips.driver_id as delivery_boy_id,
+                    delivery_boys.name  as person_name,
+                    delivery_boys.mobile as person_mobile,
+                    delivery_boys.country_code as person_country_code,
+                    orders.loading_slip_id as loading_slip_id,
+                    loading_slips.slip_no as slip_no,
+                    DATE(loading_slips.created_at) as pay_date,
+                    0 as total_cash, 0 as total_upi, 0 as total_cheque, 0 as total_signature,
+                    COUNT(DISTINCT orders.id) as total_orders,
+                    NULL as last_payment_at
+                ')
+                ->groupBy('loading_slips.driver_id', 'delivery_boys.name', 'delivery_boys.mobile',
+                          'delivery_boys.country_code', 'orders.loading_slip_id', 'loading_slips.slip_no',
+                          DB::raw('DATE(loading_slips.created_at)'))
+                ->get();
+
+            $driverAgg = $driverAgg->concat($cancelOnlyAgg);
 
             // Load settlements as a lookup map for reconciliation meta (cash_received, recon_status, etc.)
             $driverSettlements = DriverSettlement::where('seller_id', $seller->id)
@@ -1593,6 +1675,21 @@ class SettlementController extends Controller
     }
 
     /**
+     * Retailer block for trip screens: "name" is the shop name (falls back to the
+     * owner's name when the retailer has no profile / shop name) since invoices are
+     * raised to the shop, not the person.
+     */
+    private function retailerPayload($user): ?array
+    {
+        if (!$user) return null;
+        return [
+            'id'     => $user->id,
+            'name'   => $user->retailerProfile?->shop_name ?: $user->name,
+            'mobile' => $user->mobile,
+        ];
+    }
+
+    /**
      * GET /seller/trips/{id}  (updated)
      * Query: type=driver (default) | type=salesman
      * id = driver_settlement.id or salesman_settlement.id
@@ -1620,7 +1717,7 @@ class SettlementController extends Controller
         } else {
             $settlement = DriverSettlement::with(['deliveryBoy:id,name,mobile', 'loadingSlip:id,slip_no'])->find($id);
             // verify this driver belongs to the current seller
-            if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+            if (!$this->driverSettlementBelongsToSeller($settlement, $seller)) {
                 return CommonHelper::responseError('settlement_not_found');
             }
 
@@ -1647,7 +1744,7 @@ class SettlementController extends Controller
             )->unique()->values();
         }
 
-        $orders     = Order::with(['user:id,name,mobile', 'loadingSlip:id,slip_no'])->whereIn('id', $tripOrderIds)->get();
+        $orders     = Order::with(['user:id,name,mobile', 'user.retailerProfile:id,user_id,shop_name', 'loadingSlip:id,slip_no'])->whereIn('id', $tripOrderIds)->get();
         $paymentMap = $payments->groupBy('order_id');
 
         // Approved returns against orders in this trip — refund is wallet-credited
@@ -1657,6 +1754,7 @@ class SettlementController extends Controller
         $returnRequests = ReturnRequest::with([
                 'orderItem:id,order_id,product_name,variant_name,refund_amount',
                 'user:id,name,mobile',
+                'user.retailerProfile:id,user_id,shop_name',
             ])
             ->whereIn('order_id', $tripOrderIds)
             ->where('status', ReturnStatusList::$rApproved)
@@ -1683,7 +1781,7 @@ class SettlementController extends Controller
                     'orders_id'           => $o->orders_id,
                     'invoice_number'      => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
                     'loading_slip_no'     => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
-                    'retailer'            => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+                    'retailer'            => $this->retailerPayload($o->user),
                     'final_total'         => $o->final_total,
                     'total_ordered_qty'   => $items->sum(fn ($i) => (float) $i->quantity),
                     'total_delivered_qty' => $items->sum(fn ($i) => (float) ($i->delivered_quantity ?? $i->quantity)),
@@ -1716,7 +1814,18 @@ class SettlementController extends Controller
         $deliveredValue = function ($o) use ($shortfallValueByOrder) {
             $final = (float) $o->final_total;
             if ((int) $o->active_status === \App\Models\OrderStatusList::$partialDelivery) return $final;
-            return max(0, round($final - (float) ($shortfallValueByOrder->get($o->id) ?? 0), 2));
+            $shortfall = (float) ($shortfallValueByOrder->get($o->id) ?? 0);
+
+            // final_total is already net of the cash discount booked on the whole order, so the
+            // undelivered goods come off net of their share of it too (the driver app asks the
+            // retailer for delivered goods less discount) — otherwise expected ends up short by
+            // exactly that share.
+            $cashDiscount = (float) ($o->cash_discount_amount ?? 0);
+            if ($shortfall > 0 && $cashDiscount > 0 && $final + $cashDiscount > 0) {
+                $shortfall = round($shortfall * $final / ($final + $cashDiscount), 2);
+            }
+
+            return max(0, round($final - $shortfall, 2));
         };
 
         // Cancelled orders came in via the broader $tripOrderIds above (a cancel
@@ -1736,7 +1845,7 @@ class SettlementController extends Controller
             'orders_id'       => $o->orders_id,
             'invoice_number'  => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
             'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
-            'retailer'        => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+            'retailer'        => $this->retailerPayload($o->user),
             'final_total'     => $o->final_total,
             'cancelled_at'    => $cancelledAtMap->get($o->id),
             'verified'        => $o->cancel_verified_at !== null,
@@ -1753,7 +1862,7 @@ class SettlementController extends Controller
                 ->get()
             : collect();
 
-        $rescheduledOrdersMap = Order::with('user:id,name,mobile')
+        $rescheduledOrdersMap = Order::with(['user:id,name,mobile', 'user.retailerProfile:id,user_id,shop_name'])
             ->whereIn('id', $rescheduleStatuses->pluck('order_id')->unique())
             ->get()
             ->keyBy('id');
@@ -1765,7 +1874,7 @@ class SettlementController extends Controller
                     'order_id'          => $o->id,
                     'orders_id'         => $o->orders_id,
                     'invoice_number'    => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
-                    'retailer'          => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+                    'retailer'          => $this->retailerPayload($o->user),
                     'final_total'       => $o->final_total,
                     'new_delivery_date' => $o->delivery_date,
                     'delivery_reason'   => $o->delivery_reason,
@@ -1791,7 +1900,7 @@ class SettlementController extends Controller
                     'variant_name'   => $r->orderItem->variant_name ?? null,
                     'refund_amount'  => (float) ($r->orderItem->refund_amount ?? 0),
                     'reason'         => $r->reason,
-                    'retailer'       => $r->user ? ['id' => $r->user->id, 'name' => $r->user->name, 'mobile' => $r->user->mobile] : null,
+                    'retailer'       => $this->retailerPayload($r->user),
                     'returned_at'    => $r->updated_at,
                     'source'         => 'return_request',
                 ];
@@ -1938,7 +2047,7 @@ class SettlementController extends Controller
                 'active_status'   => $o->active_status,
                 'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
                 'invoice_number'  => $o->invoice_number,
-                'retailer'        => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'mobile' => $o->user->mobile] : null,
+                'retailer'        => $this->retailerPayload($o->user),
                 'payments'        => $paymentMap->get($o->id, collect())->values(),
                 'returns'         => $returnMap->get($o->id, collect())->map(fn ($r) => [
                     'product_name'  => $r->orderItem->product_name ?? '-',
@@ -1986,7 +2095,7 @@ class SettlementController extends Controller
         if (!$seller) return CommonHelper::responseError('seller_not_found');
 
         $settlement = DriverSettlement::find($id);
-        if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+        if (!$this->driverSettlementBelongsToSeller($settlement, $seller)) {
             return CommonHelper::responseError('settlement_not_found');
         }
         if (!$settlement->loading_slip_id) {
@@ -2015,13 +2124,29 @@ class SettlementController extends Controller
      * Distributor acknowledgment that a cancelled order on this trip has been
      * reviewed — a plain flag, feeding the trip's close-gate. No other side effect.
      */
+    /**
+     * Whether a driver's settlement is this distributor's to see. The driver must be linked to the
+     * distributor, and — because a driver can be shared by several distributors — the settlement must
+     * have been opened for this distributor (older single-distributor rows pass on the link alone).
+     */
+    private function driverSettlementBelongsToSeller(?DriverSettlement $settlement, $seller): bool
+    {
+        if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->forSeller($seller->id)->exists()) {
+            return false;
+        }
+        if ($settlement->seller_id && (int) $settlement->seller_id !== (int) $seller->id) {
+            return DB::table('delivery_boy_sellers')->where('delivery_boy_id', $settlement->delivery_boy_id)->count() <= 1;
+        }
+        return true;
+    }
+
     public function sellerVerifyCancelInvoice(Request $request, int $id, int $orderId)
     {
         $seller = $this->currentSeller();
         if (!$seller) return CommonHelper::responseError('seller_not_found');
 
         $settlement = DriverSettlement::find($id);
-        if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+        if (!$this->driverSettlementBelongsToSeller($settlement, $seller)) {
             return CommonHelper::responseError('settlement_not_found');
         }
         if (!$settlement->loading_slip_id) {
@@ -2062,7 +2187,7 @@ class SettlementController extends Controller
             }
         } else {
             $settlement = DriverSettlement::find($id);
-            if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+            if (!$this->driverSettlementBelongsToSeller($settlement, $seller)) {
                 return CommonHelper::responseError('settlement_not_found');
             }
         }
@@ -2208,6 +2333,16 @@ class SettlementController extends Controller
                 if ($shortfallItems->isEmpty()) continue;
                 if (CreditNote::where('order_id', $order->id)->where('reason_type', 'partial')->exists()) continue;
 
+                // The cash discount was booked on the whole order, so the missing goods carry a
+                // share of it the retailer never paid — credit them net of it. Orders in "Partial
+                // Delivery" status had their total cut to the delivered goods before the discount
+                // was booked, so there it already excludes them (same rule as $deliveredValue).
+                $cashDiscount = (float) ($order->cash_discount_amount ?? 0);
+                $final        = (float) $order->final_total;
+                $netFactor    = ((int) $order->active_status !== \App\Models\OrderStatusList::$partialDelivery && $cashDiscount > 0 && $final + $cashDiscount > 0)
+                    ? $final / ($final + $cashDiscount)
+                    : 1.0;
+
                 $totalAmount = 0.0;
                 $cnItemsData = [];
                 foreach ($shortfallItems as $item) {
@@ -2215,7 +2350,7 @@ class SettlementController extends Controller
                     if ($shortQty <= 0) continue;
 
                     $unitPrice = (float) ($item->discounted_price ?: $item->price);
-                    $shortVal = round($shortQty * $unitPrice, 2);
+                    $shortVal = round($shortQty * $unitPrice * $netFactor, 2);
                     $totalAmount += $shortVal;
 
                     $cnItemsData[] = [
@@ -2277,7 +2412,7 @@ class SettlementController extends Controller
             }
         } else {
             $settlement = DriverSettlement::find($id);
-            if (!$settlement || !DeliveryBoy::where('id', $settlement->delivery_boy_id)->where('seller_id', $seller->id)->exists()) {
+            if (!$this->driverSettlementBelongsToSeller($settlement, $seller)) {
                 return CommonHelper::responseError('settlement_not_found');
             }
         }

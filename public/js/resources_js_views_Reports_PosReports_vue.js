@@ -286,7 +286,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         text: 'Cash'
       }, {
         value: 'upi',
-        text: 'UPI'
+        text: 'Bank'
       }, {
         value: 'card',
         text: 'Card'

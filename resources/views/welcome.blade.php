@@ -140,6 +140,7 @@ $copyright_details =
 
     <link rel="stylesheet" href="{{ asset('assets/css/custom/common.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/dark-mode/app-dark.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/custom/modern.css') }}?v={{ @filemtime(public_path('assets/css/custom/modern.css')) }}">
 
     @if (isDemoMode())
         <!-- Google tag (gtag.js) -->

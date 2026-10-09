@@ -1,261 +1,351 @@
 <template>
-    <div class="list-page">
-        <div class="page-head">
-            <h3 class="page-head-title">{{ __('latest_orders') }}</h3>
+    <div class="ord ord-scope">
+        <!-- Header -->
+        <header class="ord-head">
+            <span class="ord-eyebrow">{{ __('Sales') }}</span>
+            <h1>{{ __('latest_orders') }}</h1>
+        </header>
+
+        <!-- Status cards (seller-wide counts; click to filter) -->
+        <section class="ord-cards">
+            <button type="button" v-for="card in statusCards" :key="card.key" class="ord-card ord-stat"
+                :class="{ 'ord-stat--on': String(status) === String(card.id) }" @click="setStatus(card.id)">
+                <span class="ord-tile" :class="'ord-tone--' + card.tone"><i class="fa" :class="card.icon"></i></span>
+                <span class="ord-stat__body">
+                    <span class="ord-stat__label">{{ card.label }}</span>
+                    <strong class="ord-stat__value">{{ card.count }}</strong>
+                </span>
+            </button>
+        </section>
+
+        <!-- Filters: everything on one line -->
+        <div class="ord-card ord-filters">
+            <div class="ord-search">
+                <i class="fa fa-search"></i>
+                <input v-model="search" type="text" :placeholder="__('Search by order ID, shop, mobile or product')"
+                    :aria-label="__('search')" @input="onSearchInput">
+                <button v-if="search" type="button" class="ord-search__clear" :title="__('Clear')" @click="clearSearch">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <select id="status" name="status" v-model="status" @change="handleFilterChange()"
+                class="ord-select" :aria-label="__('status')">
+                <option value="">{{ __('all_orders') }}</option>
+                <option v-for="status in statuses" :key="status.id" :value="status.id">{{
+                    getStatusDisplayName(status) }}</option>
+            </select>
+
+            <div class="ord-field__control">
+                <date-range-picker :autoApply=false :showDropdowns=true v-model="dateRange"
+                    :maxDate="maxDate" @update="handleFilterChange" :locale-data="dateRangePickerLocale" :ranges="dateRangePickerRanges"
+                    :append-to-body="true" opens="right">
+                        <template #input="picker">
+                            <i class="fa fa-calendar-alt"></i>
+                            <template v-if="picker.startDate"><span class="ord-picked">{{ __('Order') }}</span><span>{{ picker.rangeText }}</span></template>
+                            <span v-else class="ord-placeholder">{{ __('Order date range') }}</span>
+                        </template>
+                </date-range-picker>
+                <button v-if="dateRange.startDate" type="button" class="ord-clear" :title="__('clear')" @click="clearDate()">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <div class="ord-field__control">
+                <date-range-picker :autoApply=false :showDropdowns=true v-model="deliveryDateRange"
+                    :maxDate="maxDate" @update="handleFilterChange" :locale-data="dateRangePickerLocale" :ranges="dateRangePickerRanges"
+                    :append-to-body="true" opens="left">
+                        <template #input="picker">
+                            <i class="fa fa-calendar-alt"></i>
+                            <template v-if="picker.startDate"><span class="ord-picked">{{ __('Delivery') }}</span><span>{{ picker.rangeText }}</span></template>
+                            <span v-else class="ord-placeholder">{{ __('Delivery date range') }}</span>
+                        </template>
+                </date-range-picker>
+                <button v-if="deliveryDateRange.startDate" type="button" class="ord-clear" :title="__('clear')" @click="clearDeliveryDate()">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <button v-if="hasActiveFilters" type="button" class="ord-linkbtn" @click="clearAllFilters">
+                <i class="fa fa-times-circle"></i> {{ __('Clear all filters') }}
+            </button>
+
+            <button type="button" class="ord-iconbtn" :title="__('refresh')" @click="getOrders()">
+                <i class="fa fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
+            </button>
         </div>
 
-        <div class="list-surface">
-            <div class="list-toolbar has-filters">
-                <div class="list-toolbar-start">
-                    <div class="list-filter">
-                        <span class="list-filter-label">{{ __('from_and_to_date') }}</span>
-                        <div class="d-flex align-items-center">
-                            <date-range-picker :autoApply=false :showDropdowns=true v-model="dateRange"
-                                :maxDate="maxDate" @update="handleFilterChange" :locale-data="dateRangePickerLocale" :ranges="dateRangePickerRanges"
-                                :append-to-body="true" opens="right"></date-range-picker>
-                            <button class="btn btn-sm btn-danger ml-1" @click="clearDate()">
-                                {{ __('clear') }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="list-filter">
-                        <span class="list-filter-label">{{ __('from_and_to_delivery_date') }}</span>
-                        <div class="d-flex align-items-center">
-                            <date-range-picker :autoApply=false :showDropdowns=true v-model="deliveryDateRange"
-                                :maxDate="maxDate" @update="handleFilterChange" :ranges="customRanges"
-                                :append-to-body="true" opens="left"></date-range-picker>
-                            <button class="btn btn-sm btn-danger ml-1" @click="clearDeliveryDate()">
-                                {{ __('clear') }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="list-toolbar-end">
-                    <div class="list-filter">
-                        <span class="list-filter-label" for="status">{{ __('status') }}</span>
-                        <select id="status" name="status" v-model="status" @change="handleFilterChange()"
-                            class="form-control form-select">
-                            <option value="">{{ __('all_orders') }}</option>
-                            <option v-for="status in statuses" :key="status.id" :value="status.id">{{
-                                getStatusDisplayName(status) }}</option>
-                        </select>
-                    </div>
-                    <div class="list-search">
-                        <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
-                        <b-form-input id="filter-input" v-model="search" type="search"
-                            :placeholder="__('search')" @input="handleFilterChange()"></b-form-input>
-                    </div>
-                    <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')"
-                        @click="getOrders()">
-                        <i class="fa fa-refresh" aria-hidden="true"></i>
+        <!-- Table panel -->
+        <div class="ord-card ord-panel">
+            <div class="ord-panel__head">
+                <div class="ord-seg" role="tablist">
+                    <button type="button" role="tab" class="ord-seg__btn" :class="{ 'ord-seg__btn--on': activeTab === 'orders' }"
+                        :aria-selected="activeTab === 'orders'" @click="activeTab = 'orders'">
+                        <i class="fa fa-shopping-bag"></i> {{ __('orders') }} <span>{{ totalOrderRows }}</span>
+                    </button>
+                    <button type="button" role="tab" class="ord-seg__btn" :class="{ 'ord-seg__btn--on': activeTab === 'items' }"
+                        :aria-selected="activeTab === 'items'" @click="activeTab = 'items'">
+                        <i class="fa fa-cubes"></i> {{ __('order_items') }} <span>{{ totalOrderItemRows }}</span>
                     </button>
                 </div>
+
+                <div class="ord-sums" v-if="activeTab === 'orders'">
+                    <span class="ord-sums__cap">{{ __('On this page') }}</span>
+                    <span class="ord-sum">{{ __('total_amount') }} <strong>{{ $currency }}{{ formatMoney(total_amount) }}</strong></span>
+                    <span class="ord-sum ord-sum--strong">{{ __('total_final_amount') }} <strong>{{ $currency }}{{ formatMoney(remaining_final) }}</strong></span>
+                </div>
+                <div class="ord-sums" v-else>
+                    <span class="ord-sums__cap">{{ __('On this page') }}</span>
+                    <span class="ord-sum">{{ __('total') }} <strong>{{ $currency }}{{ formatMoney(order_items_total_sum) }}</strong></span>
+                </div>
             </div>
-                        <b-tabs pills active-nav-item-class="font-weight-bold text-uppercase" class="list-surface-tabs">
-                            <b-tab :title="__('orders')" active @click="getOrders">
-                                <div class="table-responsive">
-                                    <b-table :items="orders" :fields="orderFields" :filter="filter"
-                                        :filter-included-fields="filterOn" :sort-by.sync="sortBy"
-                                        :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
-                                        :busy="isLoading" stacked="md" show-empty small show-details>
 
-                                        <template #table-busy>
-                                            <div class="text-center text-black my-2">
-                                                <b-spinner class="align-middle"></b-spinner>
-                                                <strong>{{ __('loading') }}...</strong>
+            <!-- Orders -->
+            <div v-show="activeTab === 'orders'">
+                <div class="table-responsive ord-tablewrap">
+                    <b-table :items="orders" :fields="orderFields" :filter="filter"
+                        :filter-included-fields="filterOn" :sort-by.sync="sortBy"
+                        :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="false" borderless hover
+                        :busy="isLoading" stacked="md" show-empty show-details class="ord-table"
+                        :tbody-tr-class="rowClass">
+
+                        <template #table-busy>
+                            <div class="ord-busy">
+                                <b-spinner class="align-middle" small></b-spinner>
+                                <strong>{{ __('loading') }}...</strong>
+                            </div>
+                        </template>
+
+                        <!-- The short labels (F.Total, P.Method) get a hover tooltip with the full name -->
+                        <template #head(remaining_final)="data">
+                            <span class="ord-hint" v-b-tooltip.hover.top
+                                :title="__('final_total') + ': ' + __('the amount payable for this order after discounts, cancellations and returns')">{{ data.label }}</span>
+                        </template>
+
+                        <template #head(payment_method)="data">
+                            <span class="ord-hint" v-b-tooltip.hover.top :title="__('payment_method')">{{ data.label }}</span>
+                        </template>
+
+                        <template #empty>
+                            <div class="ord-empty">
+                                <div class="ord-empty__icon"><i class="fa fa-shopping-bag"></i></div>
+                                <h3>{{ __('No orders found') }}</h3>
+                                <p>{{ hasActiveFilters ? __('Nothing matches these filters. Try changing or clearing them.') : __('Orders from your retailers will show up here.') }}</p>
+                                <button v-if="hasActiveFilters" type="button" class="ord-btn" @click="clearAllFilters">
+                                    <i class="fa fa-times"></i> {{ __('Clear all filters') }}
+                                </button>
+                            </div>
+                        </template>
+
+                        <template #cell(id)="row">
+                            <div class="ord-id">
+                                <button type="button" class="ord-toggle" :class="{ 'is-open': row.detailsShowing }"
+                                    :aria-expanded="row.detailsShowing ? 'true' : 'false'" :title="__('View items')"
+                                    @click="toggleOrder(row)"><i class="fa fa-chevron-right"></i></button>
+                                <div class="ord-id__text">
+                                    <strong>#{{ row.item.id }}</strong>
+                                    <span v-if="row.item.created_at">{{ formatDateTime(row.item.created_at) }}</span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template #cell(user_name)="row">
+                            <div class="ord-shop">
+                                <span class="ord-avatar" :class="'ord-tone--' + avatarTone(row.item.user_name)">{{ initials(row.item.user_name) }}</span>
+                                <div class="ord-shop__text">
+                                    <strong :title="row.item.user_name">{{ row.item.user_name || '-' }}</strong>
+                                    <span>{{ row.item.mobile | mobileMask }}</span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template #cell(total)="row">{{ $currency }}{{ formatMoney(row.item.total) }}</template>
+
+                        <template #cell(wallet_balance)="row">
+                            <span v-if="Number(row.item.wallet_balance) > 0">{{ $currency }}{{ formatMoney(row.item.wallet_balance) }}</span>
+                            <span v-else class="ord-dash">-</span>
+                        </template>
+
+                        <template #cell(remaining_final)="row">
+                            <strong>{{ $currency }}{{ formatMoney(row.item.remaining_final) }}</strong>
+                        </template>
+
+                        <template #cell(payment_method)="row">
+                            <span class="ord-tag">{{ row.item.payment_method || '-' }}</span>
+                        </template>
+
+                        <template #cell(delivery_date)="row">
+                            <div class="ord-when">
+                                <strong>{{ formatDate(row.item.delivery_date) }}</strong>
+                                <span v-if="row.item.delivery_time">{{ row.item.delivery_time }}</span>
+                            </div>
+                        </template>
+
+                        <!-- Coloured pill with status name instead of the raw number -->
+                        <template #cell(active_status)="row">
+                            <span class="ord-pill ord-pill--dot" :class="'ord-tone--' + statusTone(row.item.active_status)">
+                                <span class="ord-dot"></span>{{ getStatusLabelById(row.item.active_status) }}
+                            </span>
+                        </template>
+
+                        <template #cell(actions)="row">
+                            <div class="ord-actions">
+                                <router-link
+                                    :to="{ name: 'SellerViewOrder', params: { id: row.item.id, record: row.item } }"
+                                    v-b-tooltip.hover :title="__('view')" class="ord-iconbtn"><i
+                                        class="fa fa-eye"></i></router-link>
+                                <b-button v-if="canEditOrder(row.item)" v-b-tooltip.hover
+                                    :title="__('edit_quantity')" class="ord-iconbtn"
+                                    @click="openEditOrderItems(row.item)">
+                                    <i class="fa fa-pencil-alt"></i>
+                                </b-button>
+                                <router-link
+                                    v-if="row.item.active_status == $delivered || row.item.active_status == 6"
+                                    :to="{ name: 'SellerInvoiceOrder', params: { id: row.item.id } }"
+                                    v-b-tooltip.hover :title="__('generate_invoice')"
+                                    class="ord-iconbtn"><i class="fa fa-file-invoice"></i></router-link>
+                            </div>
+                        </template>
+
+                        <template #row-details="row">
+                            <div class="ord-details">
+                                <div v-if="row.item.itemsLoading" class="ord-busy">
+                                    <b-spinner label="Spinning" small></b-spinner>
+                                </div>
+                                <template v-else>
+                                    <p class="ord-empty-inline" v-if="!row.item.order_items || row.item.order_items.length === 0">{{ __('no_products_found') }}</p>
+                                    <ul class="ord-lines" v-else>
+                                        <li v-for="item in row.item.order_items" :key="item.id">
+                                            <img v-if="item.image" :src="item.image" alt="" class="ord-lines__img">
+                                            <span v-else class="ord-lines__img ord-lines__img--blank"><i class="fa fa-box"></i></span>
+                                            <div class="ord-lines__name">
+                                                <strong>{{ item.product_name }}</strong>
+                                                <span v-if="item.variant_name">{{ item.variant_name }}</span>
                                             </div>
-                                        </template>
-
-                                        <template #cell(id)="row">
-                                            <div class='d-flex align-items-center'>
-                                                <i :class="row.detailsShowing ? 'fa fa-chevron-down' : 'fa fa-chevron-right'"
-                                                    @click="toggleOrder(row)"
-                                                    style="cursor: pointer; margin-right: 10px;"></i>
-                                                {{ row.item.id }}
-                                            </div>
-                                        </template>
-
-                                        <template #cell(mobile)="row">
-                                            {{ row.item.mobile | mobileMask }}
-                                        </template>
-
-                                        <!-- Show colored badge with status name instead of raw number -->
-                                        <template #cell(active_status)="row">
-                                            <span class="badge" :class="getStatusBadgeClass(row.item.active_status)">
-                                                {{ getStatusLabelById(row.item.active_status) }}
+                                            <span class="ord-lines__qty">&times; {{ item.quantity }}</span>
+                                            <strong class="ord-lines__amt">{{ $currency }}{{ formatMoney(item.sub_total) }}</strong>
+                                            <span class="ord-pill ord-pill--dot" :class="'ord-tone--' + statusTone(item.active_status)">
+                                                <span class="ord-dot"></span>{{ item.status_name || getStatusLabelById(item.active_status) }}
                                             </span>
-                                        </template>
+                                        </li>
+                                    </ul>
+                                </template>
+                            </div>
+                        </template>
+                    </b-table>
+                </div>
 
-                                        <template #cell(actions)="row">
-                                            <div class="list-actions">
-                                                <router-link
-                                                    :to="{ name: 'SellerViewOrder', params: { id: row.item.id, record: row.item } }"
-                                                    v-b-tooltip.hover :title="__('view')" class="list-action-btn is-view"><i
-                                                        class="fa fa-eye"></i></router-link>
-                                                <b-button v-if="canEditOrder(row.item)" v-b-tooltip.hover
-                                                    :title="__('edit_quantity')" class="list-action-btn is-edit"
-                                                    @click="openEditOrderItems(row.item)">
-                                                    <i class="fa fa-pencil-alt"></i>
-                                                </b-button>
-                                                <router-link
-                                                    v-if="row.item.active_status == $delivered || row.item.active_status == 6"
-                                                    :to="{ name: 'SellerInvoiceOrder', params: { id: row.item.id } }"
-                                                    v-b-tooltip.hover :title="__('generate_invoice')"
-                                                    class="list-action-btn is-invoice"><i class="fa fa-file"></i></router-link>
-                                            </div>
-                                        </template>
+                <div class="ord-foot">
+                    <div class="ord-foot__size">
+                        <label for="per-page-select">{{ __('per_page') }}</label>
+                        <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
+                            size="sm" class="form-control form-select"></b-form-select>
+                    </div>
+                    <span class="ord-foot__count">{{ rangeText(currentPage, perPage, totalOrderRows) }}</span>
+                    <b-pagination v-if="totalOrderRows > perPage" v-model="currentPage" :total-rows="totalOrderRows"
+                        :per-page="perPage" size="sm" class="my-0"></b-pagination>
+                </div>
+            </div>
 
-                                        <template #row-details="row">
-                                            <b-card>
-                                                <div v-if="row.item.itemsLoading" class="text-center">
-                                                    <b-spinner label="Spinning"></b-spinner>
-                                                </div>
-                                                <div v-else>
-                                                    <div class="table-responsive">
-                                                        <table class="table table-bordered table-sm">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>{{ __('product') }}</th>
-                                                                    <th>{{ __('image') }}</th>
-                                                                    <th>{{ __('variant') }}</th>
-                                                                    <th>{{ __('qty') }}</th>
-                                                                    <th>{{ __('subtotal') }}</th>
-                                                                    <th>{{ __('status') }}</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr v-for="item in row.item.order_items" :key="item.id">
-                                                                    <td>{{ item.product_name }}</td>
-                                                                    <td>
-                                                                        <img :src="item.image" alt="Image" height="50" />
-                                                                    </td>
-                                                                    <td>{{ item.variant_name }}</td>
-                                                                    <td>{{ item.quantity }}</td>
-                                                                    <td>{{ $currency }} {{ item.sub_total }}</td>
-                                                                    <td>{{ item.status_name }}</td>
-                                                                </tr>
-                                                                <tr v-if="!row.item.order_items || row.item.order_items.length === 0">
-                                                                    <td colspan="6" class="text-center">{{ __('no_products_found') }}</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </b-card>
-                                        </template>
-                                    </b-table>
+            <!-- Order items -->
+            <div v-show="activeTab === 'items'">
+                <div class="table-responsive ord-tablewrap">
+                    <b-table :items="order_items" :fields="orderItemFields" :filter="filter"
+                        :filter-included-fields="filterOn" :sort-by.sync="sortBy"
+                        :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="false" borderless hover
+                        :busy="isLoading" stacked="md" show-empty class="ord-table">
+                        <template #table-busy>
+                            <div class="ord-busy">
+                                <b-spinner class="align-middle" small></b-spinner>
+                                <strong>{{ __('loading') }}...</strong>
+                            </div>
+                        </template>
+
+                        <template #head(payment_method)="data">
+                            <span class="ord-hint" v-b-tooltip.hover.top :title="__('payment_method')">{{ data.label }}</span>
+                        </template>
+
+                        <template #empty>
+                            <div class="ord-empty">
+                                <div class="ord-empty__icon"><i class="fa fa-cubes"></i></div>
+                                <h3>{{ __('No order items found') }}</h3>
+                                <p>{{ hasActiveFilters ? __('Nothing matches these filters. Try changing or clearing them.') : __('Order items will show up here.') }}</p>
+                                <button v-if="hasActiveFilters" type="button" class="ord-btn" @click="clearAllFilters">
+                                    <i class="fa fa-times"></i> {{ __('Clear all filters') }}
+                                </button>
+                            </div>
+                        </template>
+
+                        <template #cell(order_id)="row">
+                            <div class="ord-id__text">
+                                <strong>#{{ row.item.order_id }}</strong>
+                                <span>{{ __('order_item_id') }} {{ row.item.id }}</span>
+                            </div>
+                        </template>
+
+                        <template #cell(product_name)="row">
+                            <div class="ord-id__text">
+                                <strong :title="row.item.product_name">{{ row.item.product_name }}</strong>
+                                <span v-if="row.item.variant_name">{{ row.item.variant_name }}<template v-if="row.item.quantity"> &middot; &times; {{ row.item.quantity }}</template></span>
+                            </div>
+                        </template>
+
+                        <template #cell(user_name)="row">
+                            <div class="ord-shop">
+                                <span class="ord-avatar" :class="'ord-tone--' + avatarTone(row.item.user_name)">{{ initials(row.item.user_name) }}</span>
+                                <div class="ord-shop__text">
+                                    <strong :title="row.item.user_name">{{ row.item.user_name || '-' }}</strong>
+                                    <span>{{ row.item.mobile | mobileMask }}</span>
                                 </div>
-                                <b-row class="mx-0 px-3 py-3 border-top">
-                                    <div class="col-md-4 text-success h6 mb-0">{{ __('total_amount') }} :- {{ $currency }} {{
-                                        total_amount }}</div>
-                                    <!-- Delivery charge disabled (client does not want it)
-                                    <div class="col-md-4 text-success h6 mb-0">{{ __('total_dchrg') }} :- {{ $currency }} {{
-                                        delivery_charge }}</div>
-                                    -->
-                                    <div class="col-md-4 text-success h6 mb-0">{{ __('total_final_amount') }} :- {{ $currency
-                                    }} {{ remaining_final }}</div>
-                                </b-row>
-                                <div class="list-footer">
-                                    <div class="list-perpage">
-                                        <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                            label-align-sm="right" label-size="sm" class="mb-0">
-                                            <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions"
-                                                size="sm" class="form-control form-select"></b-form-select>
-                                        </b-form-group>
-                                    </div>
-                                    <b-pagination v-model="currentPage" :total-rows="totalOrderRows"
-                                        :per-page="perPage" align="fill" size="sm" class="list-pagination"></b-pagination>
-                                </div>
-                            </b-tab>
-                            <b-tab :title="__('order_items')" @click="getOrders">
-                                <div class="table-responsive">
-                                    <b-table :items="order_items" :fields="orderItemFields" :filter="filter"
-                                        :filter-included-fields="filterOn" :sort-by.sync="sortBy"
-                                        :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true"
-                                        :busy="isLoading" stacked="md" show-empty small>
-                                        <template #table-busy>
-                                            <div class="text-center text-black my-2">
-                                                <b-spinner class="align-middle"></b-spinner>
-                                                <strong>{{ __('loading') }}...</strong>
-                                            </div>
-                                        </template>
+                            </div>
+                        </template>
 
-                                        <template #cell(mobile)="row">
-                                            {{ row.item.mobile | mobileMask }}
-                                        </template>
+                        <template #cell(total)="row">{{ $currency }}{{ formatMoney(row.item.total) }}</template>
 
-                                        <template #head(tax)="row">
-                                            {{ 'Tax (' + $currency + ') (%)' }}
-                                        </template>
+                        <template #cell(payment_method)="row">
+                            <span class="ord-tag">{{ row.item.payment_method || '-' }}</span>
+                        </template>
 
-                                        <template #cell(is_credited)="row">
-                                            <span v-if="row.item.is_credited" class="badge bg-success">{{ __('credited')
-                                            }}</span>
-                                            <span v-else class="badge bg-danger">{{ __('not_credited') }}</span>
-                                        </template>
+                        <template #cell(delivery_date)="row">
+                            <div class="ord-when">
+                                <strong>{{ formatDate(row.item.delivery_date) }}</strong>
+                                <span v-if="row.item.delivery_time">{{ row.item.delivery_time }}</span>
+                            </div>
+                        </template>
 
-                                        <template #cell(active_status)="row">
-                                            <span
-                                                v-if="row.item.active_status == $received || row.item.active_status == 2"
-                                                class="badge bg-primary">{{ getStatusLabelById(row.item.active_status)
-                                                }}</span>
-                                            <span
-                                                v-else-if="row.item.active_status == $pending || row.item.active_status == 1"
-                                                class="badge bg-secondary">{{ getStatusLabelById(row.item.active_status)
-                                                }}</span>
-                                            <span
-                                                v-else-if="row.item.active_status == $processed || row.item.active_status == 3"
-                                                class="badge bg-info">{{ getStatusLabelById(row.item.active_status)
-                                                }}</span>
-                                            <span
-                                                v-else-if="row.item.active_status == $shipped || row.item.active_status == 4"
-                                                class="badge bg-warning">{{ getStatusLabelById(row.item.active_status)
-                                                }}</span>
-                                            <span
-                                                v-else-if="row.item.active_status == $outForDelivery || row.item.active_status == 5"
-                                                class="badge bg-warning">{{ getStatusLabelById(row.item.active_status)
-                                                }}</span>
-                                            <span
-                                                v-else-if="row.item.active_status == $delivered || row.item.active_status == 6"
-                                                class="badge bg-success">{{ getStatusLabelById(row.item.active_status)
-                                                }}</span>
-                                            <span
-                                                v-else-if="row.item.active_status == $returned || row.item.active_status == $cancelled || row.item.active_status == 7 || row.item.active_status == 8"
-                                                class="badge bg-danger">{{ getStatusLabelById(row.item.active_status)
-                                                }}</span>
-                                            <span v-else class="badge bg-secondary">{{
-                                                getStatusLabelById(row.item.active_status) || __('not_found') }}</span>
-                                        </template>
-                                        <template #cell(actions)="row">
-                                            <div class="list-actions">
-                                                <router-link
-                                                    :to="{ name: 'SellerViewOrder', params: { id: row.item.order_id, record: row.item } }"
-                                                    v-b-tooltip.hover :title="__('view')" class="list-action-btn is-view"><i
-                                                        class="fa fa-eye"></i></router-link>
-                                            </div>
-                                        </template>
-                                    </b-table>
-                                </div>
-                                <b-row class="mx-0 px-3 py-3 border-top">
-                                    <div class="col-md-12 text-success text-center h6 mb-0">{{ __('total') }} :- {{ $currency
-                                    }} {{ order_items_total_sum
-                                        }}</div>
-                                </b-row>
-                                <div class="list-footer">
-                                    <div class="list-perpage">
-                                        <b-form-group :label="__('per_page')" label-for="per-page-select"
-                                            label-align-sm="right" label-size="sm" class="mb-0">
-                                            <b-form-select id="per-page-select" v-model="itemPerPage"
-                                                :options="pageOptions" size="sm"
-                                                class="form-control form-select"></b-form-select>
-                                        </b-form-group>
-                                    </div>
-                                    <b-pagination v-model="itemCurrentPage" :total-rows="totalOrderItemRows"
-                                        :per-page="itemPerPage" align="fill" size="sm" class="list-pagination"></b-pagination>
-                                </div>
-                            </b-tab>
-                        </b-tabs>
+                        <template #cell(is_credited)="row">
+                            <span v-if="row.item.is_credited" class="ord-pill ord-tone--green">{{ __('credited') }}</span>
+                            <span v-else class="ord-pill ord-tone--slate">{{ __('not_credited') }}</span>
+                        </template>
+
+                        <template #cell(active_status)="row">
+                            <span class="ord-pill ord-pill--dot" :class="'ord-tone--' + statusTone(row.item.active_status)">
+                                <span class="ord-dot"></span>{{ getStatusLabelById(row.item.active_status) || __('not_found') }}
+                            </span>
+                        </template>
+
+                        <template #cell(actions)="row">
+                            <div class="ord-actions">
+                                <router-link
+                                    :to="{ name: 'SellerViewOrder', params: { id: row.item.order_id, record: row.item } }"
+                                    v-b-tooltip.hover :title="__('view')" class="ord-iconbtn"><i
+                                        class="fa fa-eye"></i></router-link>
+                            </div>
+                        </template>
+                    </b-table>
+                </div>
+
+                <div class="ord-foot">
+                    <div class="ord-foot__size">
+                        <label for="item-per-page-select">{{ __('per_page') }}</label>
+                        <b-form-select id="item-per-page-select" v-model="itemPerPage"
+                            :options="pageOptions" size="sm" class="form-control form-select"></b-form-select>
+                    </div>
+                    <span class="ord-foot__count">{{ rangeText(itemCurrentPage, itemPerPage, totalOrderItemRows) }}</span>
+                    <b-pagination v-if="totalOrderItemRows > itemPerPage" v-model="itemCurrentPage" :total-rows="totalOrderItemRows"
+                        :per-page="itemPerPage" size="sm" class="my-0"></b-pagination>
+                </div>
+            </div>
         </div>
 
             <b-modal v-model="editOrderModalShow" :title="__('edit_quantity')" size="lg" :hide-footer="true"
@@ -337,32 +427,27 @@ export default {
             status: "",
             orderFields: [
                 { key: 'id', label: __('order_id'), sortable: true, sortDirection: 'desc' },
-                { key: 'user_name', label: __('user'), sortable: true, class: 'text-center' },
-                { key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center' },
-                { key: 'total', label: __('total') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
-                // { key: 'delivery_charge', label: __('dcharges') + '(' + this.$currency + ')', sortable: true, class: 'text-center' }, // delivery charge disabled
-                { key: 'wallet_balance', label: __('wallet_used') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
-                { key: 'remaining_final', label: __('ftotal') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
-                { key: 'payment_method', label: __('p_method'), sortable: true, class: 'text-center' },
-                { key: 'delivery_time', label: __('d_time'), sortable: true, class: 'text-center' },
-                { key: 'delivery_date', label: __('delivery_date'), sortable: true, class: 'text-center' },
-                { key: 'active_status', label: __('status'), sortable: true, class: 'text-center' },
-                { key: "actions", label: __('actions') }
+                { key: 'user_name', label: __('Shop Name'), sortable: true },
+                { key: 'total', label: __('total'), sortable: true, class: 'ord-num' },
+                // { key: 'delivery_charge', ... }, // delivery charge disabled
+                // { key: 'wallet_balance', label: __('wallet_used'), sortable: true, class: 'ord-num' }, // wallet column hidden
+                { key: 'remaining_final', label: __('ftotal'), sortable: true, class: 'ord-num' },
+                { key: 'payment_method', label: __('p_method'), sortable: true },
+                { key: 'delivery_date', label: __('delivery_date'), sortable: true },
+                { key: 'active_status', label: __('status'), sortable: true },
+                { key: 'actions', label: __('actions'), class: 'ord-actions-col' }
             ],
             totalOrderRows: 1,
             orderItemFields: [
                 { key: 'order_id', label: __('order_id'), sortable: true, sortDirection: 'desc' },
-                { key: 'id', label: __('order_item_id'), sortable: true, sortDirection: 'desc' },
-                { key: 'is_credited', label: __('commission'), sortable: true, class: 'text-center' },
-                { key: 'user_name', label: __('user_name'), sortable: true, class: 'text-center' },
-                { key: 'product_name', label: __('product'), sortable: true, class: 'text-center' },
-                { key: 'mobile', label: __('mobile'), sortable: true, class: 'text-center' },
-                { key: 'total', label: __('total') + '(' + this.$currency + ')', sortable: true, class: 'text-center' },
-                { key: 'payment_method', label: __('p_method'), sortable: true, class: 'text-center' },
-                { key: 'delivery_time', label: __('d_time'), sortable: true, class: 'text-center' },
-                { key: 'delivery_date', label: __('delivery_date'), sortable: true, class: 'text-center' },
-                { key: 'active_status', label: __('status'), sortable: true, class: 'text-center' },
-                { key: "actions", label: __('actions') }
+                { key: 'product_name', label: __('product'), sortable: true },
+                { key: 'user_name', label: __('Shop Name'), sortable: true },
+                { key: 'total', label: __('total'), sortable: true, class: 'ord-num' },
+                { key: 'payment_method', label: __('p_method'), sortable: true },
+                { key: 'delivery_date', label: __('delivery_date'), sortable: true },
+                { key: 'is_credited', label: __('commission'), sortable: true },
+                { key: 'active_status', label: __('status'), sortable: true },
+                { key: 'actions', label: __('actions'), class: 'ord-actions-col' }
             ],
             totalOrderItemRows: 1,
             currentPage: 1,
@@ -380,6 +465,9 @@ export default {
             max_visible_units: 12,
             max_col_in_single_row: 3,
             statuses: [],
+            statusCounts: [], // seller-wide order count per status, from the orders API
+            activeTab: 'orders', // 'orders' | 'items'
+            searchTimer: null,
 
             orders: [],
             total_amount: 0,
@@ -411,6 +499,28 @@ export default {
                     return { text: f.label, value: f.key }
                 })
         },
+        // Clickable cards above the table; counts are seller-wide (not date filtered)
+        statusCards() {
+            const count = (id) => {
+                const row = this.statusCounts.find(r => Number(r.id) === id);
+                return row ? (parseInt(row.order_count) || 0) : 0;
+            };
+            const all = this.statusCounts
+                .filter(r => Number(r.id) !== 0)
+                .reduce((sum, r) => sum + (parseInt(r.order_count) || 0), 0);
+            return [
+                { key: 'all', id: '', label: this.__('all_orders'), count: all, icon: 'fa-shopping-bag', tone: 'blue' },
+                { key: 'received', id: 2, label: this.getStatusLabelById(2), count: count(2), icon: 'fa-inbox', tone: 'amber' },
+                { key: 'out', id: 5, label: this.getStatusLabelById(5), count: count(5), icon: 'fa-truck', tone: 'purple' },
+                { key: 'delivered', id: 6, label: this.getStatusLabelById(6), count: count(6), icon: 'fa-check-circle', tone: 'green' },
+            ];
+        },
+        hasActiveFilters() {
+            return !!(this.search
+                || this.status
+                || this.dateRange.startDate
+                || this.deliveryDateRange.startDate);
+        },
         editingItemsTotal() {
             const t = this.editingItems.reduce((sum, r) => {
                 const q = parseFloat(r.quantity) || 0;
@@ -430,6 +540,9 @@ export default {
         this.getOrderStatus();
         this.getOrders();
     },
+    beforeDestroy() {
+        clearTimeout(this.searchTimer);
+    },
     watch: {
         currentPage() {
             this.getOrders();
@@ -445,6 +558,86 @@ export default {
         }
     },
     methods: {
+        // ---- presentation helpers ----
+        formatMoney(value) {
+            const n = parseFloat(value);
+            if (isNaN(n)) return '0';
+            // whole amounts stay compact (4,000); fractional ones always show paise (8,336.30)
+            const digits = Number.isInteger(n) ? 0 : 2;
+            return n.toLocaleString('en-IN', { minimumFractionDigits: digits, maximumFractionDigits: 2 });
+        },
+        formatDate(value) {
+            const m = moment(value);
+            return value && m.isValid() ? m.format('DD MMM YYYY') : '-';
+        },
+        formatDateTime(value) {
+            const m = moment(value);
+            return value && m.isValid() ? m.format('DD MMM, hh:mm A') : '';
+        },
+        initials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return ((parts[0][0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+        },
+        // Stable colour per shop so the same shop always gets the same avatar
+        avatarTone(name) {
+            const tones = ['blue', 'green', 'purple', 'amber', 'red'];
+            let hash = 0;
+            String(name || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) % 997; });
+            return tones[hash % tones.length];
+        },
+        statusTone(statusId) {
+            switch (Number(statusId)) {
+                case 2: return 'blue';            // Received
+                case 3: return 'purple';          // Processed
+                case 4: case 5: return 'amber';   // Shipped, Out For Delivery
+                case 6: return 'green';           // Delivered
+                case 7: case 8: return 'red';     // Cancelled, Returned
+                case 12: return 'purple';         // Rescheduled
+                case 13: return 'amber';          // Partial Delivery
+                case 14: return 'red';            // Not Delivered
+                case 11: return 'green';          // Picked Up
+                default: return 'slate';          // Payment Pending, Pending, ...
+            }
+        },
+        rowClass(item) {
+            return item && [7, 8].includes(Number(item.active_status)) ? 'ord-row--off' : '';
+        },
+        rangeText(page, perPage, total) {
+            if (!total) return '';
+            const from = (page - 1) * perPage + 1;
+            const to = Math.min(page * perPage, total);
+            return from + '-' + to + ' / ' + total;
+        },
+
+        // ---- filters ----
+        // The status cards double as quick filters; clicking the active one again clears it
+        setStatus(id) {
+            this.status = String(this.status) === String(id) ? '' : id;
+            this.currentPage = 1;
+            this.itemCurrentPage = 1;
+            this.handleFilterChange();
+        },
+        onSearchInput() {
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => this.handleFilterChange(), 350);
+        },
+        clearSearch() {
+            this.search = '';
+            this.handleFilterChange();
+        },
+        clearAllFilters() {
+            this.search = '';
+            this.status = '';
+            this.dateRange.startDate = null;
+            this.dateRange.endDate = null;
+            this.deliveryDateRange.startDate = null;
+            this.deliveryDateRange.endDate = null;
+            localStorage.setItem('dateRangeStartDeliveryDateFilter', null);
+            localStorage.setItem('dateRangeEndDeliveryDateFilter', null);
+            this.handleFilterChange();
+        },
+
         // Sarthi: distributor edits qty on a `received` order (active_status == 2) from the list
         canEditOrder(orderRow) {
             if (!orderRow || orderRow.active_status == null) return false;
@@ -684,6 +877,7 @@ export default {
             }).then((response) => {
                 this.isLoading = false
                 this.orders = response.data.data.orders;
+                this.statusCounts = response.data.data.status_order_count || [];
                 this.totalOrderRows = response.data.total;
 
                 this.total_amount = this.orders.map(item => parseFloat(item.total) || 0).reduce((prev, curr) => prev + curr, 0).toFixed(2);
@@ -692,7 +886,7 @@ export default {
 
                 this.order_items = response.data.data.order_items;
                 this.totalOrderItemRows = response.data.data.total_order_item;
-                this.order_items_total_sum = this.order_items.map(item => item.total).reduce((prev, curr) => prev + curr, 0).toFixed(2);
+                this.order_items_total_sum = this.order_items.map(item => parseFloat(item.total) || 0).reduce((prev, curr) => prev + curr, 0).toFixed(2);
 
                 this.orders.forEach(order => {
                     this.$set(order, 'order_items', []);
@@ -737,7 +931,249 @@ export default {
 <style scoped>
 @import "../../../../node_modules/vue2-daterange-picker/dist/vue2-daterange-picker.css";
 
-.vue-daterange-picker[data-v-1ebd09d2] {
-    min-width: 190px;
+/* ---------- tokens ---------- */
+.ord-scope {
+    --ord-card: #ffffff;
+    --ord-border: #e5eaf2;
+    --ord-text: #0f172a;
+    --ord-muted: #64748b;
+    --ord-soft: #f4f7fb;
+    --ord-primary: #1e3a8a;
+    --ord-primary-hover: #172d6e;
+    --ord-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.04);
+
+    --ord-green-bg: #e7f7ef;  --ord-green-fg: #047857;  --ord-green: #10b981;
+    --ord-amber-bg: #fff6e0;  --ord-amber-fg: #b45309;  --ord-amber: #f59e0b;
+    --ord-red-bg: #fdecec;    --ord-red-fg: #b91c1c;    --ord-red: #ef4444;
+    --ord-blue-bg: #e8f0fe;   --ord-blue-fg: #1d4ed8;   --ord-blue: #3b82f6;
+    --ord-purple-bg: #f1eafe; --ord-purple-fg: #6d28d9; --ord-purple: #8b5cf6;
+    --ord-slate-bg: #eef1f6;  --ord-slate-fg: #475569;  --ord-slate: #94a3b8;
+
+    color: var(--ord-text);
+    font-variant-numeric: tabular-nums;
+}
+.theme-dark .ord-scope {
+    --ord-card: #1e1e2d;
+    --ord-border: #2f2f45;
+    --ord-text: #eef2f7;
+    --ord-muted: #9aa5b8;
+    --ord-soft: #262639;
+    --ord-primary: #3d5fd6;
+    --ord-primary-hover: #5373e6;
+    --ord-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+
+    --ord-green-bg: rgba(16, 185, 129, 0.16);  --ord-green-fg: #4ade9f;
+    --ord-amber-bg: rgba(245, 158, 11, 0.16);  --ord-amber-fg: #fbbf4a;
+    --ord-red-bg: rgba(239, 68, 68, 0.16);     --ord-red-fg: #f87171;
+    --ord-blue-bg: rgba(59, 130, 246, 0.18);   --ord-blue-fg: #7fb0ff;
+    --ord-purple-bg: rgba(139, 92, 246, 0.18); --ord-purple-fg: #b69cff;
+    --ord-slate-bg: rgba(148, 163, 184, 0.14); --ord-slate-fg: #b6c0d1;
+}
+.ord { padding: 24px; }
+
+.ord-tone--green  { --tone-bg: var(--ord-green-bg);  --tone-fg: var(--ord-green-fg); }
+.ord-tone--amber  { --tone-bg: var(--ord-amber-bg);  --tone-fg: var(--ord-amber-fg); }
+.ord-tone--red    { --tone-bg: var(--ord-red-bg);    --tone-fg: var(--ord-red-fg); }
+.ord-tone--blue   { --tone-bg: var(--ord-blue-bg);   --tone-fg: var(--ord-blue-fg); }
+.ord-tone--purple { --tone-bg: var(--ord-purple-bg); --tone-fg: var(--ord-purple-fg); }
+.ord-tone--slate  { --tone-bg: var(--ord-slate-bg);  --tone-fg: var(--ord-slate-fg); }
+
+/* ---------- header ---------- */
+.ord-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; }
+.ord-eyebrow { padding-right: 14px; border-right: 1px solid var(--ord-border); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ord-muted); }
+.ord-head h1 { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; color: var(--ord-text); }
+
+/* ---------- shared ---------- */
+.ord-card { background: var(--ord-card); border: 1px solid var(--ord-border); border-radius: 18px; box-shadow: var(--ord-shadow); }
+.ord-btn {
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 12px;
+    border: 1px solid var(--ord-border); background: var(--ord-card); color: var(--ord-text); font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.ord-btn:hover { background: var(--ord-soft); }
+.ord-iconbtn {
+    width: 38px; height: 38px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+    border-radius: 10px; border: 1px solid var(--ord-border); background: var(--ord-card); color: var(--ord-muted);
+    font-size: 14px; cursor: pointer; text-decoration: none !important; transition: background-color 0.15s ease, color 0.15s ease;
+}
+.ord-iconbtn:hover { background: var(--ord-soft); color: var(--ord-primary); }
+.ord-pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; background: var(--tone-bg); color: var(--tone-fg);
+}
+.ord-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ord-tag { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--ord-soft); color: var(--ord-muted); border: 1px solid var(--ord-border); }
+.ord-tile { flex-shrink: 0; width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 19px; background: var(--tone-bg); color: var(--tone-fg); }
+.ord-dash { color: var(--ord-slate); }
+.ord-hint { border-bottom: 1px dotted currentColor; cursor: help; }
+
+/* ---------- status cards ---------- */
+.ord-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.ord-stat {
+    display: flex; align-items: center; gap: 14px; padding: 16px 18px; text-align: left; width: 100%;
+    cursor: pointer; font: inherit; color: inherit; transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.ord-stat:hover { box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08); transform: translateY(-2px); }
+.ord-stat--on { border-color: var(--ord-primary); box-shadow: 0 0 0 3px var(--ord-blue-bg), var(--ord-shadow); }
+.ord-stat__body { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.ord-stat__label { font-size: 13px; color: var(--ord-muted); }
+.ord-stat__value { font-size: 26px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; color: var(--ord-text); }
+
+/* ---------- filters (one line) ---------- */
+.ord-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 14px; margin-bottom: 16px; }
+.ord-search { position: relative; flex: 1 1 220px; min-width: 200px; }
+.ord-search > .fa-search { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--ord-slate); font-size: 14px; pointer-events: none; }
+.ord-search input {
+    width: 100%; height: 42px; padding: 0 38px 0 40px; border-radius: 12px; border: 1px solid var(--ord-border);
+    background: var(--ord-soft); color: var(--ord-text); font-size: 14px; outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.ord-search input::placeholder { color: var(--ord-muted); }
+.ord-search input:focus { background: var(--ord-card); border-color: var(--ord-blue); box-shadow: 0 0 0 3px var(--ord-blue-bg); }
+.ord-search__clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: var(--ord-muted); cursor: pointer; }
+.ord-search__clear:hover { background: var(--ord-slate-bg); }
+
+.ord-field__control { display: flex; align-items: center; gap: 6px; }
+.ord-select {
+    height: 42px; min-width: 150px; padding: 0 34px 0 14px; border-radius: 12px; border: 1px solid var(--ord-border);
+    background-color: var(--ord-soft); color: var(--ord-text); font-size: 14px; outline: none; cursor: pointer;
+}
+.ord-select:focus { border-color: var(--ord-blue); box-shadow: 0 0 0 3px var(--ord-blue-bg); }
+.ord-clear { width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--ord-slate-bg); color: var(--ord-slate-fg); cursor: pointer; font-size: 12px; }
+.ord-clear:hover { background: var(--ord-red-bg); color: var(--ord-red-fg); }
+.ord-linkbtn { height: 42px; border: 0; background: transparent; color: var(--ord-blue-fg); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0 4px; white-space: nowrap; }
+.ord-linkbtn:hover { text-decoration: underline; }
+
+/* date range pickers (vue2-daterange-picker renders its own markup) */
+::v-deep .ord-field__control .vue-daterange-picker { display: block; min-width: 215px; }
+::v-deep .ord-field__control .vue-daterange-picker .form-control.reportrange-text {
+    height: 42px; display: flex; align-items: center; border-radius: 12px; border: 1px solid var(--ord-border);
+    background: var(--ord-soft); color: var(--ord-text); font-size: 14px; padding: 0 14px; gap: 8px;
+}
+.ord-placeholder { color: var(--ord-muted); }
+.ord-picked { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ord-muted); }
+::v-deep .ord-field__control .reportrange-text .fa-calendar-alt { color: var(--ord-slate); }
+
+/* ---------- panel ---------- */
+.ord-panel { overflow: hidden; }
+.ord-panel__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px 20px; border-bottom: 1px solid var(--ord-border); }
+.ord-seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--ord-slate-bg); }
+.ord-seg__btn {
+    display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 0; border-radius: 9px;
+    background: transparent; color: var(--ord-muted); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+}
+.ord-seg__btn span { padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--ord-card); color: var(--ord-slate-fg); }
+.ord-seg__btn:hover { color: var(--ord-text); }
+.ord-seg__btn--on { background: var(--ord-card); color: var(--ord-text); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12); }
+.ord-seg__btn--on span { background: var(--ord-primary); color: #fff; }
+
+.ord-sums { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: 13px; color: var(--ord-muted); }
+.ord-sums__cap { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.ord-sum { padding: 6px 12px; border-radius: 10px; background: var(--ord-soft); border: 1px solid var(--ord-border); }
+.ord-sum strong { margin-left: 4px; color: var(--ord-text); }
+.ord-sum--strong { background: var(--ord-green-bg); border-color: transparent; color: var(--ord-green-fg); }
+.ord-sum--strong strong { color: var(--ord-green-fg); }
+
+/* ---------- table (b-table renders its own markup, hence the deep selectors) ---------- */
+.ord-tablewrap { margin: 0; }
+::v-deep .ord-table { margin: 0; color: var(--ord-text); }
+::v-deep .ord-table thead th {
+    padding: 12px 16px; border: 0; background: var(--ord-soft); color: var(--ord-muted); white-space: nowrap; vertical-align: middle;
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+::v-deep .ord-table tbody td { padding: 14px 16px; vertical-align: middle; border-top: 1px solid var(--ord-border); color: var(--ord-text); }
+::v-deep .ord-table tbody tr:first-child > td { border-top: 0; }
+::v-deep .ord-table.table-hover tbody tr:hover > td { background: var(--ord-soft); }
+::v-deep .ord-table .ord-num { text-align: right; white-space: nowrap; }
+::v-deep .ord-table .ord-actions-col { text-align: right; width: 1%; white-space: nowrap; }
+::v-deep .ord-table tr.ord-row--off > td { opacity: 0.6; }
+::v-deep .ord-table tr.b-table-details > td { padding: 0 16px 16px; background: var(--ord-soft); border-top: 0; }
+::v-deep .ord-table tr.b-table-has-details > td { background: var(--ord-soft); }
+
+.ord-id { display: flex; align-items: center; gap: 10px; }
+.ord-toggle {
+    width: 26px; height: 26px; flex-shrink: 0; border: 0; border-radius: 8px; background: var(--ord-slate-bg); color: var(--ord-slate-fg);
+    font-size: 11px; cursor: pointer; transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.ord-toggle:hover { background: var(--ord-blue-bg); color: var(--ord-blue-fg); }
+.ord-toggle.is-open { transform: rotate(90deg); background: var(--ord-blue-bg); color: var(--ord-blue-fg); }
+.ord-id__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ord-id__text strong { font-size: 14px; font-weight: 700; color: var(--ord-text); }
+.ord-id__text span { font-size: 12px; color: var(--ord-muted); white-space: nowrap; }
+
+.ord-shop { display: flex; align-items: center; gap: 12px; min-width: 190px; }
+.ord-avatar {
+    width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; background: var(--tone-bg); color: var(--tone-fg);
+}
+.ord-shop__text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ord-shop__text strong { font-size: 14px; font-weight: 700; color: var(--ord-text); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ord-shop__text span { font-size: 12px; color: var(--ord-muted); }
+.ord-when { display: flex; flex-direction: column; gap: 2px; }
+.ord-when strong { font-size: 13.5px; font-weight: 600; color: var(--ord-text); white-space: nowrap; }
+.ord-when span { font-size: 12px; color: var(--ord-muted); white-space: nowrap; }
+.ord-actions { display: inline-flex; gap: 8px; }
+
+.ord-busy { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 36px 0; color: var(--ord-muted); font-size: 14px; }
+.ord-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 52px 24px; }
+.ord-empty__icon { width: 68px; height: 68px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 6px; background: var(--ord-blue-bg); color: var(--ord-blue-fg); }
+.ord-empty h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--ord-text); }
+.ord-empty p { margin: 0 0 10px; max-width: 360px; font-size: 14px; color: var(--ord-muted); }
+.ord-empty-inline { margin: 0; padding: 16px 0; text-align: center; font-size: 13.5px; color: var(--ord-muted); }
+
+/* expanded order lines */
+.ord-details { padding-top: 4px; }
+.ord-lines { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ord-border); border-radius: 14px; background: var(--ord-card); overflow: hidden; }
+.ord-lines li { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
+.ord-lines li + li { border-top: 1px dashed var(--ord-border); }
+.ord-lines__img { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; object-fit: cover; background: var(--ord-soft); border: 1px solid var(--ord-border); }
+.ord-lines__img--blank { display: flex; align-items: center; justify-content: center; color: var(--ord-slate); }
+.ord-lines__name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ord-lines__name strong { font-size: 13.5px; font-weight: 600; color: var(--ord-text); }
+.ord-lines__name span { font-size: 12px; color: var(--ord-muted); }
+.ord-lines__qty { font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 8px; background: var(--ord-soft); color: var(--ord-text); }
+.ord-lines__amt { min-width: 80px; text-align: right; font-size: 14px; color: var(--ord-text); }
+
+/* ---------- footer ---------- */
+.ord-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 14px 20px; border-top: 1px solid var(--ord-border); }
+.ord-foot__size { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ord-muted); }
+.ord-foot__size label { margin: 0; }
+.ord-foot__size .form-select { width: auto; min-width: 72px; }
+.ord-foot__count { flex: 1; font-size: 13px; color: var(--ord-muted); white-space: nowrap; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1199px) {
+    .ord-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+    .ord { padding: 16px; }
+    .ord-head h1 { font-size: 24px; }
+    .ord-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .ord-stat { padding: 12px; gap: 10px; }
+    .ord-tile { width: 38px; height: 38px; font-size: 16px; }
+    .ord-stat__value { font-size: 22px; }
+    .ord-search { flex-basis: 100%; }
+    .ord-select { flex: 1 1 0; min-width: 0; }
+    .ord-panel__head { padding: 12px; }
+    .ord-seg { width: 100%; }
+    .ord-seg__btn { flex: 1; justify-content: center; }
+    .ord-foot__count { flex: none; margin-left: auto; }
+    .ord-foot .pagination { width: 100%; justify-content: center; }
+    .ord-lines li { flex-wrap: wrap; }
+    .ord-seg__btn { white-space: nowrap; padding: 0 10px; gap: 6px; }
+    .ord-field__control { flex: 1 1 100%; }
+    ::v-deep .ord-field__control .vue-daterange-picker { flex: 1; min-width: 0; }
+
+    /* bootstrap-vue stacks each table row into labelled lines below md; turn every order into a card */
+    ::v-deep .ord-table.b-table-stacked-md > tbody > tr {
+        display: block; margin: 12px; border: 1px solid var(--ord-border); border-radius: 14px; overflow: hidden; background: var(--ord-card);
+    }
+    ::v-deep .ord-table.b-table-stacked-md > tbody > tr > [data-label] { padding: 9px 14px; border-top: 1px dashed var(--ord-border); }
+    ::v-deep .ord-table.b-table-stacked-md > tbody > tr > [data-label]:first-child { border-top: 0; padding-top: 14px; }
+    ::v-deep .ord-table.b-table-stacked-md > tbody > tr > [data-label]::before {
+        text-align: left; font-weight: 600; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ord-muted);
+    }
+    ::v-deep .ord-table.b-table-stacked-md > tbody > tr.b-table-details { margin: -4px 12px 12px; border-style: dashed; }
+    ::v-deep .ord-table.b-table-stacked-md > tbody > tr.b-table-details > td { padding: 12px; }
+    ::v-deep .ord-table .ord-actions-col { width: auto; white-space: normal; text-align: left; }
 }
 </style>

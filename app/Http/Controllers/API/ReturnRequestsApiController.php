@@ -235,6 +235,7 @@ class ReturnRequestsApiController extends Controller
             $query = ReturnRequest::select(
                 'return_requests.*',
                 'users.name as customer_name',
+                DB::raw("COALESCE(NULLIF(TRIM(retailer_profiles.shop_name), ''), users.name) as shop_name"),
                 'users.mobile as customer_mobile',
                 'order_items.product_variant_id',
                 'order_items.quantity',
@@ -255,6 +256,7 @@ class ReturnRequestsApiController extends Controller
                 'product_variants.stock_unit_id'
             )
                 ->leftJoin('users', 'return_requests.user_id', '=', 'users.id')
+                ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
                 ->leftJoin('order_items', 'return_requests.order_item_id', '=', 'order_items.id')
                 ->leftJoin('orders', 'return_requests.order_id', '=', 'orders.id')
                 ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
@@ -281,6 +283,11 @@ class ReturnRequestsApiController extends Controller
             if (auth()->user()->role_id == Role::$roleSeller) {
                 $seller_id = auth()->user()->seller->id;
                 $query->where('order_items.seller_id', $seller_id);
+            }
+
+            // Optional exact status filter
+            if ($request->filled('status') && is_numeric($request->status)) {
+                $query->where('return_requests.status', (int) $request->status);
             }
 
             // Apply date filters
@@ -331,6 +338,7 @@ class ReturnRequestsApiController extends Controller
 
                         $q->where('return_requests.id', 'LIKE', '%' . $searchTerm . '%')
                             ->orWhere('users.name', 'LIKE', '%' . $searchTerm . '%')
+                            ->orWhere('retailer_profiles.shop_name', 'LIKE', '%' . $searchTerm . '%')
                             ->orWhere('users.mobile', 'LIKE', '%' . $searchTerm . '%')
                             ->orWhere('order_items.product_name', 'LIKE', '%' . $searchTerm . '%')
                             ->orWhere('order_items.variant_name', 'LIKE', '%' . $searchTerm . '%')
@@ -375,10 +383,23 @@ class ReturnRequestsApiController extends Controller
                 return $row;
             });
 
-            return CommonHelper::responseWithData(
-                $returnRequests,
-                $totalCount
-            );
+            $summaryQuery = ReturnRequest::query()
+                ->leftJoin('order_items', 'return_requests.order_item_id', '=', 'order_items.id');
+            if (auth()->user()->role_id == Role::$roleSeller) {
+                $summaryQuery->where('order_items.seller_id', auth()->user()->seller->id);
+            }
+            $byStatus = $summaryQuery
+                ->selectRaw('return_requests.status as status_id, COUNT(*) as total')
+                ->groupBy('return_requests.status')
+                ->pluck('total', 'status_id');
+
+            $payload = CommonHelper::responseWithData($returnRequests, $totalCount)->getData(true);
+            $payload['summary'] = [
+                'total'     => (int) $byStatus->sum(),
+                'by_status' => $byStatus,
+            ];
+
+            return response()->json($payload);
         } catch (\Exception $e) {
             return CommonHelper::responseError($e->getMessage());
         }

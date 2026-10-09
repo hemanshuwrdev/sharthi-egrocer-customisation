@@ -2023,7 +2023,7 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c(
     "div",
-    { attrs: { id: "app" } },
+    { staticClass: "ui-modern", attrs: { id: "app" } },
     [
       _c("div", { staticClass: "active", attrs: { id: "sidebar" } }, [
         _c("div", { staticClass: "sidebar-wrapper active" }, [
@@ -3226,7 +3226,7 @@ var render = function () {
                                 "router-link",
                                 {
                                   staticClass: "dropdown-item",
-                                  attrs: { to: "/seller/profile" },
+                                  attrs: { to: "/seller/setting?tab=profile" },
                                 },
                                 [
                                   _c("span", {

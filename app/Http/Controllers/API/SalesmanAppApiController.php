@@ -526,6 +526,8 @@ class SalesmanAppApiController extends Controller
      * POST /api/salesman/retailers/scan
      * QR resolver. Retailer's app encodes `user_id` in their QR. Salesman scans → opens detail.
      * Returns the same payload shape as retailerDetail() so the app can navigate identically.
+     * Also resolves a retailer still awaiting verification (in this salesman's territory):
+     * `needs_verification` is then true, so the app can go straight to the verify screen.
      *
      * Body: qr_code (string — the raw user_id encoded in the retailer's QR)
      */
@@ -553,7 +555,8 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('retailer_not_found');
         }
 
-        if (!$this->canAccessRetailer($salesman, (int) $retailer->id)) {
+        if (!$this->canAccessRetailer($salesman, (int) $retailer->id)
+            && !$this->canScanPendingRetailer($salesman, $retailer)) {
             return CommonHelper::responseError('retailer_not_owned_by_you');
         }
 
@@ -567,10 +570,38 @@ class SalesmanAppApiController extends Controller
             ->get();
 
         return CommonHelper::responseWithData([
-            'user'          => $retailer,
-            'profile'       => $retailer->retailerProfile,
-            'recent_orders' => $recentOrders,
+            'user'               => $retailer,
+            'profile'            => $retailer->retailerProfile,
+            'recent_orders'      => $recentOrders,
+            'needs_verification' => $retailer->verification_status === 'pending',
         ]);
+    }
+
+    /**
+     * A retailer still awaiting verification isn't in visibleRetailersQuery() (that only lists
+     * verified retailers), but its QR must still resolve: the salesman scans it to open the
+     * verify screen. Same territory rule as pendingRetailers() — the retailer's city (and area,
+     * when the distributor is area-scoped) must be one this salesman's distributor serves, and
+     * nobody else may have claimed it already. Only the scan uses this; lists and ordering are
+     * unchanged, so a pending retailer still can't be ordered for.
+     */
+    private function canScanPendingRetailer(Salesman $salesman, User $retailer): bool
+    {
+        if ($retailer->verification_status !== 'pending') {
+            return false;
+        }
+        if ($retailer->salesman_id && (int) $retailer->salesman_id !== (int) $salesman->id) {
+            return false;
+        }
+
+        $profile = $retailer->retailerProfile;
+        $cityIds = array_map('intval', $this->territoryCityIds((int) $salesman->seller_id));
+        if (!$profile || !in_array((int) $profile->city_id, $cityIds, true)) {
+            return false;
+        }
+
+        $areaIds = array_map('intval', $this->territoryAreaIds((int) $salesman->seller_id) ?: []);
+        return empty($areaIds) || in_array((int) $profile->area_id, $areaIds, true);
     }
 
     /**
@@ -1023,10 +1054,13 @@ class SalesmanAppApiController extends Controller
 
             // Cash-vs-other-methods price preview (excludes any salesman discount%
             // and tax, which are only known/applied at place-order time).
+            // One instant-payment % covers both cash and bank ("upi" key, shown as "Bank" in the
+            // apps), so both previews carry the same discounted price; "other" gets none.
             $cashDiscountPercent = (float) ($seller->cash_discount_percent ?? 0);
             $group['cash_discount_percent'] = $cashDiscountPercent;
             $group['payment_price_preview'] = [
                 'cash'  => round($group['final_total'] * (1 - $cashDiscountPercent / 100), 2),
+                'upi'   => round($group['final_total'] * (1 - $cashDiscountPercent / 100), 2),
                 'other' => round($group['final_total'], 2),
             ];
             // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.

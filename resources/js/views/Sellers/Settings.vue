@@ -3,10 +3,14 @@
         <div class="page-heading">
             <div class="row mb-3">
                 <div class="col-12">
-                    <h3>{{ __('thermal_print_settings') }}</h3>
+                    <!-- <h3>{{ __('thermal_print_settings') }}</h3> -->
+                    <h3>{{ __('settings') }}</h3>
                 </div>
             </div>
 
+            <!-- HIDDEN for now (thermal printing not in use). To bring the Thermal Print Settings card back, delete
+                 this comment's opening and closing markers. It has a logo upload (left) and a paper width choice (right);
+                 the script below (loading, saving, saveSettings) is untouched.
             <div class="card">
                 <div class="card-header">
                     <h4>{{ __('thermal_print_settings') }}</h4>
@@ -15,7 +19,6 @@
                 <div class="card-body">
                     <div class="row">
 
-                        <!-- Logo Upload -->
                         <div class="form-group col-md-6">
                             <label>{{ __('thermal_invoice_logo') }}</label>
 
@@ -42,7 +45,6 @@
                             </div>
                         </div>
 
-                        <!-- Paper Size -->
                         <div class="form-group col-md-6">
                             <label>{{ __('thermal_paper_width') }}</label>
 
@@ -62,269 +64,343 @@
                 </div>
 
             </div>
+            -->
 
-            <!-- Sarthi: Payment Collection Methods -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h4>{{ __('Payment Collection Methods') }}</h4>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted font-size-13">{{ __('Toggle the methods your drivers can use to collect payment. Methods disabled by admin cannot be enabled.') }}</p>
-                    <div class="row">
-                        <div class="form-group col-md-3" v-for="method in paymentMethods" :key="method.method">
-                            <label>{{ __(method.method.charAt(0).toUpperCase() + method.method.slice(1)) }}</label><br>
-                            <div class="form-check form-switch">
-                                <input type="checkbox" true-value="1" false-value="0"
-                                    class="form-check-input"
-                                    v-model="method.is_enabled"
-                                    :disabled="!method.is_editable"
-                                    :title="!method.is_editable ? __('Disabled by admin') : ''"
-                                >
-                            </div>
-                            <small v-if="!method.is_editable" class="text-danger">{{ __('Disabled by admin') }}</small>
-                            <div v-if="method.method === 'cash'" class="mt-2">
-                                <label class="font-size-13 text-muted">{{ __('Cash discount %') }}</label>
-                                <input type="number" min="0" max="100" step="0.01"
-                                    class="form-control form-control-sm"
-                                    v-model="method.discount_percent"
-                                    :disabled="!method.is_editable || !method.is_enabled"
-                                    :placeholder="__('e.g. 2')"
-                                >
-                                <small class="text-muted">{{ __('Knocked off final_total when the retailer pays cash, so cash is always the cheapest option.') }}</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <b-button variant="primary" :disabled="isPaymentLoading" @click="savePaymentMethods">
-                        {{ __('save') }}
-                        <b-spinner small v-if="isPaymentLoading"></b-spinner>
-                    </b-button>
-                </div>
-            </div>
+            <div class="text-muted mb-3">{{ __('Manage how orders, payments and documents work for your store.') }}</div>
 
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h4>{{ __('order_settings') }}</h4>
-                </div>
+            <b-tabs v-model="activeTab" pills nav-class="settings-tabs mb-3" content-class="mt-1">
 
-                <div class="card-body">
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="order_cutoff_time">{{ __('order_cutoff_time') }}</label>
-                            <input type="time" class="form-control"
-                                id="order_cutoff_time"
-                                v-model="order_cutoff_time"
-                                placeholder="15:00" />
-                            <span class="text text-primary font-size-13">({{
-                                __('orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after')
-                                }})</span>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="min_order_amount">{{ __('min_order_amount') }}</label>
-                            <input type="number" min="0" step="0.01" class="form-control"
-                                id="min_order_amount"
-                                v-model="min_order_amount"
-                                :placeholder="__('optional')" />
-                            <span class="text text-primary font-size-13">({{
-                                __('minimum_cart_total_required_for_a_retailer_to_place_an_order')
-                                }})</span>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="delivery_otp_enabled">{{ __('delivery_otp_enabled') }}</label><br>
-                            <div class="form-check form-switch">
-                                <input type="checkbox" class="form-check-input"
-                                    id="delivery_otp_enabled"
-                                    v-model="delivery_otp_enabled" />
-                            </div>
-                            <span class="text text-primary font-size-13">({{
-                                __('driver_must_enter_the_retailers_otp_to_mark_an_order_delivered_not_the_login_otp')
-                                }})</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-footer">
-                    <b-button variant="primary" :disabled="isOrderLoading" @click="saveOrderSettings">
-                        {{ __('save') }}
-                        <b-spinner small v-if="isOrderLoading"></b-spinner>
-                    </b-button>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h4>{{ __('invoice_settings') }}</h4>
-                </div>
-
-                <div class="card-body">
-                    <p class="text-muted font-size-13">{{ __('invoice_settings_hint') }}</p>
-                    <div class="row">
-                        <div class="form-group col-md-4">
-                            <label for="invoice_prefix">{{ __('invoice_prefix') }}</label>
-                            <input type="text" class="form-control" id="invoice_prefix"
-                                v-model="invoice_prefix" :placeholder="__('optional')" />
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="invoice_next_number">{{ __('invoice_number') }}</label>
-                            <input type="number" min="1" class="form-control" id="invoice_next_number"
-                                v-model.number="invoice_next_number" placeholder="1" />
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="invoice_suffix">{{ __('invoice_suffix') }}</label>
-                            <input type="text" class="form-control" id="invoice_suffix"
-                                v-model="invoice_suffix" :placeholder="__('optional')" />
-                        </div>
-                    </div>
-                    <p class="text-muted font-size-13 mb-0">
-                        {{ __('preview') }}: <strong>{{ invoiceNumberPreview }}</strong>
-                    </p>
-                </div>
-
-                <div class="card-footer">
-                    <b-button variant="primary" :disabled="isInvoiceLoading" @click="saveInvoiceSettings">
-                        {{ __('save') }}
-                        <b-spinner small v-if="isInvoiceLoading"></b-spinner>
-                    </b-button>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h4>{{ __('loading_slip_settings') }}</h4>
-                </div>
-
-                <div class="card-body">
-                    <p class="text-muted font-size-13">{{ __('loading_slip_settings_hint') }}</p>
-                    <div class="row">
-                        <div class="form-group col-md-4">
-                            <label for="loading_slip_prefix">{{ __('loading_slip_prefix') }}</label>
-                            <input type="text" class="form-control" id="loading_slip_prefix"
-                                v-model="loading_slip_prefix" :placeholder="__('optional')" />
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="loading_slip_next_number">{{ __('loading_slip_number') }}</label>
-                            <input type="number" min="1" class="form-control" id="loading_slip_next_number"
-                                v-model.number="loading_slip_next_number" placeholder="1" />
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="loading_slip_suffix">{{ __('loading_slip_suffix') }}</label>
-                            <input type="text" class="form-control" id="loading_slip_suffix"
-                                v-model="loading_slip_suffix" :placeholder="__('optional')" />
-                        </div>
-                    </div>
-                    <p class="text-muted font-size-13 mb-0">
-                        {{ __('preview') }}: <strong>{{ loadingSlipNumberPreview }}</strong>
-                    </p>
-                </div>
-
-                <div class="card-footer">
-                    <b-button variant="primary" :disabled="isLoadingSlipSettingsLoading" @click="saveLoadingSlipSettings">
-                        {{ __('save') }}
-                        <b-spinner small v-if="isLoadingSlipSettingsLoading"></b-spinner>
-                    </b-button>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h4>{{ __('credit_note_settings') }}</h4>
-                </div>
-
-                <div class="card-body">
-                    <p class="text-muted font-size-13">{{ __('credit_note_settings_hint') }}</p>
-                    <div class="row">
-                        <div class="form-group col-md-4">
-                            <label for="credit_note_prefix">{{ __('credit_note_prefix') }}</label>
-                            <input type="text" class="form-control" id="credit_note_prefix"
-                                v-model="credit_note_prefix" :placeholder="__('optional')" />
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="credit_note_next_number">{{ __('credit_note_number') }}</label>
-                            <input type="number" min="1" class="form-control" id="credit_note_next_number"
-                                v-model.number="credit_note_next_number" placeholder="1" />
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="credit_note_suffix">{{ __('credit_note_suffix') }}</label>
-                            <input type="text" class="form-control" id="credit_note_suffix"
-                                v-model="credit_note_suffix" :placeholder="__('optional')" />
-                        </div>
-                    </div>
-                    <p class="text-muted font-size-13 mb-0">
-                        {{ __('preview') }}: <strong>{{ creditNoteNumberPreview }}</strong>
-                    </p>
-                </div>
-
-                <div class="card-footer">
-                    <b-button variant="primary" :disabled="isCreditNoteLoading" @click="saveCreditNoteSettings">
-                        {{ __('save') }}
-                        <b-spinner small v-if="isCreditNoteLoading"></b-spinner>
-                    </b-button>
-                </div>
-            </div>
-
-            <!-- Sarthi: Sensitive Operations Password -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h4>{{ __('Sensitive Operations Password') }}</h4>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted font-size-13">
-                        {{ __('This password gates risky corrections (like editing a driver\'s recorded payment method) so only you can authorize them, even if staff have access to this panel.') }}
-                    </p>
-
-                    <template v-if="!sensitivePasswordIsSet">
-                        <div class="row">
-                            <div class="form-group col-md-6">
-                                <label>{{ __('Password') }}</label>
-                                <input type="password" class="form-control" v-model="sensitiveNewPassword" autocomplete="new-password" />
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{{ __('Confirm Password') }}</label>
-                                <input type="password" class="form-control" v-model="sensitiveConfirmPassword" autocomplete="new-password" />
-                            </div>
-                        </div>
+                <!-- Orders & Payments -->
+                <b-tab>
+                    <template #title>
+                        <span class="tab-title"><i class="fa fa-shopping-cart me-2"></i>{{ __('Orders & Payments') }}</span>
                     </template>
-                    <template v-else>
-                        <div class="row">
-                            <div class="form-group col-md-4">
-                                <template v-if="!sensitiveForgotMode">
-                                    <label>{{ __('Old Password') }}</label>
-                                    <input type="password" class="form-control" v-model="sensitiveOldPassword" autocomplete="current-password" />
-                                    <a href="javascript:void(0)" class="small" @click="startSensitiveForgotMode">{{ __('forgot_password') }}?</a>
-                                </template>
-                                <template v-else>
-                                    <label>{{ __('OTP') }}</label>
-                                    <input type="text" class="form-control" v-model="sensitiveOtp" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
-                                    <span class="small">
-                                        <a href="javascript:void(0)" @click="cancelSensitiveForgotMode">{{ __('cancel') }}</a>
-                                        &nbsp;|&nbsp;
-                                        <a href="javascript:void(0)"
-                                            :class="{ 'text-muted': otpResendCooldown > 0 }"
-                                            @click="otpResendCooldown === 0 && sendSensitiveOtp()">
-                                            {{ otpResendCooldown > 0 ? __('resend_code') + ' (' + otpResendCooldown + 's)' : __('resend_code') }}
-                                        </a>
-                                    </span>
-                                </template>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>{{ __('New Password') }}</label>
-                                <input type="password" class="form-control" v-model="sensitiveNewPassword" autocomplete="new-password" />
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>{{ __('Confirm New Password') }}</label>
-                                <input type="password" class="form-control" v-model="sensitiveConfirmPassword" autocomplete="new-password" />
+
+                    <div class="row g-3">
+                        <div class="col-xl-5">
+                            <div class="card settings-card h-100">
+                                <div class="settings-card-head">
+                                    <span class="settings-icon"><i class="fa fa-clipboard-list"></i></span>
+                                    <h5 class="mb-0">{{ __('order_settings') }}</h5>
+                                </div>
+
+                                <div class="card-body pt-0">
+                                    <div class="setting-row">
+                                        <div class="setting-text">
+                                            <label for="order_cutoff_time" class="setting-title">{{ __('order_cutoff_time') }}</label>
+                                            <div class="setting-hint">{{ __('orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after') }}</div>
+                                        </div>
+                                        <div class="setting-control">
+                                            <input type="time" class="form-control"
+                                                id="order_cutoff_time"
+                                                v-model="order_cutoff_time"
+                                                placeholder="15:00" />
+                                        </div>
+                                    </div>
+
+                                    <div class="setting-row">
+                                        <div class="setting-text">
+                                            <label for="min_order_amount" class="setting-title">{{ __('min_order_amount') }}</label>
+                                            <div class="setting-hint">{{ __('minimum_cart_total_required_for_a_retailer_to_place_an_order') }}</div>
+                                        </div>
+                                        <div class="setting-control">
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                id="min_order_amount"
+                                                v-model="min_order_amount"
+                                                :placeholder="__('optional')" />
+                                        </div>
+                                    </div>
+
+                                    <div class="setting-row">
+                                        <div class="setting-text">
+                                            <label for="delivery_otp_enabled" class="setting-title">{{ __('delivery_otp_enabled') }}</label>
+                                            <div class="setting-hint">{{ __('driver_must_enter_the_retailers_otp_to_mark_an_order_delivered_not_the_login_otp') }}</div>
+                                        </div>
+                                        <div class="setting-control setting-control-switch">
+                                            <div class="form-check form-switch m-0">
+                                                <input type="checkbox" class="form-check-input"
+                                                    id="delivery_otp_enabled"
+                                                    v-model="delivery_otp_enabled" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="settings-card-foot">
+                                    <b-button variant="primary" :disabled="isOrderLoading" @click="saveOrderSettings">
+                                        {{ __('save') }}
+                                        <b-spinner small v-if="isOrderLoading"></b-spinner>
+                                    </b-button>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Sarthi: Payment Collection Methods -->
+                        <div class="col-xl-7">
+                            <div class="card settings-card h-100">
+                                <div class="settings-card-head">
+                                    <span class="settings-icon"><i class="fa fa-wallet"></i></span>
+                                    <h5 class="mb-0">{{ __('Payment Collection Methods') }}</h5>
+                                </div>
+                                <div class="card-body pt-0">
+                                    <p class="setting-hint">{{ __('Toggle the methods your drivers can use to collect payment. Methods disabled by admin cannot be enabled.') }}</p>
+                                    <div class="row g-3">
+                                        <div class="col-sm-6" v-for="method in paymentMethods" :key="method.method">
+                                            <div class="method-tile h-100"
+                                                :class="{ 'is-on': method.is_enabled == 1, 'is-locked': !method.is_editable }">
+                                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="method-icon"><i :class="methodIcon(method.method)"></i></span>
+                                                        <span class="fw-semibold">{{ methodLabel(method.method) }}</span>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input type="checkbox" true-value="1" false-value="0"
+                                                            class="form-check-input"
+                                                            v-model="method.is_enabled"
+                                                            :disabled="!method.is_editable"
+                                                            :title="!method.is_editable ? __('Disabled by admin') : ''"
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <small v-if="!method.is_editable" class="text-danger d-block mt-2">{{ __('Disabled by admin') }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- One instant-payment discount shared by Cash and Bank -->
+                                    <div class="mt-4">
+                                        <label class="form-label small text-muted mb-1">{{ __('Cash / Bank discount %') }}</label>
+                                        <input type="number" min="0" max="100" step="0.01"
+                                            class="form-control form-control-sm" style="max-width: 220px"
+                                            v-model="instantDiscountPercent"
+                                            :disabled="!instantDiscountEditable"
+                                            :placeholder="__('e.g. 2')"
+                                        >
+                                        <small class="setting-hint d-block mt-1">{{ __('Knocked off the order total when the retailer pays the whole amount in one go by Cash or Bank, so the money comes in instantly at delivery. No discount if the payment is split across types.') }}</small>
+                                    </div>
+
+                                </div>
+                                <div class="settings-card-foot">
+                                    <b-button variant="primary" :disabled="isPaymentLoading" @click="savePaymentMethods">
+                                        {{ __('save') }}
+                                        <b-spinner small v-if="isPaymentLoading"></b-spinner>
+                                    </b-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </b-tab>
+
+                <!-- Document numbering -->
+                <b-tab>
+                    <template #title>
+                        <span class="tab-title"><i class="fa fa-hashtag me-2"></i>{{ __('Document numbering') }}</span>
                     </template>
-                </div>
-                <div class="card-footer">
-                    <b-button variant="primary" :disabled="isSensitiveLoading" @click="saveSensitivePassword">
-                        {{ sensitiveForgotMode ? __('reset_password') : (sensitivePasswordIsSet ? __('change_password') : __('set_password')) }}
-                        <b-spinner small v-if="isSensitiveLoading"></b-spinner>
-                    </b-button>
-                </div>
-            </div>
+
+                    <p class="setting-hint mb-3">{{ __('Choose how each document number looks. The preview shows the next number that will be issued.') }}</p>
+                    <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="card settings-card h-100">
+                            <div class="settings-card-head">
+                                <span class="settings-icon"><i class="fa fa-file-invoice"></i></span>
+                                <h5 class="mb-0">{{ __('invoice_settings') }}</h5>
+                            </div>
+                            <div class="card-body pt-0">
+                                <p class="setting-hint">{{ __('invoice_settings_hint') }}</p>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label for="invoice_prefix" class="form-label">{{ __('invoice_prefix') }}</label>
+                                        <input type="text" class="form-control" id="invoice_prefix"
+                                            v-model="invoice_prefix" :placeholder="__('optional')" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="invoice_suffix" class="form-label">{{ __('invoice_suffix') }}</label>
+                                        <input type="text" class="form-control" id="invoice_suffix"
+                                            v-model="invoice_suffix" :placeholder="__('optional')" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="invoice_next_number" class="form-label">{{ __('invoice_number') }}</label>
+                                        <input type="number" min="1" class="form-control" id="invoice_next_number"
+                                            v-model.number="invoice_next_number" placeholder="1" />
+                                    </div>
+                                </div>
+                                <div class="series-preview mt-3">
+                                    <span class="text-muted small">{{ __('preview') }}</span>
+                                    <strong>{{ invoiceNumberPreview }}</strong>
+                                </div>
+                            </div>
+                            <div class="settings-card-foot">
+                                <b-button variant="primary" :disabled="isInvoiceLoading" @click="saveInvoiceSettings">
+                                    {{ __('save') }}
+                                    <b-spinner small v-if="isInvoiceLoading"></b-spinner>
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card settings-card h-100">
+                            <div class="settings-card-head">
+                                <span class="settings-icon"><i class="fa fa-truck"></i></span>
+                                <h5 class="mb-0">{{ __('loading_slip_settings') }}</h5>
+                            </div>
+                            <div class="card-body pt-0">
+                                <p class="setting-hint">{{ __('loading_slip_settings_hint') }}</p>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label for="loading_slip_prefix" class="form-label">{{ __('loading_slip_prefix') }}</label>
+                                        <input type="text" class="form-control" id="loading_slip_prefix"
+                                            v-model="loading_slip_prefix" :placeholder="__('optional')" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="loading_slip_suffix" class="form-label">{{ __('loading_slip_suffix') }}</label>
+                                        <input type="text" class="form-control" id="loading_slip_suffix"
+                                            v-model="loading_slip_suffix" :placeholder="__('optional')" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="loading_slip_next_number" class="form-label">{{ __('loading_slip_number') }}</label>
+                                        <input type="number" min="1" class="form-control" id="loading_slip_next_number"
+                                            v-model.number="loading_slip_next_number" placeholder="1" />
+                                    </div>
+                                </div>
+                                <div class="series-preview mt-3">
+                                    <span class="text-muted small">{{ __('preview') }}</span>
+                                    <strong>{{ loadingSlipNumberPreview }}</strong>
+                                </div>
+                            </div>
+                            <div class="settings-card-foot">
+                                <b-button variant="primary" :disabled="isLoadingSlipSettingsLoading" @click="saveLoadingSlipSettings">
+                                    {{ __('save') }}
+                                    <b-spinner small v-if="isLoadingSlipSettingsLoading"></b-spinner>
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card settings-card h-100">
+                            <div class="settings-card-head">
+                                <span class="settings-icon"><i class="fa fa-undo-alt"></i></span>
+                                <h5 class="mb-0">{{ __('credit_note_settings') }}</h5>
+                            </div>
+                            <div class="card-body pt-0">
+                                <p class="setting-hint">{{ __('credit_note_settings_hint') }}</p>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label for="credit_note_prefix" class="form-label">{{ __('credit_note_prefix') }}</label>
+                                        <input type="text" class="form-control" id="credit_note_prefix"
+                                            v-model="credit_note_prefix" :placeholder="__('optional')" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="credit_note_suffix" class="form-label">{{ __('credit_note_suffix') }}</label>
+                                        <input type="text" class="form-control" id="credit_note_suffix"
+                                            v-model="credit_note_suffix" :placeholder="__('optional')" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="credit_note_next_number" class="form-label">{{ __('credit_note_number') }}</label>
+                                        <input type="number" min="1" class="form-control" id="credit_note_next_number"
+                                            v-model.number="credit_note_next_number" placeholder="1" />
+                                    </div>
+                                </div>
+                                <div class="series-preview mt-3">
+                                    <span class="text-muted small">{{ __('preview') }}</span>
+                                    <strong>{{ creditNoteNumberPreview }}</strong>
+                                </div>
+                            </div>
+                            <div class="settings-card-foot">
+                                <b-button variant="primary" :disabled="isCreditNoteLoading" @click="saveCreditNoteSettings">
+                                    {{ __('save') }}
+                                    <b-spinner small v-if="isCreditNoteLoading"></b-spinner>
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </b-tab>
+
+                <!-- Security -->
+                <b-tab>
+                    <template #title>
+                        <span class="tab-title"><i class="fa fa-lock me-2"></i>{{ __('Security') }}</span>
+                    </template>
+
+                    <!-- Sarthi: Sensitive Operations Password -->
+                    <div class="row">
+                        <div class="col-xl-8">
+                            <div class="card settings-card">
+                                <div class="settings-card-head">
+                                    <span class="settings-icon"><i class="fa fa-key"></i></span>
+                                    <h5 class="mb-0">{{ __('Sensitive Operations Password') }}</h5>
+                                </div>
+                                <div class="card-body pt-0">
+                                    <p class="setting-hint">
+                                        {{ __('This password gates risky corrections (like editing a driver\'s recorded payment method) so only you can authorize them, even if staff have access to this panel.') }}
+                                    </p>
+
+                                    <template v-if="!sensitivePasswordIsSet">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">{{ __('Password') }}</label>
+                                                <input type="password" class="form-control" v-model="sensitiveNewPassword" autocomplete="new-password" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">{{ __('Confirm Password') }}</label>
+                                                <input type="password" class="form-control" v-model="sensitiveConfirmPassword" autocomplete="new-password" />
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <template v-if="!sensitiveForgotMode">
+                                                    <label class="form-label">{{ __('Old Password') }}</label>
+                                                    <input type="password" class="form-control" v-model="sensitiveOldPassword" autocomplete="current-password" />
+                                                    <a href="javascript:void(0)" class="small" @click="startSensitiveForgotMode">{{ __('forgot_password') }}?</a>
+                                                </template>
+                                                <template v-else>
+                                                    <label class="form-label">{{ __('OTP') }}</label>
+                                                    <input type="text" class="form-control" v-model="sensitiveOtp" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+                                                    <span class="small">
+                                                        <a href="javascript:void(0)" @click="cancelSensitiveForgotMode">{{ __('cancel') }}</a>
+                                                        &nbsp;|&nbsp;
+                                                        <a href="javascript:void(0)"
+                                                            :class="{ 'text-muted': otpResendCooldown > 0 }"
+                                                            @click="otpResendCooldown === 0 && sendSensitiveOtp()">
+                                                            {{ otpResendCooldown > 0 ? __('resend_code') + ' (' + otpResendCooldown + 's)' : __('resend_code') }}
+                                                        </a>
+                                                    </span>
+                                                </template>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">{{ __('New Password') }}</label>
+                                                <input type="password" class="form-control" v-model="sensitiveNewPassword" autocomplete="new-password" />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">{{ __('Confirm New Password') }}</label>
+                                                <input type="password" class="form-control" v-model="sensitiveConfirmPassword" autocomplete="new-password" />
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="settings-card-foot">
+                                    <b-button variant="primary" :disabled="isSensitiveLoading" @click="saveSensitivePassword">
+                                        {{ sensitiveForgotMode ? __('reset_password') : (sensitivePasswordIsSet ? __('change_password') : __('set_password')) }}
+                                        <b-spinner small v-if="isSensitiveLoading"></b-spinner>
+                                    </b-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </b-tab>
+
+                <!-- My Profile: the same profile form the old My Profile page used, loaded only when this tab is opened -->
+                <b-tab lazy>
+                    <template #title>
+                        <span class="tab-title"><i class="fa fa-user me-2"></i>{{ __('my_profile') }}</span>
+                    </template>
+
+                    <seller-profile-form embedded></seller-profile-form>
+                </b-tab>
+
+            </b-tabs>
         </div>
     </div>
 </template>
@@ -333,10 +409,17 @@
 import axios from "axios";
 import Auth from '../../Auth.js';
 
+// tab order = b-tabs index; "?tab=profile" in the URL opens that tab (used by the My Profile menu link)
+const TAB_KEYS = ['orders', 'numbering', 'security', 'profile'];
+
 export default {
+    components: {
+        SellerProfileForm: () => import('../Seller/EditSeller.vue'),
+    },
     data() {
         return {
             login_user: Auth.user,
+            activeTab: 0,
             isLoading: false,
             thermal_paper_width: 80,
             thermal_logo: "",
@@ -353,6 +436,7 @@ export default {
             delivery_otp_enabled: true,
             isPaymentLoading: false,
             paymentMethods: [],
+            instantDiscountPercent: 0,
             isInvoiceLoading: false,
             invoice_prefix: "",
             invoice_suffix: "",
@@ -379,6 +463,16 @@ export default {
     },
 
     created() {
+        // open on the tab the user was last on (a per-browser convenience; fine if storage is blocked)
+        const fromUrl = TAB_KEYS.indexOf(this.$route.query.tab);
+        if (fromUrl >= 0) {
+            this.activeTab = fromUrl;
+        } else {
+            try {
+                const saved = parseInt(window.localStorage.getItem('sarthi_seller_settings_tab'), 10);
+                if (saved >= 0 && saved < TAB_KEYS.length) this.activeTab = saved;
+            } catch (e) {}
+        }
         this.getSettings();
         this.getOrderSettings();
         this.getPaymentMethods();
@@ -388,7 +482,28 @@ export default {
         this.getSensitivePasswordStatus();
     },
 
+    watch: {
+        activeTab(index) {
+            try { window.localStorage.setItem('sarthi_seller_settings_tab', String(index)); } catch (e) {}
+            // keep the address in step with the tab, so a refresh or a shared link lands on it
+            if (this.$route.query.tab !== TAB_KEYS[index]) {
+                const nav = this.$router.replace({ query: Object.assign({}, this.$route.query, { tab: TAB_KEYS[index] }) });
+                if (nav && nav.catch) nav.catch(() => {});
+            }
+        },
+        // the top-menu "My Profile" link while this page is already open
+        '$route.query.tab'(tab) {
+            const index = TAB_KEYS.indexOf(tab);
+            if (index >= 0 && index !== this.activeTab) this.activeTab = index;
+        },
+    },
+
     computed: {
+        // The shared Cash / Bank discount can be edited while at least one of the two is on and allowed.
+        instantDiscountEditable() {
+            return this.paymentMethods.some(m =>
+                (m.method === 'cash' || m.method === 'upi') && m.is_editable && m.is_enabled == 1);
+        },
         invoiceNumberPreview() {
             const padded = String(this.invoice_next_number || 1).padStart(4, '0');
             return `${this.invoice_prefix || ''}${padded}${this.invoice_suffix || ''}`;
@@ -404,6 +519,20 @@ export default {
     },
 
     methods: {
+
+        methodLabel(method) {
+            // label only: the method key stays 'upi' everywhere else (saving, the driver app, exports)
+            if (method === 'upi') return this.__('Bank');
+            return this.__(method.charAt(0).toUpperCase() + method.slice(1));
+        },
+        methodIcon(method) {
+            return {
+                cash: 'fa fa-money-bill-alt',
+                upi: 'fa fa-mobile-alt',
+                cheque: 'fa fa-money-check-alt',
+                signature: 'fa fa-file-signature',
+            }[method] || 'fa fa-credit-card';
+        },
 
         // ================= LOAD SETTINGS =================
         getSettings() {
@@ -492,9 +621,11 @@ export default {
                     if (res.data.status && res.data.data) {
                         this.paymentMethods = res.data.data.methods.map(m => ({
                             ...m,
-                            is_enabled: m.is_enabled ? 1 : 0,
-                            discount_percent: m.discount_percent ?? 0
+                            is_enabled: m.is_enabled ? 1 : 0
                         }));
+                        // cash and bank rows carry the same shared %
+                        const cash = res.data.data.methods.find(m => m.method === 'cash');
+                        this.instantDiscountPercent = cash && cash.discount_percent ? cash.discount_percent : 0;
                     }
                 })
                 .catch(() => {});
@@ -505,10 +636,9 @@ export default {
             let formData = new FormData();
             this.paymentMethods.forEach(m => {
                 formData.append(m.method, m.is_editable ? m.is_enabled : 0);
-                if (m.method === 'cash') {
-                    formData.append('cash_discount_percent', m.discount_percent || 0);
-                }
             });
+            // one shared Cash / Bank discount (stored as cash_discount_percent)
+            formData.append('cash_discount_percent', this.instantDiscountPercent || 0);
             axios.post(this.$sellerApiUrl + '/payment_methods/save', formData)
                 .then(res => {
                     if (res.data.status) {
@@ -762,5 +892,156 @@ export default {
     width: 60%;
     border: 1px solid #ddd;
     padding: 5px;
+}
+
+/* tabs: same pill look as the Export Center */
+::v-deep .settings-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 0;
+}
+
+::v-deep .settings-tabs .nav-link {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: #64748b;
+    background: transparent;
+}
+
+::v-deep .settings-tabs .nav-link:hover {
+    border-color: rgba(128, 128, 128, 0.55);
+}
+
+::v-deep .settings-tabs .nav-link.active {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: #10b981;
+    color: #059669;
+}
+
+.settings-card {
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    border-radius: 14px;
+}
+
+.settings-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px 14px;
+}
+
+.settings-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.settings-card-foot {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(128, 128, 128, 0.18);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.setting-hint {
+    color: #6c757d;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+/* a setting = text on the left, its control on the right */
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.setting-row:last-child {
+    border-bottom: 0;
+}
+
+.setting-text {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.setting-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.setting-control {
+    flex: 0 0 150px;
+}
+
+.setting-control-switch {
+    flex: 0 0 auto;
+}
+
+/* payment method tiles */
+.method-tile {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.method-tile.is-on {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.07);
+}
+
+.method-tile.is-locked {
+    opacity: 0.65;
+}
+
+.method-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(128, 128, 128, 0.14);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.method-tile.is-on .method-icon {
+    background: rgba(16, 185, 129, 0.2);
+    color: #059669;
+}
+
+/* numbering preview chip */
+.series-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.1);
+}
+
+.series-preview strong {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 1.05rem;
+}
+
+@media (max-width: 575px) {
+    .setting-control {
+        flex: 1 1 100%;
+    }
 }
 </style>

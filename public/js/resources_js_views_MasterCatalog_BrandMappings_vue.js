@@ -175,7 +175,9 @@ __webpack_require__.r(__webpack_exports__);
         brand_id: null,
         brand_line_id: null,
         seller_id: null,
-        city_ids: []
+        city_ids: [],
+        is_edit: false,
+        original_brand_line_id: null
       },
       brands: [],
       sellers: [],
@@ -273,7 +275,9 @@ __webpack_require__.r(__webpack_exports__);
         brand_id: null,
         brand_line_id: null,
         seller_id: null,
-        city_ids: []
+        city_ids: [],
+        is_edit: false,
+        original_brand_line_id: null
       };
       this.modalBrandLines = [];
       this.modalOpen = true;
@@ -281,16 +285,23 @@ __webpack_require__.r(__webpack_exports__);
     openEdit: function openEdit(row) {
       var _this5 = this;
       this.isEdit = true;
+      // The line can be changed here; brand and distributor identify the mapping, so they stay
+      // fixed. original_brand_line_id tells the server which mapping is being replaced.
       this.form = {
         brand_id: row.brand_id,
         brand_line_id: row.brand_line_id,
         seller_id: row.seller_id,
-        city_ids: []
+        city_ids: [],
+        is_edit: true,
+        original_brand_line_id: row.brand_line_id
       };
       this.modalOpen = true;
       if (row.brand_id) {
         axios.get(this.$apiUrl + '/admin/brands/' + row.brand_id + '/lines').then(function (r) {
-          _this5.modalBrandLines = r.data.data || [];
+          // active lines to pick from, plus the mapping's current one even if since deactivated
+          _this5.modalBrandLines = (r.data.data || []).filter(function (l) {
+            return l.status == 1 || l.id === row.brand_line_id;
+          });
         })["catch"](function () {});
       }
     },
@@ -868,7 +879,7 @@ var render = function () {
                       },
                     ],
                     staticClass: "form-control",
-                    attrs: { disabled: _vm.isEdit || !_vm.form.brand_id },
+                    attrs: { disabled: !_vm.form.brand_id },
                     on: {
                       change: function ($event) {
                         var $$selectedVal = Array.prototype.filter

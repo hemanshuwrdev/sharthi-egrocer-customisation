@@ -348,13 +348,98 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
+
+// tab order = b-tabs index; "?tab=profile" in the URL opens that tab (used by the My Profile menu link)
+var TAB_KEYS = ['orders', 'numbering', 'security', 'profile'];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  components: {
+    SellerProfileForm: function SellerProfileForm() {
+      return __webpack_require__.e(/*! import() */ "resources_js_views_Seller_EditSeller_vue").then(__webpack_require__.bind(__webpack_require__, /*! ../Seller/EditSeller.vue */ "./resources/js/views/Seller/EditSeller.vue"));
+    }
+  },
   data: function data() {
     return {
       login_user: _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].user,
+      activeTab: 0,
       isLoading: false,
       thermal_paper_width: 80,
       thermal_logo: "",
@@ -378,6 +463,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       delivery_otp_enabled: true,
       isPaymentLoading: false,
       paymentMethods: [],
+      instantDiscountPercent: 0,
       isInvoiceLoading: false,
       invoice_prefix: "",
       invoice_suffix: "",
@@ -403,6 +489,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     };
   },
   created: function created() {
+    // open on the tab the user was last on (a per-browser convenience; fine if storage is blocked)
+    var fromUrl = TAB_KEYS.indexOf(this.$route.query.tab);
+    if (fromUrl >= 0) {
+      this.activeTab = fromUrl;
+    } else {
+      try {
+        var saved = parseInt(window.localStorage.getItem('sarthi_seller_settings_tab'), 10);
+        if (saved >= 0 && saved < TAB_KEYS.length) this.activeTab = saved;
+      } catch (e) {}
+    }
     this.getSettings();
     this.getOrderSettings();
     this.getPaymentMethods();
@@ -411,7 +507,34 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     this.getCreditNoteSettings();
     this.getSensitivePasswordStatus();
   },
+  watch: {
+    activeTab: function activeTab(index) {
+      try {
+        window.localStorage.setItem('sarthi_seller_settings_tab', String(index));
+      } catch (e) {}
+      // keep the address in step with the tab, so a refresh or a shared link lands on it
+      if (this.$route.query.tab !== TAB_KEYS[index]) {
+        var nav = this.$router.replace({
+          query: Object.assign({}, this.$route.query, {
+            tab: TAB_KEYS[index]
+          })
+        });
+        if (nav && nav["catch"]) nav["catch"](function () {});
+      }
+    },
+    // the top-menu "My Profile" link while this page is already open
+    '$route.query.tab': function $routeQueryTab(tab) {
+      var index = TAB_KEYS.indexOf(tab);
+      if (index >= 0 && index !== this.activeTab) this.activeTab = index;
+    }
+  },
   computed: {
+    // The shared Cash / Bank discount can be edited while at least one of the two is on and allowed.
+    instantDiscountEditable: function instantDiscountEditable() {
+      return this.paymentMethods.some(function (m) {
+        return (m.method === 'cash' || m.method === 'upi') && m.is_editable && m.is_enabled == 1;
+      });
+    },
     invoiceNumberPreview: function invoiceNumberPreview() {
       var padded = String(this.invoice_next_number || 1).padStart(4, '0');
       return "".concat(this.invoice_prefix || '').concat(padded).concat(this.invoice_suffix || '');
@@ -426,6 +549,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
   },
   methods: {
+    methodLabel: function methodLabel(method) {
+      // label only: the method key stays 'upi' everywhere else (saving, the driver app, exports)
+      if (method === 'upi') return this.__('Bank');
+      return this.__(method.charAt(0).toUpperCase() + method.slice(1));
+    },
+    methodIcon: function methodIcon(method) {
+      return {
+        cash: 'fa fa-money-bill-alt',
+        upi: 'fa fa-mobile-alt',
+        cheque: 'fa fa-money-check-alt',
+        signature: 'fa fa-file-signature'
+      }[method] || 'fa fa-credit-card';
+    },
     // ================= LOAD SETTINGS =================
     getSettings: function getSettings() {
       var _this = this;
@@ -498,12 +634,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/payment_methods').then(function (res) {
         if (res.data.status && res.data.data) {
           _this4.paymentMethods = res.data.data.methods.map(function (m) {
-            var _m$discount_percent;
             return _objectSpread(_objectSpread({}, m), {}, {
-              is_enabled: m.is_enabled ? 1 : 0,
-              discount_percent: (_m$discount_percent = m.discount_percent) !== null && _m$discount_percent !== void 0 ? _m$discount_percent : 0
+              is_enabled: m.is_enabled ? 1 : 0
             });
           });
+          // cash and bank rows carry the same shared %
+          var cash = res.data.data.methods.find(function (m) {
+            return m.method === 'cash';
+          });
+          _this4.instantDiscountPercent = cash && cash.discount_percent ? cash.discount_percent : 0;
         }
       })["catch"](function () {});
     },
@@ -513,10 +652,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var formData = new FormData();
       this.paymentMethods.forEach(function (m) {
         formData.append(m.method, m.is_editable ? m.is_enabled : 0);
-        if (m.method === 'cash') {
-          formData.append('cash_discount_percent', m.discount_percent || 0);
-        }
       });
+      // one shared Cash / Bank discount (stored as cash_discount_percent)
+      formData.append('cash_discount_percent', this.instantDiscountPercent || 0);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/payment_methods/save', formData).then(function (res) {
         if (res.data.status) {
           _this5.showMessage('success', __(res.data.message));
@@ -745,7 +883,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.custom-image[data-v-7d055d3d] {\n    height: auto;\n    width: 60%;\n    border: 1px solid #ddd;\n    padding: 5px;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.custom-image[data-v-7d055d3d] {\n    height: auto;\n    width: 60%;\n    border: 1px solid #ddd;\n    padding: 5px;\n}\n\n/* tabs: same pill look as the Export Center */\n[data-v-7d055d3d] .settings-tabs {\n    flex-wrap: wrap;\n    gap: 8px;\n    border-bottom: 0;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 10px;\n    padding: 10px 18px;\n    font-weight: 600;\n    font-size: 13.5px;\n    color: #64748b;\n    background: transparent;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link:hover {\n    border-color: rgba(128, 128, 128, 0.55);\n}\n[data-v-7d055d3d] .settings-tabs .nav-link.active {\n    background: rgba(16, 185, 129, 0.12);\n    border-color: #10b981;\n    color: #059669;\n}\n.settings-card[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.22);\n    border-radius: 14px;\n}\n.settings-card-head[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n    padding: 18px 20px 14px;\n}\n.settings-icon[data-v-7d055d3d] {\n    width: 38px;\n    height: 38px;\n    border-radius: 10px;\n    background: rgba(37, 99, 235, 0.1);\n    color: #2563eb;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex-shrink: 0;\n}\n.settings-card-foot[data-v-7d055d3d] {\n    padding: 14px 20px;\n    border-top: 1px solid rgba(128, 128, 128, 0.18);\n    display: flex;\n    justify-content: flex-end;\n}\n.setting-hint[data-v-7d055d3d] {\n    color: #6c757d;\n    font-size: 12.5px;\n    line-height: 1.45;\n}\n\n/* a setting = text on the left, its control on the right */\n.setting-row[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 16px;\n    padding: 14px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.setting-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.setting-text[data-v-7d055d3d] {\n    flex: 1 1 220px;\n    min-width: 0;\n}\n.setting-title[data-v-7d055d3d] {\n    font-weight: 600;\n    margin-bottom: 2px;\n    display: block;\n}\n.setting-control[data-v-7d055d3d] {\n    flex: 0 0 150px;\n}\n.setting-control-switch[data-v-7d055d3d] {\n    flex: 0 0 auto;\n}\n\n/* payment method tiles */\n.method-tile[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 12px;\n    padding: 14px 16px;\n    transition: border-color 0.15s, background 0.15s;\n}\n.method-tile.is-on[data-v-7d055d3d] {\n    border-color: #10b981;\n    background: rgba(16, 185, 129, 0.07);\n}\n.method-tile.is-locked[data-v-7d055d3d] {\n    opacity: 0.65;\n}\n.method-icon[data-v-7d055d3d] {\n    width: 32px;\n    height: 32px;\n    border-radius: 8px;\n    background: rgba(128, 128, 128, 0.14);\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n}\n.method-tile.is-on .method-icon[data-v-7d055d3d] {\n    background: rgba(16, 185, 129, 0.2);\n    color: #059669;\n}\n\n/* numbering preview chip */\n.series-preview[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 12px;\n    padding: 10px 14px;\n    border-radius: 10px;\n    background: rgba(128, 128, 128, 0.1);\n}\n.series-preview strong[data-v-7d055d3d] {\n    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n    font-size: 1.05rem;\n}\n@media (max-width: 575px) {\n.setting-control[data-v-7d055d3d] {\n        flex: 1 1 100%;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -880,1271 +1018,1602 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "row mb-3" }, [
-        _c("div", { staticClass: "col-12" }, [
-          _c("h3", [_vm._v(_vm._s(_vm.__("thermal_print_settings")))]),
-        ]),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "card" }, [
-        _c("div", { staticClass: "card-header" }, [
-          _c("h4", [_vm._v(_vm._s(_vm.__("thermal_print_settings")))]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "card-body" }, [
-          _c("div", { staticClass: "row" }, [
-            _c("div", { staticClass: "form-group col-md-6" }, [
-              _c("label", [_vm._v(_vm._s(_vm.__("thermal_invoice_logo")))]),
-              _vm._v(" "),
-              _c("input", {
-                ref: "file_thermal_logo",
-                staticClass: "file-input",
-                attrs: { type: "file", accept: "image/*" },
-                on: { change: _vm.handleThermalLogo },
-              }),
-              _vm._v(" "),
-              _c(
-                "div",
-                {
-                  staticClass: "file-input-div bg-gray-100",
-                  on: {
-                    click: function ($event) {
-                      return _vm.$refs.file_thermal_logo.click()
-                    },
-                    drop: _vm.dropThermalLogo,
-                    dragover: _vm.$dragoverFile,
-                    dragleave: _vm.$dragleaveFile,
-                  },
-                },
-                [
-                  _vm.thermal_logo && _vm.thermal_logo.name
-                    ? [
-                        _c("label", [
-                          _vm._v(
-                            _vm._s(_vm.__("selected_file_name")) +
-                              ": " +
-                              _vm._s(_vm.thermal_logo.name)
-                          ),
-                        ]),
-                      ]
-                    : [
-                        _vm._m(0),
-                        _vm._v(" "),
-                        _c("label", [
-                          _vm._v(
-                            _vm._s(_vm.__("drag_and_drop_to_upload_image"))
-                          ),
-                        ]),
-                      ],
-                ],
-                2
-              ),
-              _vm._v(" "),
-              _vm.thermal_logo_url
-                ? _c("div", { staticClass: "row mt-2" }, [
-                    _c("div", { staticClass: "col-md-4" }, [
-                      _c("img", {
-                        staticClass: "custom-image",
-                        attrs: { src: _vm.thermal_logo_url },
-                      }),
-                    ]),
-                  ])
-                : _vm._e(),
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "form-group col-md-6" },
-              [
-                _c("label", [_vm._v(_vm._s(_vm.__("thermal_paper_width")))]),
-                _vm._v(" "),
-                _c("b-form-radio-group", {
-                  attrs: {
-                    options: _vm.paperOptions,
-                    buttons: "",
-                    "button-variant": "outline-primary",
-                  },
-                  model: {
-                    value: _vm.thermal_paper_width,
-                    callback: function ($$v) {
-                      _vm.thermal_paper_width = $$v
-                    },
-                    expression: "thermal_paper_width",
-                  },
-                }),
-              ],
-              1
-            ),
+    _c(
+      "div",
+      { staticClass: "page-heading" },
+      [
+        _c("div", { staticClass: "row mb-3" }, [
+          _c("div", { staticClass: "col-12" }, [
+            _c("h3", [_vm._v(_vm._s(_vm.__("settings")))]),
           ]),
         ]),
         _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-footer" },
-          [
-            _c(
-              "b-button",
-              {
-                attrs: { variant: "primary", disabled: _vm.isLoading },
-                on: { click: _vm.saveSettings },
-              },
-              [
-                _vm._v(
-                  "\n                    " +
-                    _vm._s(_vm.__("save")) +
-                    "\n                    "
-                ),
-                _vm.isLoading
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "card mt-4" }, [
-        _c("div", { staticClass: "card-header" }, [
-          _c("h4", [_vm._v(_vm._s(_vm.__("Payment Collection Methods")))]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "card-body" }, [
-          _c("p", { staticClass: "text-muted font-size-13" }, [
-            _vm._v(
-              _vm._s(
-                _vm.__(
-                  "Toggle the methods your drivers can use to collect payment. Methods disabled by admin cannot be enabled."
-                )
+        _c("div", { staticClass: "text-muted mb-3" }, [
+          _vm._v(
+            _vm._s(
+              _vm.__(
+                "Manage how orders, payments and documents work for your store."
               )
-            ),
-          ]),
-          _vm._v(" "),
-          _c(
-            "div",
-            { staticClass: "row" },
-            _vm._l(_vm.paymentMethods, function (method) {
-              return _c(
-                "div",
-                { key: method.method, staticClass: "form-group col-md-3" },
-                [
-                  _c("label", [
-                    _vm._v(
-                      _vm._s(
-                        _vm.__(
-                          method.method.charAt(0).toUpperCase() +
-                            method.method.slice(1)
-                        )
-                      )
-                    ),
-                  ]),
-                  _c("br"),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "form-check form-switch" }, [
-                    _c("input", {
-                      directives: [
-                        {
-                          name: "model",
-                          rawName: "v-model",
-                          value: method.is_enabled,
-                          expression: "method.is_enabled",
-                        },
-                      ],
-                      staticClass: "form-check-input",
-                      attrs: {
-                        type: "checkbox",
-                        "true-value": "1",
-                        "false-value": "0",
-                        disabled: !method.is_editable,
-                        title: !method.is_editable
-                          ? _vm.__("Disabled by admin")
-                          : "",
-                      },
-                      domProps: {
-                        checked: Array.isArray(method.is_enabled)
-                          ? _vm._i(method.is_enabled, null) > -1
-                          : _vm._q(method.is_enabled, "1"),
-                      },
-                      on: {
-                        change: function ($event) {
-                          var $$a = method.is_enabled,
-                            $$el = $event.target,
-                            $$c = $$el.checked ? "1" : "0"
-                          if (Array.isArray($$a)) {
-                            var $$v = null,
-                              $$i = _vm._i($$a, $$v)
-                            if ($$el.checked) {
-                              $$i < 0 &&
-                                _vm.$set(
-                                  method,
-                                  "is_enabled",
-                                  $$a.concat([$$v])
-                                )
-                            } else {
-                              $$i > -1 &&
-                                _vm.$set(
-                                  method,
-                                  "is_enabled",
-                                  $$a.slice(0, $$i).concat($$a.slice($$i + 1))
-                                )
-                            }
-                          } else {
-                            _vm.$set(method, "is_enabled", $$c)
-                          }
-                        },
-                      },
-                    }),
-                  ]),
-                  _vm._v(" "),
-                  !method.is_editable
-                    ? _c("small", { staticClass: "text-danger" }, [
-                        _vm._v(_vm._s(_vm.__("Disabled by admin"))),
-                      ])
-                    : _vm._e(),
-                  _vm._v(" "),
-                  method.method === "cash"
-                    ? _c("div", { staticClass: "mt-2" }, [
-                        _c(
-                          "label",
-                          { staticClass: "font-size-13 text-muted" },
-                          [_vm._v(_vm._s(_vm.__("Cash discount %")))]
-                        ),
-                        _vm._v(" "),
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: method.discount_percent,
-                              expression: "method.discount_percent",
-                            },
-                          ],
-                          staticClass: "form-control form-control-sm",
-                          attrs: {
-                            type: "number",
-                            min: "0",
-                            max: "100",
-                            step: "0.01",
-                            disabled: !method.is_editable || !method.is_enabled,
-                            placeholder: _vm.__("e.g. 2"),
-                          },
-                          domProps: { value: method.discount_percent },
-                          on: {
-                            input: function ($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(
-                                method,
-                                "discount_percent",
-                                $event.target.value
-                              )
-                            },
-                          },
-                        }),
-                        _vm._v(" "),
-                        _c("small", { staticClass: "text-muted" }, [
-                          _vm._v(
-                            _vm._s(
-                              _vm.__(
-                                "Knocked off final_total when the retailer pays cash, so cash is always the cheapest option."
-                              )
-                            )
-                          ),
-                        ]),
-                      ])
-                    : _vm._e(),
-                ]
-              )
-            }),
-            0
+            )
           ),
         ]),
         _vm._v(" "),
         _c(
-          "div",
-          { staticClass: "card-footer" },
+          "b-tabs",
+          {
+            attrs: {
+              pills: "",
+              "nav-class": "settings-tabs mb-3",
+              "content-class": "mt-1",
+            },
+            model: {
+              value: _vm.activeTab,
+              callback: function ($$v) {
+                _vm.activeTab = $$v
+              },
+              expression: "activeTab",
+            },
+          },
           [
             _c(
-              "b-button",
+              "b-tab",
               {
-                attrs: { variant: "primary", disabled: _vm.isPaymentLoading },
-                on: { click: _vm.savePaymentMethods },
-              },
-              [
-                _vm._v(
-                  "\n                    " +
-                    _vm._s(_vm.__("save")) +
-                    "\n                    "
-                ),
-                _vm.isPaymentLoading
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "card mt-4" }, [
-        _c("div", { staticClass: "card-header" }, [
-          _c("h4", [_vm._v(_vm._s(_vm.__("order_settings")))]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "card-body" }, [
-          _c("div", { staticClass: "row" }, [
-            _c("div", { staticClass: "form-group col-md-6" }, [
-              _c("label", { attrs: { for: "order_cutoff_time" } }, [
-                _vm._v(_vm._s(_vm.__("order_cutoff_time"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
+                scopedSlots: _vm._u([
                   {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.order_cutoff_time,
-                    expression: "order_cutoff_time",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "time",
-                  id: "order_cutoff_time",
-                  placeholder: "15:00",
-                },
-                domProps: { value: _vm.order_cutoff_time },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.order_cutoff_time = $event.target.value
-                  },
-                },
-              }),
-              _vm._v(" "),
-              _c("span", { staticClass: "text text-primary font-size-13" }, [
-                _vm._v(
-                  "(" +
-                    _vm._s(
-                      _vm.__(
-                        "orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after"
-                      )
-                    ) +
-                    ")"
-                ),
-              ]),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-6" }, [
-              _c("label", { attrs: { for: "min_order_amount" } }, [
-                _vm._v(_vm._s(_vm.__("min_order_amount"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.min_order_amount,
-                    expression: "min_order_amount",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "number",
-                  min: "0",
-                  step: "0.01",
-                  id: "min_order_amount",
-                  placeholder: _vm.__("optional"),
-                },
-                domProps: { value: _vm.min_order_amount },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.min_order_amount = $event.target.value
-                  },
-                },
-              }),
-              _vm._v(" "),
-              _c("span", { staticClass: "text text-primary font-size-13" }, [
-                _vm._v(
-                  "(" +
-                    _vm._s(
-                      _vm.__(
-                        "minimum_cart_total_required_for_a_retailer_to_place_an_order"
-                      )
-                    ) +
-                    ")"
-                ),
-              ]),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-6" }, [
-              _c("label", { attrs: { for: "delivery_otp_enabled" } }, [
-                _vm._v(_vm._s(_vm.__("delivery_otp_enabled"))),
-              ]),
-              _c("br"),
-              _vm._v(" "),
-              _c("div", { staticClass: "form-check form-switch" }, [
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.delivery_otp_enabled,
-                      expression: "delivery_otp_enabled",
+                    key: "title",
+                    fn: function () {
+                      return [
+                        _c("span", { staticClass: "tab-title" }, [
+                          _c("i", { staticClass: "fa fa-shopping-cart me-2" }),
+                          _vm._v(_vm._s(_vm.__("Orders & Payments"))),
+                        ]),
+                      ]
                     },
-                  ],
-                  staticClass: "form-check-input",
-                  attrs: { type: "checkbox", id: "delivery_otp_enabled" },
-                  domProps: {
-                    checked: Array.isArray(_vm.delivery_otp_enabled)
-                      ? _vm._i(_vm.delivery_otp_enabled, null) > -1
-                      : _vm.delivery_otp_enabled,
+                    proxy: true,
                   },
-                  on: {
-                    change: function ($event) {
-                      var $$a = _vm.delivery_otp_enabled,
-                        $$el = $event.target,
-                        $$c = $$el.checked ? true : false
-                      if (Array.isArray($$a)) {
-                        var $$v = null,
-                          $$i = _vm._i($$a, $$v)
-                        if ($$el.checked) {
-                          $$i < 0 &&
-                            (_vm.delivery_otp_enabled = $$a.concat([$$v]))
-                        } else {
-                          $$i > -1 &&
-                            (_vm.delivery_otp_enabled = $$a
-                              .slice(0, $$i)
-                              .concat($$a.slice($$i + 1)))
-                        }
-                      } else {
-                        _vm.delivery_otp_enabled = $$c
-                      }
-                    },
-                  },
-                }),
-              ]),
-              _vm._v(" "),
-              _c("span", { staticClass: "text text-primary font-size-13" }, [
-                _vm._v(
-                  "(" +
-                    _vm._s(
-                      _vm.__(
-                        "driver_must_enter_the_retailers_otp_to_mark_an_order_delivered_not_the_login_otp"
-                      )
-                    ) +
-                    ")"
-                ),
-              ]),
-            ]),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-footer" },
-          [
-            _c(
-              "b-button",
-              {
-                attrs: { variant: "primary", disabled: _vm.isOrderLoading },
-                on: { click: _vm.saveOrderSettings },
+                ]),
               },
               [
-                _vm._v(
-                  "\n                    " +
-                    _vm._s(_vm.__("save")) +
-                    "\n                    "
-                ),
-                _vm.isOrderLoading
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "card mt-4" }, [
-        _c("div", { staticClass: "card-header" }, [
-          _c("h4", [_vm._v(_vm._s(_vm.__("invoice_settings")))]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "card-body" }, [
-          _c("p", { staticClass: "text-muted font-size-13" }, [
-            _vm._v(_vm._s(_vm.__("invoice_settings_hint"))),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "row" }, [
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "invoice_prefix" } }, [
-                _vm._v(_vm._s(_vm.__("invoice_prefix"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.invoice_prefix,
-                    expression: "invoice_prefix",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "text",
-                  id: "invoice_prefix",
-                  placeholder: _vm.__("optional"),
-                },
-                domProps: { value: _vm.invoice_prefix },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.invoice_prefix = $event.target.value
-                  },
-                },
-              }),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "invoice_next_number" } }, [
-                _vm._v(_vm._s(_vm.__("invoice_number"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model.number",
-                    value: _vm.invoice_next_number,
-                    expression: "invoice_next_number",
-                    modifiers: { number: true },
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "number",
-                  min: "1",
-                  id: "invoice_next_number",
-                  placeholder: "1",
-                },
-                domProps: { value: _vm.invoice_next_number },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.invoice_next_number = _vm._n($event.target.value)
-                  },
-                  blur: function ($event) {
-                    return _vm.$forceUpdate()
-                  },
-                },
-              }),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "invoice_suffix" } }, [
-                _vm._v(_vm._s(_vm.__("invoice_suffix"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.invoice_suffix,
-                    expression: "invoice_suffix",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "text",
-                  id: "invoice_suffix",
-                  placeholder: _vm.__("optional"),
-                },
-                domProps: { value: _vm.invoice_suffix },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.invoice_suffix = $event.target.value
-                  },
-                },
-              }),
-            ]),
-          ]),
-          _vm._v(" "),
-          _c("p", { staticClass: "text-muted font-size-13 mb-0" }, [
-            _vm._v("\n                    " + _vm._s(_vm.__("preview")) + ": "),
-            _c("strong", [_vm._v(_vm._s(_vm.invoiceNumberPreview))]),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-footer" },
-          [
-            _c(
-              "b-button",
-              {
-                attrs: { variant: "primary", disabled: _vm.isInvoiceLoading },
-                on: { click: _vm.saveInvoiceSettings },
-              },
-              [
-                _vm._v(
-                  "\n                    " +
-                    _vm._s(_vm.__("save")) +
-                    "\n                    "
-                ),
-                _vm.isInvoiceLoading
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "card mt-4" }, [
-        _c("div", { staticClass: "card-header" }, [
-          _c("h4", [_vm._v(_vm._s(_vm.__("loading_slip_settings")))]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "card-body" }, [
-          _c("p", { staticClass: "text-muted font-size-13" }, [
-            _vm._v(_vm._s(_vm.__("loading_slip_settings_hint"))),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "row" }, [
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "loading_slip_prefix" } }, [
-                _vm._v(_vm._s(_vm.__("loading_slip_prefix"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.loading_slip_prefix,
-                    expression: "loading_slip_prefix",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "text",
-                  id: "loading_slip_prefix",
-                  placeholder: _vm.__("optional"),
-                },
-                domProps: { value: _vm.loading_slip_prefix },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.loading_slip_prefix = $event.target.value
-                  },
-                },
-              }),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "loading_slip_next_number" } }, [
-                _vm._v(_vm._s(_vm.__("loading_slip_number"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model.number",
-                    value: _vm.loading_slip_next_number,
-                    expression: "loading_slip_next_number",
-                    modifiers: { number: true },
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "number",
-                  min: "1",
-                  id: "loading_slip_next_number",
-                  placeholder: "1",
-                },
-                domProps: { value: _vm.loading_slip_next_number },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.loading_slip_next_number = _vm._n($event.target.value)
-                  },
-                  blur: function ($event) {
-                    return _vm.$forceUpdate()
-                  },
-                },
-              }),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "loading_slip_suffix" } }, [
-                _vm._v(_vm._s(_vm.__("loading_slip_suffix"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.loading_slip_suffix,
-                    expression: "loading_slip_suffix",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "text",
-                  id: "loading_slip_suffix",
-                  placeholder: _vm.__("optional"),
-                },
-                domProps: { value: _vm.loading_slip_suffix },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.loading_slip_suffix = $event.target.value
-                  },
-                },
-              }),
-            ]),
-          ]),
-          _vm._v(" "),
-          _c("p", { staticClass: "text-muted font-size-13 mb-0" }, [
-            _vm._v("\n                    " + _vm._s(_vm.__("preview")) + ": "),
-            _c("strong", [_vm._v(_vm._s(_vm.loadingSlipNumberPreview))]),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-footer" },
-          [
-            _c(
-              "b-button",
-              {
-                attrs: {
-                  variant: "primary",
-                  disabled: _vm.isLoadingSlipSettingsLoading,
-                },
-                on: { click: _vm.saveLoadingSlipSettings },
-              },
-              [
-                _vm._v(
-                  "\n                    " +
-                    _vm._s(_vm.__("save")) +
-                    "\n                    "
-                ),
-                _vm.isLoadingSlipSettingsLoading
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "card mt-4" }, [
-        _c("div", { staticClass: "card-header" }, [
-          _c("h4", [_vm._v(_vm._s(_vm.__("credit_note_settings")))]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "card-body" }, [
-          _c("p", { staticClass: "text-muted font-size-13" }, [
-            _vm._v(_vm._s(_vm.__("credit_note_settings_hint"))),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "row" }, [
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "credit_note_prefix" } }, [
-                _vm._v(_vm._s(_vm.__("credit_note_prefix"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.credit_note_prefix,
-                    expression: "credit_note_prefix",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "text",
-                  id: "credit_note_prefix",
-                  placeholder: _vm.__("optional"),
-                },
-                domProps: { value: _vm.credit_note_prefix },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.credit_note_prefix = $event.target.value
-                  },
-                },
-              }),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "credit_note_next_number" } }, [
-                _vm._v(_vm._s(_vm.__("credit_note_number"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model.number",
-                    value: _vm.credit_note_next_number,
-                    expression: "credit_note_next_number",
-                    modifiers: { number: true },
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "number",
-                  min: "1",
-                  id: "credit_note_next_number",
-                  placeholder: "1",
-                },
-                domProps: { value: _vm.credit_note_next_number },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.credit_note_next_number = _vm._n($event.target.value)
-                  },
-                  blur: function ($event) {
-                    return _vm.$forceUpdate()
-                  },
-                },
-              }),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group col-md-4" }, [
-              _c("label", { attrs: { for: "credit_note_suffix" } }, [
-                _vm._v(_vm._s(_vm.__("credit_note_suffix"))),
-              ]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.credit_note_suffix,
-                    expression: "credit_note_suffix",
-                  },
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  type: "text",
-                  id: "credit_note_suffix",
-                  placeholder: _vm.__("optional"),
-                },
-                domProps: { value: _vm.credit_note_suffix },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.credit_note_suffix = $event.target.value
-                  },
-                },
-              }),
-            ]),
-          ]),
-          _vm._v(" "),
-          _c("p", { staticClass: "text-muted font-size-13 mb-0" }, [
-            _vm._v("\n                    " + _vm._s(_vm.__("preview")) + ": "),
-            _c("strong", [_vm._v(_vm._s(_vm.creditNoteNumberPreview))]),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-footer" },
-          [
-            _c(
-              "b-button",
-              {
-                attrs: {
-                  variant: "primary",
-                  disabled: _vm.isCreditNoteLoading,
-                },
-                on: { click: _vm.saveCreditNoteSettings },
-              },
-              [
-                _vm._v(
-                  "\n                    " +
-                    _vm._s(_vm.__("save")) +
-                    "\n                    "
-                ),
-                _vm.isCreditNoteLoading
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "card mt-4" }, [
-        _c("div", { staticClass: "card-header" }, [
-          _c("h4", [_vm._v(_vm._s(_vm.__("Sensitive Operations Password")))]),
-        ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-body" },
-          [
-            _c("p", { staticClass: "text-muted font-size-13" }, [
-              _vm._v(
-                "\n                    " +
-                  _vm._s(
-                    _vm.__(
-                      "This password gates risky corrections (like editing a driver's recorded payment method) so only you can authorize them, even if staff have access to this panel."
-                    )
-                  ) +
-                  "\n                "
-              ),
-            ]),
-            _vm._v(" "),
-            !_vm.sensitivePasswordIsSet
-              ? [
-                  _c("div", { staticClass: "row" }, [
-                    _c("div", { staticClass: "form-group col-md-6" }, [
-                      _c("label", [_vm._v(_vm._s(_vm.__("Password")))]),
+                _vm._v(" "),
+                _c("div", { staticClass: "row g-3" }, [
+                  _c("div", { staticClass: "col-xl-5" }, [
+                    _c("div", { staticClass: "card settings-card h-100" }, [
+                      _c("div", { staticClass: "settings-card-head" }, [
+                        _c("span", { staticClass: "settings-icon" }, [
+                          _c("i", { staticClass: "fa fa-clipboard-list" }),
+                        ]),
+                        _vm._v(" "),
+                        _c("h5", { staticClass: "mb-0" }, [
+                          _vm._v(_vm._s(_vm.__("order_settings"))),
+                        ]),
+                      ]),
                       _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.sensitiveNewPassword,
-                            expression: "sensitiveNewPassword",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "password",
-                          autocomplete: "new-password",
-                        },
-                        domProps: { value: _vm.sensitiveNewPassword },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.sensitiveNewPassword = $event.target.value
-                          },
-                        },
-                      }),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "form-group col-md-6" }, [
-                      _c("label", [_vm._v(_vm._s(_vm.__("Confirm Password")))]),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.sensitiveConfirmPassword,
-                            expression: "sensitiveConfirmPassword",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "password",
-                          autocomplete: "new-password",
-                        },
-                        domProps: { value: _vm.sensitiveConfirmPassword },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.sensitiveConfirmPassword = $event.target.value
-                          },
-                        },
-                      }),
-                    ]),
-                  ]),
-                ]
-              : [
-                  _c("div", { staticClass: "row" }, [
-                    _c(
-                      "div",
-                      { staticClass: "form-group col-md-4" },
-                      [
-                        !_vm.sensitiveForgotMode
-                          ? [
-                              _c("label", [
-                                _vm._v(_vm._s(_vm.__("Old Password"))),
-                              ]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.sensitiveOldPassword,
-                                    expression: "sensitiveOldPassword",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: {
-                                  type: "password",
-                                  autocomplete: "current-password",
-                                },
-                                domProps: { value: _vm.sensitiveOldPassword },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.sensitiveOldPassword =
-                                      $event.target.value
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "a",
+                      _c("div", { staticClass: "card-body pt-0" }, [
+                        _c("div", { staticClass: "setting-row" }, [
+                          _c("div", { staticClass: "setting-text" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "setting-title",
+                                attrs: { for: "order_cutoff_time" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("order_cutoff_time")))]
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "setting-hint" }, [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.__(
+                                    "orders_at_or_before_this_time_get_next_day_delivery_after_get_day_after"
+                                  )
+                                )
+                              ),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "setting-control" }, [
+                            _c("input", {
+                              directives: [
                                 {
-                                  staticClass: "small",
-                                  attrs: { href: "javascript:void(0)" },
-                                  on: { click: _vm.startSensitiveForgotMode },
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.order_cutoff_time,
+                                  expression: "order_cutoff_time",
                                 },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "time",
+                                id: "order_cutoff_time",
+                                placeholder: "15:00",
+                              },
+                              domProps: { value: _vm.order_cutoff_time },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.order_cutoff_time = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "setting-row" }, [
+                          _c("div", { staticClass: "setting-text" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "setting-title",
+                                attrs: { for: "min_order_amount" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("min_order_amount")))]
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "setting-hint" }, [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.__(
+                                    "minimum_cart_total_required_for_a_retailer_to_place_an_order"
+                                  )
+                                )
+                              ),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "setting-control" }, [
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.min_order_amount,
+                                  expression: "min_order_amount",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "number",
+                                min: "0",
+                                step: "0.01",
+                                id: "min_order_amount",
+                                placeholder: _vm.__("optional"),
+                              },
+                              domProps: { value: _vm.min_order_amount },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.min_order_amount = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "setting-row" }, [
+                          _c("div", { staticClass: "setting-text" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "setting-title",
+                                attrs: { for: "delivery_otp_enabled" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("delivery_otp_enabled")))]
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "setting-hint" }, [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.__(
+                                    "driver_must_enter_the_retailers_otp_to_mark_an_order_delivered_not_the_login_otp"
+                                  )
+                                )
+                              ),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            {
+                              staticClass:
+                                "setting-control setting-control-switch",
+                            },
+                            [
+                              _c(
+                                "div",
+                                { staticClass: "form-check form-switch m-0" },
                                 [
-                                  _vm._v(
-                                    _vm._s(_vm.__("forgot_password")) + "?"
-                                  ),
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.delivery_otp_enabled,
+                                        expression: "delivery_otp_enabled",
+                                      },
+                                    ],
+                                    staticClass: "form-check-input",
+                                    attrs: {
+                                      type: "checkbox",
+                                      id: "delivery_otp_enabled",
+                                    },
+                                    domProps: {
+                                      checked: Array.isArray(
+                                        _vm.delivery_otp_enabled
+                                      )
+                                        ? _vm._i(
+                                            _vm.delivery_otp_enabled,
+                                            null
+                                          ) > -1
+                                        : _vm.delivery_otp_enabled,
+                                    },
+                                    on: {
+                                      change: function ($event) {
+                                        var $$a = _vm.delivery_otp_enabled,
+                                          $$el = $event.target,
+                                          $$c = $$el.checked ? true : false
+                                        if (Array.isArray($$a)) {
+                                          var $$v = null,
+                                            $$i = _vm._i($$a, $$v)
+                                          if ($$el.checked) {
+                                            $$i < 0 &&
+                                              (_vm.delivery_otp_enabled =
+                                                $$a.concat([$$v]))
+                                          } else {
+                                            $$i > -1 &&
+                                              (_vm.delivery_otp_enabled = $$a
+                                                .slice(0, $$i)
+                                                .concat($$a.slice($$i + 1)))
+                                          }
+                                        } else {
+                                          _vm.delivery_otp_enabled = $$c
+                                        }
+                                      },
+                                    },
+                                  }),
                                 ]
                               ),
                             ]
-                          : [
-                              _c("label", [_vm._v(_vm._s(_vm.__("OTP")))]),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.sensitiveOtp,
-                                    expression: "sensitiveOtp",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: {
-                                  type: "text",
-                                  maxlength: "6",
-                                  inputmode: "numeric",
-                                  autocomplete: "one-time-code",
-                                },
-                                domProps: { value: _vm.sensitiveOtp },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.sensitiveOtp = $event.target.value
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c("span", { staticClass: "small" }, [
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "settings-card-foot" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                disabled: _vm.isOrderLoading,
+                              },
+                              on: { click: _vm.saveOrderSettings },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(_vm.__("save")) +
+                                  "\n                                    "
+                              ),
+                              _vm.isOrderLoading
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-xl-7" }, [
+                    _c("div", { staticClass: "card settings-card h-100" }, [
+                      _c("div", { staticClass: "settings-card-head" }, [
+                        _c("span", { staticClass: "settings-icon" }, [
+                          _c("i", { staticClass: "fa fa-wallet" }),
+                        ]),
+                        _vm._v(" "),
+                        _c("h5", { staticClass: "mb-0" }, [
+                          _vm._v(_vm._s(_vm.__("Payment Collection Methods"))),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "card-body pt-0" }, [
+                        _c("p", { staticClass: "setting-hint" }, [
+                          _vm._v(
+                            _vm._s(
+                              _vm.__(
+                                "Toggle the methods your drivers can use to collect payment. Methods disabled by admin cannot be enabled."
+                              )
+                            )
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "row g-3" },
+                          _vm._l(_vm.paymentMethods, function (method) {
+                            return _c(
+                              "div",
+                              { key: method.method, staticClass: "col-sm-6" },
+                              [
                                 _c(
-                                  "a",
+                                  "div",
                                   {
-                                    attrs: { href: "javascript:void(0)" },
-                                    on: {
-                                      click: _vm.cancelSensitiveForgotMode,
-                                    },
-                                  },
-                                  [_vm._v(_vm._s(_vm.__("cancel")))]
-                                ),
-                                _vm._v(
-                                  "\n                                     | \n                                    "
-                                ),
-                                _c(
-                                  "a",
-                                  {
+                                    staticClass: "method-tile h-100",
                                     class: {
-                                      "text-muted": _vm.otpResendCooldown > 0,
-                                    },
-                                    attrs: { href: "javascript:void(0)" },
-                                    on: {
-                                      click: function ($event) {
-                                        _vm.otpResendCooldown === 0 &&
-                                          _vm.sendSensitiveOtp()
-                                      },
+                                      "is-on": method.is_enabled == 1,
+                                      "is-locked": !method.is_editable,
                                     },
                                   },
                                   [
-                                    _vm._v(
-                                      "\n                                        " +
-                                        _vm._s(
-                                          _vm.otpResendCooldown > 0
-                                            ? _vm.__("resend_code") +
-                                                " (" +
-                                                _vm.otpResendCooldown +
-                                                "s)"
-                                            : _vm.__("resend_code")
-                                        ) +
-                                        "\n                                    "
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "d-flex align-items-center justify-content-between gap-2",
+                                      },
+                                      [
+                                        _c(
+                                          "div",
+                                          {
+                                            staticClass:
+                                              "d-flex align-items-center gap-2",
+                                          },
+                                          [
+                                            _c(
+                                              "span",
+                                              { staticClass: "method-icon" },
+                                              [
+                                                _c("i", {
+                                                  class: _vm.methodIcon(
+                                                    method.method
+                                                  ),
+                                                }),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "span",
+                                              { staticClass: "fw-semibold" },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.methodLabel(
+                                                      method.method
+                                                    )
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          {
+                                            staticClass:
+                                              "form-check form-switch m-0",
+                                          },
+                                          [
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: method.is_enabled,
+                                                  expression:
+                                                    "method.is_enabled",
+                                                },
+                                              ],
+                                              staticClass: "form-check-input",
+                                              attrs: {
+                                                type: "checkbox",
+                                                "true-value": "1",
+                                                "false-value": "0",
+                                                disabled: !method.is_editable,
+                                                title: !method.is_editable
+                                                  ? _vm.__("Disabled by admin")
+                                                  : "",
+                                              },
+                                              domProps: {
+                                                checked: Array.isArray(
+                                                  method.is_enabled
+                                                )
+                                                  ? _vm._i(
+                                                      method.is_enabled,
+                                                      null
+                                                    ) > -1
+                                                  : _vm._q(
+                                                      method.is_enabled,
+                                                      "1"
+                                                    ),
+                                              },
+                                              on: {
+                                                change: function ($event) {
+                                                  var $$a = method.is_enabled,
+                                                    $$el = $event.target,
+                                                    $$c = $$el.checked
+                                                      ? "1"
+                                                      : "0"
+                                                  if (Array.isArray($$a)) {
+                                                    var $$v = null,
+                                                      $$i = _vm._i($$a, $$v)
+                                                    if ($$el.checked) {
+                                                      $$i < 0 &&
+                                                        _vm.$set(
+                                                          method,
+                                                          "is_enabled",
+                                                          $$a.concat([$$v])
+                                                        )
+                                                    } else {
+                                                      $$i > -1 &&
+                                                        _vm.$set(
+                                                          method,
+                                                          "is_enabled",
+                                                          $$a
+                                                            .slice(0, $$i)
+                                                            .concat(
+                                                              $$a.slice($$i + 1)
+                                                            )
+                                                        )
+                                                    }
+                                                  } else {
+                                                    _vm.$set(
+                                                      method,
+                                                      "is_enabled",
+                                                      $$c
+                                                    )
+                                                  }
+                                                },
+                                              },
+                                            }),
+                                          ]
+                                        ),
+                                      ]
                                     ),
+                                    _vm._v(" "),
+                                    !method.is_editable
+                                      ? _c(
+                                          "small",
+                                          {
+                                            staticClass:
+                                              "text-danger d-block mt-2",
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                _vm.__("Disabled by admin")
+                                              )
+                                            ),
+                                          ]
+                                        )
+                                      : _vm._e(),
                                   ]
                                 ),
-                              ]),
+                              ]
+                            )
+                          }),
+                          0
+                        ),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "mt-4" }, [
+                          _c(
+                            "label",
+                            { staticClass: "form-label small text-muted mb-1" },
+                            [_vm._v(_vm._s(_vm.__("Cash / Bank discount %")))]
+                          ),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.instantDiscountPercent,
+                                expression: "instantDiscountPercent",
+                              },
                             ],
-                      ],
-                      2
-                    ),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "form-group col-md-4" }, [
-                      _c("label", [_vm._v(_vm._s(_vm.__("New Password")))]),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.sensitiveNewPassword,
-                            expression: "sensitiveNewPassword",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "password",
-                          autocomplete: "new-password",
-                        },
-                        domProps: { value: _vm.sensitiveNewPassword },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.sensitiveNewPassword = $event.target.value
-                          },
-                        },
-                      }),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "form-group col-md-4" }, [
-                      _c("label", [
-                        _vm._v(_vm._s(_vm.__("Confirm New Password"))),
+                            staticClass: "form-control form-control-sm",
+                            staticStyle: { "max-width": "220px" },
+                            attrs: {
+                              type: "number",
+                              min: "0",
+                              max: "100",
+                              step: "0.01",
+                              disabled: !_vm.instantDiscountEditable,
+                              placeholder: _vm.__("e.g. 2"),
+                            },
+                            domProps: { value: _vm.instantDiscountPercent },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.instantDiscountPercent = $event.target.value
+                              },
+                            },
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "small",
+                            { staticClass: "setting-hint d-block mt-1" },
+                            [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.__(
+                                    "Knocked off the order total when the retailer pays the whole amount in one go by Cash or Bank, so the money comes in instantly at delivery. No discount if the payment is split across types."
+                                  )
+                                )
+                              ),
+                            ]
+                          ),
+                        ]),
                       ]),
                       _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.sensitiveConfirmPassword,
-                            expression: "sensitiveConfirmPassword",
-                          },
+                      _c(
+                        "div",
+                        { staticClass: "settings-card-foot" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                disabled: _vm.isPaymentLoading,
+                              },
+                              on: { click: _vm.savePaymentMethods },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(_vm.__("save")) +
+                                  "\n                                    "
+                              ),
+                              _vm.isPaymentLoading
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
                         ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "password",
-                          autocomplete: "new-password",
-                        },
-                        domProps: { value: _vm.sensitiveConfirmPassword },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.sensitiveConfirmPassword = $event.target.value
-                          },
-                        },
-                      }),
+                        1
+                      ),
                     ]),
                   ]),
-                ],
-          ],
-          2
-        ),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "card-footer" },
-          [
+                ]),
+              ]
+            ),
+            _vm._v(" "),
             _c(
-              "b-button",
+              "b-tab",
               {
-                attrs: { variant: "primary", disabled: _vm.isSensitiveLoading },
-                on: { click: _vm.saveSensitivePassword },
+                scopedSlots: _vm._u([
+                  {
+                    key: "title",
+                    fn: function () {
+                      return [
+                        _c("span", { staticClass: "tab-title" }, [
+                          _c("i", { staticClass: "fa fa-hashtag me-2" }),
+                          _vm._v(_vm._s(_vm.__("Document numbering"))),
+                        ]),
+                      ]
+                    },
+                    proxy: true,
+                  },
+                ]),
               },
               [
-                _vm._v(
-                  "\n                    " +
+                _vm._v(" "),
+                _c("p", { staticClass: "setting-hint mb-3" }, [
+                  _vm._v(
                     _vm._s(
-                      _vm.sensitiveForgotMode
-                        ? _vm.__("reset_password")
-                        : _vm.sensitivePasswordIsSet
-                        ? _vm.__("change_password")
-                        : _vm.__("set_password")
-                    ) +
-                    "\n                    "
-                ),
-                _vm.isSensitiveLoading
-                  ? _c("b-spinner", { attrs: { small: "" } })
-                  : _vm._e(),
+                      _vm.__(
+                        "Choose how each document number looks. The preview shows the next number that will be issued."
+                      )
+                    )
+                  ),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "row g-3" }, [
+                  _c("div", { staticClass: "col-lg-4" }, [
+                    _c("div", { staticClass: "card settings-card h-100" }, [
+                      _c("div", { staticClass: "settings-card-head" }, [
+                        _c("span", { staticClass: "settings-icon" }, [
+                          _c("i", { staticClass: "fa fa-file-invoice" }),
+                        ]),
+                        _vm._v(" "),
+                        _c("h5", { staticClass: "mb-0" }, [
+                          _vm._v(_vm._s(_vm.__("invoice_settings"))),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "card-body pt-0" }, [
+                        _c("p", { staticClass: "setting-hint" }, [
+                          _vm._v(_vm._s(_vm.__("invoice_settings_hint"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "row g-3" }, [
+                          _c("div", { staticClass: "col-6" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "invoice_prefix" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("invoice_prefix")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.invoice_prefix,
+                                  expression: "invoice_prefix",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                id: "invoice_prefix",
+                                placeholder: _vm.__("optional"),
+                              },
+                              domProps: { value: _vm.invoice_prefix },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.invoice_prefix = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "col-6" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "invoice_suffix" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("invoice_suffix")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.invoice_suffix,
+                                  expression: "invoice_suffix",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                id: "invoice_suffix",
+                                placeholder: _vm.__("optional"),
+                              },
+                              domProps: { value: _vm.invoice_suffix },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.invoice_suffix = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "col-12" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "invoice_next_number" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("invoice_number")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model.number",
+                                  value: _vm.invoice_next_number,
+                                  expression: "invoice_next_number",
+                                  modifiers: { number: true },
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "number",
+                                min: "1",
+                                id: "invoice_next_number",
+                                placeholder: "1",
+                              },
+                              domProps: { value: _vm.invoice_next_number },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.invoice_next_number = _vm._n(
+                                    $event.target.value
+                                  )
+                                },
+                                blur: function ($event) {
+                                  return _vm.$forceUpdate()
+                                },
+                              },
+                            }),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "series-preview mt-3" }, [
+                          _c("span", { staticClass: "text-muted small" }, [
+                            _vm._v(_vm._s(_vm.__("preview"))),
+                          ]),
+                          _vm._v(" "),
+                          _c("strong", [
+                            _vm._v(_vm._s(_vm.invoiceNumberPreview)),
+                          ]),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "settings-card-foot" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                disabled: _vm.isInvoiceLoading,
+                              },
+                              on: { click: _vm.saveInvoiceSettings },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.__("save")) +
+                                  "\n                                "
+                              ),
+                              _vm.isInvoiceLoading
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-lg-4" }, [
+                    _c("div", { staticClass: "card settings-card h-100" }, [
+                      _c("div", { staticClass: "settings-card-head" }, [
+                        _c("span", { staticClass: "settings-icon" }, [
+                          _c("i", { staticClass: "fa fa-truck" }),
+                        ]),
+                        _vm._v(" "),
+                        _c("h5", { staticClass: "mb-0" }, [
+                          _vm._v(_vm._s(_vm.__("loading_slip_settings"))),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "card-body pt-0" }, [
+                        _c("p", { staticClass: "setting-hint" }, [
+                          _vm._v(_vm._s(_vm.__("loading_slip_settings_hint"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "row g-3" }, [
+                          _c("div", { staticClass: "col-6" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "loading_slip_prefix" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("loading_slip_prefix")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.loading_slip_prefix,
+                                  expression: "loading_slip_prefix",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                id: "loading_slip_prefix",
+                                placeholder: _vm.__("optional"),
+                              },
+                              domProps: { value: _vm.loading_slip_prefix },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.loading_slip_prefix = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "col-6" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "loading_slip_suffix" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("loading_slip_suffix")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.loading_slip_suffix,
+                                  expression: "loading_slip_suffix",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                id: "loading_slip_suffix",
+                                placeholder: _vm.__("optional"),
+                              },
+                              domProps: { value: _vm.loading_slip_suffix },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.loading_slip_suffix = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "col-12" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "loading_slip_next_number" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("loading_slip_number")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model.number",
+                                  value: _vm.loading_slip_next_number,
+                                  expression: "loading_slip_next_number",
+                                  modifiers: { number: true },
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "number",
+                                min: "1",
+                                id: "loading_slip_next_number",
+                                placeholder: "1",
+                              },
+                              domProps: { value: _vm.loading_slip_next_number },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.loading_slip_next_number = _vm._n(
+                                    $event.target.value
+                                  )
+                                },
+                                blur: function ($event) {
+                                  return _vm.$forceUpdate()
+                                },
+                              },
+                            }),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "series-preview mt-3" }, [
+                          _c("span", { staticClass: "text-muted small" }, [
+                            _vm._v(_vm._s(_vm.__("preview"))),
+                          ]),
+                          _vm._v(" "),
+                          _c("strong", [
+                            _vm._v(_vm._s(_vm.loadingSlipNumberPreview)),
+                          ]),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "settings-card-foot" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                disabled: _vm.isLoadingSlipSettingsLoading,
+                              },
+                              on: { click: _vm.saveLoadingSlipSettings },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.__("save")) +
+                                  "\n                                "
+                              ),
+                              _vm.isLoadingSlipSettingsLoading
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-lg-4" }, [
+                    _c("div", { staticClass: "card settings-card h-100" }, [
+                      _c("div", { staticClass: "settings-card-head" }, [
+                        _c("span", { staticClass: "settings-icon" }, [
+                          _c("i", { staticClass: "fa fa-undo-alt" }),
+                        ]),
+                        _vm._v(" "),
+                        _c("h5", { staticClass: "mb-0" }, [
+                          _vm._v(_vm._s(_vm.__("credit_note_settings"))),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "card-body pt-0" }, [
+                        _c("p", { staticClass: "setting-hint" }, [
+                          _vm._v(_vm._s(_vm.__("credit_note_settings_hint"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "row g-3" }, [
+                          _c("div", { staticClass: "col-6" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "credit_note_prefix" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("credit_note_prefix")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.credit_note_prefix,
+                                  expression: "credit_note_prefix",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                id: "credit_note_prefix",
+                                placeholder: _vm.__("optional"),
+                              },
+                              domProps: { value: _vm.credit_note_prefix },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.credit_note_prefix = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "col-6" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "credit_note_suffix" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("credit_note_suffix")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.credit_note_suffix,
+                                  expression: "credit_note_suffix",
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "text",
+                                id: "credit_note_suffix",
+                                placeholder: _vm.__("optional"),
+                              },
+                              domProps: { value: _vm.credit_note_suffix },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.credit_note_suffix = $event.target.value
+                                },
+                              },
+                            }),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "col-12" }, [
+                            _c(
+                              "label",
+                              {
+                                staticClass: "form-label",
+                                attrs: { for: "credit_note_next_number" },
+                              },
+                              [_vm._v(_vm._s(_vm.__("credit_note_number")))]
+                            ),
+                            _vm._v(" "),
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model.number",
+                                  value: _vm.credit_note_next_number,
+                                  expression: "credit_note_next_number",
+                                  modifiers: { number: true },
+                                },
+                              ],
+                              staticClass: "form-control",
+                              attrs: {
+                                type: "number",
+                                min: "1",
+                                id: "credit_note_next_number",
+                                placeholder: "1",
+                              },
+                              domProps: { value: _vm.credit_note_next_number },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.credit_note_next_number = _vm._n(
+                                    $event.target.value
+                                  )
+                                },
+                                blur: function ($event) {
+                                  return _vm.$forceUpdate()
+                                },
+                              },
+                            }),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "series-preview mt-3" }, [
+                          _c("span", { staticClass: "text-muted small" }, [
+                            _vm._v(_vm._s(_vm.__("preview"))),
+                          ]),
+                          _vm._v(" "),
+                          _c("strong", [
+                            _vm._v(_vm._s(_vm.creditNoteNumberPreview)),
+                          ]),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "settings-card-foot" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                disabled: _vm.isCreditNoteLoading,
+                              },
+                              on: { click: _vm.saveCreditNoteSettings },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.__("save")) +
+                                  "\n                                "
+                              ),
+                              _vm.isCreditNoteLoading
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                  ]),
+                ]),
+              ]
+            ),
+            _vm._v(" "),
+            _c(
+              "b-tab",
+              {
+                scopedSlots: _vm._u([
+                  {
+                    key: "title",
+                    fn: function () {
+                      return [
+                        _c("span", { staticClass: "tab-title" }, [
+                          _c("i", { staticClass: "fa fa-lock me-2" }),
+                          _vm._v(_vm._s(_vm.__("Security"))),
+                        ]),
+                      ]
+                    },
+                    proxy: true,
+                  },
+                ]),
+              },
+              [
+                _vm._v(" "),
+                _c("div", { staticClass: "row" }, [
+                  _c("div", { staticClass: "col-xl-8" }, [
+                    _c("div", { staticClass: "card settings-card" }, [
+                      _c("div", { staticClass: "settings-card-head" }, [
+                        _c("span", { staticClass: "settings-icon" }, [
+                          _c("i", { staticClass: "fa fa-key" }),
+                        ]),
+                        _vm._v(" "),
+                        _c("h5", { staticClass: "mb-0" }, [
+                          _vm._v(
+                            _vm._s(_vm.__("Sensitive Operations Password"))
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "card-body pt-0" },
+                        [
+                          _c("p", { staticClass: "setting-hint" }, [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(
+                                  _vm.__(
+                                    "This password gates risky corrections (like editing a driver's recorded payment method) so only you can authorize them, even if staff have access to this panel."
+                                  )
+                                ) +
+                                "\n                                "
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          !_vm.sensitivePasswordIsSet
+                            ? [
+                                _c("div", { staticClass: "row g-3" }, [
+                                  _c("div", { staticClass: "col-md-6" }, [
+                                    _c("label", { staticClass: "form-label" }, [
+                                      _vm._v(_vm._s(_vm.__("Password"))),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.sensitiveNewPassword,
+                                          expression: "sensitiveNewPassword",
+                                        },
+                                      ],
+                                      staticClass: "form-control",
+                                      attrs: {
+                                        type: "password",
+                                        autocomplete: "new-password",
+                                      },
+                                      domProps: {
+                                        value: _vm.sensitiveNewPassword,
+                                      },
+                                      on: {
+                                        input: function ($event) {
+                                          if ($event.target.composing) {
+                                            return
+                                          }
+                                          _vm.sensitiveNewPassword =
+                                            $event.target.value
+                                        },
+                                      },
+                                    }),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "col-md-6" }, [
+                                    _c("label", { staticClass: "form-label" }, [
+                                      _vm._v(
+                                        _vm._s(_vm.__("Confirm Password"))
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.sensitiveConfirmPassword,
+                                          expression:
+                                            "sensitiveConfirmPassword",
+                                        },
+                                      ],
+                                      staticClass: "form-control",
+                                      attrs: {
+                                        type: "password",
+                                        autocomplete: "new-password",
+                                      },
+                                      domProps: {
+                                        value: _vm.sensitiveConfirmPassword,
+                                      },
+                                      on: {
+                                        input: function ($event) {
+                                          if ($event.target.composing) {
+                                            return
+                                          }
+                                          _vm.sensitiveConfirmPassword =
+                                            $event.target.value
+                                        },
+                                      },
+                                    }),
+                                  ]),
+                                ]),
+                              ]
+                            : [
+                                _c("div", { staticClass: "row g-3" }, [
+                                  _c(
+                                    "div",
+                                    { staticClass: "col-md-4" },
+                                    [
+                                      !_vm.sensitiveForgotMode
+                                        ? [
+                                            _c(
+                                              "label",
+                                              { staticClass: "form-label" },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(_vm.__("Old Password"))
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value:
+                                                    _vm.sensitiveOldPassword,
+                                                  expression:
+                                                    "sensitiveOldPassword",
+                                                },
+                                              ],
+                                              staticClass: "form-control",
+                                              attrs: {
+                                                type: "password",
+                                                autocomplete:
+                                                  "current-password",
+                                              },
+                                              domProps: {
+                                                value: _vm.sensitiveOldPassword,
+                                              },
+                                              on: {
+                                                input: function ($event) {
+                                                  if ($event.target.composing) {
+                                                    return
+                                                  }
+                                                  _vm.sensitiveOldPassword =
+                                                    $event.target.value
+                                                },
+                                              },
+                                            }),
+                                            _vm._v(" "),
+                                            _c(
+                                              "a",
+                                              {
+                                                staticClass: "small",
+                                                attrs: {
+                                                  href: "javascript:void(0)",
+                                                },
+                                                on: {
+                                                  click:
+                                                    _vm.startSensitiveForgotMode,
+                                                },
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.__("forgot_password")
+                                                  ) + "?"
+                                                ),
+                                              ]
+                                            ),
+                                          ]
+                                        : [
+                                            _c(
+                                              "label",
+                                              { staticClass: "form-label" },
+                                              [_vm._v(_vm._s(_vm.__("OTP")))]
+                                            ),
+                                            _vm._v(" "),
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: _vm.sensitiveOtp,
+                                                  expression: "sensitiveOtp",
+                                                },
+                                              ],
+                                              staticClass: "form-control",
+                                              attrs: {
+                                                type: "text",
+                                                maxlength: "6",
+                                                inputmode: "numeric",
+                                                autocomplete: "one-time-code",
+                                              },
+                                              domProps: {
+                                                value: _vm.sensitiveOtp,
+                                              },
+                                              on: {
+                                                input: function ($event) {
+                                                  if ($event.target.composing) {
+                                                    return
+                                                  }
+                                                  _vm.sensitiveOtp =
+                                                    $event.target.value
+                                                },
+                                              },
+                                            }),
+                                            _vm._v(" "),
+                                            _c(
+                                              "span",
+                                              { staticClass: "small" },
+                                              [
+                                                _c(
+                                                  "a",
+                                                  {
+                                                    attrs: {
+                                                      href: "javascript:void(0)",
+                                                    },
+                                                    on: {
+                                                      click:
+                                                        _vm.cancelSensitiveForgotMode,
+                                                    },
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(_vm.__("cancel"))
+                                                    ),
+                                                  ]
+                                                ),
+                                                _vm._v(
+                                                  "\n                                                     | \n                                                    "
+                                                ),
+                                                _c(
+                                                  "a",
+                                                  {
+                                                    class: {
+                                                      "text-muted":
+                                                        _vm.otpResendCooldown >
+                                                        0,
+                                                    },
+                                                    attrs: {
+                                                      href: "javascript:void(0)",
+                                                    },
+                                                    on: {
+                                                      click: function ($event) {
+                                                        _vm.otpResendCooldown ===
+                                                          0 &&
+                                                          _vm.sendSensitiveOtp()
+                                                      },
+                                                    },
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "\n                                                        " +
+                                                        _vm._s(
+                                                          _vm.otpResendCooldown >
+                                                            0
+                                                            ? _vm.__(
+                                                                "resend_code"
+                                                              ) +
+                                                                " (" +
+                                                                _vm.otpResendCooldown +
+                                                                "s)"
+                                                            : _vm.__(
+                                                                "resend_code"
+                                                              )
+                                                        ) +
+                                                        "\n                                                    "
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            ),
+                                          ],
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "col-md-4" }, [
+                                    _c("label", { staticClass: "form-label" }, [
+                                      _vm._v(_vm._s(_vm.__("New Password"))),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.sensitiveNewPassword,
+                                          expression: "sensitiveNewPassword",
+                                        },
+                                      ],
+                                      staticClass: "form-control",
+                                      attrs: {
+                                        type: "password",
+                                        autocomplete: "new-password",
+                                      },
+                                      domProps: {
+                                        value: _vm.sensitiveNewPassword,
+                                      },
+                                      on: {
+                                        input: function ($event) {
+                                          if ($event.target.composing) {
+                                            return
+                                          }
+                                          _vm.sensitiveNewPassword =
+                                            $event.target.value
+                                        },
+                                      },
+                                    }),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "col-md-4" }, [
+                                    _c("label", { staticClass: "form-label" }, [
+                                      _vm._v(
+                                        _vm._s(_vm.__("Confirm New Password"))
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.sensitiveConfirmPassword,
+                                          expression:
+                                            "sensitiveConfirmPassword",
+                                        },
+                                      ],
+                                      staticClass: "form-control",
+                                      attrs: {
+                                        type: "password",
+                                        autocomplete: "new-password",
+                                      },
+                                      domProps: {
+                                        value: _vm.sensitiveConfirmPassword,
+                                      },
+                                      on: {
+                                        input: function ($event) {
+                                          if ($event.target.composing) {
+                                            return
+                                          }
+                                          _vm.sensitiveConfirmPassword =
+                                            $event.target.value
+                                        },
+                                      },
+                                    }),
+                                  ]),
+                                ]),
+                              ],
+                        ],
+                        2
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "settings-card-foot" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                disabled: _vm.isSensitiveLoading,
+                              },
+                              on: { click: _vm.saveSensitivePassword },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(
+                                    _vm.sensitiveForgotMode
+                                      ? _vm.__("reset_password")
+                                      : _vm.sensitivePasswordIsSet
+                                      ? _vm.__("change_password")
+                                      : _vm.__("set_password")
+                                  ) +
+                                  "\n                                    "
+                              ),
+                              _vm.isSensitiveLoading
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                  ]),
+                ]),
+              ]
+            ),
+            _vm._v(" "),
+            _c(
+              "b-tab",
+              {
+                attrs: { lazy: "" },
+                scopedSlots: _vm._u([
+                  {
+                    key: "title",
+                    fn: function () {
+                      return [
+                        _c("span", { staticClass: "tab-title" }, [
+                          _c("i", { staticClass: "fa fa-user me-2" }),
+                          _vm._v(_vm._s(_vm.__("my_profile"))),
+                        ]),
+                      ]
+                    },
+                    proxy: true,
+                  },
+                ]),
+              },
+              [
+                _vm._v(" "),
+                _c("seller-profile-form", { attrs: { embedded: "" } }),
               ],
               1
             ),
           ],
           1
         ),
-      ]),
-    ]),
+      ],
+      1
+    ),
   ])
 }
-var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("label", [
-      _c("i", { staticClass: "fa fa-cloud-upload-alt fa-2x" }),
-    ])
-  },
-]
+var staticRenderFns = []
 render._withStripped = true
 
 

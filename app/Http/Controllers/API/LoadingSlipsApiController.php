@@ -564,6 +564,13 @@ class LoadingSlipsApiController extends Controller
                 $order->save();
             }
 
+            // The driver carries each invoice, so its number must exist before the slip leaves —
+            // assigned here, in the same order the slip prints (order id), rather than lazily after
+            // delivery. Idempotent: an order that already has one (e.g. rescheduled) keeps it.
+            foreach ($orders->sortBy('id') as $order) {
+                CommonHelper::resolveDistributorInvoiceNumber($order->id);
+            }
+
             DB::commit();
 
             return CommonHelper::responseWithData([
@@ -977,11 +984,17 @@ class LoadingSlipsApiController extends Controller
                         } elseif (in_array($code, ['g', 'gm', 'gram', 'grams', 'ml', 'milliliter', 'milliliters'])) {
                             $weightInKg = $weight / 1000;
                         } else {
-                            // For pieces/packets treat as 0.1 kg standard
-                            $weightInKg = 0.1;
+                            // The unit here is the SELLING unit (Nos / Pcs / Bag ...), which says nothing
+                            // about what the weight figure is measured in. The master product form
+                            // takes weight in Kg per outer pack ("Weight (Kg)"), and $weight is already
+                            // divided down to one inner unit above — so use what was entered. Ignoring it
+                            // (flat 0.1 kg per piece) made every Nos-sold product weigh the same whatever
+                            // its weight field said. Only a product with no weight entered keeps the
+                            // 0.1 kg standard.
+                            $weightInKg = $weight > 0 ? $weight : 0.1;
                         }
                     } else {
-                        $weightInKg = 0.1;
+                        $weightInKg = $weight > 0 ? $weight : 0.1;
                     }
                 } else {
                     $weightInKg = 0.1;

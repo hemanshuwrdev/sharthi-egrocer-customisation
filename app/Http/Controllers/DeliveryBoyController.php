@@ -652,8 +652,12 @@ class DeliveryBoyController extends BaseController
         // resolvable once the driver is logged in and their distributor is known;
         // defaults to true (required) when no token is passed or the driver has no seller.
         $deliveryBoy = $user ? ($user->deliveryBoy ?? null) : null;
-        $seller = $deliveryBoy && $deliveryBoy->seller_id ? \App\Models\Seller::find($deliveryBoy->seller_id) : null;
-        $settings['delivery_otp_enabled'] = $seller ? (bool) ($seller->delivery_otp_enabled ?? true) : true;
+        // A driver can work for several distributors; the OTP is only skipped when every one of them has it off
+        // (the per-order check at delivery time uses that order's own distributor).
+        $linkedSellers = $deliveryBoy ? $deliveryBoy->sellers()->get(['sellers.id', 'sellers.delivery_otp_enabled']) : collect();
+        $settings['delivery_otp_enabled'] = $linkedSellers->isEmpty()
+            ? true
+            : $linkedSellers->contains(fn ($s) => (bool) ($s->delivery_otp_enabled ?? true));
 
         return CommonHelper::responseWithData($settings);
     }

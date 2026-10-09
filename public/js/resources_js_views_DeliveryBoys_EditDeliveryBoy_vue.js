@@ -21,17 +21,74 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
 /* harmony import */ var _mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../mixins/TranslationHelper.js */ "./resources/js/mixins/TranslationHelper.js");
-
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -541,6 +598,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         bonus_max_amount: 0
       },
       mobilevalidationError: null,
+      showExistingDriverModal: false,
+      existingDriver: null,
+      isLinkingDriver: false,
       dobvalidationError: null,
       account_numbervalidationError: null,
       drivingLicencevalidationerror: null,
@@ -556,6 +616,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       countries: [],
       countryDropdownOpen: false
     };
+  },
+  computed: {
+    isSellerRole: function isSellerRole() {
+      return this.$roleSeller === this.login_user.role.name;
+    }
   },
   created: function created() {
     var _this = this;
@@ -704,6 +769,104 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         this.dobvalidationError = null;
       }
     },
+    // Distributor adding a new driver: if the mobile number already belongs to a driver (added by another
+    // distributor), offer to link that driver instead. Returns true when the confirmation was opened.
+    lookupExistingDriver: function lookupExistingDriver() {
+      var _this4 = this;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+        var res, data;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!(!_this4.isSellerRole || _this4.deliveryBoys.id || !_this4.deliveryBoys.mobile)) {
+                  _context.next = 2;
+                  break;
+                }
+                return _context.abrupt("return", false);
+              case 2:
+                _context.prev = 2;
+                _context.next = 5;
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this4.$apiUrl + '/seller/delivery_boys/lookup', {
+                  mobile: String(_this4.deliveryBoys.mobile)
+                });
+              case 5:
+                res = _context.sent;
+                data = res.data && res.data.data;
+                if (!(!data || !data.found)) {
+                  _context.next = 9;
+                  break;
+                }
+                return _context.abrupt("return", false);
+              case 9:
+                _this4.existingDriver = data;
+                _this4.showExistingDriverModal = true;
+                return _context.abrupt("return", true);
+              case 14:
+                _context.prev = 14;
+                _context.t0 = _context["catch"](2);
+                return _context.abrupt("return", false);
+              case 17:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[2, 14]]);
+      }))();
+    },
+    checkExistingDriver: function checkExistingDriver() {
+      this.lookupExistingDriver();
+    },
+    driverInitials: function driverInitials(name) {
+      var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '?';
+      return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    },
+    confirmLinkDriver: function confirmLinkDriver() {
+      var _this5 = this;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+        var res, _res$data, _error$response, _error$response$data;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _this5.isLinkingDriver = true;
+                _context2.prev = 1;
+                _context2.next = 4;
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this5.$apiUrl + '/seller/delivery_boys/link', {
+                  mobile: String(_this5.deliveryBoys.mobile)
+                });
+              case 4:
+                res = _context2.sent;
+                if (!(!res.data || res.data.status !== 1)) {
+                  _context2.next = 7;
+                  break;
+                }
+                throw new Error(((_res$data = res.data) === null || _res$data === void 0 ? void 0 : _res$data.message) || __('something_went_wrong'));
+              case 7:
+                _this5.showExistingDriverModal = false;
+                _this5.showMessage('success', __('driver_added_successfully'));
+                _this5.$router.push({
+                  path: '/seller/delivery_boys'
+                });
+                _context2.next = 15;
+                break;
+              case 12:
+                _context2.prev = 12;
+                _context2.t0 = _context2["catch"](1);
+                _this5.showError(_context2.t0.message || (_context2.t0 === null || _context2.t0 === void 0 ? void 0 : (_error$response = _context2.t0.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong'));
+              case 15:
+                _context2.prev = 15;
+                _this5.isLinkingDriver = false;
+                return _context2.finish(15);
+              case 18:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, null, [[1, 12, 15, 18]]);
+      }))();
+    },
     validateMobileNumber: function validateMobileNumber() {
       if (this.deliveryBoys.mobile < 0) {
         this.mobilevalidationError = "Mobile Number must be numeric value.";
@@ -747,15 +910,15 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     getBonusSettings: function getBonusSettings() {
-      var _this4 = this;
+      var _this6 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/delivery_boys/bonus_settings').then(function (response) {
         var data = response.data;
-        _this4.bonusSettings = data.data;
-        if (_this4.bonusSettings.delivery_boy_bonus_settings == 1) {
-          _this4.deliveryBoys.bonus_type = _this4.bonusSettings.delivery_boy_bonus_type;
-          _this4.deliveryBoys.bonus_percentage = _this4.bonusSettings.delivery_boy_bonus_percentage;
-          _this4.deliveryBoys.bonus_min_amount = _this4.bonusSettings.delivery_boy_bonus_min_amount;
-          _this4.deliveryBoys.bonus_max_amount = _this4.bonusSettings.delivery_boy_bonus_max_amount;
+        _this6.bonusSettings = data.data;
+        if (_this6.bonusSettings.delivery_boy_bonus_settings == 1) {
+          _this6.deliveryBoys.bonus_type = _this6.bonusSettings.delivery_boy_bonus_type;
+          _this6.deliveryBoys.bonus_percentage = _this6.bonusSettings.delivery_boy_bonus_percentage;
+          _this6.deliveryBoys.bonus_min_amount = _this6.bonusSettings.delivery_boy_bonus_min_amount;
+          _this6.deliveryBoys.bonus_max_amount = _this6.bonusSettings.delivery_boy_bonus_max_amount;
         }
       });
     },
@@ -782,17 +945,17 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     getCities: function getCities() {
-      var _this5 = this;
+      var _this7 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/cities').then(function (response) {
-        _this5.isLoading = false;
+        _this7.isLoading = false;
         var data = response.data;
         // API returns data.data = { total, cities }; ensure we always set an array for multiselect
         var raw = data.data;
         var list = raw && raw.cities ? raw.cities : raw;
-        _this5.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
-        if (_this5.deliveryBoys.id && _this5.record) {
-          _this5.applyRecordCities();
+        _this7.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
+        if (_this7.deliveryBoys.id && _this7.record) {
+          _this7.applyRecordCities();
         }
       });
     },
@@ -814,139 +977,148 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       this.setCityId();
     },
     getDeliveryBoy: function getDeliveryBoy() {
-      var _this6 = this;
+      var _this8 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/delivery_boys/edit/' + this.id).then(function (response) {
-        _this6.isLoading = false;
+        _this8.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
-          var _this6$record, _this6$record2, _this6$record3, _this6$record4, _this6$record5, _this6$record6, _this6$record7, _this6$record8, _this6$record9, _this6$record10, _this6$record11, _this6$record12, _this6$record13;
-          _this6.record = data.data;
-          _this6.translations = {};
-          if (!_this6.languages.length) return;
+          var _this8$record, _this8$record2, _this8$record3, _this8$record4, _this8$record5, _this8$record6, _this8$record7, _this8$record8, _this8$record9, _this8$record10, _this8$record11, _this8$record12, _this8$record13;
+          _this8.record = data.data;
+          _this8.translations = {};
+          if (!_this8.languages.length) return;
 
           // Helper: show empty string when value is null, undefined, or string "null"
           var emptyIfNull = function emptyIfNull(val) {
             return val != null && val !== "null" ? val : "";
           };
-          _this6.translations = {};
-          _this6.languages.forEach(function (lang) {
-            var _this6$record$transla;
-            var t = (_this6$record$transla = _this6.record.translations) === null || _this6$record$transla === void 0 ? void 0 : _this6$record$transla.find(function (tr) {
+          _this8.translations = {};
+          _this8.languages.forEach(function (lang) {
+            var _this8$record$transla;
+            var t = (_this8$record$transla = _this8.record.translations) === null || _this8$record$transla === void 0 ? void 0 : _this8$record$transla.find(function (tr) {
               return tr.language_id === lang.id;
             });
             if (lang.is_default) {
-              _this6.$set(_this6.translations, lang.id, {
-                name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name) || emptyIfNull(_this6.record.name),
-                address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address) || emptyIfNull(_this6.record.address),
-                other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information) || emptyIfNull(_this6.record.other_payment_information)
+              _this8.$set(_this8.translations, lang.id, {
+                name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name) || emptyIfNull(_this8.record.name),
+                address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address) || emptyIfNull(_this8.record.address),
+                other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information) || emptyIfNull(_this8.record.other_payment_information)
               });
             } else {
-              _this6.$set(_this6.translations, lang.id, {
+              _this8.$set(_this8.translations, lang.id, {
                 name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name),
                 address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address),
                 other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information)
               });
             }
           });
-          _this6.deliveryBoys.id = _this6.record ? _this6.record.id : null;
-          _this6.deliveryBoys.admin_id = emptyIfNull((_this6$record = _this6.record) === null || _this6$record === void 0 ? void 0 : _this6$record.admin_id);
-          _this6.deliveryBoys.name = emptyIfNull((_this6$record2 = _this6.record) === null || _this6$record2 === void 0 ? void 0 : _this6$record2.name);
-          _this6.deliveryBoys.dob = emptyIfNull((_this6$record3 = _this6.record) === null || _this6$record3 === void 0 ? void 0 : _this6$record3.dob);
-          _this6.deliveryBoys.mobile = emptyIfNull((_this6$record4 = _this6.record) === null || _this6$record4 === void 0 ? void 0 : _this6$record4.mobile);
-          _this6.deliveryBoys.country_code = ((_this6$record5 = _this6.record) === null || _this6$record5 === void 0 ? void 0 : _this6$record5.country_code) || "+91";
-          _this6.deliveryBoys.license_no = emptyIfNull((_this6$record6 = _this6.record) === null || _this6$record6 === void 0 ? void 0 : _this6$record6.license_no);
-          _this6.deliveryBoys.email = (_this6$record7 = _this6.record) !== null && _this6$record7 !== void 0 && _this6$record7.admin ? _this6.record.admin.email || '' : '';
-          _this6.deliveryBoys.password = "";
-          _this6.deliveryBoys.confirm_password = "";
-          _this6.deliveryBoys.ifsc_code = emptyIfNull((_this6$record8 = _this6.record) === null || _this6$record8 === void 0 ? void 0 : _this6$record8.ifsc_code);
-          _this6.deliveryBoys.bank_name = emptyIfNull((_this6$record9 = _this6.record) === null || _this6$record9 === void 0 ? void 0 : _this6$record9.bank_name);
-          _this6.deliveryBoys.bank_account_number = emptyIfNull((_this6$record10 = _this6.record) === null || _this6$record10 === void 0 ? void 0 : _this6$record10.bank_account_number);
-          _this6.deliveryBoys.account_name = emptyIfNull((_this6$record11 = _this6.record) === null || _this6$record11 === void 0 ? void 0 : _this6$record11.account_name);
-          _this6.applyRecordCities();
-          _this6.deliveryBoys.address = emptyIfNull((_this6$record12 = _this6.record) === null || _this6$record12 === void 0 ? void 0 : _this6$record12.address);
-          _this6.deliveryBoys.other_payment_information = emptyIfNull((_this6$record13 = _this6.record) === null || _this6$record13 === void 0 ? void 0 : _this6$record13.other_payment_information);
-          _this6.deliveryBoys.driving_license = "";
-          _this6.deliveryBoys.driving_license_url = _this6.record ? _this6.$storageUrl + _this6.record.driving_license : "";
-          _this6.deliveryBoys.national_identity_card = "";
-          _this6.deliveryBoys.national_identity_card_url = _this6.record ? _this6.$storageUrl + _this6.record.national_identity_card : "";
-          _this6.deliveryBoys.status = _this6.record ? _this6.record.status : 0;
-          _this6.deliveryBoys.remark = _this6.record ? _this6.record.remark : "";
-          _this6.deliveryBoys.bonus_type = _this6.record ? _this6.record.bonus_type : 0;
-          _this6.deliveryBoys.bonus_percentage = _this6.record ? _this6.record.bonus_percentage : 0;
-          _this6.deliveryBoys.bonus_min_amount = _this6.record ? _this6.record.bonus_min_amount : 0;
-          _this6.deliveryBoys.bonus_max_amount = _this6.record ? _this6.record.bonus_max_amount : 0;
+          _this8.deliveryBoys.id = _this8.record ? _this8.record.id : null;
+          _this8.deliveryBoys.admin_id = emptyIfNull((_this8$record = _this8.record) === null || _this8$record === void 0 ? void 0 : _this8$record.admin_id);
+          _this8.deliveryBoys.name = emptyIfNull((_this8$record2 = _this8.record) === null || _this8$record2 === void 0 ? void 0 : _this8$record2.name);
+          _this8.deliveryBoys.dob = emptyIfNull((_this8$record3 = _this8.record) === null || _this8$record3 === void 0 ? void 0 : _this8$record3.dob);
+          _this8.deliveryBoys.mobile = emptyIfNull((_this8$record4 = _this8.record) === null || _this8$record4 === void 0 ? void 0 : _this8$record4.mobile);
+          _this8.deliveryBoys.country_code = ((_this8$record5 = _this8.record) === null || _this8$record5 === void 0 ? void 0 : _this8$record5.country_code) || "+91";
+          _this8.deliveryBoys.license_no = emptyIfNull((_this8$record6 = _this8.record) === null || _this8$record6 === void 0 ? void 0 : _this8$record6.license_no);
+          _this8.deliveryBoys.email = (_this8$record7 = _this8.record) !== null && _this8$record7 !== void 0 && _this8$record7.admin ? _this8.record.admin.email || '' : '';
+          _this8.deliveryBoys.password = "";
+          _this8.deliveryBoys.confirm_password = "";
+          _this8.deliveryBoys.ifsc_code = emptyIfNull((_this8$record8 = _this8.record) === null || _this8$record8 === void 0 ? void 0 : _this8$record8.ifsc_code);
+          _this8.deliveryBoys.bank_name = emptyIfNull((_this8$record9 = _this8.record) === null || _this8$record9 === void 0 ? void 0 : _this8$record9.bank_name);
+          _this8.deliveryBoys.bank_account_number = emptyIfNull((_this8$record10 = _this8.record) === null || _this8$record10 === void 0 ? void 0 : _this8$record10.bank_account_number);
+          _this8.deliveryBoys.account_name = emptyIfNull((_this8$record11 = _this8.record) === null || _this8$record11 === void 0 ? void 0 : _this8$record11.account_name);
+          _this8.applyRecordCities();
+          _this8.deliveryBoys.address = emptyIfNull((_this8$record12 = _this8.record) === null || _this8$record12 === void 0 ? void 0 : _this8$record12.address);
+          _this8.deliveryBoys.other_payment_information = emptyIfNull((_this8$record13 = _this8.record) === null || _this8$record13 === void 0 ? void 0 : _this8$record13.other_payment_information);
+          _this8.deliveryBoys.driving_license = "";
+          _this8.deliveryBoys.driving_license_url = _this8.record ? _this8.$storageUrl + _this8.record.driving_license : "";
+          _this8.deliveryBoys.national_identity_card = "";
+          _this8.deliveryBoys.national_identity_card_url = _this8.record ? _this8.$storageUrl + _this8.record.national_identity_card : "";
+          _this8.deliveryBoys.status = _this8.record ? _this8.record.status : 0;
+          _this8.deliveryBoys.remark = _this8.record ? _this8.record.remark : "";
+          _this8.deliveryBoys.bonus_type = _this8.record ? _this8.record.bonus_type : 0;
+          _this8.deliveryBoys.bonus_percentage = _this8.record ? _this8.record.bonus_percentage : 0;
+          _this8.deliveryBoys.bonus_min_amount = _this8.record ? _this8.record.bonus_min_amount : 0;
+          _this8.deliveryBoys.bonus_max_amount = _this8.record ? _this8.record.bonus_max_amount : 0;
         } else {
-          _this6.showError(data.message);
+          _this8.showError(data.message);
           setTimeout(function () {
-            _this6.$router.back();
+            _this8.$router.back();
           }, 1000);
         }
       })["catch"](function (error) {
         var _error$request;
-        _this6.isLoading = false;
+        _this8.isLoading = false;
         if ((_error$request = error.request) !== null && _error$request !== void 0 && _error$request.statusText) {
-          _this6.showError(error.request.statusText);
+          _this8.showError(error.request.statusText);
         } else if (error.message) {
-          _this6.showError(error.message);
+          _this8.showError(error.message);
         } else {
-          _this6.showError("Something went wrong!");
+          _this8.showError("Something went wrong!");
         }
       });
     },
     saveRecord: function saveRecord() {
-      var _this7 = this;
-      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+      var _this9 = this;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
         var _defaultTrans$name;
-        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this7$deliveryBoys$d, _this7$deliveryBoys$r, isEdit, fd, _this7$deliveryBoys$p, _this7$deliveryBoys$c, _this7$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response, _error$response$data;
-        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this9$deliveryBoys$d, _this9$deliveryBoys$r, isEdit, fd, _this9$deliveryBoys$p, _this9$deliveryBoys$c, _this9$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response2, _error$response2$data;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                if (_this7.defaultLanguage) {
-                  _context.next = 3;
+                if (_this9.defaultLanguage) {
+                  _context3.next = 3;
                   break;
                 }
-                _this7.showError(__('default_language_not_found') || 'Default language not loaded.');
-                return _context.abrupt("return");
+                _this9.showError(__('default_language_not_found') || 'Default language not loaded.');
+                return _context3.abrupt("return");
               case 3:
-                defaultLang = _this7.defaultLanguage;
-                defaultTrans = _this7.translations[defaultLang.id];
+                defaultLang = _this9.defaultLanguage;
+                defaultTrans = _this9.translations[defaultLang.id];
                 switchToDefault = function switchToDefault() {
-                  _this7.activeLanguageTab = _this7.languages.findIndex(function (l) {
+                  _this9.activeLanguageTab = _this9.languages.findIndex(function (l) {
                     return l.id === defaultLang.id;
                   });
                 };
                 if (defaultTrans !== null && defaultTrans !== void 0 && (_defaultTrans$name = defaultTrans.name) !== null && _defaultTrans$name !== void 0 && _defaultTrans$name.trim()) {
-                  _context.next = 10;
+                  _context3.next = 10;
                   break;
                 }
-                _this7.showError(__('please_fill_name_in_default_language') || 'Please fill the name in the default language.');
+                _this9.showError(__('please_fill_name_in_default_language') || 'Please fill the name in the default language.');
                 switchToDefault();
-                return _context.abrupt("return");
+                return _context3.abrupt("return");
               case 10:
-                if (_this7.deliveryBoys.mobile) {
-                  _context.next = 14;
+                if (_this9.deliveryBoys.mobile) {
+                  _context3.next = 14;
                   break;
                 }
-                _this7.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
+                _this9.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
                 switchToDefault();
-                return _context.abrupt("return");
+                return _context3.abrupt("return");
               case 14:
-                if (_this7.deliveryBoys.city_id) {
-                  _context.next = 18;
+                if (!(!_this9.isSellerRole && !_this9.deliveryBoys.city_id)) {
+                  _context3.next = 18;
                   break;
                 }
-                _this7.showError(__('please_select_city') || 'Please select a city.');
+                _this9.showError(__('please_select_city') || 'Please select a city.');
                 switchToDefault();
-                return _context.abrupt("return");
+                return _context3.abrupt("return");
               case 18:
+                _context3.next = 20;
+                return _this9.lookupExistingDriver();
+              case 20:
+                if (!_context3.sent) {
+                  _context3.next = 22;
+                  break;
+                }
+                return _context3.abrupt("return");
+              case 22:
                 // All client-side checks passed — start loading
-                _this7.isLoading = true;
-                _context.prev = 19;
-                isEdit = !!_this7.deliveryBoys.id;
+                _this9.isLoading = true;
+                _context3.prev = 23;
+                isEdit = !!_this9.deliveryBoys.id;
                 fd = new FormData();
                 if (isEdit) {
-                  fd.append('id', _this7.deliveryBoys.id);
+                  fd.append('id', _this9.deliveryBoys.id);
                 }
 
                 // default language
@@ -956,138 +1128,140 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 fd.append('other_payment_information', (_defaultTrans$other_p = defaultTrans.other_payment_information) !== null && _defaultTrans$other_p !== void 0 ? _defaultTrans$other_p : '');
 
                 // main fields
-                fd.append('dob', (_this7$deliveryBoys$d = _this7.deliveryBoys.dob) !== null && _this7$deliveryBoys$d !== void 0 ? _this7$deliveryBoys$d : '');
-                fd.append('mobile', _this7.deliveryBoys.mobile);
-                fd.append('country_code', _this7.deliveryBoys.country_code);
-                fd.append('license_no', _this7.deliveryBoys.license_no);
-                fd.append('email', _this7.deliveryBoys.email);
-                fd.append('ifsc_code', _this7.deliveryBoys.ifsc_code);
-                fd.append('bank_name', _this7.deliveryBoys.bank_name);
-                fd.append('bank_account_number', _this7.deliveryBoys.bank_account_number);
-                fd.append('account_name', _this7.deliveryBoys.account_name);
-                fd.append('city_id', _this7.deliveryBoys.city_id);
-                (_this7.deliveryBoys.city_ids || []).forEach(function (id, i) {
-                  return fd.append('city_ids[' + i + ']', id);
-                });
-                fd.append('status', _this7.deliveryBoys.status);
-                fd.append('remark', (_this7$deliveryBoys$r = _this7.deliveryBoys.remark) !== null && _this7$deliveryBoys$r !== void 0 ? _this7$deliveryBoys$r : '');
-                fd.append('bonus_type', _this7.deliveryBoys.bonus_type || 0);
-                fd.append('bonus_percentage', _this7.deliveryBoys.bonus_percentage || 0);
-                fd.append('bonus_min_amount', _this7.deliveryBoys.bonus_min_amount || 0);
-                fd.append('bonus_max_amount', _this7.deliveryBoys.bonus_max_amount || 0);
+                fd.append('dob', (_this9$deliveryBoys$d = _this9.deliveryBoys.dob) !== null && _this9$deliveryBoys$d !== void 0 ? _this9$deliveryBoys$d : '');
+                fd.append('mobile', _this9.deliveryBoys.mobile);
+                fd.append('country_code', _this9.deliveryBoys.country_code);
+                fd.append('license_no', _this9.deliveryBoys.license_no);
+                fd.append('email', _this9.deliveryBoys.email);
+                fd.append('ifsc_code', _this9.deliveryBoys.ifsc_code);
+                fd.append('bank_name', _this9.deliveryBoys.bank_name);
+                fd.append('bank_account_number', _this9.deliveryBoys.bank_account_number);
+                fd.append('account_name', _this9.deliveryBoys.account_name);
+                if (!_this9.isSellerRole) {
+                  fd.append('city_id', _this9.deliveryBoys.city_id);
+                  (_this9.deliveryBoys.city_ids || []).forEach(function (id, i) {
+                    return fd.append('city_ids[' + i + ']', id);
+                  });
+                }
+                fd.append('status', _this9.deliveryBoys.status);
+                fd.append('remark', (_this9$deliveryBoys$r = _this9.deliveryBoys.remark) !== null && _this9$deliveryBoys$r !== void 0 ? _this9$deliveryBoys$r : '');
+                fd.append('bonus_type', _this9.deliveryBoys.bonus_type || 0);
+                fd.append('bonus_percentage', _this9.deliveryBoys.bonus_percentage || 0);
+                fd.append('bonus_min_amount', _this9.deliveryBoys.bonus_min_amount || 0);
+                fd.append('bonus_max_amount', _this9.deliveryBoys.bonus_max_amount || 0);
 
                 // password: required on CREATE; on EDIT send only when filled
                 if (!isEdit) {
-                  fd.append('password', (_this7$deliveryBoys$p = _this7.deliveryBoys.password) !== null && _this7$deliveryBoys$p !== void 0 ? _this7$deliveryBoys$p : '');
-                  fd.append('confirm_password', (_this7$deliveryBoys$c = _this7.deliveryBoys.confirm_password) !== null && _this7$deliveryBoys$c !== void 0 ? _this7$deliveryBoys$c : '');
-                } else if (_this7.deliveryBoys.password) {
-                  fd.append('password', _this7.deliveryBoys.password);
-                  fd.append('confirm_password', (_this7$deliveryBoys$c2 = _this7.deliveryBoys.confirm_password) !== null && _this7$deliveryBoys$c2 !== void 0 ? _this7$deliveryBoys$c2 : '');
+                  fd.append('password', (_this9$deliveryBoys$p = _this9.deliveryBoys.password) !== null && _this9$deliveryBoys$p !== void 0 ? _this9$deliveryBoys$p : '');
+                  fd.append('confirm_password', (_this9$deliveryBoys$c = _this9.deliveryBoys.confirm_password) !== null && _this9$deliveryBoys$c !== void 0 ? _this9$deliveryBoys$c : '');
+                } else if (_this9.deliveryBoys.password) {
+                  fd.append('password', _this9.deliveryBoys.password);
+                  fd.append('confirm_password', (_this9$deliveryBoys$c2 = _this9.deliveryBoys.confirm_password) !== null && _this9$deliveryBoys$c2 !== void 0 ? _this9$deliveryBoys$c2 : '');
                 }
 
                 // files
-                if (_this7.deliveryBoys.driving_license instanceof File) {
-                  fd.append('driving_license', _this7.deliveryBoys.driving_license);
+                if (_this9.deliveryBoys.driving_license instanceof File) {
+                  fd.append('driving_license', _this9.deliveryBoys.driving_license);
                 }
-                if (_this7.deliveryBoys.national_identity_card instanceof File) {
-                  fd.append('national_identity_card', _this7.deliveryBoys.national_identity_card);
+                if (_this9.deliveryBoys.national_identity_card instanceof File) {
+                  fd.append('national_identity_card', _this9.deliveryBoys.national_identity_card);
                 }
-                url = isEdit ? _this7.$apiUrl + '/delivery_boys/update' : _this7.$apiUrl + '/delivery_boys/save';
-                _context.next = 50;
+                url = isEdit ? _this9.$apiUrl + '/delivery_boys/update' : _this9.$apiUrl + '/delivery_boys/save';
+                _context3.next = 53;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, fd);
-              case 50:
-                response = _context.sent;
+              case 53:
+                response = _context3.sent;
                 if (!(!response.data || response.data.status !== 1)) {
-                  _context.next = 53;
+                  _context3.next = 56;
                   break;
                 }
                 throw new Error(((_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || __('something_went_wrong'));
-              case 53:
+              case 56:
                 if (!isEdit) {
-                  _this7.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
+                  _this9.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 }
 
                 // Save non-default language translations
-                _iterator = _createForOfIteratorHelper(_this7.languages);
-                _context.prev = 55;
+                _iterator = _createForOfIteratorHelper(_this9.languages);
+                _context3.prev = 58;
                 _iterator.s();
-              case 57:
+              case 60:
                 if ((_step = _iterator.n()).done) {
-                  _context.next = 77;
+                  _context3.next = 80;
                   break;
                 }
                 lang = _step.value;
                 if (!lang.is_default) {
-                  _context.next = 61;
+                  _context3.next = 64;
                   break;
                 }
-                return _context.abrupt("continue", 75);
-              case 61:
-                t = _this7.translations[lang.id];
-                if (!(!t || !t.name && !t.address && !t.other_payment_information)) {
-                  _context.next = 64;
-                  break;
-                }
-                return _context.abrupt("continue", 75);
+                return _context3.abrupt("continue", 78);
               case 64:
+                t = _this9.translations[lang.id];
+                if (!(!t || !t.name && !t.address && !t.other_payment_information)) {
+                  _context3.next = 67;
+                  break;
+                }
+                return _context3.abrupt("continue", 78);
+              case 67:
                 tfd = new FormData();
-                tfd.append('id', _this7.deliveryBoys.id);
+                tfd.append('id', _this9.deliveryBoys.id);
                 tfd.append('language_id', lang.id);
                 tfd.append('name', (_t$name = t.name) !== null && _t$name !== void 0 ? _t$name : '');
                 tfd.append('address', (_t$address = t.address) !== null && _t$address !== void 0 ? _t$address : '');
                 tfd.append('other_payment_information', (_t$other_payment_info = t.other_payment_information) !== null && _t$other_payment_info !== void 0 ? _t$other_payment_info : '');
-                _context.next = 72;
-                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this7.$apiUrl + '/delivery_boys/update', tfd);
-              case 72:
-                tRes = _context.sent;
+                _context3.next = 75;
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this9.$apiUrl + '/delivery_boys/update', tfd);
+              case 75:
+                tRes = _context3.sent;
                 if (!(!tRes.data || tRes.data.status !== 1)) {
-                  _context.next = 75;
+                  _context3.next = 78;
                   break;
                 }
                 throw new Error(((_tRes$data = tRes.data) === null || _tRes$data === void 0 ? void 0 : _tRes$data.message) || __('something_went_wrong'));
-              case 75:
-                _context.next = 57;
+              case 78:
+                _context3.next = 60;
                 break;
-              case 77:
-                _context.next = 82;
+              case 80:
+                _context3.next = 85;
                 break;
-              case 79:
-                _context.prev = 79;
-                _context.t0 = _context["catch"](55);
-                _iterator.e(_context.t0);
               case 82:
-                _context.prev = 82;
-                _iterator.f();
-                return _context.finish(82);
+                _context3.prev = 82;
+                _context3.t0 = _context3["catch"](58);
+                _iterator.e(_context3.t0);
               case 85:
-                _this7.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
-                if (!_this7.login_user || _this7.login_user.role_id !== 4) {
-                  if (_this7.$route.path.includes('/seller')) {
-                    _this7.$router.push({
+                _context3.prev = 85;
+                _iterator.f();
+                return _context3.finish(85);
+              case 88:
+                _this9.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
+                if (!_this9.login_user || _this9.login_user.role_id !== 4) {
+                  if (_this9.$route.path.includes('/seller')) {
+                    _this9.$router.push({
                       path: '/seller/delivery_boys'
                     });
                   } else {
-                    _this7.$router.push({
+                    _this9.$router.push({
                       path: '/delivery_boys'
                     });
                   }
                 }
-                _context.next = 92;
+                _context3.next = 95;
                 break;
-              case 89:
-                _context.prev = 89;
-                _context.t1 = _context["catch"](19);
-                _this7.showError(_context.t1.message || (_context.t1 === null || _context.t1 === void 0 ? void 0 : (_error$response = _context.t1.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong') || 'Something went wrong.');
               case 92:
-                _context.prev = 92;
-                _this7.isLoading = false;
-                return _context.finish(92);
+                _context3.prev = 92;
+                _context3.t1 = _context3["catch"](23);
+                _this9.showError(_context3.t1.message || (_context3.t1 === null || _context3.t1 === void 0 ? void 0 : (_error$response2 = _context3.t1.response) === null || _error$response2 === void 0 ? void 0 : (_error$response2$data = _error$response2.data) === null || _error$response2$data === void 0 ? void 0 : _error$response2$data.message) || __('something_went_wrong') || 'Something went wrong.');
               case 95:
+                _context3.prev = 95;
+                _this9.isLoading = false;
+                return _context3.finish(95);
+              case 98:
               case "end":
-                return _context.stop();
+                return _context3.stop();
             }
           }
-        }, _callee, null, [[19, 89, 92, 95], [55, 79, 82, 85]]);
+        }, _callee3, null, [[23, 92, 95, 98], [58, 82, 85, 88]]);
       }))();
     }
   }
@@ -1415,7 +1589,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_multiselect_dist_vue_multiselect_min_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.input-group.mobile-input-group[data-v-77323279] {\n    flex-wrap: nowrap;\n    border: 1px solid #ced4da;\n    border-radius: 0.375rem;\n    background: #fff;\n}\n.mobile-input-group .country-code-dropdown[data-v-77323279] {\n    position: relative;\n    flex: 0 0 auto;\n    width: 72px;\n    border-right: 1px solid #ced4da;\n}\n.mobile-input-group .country-code-toggle[data-v-77323279] {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 2px;\n    padding: 0.375rem 0.5rem;\n    border: none;\n    background: transparent;\n    cursor: pointer;\n    border-top-left-radius: 0.375rem;\n    border-bottom-left-radius: 0.375rem;\n}\n.mobile-input-group input.form-control[data-v-77323279] {\n    flex: 1 1 auto;\n    min-width: 0;\n    border: none;\n    border-top-left-radius: 0;\n    border-bottom-left-radius: 0;\n    border-top-right-radius: 0.375rem;\n    border-bottom-right-radius: 0.375rem;\n    box-shadow: none;\n}\n.mobile-input-group input.form-control[data-v-77323279]:focus {\n    box-shadow: none;\n}\n.country-code-caret[data-v-77323279] {\n    width: 0;\n    height: 0;\n    border-left: 4px solid transparent;\n    border-right: 4px solid transparent;\n    border-top: 5px solid #6c757d;\n}\n.country-code-menu[data-v-77323279] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    z-index: 1050;\n    width: 130px;\n    max-height: 220px;\n    overflow-y: auto;\n    margin: 2px 0 0;\n    padding: 4px 0;\n    list-style: none;\n    background: #fff;\n    border: 1px solid #ced4da;\n    border-radius: 4px;\n    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n}\n.country-code-menu li[data-v-77323279] {\n    padding: 6px 12px;\n    cursor: pointer;\n}\n.country-code-menu li[data-v-77323279]:hover {\n    background: #f1f3f5;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* \"driver already exists\" confirmation modal */\n.driver-link[data-v-77323279] { color: var(--ui-text);\n}\n.driver-link__head[data-v-77323279] { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px;\n}\n.driver-link__title[data-v-77323279] { flex: 1 1 auto; min-width: 0;\n}\n.driver-link__title h5[data-v-77323279] { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text);\n}\n.driver-link__title p[data-v-77323279] { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted);\n}\n.driver-link__close[data-v-77323279] {\n    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;\n    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;\n}\n.driver-link__close[data-v-77323279]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n.driver-link__card[data-v-77323279] {\n    margin: 4px 22px 0; padding: 16px; border: 1px solid var(--ui-border); border-radius: 14px; background: var(--ui-soft);\n}\n.driver-link .driver-link__avatar[data-v-77323279] { width: 48px; height: 48px; font-size: 16px;\n}\n.driver-link .driver-link__card .ui-person[data-v-77323279] { min-width: 0;\n}\n.driver-link__who[data-v-77323279] { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0;\n}\n.driver-link__who strong[data-v-77323279] { font-size: 16px; font-weight: 700; color: var(--ui-text);\n}\n.driver-link .driver-link__status[data-v-77323279] { font-size: 11.5px; padding: 3px 10px;\n}\n.driver-link__details[data-v-77323279] { list-style: none; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--ui-border); display: grid; gap: 8px;\n}\n.driver-link__details li[data-v-77323279] { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ui-text);\n}\n.driver-link__details li i[data-v-77323279] { width: 16px; margin-top: 3px; text-align: center; color: var(--ui-muted);\n}\n.driver-link__notice[data-v-77323279] {\n    display: flex; align-items: flex-start; gap: 10px; margin: 14px 22px 0; padding: 10px 14px; border-radius: 12px;\n    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);\n}\n.driver-link__notice i[data-v-77323279] { margin-top: 2px;\n}\n.driver-link__actions[data-v-77323279] { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px;\n}\n.driver-link__actions .btn[data-v-77323279] { min-width: 110px; border-radius: 10px; font-weight: 600;\n}\n@media (max-width: 575px) {\n.driver-link__actions[data-v-77323279] { flex-direction: column-reverse;\n}\n.driver-link__actions .btn[data-v-77323279] { width: 100%;\n}\n}\n.input-group.mobile-input-group[data-v-77323279] {\n    flex-wrap: nowrap;\n    border: 1px solid #ced4da;\n    border-radius: 0.375rem;\n    background: #fff;\n}\n.mobile-input-group .country-code-dropdown[data-v-77323279] {\n    position: relative;\n    flex: 0 0 auto;\n    width: 72px;\n    border-right: 1px solid #ced4da;\n}\n.mobile-input-group .country-code-toggle[data-v-77323279] {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 2px;\n    padding: 0.375rem 0.5rem;\n    border: none;\n    background: transparent;\n    cursor: pointer;\n    border-top-left-radius: 0.375rem;\n    border-bottom-left-radius: 0.375rem;\n}\n.mobile-input-group input.form-control[data-v-77323279] {\n    flex: 1 1 auto;\n    min-width: 0;\n    border: none;\n    border-top-left-radius: 0;\n    border-bottom-left-radius: 0;\n    border-top-right-radius: 0.375rem;\n    border-bottom-right-radius: 0.375rem;\n    box-shadow: none;\n}\n.mobile-input-group input.form-control[data-v-77323279]:focus {\n    box-shadow: none;\n}\n.country-code-caret[data-v-77323279] {\n    width: 0;\n    height: 0;\n    border-left: 4px solid transparent;\n    border-right: 4px solid transparent;\n    border-top: 5px solid #6c757d;\n}\n.country-code-menu[data-v-77323279] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    z-index: 1050;\n    width: 130px;\n    max-height: 220px;\n    overflow-y: auto;\n    margin: 2px 0 0;\n    padding: 4px 0;\n    list-style: none;\n    background: #fff;\n    border: 1px solid #ced4da;\n    border-radius: 4px;\n    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n}\n.country-code-menu li[data-v-77323279] {\n    padding: 6px 12px;\n    cursor: pointer;\n}\n.country-code-menu li[data-v-77323279]:hover {\n    background: #f1f3f5;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -1579,789 +1753,559 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-          this.$roleDeliveryBoy === this.login_user.role.name
-            ? _c("h3", [
-                _vm._v(
-                  "\n                    " +
-                    _vm._s(_vm.__("my_profile")) +
-                    "\n                "
-                ),
-              ])
-            : _c(
-                "h3",
-                [
-                  _vm.id
-                    ? [_vm._v(_vm._s(_vm.__("edit")))]
-                    : [_vm._v(_vm._s(_vm.__("create")))],
+  return _c(
+    "div",
+    [
+      _c("div", { staticClass: "page-heading" }, [
+        _c("div", { staticClass: "row" }, [
+          _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
+            this.$roleDeliveryBoy === this.login_user.role.name
+              ? _c("h3", [
                   _vm._v(
                     "\n                    " +
-                      _vm._s(_vm.__("delivery_boy")) +
+                      _vm._s(_vm.__("my_profile")) +
                       "\n                "
                   ),
-                ],
-                2
-              ),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
-          _c(
-            "nav",
-            {
-              staticClass: "breadcrumb-header float-start float-md-end",
-              attrs: { "aria-label": "breadcrumb" },
-            },
-            [
-              _c(
-                "ol",
-                {
-                  staticClass:
-                    "breadcrumb justify-content-md-end mb-0 text-end",
-                },
-                [
-                  _c(
-                    "li",
-                    { staticClass: "breadcrumb-item" },
-                    [
-                      this.$roleDeliveryBoy === this.login_user.role.name
-                        ? _c(
-                            "router-link",
-                            { attrs: { to: "/delivery_boy" } },
-                            [_vm._v(_vm._s(_vm.__("dashboard")))]
-                          )
-                        : _c("router-link", { attrs: { to: "/dashboard" } }, [
-                            _vm._v(_vm._s(_vm.__("dashboard"))),
-                          ]),
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  this.$roleDeliveryBoy === this.login_user.role.name
-                    ? [
-                        _c(
-                          "li",
-                          {
-                            staticClass: "breadcrumb-item",
-                            attrs: { "aria-current": "page" },
-                          },
-                          [_vm._v(_vm._s(_vm.__("my_profile")))]
-                        ),
-                      ]
-                    : [
-                        _c(
-                          "li",
-                          {
-                            staticClass: "breadcrumb-item",
-                            attrs: { "aria-current": "page" },
-                          },
-                          [
-                            _c(
-                              "router-link",
-                              {
-                                attrs: {
-                                  to: _vm.$route.path.includes("/seller")
-                                    ? "/seller/delivery_boys"
-                                    : "/delivery_boys",
-                                },
-                              },
-                              [_vm._v(_vm._s(_vm.__("manage_delivery_boy")))]
-                            ),
-                          ],
-                          1
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "li",
-                          {
-                            staticClass: "breadcrumb-item active",
-                            attrs: { "aria-current": "page" },
-                          },
-                          [
-                            _vm.id
-                              ? [_vm._v(_vm._s(_vm.__("edit")))]
-                              : [_vm._v(_vm._s(_vm.__("create")))],
-                            _vm._v(
-                              "\n                                " +
-                                _vm._s(_vm.__("delivery_boy")) +
-                                "\n                            "
-                            ),
-                          ],
-                          2
-                        ),
-                      ],
-                ],
-                2
-              ),
-            ]
-          ),
-        ]),
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-12 order-md-1 order-last" }, [
-          _c("div", { staticClass: "card" }, [
-            this.$roleDeliveryBoy !== this.login_user.role.name
-              ? _c("div", { staticClass: "card-header" }, [
-                  _c("h4", [_vm._v(_vm._s(_vm.__("delivery_boy")))]),
-                  _vm._v(" "),
-                  _c(
-                    "span",
-                    { staticClass: "pull-right" },
-                    [
-                      _c(
-                        "router-link",
-                        {
-                          directives: [
-                            {
-                              name: "b-tooltip",
-                              rawName: "v-b-tooltip.hover",
-                              modifiers: { hover: true },
-                            },
-                          ],
-                          staticClass: "btn btn-primary",
-                          attrs: {
-                            to: _vm.$route.path.includes("/seller")
-                              ? "/seller/delivery_boys"
-                              : "/delivery_boys",
-                            title: "View Delivery boys",
-                          },
-                        },
-                        [_vm._v(_vm._s(_vm.__("view_delivery_boys")))]
-                      ),
-                    ],
-                    1
-                  ),
                 ])
-              : _vm._e(),
-            _vm._v(" "),
+              : _c(
+                  "h3",
+                  [
+                    _vm.id
+                      ? [_vm._v(_vm._s(_vm.__("edit")))]
+                      : [_vm._v(_vm._s(_vm.__("create")))],
+                    _vm._v(
+                      "\n                    " +
+                        _vm._s(_vm.__("delivery_boy")) +
+                        "\n                "
+                    ),
+                  ],
+                  2
+                ),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
             _c(
-              "form",
+              "nav",
               {
-                ref: "my-form",
-                on: {
-                  submit: function ($event) {
-                    $event.preventDefault()
-                    return _vm.saveRecord.apply(null, arguments)
-                  },
-                },
+                staticClass: "breadcrumb-header float-start float-md-end",
+                attrs: { "aria-label": "breadcrumb" },
               },
               [
                 _c(
-                  "div",
-                  { staticClass: "card-body" },
+                  "ol",
+                  {
+                    staticClass:
+                      "breadcrumb justify-content-md-end mb-0 text-end",
+                  },
                   [
-                    _vm.languages.length > 0
-                      ? _c(
-                          "b-tabs",
+                    _c(
+                      "li",
+                      { staticClass: "breadcrumb-item" },
+                      [
+                        this.$roleDeliveryBoy === this.login_user.role.name
+                          ? _c(
+                              "router-link",
+                              { attrs: { to: "/delivery_boy" } },
+                              [_vm._v(_vm._s(_vm.__("dashboard")))]
+                            )
+                          : _c("router-link", { attrs: { to: "/dashboard" } }, [
+                              _vm._v(_vm._s(_vm.__("dashboard"))),
+                            ]),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    this.$roleDeliveryBoy === this.login_user.role.name
+                      ? [
+                          _c(
+                            "li",
+                            {
+                              staticClass: "breadcrumb-item",
+                              attrs: { "aria-current": "page" },
+                            },
+                            [_vm._v(_vm._s(_vm.__("my_profile")))]
+                          ),
+                        ]
+                      : [
+                          _c(
+                            "li",
+                            {
+                              staticClass: "breadcrumb-item",
+                              attrs: { "aria-current": "page" },
+                            },
+                            [
+                              _c(
+                                "router-link",
+                                {
+                                  attrs: {
+                                    to: _vm.$route.path.includes("/seller")
+                                      ? "/seller/delivery_boys"
+                                      : "/delivery_boys",
+                                  },
+                                },
+                                [_vm._v(_vm._s(_vm.__("manage_delivery_boy")))]
+                              ),
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "li",
+                            {
+                              staticClass: "breadcrumb-item active",
+                              attrs: { "aria-current": "page" },
+                            },
+                            [
+                              _vm.id
+                                ? [_vm._v(_vm._s(_vm.__("edit")))]
+                                : [_vm._v(_vm._s(_vm.__("create")))],
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.__("delivery_boy")) +
+                                  "\n                            "
+                              ),
+                            ],
+                            2
+                          ),
+                        ],
+                  ],
+                  2
+                ),
+              ]
+            ),
+          ]),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "row" }, [
+          _c("div", { staticClass: "col-12 col-md-12 order-md-1 order-last" }, [
+            _c("div", { staticClass: "card" }, [
+              this.$roleDeliveryBoy !== this.login_user.role.name
+                ? _c("div", { staticClass: "card-header" }, [
+                    _c("h4", [_vm._v(_vm._s(_vm.__("delivery_boy")))]),
+                    _vm._v(" "),
+                    _c(
+                      "span",
+                      { staticClass: "pull-right" },
+                      [
+                        _c(
+                          "router-link",
                           {
-                            key: "lang-tabs-" + _vm.languagesKey,
-                            attrs: { "content-class": "mt-3" },
-                            model: {
-                              value: _vm.activeLanguageTab,
-                              callback: function ($$v) {
-                                _vm.activeLanguageTab = $$v
+                            directives: [
+                              {
+                                name: "b-tooltip",
+                                rawName: "v-b-tooltip.hover",
+                                modifiers: { hover: true },
                               },
-                              expression: "activeLanguageTab",
+                            ],
+                            staticClass: "btn btn-primary",
+                            attrs: {
+                              to: _vm.$route.path.includes("/seller")
+                                ? "/seller/delivery_boys"
+                                : "/delivery_boys",
+                              title: "View Delivery boys",
                             },
                           },
-                          [
-                            _vm._l(_vm.languages, function (lang, index) {
-                              return lang.is_default
-                                ? _c(
-                                    "b-tab",
-                                    {
-                                      key: "lang-tab-" + lang.id,
-                                      attrs: { lazy: "" },
-                                      scopedSlots: _vm._u(
-                                        [
-                                          {
-                                            key: "title",
-                                            fn: function () {
-                                              return [
+                          [_vm._v(_vm._s(_vm.__("view_delivery_boys")))]
+                        ),
+                      ],
+                      1
+                    ),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _c(
+                "form",
+                {
+                  ref: "my-form",
+                  on: {
+                    submit: function ($event) {
+                      $event.preventDefault()
+                      return _vm.saveRecord.apply(null, arguments)
+                    },
+                  },
+                },
+                [
+                  _c(
+                    "div",
+                    { staticClass: "card-body" },
+                    [
+                      _vm.languages.length > 0
+                        ? _c(
+                            "b-tabs",
+                            {
+                              key: "lang-tabs-" + _vm.languagesKey,
+                              attrs: { "content-class": "mt-3" },
+                              model: {
+                                value: _vm.activeLanguageTab,
+                                callback: function ($$v) {
+                                  _vm.activeLanguageTab = $$v
+                                },
+                                expression: "activeLanguageTab",
+                              },
+                            },
+                            [
+                              _vm._l(_vm.languages, function (lang, index) {
+                                return lang.is_default
+                                  ? _c(
+                                      "b-tab",
+                                      {
+                                        key: "lang-tab-" + lang.id,
+                                        attrs: { lazy: "" },
+                                        scopedSlots: _vm._u(
+                                          [
+                                            {
+                                              key: "title",
+                                              fn: function () {
+                                                return [
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      class: {
+                                                        "text-primary":
+                                                          lang.is_default,
+                                                      },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        "\n                                            " +
+                                                          _vm._s(lang.name) +
+                                                          "\n                                        "
+                                                      ),
+                                                    ]
+                                                  ),
+                                                ]
+                                              },
+                                              proxy: true,
+                                            },
+                                          ],
+                                          null,
+                                          true
+                                        ),
+                                      },
+                                      [
+                                        _vm._v(" "),
+                                        lang.is_default &&
+                                        _vm.languages.length > 1
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "mb-3" },
+                                              [
                                                 _c(
-                                                  "span",
+                                                  "b-button",
                                                   {
-                                                    class: {
-                                                      "text-primary":
-                                                        lang.is_default,
+                                                    directives: [
+                                                      {
+                                                        name: "b-tooltip",
+                                                        rawName:
+                                                          "v-b-tooltip.hover",
+                                                        modifiers: {
+                                                          hover: true,
+                                                        },
+                                                      },
+                                                    ],
+                                                    staticClass: "mr-2",
+                                                    attrs: {
+                                                      size: "sm",
+                                                      variant:
+                                                        "outline-primary",
+                                                      title: _vm.__(
+                                                        "only_empty_fields_will_be_translated_existing_content_will_not_be_changed"
+                                                      ),
+                                                      disabled:
+                                                        _vm.loadingEmpty,
+                                                    },
+                                                    on: {
+                                                      click: function ($event) {
+                                                        return _vm.translateEmpty(
+                                                          lang
+                                                        )
+                                                      },
                                                     },
                                                   },
                                                   [
+                                                    !_vm.loadingEmpty
+                                                      ? _c("span", [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "translate_empty_fields"
+                                                              )
+                                                            )
+                                                          ),
+                                                        ])
+                                                      : _c("b-spinner", {
+                                                          attrs: { small: "" },
+                                                        }),
+                                                  ],
+                                                  1
+                                                ),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "b-button",
+                                                  {
+                                                    directives: [
+                                                      {
+                                                        name: "b-tooltip",
+                                                        rawName:
+                                                          "v-b-tooltip.hover",
+                                                        modifiers: {
+                                                          hover: true,
+                                                        },
+                                                      },
+                                                    ],
+                                                    attrs: {
+                                                      size: "sm",
+                                                      variant: "outline-danger",
+                                                      title: _vm.__(
+                                                        "all_fields_will_be_translated_and_existing_content_will_be_overwritten"
+                                                      ),
+                                                      disabled:
+                                                        _vm.loadingOverwrite,
+                                                    },
+                                                    on: {
+                                                      click: function ($event) {
+                                                        return _vm.translateOverwrite(
+                                                          lang
+                                                        )
+                                                      },
+                                                    },
+                                                  },
+                                                  [
+                                                    !_vm.loadingOverwrite
+                                                      ? _c("span", [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "translate_and_overwrite"
+                                                              )
+                                                            )
+                                                          ),
+                                                        ])
+                                                      : _c("b-spinner", {
+                                                          attrs: { small: "" },
+                                                        }),
+                                                  ],
+                                                  1
+                                                ),
+                                                _vm._v(" "),
+                                                _vm.translateSuccessMessage
+                                                  ? _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "text-success mt-2 font-weight-bold",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "\n                                            " +
+                                                            _vm._s(
+                                                              _vm.translateSuccessMessage
+                                                            ) +
+                                                            "\n                                        "
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
+                                              ],
+                                              1
+                                            )
+                                          : _vm._e(),
+                                      ]
+                                    )
+                                  : _vm._e()
+                              }),
+                              _vm._v(" "),
+                              _vm._l(_vm.languages, function (lang, index) {
+                                return !lang.is_default
+                                  ? _c(
+                                      "b-tab",
+                                      {
+                                        key: "lang-tab-" + lang.id,
+                                        attrs: { lazy: "" },
+                                        scopedSlots: _vm._u(
+                                          [
+                                            {
+                                              key: "title",
+                                              fn: function () {
+                                                return [
+                                                  _c("span", [
                                                     _vm._v(
                                                       "\n                                            " +
                                                         _vm._s(lang.name) +
                                                         "\n                                        "
                                                     ),
-                                                  ]
-                                                ),
-                                              ]
+                                                  ]),
+                                                ]
+                                              },
+                                              proxy: true,
                                             },
-                                            proxy: true,
-                                          },
-                                        ],
-                                        null,
-                                        true
-                                      ),
-                                    },
-                                    [
-                                      _vm._v(" "),
-                                      lang.is_default &&
-                                      _vm.languages.length > 1
-                                        ? _c(
+                                          ],
+                                          null,
+                                          true
+                                        ),
+                                      },
+                                      [
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "row" }, [
+                                          _c(
                                             "div",
-                                            { staticClass: "mb-3" },
+                                            { staticClass: "col-md-12" },
                                             [
                                               _c(
-                                                "b-button",
-                                                {
-                                                  directives: [
-                                                    {
-                                                      name: "b-tooltip",
-                                                      rawName:
-                                                        "v-b-tooltip.hover",
-                                                      modifiers: {
-                                                        hover: true,
-                                                      },
-                                                    },
-                                                  ],
-                                                  staticClass: "mr-2",
-                                                  attrs: {
-                                                    size: "sm",
-                                                    variant: "outline-primary",
-                                                    title: _vm.__(
-                                                      "only_empty_fields_will_be_translated_existing_content_will_not_be_changed"
-                                                    ),
-                                                    disabled: _vm.loadingEmpty,
-                                                  },
-                                                  on: {
-                                                    click: function ($event) {
-                                                      return _vm.translateEmpty(
-                                                        lang
-                                                      )
-                                                    },
-                                                  },
-                                                },
+                                                "div",
+                                                { staticClass: "form-group" },
                                                 [
-                                                  !_vm.loadingEmpty
-                                                    ? _c("span", [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "translate_empty_fields"
-                                                            )
-                                                          )
-                                                        ),
-                                                      ])
-                                                    : _c("b-spinner", {
-                                                        attrs: { small: "" },
-                                                      }),
-                                                ],
-                                                1
-                                              ),
-                                              _vm._v(" "),
-                                              _c(
-                                                "b-button",
-                                                {
-                                                  directives: [
-                                                    {
-                                                      name: "b-tooltip",
-                                                      rawName:
-                                                        "v-b-tooltip.hover",
-                                                      modifiers: {
-                                                        hover: true,
-                                                      },
-                                                    },
-                                                  ],
-                                                  attrs: {
-                                                    size: "sm",
-                                                    variant: "outline-danger",
-                                                    title: _vm.__(
-                                                      "all_fields_will_be_translated_and_existing_content_will_be_overwritten"
-                                                    ),
-                                                    disabled:
-                                                      _vm.loadingOverwrite,
-                                                  },
-                                                  on: {
-                                                    click: function ($event) {
-                                                      return _vm.translateOverwrite(
-                                                        lang
-                                                      )
-                                                    },
-                                                  },
-                                                },
-                                                [
-                                                  !_vm.loadingOverwrite
-                                                    ? _c("span", [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "translate_and_overwrite"
-                                                            )
-                                                          )
-                                                        ),
-                                                      ])
-                                                    : _c("b-spinner", {
-                                                        attrs: { small: "" },
-                                                      }),
-                                                ],
-                                                1
-                                              ),
-                                              _vm._v(" "),
-                                              _vm.translateSuccessMessage
-                                                ? _c(
-                                                    "div",
-                                                    {
-                                                      staticClass:
-                                                        "text-success mt-2 font-weight-bold",
-                                                    },
+                                                  _c(
+                                                    "label",
+                                                    { attrs: { for: "name" } },
                                                     [
                                                       _vm._v(
-                                                        "\n                                            " +
-                                                          _vm._s(
-                                                            _vm.translateSuccessMessage
-                                                          ) +
-                                                          "\n                                        "
+                                                        _vm._s(_vm.__("name"))
                                                       ),
                                                     ]
-                                                  )
-                                                : _vm._e(),
-                                            ],
-                                            1
-                                          )
-                                        : _vm._e(),
-                                    ]
-                                  )
-                                : _vm._e()
-                            }),
-                            _vm._v(" "),
-                            _vm._l(_vm.languages, function (lang, index) {
-                              return !lang.is_default
-                                ? _c(
-                                    "b-tab",
-                                    {
-                                      key: "lang-tab-" + lang.id,
-                                      attrs: { lazy: "" },
-                                      scopedSlots: _vm._u(
-                                        [
-                                          {
-                                            key: "title",
-                                            fn: function () {
-                                              return [
-                                                _c("span", [
-                                                  _vm._v(
-                                                    "\n                                            " +
-                                                      _vm._s(lang.name) +
-                                                      "\n                                        "
                                                   ),
-                                                ]),
-                                              ]
-                                            },
-                                            proxy: true,
-                                          },
-                                        ],
-                                        null,
-                                        true
-                                      ),
-                                    },
-                                    [
-                                      _vm._v(" "),
-                                      _c("div", { staticClass: "row" }, [
-                                        _c(
-                                          "div",
-                                          { staticClass: "col-md-12" },
-                                          [
-                                            _c(
-                                              "div",
-                                              { staticClass: "form-group" },
-                                              [
-                                                _c(
-                                                  "label",
-                                                  { attrs: { for: "name" } },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(_vm.__("name"))
-                                                    ),
-                                                  ]
-                                                ),
-                                                _vm._v(" "),
-                                                _c("input", {
-                                                  directives: [
-                                                    {
-                                                      name: "model",
-                                                      rawName: "v-model",
+                                                  _vm._v(" "),
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          _vm.translations[
+                                                            lang.id
+                                                          ].name,
+                                                        expression:
+                                                          "translations[lang.id].name",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "text",
+                                                      name: "name",
+                                                      id: "name_" + lang.id,
+                                                      placeholder:
+                                                        _vm.__("name"),
+                                                    },
+                                                    domProps: {
                                                       value:
                                                         _vm.translations[
                                                           lang.id
                                                         ].name,
-                                                      expression:
-                                                        "translations[lang.id].name",
                                                     },
-                                                  ],
-                                                  staticClass: "form-control",
-                                                  attrs: {
-                                                    type: "text",
-                                                    name: "name",
-                                                    id: "name_" + lang.id,
-                                                    placeholder: _vm.__("name"),
-                                                  },
-                                                  domProps: {
-                                                    value:
-                                                      _vm.translations[lang.id]
-                                                        .name,
-                                                  },
-                                                  on: {
-                                                    input: function ($event) {
-                                                      if (
-                                                        $event.target.composing
-                                                      ) {
-                                                        return
-                                                      }
-                                                      _vm.$set(
-                                                        _vm.translations[
-                                                          lang.id
-                                                        ],
-                                                        "name",
-                                                        $event.target.value
-                                                      )
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          _vm.translations[
+                                                            lang.id
+                                                          ],
+                                                          "name",
+                                                          $event.target.value
+                                                        )
+                                                      },
                                                     },
-                                                  },
-                                                }),
-                                              ]
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "div",
-                                          { staticClass: "col-md-12" },
-                                          [
-                                            _c(
-                                              "div",
-                                              { staticClass: "form-group" },
-                                              [
-                                                _c(
-                                                  "label",
-                                                  { attrs: { for: "address" } },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(_vm.__("address"))
-                                                    ),
-                                                  ]
-                                                ),
-                                                _vm._v(" "),
-                                                _c("textarea", {
-                                                  directives: [
+                                                  }),
+                                                ]
+                                              ),
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "div",
+                                            { staticClass: "col-md-12" },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c(
+                                                    "label",
                                                     {
-                                                      name: "model",
-                                                      rawName: "v-model",
+                                                      attrs: { for: "address" },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.__("address")
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c("textarea", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          _vm.translations[
+                                                            lang.id
+                                                          ].address,
+                                                        expression:
+                                                          "translations[lang.id].address",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      name: "address",
+                                                      id: "address_" + lang.id,
+                                                      rows: "3",
+                                                      placeholder:
+                                                        _vm.__("address"),
+                                                    },
+                                                    domProps: {
                                                       value:
                                                         _vm.translations[
                                                           lang.id
                                                         ].address,
-                                                      expression:
-                                                        "translations[lang.id].address",
                                                     },
-                                                  ],
-                                                  staticClass: "form-control",
-                                                  attrs: {
-                                                    name: "address",
-                                                    id: "address_" + lang.id,
-                                                    rows: "3",
-                                                    placeholder:
-                                                      _vm.__("address"),
-                                                  },
-                                                  domProps: {
-                                                    value:
-                                                      _vm.translations[lang.id]
-                                                        .address,
-                                                  },
-                                                  on: {
-                                                    input: function ($event) {
-                                                      if (
-                                                        $event.target.composing
-                                                      ) {
-                                                        return
-                                                      }
-                                                      _vm.$set(
-                                                        _vm.translations[
-                                                          lang.id
-                                                        ],
-                                                        "address",
-                                                        $event.target.value
-                                                      )
-                                                    },
-                                                  },
-                                                }),
-                                              ]
-                                            ),
-                                          ]
-                                        ),
-                                      ]),
-                                    ]
-                                  )
-                                : _vm._e()
-                            }),
-                          ],
-                          2
-                        )
-                      : _vm._e(),
-                    _vm._v(" "),
-                    !_vm.languages.length ||
-                    (_vm.defaultLanguage &&
-                      _vm.getCurrentLanguage() &&
-                      _vm.getCurrentLanguage().is_default)
-                      ? _c("div", [
-                          _c("div", { staticClass: "row mt-3" }, [
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", { attrs: { for: "name" } }, [
-                                  _vm._v(_vm._s(_vm.__("name"))),
-                                  _c(
-                                    "span",
-                                    { staticClass: "text-danger text-xs" },
-                                    [_vm._v("*")]
-                                  ),
-                                ]),
-                                _vm._v(" "),
-                                _vm.defaultLanguage
-                                  ? _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value:
-                                            _vm.translations[
-                                              _vm.defaultLanguage.id
-                                            ].name,
-                                          expression:
-                                            "translations[defaultLanguage.id].name",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "text",
-                                        name: "name",
-                                        id: "name",
-                                        placeholder: _vm.__("name"),
-                                      },
-                                      domProps: {
-                                        value:
-                                          _vm.translations[
-                                            _vm.defaultLanguage.id
-                                          ].name,
-                                      },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.translations[
-                                              _vm.defaultLanguage.id
-                                            ],
-                                            "name",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    })
-                                  : _vm._e(),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", { attrs: { for: "mobile" } }, [
-                                  _vm._v(_vm._s(_vm.__("mobile"))),
-                                  _c(
-                                    "span",
-                                    { staticClass: "text-danger text-xs" },
-                                    [_vm._v("*")]
-                                  ),
-                                ]),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  {
-                                    staticClass:
-                                      "input-group mobile-input-group",
-                                  },
-                                  [
-                                    _c(
-                                      "div",
-                                      {
-                                        ref: "countryDropdown",
-                                        staticClass: "country-code-dropdown",
-                                      },
-                                      [
-                                        _c(
-                                          "button",
-                                          {
-                                            staticClass: "country-code-toggle",
-                                            attrs: { type: "button" },
-                                            on: {
-                                              click: function ($event) {
-                                                _vm.countryDropdownOpen =
-                                                  !_vm.countryDropdownOpen
-                                              },
-                                            },
-                                          },
-                                          [
-                                            _c("span", [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.deliveryBoys.country_code
-                                                )
-                                              ),
-                                            ]),
-                                            _vm._v(" "),
-                                            _c("span", {
-                                              staticClass: "country-code-caret",
-                                            }),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _vm.countryDropdownOpen
-                                          ? _c(
-                                              "ul",
-                                              {
-                                                staticClass:
-                                                  "country-code-menu",
-                                              },
-                                              _vm._l(
-                                                _vm.countries,
-                                                function (c) {
-                                                  return _c(
-                                                    "li",
-                                                    {
-                                                      key: c.id,
-                                                      on: {
-                                                        click: function (
-                                                          $event
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
                                                         ) {
-                                                          _vm.deliveryBoys.country_code =
-                                                            c.dial_code
-                                                          _vm.countryDropdownOpen = false
-                                                        },
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          _vm.translations[
+                                                            lang.id
+                                                          ],
+                                                          "address",
+                                                          $event.target.value
+                                                        )
                                                       },
                                                     },
-                                                    [
-                                                      _vm._v(
-                                                        "\n                                                            " +
-                                                          _vm._s(c.dial_code) +
-                                                          "\n                                                        "
-                                                      ),
-                                                    ]
-                                                  )
-                                                }
+                                                  }),
+                                                ]
                                               ),
-                                              0
-                                            )
-                                          : _vm._e(),
+                                            ]
+                                          ),
+                                        ]),
                                       ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.deliveryBoys.mobile,
-                                          expression: "deliveryBoys.mobile",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "number",
-                                        name: "mobile",
-                                        id: "mobile",
-                                        placeholder: _vm.__("mobile_no"),
-                                      },
-                                      domProps: {
-                                        value: _vm.deliveryBoys.mobile,
-                                      },
-                                      on: {
-                                        input: [
-                                          function ($event) {
-                                            if ($event.target.composing) {
-                                              return
-                                            }
-                                            _vm.$set(
-                                              _vm.deliveryBoys,
-                                              "mobile",
-                                              $event.target.value
-                                            )
-                                          },
-                                          _vm.validateMobileNumber,
-                                        ],
-                                      },
-                                    }),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _vm.mobilevalidationError
-                                  ? _c("span", { staticClass: "error" }, [
-                                      _vm._v(_vm._s(_vm.mobilevalidationError)),
-                                    ])
-                                  : _vm._e(),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", { attrs: { for: "license_no" } }, [
-                                  _vm._v(_vm._s(_vm.__("license_no"))),
-                                ]),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.deliveryBoys.license_no,
-                                      expression: "deliveryBoys.license_no",
-                                    },
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: {
-                                    type: "text",
-                                    name: "license_no",
-                                    id: "license_no",
-                                    placeholder: _vm.__("license_no"),
-                                  },
-                                  domProps: {
-                                    value: _vm.deliveryBoys.license_no,
-                                  },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.deliveryBoys,
-                                        "license_no",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                              ]),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "row" }, [
-                            _c("div", { staticClass: "col-md-12" }, [
-                              _c(
-                                "div",
-                                { staticClass: "form-group" },
-                                [
-                                  _c("label", { attrs: { for: "city_name" } }, [
-                                    _vm._v(
-                                      _vm._s(_vm.__("select_or_search_city"))
-                                    ),
+                                    )
+                                  : _vm._e()
+                              }),
+                            ],
+                            2
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      !_vm.languages.length ||
+                      (_vm.defaultLanguage &&
+                        _vm.getCurrentLanguage() &&
+                        _vm.getCurrentLanguage().is_default)
+                        ? _c("div", [
+                            _c("div", { staticClass: "row mt-3" }, [
+                              _c("div", { staticClass: "col-md-4" }, [
+                                _c("div", { staticClass: "form-group" }, [
+                                  _c("label", { attrs: { for: "name" } }, [
+                                    _vm._v(_vm._s(_vm.__("name"))),
                                     _c(
                                       "span",
                                       { staticClass: "text-danger text-xs" },
@@ -2369,983 +2313,258 @@ var render = function () {
                                     ),
                                   ]),
                                   _vm._v(" "),
-                                  _c("multiselect", {
-                                    attrs: {
-                                      options: _vm.cities,
-                                      multiple: true,
-                                      "close-on-select": false,
-                                      placeholder: _vm.__(
-                                        "select_or_search_city"
-                                      ),
-                                      label: "name",
-                                      "track-by": "id",
-                                      id: "city_name",
-                                    },
-                                    on: {
-                                      close: _vm.setCityId,
-                                      remove: _vm.setCityId,
-                                    },
-                                    scopedSlots: _vm._u(
-                                      [
-                                        {
-                                          key: "option",
-                                          fn: function (props) {
-                                            return [
-                                              _c(
-                                                "div",
-                                                { staticClass: "option__desc" },
-                                                [
-                                                  _c(
-                                                    "span",
-                                                    {
-                                                      staticClass:
-                                                        "option__title",
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          props.option
-                                                            .formatted_address
-                                                        )
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              ),
-                                            ]
+                                  _vm.defaultLanguage
+                                    ? _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value:
+                                              _vm.translations[
+                                                _vm.defaultLanguage.id
+                                              ].name,
+                                            expression:
+                                              "translations[defaultLanguage.id].name",
                                           },
+                                        ],
+                                        staticClass: "form-control",
+                                        attrs: {
+                                          type: "text",
+                                          name: "name",
+                                          id: "name",
+                                          placeholder: _vm.__("name"),
                                         },
-                                      ],
-                                      null,
-                                      false,
-                                      4052974533
-                                    ),
-                                    model: {
-                                      value: _vm.selectedCities,
-                                      callback: function ($$v) {
-                                        _vm.selectedCities = $$v
-                                      },
-                                      expression: "selectedCities",
-                                    },
-                                  }),
-                                ],
-                                1
-                              ),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _vm.defaultLanguage
-                            ? _c("div", { staticClass: "row" }, [
-                                _c("div", { staticClass: "col-md-12" }, [
-                                  _c("div", { staticClass: "form-group" }, [
-                                    _c("label", { attrs: { for: "address" } }, [
-                                      _vm._v(_vm._s(_vm.__("address"))),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("textarea", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
+                                        domProps: {
                                           value:
                                             _vm.translations[
                                               _vm.defaultLanguage.id
-                                            ].address,
-                                          expression:
-                                            "translations[defaultLanguage.id].address",
+                                            ].name,
                                         },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        name: "address",
-                                        id: "address",
-                                        rows: "3",
-                                        placeholder: _vm.__("address"),
-                                      },
-                                      domProps: {
-                                        value:
-                                          _vm.translations[
-                                            _vm.defaultLanguage.id
-                                          ].address,
-                                      },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            _vm.translations[
-                                              _vm.defaultLanguage.id
-                                            ],
-                                            "address",
-                                            $event.target.value
-                                          )
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              _vm.translations[
+                                                _vm.defaultLanguage.id
+                                              ],
+                                              "name",
+                                              $event.target.value
+                                            )
+                                          },
                                         },
-                                      },
-                                    }),
-                                  ]),
+                                      })
+                                    : _vm._e(),
                                 ]),
-                              ])
-                            : _vm._e(),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "row" }, [
-                            _c("div", { staticClass: "col-md-6" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c(
-                                  "label",
-                                  { attrs: { for: "driving_license" } },
-                                  [
-                                    _vm._v(
-                                      _vm._s(_vm.__("driving_licence")) +
-                                        "\n                                                   "
-                                    ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                this.$roleDeliveryBoy !==
-                                this.login_user.role.name
-                                  ? _c("input", {
-                                      ref: "file_license",
-                                      staticClass: "file-input",
-                                      staticStyle: { display: "none" },
-                                      attrs: {
-                                        type: "file",
-                                        accept:
-                                          "image/*,application/pdf,.doc,.docx",
-                                        name: "driving_license",
-                                        id: "driving_license",
-                                      },
-                                      on: {
-                                        change: _vm.handleFileUploadLicense,
-                                      },
-                                    })
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                this.$roleDeliveryBoy !==
-                                this.login_user.role.name
-                                  ? _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "file-input-div bg-gray-100",
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.$refs.file_license.click()
-                                          },
-                                          drop: _vm.dropFileUploadLicense,
-                                          dragover: _vm.$dragoverFile,
-                                          dragleave: _vm.$dragleaveFile,
-                                        },
-                                      },
-                                      [
-                                        _vm.deliveryBoys.driving_license &&
-                                        _vm.deliveryBoys.driving_license
-                                          .name !== ""
-                                          ? [
-                                              _c("label", [
-                                                _vm._v(
-                                                  _vm._s(
-                                                    _vm.__("selected_file_name")
-                                                  ) +
-                                                    _vm._s(
-                                                      _vm.deliveryBoys
-                                                        .driving_license.name
-                                                    )
-                                                ),
-                                              ]),
-                                            ]
-                                          : [
-                                              _vm._m(0),
-                                              _vm._v(" "),
-                                              _c("label", [
-                                                _vm._v(
-                                                  _vm._s(
-                                                    _vm.__(
-                                                      "drop_files_here_or_click_to_upload"
-                                                    )
-                                                  )
-                                                ),
-                                              ]),
-                                            ],
-                                      ],
-                                      2
-                                    )
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                _vm.drivingLicencevalidationerror
-                                  ? _c("p", { staticClass: "error" }, [
-                                      _vm._v(
-                                        _vm._s(
-                                          _vm.drivingLicencevalidationerror
-                                        )
-                                      ),
-                                    ])
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                _vm.deliveryBoys.driving_license_url
-                                  ? _c("div", { staticClass: "row mt-2" }, [
-                                      _vm.isImage(
-                                        _vm.deliveryBoys.driving_license_url
-                                      )
-                                        ? _c(
-                                            "div",
-                                            { staticClass: "col-md-2" },
-                                            [
-                                              _c("img", {
-                                                staticClass: "custom-image",
-                                                attrs: {
-                                                  src: _vm.deliveryBoys
-                                                    .driving_license_url,
-                                                  title: "Driving License",
-                                                  alt: "Driving License",
-                                                },
-                                              }),
-                                            ]
-                                          )
-                                        : _c(
-                                            "div",
-                                            { staticClass: "col-md-2 mt-2" },
-                                            [
-                                              _c(
-                                                "a",
-                                                {
-                                                  staticClass:
-                                                    "badge bg-success",
-                                                  attrs: {
-                                                    target: "_blank",
-                                                    href: _vm.deliveryBoys
-                                                      .driving_license_url,
-                                                  },
-                                                },
-                                                [
-                                                  _c("i", {
-                                                    staticClass: "fa fa-eye",
-                                                  }),
-                                                  _vm._v(
-                                                    " " +
-                                                      _vm._s(
-                                                        _vm.__("identity_card")
-                                                      ) +
-                                                      "\n                                                    "
-                                                  ),
-                                                ]
-                                              ),
-                                            ]
-                                          ),
-                                    ])
-                                  : _vm._e(),
                               ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-6" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c(
-                                  "label",
-                                  { attrs: { for: "national_identity_card" } },
-                                  [
-                                    _vm._v(
-                                      _vm._s(_vm.__("national_identity_card"))
+                              _vm._v(" "),
+                              _c("div", { staticClass: "col-md-4" }, [
+                                _c("div", { staticClass: "form-group" }, [
+                                  _c("label", { attrs: { for: "mobile" } }, [
+                                    _vm._v(_vm._s(_vm.__("mobile"))),
+                                    _c(
+                                      "span",
+                                      { staticClass: "text-danger text-xs" },
+                                      [_vm._v("*")]
                                     ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                this.$roleDeliveryBoy !==
-                                this.login_user.role.name
-                                  ? _c("input", {
-                                      ref: "file_card",
-                                      staticClass: "file-input",
-                                      staticStyle: { display: "none" },
-                                      attrs: {
-                                        type: "file",
-                                        accept:
-                                          "image/*,application/pdf,.doc,.docx",
-                                        name: "national_identity_card",
-                                        id: "national_identity_card",
-                                      },
-                                      on: { change: _vm.handleFileUploadCard },
-                                    })
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                this.$roleDeliveryBoy !==
-                                this.login_user.role.name
-                                  ? _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "file-input-div bg-gray-100",
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.$refs.file_card.click()
-                                          },
-                                          drop: _vm.dropFileUploadCard,
-                                          dragover: _vm.$dragoverFile,
-                                          dragleave: _vm.$dragleaveFile,
-                                        },
-                                      },
-                                      [
-                                        _vm.deliveryBoys
-                                          .national_identity_card &&
-                                        _vm.deliveryBoys.national_identity_card
-                                          .name !== ""
-                                          ? [
-                                              _c("label", [
-                                                _vm._v(
-                                                  _vm._s(
-                                                    _vm.__("selected_file_Name")
-                                                  ) +
-                                                    _vm._s(
-                                                      _vm.deliveryBoys
-                                                        .national_identity_card
-                                                        .name
-                                                    )
-                                                ),
-                                              ]),
-                                            ]
-                                          : [
-                                              _vm._m(1),
-                                              _vm._v(" "),
-                                              _c("label", [
-                                                _vm._v(
-                                                  _vm._s(
-                                                    _vm.__(
-                                                      "drop_files_here_or_click_to_upload"
-                                                    )
-                                                  )
-                                                ),
-                                              ]),
-                                            ],
-                                      ],
-                                      2
-                                    )
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                _vm.nationalIdentityCardvalidationerror
-                                  ? _c("p", { staticClass: "error" }, [
-                                      _vm._v(
-                                        _vm._s(
-                                          _vm.nationalIdentityCardvalidationerror
-                                        )
-                                      ),
-                                    ])
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                _vm.deliveryBoys.national_identity_card_url
-                                  ? _c("div", { staticClass: "row mt-2" }, [
-                                      _vm.isImage(
-                                        _vm.deliveryBoys
-                                          .national_identity_card_url
-                                      )
-                                        ? _c(
-                                            "div",
-                                            { staticClass: "col-md-2" },
-                                            [
-                                              _c("img", {
-                                                staticClass: "custom-image",
-                                                attrs: {
-                                                  src: _vm.deliveryBoys
-                                                    .national_identity_card_url,
-                                                  title:
-                                                    "National Identity Card",
-                                                  alt: "National Identity Card",
-                                                },
-                                              }),
-                                            ]
-                                          )
-                                        : _c(
-                                            "div",
-                                            { staticClass: "col-md-2 mt-2" },
-                                            [
-                                              _c(
-                                                "a",
-                                                {
-                                                  staticClass:
-                                                    "badge bg-success",
-                                                  attrs: {
-                                                    target: "_blank",
-                                                    href: _vm.deliveryBoys
-                                                      .national_identity_card_url,
-                                                  },
-                                                },
-                                                [
-                                                  _c("i", {
-                                                    staticClass: "fa fa-eye",
-                                                  }),
-                                                  _vm._v(
-                                                    " " +
-                                                      _vm._s(
-                                                        _vm.__("identity_card")
-                                                      ) +
-                                                      "\n                                                    "
-                                                  ),
-                                                ]
-                                              ),
-                                            ]
-                                          ),
-                                    ])
-                                  : _vm._e(),
-                              ]),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          !_vm.$route.path.includes("/seller")
-                            ? _c(
-                                "div",
-                                { staticClass: "list-group-item m-2" },
-                                [
+                                  ]),
+                                  _vm._v(" "),
                                   _c(
                                     "div",
                                     {
                                       staticClass:
-                                        "d-flex justify-content-between align-content-center",
+                                        "input-group mobile-input-group",
                                     },
                                     [
-                                      _c("h6", [
-                                        _vm._v(
-                                          _vm._s(
-                                            _vm.__("delivery_boy_bonus_details")
-                                          )
-                                        ),
-                                      ]),
-                                      _vm._v(" "),
-                                      this.$roleDeliveryBoy !==
-                                      this.login_user.role.name
-                                        ? _c(
-                                            "b-button-group",
-                                            [
-                                              _vm.$deliveryBoyBonusSettings == 1
-                                                ? _c(
-                                                    "b-button",
-                                                    {
-                                                      attrs: {
-                                                        type: "button",
-                                                        variant: "primary",
-                                                        size: "sm",
-                                                      },
-                                                      on: {
-                                                        click:
-                                                          _vm.getBonusSettings,
-                                                      },
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        "\n                                                " +
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "add_default_bonus"
-                                                            )
-                                                          ) +
-                                                          "\n                                            "
-                                                      ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
-                                              _vm._v(" "),
-                                              _vm.deliveryBoys.id
-                                                ? _c(
-                                                    "b-button",
-                                                    {
-                                                      attrs: {
-                                                        type: "button",
-                                                        size: "sm",
-                                                      },
-                                                      on: {
-                                                        click: _vm.resetBonus,
-                                                      },
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        "\n                                                " +
-                                                          _vm._s(
-                                                            _vm.__(
-                                                              "reset_bonus"
-                                                            )
-                                                          ) +
-                                                          "\n                                            "
-                                                      ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
-                                            ],
-                                            1
-                                          )
-                                        : _vm._e(),
-                                    ],
-                                    1
-                                  ),
-                                  _vm._v(" "),
-                                  _c("div", { staticClass: "row mt-2" }, [
-                                    _c("div", { staticClass: "col-md-3" }, [
-                                      _c("div", { staticClass: "form-group" }, [
-                                        _c(
-                                          "label",
-                                          { attrs: { for: "bonus_type" } },
-                                          [
-                                            _vm._v(
-                                              _vm._s(_vm.__("bonus_type")) +
-                                                "\n                                                       "
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "select",
-                                          {
-                                            directives: [
-                                              {
-                                                name: "model",
-                                                rawName: "v-model",
-                                                value:
-                                                  _vm.deliveryBoys.bonus_type,
-                                                expression:
-                                                  "deliveryBoys.bonus_type",
-                                              },
-                                            ],
-                                            staticClass:
-                                              "form-control form-select",
-                                            attrs: {
-                                              name: "bonus_type",
-                                              id: "bonus_type",
-                                              disabled:
-                                                this.$roleDeliveryBoy ===
-                                                this.login_user.role.name,
-                                            },
-                                            on: {
-                                              change: [
-                                                function ($event) {
-                                                  var $$selectedVal =
-                                                    Array.prototype.filter
-                                                      .call(
-                                                        $event.target.options,
-                                                        function (o) {
-                                                          return o.selected
-                                                        }
-                                                      )
-                                                      .map(function (o) {
-                                                        var val =
-                                                          "_value" in o
-                                                            ? o._value
-                                                            : o.value
-                                                        return val
-                                                      })
-                                                  _vm.$set(
-                                                    _vm.deliveryBoys,
-                                                    "bonus_type",
-                                                    $event.target.multiple
-                                                      ? $$selectedVal
-                                                      : $$selectedVal[0]
-                                                  )
+                                      _c(
+                                        "div",
+                                        {
+                                          ref: "countryDropdown",
+                                          staticClass: "country-code-dropdown",
+                                        },
+                                        [
+                                          _c(
+                                            "button",
+                                            {
+                                              staticClass:
+                                                "country-code-toggle",
+                                              attrs: { type: "button" },
+                                              on: {
+                                                click: function ($event) {
+                                                  _vm.countryDropdownOpen =
+                                                    !_vm.countryDropdownOpen
                                                 },
-                                                _vm.changeBonusType,
-                                              ],
+                                              },
                                             },
-                                          },
-                                          [
-                                            _c(
-                                              "option",
-                                              { attrs: { value: "" } },
-                                              [_vm._v(_vm._s(_vm.__("select")))]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "option",
-                                              { attrs: { value: "1" } },
-                                              [
-                                                _vm._v(
-                                                  _vm._s(_vm.__("commission"))
-                                                ),
-                                              ]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "option",
-                                              { attrs: { value: "0" } },
-                                              [
+                                            [
+                                              _c("span", [
                                                 _vm._v(
                                                   _vm._s(
-                                                    _vm.__("fixed_salaried")
+                                                    _vm.deliveryBoys
+                                                      .country_code
                                                   )
                                                 ),
-                                              ]
-                                            ),
-                                          ]
-                                        ),
-                                      ]),
-                                    ]),
-                                    _vm._v(" "),
-                                    _vm.deliveryBoys.bonus_type == 1
-                                      ? _c("div", { staticClass: "col-md-3" }, [
-                                          _c(
-                                            "div",
-                                            { staticClass: "form-group" },
-                                            [
-                                              _c(
-                                                "label",
-                                                {
-                                                  attrs: {
-                                                    for: "bonus_percentage",
-                                                  },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__("bonus_percentage")
-                                                    )
-                                                  ),
-                                                ]
-                                              ),
+                                              ]),
                                               _vm._v(" "),
-                                              _c("input", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value:
-                                                      _vm.deliveryBoys
-                                                        .bonus_percentage,
-                                                    expression:
-                                                      "deliveryBoys.bonus_percentage",
-                                                  },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  type: "number",
-                                                  min: "0.1",
-                                                  max: "100",
-                                                  step: "0.1",
-                                                  name: "bonus_percentage",
-                                                  id: "bonus_percentage",
-                                                  placeholder:
-                                                    _vm.__("bonus_percentage"),
-                                                  readonly:
-                                                    this.$roleDeliveryBoy ===
-                                                    this.login_user.role.name,
-                                                },
-                                                domProps: {
-                                                  value:
-                                                    _vm.deliveryBoys
-                                                      .bonus_percentage,
-                                                },
-                                                on: {
-                                                  input: function ($event) {
-                                                    if (
-                                                      $event.target.composing
-                                                    ) {
-                                                      return
-                                                    }
-                                                    _vm.$set(
-                                                      _vm.deliveryBoys,
-                                                      "bonus_percentage",
-                                                      $event.target.value
-                                                    )
-                                                  },
-                                                },
+                                              _c("span", {
+                                                staticClass:
+                                                  "country-code-caret",
                                               }),
                                             ]
                                           ),
-                                        ])
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.deliveryBoys.bonus_type == 1
-                                      ? _c("div", { staticClass: "col-md-3" }, [
-                                          _c(
-                                            "div",
-                                            { staticClass: "form-group" },
-                                            [
-                                              _c(
-                                                "label",
+                                          _vm._v(" "),
+                                          _vm.countryDropdownOpen
+                                            ? _c(
+                                                "ul",
                                                 {
-                                                  attrs: {
-                                                    for: "bonus_min_amount",
-                                                  },
+                                                  staticClass:
+                                                    "country-code-menu",
                                                 },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "minimum_bonus_amount"
-                                                      )
+                                                _vm._l(
+                                                  _vm.countries,
+                                                  function (c) {
+                                                    return _c(
+                                                      "li",
+                                                      {
+                                                        key: c.id,
+                                                        on: {
+                                                          click: function (
+                                                            $event
+                                                          ) {
+                                                            _vm.deliveryBoys.country_code =
+                                                              c.dial_code
+                                                            _vm.countryDropdownOpen = false
+                                                          },
+                                                        },
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "\n                                                            " +
+                                                            _vm._s(
+                                                              c.dial_code
+                                                            ) +
+                                                            "\n                                                        "
+                                                        ),
+                                                      ]
                                                     )
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c("input", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value:
-                                                      _vm.deliveryBoys
-                                                        .bonus_min_amount,
-                                                    expression:
-                                                      "deliveryBoys.bonus_min_amount",
-                                                  },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  type: "number",
-                                                  min: "0",
-                                                  step: "0.1",
-                                                  required: "",
-                                                  name: "bonus_min_amount",
-                                                  id: "bonus_min_amount",
-                                                  placeholder:
-                                                    "Minimum bonus amount",
-                                                  readonly:
-                                                    this.$roleDeliveryBoy ===
-                                                    this.login_user.role.name,
-                                                },
-                                                domProps: {
-                                                  value:
-                                                    _vm.deliveryBoys
-                                                      .bonus_min_amount,
-                                                },
-                                                on: {
-                                                  input: [
-                                                    function ($event) {
-                                                      if (
-                                                        $event.target.composing
-                                                      ) {
-                                                        return
-                                                      }
-                                                      _vm.$set(
-                                                        _vm.deliveryBoys,
-                                                        "bonus_min_amount",
-                                                        $event.target.value
-                                                      )
-                                                    },
-                                                    _vm.validateBonusMinAmount,
-                                                  ],
-                                                },
-                                              }),
-                                              _vm._v(" "),
-                                              this.$roleDeliveryBoy !==
-                                              this.login_user.role.name
-                                                ? _c(
-                                                    "span",
-                                                    {
-                                                      staticClass:
-                                                        "text text-primary font-size-13",
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.__(
-                                                            "set_0_if_you_want_to_remove_limit"
-                                                          )
-                                                        )
-                                                      ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
-                                              _vm._v(" "),
-                                              _vm.bonusMinAmountValidationError
-                                                ? _c(
-                                                    "span",
-                                                    { staticClass: "error" },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.bonusMinAmountValidationError
-                                                        )
-                                                      ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
-                                            ]
-                                          ),
-                                        ])
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.deliveryBoys.bonus_type == 1
-                                      ? _c("div", { staticClass: "col-md-3" }, [
-                                          _c(
-                                            "div",
-                                            { staticClass: "form-group" },
-                                            [
-                                              _c(
-                                                "label",
-                                                {
-                                                  attrs: {
-                                                    for: "bonus_max_amount",
-                                                  },
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    _vm._s(
-                                                      _vm.__(
-                                                        "maximum_bonus_amount"
-                                                      )
-                                                    )
-                                                  ),
-                                                ]
-                                              ),
-                                              _vm._v(" "),
-                                              _c("input", {
-                                                directives: [
-                                                  {
-                                                    name: "model",
-                                                    rawName: "v-model",
-                                                    value:
-                                                      _vm.deliveryBoys
-                                                        .bonus_max_amount,
-                                                    expression:
-                                                      "deliveryBoys.bonus_max_amount",
-                                                  },
-                                                ],
-                                                staticClass: "form-control",
-                                                attrs: {
-                                                  type: "number",
-                                                  min: "0",
-                                                  step: "0.1",
-                                                  required: "",
-                                                  name: "bonus_max_amount",
-                                                  id: "bonus_max_amount",
-                                                  placeholder: _vm.__(
-                                                    "maximum_bonus_amount"
-                                                  ),
-                                                  readonly:
-                                                    this.$roleDeliveryBoy ===
-                                                    this.login_user.role.name,
-                                                },
-                                                domProps: {
-                                                  value:
-                                                    _vm.deliveryBoys
-                                                      .bonus_max_amount,
-                                                },
-                                                on: {
-                                                  input: [
-                                                    function ($event) {
-                                                      if (
-                                                        $event.target.composing
-                                                      ) {
-                                                        return
-                                                      }
-                                                      _vm.$set(
-                                                        _vm.deliveryBoys,
-                                                        "bonus_max_amount",
-                                                        $event.target.value
-                                                      )
-                                                    },
-                                                    _vm.validateBonusMaxAmount,
-                                                  ],
-                                                },
-                                              }),
-                                              _vm._v(" "),
-                                              this.$roleDeliveryBoy !==
-                                              this.login_user.role.name
-                                                ? _c(
-                                                    "span",
-                                                    {
-                                                      staticClass:
-                                                        "text text-primary font-size-13",
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.__(
-                                                            "set_0_if_you_want_to_remove_limit"
-                                                          )
-                                                        )
-                                                      ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
-                                              _vm._v(" "),
-                                              _vm.bonusMaxAmountValidationError
-                                                ? _c(
-                                                    "span",
-                                                    { staticClass: "error" },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.bonusMaxAmountValidationError
-                                                        )
-                                                      ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
-                                            ]
-                                          ),
-                                        ])
-                                      : _vm._e(),
-                                  ]),
-                                ]
-                              )
-                            : _vm._e(),
-                          _vm._v(" "),
-                          _vm.deliveryBoys.id &&
-                          this.$roleDeliveryBoy !== this.login_user.role.name
-                            ? _c("div", { staticClass: "row" }, [
-                                _c("div", { staticClass: "col-md-8" }, [
-                                  _c(
-                                    "div",
-                                    { staticClass: "form-group" },
-                                    [
-                                      _c("label", [
-                                        _vm._v(_vm._s(_vm.__("status"))),
-                                        _c(
-                                          "span",
-                                          {
-                                            staticClass: "text-danger text-xs",
-                                          },
-                                          [_vm._v("*")]
-                                        ),
-                                      ]),
-                                      _c("br"),
+                                                  }
+                                                ),
+                                                0
+                                              )
+                                            : _vm._e(),
+                                        ]
+                                      ),
                                       _vm._v(" "),
-                                      _c("b-form-radio-group", {
-                                        staticClass:
-                                          "d-flex flex-wrap flex-md-nowrap",
-                                        attrs: {
-                                          options: [
-                                            {
-                                              text: _vm.__("registered"),
-                                              value: 0,
-                                            },
-                                            {
-                                              text: _vm.__("active"),
-                                              value: 1,
-                                            },
-                                            {
-                                              text: _vm.__("not_approved"),
-                                              value: 2,
-                                            },
-                                            {
-                                              text: _vm.__("deactive"),
-                                              value: 3,
-                                            },
-                                            { text: _vm.__("block"), value: 4 },
-                                          ],
-                                          buttons: "",
-                                          "button-variant": "outline-primary",
-                                          required: "",
-                                        },
-                                        model: {
-                                          value: _vm.deliveryBoys.status,
-                                          callback: function ($$v) {
-                                            _vm.$set(
-                                              _vm.deliveryBoys,
-                                              "status",
-                                              $$v
-                                            )
+                                      _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.deliveryBoys.mobile,
+                                            expression: "deliveryBoys.mobile",
                                           },
-                                          expression: "deliveryBoys.status",
+                                        ],
+                                        staticClass: "form-control",
+                                        attrs: {
+                                          type: "number",
+                                          name: "mobile",
+                                          id: "mobile",
+                                          placeholder: _vm.__("mobile_no"),
+                                        },
+                                        domProps: {
+                                          value: _vm.deliveryBoys.mobile,
+                                        },
+                                        on: {
+                                          input: [
+                                            function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                _vm.deliveryBoys,
+                                                "mobile",
+                                                $event.target.value
+                                              )
+                                            },
+                                            _vm.validateMobileNumber,
+                                          ],
+                                          blur: _vm.checkExistingDriver,
                                         },
                                       }),
-                                    ],
-                                    1
+                                    ]
                                   ),
+                                  _vm._v(" "),
+                                  _vm.mobilevalidationError
+                                    ? _c("span", { staticClass: "error" }, [
+                                        _vm._v(
+                                          _vm._s(_vm.mobilevalidationError)
+                                        ),
+                                      ])
+                                    : _vm._e(),
                                 ]),
-                                _vm._v(" "),
-                                [2, 3, 4].includes(_vm.deliveryBoys.status)
-                                  ? _c("div", { staticClass: "col-md-4" }, [
-                                      _c("div", { staticClass: "form-group" }, [
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "col-md-4" }, [
+                                _c("div", { staticClass: "form-group" }, [
+                                  _c(
+                                    "label",
+                                    { attrs: { for: "license_no" } },
+                                    [_vm._v(_vm._s(_vm.__("license_no")))]
+                                  ),
+                                  _vm._v(" "),
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.deliveryBoys.license_no,
+                                        expression: "deliveryBoys.license_no",
+                                      },
+                                    ],
+                                    staticClass: "form-control",
+                                    attrs: {
+                                      type: "text",
+                                      name: "license_no",
+                                      id: "license_no",
+                                      placeholder: _vm.__("license_no"),
+                                    },
+                                    domProps: {
+                                      value: _vm.deliveryBoys.license_no,
+                                    },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.deliveryBoys,
+                                          "license_no",
+                                          $event.target.value
+                                        )
+                                      },
+                                    },
+                                  }),
+                                ]),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            !_vm.isSellerRole
+                              ? _c("div", { staticClass: "row" }, [
+                                  _c("div", { staticClass: "col-md-12" }, [
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group" },
+                                      [
                                         _c(
                                           "label",
-                                          { attrs: { for: "remark" } },
+                                          { attrs: { for: "city_name" } },
                                           [
-                                            _vm._v(_vm._s(_vm.__("remark"))),
+                                            _vm._v(
+                                              _vm._s(
+                                                _vm.__("select_or_search_city")
+                                              )
+                                            ),
                                             _c(
                                               "span",
                                               {
@@ -3357,137 +2576,1417 @@ var render = function () {
                                           ]
                                         ),
                                         _vm._v(" "),
-                                        _c("textarea", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value: _vm.deliveryBoys.remark,
-                                              expression: "deliveryBoys.remark",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
+                                        _c("multiselect", {
                                           attrs: {
-                                            name: "remark",
-                                            id: "remark",
-                                            required: "",
-                                            placeholder: _vm.__("remark"),
-                                          },
-                                          domProps: {
-                                            value: _vm.deliveryBoys.remark,
+                                            options: _vm.cities,
+                                            multiple: true,
+                                            "close-on-select": false,
+                                            placeholder: _vm.__(
+                                              "select_or_search_city"
+                                            ),
+                                            label: "name",
+                                            "track-by": "id",
+                                            id: "city_name",
                                           },
                                           on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                _vm.deliveryBoys,
-                                                "remark",
-                                                $event.target.value
-                                              )
+                                            close: _vm.setCityId,
+                                            remove: _vm.setCityId,
+                                          },
+                                          scopedSlots: _vm._u(
+                                            [
+                                              {
+                                                key: "option",
+                                                fn: function (props) {
+                                                  return [
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "option__desc",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "option__title",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                props.option
+                                                                  .formatted_address
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                  ]
+                                                },
+                                              },
+                                            ],
+                                            null,
+                                            false,
+                                            4052974533
+                                          ),
+                                          model: {
+                                            value: _vm.selectedCities,
+                                            callback: function ($$v) {
+                                              _vm.selectedCities = $$v
                                             },
+                                            expression: "selectedCities",
                                           },
                                         }),
+                                      ],
+                                      1
+                                    ),
+                                  ]),
+                                ])
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _vm.defaultLanguage
+                              ? _c("div", { staticClass: "row" }, [
+                                  _c("div", { staticClass: "col-md-12" }, [
+                                    _c("div", { staticClass: "form-group" }, [
+                                      _c(
+                                        "label",
+                                        { attrs: { for: "address" } },
+                                        [_vm._v(_vm._s(_vm.__("address")))]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("textarea", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value:
+                                              _vm.translations[
+                                                _vm.defaultLanguage.id
+                                              ].address,
+                                            expression:
+                                              "translations[defaultLanguage.id].address",
+                                          },
+                                        ],
+                                        staticClass: "form-control",
+                                        attrs: {
+                                          name: "address",
+                                          id: "address",
+                                          rows: "3",
+                                          placeholder: _vm.__("address"),
+                                        },
+                                        domProps: {
+                                          value:
+                                            _vm.translations[
+                                              _vm.defaultLanguage.id
+                                            ].address,
+                                        },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              _vm.translations[
+                                                _vm.defaultLanguage.id
+                                              ],
+                                              "address",
+                                              $event.target.value
+                                            )
+                                          },
+                                        },
+                                      }),
+                                    ]),
+                                  ]),
+                                ])
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "row" }, [
+                              _c("div", { staticClass: "col-md-6" }, [
+                                _c("div", { staticClass: "form-group" }, [
+                                  _c(
+                                    "label",
+                                    { attrs: { for: "driving_license" } },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.__("driving_licence")) +
+                                          "\n                                                   "
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  this.$roleDeliveryBoy !==
+                                  this.login_user.role.name
+                                    ? _c("input", {
+                                        ref: "file_license",
+                                        staticClass: "file-input",
+                                        staticStyle: { display: "none" },
+                                        attrs: {
+                                          type: "file",
+                                          accept:
+                                            "image/*,application/pdf,.doc,.docx",
+                                          name: "driving_license",
+                                          id: "driving_license",
+                                        },
+                                        on: {
+                                          change: _vm.handleFileUploadLicense,
+                                        },
+                                      })
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  this.$roleDeliveryBoy !==
+                                  this.login_user.role.name
+                                    ? _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "file-input-div bg-gray-100",
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.$refs.file_license.click()
+                                            },
+                                            drop: _vm.dropFileUploadLicense,
+                                            dragover: _vm.$dragoverFile,
+                                            dragleave: _vm.$dragleaveFile,
+                                          },
+                                        },
+                                        [
+                                          _vm.deliveryBoys.driving_license &&
+                                          _vm.deliveryBoys.driving_license
+                                            .name !== ""
+                                            ? [
+                                                _c("label", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "selected_file_name"
+                                                      )
+                                                    ) +
+                                                      _vm._s(
+                                                        _vm.deliveryBoys
+                                                          .driving_license.name
+                                                      )
+                                                  ),
+                                                ]),
+                                              ]
+                                            : [
+                                                _vm._m(0),
+                                                _vm._v(" "),
+                                                _c("label", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "drop_files_here_or_click_to_upload"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]),
+                                              ],
+                                        ],
+                                        2
+                                      )
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.drivingLicencevalidationerror
+                                    ? _c("p", { staticClass: "error" }, [
+                                        _vm._v(
+                                          _vm._s(
+                                            _vm.drivingLicencevalidationerror
+                                          )
+                                        ),
+                                      ])
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.deliveryBoys.driving_license_url
+                                    ? _c("div", { staticClass: "row mt-2" }, [
+                                        _vm.isImage(
+                                          _vm.deliveryBoys.driving_license_url
+                                        )
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "col-md-2" },
+                                              [
+                                                _c("img", {
+                                                  staticClass: "custom-image",
+                                                  attrs: {
+                                                    src: _vm.deliveryBoys
+                                                      .driving_license_url,
+                                                    title: "Driving License",
+                                                    alt: "Driving License",
+                                                  },
+                                                }),
+                                              ]
+                                            )
+                                          : _c(
+                                              "div",
+                                              { staticClass: "col-md-2 mt-2" },
+                                              [
+                                                _c(
+                                                  "a",
+                                                  {
+                                                    staticClass:
+                                                      "badge bg-success",
+                                                    attrs: {
+                                                      target: "_blank",
+                                                      href: _vm.deliveryBoys
+                                                        .driving_license_url,
+                                                    },
+                                                  },
+                                                  [
+                                                    _c("i", {
+                                                      staticClass: "fa fa-eye",
+                                                    }),
+                                                    _vm._v(
+                                                      " " +
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "identity_card"
+                                                          )
+                                                        ) +
+                                                        "\n                                                    "
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            ),
+                                      ])
+                                    : _vm._e(),
+                                ]),
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "col-md-6" }, [
+                                _c("div", { staticClass: "form-group" }, [
+                                  _c(
+                                    "label",
+                                    {
+                                      attrs: { for: "national_identity_card" },
+                                    },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.__("national_identity_card"))
+                                      ),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  this.$roleDeliveryBoy !==
+                                  this.login_user.role.name
+                                    ? _c("input", {
+                                        ref: "file_card",
+                                        staticClass: "file-input",
+                                        staticStyle: { display: "none" },
+                                        attrs: {
+                                          type: "file",
+                                          accept:
+                                            "image/*,application/pdf,.doc,.docx",
+                                          name: "national_identity_card",
+                                          id: "national_identity_card",
+                                        },
+                                        on: {
+                                          change: _vm.handleFileUploadCard,
+                                        },
+                                      })
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  this.$roleDeliveryBoy !==
+                                  this.login_user.role.name
+                                    ? _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "file-input-div bg-gray-100",
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.$refs.file_card.click()
+                                            },
+                                            drop: _vm.dropFileUploadCard,
+                                            dragover: _vm.$dragoverFile,
+                                            dragleave: _vm.$dragleaveFile,
+                                          },
+                                        },
+                                        [
+                                          _vm.deliveryBoys
+                                            .national_identity_card &&
+                                          _vm.deliveryBoys
+                                            .national_identity_card.name !== ""
+                                            ? [
+                                                _c("label", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "selected_file_Name"
+                                                      )
+                                                    ) +
+                                                      _vm._s(
+                                                        _vm.deliveryBoys
+                                                          .national_identity_card
+                                                          .name
+                                                      )
+                                                  ),
+                                                ]),
+                                              ]
+                                            : [
+                                                _vm._m(1),
+                                                _vm._v(" "),
+                                                _c("label", [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.__(
+                                                        "drop_files_here_or_click_to_upload"
+                                                      )
+                                                    )
+                                                  ),
+                                                ]),
+                                              ],
+                                        ],
+                                        2
+                                      )
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.nationalIdentityCardvalidationerror
+                                    ? _c("p", { staticClass: "error" }, [
+                                        _vm._v(
+                                          _vm._s(
+                                            _vm.nationalIdentityCardvalidationerror
+                                          )
+                                        ),
+                                      ])
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.deliveryBoys.national_identity_card_url
+                                    ? _c("div", { staticClass: "row mt-2" }, [
+                                        _vm.isImage(
+                                          _vm.deliveryBoys
+                                            .national_identity_card_url
+                                        )
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "col-md-2" },
+                                              [
+                                                _c("img", {
+                                                  staticClass: "custom-image",
+                                                  attrs: {
+                                                    src: _vm.deliveryBoys
+                                                      .national_identity_card_url,
+                                                    title:
+                                                      "National Identity Card",
+                                                    alt: "National Identity Card",
+                                                  },
+                                                }),
+                                              ]
+                                            )
+                                          : _c(
+                                              "div",
+                                              { staticClass: "col-md-2 mt-2" },
+                                              [
+                                                _c(
+                                                  "a",
+                                                  {
+                                                    staticClass:
+                                                      "badge bg-success",
+                                                    attrs: {
+                                                      target: "_blank",
+                                                      href: _vm.deliveryBoys
+                                                        .national_identity_card_url,
+                                                    },
+                                                  },
+                                                  [
+                                                    _c("i", {
+                                                      staticClass: "fa fa-eye",
+                                                    }),
+                                                    _vm._v(
+                                                      " " +
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "identity_card"
+                                                          )
+                                                        ) +
+                                                        "\n                                                    "
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            ),
+                                      ])
+                                    : _vm._e(),
+                                ]),
+                              ]),
+                            ]),
+                            _vm._v(" "),
+                            !_vm.$route.path.includes("/seller")
+                              ? _c(
+                                  "div",
+                                  { staticClass: "list-group-item m-2" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "d-flex justify-content-between align-content-center",
+                                      },
+                                      [
+                                        _c("h6", [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.__(
+                                                "delivery_boy_bonus_details"
+                                              )
+                                            )
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        this.$roleDeliveryBoy !==
+                                        this.login_user.role.name
+                                          ? _c(
+                                              "b-button-group",
+                                              [
+                                                _vm.$deliveryBoyBonusSettings ==
+                                                1
+                                                  ? _c(
+                                                      "b-button",
+                                                      {
+                                                        attrs: {
+                                                          type: "button",
+                                                          variant: "primary",
+                                                          size: "sm",
+                                                        },
+                                                        on: {
+                                                          click:
+                                                            _vm.getBonusSettings,
+                                                        },
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "\n                                                " +
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "add_default_bonus"
+                                                              )
+                                                            ) +
+                                                            "\n                                            "
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
+                                                _vm._v(" "),
+                                                _vm.deliveryBoys.id
+                                                  ? _c(
+                                                      "b-button",
+                                                      {
+                                                        attrs: {
+                                                          type: "button",
+                                                          size: "sm",
+                                                        },
+                                                        on: {
+                                                          click: _vm.resetBonus,
+                                                        },
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "\n                                                " +
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "reset_bonus"
+                                                              )
+                                                            ) +
+                                                            "\n                                            "
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
+                                              ],
+                                              1
+                                            )
+                                          : _vm._e(),
+                                      ],
+                                      1
+                                    ),
+                                    _vm._v(" "),
+                                    _c("div", { staticClass: "row mt-2" }, [
+                                      _c("div", { staticClass: "col-md-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c(
+                                              "label",
+                                              { attrs: { for: "bonus_type" } },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(_vm.__("bonus_type")) +
+                                                    "\n                                                       "
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "select",
+                                              {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      _vm.deliveryBoys
+                                                        .bonus_type,
+                                                    expression:
+                                                      "deliveryBoys.bonus_type",
+                                                  },
+                                                ],
+                                                staticClass:
+                                                  "form-control form-select",
+                                                attrs: {
+                                                  name: "bonus_type",
+                                                  id: "bonus_type",
+                                                  disabled:
+                                                    this.$roleDeliveryBoy ===
+                                                    this.login_user.role.name,
+                                                },
+                                                on: {
+                                                  change: [
+                                                    function ($event) {
+                                                      var $$selectedVal =
+                                                        Array.prototype.filter
+                                                          .call(
+                                                            $event.target
+                                                              .options,
+                                                            function (o) {
+                                                              return o.selected
+                                                            }
+                                                          )
+                                                          .map(function (o) {
+                                                            var val =
+                                                              "_value" in o
+                                                                ? o._value
+                                                                : o.value
+                                                            return val
+                                                          })
+                                                      _vm.$set(
+                                                        _vm.deliveryBoys,
+                                                        "bonus_type",
+                                                        $event.target.multiple
+                                                          ? $$selectedVal
+                                                          : $$selectedVal[0]
+                                                      )
+                                                    },
+                                                    _vm.changeBonusType,
+                                                  ],
+                                                },
+                                              },
+                                              [
+                                                _c(
+                                                  "option",
+                                                  { attrs: { value: "" } },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(_vm.__("select"))
+                                                    ),
+                                                  ]
+                                                ),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "option",
+                                                  { attrs: { value: "1" } },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__("commission")
+                                                      )
+                                                    ),
+                                                  ]
+                                                ),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "option",
+                                                  { attrs: { value: "0" } },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.__("fixed_salaried")
+                                                      )
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            ),
+                                          ]
+                                        ),
                                       ]),
-                                    ])
-                                  : _vm._e(),
-                              ])
-                            : _vm._e(),
-                        ])
-                      : _vm._e(),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "div",
-                  { staticClass: "card-footer" },
-                  [
-                    _vm.deliveryBoys.id
-                      ? [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: {
-                                type: "submit",
-                                variant: "primary",
-                                disabled: _vm.isLoading,
-                              },
-                            },
-                            [
-                              _vm._v(
-                                "\n                                    " +
-                                  _vm._s(_vm.__("update")) +
-                                  "\n                                    "
-                              ),
-                              _vm.isLoading
-                                ? _c("b-spinner", {
-                                    attrs: { small: "", label: "Spinning" },
-                                  })
-                                : _vm._e(),
-                            ],
-                            1
-                          ),
-                        ]
-                      : [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: {
-                                type: "submit",
-                                variant: "primary",
-                                disabled: _vm.isLoading,
-                              },
-                            },
-                            [
-                              _vm._v(
-                                "\n                                    " +
-                                  _vm._s(_vm.__("save")) +
-                                  "\n                                    "
-                              ),
-                              _vm.isLoading
-                                ? _c("b-spinner", {
-                                    attrs: { small: "", label: "Spinning" },
-                                  })
-                                : _vm._e(),
-                            ],
-                            1
-                          ),
-                          _vm._v(" "),
-                          this.$roleDeliveryBoy !== this.login_user.role.name
-                            ? _c(
-                                "button",
-                                {
-                                  staticClass: "btn btn-danger",
-                                  attrs: { type: "reset" },
+                                      _vm._v(" "),
+                                      _vm.deliveryBoys.bonus_type == 1
+                                        ? _c(
+                                            "div",
+                                            { staticClass: "col-md-3" },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c(
+                                                    "label",
+                                                    {
+                                                      attrs: {
+                                                        for: "bonus_percentage",
+                                                      },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "bonus_percentage"
+                                                          )
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          _vm.deliveryBoys
+                                                            .bonus_percentage,
+                                                        expression:
+                                                          "deliveryBoys.bonus_percentage",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      min: "0.1",
+                                                      max: "100",
+                                                      step: "0.1",
+                                                      name: "bonus_percentage",
+                                                      id: "bonus_percentage",
+                                                      placeholder:
+                                                        _vm.__(
+                                                          "bonus_percentage"
+                                                        ),
+                                                      readonly:
+                                                        this
+                                                          .$roleDeliveryBoy ===
+                                                        this.login_user.role
+                                                          .name,
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        _vm.deliveryBoys
+                                                          .bonus_percentage,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          _vm.deliveryBoys,
+                                                          "bonus_percentage",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                      _vm._v(" "),
+                                      _vm.deliveryBoys.bonus_type == 1
+                                        ? _c(
+                                            "div",
+                                            { staticClass: "col-md-3" },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c(
+                                                    "label",
+                                                    {
+                                                      attrs: {
+                                                        for: "bonus_min_amount",
+                                                      },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "minimum_bonus_amount"
+                                                          )
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          _vm.deliveryBoys
+                                                            .bonus_min_amount,
+                                                        expression:
+                                                          "deliveryBoys.bonus_min_amount",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      min: "0",
+                                                      step: "0.1",
+                                                      required: "",
+                                                      name: "bonus_min_amount",
+                                                      id: "bonus_min_amount",
+                                                      placeholder:
+                                                        "Minimum bonus amount",
+                                                      readonly:
+                                                        this
+                                                          .$roleDeliveryBoy ===
+                                                        this.login_user.role
+                                                          .name,
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        _vm.deliveryBoys
+                                                          .bonus_min_amount,
+                                                    },
+                                                    on: {
+                                                      input: [
+                                                        function ($event) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            _vm.deliveryBoys,
+                                                            "bonus_min_amount",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                        _vm.validateBonusMinAmount,
+                                                      ],
+                                                    },
+                                                  }),
+                                                  _vm._v(" "),
+                                                  this.$roleDeliveryBoy !==
+                                                  this.login_user.role.name
+                                                    ? _c(
+                                                        "span",
+                                                        {
+                                                          staticClass:
+                                                            "text text-primary font-size-13",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "set_0_if_you_want_to_remove_limit"
+                                                              )
+                                                            )
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                  _vm._v(" "),
+                                                  _vm.bonusMinAmountValidationError
+                                                    ? _c(
+                                                        "span",
+                                                        {
+                                                          staticClass: "error",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.bonusMinAmountValidationError
+                                                            )
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                ]
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                      _vm._v(" "),
+                                      _vm.deliveryBoys.bonus_type == 1
+                                        ? _c(
+                                            "div",
+                                            { staticClass: "col-md-3" },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "form-group" },
+                                                [
+                                                  _c(
+                                                    "label",
+                                                    {
+                                                      attrs: {
+                                                        for: "bonus_max_amount",
+                                                      },
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.__(
+                                                            "maximum_bonus_amount"
+                                                          )
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          _vm.deliveryBoys
+                                                            .bonus_max_amount,
+                                                        expression:
+                                                          "deliveryBoys.bonus_max_amount",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      min: "0",
+                                                      step: "0.1",
+                                                      required: "",
+                                                      name: "bonus_max_amount",
+                                                      id: "bonus_max_amount",
+                                                      placeholder: _vm.__(
+                                                        "maximum_bonus_amount"
+                                                      ),
+                                                      readonly:
+                                                        this
+                                                          .$roleDeliveryBoy ===
+                                                        this.login_user.role
+                                                          .name,
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        _vm.deliveryBoys
+                                                          .bonus_max_amount,
+                                                    },
+                                                    on: {
+                                                      input: [
+                                                        function ($event) {
+                                                          if (
+                                                            $event.target
+                                                              .composing
+                                                          ) {
+                                                            return
+                                                          }
+                                                          _vm.$set(
+                                                            _vm.deliveryBoys,
+                                                            "bonus_max_amount",
+                                                            $event.target.value
+                                                          )
+                                                        },
+                                                        _vm.validateBonusMaxAmount,
+                                                      ],
+                                                    },
+                                                  }),
+                                                  _vm._v(" "),
+                                                  this.$roleDeliveryBoy !==
+                                                  this.login_user.role.name
+                                                    ? _c(
+                                                        "span",
+                                                        {
+                                                          staticClass:
+                                                            "text text-primary font-size-13",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.__(
+                                                                "set_0_if_you_want_to_remove_limit"
+                                                              )
+                                                            )
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                  _vm._v(" "),
+                                                  _vm.bonusMaxAmountValidationError
+                                                    ? _c(
+                                                        "span",
+                                                        {
+                                                          staticClass: "error",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            _vm._s(
+                                                              _vm.bonusMaxAmountValidationError
+                                                            )
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                ]
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                    ]),
+                                  ]
+                                )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _vm.deliveryBoys.id &&
+                            this.$roleDeliveryBoy !== this.login_user.role.name
+                              ? _c("div", { staticClass: "row" }, [
+                                  _c("div", { staticClass: "col-md-8" }, [
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group" },
+                                      [
+                                        _c("label", [
+                                          _vm._v(_vm._s(_vm.__("status"))),
+                                          _c(
+                                            "span",
+                                            {
+                                              staticClass:
+                                                "text-danger text-xs",
+                                            },
+                                            [_vm._v("*")]
+                                          ),
+                                        ]),
+                                        _c("br"),
+                                        _vm._v(" "),
+                                        _c("b-form-radio-group", {
+                                          staticClass:
+                                            "d-flex flex-wrap flex-md-nowrap",
+                                          attrs: {
+                                            options: [
+                                              {
+                                                text: _vm.__("registered"),
+                                                value: 0,
+                                              },
+                                              {
+                                                text: _vm.__("active"),
+                                                value: 1,
+                                              },
+                                              {
+                                                text: _vm.__("not_approved"),
+                                                value: 2,
+                                              },
+                                              {
+                                                text: _vm.__("deactive"),
+                                                value: 3,
+                                              },
+                                              {
+                                                text: _vm.__("block"),
+                                                value: 4,
+                                              },
+                                            ],
+                                            buttons: "",
+                                            "button-variant": "outline-primary",
+                                            required: "",
+                                          },
+                                          model: {
+                                            value: _vm.deliveryBoys.status,
+                                            callback: function ($$v) {
+                                              _vm.$set(
+                                                _vm.deliveryBoys,
+                                                "status",
+                                                $$v
+                                              )
+                                            },
+                                            expression: "deliveryBoys.status",
+                                          },
+                                        }),
+                                      ],
+                                      1
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  [2, 3, 4].includes(_vm.deliveryBoys.status)
+                                    ? _c("div", { staticClass: "col-md-4" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c(
+                                              "label",
+                                              { attrs: { for: "remark" } },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(_vm.__("remark"))
+                                                ),
+                                                _c(
+                                                  "span",
+                                                  {
+                                                    staticClass:
+                                                      "text-danger text-xs",
+                                                  },
+                                                  [_vm._v("*")]
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c("textarea", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value:
+                                                    _vm.deliveryBoys.remark,
+                                                  expression:
+                                                    "deliveryBoys.remark",
+                                                },
+                                              ],
+                                              staticClass: "form-control",
+                                              attrs: {
+                                                name: "remark",
+                                                id: "remark",
+                                                required: "",
+                                                placeholder: _vm.__("remark"),
+                                              },
+                                              domProps: {
+                                                value: _vm.deliveryBoys.remark,
+                                              },
+                                              on: {
+                                                input: function ($event) {
+                                                  if ($event.target.composing) {
+                                                    return
+                                                  }
+                                                  _vm.$set(
+                                                    _vm.deliveryBoys,
+                                                    "remark",
+                                                    $event.target.value
+                                                  )
+                                                },
+                                              },
+                                            }),
+                                          ]
+                                        ),
+                                      ])
+                                    : _vm._e(),
+                                ])
+                              : _vm._e(),
+                          ])
+                        : _vm._e(),
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    { staticClass: "card-footer" },
+                    [
+                      _vm.deliveryBoys.id
+                        ? [
+                            _c(
+                              "b-button",
+                              {
+                                attrs: {
+                                  type: "submit",
+                                  variant: "primary",
+                                  disabled: _vm.isLoading,
                                 },
-                                [_vm._v(_vm._s(_vm.__("clear")))]
-                              )
-                            : _c(
-                                "button",
-                                {
-                                  staticClass: "btn btn-danger",
-                                  attrs: { type: "button" },
-                                  on: {
-                                    click: function ($event) {
-                                      return _vm.$router.go(-1)
+                              },
+                              [
+                                _vm._v(
+                                  "\n                                    " +
+                                    _vm._s(_vm.__("update")) +
+                                    "\n                                    "
+                                ),
+                                _vm.isLoading
+                                  ? _c("b-spinner", {
+                                      attrs: { small: "", label: "Spinning" },
+                                    })
+                                  : _vm._e(),
+                              ],
+                              1
+                            ),
+                          ]
+                        : [
+                            _c(
+                              "b-button",
+                              {
+                                attrs: {
+                                  type: "submit",
+                                  variant: "primary",
+                                  disabled: _vm.isLoading,
+                                },
+                              },
+                              [
+                                _vm._v(
+                                  "\n                                    " +
+                                    _vm._s(_vm.__("save")) +
+                                    "\n                                    "
+                                ),
+                                _vm.isLoading
+                                  ? _c("b-spinner", {
+                                      attrs: { small: "", label: "Spinning" },
+                                    })
+                                  : _vm._e(),
+                              ],
+                              1
+                            ),
+                            _vm._v(" "),
+                            this.$roleDeliveryBoy !== this.login_user.role.name
+                              ? _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-danger",
+                                    attrs: { type: "reset" },
+                                  },
+                                  [_vm._v(_vm._s(_vm.__("clear")))]
+                                )
+                              : _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-danger",
+                                    attrs: { type: "button" },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.$router.go(-1)
+                                      },
                                     },
                                   },
-                                },
-                                [_vm._v(_vm._s(_vm.__("back")))]
-                              ),
-                        ],
-                  ],
-                  2
-                ),
-              ]
-            ),
+                                  [_vm._v(_vm._s(_vm.__("back")))]
+                                ),
+                          ],
+                    ],
+                    2
+                  ),
+                ]
+              ),
+            ]),
           ]),
         ]),
       ]),
-    ]),
-  ])
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            "hide-header": "",
+            "hide-footer": "",
+            centered: "",
+            "no-close-on-backdrop": "",
+            size: "md",
+            "body-class": "p-0",
+          },
+          model: {
+            value: _vm.showExistingDriverModal,
+            callback: function ($$v) {
+              _vm.showExistingDriverModal = $$v
+            },
+            expression: "showExistingDriverModal",
+          },
+        },
+        [
+          _vm.existingDriver
+            ? _c("div", { staticClass: "ui-modern driver-link" }, [
+                _c("div", { staticClass: "driver-link__head" }, [
+                  _c("span", { staticClass: "ui-tile ui-tone--blue" }, [
+                    _c("i", { staticClass: "fa fa-user-check" }),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "driver-link__title" }, [
+                    _c("h5", [_vm._v(_vm._s(_vm.__("driver_already_exists")))]),
+                    _vm._v(" "),
+                    _c("p", [
+                      _vm._v(
+                        _vm._s(_vm.__("is_this_the_driver_you_want_to_add"))
+                      ),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "driver-link__close",
+                      attrs: { type: "button", "aria-label": "Close" },
+                      on: {
+                        click: function ($event) {
+                          _vm.showExistingDriverModal = false
+                        },
+                      },
+                    },
+                    [_vm._v("×")]
+                  ),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "driver-link__card" }, [
+                  _c("div", { staticClass: "ui-person" }, [
+                    _c(
+                      "span",
+                      {
+                        staticClass:
+                          "ui-avatar ui-tone--green driver-link__avatar",
+                      },
+                      [
+                        _vm._v(
+                          _vm._s(
+                            _vm.driverInitials(_vm.existingDriver.driver.name)
+                          )
+                        ),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "driver-link__who" }, [
+                      _c("strong", [
+                        _vm._v(_vm._s(_vm.existingDriver.driver.name)),
+                      ]),
+                      _vm._v(" "),
+                      _vm.existingDriver.driver.status === 1
+                        ? _c(
+                            "span",
+                            {
+                              staticClass:
+                                "ui-pill ui-pill--dot ui-tone--green driver-link__status",
+                            },
+                            [
+                              _c("i", { staticClass: "ui-dot" }),
+                              _vm._v(
+                                _vm._s(_vm.__("active")) +
+                                  "\n                        "
+                              ),
+                            ]
+                          )
+                        : _c(
+                            "span",
+                            {
+                              staticClass:
+                                "ui-pill ui-pill--dot ui-tone--amber driver-link__status",
+                            },
+                            [
+                              _c("i", { staticClass: "ui-dot" }),
+                              _vm._v(
+                                _vm._s(_vm.__("inactive")) +
+                                  "\n                        "
+                              ),
+                            ]
+                          ),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("ul", { staticClass: "driver-link__details" }, [
+                    _c("li", [
+                      _c("i", { staticClass: "fa fa-phone-alt" }),
+                      _vm._v(" "),
+                      _c("span", [
+                        _vm._v(
+                          _vm._s(_vm.existingDriver.driver.country_code) +
+                            " " +
+                            _vm._s(_vm.existingDriver.driver.mobile)
+                        ),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _vm.existingDriver.driver.address
+                      ? _c("li", [
+                          _c("i", { staticClass: "fa fa-map-marker-alt" }),
+                          _vm._v(" "),
+                          _c("span", [
+                            _vm._v(_vm._s(_vm.existingDriver.driver.address)),
+                          ]),
+                        ])
+                      : _vm._e(),
+                  ]),
+                ]),
+                _vm._v(" "),
+                !_vm.existingDriver.linkable
+                  ? _c(
+                      "div",
+                      { staticClass: "driver-link__notice ui-tone--red" },
+                      [
+                        _c("i", { staticClass: "fa fa-info-circle" }),
+                        _vm._v(" "),
+                        _vm.existingDriver.already_linked
+                          ? _c("span", [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.__(
+                                    "this_driver_is_already_in_your_drivers"
+                                  )
+                                )
+                              ),
+                            ])
+                          : _c("span", [
+                              _vm._v(
+                                _vm._s(
+                                  _vm.__(
+                                    "this_driver_is_not_active_and_cannot_be_added"
+                                  )
+                                )
+                              ),
+                            ]),
+                      ]
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _c("div", { staticClass: "driver-link__actions" }, [
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-light border",
+                      attrs: { type: "button" },
+                      on: {
+                        click: function ($event) {
+                          _vm.showExistingDriverModal = false
+                        },
+                      },
+                    },
+                    [
+                      _vm._v(
+                        "\n                    " +
+                          _vm._s(
+                            _vm.existingDriver.linkable
+                              ? _vm.__("cancel")
+                              : _vm.__("close")
+                          ) +
+                          "\n                "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _vm.existingDriver.linkable
+                    ? _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-primary",
+                          attrs: {
+                            type: "button",
+                            disabled: _vm.isLinkingDriver,
+                          },
+                          on: { click: _vm.confirmLinkDriver },
+                        },
+                        [
+                          _vm.isLinkingDriver
+                            ? _c("b-spinner", { attrs: { small: "" } })
+                            : _c("i", { staticClass: "fa fa-plus" }),
+                          _vm._v(
+                            "\n                    " +
+                              _vm._s(_vm.__("yes_add_this_driver")) +
+                              "\n                "
+                          ),
+                        ],
+                        1
+                      )
+                    : _vm._e(),
+                ]),
+              ])
+            : _vm._e(),
+        ]
+      ),
+    ],
+    1
+  )
 }
 var staticRenderFns = [
   function () {

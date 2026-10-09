@@ -1,5 +1,5 @@
 <template>
-    <div id="app">
+    <div id="app" class="ui-modern">
         <div id="sidebar" class="active">
             <div class="sidebar-wrapper active">
                 <div class="sidebar-header">

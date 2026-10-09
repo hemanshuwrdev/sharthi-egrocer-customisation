@@ -56,6 +56,7 @@ const SellerWalletTransactions = () => import("../views/Seller/WalletTransaction
 // Logistics
 const ManageVehicles = () => import("../views/Logistics/ManageVehicles.vue");
 const CreateLoadingSlip = () => import("../views/Logistics/CreateLoadingSlip.vue");
+const SellerCreateLoadingSlip = () => import("../views/Sellers/CreateLoadingSlip.vue");
 const ManageLoadingSlips = () => import("../views/Logistics/ManageLoadingSlips.vue");
 const ViewLoadingSlip = () => import("../views/Logistics/ViewLoadingSlip.vue");
 
@@ -116,6 +117,7 @@ const PopupOffer = () => import("../views/Offers/PopupOffer");
 
 // DeliveryBoys
 const DeliveryBoys = () => import("../views/DeliveryBoys/DeliveryBoys");
+const SellerDeliveryBoys = () => import("../views/Sellers/DeliveryBoys");
 const EditDeliveryBoy = () => import("../views/DeliveryBoys/EditDeliveryBoy");
 const RegisteredDeliveryBoys = () => import("../views/DeliveryBoys/RegisteredDeliveryBoys");
 
@@ -217,7 +219,7 @@ const SellerViewOrder = () => import("../views/Orders/ViewOrder");
 const SellerInvoiceOrder = () => import("../views/Orders/InvoiceOrder");
 
 // const SellerCategories = () => import("../views/Sellers/Categories");
-const SellerReturnRequests = () => import("../views/ReturnRequests/ReturnRequests");
+const SellerReturnRequests = () => import("../views/Sellers/ReturnRequests");
 const SellerWithdrawalRequests = () => import("../views/Sellers/WithdrawalRequests/WithdrawalRequests");
 const SellerProductSalesReports = () => import("../views/Sellers/ProductSalesReports");
 const SellerSalesReports = () => import("../views/Sellers/SalesReports");
@@ -247,7 +249,6 @@ const SellerCloneProduct = () => import("../views/Product/EditProduct");
 const SellerManageStock = () => import("../views/Product/ManageStock");
 // const SellerMedia = () => import("../views/Product/Media");
 const SellerSettings = () => import('../views/Settings');
-const SellerProfile = () => import("../views/Seller/EditSeller");
 // const SellerPointOfSale = () => import("../views/Sellers/PointOfSale");
 // const SellerPosReports = () => import("../views/Sellers/PosReport");
 const SellerPrintSettings = () => import("../views/Sellers/Settings");
@@ -1755,7 +1756,7 @@ function configRoutes() {
                 {
                     path: "delivery_boys",
                     name: "SellerDeliveryBoys",
-                    component: DeliveryBoys,
+                    component: SellerDeliveryBoys,
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
@@ -2252,7 +2253,8 @@ function configRoutes() {
                 {
                     path: "profile",
                     name: "SellerProfile",
-                    component: SellerProfile,
+                    // the profile now lives in the Settings page's "My Profile" tab
+                    redirect: { path: '/seller/setting', query: { tab: 'profile' } },
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
@@ -2303,7 +2305,7 @@ function configRoutes() {
                 {
                     path: "loading_slips/create",
                     name: "SellerCreateLoadingSlip",
-                    component: CreateLoadingSlip,
+                    component: SellerCreateLoadingSlip,
                     meta: {
                         requiresAuth: true,
                         permission: 'product_list',
