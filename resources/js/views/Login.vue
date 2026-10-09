@@ -13,9 +13,42 @@
                             <h2 style="margin: 10px;">{{ $appName }}</h2>
                         </a>
                     </div>
-                    <h4>Welcome Back!</h4>
-                    <p class="auth-subtitle text-primary">Please login to your Account</p>
-                    <form @submit.prevent="loginCheck()">
+                    <h4>{{ twoFactor.required ? __('verify_its_you') : 'Welcome Back!' }}</h4>
+                    <p class="auth-subtitle text-primary">
+                        <template v-if="twoFactor.required">{{ __('enter_the_code_sent_to') }} <strong>{{ twoFactor.email }}</strong></template>
+                        <template v-else>Please login to your Account</template>
+                    </p>
+
+                    <!-- Super Admin two-factor step: the code we emailed after the password check -->
+                    <form v-if="twoFactor.required" @submit.prevent="verifyTwoFactor()">
+                        <div class="form-group position-relative has-icon-left mb-4">
+                            <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+                                class="form-control form-control-xl text-center" ref="otpInput"
+                                style="letter-spacing: 8px; font-size: 22px;" :placeholder="__('verification_code')"
+                                required v-model="twoFactor.otp" @input="twoFactor.otp = twoFactor.otp.replace(/\D/g, '')">
+                            <div class="form-control-icon">
+                                <i class="bi bi-shield-lock"></i>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-block btn-lg shadow-lg mt-3 auth-btn"
+                            :disabled="isLoading || twoFactor.otp.length !== 6">
+                            {{ __('verify_and_login') }}
+                            <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
+                            <span v-else class="bi bi-arrow-right"></span>
+                        </button>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="javascript:void(0)" class="font-bold" @click="backToLogin">
+                                <span class="bi bi-arrow-left"></span> {{ __('back_to_login') }}
+                            </a>
+                            <a v-if="twoFactor.countdown <= 0" href="javascript:void(0)" class="font-bold"
+                                @click="resendTwoFactor">{{ __('resend_code') }}</a>
+                            <span v-else class="text-muted">{{ __('resend_code_in') }} {{ twoFactor.countdown }}s</span>
+                        </div>
+                    </form>
+
+                    <form v-else @submit.prevent="loginCheck()">
                         <div class="form-group position-relative has-icon-left mb-4">
                             <input type="email" class="form-control form-control-xl" placeholder="Email Address"
                                 required v-model="user.email">
@@ -123,7 +156,13 @@ export default {
             subscriptionMessage: '',
             subscriptionPlans: [],
             isDistributorHost: window.location.hostname.startsWith('distributor.'),
+            // Super Admin two-factor step (only shown when the server asks for it)
+            twoFactor: { required: false, token: '', email: '', otp: '', countdown: 0 },
+            twoFactorTimer: null,
         };
+    },
+    beforeDestroy() {
+        this.stopTwoFactorTimer();
     },
 
     mounted() {
@@ -147,22 +186,12 @@ export default {
                 vm.isLoading = false;
                 let data = res.data;
                 if (data.status === 1) {
-                    // Sarthi: this admin-domain login form must not accept a distributor
-                    // login — currently nothing stops it, only the post-login router
-                    // redirect confines a seller-role user to their own pages. Block it
-                    // here directly so distributors are told to use the Distributor Panel
-                    // URL instead of silently landing on the same panel from this domain.
-                    if (!this.isDistributorHost && data.data.user.role_id === 3) {
-                        vm.showError('Distributors must log in via the Distributor Panel.');
+                    // Super Admin with two-factor on: no session yet, a code was emailed.
+                    if (data.data.two_factor_required) {
+                        vm.startTwoFactor(data.data);
                         return;
                     }
-                    Auth.login(data.data.access_token, data.data.user);
-                    this.$router.push('/dashboard');
-                    if (data.data.subscription_warning) {
-                        vm.subscriptionMessage = data.data.subscription_warning;
-                        vm.subscriptionPlans = data.data.subscription_plans || [];
-                        vm.showSubscriptionModal = true;
-                    }
+                    vm.finishLogin(data);
                 } else {
                     vm.showError(data.message);
                 }
@@ -177,6 +206,98 @@ export default {
                 }
 
             });
+        },
+
+        // Everything that happens once the server has handed back a user + access token.
+        finishLogin: function (data) {
+            let vm = this;
+            // Sarthi: this admin-domain login form must not accept a distributor
+            // login — currently nothing stops it, only the post-login router
+            // redirect confines a seller-role user to their own pages. Block it
+            // here directly so distributors are told to use the Distributor Panel
+            // URL instead of silently landing on the same panel from this domain.
+            if (!this.isDistributorHost && data.data.user.role_id === 3) {
+                vm.showError('Distributors must log in via the Distributor Panel.');
+                return;
+            }
+            Auth.login(data.data.access_token, data.data.user);
+            this.$router.push('/dashboard');
+            if (data.data.subscription_warning) {
+                vm.subscriptionMessage = data.data.subscription_warning;
+                vm.subscriptionPlans = data.data.subscription_plans || [];
+                vm.showSubscriptionModal = true;
+            }
+        },
+
+        startTwoFactor: function (info) {
+            this.twoFactor = { required: true, token: info.two_factor_token, email: info.email, otp: '', countdown: info.resend_after || 60 };
+            this.startTwoFactorTimer();
+            this.$nextTick(() => { if (this.$refs.otpInput) this.$refs.otpInput.focus(); });
+        },
+
+        startTwoFactorTimer: function () {
+            this.stopTwoFactorTimer();
+            this.twoFactorTimer = setInterval(() => {
+                if (this.twoFactor.countdown > 0) {
+                    this.twoFactor.countdown--;
+                } else {
+                    this.stopTwoFactorTimer();
+                }
+            }, 1000);
+        },
+
+        stopTwoFactorTimer: function () {
+            if (this.twoFactorTimer) {
+                clearInterval(this.twoFactorTimer);
+                this.twoFactorTimer = null;
+            }
+        },
+
+        verifyTwoFactor: function () {
+            let vm = this;
+            this.isLoading = true;
+            axios.post(this.$apiUrl + '/login/two-factor/verify', {
+                two_factor_token: this.twoFactor.token,
+                otp: this.twoFactor.otp,
+            }).then(res => {
+                vm.isLoading = false;
+                let data = res.data;
+                if (data.status === 1) {
+                    vm.stopTwoFactorTimer();
+                    vm.twoFactor = { required: false, token: '', email: '', otp: '', countdown: 0 };
+                    vm.finishLogin(data);
+                } else {
+                    vm.twoFactor.otp = '';
+                    vm.showError(data.message);
+                    vm.$nextTick(() => { if (vm.$refs.otpInput) vm.$refs.otpInput.focus(); });
+                }
+            }).catch(error => {
+                vm.isLoading = false;
+                vm.showError((error.response && error.response.data && error.response.data.message) || error.message || "Something went wrong!");
+            });
+        },
+
+        resendTwoFactor: function () {
+            let vm = this;
+            axios.post(this.$apiUrl + '/login/two-factor/resend', { two_factor_token: this.twoFactor.token }).then(res => {
+                let data = res.data;
+                if (data.status === 1) {
+                    vm.twoFactor.otp = '';
+                    vm.twoFactor.countdown = data.data.resend_after || 60;
+                    vm.startTwoFactorTimer();
+                    vm.showMessage('success', __('verification_code_sent'));
+                } else {
+                    vm.showError(data.message);
+                }
+            }).catch(error => {
+                vm.showError((error.response && error.response.data && error.response.data.message) || error.message || "Something went wrong!");
+            });
+        },
+
+        backToLogin: function () {
+            this.stopTwoFactorTimer();
+            this.twoFactor = { required: false, token: '', email: '', otp: '', countdown: 0 };
+            this.user.password = (this.$isDemo === 1 || this.$isDemo === '1') ? '123456' : '';
         }
     }
 }

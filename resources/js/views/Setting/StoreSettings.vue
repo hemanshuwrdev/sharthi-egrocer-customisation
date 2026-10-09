@@ -1510,6 +1510,66 @@
 
                                         </div>
                                     </div>
+                                    <div v-if="activeTab === __('security_setting')">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h4 class="card-title">{{ __('security_setting') }}</h4>
+                                            </div>
+                                            <div class="card-body">
+                                                <form method="post" @submit.prevent="saveSecuritySetting">
+                                                    <div class="row">
+                                                        <div class="form-group col-md-8">
+                                                            <label for="superadmin_2fa_enabled">{{ __('superadmin_two_factor_authentication') }}
+                                                                <small>[ {{ __('enable') }} / {{ __('disable') }} ]</small>
+                                                            </label><br>
+                                                            <div class='form-check form-switch'>
+                                                                <input class='form-check-input' id="superadmin_2fa_enabled"
+                                                                    type='checkbox' true-value="1" false-value="0"
+                                                                    v-model="security_settings.superadmin_2fa_enabled">
+                                                            </div>
+                                                            <small class="text-muted d-block mt-2">
+                                                                {{ __('superadmin_two_factor_authentication_help') }}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="form-group col-md-6">
+                                                            <b-button type="submit" variant="primary" :disabled="isLoading"
+                                                                v-if="$can('manage_store_settings')">
+                                                                {{ __('update') }}
+                                                                <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
+                                                            </b-button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+
+                                                <!-- Turning 2FA on or off needs the code we email to the Super Admin -->
+                                                <b-modal v-model="showSecurityOtpModal" :title="__('confirm_security_change')"
+                                                    hide-footer centered no-close-on-backdrop @hidden="onSecurityOtpHidden">
+                                                    <p class="mb-3">
+                                                        {{ securityPendingEnable ? __('enter_the_code_to_turn_on_two_factor') : __('enter_the_code_to_turn_off_two_factor') }}
+                                                        <strong>{{ securityOtpEmail }}</strong>
+                                                    </p>
+                                                    <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+                                                        class="form-control form-control-lg text-center" ref="securityOtpInput"
+                                                        style="letter-spacing: 8px; font-size: 22px;" :placeholder="__('verification_code')"
+                                                        v-model="securityOtp" @input="securityOtp = securityOtp.replace(/\D/g, '')"
+                                                        @keyup.enter="confirmSecurityChange">
+                                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                                        <a v-if="securityResendCountdown <= 0" href="javascript:void(0)" @click="sendSecurityCode">{{ __('resend_code') }}</a>
+                                                        <span v-else class="text-muted">{{ __('resend_code_in') }} {{ securityResendCountdown }}s</span>
+                                                        <div>
+                                                            <b-button variant="light" class="border mr-2" @click="showSecurityOtpModal = false">{{ __('cancel') }}</b-button>
+                                                            <b-button variant="primary" :disabled="isConfirmingSecurity || securityOtp.length !== 6" @click="confirmSecurityChange">
+                                                                {{ __('confirm') }}
+                                                                <b-spinner v-if="isConfirmingSecurity" small label="Spinning"></b-spinner>
+                                                            </b-button>
+                                                        </div>
+                                                    </div>
+                                                </b-modal>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div v-if="activeTab === __('cart_setting')">
                                         <div class="card">
                                             <div class="card-header">
@@ -1735,6 +1795,17 @@ export default {
                 firebase_authentication: 0,
                 custom_sms_gateway_otp_based: 0
             },
+            security_settings: {
+                superadmin_2fa_enabled: 0
+            },
+            showSecurityOtpModal: false,
+            securityOtp: '',
+            securityOtpEmail: '',
+            securityPendingEnable: false,
+            securityResendCountdown: 0,
+            securityTimer: null,
+            securityConfirmed: false,
+            isConfirmingSecurity: false,
             refer_earn_settings: {},
             record: null,
             timezone_options: null,
@@ -1758,6 +1829,7 @@ export default {
                 __('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('salesman_setting'),
                 __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'),
                 __('seller_setting'), __('login_setting'),
+                ...((Auth.user && Auth.user.role_id === 1) ? [__('security_setting')] : []), // Super Admin only
                 // __('cart_setting'), // Sarthi: hidden per request — not deleted, just unreachable.
                 __('refer_earn_setting'),
             ],
@@ -2145,6 +2217,10 @@ export default {
                         }
                     });
                 }
+
+                (response.data.data.security_settings || []).forEach((item) => {
+                    this.security_settings[item.variable] = String(item.value).trim() === '1' ? 1 : 0;
+                });
 
                 this.refer_earn_record = response.data.data.refer_earn_settings;
                 // Guard: refer_earn_record must be an array before mapping
@@ -2938,6 +3014,88 @@ export default {
                 }
                 vm.isLoading = false;
             });
+        },
+        // Step 1: ask the server to email a code (turning 2FA on or off both need one).
+        saveSecuritySetting: function () {
+            this.isLoading = true;
+            this.requestSecurityCode(true);
+        },
+        sendSecurityCode: function () {
+            this.requestSecurityCode(false);
+        },
+        requestSecurityCode: function (firstTime) {
+            let formData = new FormData();
+            formData.append('superadmin_2fa_enabled', this.security_settings.superadmin_2fa_enabled);
+
+            axios.post(this.$apiUrl + '/store_settings/save_security_setting', formData).then(res => {
+                this.isLoading = false;
+                let data = res.data;
+                if (data.status === 1 && data.data && data.data.otp_required) {
+                    this.securityPendingEnable = String(this.security_settings.superadmin_2fa_enabled) === '1';
+                    this.securityOtpEmail = data.data.email;
+                    this.securityOtp = '';
+                    this.securityConfirmed = false;
+                    this.securityResendCountdown = data.data.resend_after || 60;
+                    this.startSecurityTimer();
+                    if (firstTime) {
+                        this.showSecurityOtpModal = true;
+                    } else {
+                        this.showMessage('success', __('verification_code_sent'));
+                    }
+                    this.$nextTick(() => { if (this.$refs.securityOtpInput) this.$refs.securityOtpInput.focus(); });
+                } else if (data.status === 1) {
+                    this.showMessage('success', data.message); // nothing to change
+                } else {
+                    this.showError(data.message);
+                    if (firstTime) this.getStoreSetting(); // put the switch back to what is actually saved
+                }
+            }).catch(error => {
+                this.isLoading = false;
+                this.showError((error.response && error.response.data && error.response.data.message) || error.message || "Something went wrong!");
+                if (firstTime) this.getStoreSetting();
+            });
+        },
+        // Step 2: send the code back along with the new value.
+        confirmSecurityChange: function () {
+            if (this.securityOtp.length !== 6 || this.isConfirmingSecurity) return;
+            this.isConfirmingSecurity = true;
+            let formData = new FormData();
+            formData.append('superadmin_2fa_enabled', this.security_settings.superadmin_2fa_enabled);
+            formData.append('otp', this.securityOtp);
+
+            axios.post(this.$apiUrl + '/store_settings/save_security_setting', formData).then(res => {
+                this.isConfirmingSecurity = false;
+                if (res.data.status === 1) {
+                    this.securityConfirmed = true;
+                    this.showSecurityOtpModal = false;
+                    this.showMessage('success', res.data.message);
+                } else {
+                    this.securityOtp = '';
+                    this.showError(res.data.message);
+                    this.$nextTick(() => { if (this.$refs.securityOtpInput) this.$refs.securityOtpInput.focus(); });
+                }
+            }).catch(error => {
+                this.isConfirmingSecurity = false;
+                this.showError((error.response && error.response.data && error.response.data.message) || error.message || "Something went wrong!");
+            });
+        },
+        onSecurityOtpHidden: function () {
+            clearInterval(this.securityTimer);
+            this.securityTimer = null;
+            this.securityOtp = '';
+            // closed without confirming: put the switch back to what is actually saved
+            if (!this.securityConfirmed) this.getStoreSetting();
+        },
+        startSecurityTimer: function () {
+            clearInterval(this.securityTimer);
+            this.securityTimer = setInterval(() => {
+                if (this.securityResendCountdown > 0) {
+                    this.securityResendCountdown--;
+                } else {
+                    clearInterval(this.securityTimer);
+                    this.securityTimer = null;
+                }
+            }, 1000);
         },
         saveReferEarnSetting: function () {
             this.isLoading = true;

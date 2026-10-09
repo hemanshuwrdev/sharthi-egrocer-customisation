@@ -8,8 +8,10 @@ use Symfony\Component\Process\Process;
 class DeployToFtp extends Command
 {
     protected $signature = 'deploy:ftp
-        {commit? : Starting commit — all changes from this commit through HEAD will be deployed (default: HEAD, i.e. just the last commit)}
+        {commit? : Starting commit, changes through the ending ref will be deployed (default: HEAD)}
+        {--to=HEAD : Ending commit or ref for the diff range}
         {--profile= : Profile key from .vscode/sftp.json — omit to be prompted}
+        {--exclude=* : Skip these files, folders or globs, e.g. --exclude=routes/web.php --exclude=tests (repeatable)}
         {--dry : List files that would upload, without uploading}';
 
     protected $description = 'Upload files changed in a git commit to an FTP server using .vscode/sftp.json profile';
@@ -17,6 +19,7 @@ class DeployToFtp extends Command
     public function handle(): int
     {
         $commit = $this->argument('commit') ?: 'HEAD';
+        $to = $this->option('to') ?: 'HEAD';
 
         $configPath = base_path('.vscode/sftp.json');
         if (! file_exists($configPath)) {
@@ -43,7 +46,17 @@ class DeployToFtp extends Command
             return self::FAILURE;
         }
 
-        $files = $this->changedFiles($commit);
+        $files = $this->changedFiles($commit, $to);
+
+        $excluded = array_values(array_filter($files, fn ($file) => $this->isExcluded($file)));
+        if ($excluded) {
+            $this->warn('Skipping ' . count($excluded) . ' excluded file(s):');
+            foreach ($excluded as $f) {
+                $this->line('  ' . $f);
+            }
+            $files = array_values(array_diff($files, $excluded));
+        }
+
         if (empty($files)) {
             $this->info('No changed files found for commit ' . $commit);
             return self::SUCCESS;
@@ -67,11 +80,11 @@ class DeployToFtp extends Command
         return $this->upload($profile, $files);
     }
 
-    private function changedFiles(string $commit): array
+    private function changedFiles(string $commit, string $to = 'HEAD'): array
     {
-        // Diff from the commit's parent through HEAD, so all commits from
-        // $commit up to and including HEAD are covered, not just $commit itself.
-        $process = new Process(['git', 'diff', '--name-only', $commit . '^', 'HEAD']);
+        // Diff from the commit's parent through $to, so all commits from
+        // $commit up to and including $to are covered, not just $commit itself.
+        $process = new Process(['git', 'diff', '--name-only', $commit . '^', $to]);
         $process->setWorkingDirectory(base_path());
         $process->run();
 
@@ -93,6 +106,19 @@ class DeployToFtp extends Command
             }
             return true;
         }));
+    }
+
+    // True when $file equals, sits inside, or glob-matches any --exclude pattern.
+    private function isExcluded(string $file): bool
+    {
+        foreach ((array) $this->option('exclude') as $pattern) {
+            $pattern = trim($pattern, '/');
+            if ($pattern !== '' && ($file === $pattern || str_starts_with($file, $pattern . '/') || fnmatch($pattern, $file))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function upload(array $profile, array $files): int

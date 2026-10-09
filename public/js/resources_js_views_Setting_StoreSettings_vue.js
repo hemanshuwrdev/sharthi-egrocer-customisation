@@ -24,13 +24,77 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var crypto_js__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(crypto_js__WEBPACK_IMPORTED_MODULE_6__);
 /* harmony import */ var _config_Country_json__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../../../config/Country.json */ "./config/Country.json");
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -1762,6 +1826,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         firebase_authentication: 0,
         custom_sms_gateway_otp_based: 0
       },
+      security_settings: {
+        superadmin_2fa_enabled: 0
+      },
+      showSecurityOtpModal: false,
+      securityOtp: '',
+      securityOtpEmail: '',
+      securityPendingEnable: false,
+      securityResendCountdown: 0,
+      securityTimer: null,
+      securityConfirmed: false,
+      isConfirmingSecurity: false,
       refer_earn_settings: {},
       record: null,
       timezone_options: null,
@@ -1781,9 +1856,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       Logoerror: null,
       Panel_login_background_imgerror: null,
       Fssaierror: null,
-      tabs: [__('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('salesman_setting'), __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'), __('seller_setting'), __('login_setting'),
+      tabs: [__('store_setting'), __('address_setting'), __('other_setting'), __('delivery_boy_setting'), __('salesman_setting'), __('app_setting'), __('frontend_home_setting'), __('smtp_mail_setting'), __('third_party_api_credentials'), __('seller_setting'), __('login_setting')].concat(_toConsumableArray(_Auth_js__WEBPACK_IMPORTED_MODULE_2__["default"].user && _Auth_js__WEBPACK_IMPORTED_MODULE_2__["default"].user.role_id === 1 ? [__('security_setting')] : []), [
+      // Super Admin only
       // __('cart_setting'), // Sarthi: hidden per request — not deleted, just unreachable.
-      __('refer_earn_setting')]
+      __('refer_earn_setting')])
     }, _defineProperty(_ref, "activeTab", __('store_setting')), _defineProperty(_ref, "dateFormatDefs", [{
       value: 'd-m-Y',
       labelPrefix: 'DD-MM-YYYY'
@@ -2196,6 +2272,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             }
           });
         }
+        (response.data.data.security_settings || []).forEach(function (item) {
+          _this4.security_settings[item.variable] = String(item.value).trim() === '1' ? 1 : 0;
+        });
         _this4.refer_earn_record = response.data.data.refer_earn_settings;
         // Guard: refer_earn_record must be an array before mapping
         if (Array.isArray(_this4.refer_earn_record)) {
@@ -2882,8 +2961,95 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isLoading = false;
       });
     },
-    saveReferEarnSetting: function saveReferEarnSetting() {
+    // Step 1: ask the server to email a code (turning 2FA on or off both need one).
+    saveSecuritySetting: function saveSecuritySetting() {
+      this.isLoading = true;
+      this.requestSecurityCode(true);
+    },
+    sendSecurityCode: function sendSecurityCode() {
+      this.requestSecurityCode(false);
+    },
+    requestSecurityCode: function requestSecurityCode(firstTime) {
       var _this17 = this;
+      var formData = new FormData();
+      formData.append('superadmin_2fa_enabled', this.security_settings.superadmin_2fa_enabled);
+      axios__WEBPACK_IMPORTED_MODULE_1___default().post(this.$apiUrl + '/store_settings/save_security_setting', formData).then(function (res) {
+        _this17.isLoading = false;
+        var data = res.data;
+        if (data.status === 1 && data.data && data.data.otp_required) {
+          _this17.securityPendingEnable = String(_this17.security_settings.superadmin_2fa_enabled) === '1';
+          _this17.securityOtpEmail = data.data.email;
+          _this17.securityOtp = '';
+          _this17.securityConfirmed = false;
+          _this17.securityResendCountdown = data.data.resend_after || 60;
+          _this17.startSecurityTimer();
+          if (firstTime) {
+            _this17.showSecurityOtpModal = true;
+          } else {
+            _this17.showMessage('success', __('verification_code_sent'));
+          }
+          _this17.$nextTick(function () {
+            if (_this17.$refs.securityOtpInput) _this17.$refs.securityOtpInput.focus();
+          });
+        } else if (data.status === 1) {
+          _this17.showMessage('success', data.message); // nothing to change
+        } else {
+          _this17.showError(data.message);
+          if (firstTime) _this17.getStoreSetting(); // put the switch back to what is actually saved
+        }
+      })["catch"](function (error) {
+        _this17.isLoading = false;
+        _this17.showError(error.response && error.response.data && error.response.data.message || error.message || "Something went wrong!");
+        if (firstTime) _this17.getStoreSetting();
+      });
+    },
+    // Step 2: send the code back along with the new value.
+    confirmSecurityChange: function confirmSecurityChange() {
+      var _this18 = this;
+      if (this.securityOtp.length !== 6 || this.isConfirmingSecurity) return;
+      this.isConfirmingSecurity = true;
+      var formData = new FormData();
+      formData.append('superadmin_2fa_enabled', this.security_settings.superadmin_2fa_enabled);
+      formData.append('otp', this.securityOtp);
+      axios__WEBPACK_IMPORTED_MODULE_1___default().post(this.$apiUrl + '/store_settings/save_security_setting', formData).then(function (res) {
+        _this18.isConfirmingSecurity = false;
+        if (res.data.status === 1) {
+          _this18.securityConfirmed = true;
+          _this18.showSecurityOtpModal = false;
+          _this18.showMessage('success', res.data.message);
+        } else {
+          _this18.securityOtp = '';
+          _this18.showError(res.data.message);
+          _this18.$nextTick(function () {
+            if (_this18.$refs.securityOtpInput) _this18.$refs.securityOtpInput.focus();
+          });
+        }
+      })["catch"](function (error) {
+        _this18.isConfirmingSecurity = false;
+        _this18.showError(error.response && error.response.data && error.response.data.message || error.message || "Something went wrong!");
+      });
+    },
+    onSecurityOtpHidden: function onSecurityOtpHidden() {
+      clearInterval(this.securityTimer);
+      this.securityTimer = null;
+      this.securityOtp = '';
+      // closed without confirming: put the switch back to what is actually saved
+      if (!this.securityConfirmed) this.getStoreSetting();
+    },
+    startSecurityTimer: function startSecurityTimer() {
+      var _this19 = this;
+      clearInterval(this.securityTimer);
+      this.securityTimer = setInterval(function () {
+        if (_this19.securityResendCountdown > 0) {
+          _this19.securityResendCountdown--;
+        } else {
+          clearInterval(_this19.securityTimer);
+          _this19.securityTimer = null;
+        }
+      }, 1000);
+    },
+    saveReferEarnSetting: function saveReferEarnSetting() {
+      var _this20 = this;
       this.isLoading = true;
       var refer_earn_settingsObject = this.refer_earn_settings;
       var formData = new FormData();
@@ -2895,8 +3061,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData).then(function (res) {
         var data = res.data;
         if (data.status === 1) {
-          _this17.showMessage("success", data.message);
-          _this17.getStoreSetting();
+          _this20.showMessage("success", data.message);
+          _this20.getStoreSetting();
           setTimeout(function () {
             vm.$swal.close();
             vm.isLoading = false;
@@ -2910,20 +3076,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           vm.isLoading = false;
         }
       })["catch"](function (error) {
-        _this17.isLoading = false;
+        _this20.isLoading = false;
         if (error.request.statusText) {
-          _this17.showError(error.request.statusText);
+          _this20.showError(error.request.statusText);
         } else if (error.message) {
-          _this17.showError(error.message);
+          _this20.showError(error.message);
         } else {
-          _this17.showError("Something went wrong!");
+          _this20.showError("Something went wrong!");
         }
         vm.isLoading = false;
       });
     },
     // Test mail uses smtp_from_mail as SMTP username. For Gmail that must be your Gmail address; for SendGrid use host smtp.sendgrid.net and username "apikey".
     testMail: function testMail() {
-      var _this18 = this;
+      var _this21 = this;
       var data = {
         'mailer': this.store_settings.mailer,
         'email': this.store_settings.test_email,
@@ -2942,7 +3108,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         vm.isSendingTestEmail = false;
         var data = res.data;
         if (data.status === 1) {
-          _this18.showMessage("success", data.message);
+          _this21.showMessage("success", data.message);
         } else {
           vm.showError(data.message);
           vm.isLoading = false;
@@ -2950,46 +3116,46 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       })["catch"](function (error) {
         vm.isSendingTestEmail = false;
         if (error.request.statusText) {
-          _this18.showError(error.request.statusText);
+          _this21.showError(error.request.statusText);
         } else if (error.message) {
-          _this18.showError(error.message);
+          _this21.showError(error.message);
         } else {
-          _this18.showError("Something went wrong!");
+          _this21.showError("Something went wrong!");
         }
       });
     },
     fetchActiveLanguages: function fetchActiveLanguages() {
-      var _this19 = this;
+      var _this22 = this;
       if (this.languages.length) {
         return Promise.resolve(this.languages);
       }
       this.isLoadingLanguages = true;
       return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/active_languages').then(function (res) {
-        _this19.languages = res.data.data || [];
-        var def = _this19.languages.find(function (l) {
+        _this22.languages = res.data.data || [];
+        var def = _this22.languages.find(function (l) {
           return l.is_default == 1;
         });
-        _this19.defaultLanguageId = def ? def.id : null;
+        _this22.defaultLanguageId = def ? def.id : null;
 
         // init empty translation shells ONCE
-        _this19.initTranslationShells();
-        return _this19.languages;
+        _this22.initTranslationShells();
+        return _this22.languages;
       })["finally"](function () {
-        _this19.isLoadingLanguages = false;
+        _this22.isLoadingLanguages = false;
       });
     },
     initTranslationShells: function initTranslationShells() {
-      var _this20 = this;
+      var _this23 = this;
       this.languages.forEach(function (lang) {
-        _this20.$set(_this20.storeTranslations.app_name, lang.code, '');
-        _this20.$set(_this20.storeTranslations.copyright_details, lang.code, '');
-        _this20.$set(_this20.appTranslations.app_mode_customer_remark, lang.code, '');
-        _this20.$set(_this20.appTranslations.app_mode_seller_remark, lang.code, '');
-        _this20.$set(_this20.appTranslations.app_mode_delivery_boy_remark, lang.code, '');
+        _this23.$set(_this23.storeTranslations.app_name, lang.code, '');
+        _this23.$set(_this23.storeTranslations.copyright_details, lang.code, '');
+        _this23.$set(_this23.appTranslations.app_mode_customer_remark, lang.code, '');
+        _this23.$set(_this23.appTranslations.app_mode_seller_remark, lang.code, '');
+        _this23.$set(_this23.appTranslations.app_mode_delivery_boy_remark, lang.code, '');
       });
     },
     _translateCodeKeyed: function _translateCodeKeyed(sourceData, applyTo, fields, emptyOnly) {
-      var _this21 = this;
+      var _this24 = this;
       var defaultLang = this.languages.find(function (l) {
         return l.is_default;
       });
@@ -3046,7 +3212,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         data: sourceData
       }).then(function (res) {
         var allTranslations = res.data.data || {};
-        _this21.languages.forEach(function (lang) {
+        _this24.languages.forEach(function (lang) {
           if (lang.is_default) return;
           var translated = allTranslations[lang.code];
           if (!translated) return;
@@ -3055,21 +3221,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             if (val == null) return;
             if (applyTo[field] && _typeof(applyTo[field]) === 'object') {
               if (emptyOnly && applyTo[field][lang.code]) return;
-              _this21.$set(applyTo[field], lang.code, val);
+              _this24.$set(applyTo[field], lang.code, val);
             }
           });
         });
-        _this21.translateSuccessMessage = emptyOnly ? __('translation_completed_successfully') || 'Translation completed successfully' : __('translation_overwritten_successfully') || 'Translation overwritten successfully';
+        _this24.translateSuccessMessage = emptyOnly ? __('translation_completed_successfully') || 'Translation completed successfully' : __('translation_overwritten_successfully') || 'Translation overwritten successfully';
         setTimeout(function () {
-          _this21.translateSuccessMessage = '';
+          _this24.translateSuccessMessage = '';
         }, 5000);
       })["catch"](function (err) {
         var _err$response3, _err$response3$data;
         var msg = ((_err$response3 = err.response) === null || _err$response3 === void 0 ? void 0 : (_err$response3$data = _err$response3.data) === null || _err$response3$data === void 0 ? void 0 : _err$response3$data.message) || err.message || __('something_went_wrong');
-        _this21.showError(msg);
+        _this24.showError(msg);
         throw err;
       })["finally"](function () {
-        if (emptyOnly) _this21.loadingEmpty = false;else _this21.loadingOverwrite = false;
+        if (emptyOnly) _this24.loadingEmpty = false;else _this24.loadingOverwrite = false;
       });
     },
     translateEmptyStoreSetting: function translateEmptyStoreSetting(language) {
@@ -12404,6 +12570,415 @@ var render = function () {
                               ]
                             ),
                           ]),
+                        ]),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm.activeTab === _vm.__("security_setting")
+                    ? _c("div", [
+                        _c("div", { staticClass: "card" }, [
+                          _c("div", { staticClass: "card-header" }, [
+                            _c("h4", { staticClass: "card-title" }, [
+                              _vm._v(_vm._s(_vm.__("security_setting"))),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "card-body" },
+                            [
+                              _c(
+                                "form",
+                                {
+                                  attrs: { method: "post" },
+                                  on: {
+                                    submit: function ($event) {
+                                      $event.preventDefault()
+                                      return _vm.saveSecuritySetting.apply(
+                                        null,
+                                        arguments
+                                      )
+                                    },
+                                  },
+                                },
+                                [
+                                  _c("div", { staticClass: "row" }, [
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group col-md-8" },
+                                      [
+                                        _c(
+                                          "label",
+                                          {
+                                            attrs: {
+                                              for: "superadmin_2fa_enabled",
+                                            },
+                                          },
+                                          [
+                                            _vm._v(
+                                              _vm._s(
+                                                _vm.__(
+                                                  "superadmin_two_factor_authentication"
+                                                )
+                                              ) +
+                                                "\n                                                            "
+                                            ),
+                                            _c("small", [
+                                              _vm._v(
+                                                "[ " +
+                                                  _vm._s(_vm.__("enable")) +
+                                                  " / " +
+                                                  _vm._s(_vm.__("disable")) +
+                                                  " ]"
+                                              ),
+                                            ]),
+                                          ]
+                                        ),
+                                        _c("br"),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          {
+                                            staticClass:
+                                              "form-check form-switch",
+                                          },
+                                          [
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value:
+                                                    _vm.security_settings
+                                                      .superadmin_2fa_enabled,
+                                                  expression:
+                                                    "security_settings.superadmin_2fa_enabled",
+                                                },
+                                              ],
+                                              staticClass: "form-check-input",
+                                              attrs: {
+                                                id: "superadmin_2fa_enabled",
+                                                type: "checkbox",
+                                                "true-value": "1",
+                                                "false-value": "0",
+                                              },
+                                              domProps: {
+                                                checked: Array.isArray(
+                                                  _vm.security_settings
+                                                    .superadmin_2fa_enabled
+                                                )
+                                                  ? _vm._i(
+                                                      _vm.security_settings
+                                                        .superadmin_2fa_enabled,
+                                                      null
+                                                    ) > -1
+                                                  : _vm._q(
+                                                      _vm.security_settings
+                                                        .superadmin_2fa_enabled,
+                                                      "1"
+                                                    ),
+                                              },
+                                              on: {
+                                                change: function ($event) {
+                                                  var $$a =
+                                                      _vm.security_settings
+                                                        .superadmin_2fa_enabled,
+                                                    $$el = $event.target,
+                                                    $$c = $$el.checked
+                                                      ? "1"
+                                                      : "0"
+                                                  if (Array.isArray($$a)) {
+                                                    var $$v = null,
+                                                      $$i = _vm._i($$a, $$v)
+                                                    if ($$el.checked) {
+                                                      $$i < 0 &&
+                                                        _vm.$set(
+                                                          _vm.security_settings,
+                                                          "superadmin_2fa_enabled",
+                                                          $$a.concat([$$v])
+                                                        )
+                                                    } else {
+                                                      $$i > -1 &&
+                                                        _vm.$set(
+                                                          _vm.security_settings,
+                                                          "superadmin_2fa_enabled",
+                                                          $$a
+                                                            .slice(0, $$i)
+                                                            .concat(
+                                                              $$a.slice($$i + 1)
+                                                            )
+                                                        )
+                                                    }
+                                                  } else {
+                                                    _vm.$set(
+                                                      _vm.security_settings,
+                                                      "superadmin_2fa_enabled",
+                                                      $$c
+                                                    )
+                                                  }
+                                                },
+                                              },
+                                            }),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "small",
+                                          {
+                                            staticClass:
+                                              "text-muted d-block mt-2",
+                                          },
+                                          [
+                                            _vm._v(
+                                              "\n                                                            " +
+                                                _vm._s(
+                                                  _vm.__(
+                                                    "superadmin_two_factor_authentication_help"
+                                                  )
+                                                ) +
+                                                "\n                                                        "
+                                            ),
+                                          ]
+                                        ),
+                                      ]
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "row" }, [
+                                    _c(
+                                      "div",
+                                      { staticClass: "form-group col-md-6" },
+                                      [
+                                        _vm.$can("manage_store_settings")
+                                          ? _c(
+                                              "b-button",
+                                              {
+                                                attrs: {
+                                                  type: "submit",
+                                                  variant: "primary",
+                                                  disabled: _vm.isLoading,
+                                                },
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                            " +
+                                                    _vm._s(_vm.__("update")) +
+                                                    "\n                                                            "
+                                                ),
+                                                _vm.isLoading
+                                                  ? _c("b-spinner", {
+                                                      attrs: {
+                                                        small: "",
+                                                        label: "Spinning",
+                                                      },
+                                                    })
+                                                  : _vm._e(),
+                                              ],
+                                              1
+                                            )
+                                          : _vm._e(),
+                                      ],
+                                      1
+                                    ),
+                                  ]),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "b-modal",
+                                {
+                                  attrs: {
+                                    title: _vm.__("confirm_security_change"),
+                                    "hide-footer": "",
+                                    centered: "",
+                                    "no-close-on-backdrop": "",
+                                  },
+                                  on: { hidden: _vm.onSecurityOtpHidden },
+                                  model: {
+                                    value: _vm.showSecurityOtpModal,
+                                    callback: function ($$v) {
+                                      _vm.showSecurityOtpModal = $$v
+                                    },
+                                    expression: "showSecurityOtpModal",
+                                  },
+                                },
+                                [
+                                  _c("p", { staticClass: "mb-3" }, [
+                                    _vm._v(
+                                      "\n                                                    " +
+                                        _vm._s(
+                                          _vm.securityPendingEnable
+                                            ? _vm.__(
+                                                "enter_the_code_to_turn_on_two_factor"
+                                              )
+                                            : _vm.__(
+                                                "enter_the_code_to_turn_off_two_factor"
+                                              )
+                                        ) +
+                                        "\n                                                    "
+                                    ),
+                                    _c("strong", [
+                                      _vm._v(_vm._s(_vm.securityOtpEmail)),
+                                    ]),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.securityOtp,
+                                        expression: "securityOtp",
+                                      },
+                                    ],
+                                    ref: "securityOtpInput",
+                                    staticClass:
+                                      "form-control form-control-lg text-center",
+                                    staticStyle: {
+                                      "letter-spacing": "8px",
+                                      "font-size": "22px",
+                                    },
+                                    attrs: {
+                                      type: "text",
+                                      inputmode: "numeric",
+                                      autocomplete: "one-time-code",
+                                      maxlength: "6",
+                                      placeholder: _vm.__("verification_code"),
+                                    },
+                                    domProps: { value: _vm.securityOtp },
+                                    on: {
+                                      input: [
+                                        function ($event) {
+                                          if ($event.target.composing) {
+                                            return
+                                          }
+                                          _vm.securityOtp = $event.target.value
+                                        },
+                                        function ($event) {
+                                          _vm.securityOtp =
+                                            _vm.securityOtp.replace(/\D/g, "")
+                                        },
+                                      ],
+                                      keyup: function ($event) {
+                                        if (
+                                          !$event.type.indexOf("key") &&
+                                          _vm._k(
+                                            $event.keyCode,
+                                            "enter",
+                                            13,
+                                            $event.key,
+                                            "Enter"
+                                          )
+                                        ) {
+                                          return null
+                                        }
+                                        return _vm.confirmSecurityChange.apply(
+                                          null,
+                                          arguments
+                                        )
+                                      },
+                                    },
+                                  }),
+                                  _vm._v(" "),
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass:
+                                        "d-flex justify-content-between align-items-center mt-3",
+                                    },
+                                    [
+                                      _vm.securityResendCountdown <= 0
+                                        ? _c(
+                                            "a",
+                                            {
+                                              attrs: {
+                                                href: "javascript:void(0)",
+                                              },
+                                              on: {
+                                                click: _vm.sendSecurityCode,
+                                              },
+                                            },
+                                            [
+                                              _vm._v(
+                                                _vm._s(_vm.__("resend_code"))
+                                              ),
+                                            ]
+                                          )
+                                        : _c(
+                                            "span",
+                                            { staticClass: "text-muted" },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.__("resend_code_in")
+                                                ) +
+                                                  " " +
+                                                  _vm._s(
+                                                    _vm.securityResendCountdown
+                                                  ) +
+                                                  "s"
+                                              ),
+                                            ]
+                                          ),
+                                      _vm._v(" "),
+                                      _c(
+                                        "div",
+                                        [
+                                          _c(
+                                            "b-button",
+                                            {
+                                              staticClass: "border mr-2",
+                                              attrs: { variant: "light" },
+                                              on: {
+                                                click: function ($event) {
+                                                  _vm.showSecurityOtpModal = false
+                                                },
+                                              },
+                                            },
+                                            [_vm._v(_vm._s(_vm.__("cancel")))]
+                                          ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "b-button",
+                                            {
+                                              attrs: {
+                                                variant: "primary",
+                                                disabled:
+                                                  _vm.isConfirmingSecurity ||
+                                                  _vm.securityOtp.length !== 6,
+                                              },
+                                              on: {
+                                                click:
+                                                  _vm.confirmSecurityChange,
+                                              },
+                                            },
+                                            [
+                                              _vm._v(
+                                                "\n                                                            " +
+                                                  _vm._s(_vm.__("confirm")) +
+                                                  "\n                                                            "
+                                              ),
+                                              _vm.isConfirmingSecurity
+                                                ? _c("b-spinner", {
+                                                    attrs: {
+                                                      small: "",
+                                                      label: "Spinning",
+                                                    },
+                                                  })
+                                                : _vm._e(),
+                                            ],
+                                            1
+                                          ),
+                                        ],
+                                        1
+                                      ),
+                                    ]
+                                  ),
+                                ]
+                              ),
+                            ],
+                            1
+                          ),
                         ]),
                       ])
                     : _vm._e(),

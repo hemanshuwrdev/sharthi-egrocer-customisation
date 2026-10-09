@@ -163,7 +163,10 @@ Route::get('/generate_key', function () {
 });
 
 Route::get('/migrate', function () {
-    Artisan::call('migrate');
+    Artisan::call('migrate', [
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
     return Artisan::output();
 });
 

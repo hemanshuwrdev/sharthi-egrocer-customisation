@@ -11,6 +11,7 @@ use App\Models\Role;
 use App\Models\Salesman;
 use App\Models\Seller;
 use App\Models\AdminToken;
+use App\Services\AdminTwoFactorService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -202,6 +203,61 @@ class AdminAuthController extends Controller
             return CommonHelper::responseError('your_account_is_blocked_please_contact_to_administrator_for_activate');
         }
 
+        // Super Admin two-factor authentication (Settings -> Security): park the login and email a code.
+        // The session / access token is only issued by verifyTwoFactor() once the code is entered.
+        if (AdminTwoFactorService::appliesTo($user)) {
+            try {
+                return CommonHelper::responseWithData(app(AdminTwoFactorService::class)->start($user));
+            } catch (\RuntimeException $e) {
+                return CommonHelper::responseError('failed_to_send_otp_email_check_mail_settings');
+            }
+        }
+
+        return $this->completeLogin($request, $user, $subscriptionWarning, $subscriptionPlans);
+    }
+
+    /**
+     * Second step of the Super Admin login: the emailed code.
+     */
+    public function verifyTwoFactor(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'two_factor_token' => 'required|string',
+            'otp' => 'required|string',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        [$user, $error] = app(AdminTwoFactorService::class)->verify($request->two_factor_token, $request->otp);
+        if (!$user) {
+            return CommonHelper::responseError($error);
+        }
+
+        return $this->completeLogin($request, $user);
+    }
+
+    public function resendTwoFactor(Request $request)
+    {
+        $validator = Validator::make($request->all(), ['two_factor_token' => 'required|string']);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        [$info, $error] = app(AdminTwoFactorService::class)->resend($request->two_factor_token);
+        if (!$info) {
+            return CommonHelper::responseError($error);
+        }
+
+        return CommonHelper::responseWithData($info);
+    }
+
+    /**
+     * Everything that happens once a user is fully authenticated: session, activity log,
+     * push token, access token and the response.
+     */
+    private function completeLogin(Request $request, Admin $user, $subscriptionWarning = null, $subscriptionPlans = [])
+    {
         Auth::login($user, false);
 
         activity()

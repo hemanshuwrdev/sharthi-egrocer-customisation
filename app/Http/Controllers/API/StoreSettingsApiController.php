@@ -154,12 +154,15 @@ class StoreSettingsApiController extends Controller
         $refer_earn_variables = array_keys($refer_earn_settingsArray);
         $refer_earn_settings = Setting::whereIn('variable', $refer_earn_variables)->get();
 
+        $security_settings = Setting::whereIn('variable', [\App\Services\AdminTwoFactorService::SETTING])->get();
+
         $data = array(
             "store_settingsObject" => $store_settingsArray,
             "timezone_options" => $timezone_options,
             "currency_code" => $countries,
             "store_settings" => $store_settings,
             "login_settings" => $login_settings,
+            "security_settings" => $security_settings,
             "refer_earn_settings" => $refer_earn_settings
         );
         return CommonHelper::responseWithData($data);
@@ -209,6 +212,53 @@ class StoreSettingsApiController extends Controller
         }
         return CommonHelper::responseSuccess(__('login_settings_saved_successfully'));
     }
+    /**
+     * Super Admin two-factor authentication on/off. Only a Super Admin may change it, and both turning
+     * it on and turning it off need a code emailed to the Super Admin:
+     *   1st call (no otp)  -> emails the code, answers {otp_required: true}
+     *   2nd call (+ otp)   -> verifies the code and saves the setting
+     * Because the code has to arrive by email, 2FA can never be switched on into a broken mail setup.
+     */
+    public function save_security_setting(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user || (int) $user->role_id !== (int) \App\Models\Role::$roleSuperAdmin) {
+            return CommonHelper::responseError('only_super_admin_can_change_this_setting');
+        }
+
+        $service = app(\App\Services\AdminTwoFactorService::class);
+        $enable = in_array((string) $request->input(\App\Services\AdminTwoFactorService::SETTING), ['1', 'true', 'on'], true);
+
+        if ($enable === \App\Services\AdminTwoFactorService::isEnabled()) {
+            return CommonHelper::responseSuccess(__($enable ? 'two_factor_authentication_enabled' : 'two_factor_authentication_disabled'));
+        }
+
+        if (empty($user->email)) {
+            return CommonHelper::responseError('super_admin_has_no_email_address');
+        }
+
+        if (!$request->filled('otp')) {
+            try {
+                return CommonHelper::responseWithData($service->sendSettingChangeCode($user, $enable));
+            } catch (\RuntimeException $e) {
+                return CommonHelper::responseError($e->getMessage());
+            }
+        }
+
+        $error = $service->confirmSettingChange($user, $enable, (string) $request->otp);
+        if ($error) {
+            return CommonHelper::responseError($error);
+        }
+
+        Setting::updateOrCreate(
+            ['variable' => \App\Services\AdminTwoFactorService::SETTING],
+            ['value' => $enable ? '1' : '0']
+        );
+        activity()->causedBy($user)->event('updated')->log('Super Admin two-factor authentication ' . ($enable ? 'enabled' : 'disabled'));
+
+        return CommonHelper::responseSuccess(__($enable ? 'two_factor_authentication_enabled' : 'two_factor_authentication_disabled'));
+    }
+
     public function save_refer_earn_setting(Request $request)
     {
         foreach ($request->all() as $key => $value) {

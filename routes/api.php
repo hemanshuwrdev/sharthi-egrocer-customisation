@@ -15,6 +15,9 @@ Route::group(['prefix' => 'install'], function () {
 });
 
 Route::post('login', [\App\Http\Controllers\API\AdminAuthController::class, 'login']);
+// Super Admin two-factor login (emailed code) — see AdminTwoFactorService
+Route::post('login/two-factor/verify', [\App\Http\Controllers\API\AdminAuthController::class, 'verifyTwoFactor'])->middleware('throttle:10,1');
+Route::post('login/two-factor/resend', [\App\Http\Controllers\API\AdminAuthController::class, 'resendTwoFactor'])->middleware('throttle:6,1');
 Route::post('forgot_password', [\App\Http\Controllers\API\AdminAuthController::class, 'forgetPassword'])->name('forget-password');
 Route::post('reset-password', [\App\Http\Controllers\API\AdminAuthController::class, 'resetPassword'])->name('reset-password');
 Route::get('system_languages', [\App\Http\Controllers\API\LanguageApiController::class, 'getSystemLanguages']);
@@ -284,6 +287,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('save_third_party_api_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_third_party_api_setting'])->name('store_settings.save_third_party_api_setting');
         Route::post('save_seller_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_seller_setting'])->name('store_settings.save_seller_setting');
         Route::post('save_login_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_login_setting'])->name('store_settings.save_login_setting');
+        Route::post('save_security_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_security_setting'])->name('store_settings.save_security_setting');
         Route::post('save_cart_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_cart_setting'])->name('store_settings.save_cart_setting');
         Route::post('save_refer_earn_setting', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_refer_earn_setting'])->name('store_settings.save_refer_earn_setting');
         Route::post('save_additional_charges', [\App\Http\Controllers\API\StoreSettingsApiController::class, 'save_additional_charges'])->name('store_settings.save_additional_charges');

@@ -116,6 +116,39 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -136,8 +169,20 @@ __webpack_require__.r(__webpack_exports__);
       showSubscriptionModal: false,
       subscriptionMessage: '',
       subscriptionPlans: [],
-      isDistributorHost: window.location.hostname.startsWith('distributor.')
+      isDistributorHost: window.location.hostname.startsWith('distributor.'),
+      // Super Admin two-factor step (only shown when the server asks for it)
+      twoFactor: {
+        required: false,
+        token: '',
+        email: '',
+        otp: '',
+        countdown: 0
+      },
+      twoFactorTimer: null
     };
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.stopTwoFactorTimer();
   },
   mounted: function mounted() {
     if (this.loggedUser) {
@@ -159,22 +204,12 @@ __webpack_require__.r(__webpack_exports__);
         vm.isLoading = false;
         var data = res.data;
         if (data.status === 1) {
-          // Sarthi: this admin-domain login form must not accept a distributor
-          // login — currently nothing stops it, only the post-login router
-          // redirect confines a seller-role user to their own pages. Block it
-          // here directly so distributors are told to use the Distributor Panel
-          // URL instead of silently landing on the same panel from this domain.
-          if (!_this.isDistributorHost && data.data.user.role_id === 3) {
-            vm.showError('Distributors must log in via the Distributor Panel.');
+          // Super Admin with two-factor on: no session yet, a code was emailed.
+          if (data.data.two_factor_required) {
+            vm.startTwoFactor(data.data);
             return;
           }
-          _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].login(data.data.access_token, data.data.user);
-          _this.$router.push('/dashboard');
-          if (data.data.subscription_warning) {
-            vm.subscriptionMessage = data.data.subscription_warning;
-            vm.subscriptionPlans = data.data.subscription_plans || [];
-            vm.showSubscriptionModal = true;
-          }
+          vm.finishLogin(data);
         } else {
           vm.showError(data.message);
         }
@@ -188,6 +223,117 @@ __webpack_require__.r(__webpack_exports__);
           _this.showError("Something went wrong!");
         }
       });
+    },
+    // Everything that happens once the server has handed back a user + access token.
+    finishLogin: function finishLogin(data) {
+      var vm = this;
+      // Sarthi: this admin-domain login form must not accept a distributor
+      // login — currently nothing stops it, only the post-login router
+      // redirect confines a seller-role user to their own pages. Block it
+      // here directly so distributors are told to use the Distributor Panel
+      // URL instead of silently landing on the same panel from this domain.
+      if (!this.isDistributorHost && data.data.user.role_id === 3) {
+        vm.showError('Distributors must log in via the Distributor Panel.');
+        return;
+      }
+      _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].login(data.data.access_token, data.data.user);
+      this.$router.push('/dashboard');
+      if (data.data.subscription_warning) {
+        vm.subscriptionMessage = data.data.subscription_warning;
+        vm.subscriptionPlans = data.data.subscription_plans || [];
+        vm.showSubscriptionModal = true;
+      }
+    },
+    startTwoFactor: function startTwoFactor(info) {
+      var _this2 = this;
+      this.twoFactor = {
+        required: true,
+        token: info.two_factor_token,
+        email: info.email,
+        otp: '',
+        countdown: info.resend_after || 60
+      };
+      this.startTwoFactorTimer();
+      this.$nextTick(function () {
+        if (_this2.$refs.otpInput) _this2.$refs.otpInput.focus();
+      });
+    },
+    startTwoFactorTimer: function startTwoFactorTimer() {
+      var _this3 = this;
+      this.stopTwoFactorTimer();
+      this.twoFactorTimer = setInterval(function () {
+        if (_this3.twoFactor.countdown > 0) {
+          _this3.twoFactor.countdown--;
+        } else {
+          _this3.stopTwoFactorTimer();
+        }
+      }, 1000);
+    },
+    stopTwoFactorTimer: function stopTwoFactorTimer() {
+      if (this.twoFactorTimer) {
+        clearInterval(this.twoFactorTimer);
+        this.twoFactorTimer = null;
+      }
+    },
+    verifyTwoFactor: function verifyTwoFactor() {
+      var vm = this;
+      this.isLoading = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/login/two-factor/verify', {
+        two_factor_token: this.twoFactor.token,
+        otp: this.twoFactor.otp
+      }).then(function (res) {
+        vm.isLoading = false;
+        var data = res.data;
+        if (data.status === 1) {
+          vm.stopTwoFactorTimer();
+          vm.twoFactor = {
+            required: false,
+            token: '',
+            email: '',
+            otp: '',
+            countdown: 0
+          };
+          vm.finishLogin(data);
+        } else {
+          vm.twoFactor.otp = '';
+          vm.showError(data.message);
+          vm.$nextTick(function () {
+            if (vm.$refs.otpInput) vm.$refs.otpInput.focus();
+          });
+        }
+      })["catch"](function (error) {
+        vm.isLoading = false;
+        vm.showError(error.response && error.response.data && error.response.data.message || error.message || "Something went wrong!");
+      });
+    },
+    resendTwoFactor: function resendTwoFactor() {
+      var vm = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$apiUrl + '/login/two-factor/resend', {
+        two_factor_token: this.twoFactor.token
+      }).then(function (res) {
+        var data = res.data;
+        if (data.status === 1) {
+          vm.twoFactor.otp = '';
+          vm.twoFactor.countdown = data.data.resend_after || 60;
+          vm.startTwoFactorTimer();
+          vm.showMessage('success', __('verification_code_sent'));
+        } else {
+          vm.showError(data.message);
+        }
+      })["catch"](function (error) {
+        vm.showError(error.response && error.response.data && error.response.data.message || error.message || "Something went wrong!");
+      });
+    },
+    backToLogin: function backToLogin() {
+      this.stopTwoFactorTimer();
+      this.twoFactor = {
+        required: false,
+        token: '',
+        email: '',
+        otp: '',
+        countdown: 0
+      };
+      this.user.password = this.$isDemo === 1 || this.$isDemo === '1' ? '123456' : '';
     }
   }
 });
@@ -323,247 +469,409 @@ var render = function () {
               ),
             ]),
             _vm._v(" "),
-            _c("h4", [_vm._v("Welcome Back!")]),
-            _vm._v(" "),
-            _c("p", { staticClass: "auth-subtitle text-primary" }, [
-              _vm._v("Please login to your Account"),
+            _c("h4", [
+              _vm._v(
+                _vm._s(
+                  _vm.twoFactor.required
+                    ? _vm.__("verify_its_you")
+                    : "Welcome Back!"
+                )
+              ),
             ]),
             _vm._v(" "),
             _c(
-              "form",
-              {
-                on: {
-                  submit: function ($event) {
-                    $event.preventDefault()
-                    return _vm.loginCheck()
-                  },
-                },
-              },
+              "p",
+              { staticClass: "auth-subtitle text-primary" },
               [
-                _c(
-                  "div",
+                _vm.twoFactor.required
+                  ? [
+                      _vm._v(_vm._s(_vm.__("enter_the_code_sent_to")) + " "),
+                      _c("strong", [_vm._v(_vm._s(_vm.twoFactor.email))]),
+                    ]
+                  : [_vm._v("Please login to your Account")],
+              ],
+              2
+            ),
+            _vm._v(" "),
+            _vm.twoFactor.required
+              ? _c(
+                  "form",
                   {
-                    staticClass:
-                      "form-group position-relative has-icon-left mb-4",
+                    on: {
+                      submit: function ($event) {
+                        $event.preventDefault()
+                        return _vm.verifyTwoFactor()
+                      },
+                    },
                   },
                   [
-                    _c("input", {
-                      directives: [
-                        {
-                          name: "model",
-                          rawName: "v-model",
-                          value: _vm.user.email,
-                          expression: "user.email",
-                        },
-                      ],
-                      staticClass: "form-control form-control-xl",
-                      attrs: {
-                        type: "email",
-                        placeholder: "Email Address",
-                        required: "",
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "form-group position-relative has-icon-left mb-4",
                       },
-                      domProps: { value: _vm.user.email },
-                      on: {
-                        input: function ($event) {
-                          if ($event.target.composing) {
-                            return
-                          }
-                          _vm.$set(_vm.user, "email", $event.target.value)
-                        },
-                      },
-                    }),
-                    _vm._v(" "),
-                    _vm._m(0),
-                  ]
-                ),
-                _vm._v(" "),
-                _c(
-                  "div",
-                  { staticClass: "form-group position-relative has-icon-left" },
-                  [
-                    (_vm.showPassword ? "text" : "password") === "checkbox"
-                      ? _c("input", {
+                      [
+                        _c("input", {
                           directives: [
                             {
                               name: "model",
                               rawName: "v-model",
-                              value: _vm.user.password,
-                              expression: "user.password",
+                              value: _vm.twoFactor.otp,
+                              expression: "twoFactor.otp",
                             },
                           ],
-                          staticClass: "form-control form-control-xl",
+                          ref: "otpInput",
+                          staticClass:
+                            "form-control form-control-xl text-center",
+                          staticStyle: {
+                            "letter-spacing": "8px",
+                            "font-size": "22px",
+                          },
                           attrs: {
-                            placeholder: "Password",
+                            type: "text",
+                            inputmode: "numeric",
+                            autocomplete: "one-time-code",
+                            maxlength: "6",
+                            placeholder: _vm.__("verification_code"),
                             required: "",
-                            type: "checkbox",
                           },
-                          domProps: {
-                            checked: Array.isArray(_vm.user.password)
-                              ? _vm._i(_vm.user.password, null) > -1
-                              : _vm.user.password,
-                          },
+                          domProps: { value: _vm.twoFactor.otp },
                           on: {
-                            change: function ($event) {
-                              var $$a = _vm.user.password,
-                                $$el = $event.target,
-                                $$c = $$el.checked ? true : false
-                              if (Array.isArray($$a)) {
-                                var $$v = null,
-                                  $$i = _vm._i($$a, $$v)
-                                if ($$el.checked) {
-                                  $$i < 0 &&
-                                    _vm.$set(
-                                      _vm.user,
-                                      "password",
-                                      $$a.concat([$$v])
-                                    )
-                                } else {
-                                  $$i > -1 &&
-                                    _vm.$set(
-                                      _vm.user,
-                                      "password",
-                                      $$a
-                                        .slice(0, $$i)
-                                        .concat($$a.slice($$i + 1))
-                                    )
+                            input: [
+                              function ($event) {
+                                if ($event.target.composing) {
+                                  return
                                 }
-                              } else {
-                                _vm.$set(_vm.user, "password", $$c)
-                              }
-                            },
-                          },
-                        })
-                      : (_vm.showPassword ? "text" : "password") === "radio"
-                      ? _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.user.password,
-                              expression: "user.password",
-                            },
-                          ],
-                          staticClass: "form-control form-control-xl",
-                          attrs: {
-                            placeholder: "Password",
-                            required: "",
-                            type: "radio",
-                          },
-                          domProps: {
-                            checked: _vm._q(_vm.user.password, null),
-                          },
-                          on: {
-                            change: function ($event) {
-                              return _vm.$set(_vm.user, "password", null)
-                            },
-                          },
-                        })
-                      : _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.user.password,
-                              expression: "user.password",
-                            },
-                          ],
-                          staticClass: "form-control form-control-xl",
-                          attrs: {
-                            placeholder: "Password",
-                            required: "",
-                            type: _vm.showPassword ? "text" : "password",
-                          },
-                          domProps: { value: _vm.user.password },
-                          on: {
-                            input: function ($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(
-                                _vm.user,
-                                "password",
-                                $event.target.value
-                              )
-                            },
+                                _vm.$set(
+                                  _vm.twoFactor,
+                                  "otp",
+                                  $event.target.value
+                                )
+                              },
+                              function ($event) {
+                                _vm.twoFactor.otp = _vm.twoFactor.otp.replace(
+                                  /\D/g,
+                                  ""
+                                )
+                              },
+                            ],
                           },
                         }),
-                    _vm._v(" "),
-                    _vm._m(1),
+                        _vm._v(" "),
+                        _vm._m(0),
+                      ]
+                    ),
                     _vm._v(" "),
                     _c(
                       "button",
                       {
                         staticClass:
-                          "btn btn-sm btn-outline-light font-bold text-primary",
-                        staticStyle: {
-                          "margin-top": "-45px",
-                          position: "absolute",
-                          right: "10px",
-                          cursor: "pointer",
-                        },
-                        attrs: { type: "button" },
-                        on: {
-                          click: function ($event) {
-                            _vm.showPassword = !_vm.showPassword
-                          },
+                          "btn btn-primary btn-block btn-lg shadow-lg mt-3 auth-btn",
+                        attrs: {
+                          disabled:
+                            _vm.isLoading || _vm.twoFactor.otp.length !== 6,
                         },
                       },
                       [
-                        _c("i", {
-                          class: _vm.showPassword
-                            ? "bi bi-eye"
-                            : "bi bi-eye-slash",
-                        }),
+                        _vm._v(
+                          "\n                        " +
+                            _vm._s(_vm.__("verify_and_login")) +
+                            "\n                        "
+                        ),
+                        _vm.isLoading
+                          ? _c("b-spinner", {
+                              attrs: { small: "", label: "Spinning" },
+                            })
+                          : _c("span", { staticClass: "bi bi-arrow-right" }),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "d-flex justify-content-between align-items-center mt-4",
+                      },
+                      [
+                        _c(
+                          "a",
+                          {
+                            staticClass: "font-bold",
+                            attrs: { href: "javascript:void(0)" },
+                            on: { click: _vm.backToLogin },
+                          },
+                          [
+                            _c("span", { staticClass: "bi bi-arrow-left" }),
+                            _vm._v(
+                              " " +
+                                _vm._s(_vm.__("back_to_login")) +
+                                "\n                        "
+                            ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _vm.twoFactor.countdown <= 0
+                          ? _c(
+                              "a",
+                              {
+                                staticClass: "font-bold",
+                                attrs: { href: "javascript:void(0)" },
+                                on: { click: _vm.resendTwoFactor },
+                              },
+                              [_vm._v(_vm._s(_vm.__("resend_code")))]
+                            )
+                          : _c("span", { staticClass: "text-muted" }, [
+                              _vm._v(
+                                _vm._s(_vm.__("resend_code_in")) +
+                                  " " +
+                                  _vm._s(_vm.twoFactor.countdown) +
+                                  "s"
+                              ),
+                            ]),
                       ]
                     ),
                   ]
-                ),
-                _vm._v(" "),
-                _c(
-                  "div",
+                )
+              : _c(
+                  "form",
                   {
-                    staticClass: "mb-4 text-end",
-                    staticStyle: { "margin-top": "35px" },
+                    on: {
+                      submit: function ($event) {
+                        $event.preventDefault()
+                        return _vm.loginCheck()
+                      },
+                    },
                   },
                   [
                     _c(
-                      "router-link",
+                      "div",
                       {
-                        staticClass: "font-bold",
-                        attrs: { to: "/forgot-password" },
+                        staticClass:
+                          "form-group position-relative has-icon-left mb-4",
                       },
                       [
-                        _c("span", [
-                          _vm._v(
-                            "Forgot\n                                Password?"
-                          ),
-                        ]),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.user.email,
+                              expression: "user.email",
+                            },
+                          ],
+                          staticClass: "form-control form-control-xl",
+                          attrs: {
+                            type: "email",
+                            placeholder: "Email Address",
+                            required: "",
+                          },
+                          domProps: { value: _vm.user.email },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(_vm.user, "email", $event.target.value)
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _vm._m(1),
                       ]
                     ),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "button",
-                  {
-                    staticClass:
-                      "btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn",
-                  },
-                  [
-                    _vm._v(
-                      "\n                        Login\n                        "
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "form-group position-relative has-icon-left",
+                      },
+                      [
+                        (_vm.showPassword ? "text" : "password") === "checkbox"
+                          ? _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.user.password,
+                                  expression: "user.password",
+                                },
+                              ],
+                              staticClass: "form-control form-control-xl",
+                              attrs: {
+                                placeholder: "Password",
+                                required: "",
+                                type: "checkbox",
+                              },
+                              domProps: {
+                                checked: Array.isArray(_vm.user.password)
+                                  ? _vm._i(_vm.user.password, null) > -1
+                                  : _vm.user.password,
+                              },
+                              on: {
+                                change: function ($event) {
+                                  var $$a = _vm.user.password,
+                                    $$el = $event.target,
+                                    $$c = $$el.checked ? true : false
+                                  if (Array.isArray($$a)) {
+                                    var $$v = null,
+                                      $$i = _vm._i($$a, $$v)
+                                    if ($$el.checked) {
+                                      $$i < 0 &&
+                                        _vm.$set(
+                                          _vm.user,
+                                          "password",
+                                          $$a.concat([$$v])
+                                        )
+                                    } else {
+                                      $$i > -1 &&
+                                        _vm.$set(
+                                          _vm.user,
+                                          "password",
+                                          $$a
+                                            .slice(0, $$i)
+                                            .concat($$a.slice($$i + 1))
+                                        )
+                                    }
+                                  } else {
+                                    _vm.$set(_vm.user, "password", $$c)
+                                  }
+                                },
+                              },
+                            })
+                          : (_vm.showPassword ? "text" : "password") === "radio"
+                          ? _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.user.password,
+                                  expression: "user.password",
+                                },
+                              ],
+                              staticClass: "form-control form-control-xl",
+                              attrs: {
+                                placeholder: "Password",
+                                required: "",
+                                type: "radio",
+                              },
+                              domProps: {
+                                checked: _vm._q(_vm.user.password, null),
+                              },
+                              on: {
+                                change: function ($event) {
+                                  return _vm.$set(_vm.user, "password", null)
+                                },
+                              },
+                            })
+                          : _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.user.password,
+                                  expression: "user.password",
+                                },
+                              ],
+                              staticClass: "form-control form-control-xl",
+                              attrs: {
+                                placeholder: "Password",
+                                required: "",
+                                type: _vm.showPassword ? "text" : "password",
+                              },
+                              domProps: { value: _vm.user.password },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.$set(
+                                    _vm.user,
+                                    "password",
+                                    $event.target.value
+                                  )
+                                },
+                              },
+                            }),
+                        _vm._v(" "),
+                        _vm._m(2),
+                        _vm._v(" "),
+                        _c(
+                          "button",
+                          {
+                            staticClass:
+                              "btn btn-sm btn-outline-light font-bold text-primary",
+                            staticStyle: {
+                              "margin-top": "-45px",
+                              position: "absolute",
+                              right: "10px",
+                              cursor: "pointer",
+                            },
+                            attrs: { type: "button" },
+                            on: {
+                              click: function ($event) {
+                                _vm.showPassword = !_vm.showPassword
+                              },
+                            },
+                          },
+                          [
+                            _c("i", {
+                              class: _vm.showPassword
+                                ? "bi bi-eye"
+                                : "bi bi-eye-slash",
+                            }),
+                          ]
+                        ),
+                      ]
                     ),
-                    _vm.isLoading
-                      ? _c("b-spinner", {
-                          attrs: { small: "", label: "Spinning" },
-                        })
-                      : _c("span", { staticClass: "bi bi-arrow-right" }),
-                  ],
-                  1
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass: "mb-4 text-end",
+                        staticStyle: { "margin-top": "35px" },
+                      },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            staticClass: "font-bold",
+                            attrs: { to: "/forgot-password" },
+                          },
+                          [
+                            _c("span", [
+                              _vm._v(
+                                "Forgot\n                                Password?"
+                              ),
+                            ]),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "button",
+                      {
+                        staticClass:
+                          "btn btn-primary btn-block btn-lg shadow-lg mt-5 auth-btn",
+                      },
+                      [
+                        _vm._v(
+                          "\n                        Login\n                        "
+                        ),
+                        _vm.isLoading
+                          ? _c("b-spinner", {
+                              attrs: { small: "", label: "Spinning" },
+                            })
+                          : _c("span", { staticClass: "bi bi-arrow-right" }),
+                      ],
+                      1
+                    ),
+                  ]
                 ),
-              ]
-            ),
             _vm._v(" "),
             _c("div", { staticClass: "auth-copyright" }, [
               _c("a", {
@@ -694,6 +1002,14 @@ var render = function () {
   )
 }
 var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "form-control-icon" }, [
+      _c("i", { staticClass: "bi bi-shield-lock" }),
+    ])
+  },
   function () {
     var _vm = this
     var _h = _vm.$createElement
