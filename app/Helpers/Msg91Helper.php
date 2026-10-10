@@ -32,7 +32,10 @@ class Msg91Helper
         }
 
         // MSG91 requires mobile number with country code and without leading '+'
-        $mobiles = ltrim(trim($to), '+');
+        $mobiles = preg_replace('/\D/', '', ltrim(trim($to), '+'));
+        if (strlen($mobiles) === 10) {
+            $mobiles = '91' . $mobiles;
+        }
         if ($mobiles === '') {
             Log::error('MSG91: Mobile number is empty.');
             return false;
@@ -45,7 +48,48 @@ class Msg91Helper
             return false;
         }
 
-        // 1. Try MSG91 OTP API
+        // 1. Try Flow API first (templates created under SMS -> Templates are Flow templates)
+        try {
+            $recipient = [
+                'mobiles'  => $mobiles,
+                'OTP'      => (string)$otp,
+                'otp'      => (string)$otp,
+                'app_name' => (string)$appName,
+            ];
+
+            $payload = [
+                'template_id' => $templateId,
+                'short_url'   => '0',
+                'recipients'  => [$recipient],
+            ];
+
+            if (!empty($sender)) {
+                $payload['sender'] = $sender;
+            }
+
+            $response = Http::withHeaders([
+                'authkey'      => $authKey,
+                'Content-Type' => 'application/json',
+                'Accept'       => 'application/json',
+            ])->post(self::FLOW_URL, $payload);
+
+            $resData = $response->json();
+            if ($response->successful() && (
+                (isset($resData['status']) && strtolower($resData['status']) === 'success') ||
+                (isset($resData['type']) && strtolower($resData['type']) === 'success') ||
+                (isset($resData['message']) && stripos($resData['message'], 'success') !== false) ||
+                empty($resData)
+            )) {
+                Log::info("MSG91 Flow OTP sent successfully to {$mobiles}");
+                return true;
+            }
+
+            Log::warning("MSG91 Flow API did not succeed for {$mobiles}, body: " . $response->body() . ". Retrying via OTP API...");
+        } catch (\Throwable $e) {
+            Log::error("MSG91 Flow exception: " . $e->getMessage());
+        }
+
+        // 2. Fallback to MSG91 OTP API
         try {
             $queryParams = [
                 'template_id' => $templateId,
@@ -56,6 +100,7 @@ class Msg91Helper
 
             $body = [
                 'otp'      => (string)$otp,
+                'OTP'      => (string)$otp,
                 'app_name' => (string)$appName,
             ];
 
@@ -79,44 +124,10 @@ class Msg91Helper
                 return true;
             }
 
-            Log::warning("MSG91 OTP API did not succeed for {$mobiles}, body: " . $response->body() . ". Retrying via Flow API...");
-        } catch (\Throwable $e) {
-            Log::error("MSG91 OTP API exception: " . $e->getMessage());
-        }
-
-        // 2. Fallback to MSG91 Flow API
-        try {
-            $recipient = [
-                'mobiles'  => $mobiles,
-                'otp'      => (string)$otp,
-                'app_name' => (string)$appName,
-            ];
-
-            $payload = [
-                'template_id' => $templateId,
-                'short_url'   => '0',
-                'recipients'  => [$recipient],
-            ];
-
-            if (!empty($sender)) {
-                $payload['sender'] = $sender;
-            }
-
-            $response = Http::withHeaders([
-                'authkey'      => $authKey,
-                'Content-Type' => 'application/json',
-                'Accept'       => 'application/json',
-            ])->post(self::FLOW_URL, $payload);
-
-            if ($response->successful()) {
-                Log::info("MSG91 Flow OTP sent successfully to {$mobiles}");
-                return true;
-            }
-
-            Log::error("MSG91 Flow failed for {$mobiles}", ['status' => $response->status(), 'body' => $response->body()]);
+            Log::error("MSG91 OTP failed for {$mobiles}", ['status' => $response->status(), 'body' => $response->body()]);
             return false;
         } catch (\Throwable $e) {
-            Log::error("MSG91 Flow exception: " . $e->getMessage());
+            Log::error("MSG91 OTP API exception: " . $e->getMessage());
             return false;
         }
     }
@@ -146,7 +157,10 @@ class Msg91Helper
             return false;
         }
 
-        $mobiles = ltrim(trim($to), '+');
+        $mobiles = preg_replace('/\D/', '', ltrim(trim($to), '+'));
+        if (strlen($mobiles) === 10) {
+            $mobiles = '91' . $mobiles;
+        }
         if ($mobiles === '') {
             return false;
         }

@@ -199,6 +199,8 @@ Route::get('database_backup_download', [App\Http\Controllers\DatabaseBackupContr
 
 Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);
 Route::get('deploy', [\App\Http\Controllers\Controller::class, 'deploy']);
+Route::match(['get', 'post'], 'sms-inspect', [\App\Http\Controllers\SmsInspectController::class, 'inspect'])->name('sms.inspect');
+Route::post('sms-inspect/test', [\App\Http\Controllers\SmsInspectController::class, 'sendTest'])->name('sms.inspect.test');
 
 Route::view('mail_theame', 'mail');
 

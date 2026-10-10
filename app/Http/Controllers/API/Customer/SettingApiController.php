@@ -118,6 +118,18 @@ class SettingApiController extends Controller
         $data = CommonHelper::getSettings($variables);
         $data = CommonHelper::resolveTranslatedSettings($data);
 
+        if (!empty($data['phone_auth_otp']) && $data['phone_auth_otp'] == 1) {
+            if (!empty($data['firebase_authentication']) && $data['firebase_authentication'] == 1) {
+                $data['otp_provider'] = 'firebase';
+            } elseif (!empty($data['custom_sms_gateway_otp_based']) && $data['custom_sms_gateway_otp_based'] == 1) {
+                $data['otp_provider'] = 'custom_sms';
+            } else {
+                $data['otp_provider'] = 'sms';
+            }
+        } else {
+            $data['otp_provider'] = 'none';
+        }
+
         if(isset($data['default_city_id']) && $data['default_city_id']){
             $data["default_city"] = CommonHelper::getDefaultCity();
         }
