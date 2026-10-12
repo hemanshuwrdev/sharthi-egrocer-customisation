@@ -19,6 +19,28 @@
                     <i class="fa fa-times"></i>
                 </button>
             </div>
+
+            <select v-model="brandFilter" @change="applyFilters()" class="ui-select" :aria-label="__('brand')">
+                <option :value="null">{{ __('All brands') }}</option>
+                <option v-for="b in availableBrands" :key="b.id" :value="b.id">{{ b.name }}</option>
+            </select>
+
+            <select v-model="categoryFilter" @change="applyFilters()" class="ui-select" :aria-label="__('category')">
+                <option :value="null">{{ __('all_categories') }}</option>
+                <option v-for="c in availableCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+
+            <select v-model="stockStatusFilter" @change="applyFilters()" class="ui-select" :aria-label="__('stock')">
+                <option :value="null">{{ __('all_stock_levels') }}</option>
+                <option value="in_stock">{{ __('in_stock') }}</option>
+                <option value="low_stock">{{ __('low_stock') }}</option>
+                <option value="sold_out">{{ __('sold_out') }}</option>
+            </select>
+
+            <button v-if="hasActiveFilters" type="button" class="ui-linkbtn" v-b-tooltip.hover :title="__('Clear all filters')" @click="clearAllFilters()">
+                <i class="fa fa-times-circle"></i> {{ __('Clear') }}
+            </button>
+
             <button type="button" class="ui-iconbtn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
                 <i class="fa fa-sync-alt" :class="{ 'fa-spin': isLoading }" aria-hidden="true"></i>
             </button>
@@ -42,9 +64,9 @@
                         <div class="ui-empty">
                             <div class="ui-empty__icon"><i class="fa fa-boxes"></i></div>
                             <h3>{{ __('No products found') }}</h3>
-                            <p>{{ filter ? __('Nothing matches this search. Try changing or clearing it.') : __('Products you sell will show up here.') }}</p>
-                            <button v-if="filter" type="button" class="ui-btn" @click="clearSearch()">
-                                <i class="fa fa-times"></i> {{ __('Clear search') }}
+                            <p>{{ hasActiveFilters ? __('Nothing matches these filters. Try changing or clearing them.') : __('Products you sell will show up here.') }}</p>
+                            <button v-if="hasActiveFilters" type="button" class="ui-btn" @click="clearAllFilters()">
+                                <i class="fa fa-times"></i> {{ __('Clear all filters') }}
                             </button>
                         </div>
                     </template>
@@ -62,7 +84,10 @@
 
                     <!-- Product name column -->
                     <template #cell(name)="row">
-                        <strong class="ui-strong">{{ getTranslatedProductName(row.item) }}</strong>
+                        <div class="ms-name">
+                            <strong class="ui-strong">{{ getTranslatedProductName(row.item) }}</strong>
+                            <span v-if="row.item.brand_name" class="ui-tag">{{ row.item.brand_name }}</span>
+                        </div>
                     </template>
 
                     <!-- Variant column -->
@@ -157,6 +182,11 @@ export default {
             sortDirection: 'asc',
             filter: null,
             filterDebounce: null,
+            brandFilter: null,
+            categoryFilter: null,
+            stockStatusFilter: null,
+            availableBrands: [],
+            availableCategories: [],
             filterOn: ['name'],
             isLoading: false,
             products: [],
@@ -170,7 +200,15 @@ export default {
             activeLanguages: []
         }
     },
+    computed: {
+        hasActiveFilters() {
+            const set = v => v !== null && v !== undefined && v !== '';
+            return set(this.filter) || set(this.brandFilter) || set(this.categoryFilter) || set(this.stockStatusFilter);
+        },
+    },
     created() {
+        this.getBrands();
+        this.getCategories();
         this.$eventBus.$on('recordSaved', (message) => {
             this.showMessage('success', message);
             this.getRecords();
@@ -314,6 +352,25 @@ export default {
             this.filter = null;
             this.applyFilters();
         },
+        clearAllFilters() {
+            this.filter = null;
+            this.brandFilter = null;
+            this.categoryFilter = null;
+            this.stockStatusFilter = null;
+            this.applyFilters();
+        },
+        // Filter options come from the distributor's own brand assignments, independent of the list below
+        // (same endpoints My Products uses), so they never shrink to nothing when a filter matches no rows.
+        getBrands() {
+            axios.get(this.$sellerApiUrl + '/products/filter_brands')
+                .then(res => { this.availableBrands = res.data.data || []; })
+                .catch(() => {});
+        },
+        getCategories() {
+            axios.get(this.$sellerApiUrl + '/products/filter_categories')
+                .then(res => { this.availableCategories = res.data.data || []; })
+                .catch(() => {});
+        },
         openLightbox(image) {
 
             this.lightboxSources = [image];
@@ -330,7 +387,10 @@ export default {
                 params: {
                     page: this.currentPage,
                     per_page: this.perPage,
-                    filter: this.filter
+                    filter: this.filter,
+                    brand_id: this.brandFilter,
+                    category_id: this.categoryFilter,
+                    stock_status: this.stockStatusFilter
                 }
             }).then((response) => {
                 this.isLoading = false;
@@ -392,3 +452,6 @@ export default {
     }
 };
 </script>
+<style scoped>
+.ms-name { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 150px; }
+</style>

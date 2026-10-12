@@ -1566,6 +1566,11 @@ class OrderApiController extends Controller
                 return CommonHelper::responseSuccess("Order Status Updated Successfully");
                 /*Send Notification*/
             } else if ($postStatus == OrderStatusList::$cancelled) {
+                // Delivered is final — a delivered order or item can't be cancelled.
+                if (CommonHelper::isDeliveredFinal($order->active_status) || CommonHelper::isDeliveredFinal($order_item->active_status)) {
+                    return CommonHelper::responseError('delivered_order_cannot_be_cancelled');
+                }
+
                 // Once a loading slip has been generated for this order, it's already
                 // staged for dispatch physically — cancellation is only allowed before that.
                 if (!empty($order->loading_slip_id)) {

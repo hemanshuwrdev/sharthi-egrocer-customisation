@@ -521,7 +521,7 @@ class SettlementController extends Controller
         ];
 
         // "upi" is stored internally but shown to the driver app as "bank"
-        $data = array_map(fn ($m) => array_merge(['method' => $m === 'upi' ? 'bank' : $m], $meta[$m]), $enabled);
+        $data = array_map(fn ($m) => array_merge(['method' => OrderPayment::appMethod($m)], $meta[$m]), $enabled);
 
         return CommonHelper::responseWithData(['methods' => array_values($data)]);
     }
@@ -546,7 +546,7 @@ class SettlementController extends Controller
 
     /**
      * POST /delivery_boy/collect_payment
-     * Body: order_id, method, amount (cash/upi), proof_photo (upi/cheque/signature)
+     * Body: order_id, method, amount (cash/bank), proof_photo (bank/cheque/signature)
      */
     public function collectPayment(Request $request)
     {
@@ -561,9 +561,7 @@ class SettlementController extends Controller
         }
 
         // The driver app sees "bank" (see driverPaymentMethods); it is stored as "upi".
-        if ($request->input('method') === 'bank') {
-            $request->merge(['method' => 'upi']);
-        }
+        $request->merge(['method' => OrderPayment::storedMethod($request->input('method'))]);
 
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|integer|exists:orders,id',
@@ -582,10 +580,10 @@ class SettlementController extends Controller
         // Method-specific field validation — all methods require amount
         $method = $request->method;
         if (!$request->filled('amount')) {
-            return CommonHelper::responseError('amount_required_for_' . $method);
+            return CommonHelper::responseError('amount_required_for_' . OrderPayment::appMethod($method));
         }
         if (in_array($method, ['upi', 'cheque', 'signature'], true) && !$request->hasFile('proof_photo') && !$request->filled('proof_photo')) {
-            return CommonHelper::responseError('proof_photo_required_for_' . $method);
+            return CommonHelper::responseError('proof_photo_required_for_' . OrderPayment::appMethod($method));
         }
 
         // Verify this order belongs to this driver
@@ -711,7 +709,7 @@ class SettlementController extends Controller
         $summary = [
             'total_orders'    => $payments->count(),
             'total_cash'      => round($payments->where('method', 'cash')->sum('amount'), 2),
-            'total_upi'       => round($payments->where('method', 'upi')->sum('amount'), 2),
+            'total_bank'      => round($payments->where('method', 'upi')->sum('amount'), 2),
             'total_cheque'    => round($payments->where('method', 'cheque')->sum('amount'), 2),
             'total_signature' => round($payments->where('method', 'signature')->sum('amount'), 2),
             'pending_count'   => $pendingCount,
@@ -853,14 +851,14 @@ class SettlementController extends Controller
                 // vs. still pending, per payment method — same shape as settlement/today.
                 'payment_methods'    => [
                     'cash'      => round($payments->where('method', 'cash')->sum('amount'), 2),
-                    'upi'       => round($payments->where('method', 'upi')->sum('amount'), 2),
+                    'bank'      => round($payments->where('method', 'upi')->sum('amount'), 2),
                     'cheque'    => round($payments->where('method', 'cheque')->sum('amount'), 2),
                     'signature' => round($payments->where('method', 'signature')->sum('amount'), 2),
                 ],
                 'payments' => $payments->map(fn (OrderPayment $p) => [
                     'id'         => $p->id,
                     'order_id'   => $p->order_id,
-                    'method'     => $p->method,
+                    'method'     => OrderPayment::appMethod($p->method),
                     'amount'     => (float) $p->amount,
                     // Cash never goes through distributor verification (see lock-gate
                     // above) — reflect that here so it doesn't read as stuck "pending".
@@ -1163,7 +1161,7 @@ class SettlementController extends Controller
 
     /**
      * GET /salesman/payment-methods
-     * Salesman collects actual money (cash/upi/cheque) for delivered orders where driver took signature.
+     * Salesman collects actual money (cash/bank/cheque) for delivered orders where driver took signature.
      */
     public function salesmanPaymentMethods()
     {
@@ -1185,13 +1183,13 @@ class SettlementController extends Controller
         ));
 
         return CommonHelper::responseWithData([
-            'methods' => array_values(array_map(fn ($m) => array_merge(['method' => $m], $allMeta[$m]), $enabled))
+            'methods' => array_values(array_map(fn ($m) => array_merge(['method' => OrderPayment::appMethod($m)], $allMeta[$m]), $enabled))
         ]);
     }
 
     /**
      * POST /salesman/collect-payment
-     * Body: order_id, method (cash/upi/cheque), amount, proof_photo (for upi/cheque)
+     * Body: order_id, method (cash/bank/cheque), amount, proof_photo (for bank/cheque)
      * Only allowed for orders that are delivered and have a driver signature payment but no salesman collection yet.
      */
     public function salesmanCollectPayment(Request $request)
@@ -1201,6 +1199,8 @@ class SettlementController extends Controller
 
         $seller = $salesman->seller_id ? Seller::find($salesman->seller_id) : null;
         if (!$seller) return CommonHelper::responseError('salesman_not_linked_to_distributor');
+
+        $request->merge(['method' => OrderPayment::storedMethod($request->input('method'))]);
 
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|integer|exists:orders,id',
@@ -1213,7 +1213,7 @@ class SettlementController extends Controller
         if (!in_array($method, $enabledMethods, true)) return CommonHelper::responseError('payment_method_not_allowed');
         if (!$request->filled('amount')) return CommonHelper::responseError('amount_required');
         if (in_array($method, ['upi', 'cheque'], true) && !$request->hasFile('proof_photo') && !$request->filled('proof_photo')) {
-            return CommonHelper::responseError('proof_photo_required_for_' . $method);
+            return CommonHelper::responseError('proof_photo_required_for_' . OrderPayment::appMethod($method));
         }
 
         $order = Order::where('id', $request->order_id)
@@ -1293,7 +1293,7 @@ class SettlementController extends Controller
             'summary'    => [
                 'total_orders'    => $payments->count(),
                 'total_cash'      => round($payments->where('method', 'cash')->sum('amount'), 2),
-                'total_upi'       => round($payments->where('method', 'upi')->sum('amount'), 2),
+                'total_bank'      => round($payments->where('method', 'upi')->sum('amount'), 2),
                 'total_cheque'    => round($payments->where('method', 'cheque')->sum('amount'), 2),
                 'total_signature' => round($payments->where('method', 'signature')->sum('amount'), 2),
                 'pending_count'   => $pending,
@@ -1381,7 +1381,7 @@ class SettlementController extends Controller
                 'total_collected'    => round($payments->whereIn('method', ['cash', 'upi', 'cheque'])->sum('amount'), 2),
                 'payments' => $payments->map(fn (OrderPayment $p) => [
                     'id'         => $p->id,
-                    'method'     => $p->method,
+                    'method'     => OrderPayment::appMethod($p->method),
                     'amount'     => (float) $p->amount,
                     'status'     => $p->method === 'cash' ? 'verified' : $p->status,
                     'verified_at'=> $p->verified_at,
@@ -1687,6 +1687,22 @@ class SettlementController extends Controller
      * owner's name when the retailer has no profile / shop name) since invoices are
      * raised to the shop, not the person.
      */
+    /**
+     * The distributor's name + address for the top of the exported PDF, picked the same way the
+     * Loading Slip print header does (loading_slip_print.blade.php): store name else the app
+     * name; formatted address else street + city.
+     */
+    private function sellerHeaderPayload(Seller $seller): array
+    {
+        $address = $seller->formatted_address
+            ?: ($seller->street ? $seller->street . ($seller->city?->name ? ', ' . $seller->city->name : '') : null);
+
+        return [
+            'name'    => $seller->store_name ?: (Setting::get_value('app_name') ?: 'Sarthi Wholesale'),
+            'address' => $address,
+        ];
+    }
+
     private function retailerPayload($user): ?array
     {
         if (!$user) return null;
@@ -1760,7 +1776,7 @@ class SettlementController extends Controller
         // handed back by the driver, so it's shown separately from the cash/digital
         // collection math above rather than folded into it.
         $returnRequests = ReturnRequest::with([
-                'orderItem:id,order_id,product_name,variant_name,refund_amount',
+                'orderItem:id,order_id,product_name,variant_name,refund_amount,quantity',
                 'user:id,name,mobile',
                 'user.retailerProfile:id,user_id,shop_name',
             ])
@@ -1926,6 +1942,9 @@ class SettlementController extends Controller
                     'invoice_number' => $o ? ($o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id)) : null,
                     'product_name'   => $r->orderItem->product_name ?? '-',
                     'variant_name'   => $r->orderItem->variant_name ?? null,
+                    // A return request covers its whole order item (refund and stock restore both use
+                    // the item's full quantity), so that is the quantity that comes back.
+                    'quantity'       => (float) ($r->orderItem->quantity ?? 0),
                     'refund_amount'  => (float) ($r->orderItem->refund_amount ?? 0),
                     'reason'         => $r->reason,
                     'retailer'       => $this->retailerPayload($r->user),
@@ -1978,6 +1997,7 @@ class SettlementController extends Controller
             ]));
 
         $returnItemSummary = $returnItemSummary->concat($shortfallReturnRows)->concat($cancelReturnRows)->values();
+        $returnedItemTotals = $this->totalReturnedItems($returnItemSummary);
         $totalReturns      = round($totalReturns + (float) $shortfallValueByOrder->sum() + (float) $cancelReturnRows->sum('refund_amount'), 2);
 
         // A salesman is only ever sent to collect on a driver's "signature" IOU for an
@@ -2079,6 +2099,7 @@ class SettlementController extends Controller
 
         return CommonHelper::responseWithData([
             'settlement'     => $settlementData,
+            'seller'         => $this->sellerHeaderPayload($seller),
             'orders'         => $orders->map(fn ($o) => [
                 'id'              => $o->id,
                 'orders_id'       => $o->orders_id,
@@ -2125,6 +2146,7 @@ class SettlementController extends Controller
             'cancel_invoices'     => $cancelInvoices,
             'reschedule_invoices' => $rescheduleInvoices,
             'return_item_summary' => $returnItemSummary,
+            'returned_item_totals' => $returnedItemTotals,
             'can_close'      => $canClose,
             'close_blockers' => $blockers,
         ]);
@@ -2158,6 +2180,25 @@ class SettlementController extends Controller
         }
 
         return $qty;
+    }
+
+    /**
+     * One line per product across every row of the Returns list (return requests, partial-delivery
+     * shortfalls, cancelled orders), so what came back off the truck can be counted in one go
+     * instead of invoice by invoice — 10 oil from invoice 1 and 20 from invoice 2 is 30 oil.
+     * Same product + variant name is the same line; sorted by name so it reads as a checklist.
+     */
+    private function totalReturnedItems($rows)
+    {
+        return collect($rows)
+            ->groupBy(fn ($r) => mb_strtolower(trim((string) $r['product_name']) . '|' . trim((string) ($r['variant_name'] ?? ''))))
+            ->map(fn ($group) => [
+                'product_name' => $group->first()['product_name'],
+                'variant_name' => $group->first()['variant_name'] ?? null,
+                'quantity'     => round((float) $group->sum(fn ($r) => (float) ($r['quantity'] ?? 0)), 3),
+            ])
+            ->sortBy(fn ($r) => mb_strtolower((string) $r['product_name']) . '|' . mb_strtolower((string) ($r['variant_name'] ?? '')))
+            ->values();
     }
 
     /**

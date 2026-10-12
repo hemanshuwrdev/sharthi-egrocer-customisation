@@ -439,7 +439,7 @@ class RetailerPosController extends Controller
             'orders_id'       => $order->orders_id,
             'date'            => $order->created_at,
             'delivery_date'   => $order->delivery_date,
-            'payment_method'  => DB::table('order_payments')->where('order_id', $order->id)->orderByDesc('id')->value('method') ?? $order->payment_method,
+            'payment_method'  => \App\Models\OrderPayment::appMethod(DB::table('order_payments')->where('order_id', $order->id)->orderByDesc('id')->value('method')) ?? $order->payment_method,
             'order_note'      => $order->order_note,
             'seller_name'     => $seller->store_name ?? null,
             'sub_total'       => (float) $order->total,

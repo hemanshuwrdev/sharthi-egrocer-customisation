@@ -360,6 +360,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -519,6 +532,7 @@ var tr = function tr(key, fallback) {
       availableBrands: [],
       availableCategories: [],
       noBrandsAssigned: false,
+      stats: null,
       isLoading: false,
       toggler: false,
       lightboxSources: [],
@@ -534,6 +548,65 @@ var tr = function tr(key, fallback) {
         return f.visible;
       });
     },
+    // Each card is one of the list's existing filters, so the card's count and the rows it shows always agree
+    statCards: function statCards() {
+      var _this = this;
+      var set = function set(v) {
+        return v !== null && v !== undefined && v !== '';
+      };
+      var n = function n(key) {
+        return _this.stats ? _this.stats[key] : '–';
+      };
+      var active = this.activeFilter;
+      var stock = this.stockStatusFilter;
+      return [{
+        key: 'active',
+        label: tr('active', 'Active'),
+        count: n('active'),
+        icon: 'fa-check-circle',
+        tone: 'green',
+        hint: this.stats ? tr('of_total_products', 'of :total products').replace(':total', this.stats.total) : '',
+        filter: {
+          active: '1',
+          stock: null
+        },
+        on: active === '1' && !set(stock)
+      }, {
+        key: 'inactive',
+        label: tr('inactive', 'Inactive'),
+        count: n('inactive'),
+        icon: 'fa-pause-circle',
+        tone: 'slate',
+        hint: this.stats ? tr('not_live_yet', 'Not live yet') : '',
+        filter: {
+          active: '0',
+          stock: null
+        },
+        on: active === '0' && !set(stock)
+      }, {
+        key: 'low_stock',
+        label: tr('low_stock', 'Low stock'),
+        count: n('low_stock'),
+        icon: 'fa-exclamation-triangle',
+        tone: 'amber',
+        filter: {
+          active: null,
+          stock: 'low_stock'
+        },
+        on: stock === 'low_stock' && !set(active)
+      }, {
+        key: 'sold_out',
+        label: tr('sold_out', 'Sold out'),
+        count: n('sold_out'),
+        icon: 'fa-ban',
+        tone: 'red',
+        filter: {
+          active: null,
+          stock: 'sold_out'
+        },
+        on: stock === 'sold_out' && !set(active)
+      }];
+    },
     hasActiveFilters: function hasActiveFilters() {
       var set = function set(v) {
         return v !== null && v !== undefined && v !== '';
@@ -543,6 +616,7 @@ var tr = function tr(key, fallback) {
   },
   created: function created() {
     this.getRecords();
+    this.getStats();
     this.getBrands();
     this.getCategories();
   },
@@ -585,6 +659,24 @@ var tr = function tr(key, fallback) {
       var currency = this.$currency ? this.$currency + ' ' : '';
       return __('inner_pack_price_hint') + ': ' + currency + innerPrice + (item.secondary_unit ? ' / ' + item.secondary_unit : '') + ' (' + step + (item.unit ? ' ' + item.unit : '') + ')';
     },
+    getStats: function getStats() {
+      var _this2 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/products/stats').then(function (res) {
+        if (res.data && res.data.data) {
+          _this2.stats = res.data.data;
+        }
+      })["catch"](function () {});
+    },
+    refresh: function refresh() {
+      this.getRecords();
+      this.getStats();
+    },
+    // Clicking the card that is already selected clears it
+    applyQuickFilter: function applyQuickFilter(card) {
+      this.activeFilter = card.on ? null : card.filter.active;
+      this.stockStatusFilter = card.on ? null : card.filter.stock;
+      this.applyFilters();
+    },
     slabCount: function slabCount(item) {
       return item.slab_prices ? item.slab_prices.length : 0;
     },
@@ -604,10 +696,10 @@ var tr = function tr(key, fallback) {
       }
     },
     onFilterChange: function onFilterChange() {
-      var _this = this;
+      var _this3 = this;
       clearTimeout(this.filterDebounce);
       this.filterDebounce = setTimeout(function () {
-        return _this.applyFilters();
+        return _this3.applyFilters();
       }, 250);
     },
     clearSearch: function clearSearch() {
@@ -625,7 +717,7 @@ var tr = function tr(key, fallback) {
       this.applyFilters();
     },
     getRecords: function getRecords() {
-      var _this2 = this;
+      var _this4 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/products', {
         params: {
@@ -641,39 +733,39 @@ var tr = function tr(key, fallback) {
           master_product_id: this.masterProductIdFilter
         }
       }).then(function (res) {
-        _this2.isLoading = false;
+        _this4.isLoading = false;
         var data = res.data.data || [];
-        _this2.rows = data.map(function (r) {
+        _this4.rows = data.map(function (r) {
           return _objectSpread(_objectSpread({}, r), {}, {
             _saving: false
           });
         });
-        _this2.totalRows = res.data.total || 0;
+        _this4.totalRows = res.data.total || 0;
         // Explicit backend flag — an empty result can also just mean the current
         // filter/search matched nothing, which isn't the same thing.
-        _this2.noBrandsAssigned = !!res.data.no_brands_assigned;
+        _this4.noBrandsAssigned = !!res.data.no_brands_assigned;
       })["catch"](function () {
-        _this2.isLoading = false;
+        _this4.isLoading = false;
       });
     },
     getBrands: function getBrands() {
-      var _this3 = this;
+      var _this5 = this;
       // Fetched independently of the product list/filters/pagination — this used
       // to be derived from whatever rows were on the current page (collectBrands()),
       // so filtering or paging down to a handful of rows made brands silently
       // disappear from their own filter dropdown.
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/products/filter_brands').then(function (res) {
-        _this3.availableBrands = res.data.data || [];
+        _this5.availableBrands = res.data.data || [];
       })["catch"](function () {});
     },
     getCategories: function getCategories() {
-      var _this4 = this;
+      var _this6 = this;
       // Fetched independently of the product list/filters — same reasoning as
       // the brand list should have used all along: an options list derived
       // from the currently filtered rows shrinks to empty the moment a filter
       // matches nothing, which would make the dropdown itself look broken.
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/products/filter_categories').then(function (res) {
-        _this4.availableCategories = res.data.data || [];
+        _this6.availableCategories = res.data.data || [];
       })["catch"](function () {});
     },
     openLightbox: function openLightbox(src) {
@@ -684,7 +776,7 @@ var tr = function tr(key, fallback) {
       this.toggler = false;
     },
     saveRow: function saveRow(row) {
-      var _this5 = this;
+      var _this7 = this;
       row._saving = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/products/update', {
         product_variant_id: row.product_variant_id,
@@ -706,27 +798,30 @@ var tr = function tr(key, fallback) {
           if (res.data.data && res.data.data.seller_product_id) {
             row.seller_product_id = res.data.data.seller_product_id;
           }
-          _this5.showMessage('success', res.data.message || __('product_updated_successfully'));
+          _this7.showMessage('success', res.data.message || __('product_updated_successfully'));
+          _this7.getStats();
         } else {
-          _this5.showError(res.data.message);
+          _this7.showError(res.data.message);
         }
       })["catch"](function (err) {
         row._saving = false;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this5.showError(msg);
+        _this7.showError(msg);
       });
     },
     toggleStatus: function toggleStatus(row, event) {
-      var _this6 = this;
+      var _this8 = this;
       var newStatus = event.target.checked ? 1 : 0;
       row.status = newStatus;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/products/toggle_status', {
         product_variant_id: row.product_variant_id,
         status: newStatus
+      }).then(function () {
+        return _this8.getStats();
       })["catch"](function (err) {
         row.status = newStatus === 1 ? 0 : 1;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this6.showError(msg);
+        _this8.showError(msg);
       });
     },
     openSlabs: function openSlabs(row) {
@@ -750,7 +845,7 @@ var tr = function tr(key, fallback) {
       this.slabDraft.splice(idx, 1);
     },
     saveSlabs: function saveSlabs() {
-      var _this7 = this;
+      var _this9 = this;
       if (!this.slabTarget.seller_product_id) {
         this.showError(__('save_price_first_before_slabs'));
         return;
@@ -820,18 +915,18 @@ var tr = function tr(key, fallback) {
         seller_product_id: this.slabTarget.seller_product_id,
         slabs: this.slabDraft
       }).then(function (res) {
-        _this7.slabSaving = false;
+        _this9.slabSaving = false;
         if (res.data.status) {
-          _this7.slabTarget.slab_prices = _this7.slabDraft.slice();
-          _this7.slabModalOpen = false;
-          _this7.showMessage('success', res.data.message || __('slab_prices_saved_successfully'));
+          _this9.slabTarget.slab_prices = _this9.slabDraft.slice();
+          _this9.slabModalOpen = false;
+          _this9.showMessage('success', res.data.message || __('slab_prices_saved_successfully'));
         } else {
-          _this7.showError(res.data.message);
+          _this9.showError(res.data.message);
         }
       })["catch"](function (err) {
-        _this7.slabSaving = false;
+        _this9.slabSaving = false;
         var msg = err.response && err.response.data && err.response.data.message || __('something_went_wrong');
-        _this7.showError(msg);
+        _this9.showError(msg);
       });
     }
   }
@@ -856,7 +951,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout) */\n.mp-busy[data-v-147d0436] { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 36px 0; color: var(--ui-muted); font-size: 14px;\n}\n.mp-muted[data-v-147d0436] { font-size: 13px; color: var(--ui-muted);\n}\n.mp-id[data-v-147d0436] { font-size: 13px; font-weight: 600; color: var(--ui-muted); white-space: nowrap;\n}\n.mp-zoom[data-v-147d0436] { cursor: zoom-in;\n}\n.mp-thumb--blank[data-v-147d0436] { display: flex; align-items: center; justify-content: center; color: var(--ui-slate); font-size: 16px;\n}\n\n/* name + brand / free-item tags */\n.mp-name[data-v-147d0436] { display: flex; flex-direction: column; gap: 4px; min-width: 180px;\n}\n.mp-name strong[data-v-147d0436] { font-size: 14px; font-weight: 700; color: var(--ui-text);\n}\n.mp-name__meta[data-v-147d0436] { display: flex; flex-wrap: wrap; align-items: center; gap: 6px;\n}\n\n/* inline-edit inputs */\n.mp-input[data-v-147d0436] {\n    height: 38px; width: 100%; padding: 0 10px; border-radius: 10px; border: 1px solid var(--ui-border);\n    background: var(--ui-card); color: var(--ui-text); font-size: 14px; outline: none;\n    transition: border-color 0.15s ease, box-shadow 0.15s ease;\n}\n.mp-input[data-v-147d0436]:focus { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.mp-input[data-v-147d0436]:disabled { background: var(--ui-soft); color: var(--ui-muted); cursor: not-allowed;\n}\n.mp-input--plain[data-v-147d0436] { min-width: 84px; max-width: 110px;\n}\n.mp-input--narrow[data-v-147d0436] { min-width: 70px; max-width: 90px;\n}\n.mp-input--days[data-v-147d0436] { min-width: 64px; width: 70px;\n}\n/* currency prefix + input that read as one field */\n.mp-money[data-v-147d0436] {\n    display: flex; align-items: center; min-width: 100px; max-width: 130px; height: 38px; padding-left: 10px; border-radius: 10px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-muted); font-size: 13px; font-weight: 600;\n    transition: border-color 0.15s ease, box-shadow 0.15s ease;\n}\n.mp-money[data-v-147d0436]:focus-within { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.mp-money .mp-input[data-v-147d0436] { border: 0; box-shadow: none; background: transparent; padding-left: 6px; height: 100%;\n}\n.mp-money .mp-input[data-v-147d0436]:disabled { background: transparent;\n}\n.mp-info[data-v-147d0436] { color: var(--ui-slate); cursor: help;\n}\n\n/* switches line up under their (left-aligned) column header */\n.mp-switch[data-v-147d0436] { margin: 0; min-height: 0;\n}\n\n/* slab count button */\n.mp-slabs[data-v-147d0436] {\n    display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 10px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-muted); font-size: 13px; font-weight: 600; cursor: pointer;\n    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;\n}\n.mp-slabs[data-v-147d0436]:hover:not(:disabled) { background: var(--ui-soft); color: var(--ui-text);\n}\n.mp-slabs--set[data-v-147d0436] { background: var(--ui-blue-bg); border-color: transparent; color: var(--ui-blue-fg);\n}\n.mp-slabs[data-v-147d0436]:disabled { opacity: 0.5; cursor: not-allowed;\n}\n\n/* row save */\n.mp-save[data-v-147d0436] {\n    width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 10px;\n    background: var(--ui-primary); color: #fff; font-size: 14px; cursor: pointer; transition: filter 0.15s ease;\n}\n.mp-save[data-v-147d0436]:hover:not(:disabled) { filter: brightness(0.92);\n}\n.mp-save[data-v-147d0436]:disabled { opacity: 0.7; cursor: default;\n}\n\n/* empty-state button */\n.mp-btn[data-v-147d0436] {\n    display: inline-flex; align-items: center; gap: 8px; height: 40px; margin-top: 8px; padding: 0 16px; border-radius: 12px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-text); font-size: 13.5px; font-weight: 600; cursor: pointer;\n}\n.mp-btn[data-v-147d0436]:hover { background: var(--ui-soft);\n}\n\n/* footer count sits right after the page-size picker */\n.mp-count[data-v-147d0436] { flex: 1; font-size: 13px; color: var(--ui-muted); white-space: nowrap;\n}\n\n/* max allowed qty */\n.max-qty-head[data-v-147d0436] {\n    text-align: left;\n    line-height: 1.3;\n}\n.max-qty-cell[data-v-147d0436] {\n    display: flex;\n    flex-direction: column;\n    align-items: stretch;\n    gap: 8px;\n    min-width: 150px;\n    padding: 4px 0;\n}\n.max-qty-select[data-v-147d0436],\n.max-qty-input[data-v-147d0436] {\n    width: 100%;\n    max-width: none;\n}\n.max-qty-hint[data-v-147d0436] {\n    font-size: 12px;\n    color: var(--ui-muted);\n    line-height: 1.4;\n}\n@media (max-width: 767px) {\n.mp-count[data-v-147d0436] { flex: none; margin-left: auto;\n}\n.mp-name[data-v-147d0436] { min-width: 0;\n}\n.mp-input--plain[data-v-147d0436], .mp-input--narrow[data-v-147d0436] { max-width: none;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout) */\n.mp-busy[data-v-147d0436] { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 36px 0; color: var(--ui-muted); font-size: 14px;\n}\n.mp-muted[data-v-147d0436] { font-size: 13px; color: var(--ui-muted);\n}\n.mp-id[data-v-147d0436] { font-size: 13px; font-weight: 600; color: var(--ui-muted); white-space: nowrap;\n}\n.mp-zoom[data-v-147d0436] { cursor: zoom-in;\n}\n.mp-thumb--blank[data-v-147d0436] { display: flex; align-items: center; justify-content: center; color: var(--ui-slate); font-size: 16px;\n}\n\n/* the editable grid is wide; slimmer side padding keeps the save button on screen on laptop widths */\n[data-v-147d0436] .list-surface table.b-table.mp-table thead th,[data-v-147d0436] .list-surface table.b-table.mp-table tbody td { padding-left: 12px !important; padding-right: 12px !important;\n}\n\n/* name + brand / free-item tags */\n.mp-name[data-v-147d0436] { display: flex; flex-direction: column; gap: 4px; min-width: 180px;\n}\n.mp-name strong[data-v-147d0436] { font-size: 14px; font-weight: 700; color: var(--ui-text);\n}\n.mp-name__meta[data-v-147d0436] { display: flex; flex-wrap: wrap; align-items: center; gap: 6px;\n}\n\n/* inline-edit inputs */\n.mp-input[data-v-147d0436] {\n    height: 38px; width: 100%; padding: 0 10px; border-radius: 10px; border: 1px solid var(--ui-border);\n    background: var(--ui-card); color: var(--ui-text); font-size: 14px; outline: none;\n    transition: border-color 0.15s ease, box-shadow 0.15s ease;\n}\n.mp-input[data-v-147d0436]:focus { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.mp-input[data-v-147d0436]:disabled { background: var(--ui-soft); color: var(--ui-muted); cursor: not-allowed;\n}\n.mp-input--plain[data-v-147d0436] { min-width: 84px; max-width: 110px;\n}\n.mp-input--narrow[data-v-147d0436] { min-width: 70px; max-width: 90px;\n}\n.mp-input--days[data-v-147d0436] { min-width: 64px; width: 70px;\n}\n/* currency prefix + input that read as one field */\n.mp-money[data-v-147d0436] {\n    display: flex; align-items: center; min-width: 100px; max-width: 130px; height: 38px; padding-left: 10px; border-radius: 10px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-muted); font-size: 13px; font-weight: 600;\n    transition: border-color 0.15s ease, box-shadow 0.15s ease;\n}\n.mp-money[data-v-147d0436]:focus-within { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.mp-money .mp-input[data-v-147d0436] { border: 0; box-shadow: none; background: transparent; padding-left: 6px; height: 100%;\n}\n.mp-money .mp-input[data-v-147d0436]:disabled { background: transparent;\n}\n.mp-info[data-v-147d0436] { color: var(--ui-slate); cursor: help;\n}\n\n/* switches line up under their (left-aligned) column header */\n.mp-switch[data-v-147d0436] { margin: 0; min-height: 0;\n}\n\n/* slab count button */\n.mp-slabs[data-v-147d0436] {\n    display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 10px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-muted); font-size: 13px; font-weight: 600; cursor: pointer;\n    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;\n}\n.mp-slabs[data-v-147d0436]:hover:not(:disabled) { background: var(--ui-soft); color: var(--ui-text);\n}\n.mp-slabs--set[data-v-147d0436] { background: var(--ui-blue-bg); border-color: transparent; color: var(--ui-blue-fg);\n}\n.mp-slabs[data-v-147d0436]:disabled { opacity: 0.5; cursor: not-allowed;\n}\n\n/* row save */\n.mp-save[data-v-147d0436] {\n    width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 10px;\n    background: var(--ui-primary); color: #fff; font-size: 14px; cursor: pointer; transition: filter 0.15s ease;\n}\n.mp-save[data-v-147d0436]:hover:not(:disabled) { filter: brightness(0.92);\n}\n.mp-save[data-v-147d0436]:disabled { opacity: 0.7; cursor: default;\n}\n\n/* empty-state button */\n.mp-btn[data-v-147d0436] {\n    display: inline-flex; align-items: center; gap: 8px; height: 40px; margin-top: 8px; padding: 0 16px; border-radius: 12px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-text); font-size: 13.5px; font-weight: 600; cursor: pointer;\n}\n.mp-btn[data-v-147d0436]:hover { background: var(--ui-soft);\n}\n\n/* footer count sits right after the page-size picker */\n.mp-count[data-v-147d0436] { flex: 1; font-size: 13px; color: var(--ui-muted); white-space: nowrap;\n}\n\n/* max allowed qty */\n.max-qty-head[data-v-147d0436] {\n    text-align: left;\n    line-height: 1.3;\n}\n.max-qty-cell[data-v-147d0436] {\n    display: flex;\n    flex-direction: column;\n    align-items: stretch;\n    gap: 8px;\n    min-width: 150px;\n    padding: 4px 0;\n}\n.max-qty-select[data-v-147d0436],\n.max-qty-input[data-v-147d0436] {\n    width: 100%;\n    max-width: none;\n}\n.max-qty-hint[data-v-147d0436] {\n    font-size: 12px;\n    color: var(--ui-muted);\n    line-height: 1.4;\n}\n@media (max-width: 767px) {\n.mp-count[data-v-147d0436] { flex: none; margin-left: auto;\n}\n.mp-name[data-v-147d0436] { min-width: 0;\n}\n.mp-input--plain[data-v-147d0436], .mp-input--narrow[data-v-147d0436] { max-width: none;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -1023,7 +1118,7 @@ var render = function () {
                 attrs: { type: "button", title: _vm.__("refresh") },
                 on: {
                   click: function ($event) {
-                    return _vm.getRecords()
+                    return _vm.refresh()
                   },
                 },
               },
@@ -1152,6 +1247,53 @@ var render = function () {
           1
         ),
       ]),
+      _vm._v(" "),
+      !_vm.noBrandsAssigned
+        ? _c(
+            "section",
+            { staticClass: "ui-cards" },
+            _vm._l(_vm.statCards, function (card) {
+              return _c(
+                "button",
+                {
+                  key: card.key,
+                  staticClass: "ui-stat",
+                  class: { "ui-stat--on": card.on },
+                  attrs: { type: "button" },
+                  on: {
+                    click: function ($event) {
+                      return _vm.applyQuickFilter(card)
+                    },
+                  },
+                },
+                [
+                  _c(
+                    "span",
+                    { staticClass: "ui-tile", class: "ui-tone--" + card.tone },
+                    [_c("i", { staticClass: "fa", class: card.icon })]
+                  ),
+                  _vm._v(" "),
+                  _c("span", { staticClass: "ui-stat__body" }, [
+                    _c("span", { staticClass: "ui-stat__label" }, [
+                      _vm._v(_vm._s(card.label)),
+                    ]),
+                    _vm._v(" "),
+                    _c("strong", { staticClass: "ui-stat__value" }, [
+                      _vm._v(_vm._s(card.count)),
+                    ]),
+                    _vm._v(" "),
+                    card.hint
+                      ? _c("span", { staticClass: "ui-stat__hint" }, [
+                          _vm._v(_vm._s(card.hint)),
+                        ])
+                      : _vm._e(),
+                  ]),
+                ]
+              )
+            }),
+            0
+          )
+        : _vm._e(),
       _vm._v(" "),
       _c("div", { staticClass: "ui-filters" }, [
         _c("div", { staticClass: "ui-search" }, [
@@ -1513,6 +1655,7 @@ var render = function () {
                   busy: _vm.isLoading,
                   stacked: "md",
                   "show-empty": "",
+                  "table-class": "mp-table",
                 },
                 scopedSlots: _vm._u([
                   {

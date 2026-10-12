@@ -22,6 +22,20 @@ class OrderPayment extends Model
         'cheque_date'     => 'date',
     ];
 
+    /**
+     * "upi" is the stored method value (enum, reports, exports), but every app shows and sends "bank".
+     * appMethod() maps stored -> app, storedMethod() maps what an app sent -> stored.
+     */
+    public static function appMethod(?string $method): ?string
+    {
+        return $method === 'upi' ? 'bank' : $method;
+    }
+
+    public static function storedMethod(?string $method): ?string
+    {
+        return $method === 'bank' ? 'upi' : $method;
+    }
+
     public function order()
     {
         return $this->belongsTo(Order::class);

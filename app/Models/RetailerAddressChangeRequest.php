@@ -24,6 +24,8 @@ class RetailerAddressChangeRequest extends Model
         'new_address_line2',
         'new_city_name',
         'new_state',
+        'new_area_id',
+        'new_pincode',
         'new_city_id',
         'new_gps_lat',
         'new_gps_lng',
@@ -60,6 +62,11 @@ class RetailerAddressChangeRequest extends Model
     public function newCity()
     {
         return $this->belongsTo(\App\Models\City::class, 'new_city_id');
+    }
+
+    public function newArea()
+    {
+        return $this->belongsTo(\App\Models\Area::class, 'new_area_id');
     }
 
     public function getActivitylogOptions(): LogOptions

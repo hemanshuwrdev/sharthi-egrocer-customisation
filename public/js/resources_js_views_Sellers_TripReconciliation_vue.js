@@ -1050,6 +1050,44 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1065,6 +1103,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       cancelInvoices: [],
       rescheduleInvoices: [],
       returnItemSummary: [],
+      returnedItemTotals: [],
+      sellerInfo: null,
       totals: {
         total_expected: 0,
         total_collected: 0,
@@ -1252,6 +1292,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         _this.cancelInvoices = d.cancel_invoices || [];
         _this.rescheduleInvoices = d.reschedule_invoices || [];
         _this.returnItemSummary = d.return_item_summary || [];
+        _this.returnedItemTotals = d.returned_item_totals || [];
+        _this.sellerInfo = d.seller || null;
         _this.loading = false;
       })["catch"](function () {
         _this.loading = false;
@@ -1740,23 +1782,47 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var personName = this.settlement.person ? this.settlement.person.name : '-';
       var typeLabel = this.tripType === 'salesman' ? __('salesman') : __('driver');
 
+      // Distributor header — name with the year, then the address, centred and upper-case,
+      // the same as the top of the Loading Slip print. `top` is where the bar below starts.
+      var top = 0;
+      if (this.sellerInfo && this.sellerInfo.name) {
+        var year = new Date().getFullYear();
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(13);
+        doc.text(this.sellerInfo.name.toUpperCase() + ' (' + year + '-' + String((year + 1) % 100).padStart(2, '0') + ')', pageW / 2, 11, {
+          align: 'center'
+        });
+        top = 15;
+        if (this.sellerInfo.address) {
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(8.5);
+          var addressLines = doc.splitTextToSize(this.sellerInfo.address.toUpperCase(), pageW - 28);
+          doc.text(addressLines, pageW / 2, top + 1, {
+            align: 'center'
+          });
+          top += addressLines.length * 4 + 2;
+        }
+        top += 3;
+      }
+
       // Header bar
       doc.setFillColor(52, 58, 64);
-      doc.rect(0, 0, pageW, 22, 'F');
+      doc.rect(0, top, pageW, 22, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(15);
       doc.setFont(undefined, 'bold');
-      doc.text(__('trip_reconciliation') || 'Trip Reconciliation', 14, 14);
+      doc.text(__('trip_reconciliation') || 'Trip Reconciliation', 14, top + 14);
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9);
-      doc.text('#' + this.$route.params.id, pageW - 14, 14, {
+      doc.text('#' + this.$route.params.id, pageW - 14, top + 14, {
         align: 'right'
       });
       doc.setTextColor(0, 0, 0);
 
       // Person / type / date + status summary table
       (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-        startY: 28,
+        startY: top + 28,
         theme: 'plain',
         styles: {
           fontSize: 9,
@@ -2019,6 +2085,45 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           columnStyles: {
             1: {
               cellWidth: 35
+            }
+          }
+        });
+      }
+
+      // Returned Item Summary — one line per product, with an empty "Counted" column to tick
+      // on paper while the goods are checked off the truck.
+      if (this.returnedItemTotals.length) {
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(__('returned_item_summary') || 'Returned Item Summary', 14, doc.lastAutoTable.finalY + 10);
+        doc.setFont(undefined, 'normal');
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
+          startY: doc.lastAutoTable.finalY + 13,
+          head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', __('quantity') || 'Quantity', 'Counted']],
+          body: this.returnedItemTotals.map(function (r, i) {
+            return [i + 1, r.product_name + (r.variant_name ? ' — ' + r.variant_name : ''), r.quantity, ''];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: {
+            fillColor: [234, 88, 12]
+          },
+          alternateRowStyles: {
+            fillColor: [255, 247, 237]
+          },
+          columnStyles: {
+            0: {
+              cellWidth: 14,
+              halign: 'center'
+            },
+            2: {
+              cellWidth: 25,
+              halign: 'right'
+            },
+            3: {
+              cellWidth: 20
             }
           }
         });
@@ -7655,116 +7760,61 @@ var render = function () {
                   _vm._v(" "),
                   _c("div", { staticClass: "trip-header__divider" }),
                   _vm._v(" "),
-                  _c(
-                    "div",
-                    { staticClass: "trip-header__actions" },
-                    [
-                      _vm.methodEditUnlocked
-                        ? _c(
-                            "span",
-                            { staticClass: "text-success small fw-semibold" },
-                            [
-                              _c("i", { staticClass: "fa fa-unlock me-1" }),
-                              _vm._v(
-                                _vm._s(_vm.__("editing_enabled")) +
-                                  "\n                        "
-                              ),
-                            ]
-                          )
-                        : _c(
-                            "button",
-                            {
-                              staticClass:
-                                "trip-header__btn trip-header__btn--secondary",
-                              attrs: { type: "button" },
-                              on: { click: _vm.openUnlockModal },
-                            },
-                            [
-                              _c("i", {
-                                staticClass: "fa fa-lock trip-header__btn-icon",
-                              }),
-                              _vm._v(
-                                _vm._s(_vm.__("edit")) +
-                                  "\n                        "
-                              ),
-                            ]
-                          ),
-                      _vm._v(" "),
-                      _vm.isClosed
-                        ? _c(
-                            "b-dropdown",
-                            {
-                              staticClass: "export-dropdown",
-                              attrs: {
-                                right: "",
-                                boundary: "window",
-                                "toggle-class":
-                                  "trip-header__btn trip-header__btn--primary",
-                                "no-caret": "",
+                  _c("div", { staticClass: "trip-header__actions" }, [
+                    _vm.methodEditUnlocked
+                      ? _c(
+                          "span",
+                          { staticClass: "text-success small fw-semibold" },
+                          [
+                            _c("i", { staticClass: "fa fa-unlock me-1" }),
+                            _vm._v(
+                              _vm._s(_vm.__("editing_enabled")) +
+                                "\n                        "
+                            ),
+                          ]
+                        )
+                      : _c(
+                          "button",
+                          {
+                            staticClass:
+                              "trip-header__btn trip-header__btn--secondary",
+                            attrs: { type: "button" },
+                            on: { click: _vm.openUnlockModal },
+                          },
+                          [
+                            _c("i", {
+                              staticClass: "fa fa-lock trip-header__btn-icon",
+                            }),
+                            _vm._v(
+                              _vm._s(_vm.__("edit")) +
+                                "\n                        "
+                            ),
+                          ]
+                        ),
+                    _vm._v(" "),
+                    _vm.isClosed
+                      ? _c(
+                          "button",
+                          {
+                            staticClass:
+                              "trip-header__btn trip-header__btn--primary",
+                            attrs: { type: "button" },
+                            on: {
+                              click: function ($event) {
+                                return _vm.exportReport("pdf")
                               },
-                              scopedSlots: _vm._u(
-                                [
-                                  {
-                                    key: "button-content",
-                                    fn: function () {
-                                      return [
-                                        _c("i", {
-                                          staticClass: "fa fa-download",
-                                        }),
-                                        _vm._v(
-                                          _vm._s(_vm.__("export_report")) +
-                                            "\n                                "
-                                        ),
-                                        _c("i", {
-                                          staticClass:
-                                            "fa fa-caret-down trip-header__btn-caret",
-                                        }),
-                                      ]
-                                    },
-                                    proxy: true,
-                                  },
-                                ],
-                                null,
-                                false,
-                                2119469500
-                              ),
                             },
-                            [
-                              _vm._v(" "),
-                              _c(
-                                "b-dropdown-item",
-                                {
-                                  attrs: { href: "#" },
-                                  on: {
-                                    click: function ($event) {
-                                      $event.preventDefault()
-                                      return _vm.exportReport("csv")
-                                    },
-                                  },
-                                },
-                                [_vm._v(_vm._s(_vm.__("export_as_csv")))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "b-dropdown-item",
-                                {
-                                  attrs: { href: "#" },
-                                  on: {
-                                    click: function ($event) {
-                                      $event.preventDefault()
-                                      return _vm.exportReport("pdf")
-                                    },
-                                  },
-                                },
-                                [_vm._v(_vm._s(_vm.__("export_as_pdf")))]
-                              ),
-                            ],
-                            1
-                          )
-                        : _vm._e(),
-                    ],
-                    1
-                  ),
+                          },
+                          [
+                            _c("i", { staticClass: "fa fa-download" }),
+                            _vm._v(
+                              _vm._s(_vm.__("Export PDF")) +
+                                "\n                        "
+                            ),
+                          ]
+                        )
+                      : _vm._e(),
+                  ]),
                 ]),
               ]),
               _vm._v(" "),
@@ -12239,6 +12289,158 @@ var render = function () {
                       ]),
                     },
                     [
+                      _vm._v(" "),
+                      _vm.returnedItemTotals.length > 0
+                        ? _c("div", { staticClass: "card mb-3" }, [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "card-header d-flex justify-content-between align-items-center",
+                              },
+                              [
+                                _c("h5", { staticClass: "card-title mb-0" }, [
+                                  _c("i", {
+                                    staticClass: "fa fa-list-ol me-2 text-info",
+                                  }),
+                                  _vm._v(
+                                    _vm._s(_vm.__("returned_item_summary"))
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "span",
+                                  { staticClass: "text-muted small" },
+                                  [
+                                    _vm._v(
+                                      _vm._s(_vm.returnedItemTotals.length) +
+                                        " " +
+                                        _vm._s(
+                                          _vm.returnedItemTotals.length === 1
+                                            ? _vm.__("item")
+                                            : _vm.__("items")
+                                        )
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "card-body p-0" }, [
+                              _c("div", { staticClass: "table-responsive" }, [
+                                _c(
+                                  "table",
+                                  {
+                                    staticClass:
+                                      "table table-bordered align-middle mb-0",
+                                  },
+                                  [
+                                    _c(
+                                      "thead",
+                                      { staticClass: "table-light" },
+                                      [
+                                        _c("tr", [
+                                          _c(
+                                            "th",
+                                            {
+                                              staticClass: "ps-3 text-center",
+                                              staticStyle: { width: "80px" },
+                                            },
+                                            [_vm._v(_vm._s(_vm.__("si_no")))]
+                                          ),
+                                          _vm._v(" "),
+                                          _c("th", [
+                                            _vm._v(_vm._s(_vm.__("item_name"))),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c(
+                                            "th",
+                                            {
+                                              staticClass: "text-end pe-3",
+                                              staticStyle: { width: "140px" },
+                                            },
+                                            [_vm._v(_vm._s(_vm.__("quantity")))]
+                                          ),
+                                        ]),
+                                      ]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "tbody",
+                                      _vm._l(
+                                        _vm.returnedItemTotals,
+                                        function (row, idx) {
+                                          return _c(
+                                            "tr",
+                                            {
+                                              key:
+                                                row.product_name +
+                                                "_" +
+                                                (row.variant_name || "") +
+                                                "_" +
+                                                idx,
+                                            },
+                                            [
+                                              _c(
+                                                "td",
+                                                {
+                                                  staticClass:
+                                                    "ps-3 text-center",
+                                                },
+                                                [_vm._v(_vm._s(idx + 1))]
+                                              ),
+                                              _vm._v(" "),
+                                              _c("td", [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass: "fw-semibold",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(row.product_name)
+                                                    ),
+                                                  ]
+                                                ),
+                                                _vm._v(" "),
+                                                row.variant_name
+                                                  ? _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "text-muted small",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            row.variant_name
+                                                          )
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "td",
+                                                {
+                                                  staticClass:
+                                                    "text-end pe-3 fw-bold",
+                                                },
+                                                [_vm._v(_vm._s(row.quantity))]
+                                              ),
+                                            ]
+                                          )
+                                        }
+                                      ),
+                                      0
+                                    ),
+                                  ]
+                                ),
+                              ]),
+                            ]),
+                          ])
+                        : _vm._e(),
                       _vm._v(" "),
                       _vm.returnItemSummary.length > 0
                         ? _c("div", { staticClass: "card" }, [

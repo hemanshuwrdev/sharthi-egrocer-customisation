@@ -1864,6 +1864,7 @@ class ProductApisController extends Controller
                 'sp.discounted_price',
                 'sp.stock',
                 'sp.status as pv_status',
+                DB::raw('(SELECT b.name FROM brands b WHERE b.id = mp.brand_id) as brand_name'),
                 DB::raw('(SELECT short_code FROM units u WHERE u.id = mpv.unit_id) as short_code'),
                 DB::raw('(SELECT short_code FROM units u WHERE u.id = mpv.unit_id) as stock_unit')
             )
@@ -1882,6 +1883,39 @@ class ProductApisController extends Controller
                     ->orWhere('mp.hsn', 'LIKE', "%$searchTerm%")
                     ->orWhere('mpv.sku', 'LIKE', "%$searchTerm%");
             });
+        }
+
+        // Optional filters for the Stock Management screen (all additive: no param, no change).
+        if ($request->filled('brand_id')) {
+            $query->where('mp.brand_id', $request->brand_id);
+        }
+        if ($request->filled('category_id')) {
+            $query->where('mp.category_id', $request->category_id);
+        }
+        // Same sold_out / low_stock / in_stock convention as SellerProductApiController::getMyProducts,
+        // so "low stock" means the same thing on My Products and here.
+        $stockStatus = (string) $request->input('stock_status', '');
+        if ($stockStatus === 'sold_out') {
+            $query->where('sp.stock', '<=', 0)
+                  ->where('sp.status', 0);
+        } elseif ($stockStatus === 'low_stock') {
+            $lowStockLimit = Setting::where('variable', 'low_stock_limit')->value('value');
+            if ($lowStockLimit !== null && $lowStockLimit !== '') {
+                $query->where('sp.stock', '>', 0)
+                      ->where('sp.stock', '<=', (float) $lowStockLimit)
+                      ->where('sp.status', 1);
+            } else {
+                // No threshold configured: nothing can be "low stock" by definition.
+                $query->whereRaw('1 = 0');
+            }
+        } elseif ($stockStatus === 'in_stock') {
+            $lowStockLimit = Setting::where('variable', 'low_stock_limit')->value('value');
+            $query->where('sp.status', 1);
+            if ($lowStockLimit !== null && $lowStockLimit !== '') {
+                $query->where('sp.stock', '>', (float) $lowStockLimit);
+            } else {
+                $query->where('sp.stock', '>', 0);
+            }
         }
 
         $rawProducts = $query->orderBy('mp.id', 'DESC')

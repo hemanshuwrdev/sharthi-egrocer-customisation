@@ -53,7 +53,7 @@ class OrdersApiController extends Controller
             'orders.wallet_balance',
             'orders.final_total',
             'orders.remaining_final',
-            DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
+            DB::raw('COALESCE((SELECT IF(op.method = "upi", "bank", op.method) FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
             'orders.delivery_time',
             'orders.delivery_date',
             'orders.additional_charges',
@@ -187,7 +187,7 @@ class OrdersApiController extends Controller
             'orders.wallet_balance',
             'orders.final_total',
             'orders.remaining_final',
-            DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
+            DB::raw('COALESCE((SELECT IF(op.method = "upi", "bank", op.method) FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
             'orders.delivery_time',
             'orders.delivery_date',
             'orders.additional_charges',
@@ -323,7 +323,7 @@ class OrdersApiController extends Controller
         $data["deliveryBoys"] = $this->getDeliveryBoysWithTranslations($data["order"]->city_id);
 
         // Cash-vs-other-methods price preview, so the driver app can show the customer
-        // "pay cash: X, pay UPI: Y" before collectPayment() actually books the discount.
+        // "pay cash: X, pay bank: Y" before collectPayment() actually books the discount.
         $sellerId = $data["order"]->seller_id ?? null;
         if ($sellerId) {
             $cashDiscountPercent = (float) (Seller::find($sellerId)->cash_discount_percent ?? 0);
@@ -335,7 +335,7 @@ class OrdersApiController extends Controller
                 'cash_discount_percent' => $cashDiscountPercent,
                 'outstanding_amount'    => round($outstanding, 2),
                 'cash'                  => round($outstanding * (1 - $cashDiscountPercent / 100), 2),
-                'upi'                   => round($outstanding * (1 - $cashDiscountPercent / 100), 2),
+                'bank'                  => round($outstanding * (1 - $cashDiscountPercent / 100), 2),
                 'other'                 => round($outstanding, 2),
             ];
         }
@@ -485,6 +485,11 @@ class OrdersApiController extends Controller
 
         if ($order->active_status == OrderStatusList::$returned || $order->active_status == OrderStatusList::$cancelled) {
             return CommonHelper::responseError("Order is Cancelled OR Returned.");
+        }
+
+        // Delivered is final — no role (super admin included) may cancel a delivered order.
+        if ((int) $request->status_id === OrderStatusList::$cancelled && CommonHelper::isDeliveredFinal($order->active_status)) {
+            return CommonHelper::responseError('delivered_order_cannot_be_cancelled');
         }
 
         if (auth()->user()->role_id != Role::$roleSuperAdmin) {
@@ -967,6 +972,21 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
         $ids = explode(",", $request->ids);
+
+        // Delivered is final — an item of a delivered order can't be cancelled. Every selected item
+        // is checked up front so a mixed selection isn't half-applied before it hits the blocked one.
+        if ((int) $request->status_id === OrderStatusList::$cancelled) {
+            foreach ($ids as $id) {
+                $checkItem = OrderItem::find($id);
+                if (!$checkItem) continue;
+                $checkOrder = Order::find($checkItem->order_id);
+                if (CommonHelper::isDeliveredFinal($checkItem->active_status)
+                    || ($checkOrder && CommonHelper::isDeliveredFinal($checkOrder->active_status))) {
+                    return CommonHelper::responseError('delivered_order_cannot_be_cancelled');
+                }
+            }
+        }
+
         foreach ($ids as $key => $id) {
             $orderItem = OrderItem::find($id);
             $order = Order::find($orderItem->order_id);
@@ -1213,6 +1233,10 @@ class OrdersApiController extends Controller
 
         if ($order->active_status == OrderStatusList::$cancelled || $order->active_status == OrderStatusList::$returned) {
             return CommonHelper::responseError('order_is_already_cancelled_or_returned');
+        }
+
+        if (CommonHelper::isDeliveredFinal($order->active_status)) {
+            return CommonHelper::responseError('delivered_order_cannot_be_cancelled');
         }
 
         if ($order->active_status == OrderStatusList::$delivered || $order->active_status == OrderStatusList::$selfPickupPicked) {

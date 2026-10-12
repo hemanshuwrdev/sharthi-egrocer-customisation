@@ -65,6 +65,11 @@
                             <button v-else type="button" class="trip-header__btn trip-header__btn--secondary" @click="openUnlockModal">
                                 <i class="fa fa-lock trip-header__btn-icon"></i>{{ __('edit') }}
                             </button>
+                            <button v-if="isClosed" type="button" class="trip-header__btn trip-header__btn--primary" @click="exportReport('pdf')">
+                                <i class="fa fa-download"></i>{{ __('Export PDF') }}
+                            </button>
+                            <!-- CSV export is hidden for now (not useful for distributors). To bring it back, remove the button above
+                                 and uncomment this dropdown; exportReportCsv() is still in the script.
                             <b-dropdown v-if="isClosed" right boundary="window" class="export-dropdown"
                                 toggle-class="trip-header__btn trip-header__btn--primary" no-caret>
                                 <template #button-content>
@@ -74,6 +79,7 @@
                                 <b-dropdown-item href="#" @click.prevent="exportReport('csv')">{{ __('export_as_csv') }}</b-dropdown-item>
                                 <b-dropdown-item href="#" @click.prevent="exportReport('pdf')">{{ __('export_as_pdf') }}</b-dropdown-item>
                             </b-dropdown>
+                            -->
                         </div>
                     </div>
                 </div>
@@ -884,6 +890,38 @@
                         </span>
                     </template>
 
+                <!-- Returned Item Summary — one line per product across all invoices, to count what came
+                     back off the truck in one go (the per-invoice detail is the card below). -->
+                <div class="card mb-3" v-if="returnedItemTotals.length > 0">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="fa fa-list-ol me-2 text-info"></i>{{ __('returned_item_summary') }}</h5>
+                        <span class="text-muted small">{{ returnedItemTotals.length }} {{ returnedItemTotals.length === 1 ? __('item') : __('items') }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3 text-center" style="width:80px">{{ __('si_no') }}</th>
+                                        <th>{{ __('item_name') }}</th>
+                                        <th class="text-end pe-3" style="width:140px">{{ __('quantity') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(row, idx) in returnedItemTotals" :key="row.product_name + '_' + (row.variant_name || '') + '_' + idx">
+                                        <td class="ps-3 text-center">{{ idx + 1 }}</td>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.product_name }}</div>
+                                            <div class="text-muted small" v-if="row.variant_name">{{ row.variant_name }}</div>
+                                        </td>
+                                        <td class="text-end pe-3 fw-bold">{{ row.quantity }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Item Summary of Returned Items -->
                 <div class="card" v-if="returnItemSummary.length > 0">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -1042,6 +1080,8 @@ export default {
             cancelInvoices: [],
             rescheduleInvoices: [],
             returnItemSummary: [],
+            returnedItemTotals: [],
+            sellerInfo: null,
             totals: {
                 total_expected: 0, total_collected: 0,
                 total_cash: 0, total_upi: 0, total_cheque: 0, total_signature: 0,
@@ -1185,6 +1225,8 @@ export default {
                 this.cancelInvoices     = d.cancel_invoices || [];
                 this.rescheduleInvoices = d.reschedule_invoices || [];
                 this.returnItemSummary  = d.return_item_summary || [];
+                this.returnedItemTotals = d.returned_item_totals || [];
+                this.sellerInfo         = d.seller || null;
                 this.loading            = false;
             }).catch(() => { this.loading = false; });
         },
@@ -1558,21 +1600,41 @@ export default {
             const personName = this.settlement.person ? this.settlement.person.name : '-';
             const typeLabel  = this.tripType === 'salesman' ? __('salesman') : __('driver');
 
+            // Distributor header — name with the year, then the address, centred and upper-case,
+            // the same as the top of the Loading Slip print. `top` is where the bar below starts.
+            let top = 0;
+            if (this.sellerInfo && this.sellerInfo.name) {
+                const year = new Date().getFullYear();
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'bold');
+                doc.setFontSize(13);
+                doc.text(this.sellerInfo.name.toUpperCase() + ' (' + year + '-' + String((year + 1) % 100).padStart(2, '0') + ')', pageW / 2, 11, { align: 'center' });
+                top = 15;
+                if (this.sellerInfo.address) {
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(8.5);
+                    const addressLines = doc.splitTextToSize(this.sellerInfo.address.toUpperCase(), pageW - 28);
+                    doc.text(addressLines, pageW / 2, top + 1, { align: 'center' });
+                    top += addressLines.length * 4 + 2;
+                }
+                top += 3;
+            }
+
             // Header bar
             doc.setFillColor(52, 58, 64);
-            doc.rect(0, 0, pageW, 22, 'F');
+            doc.rect(0, top, pageW, 22, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(15);
             doc.setFont(undefined, 'bold');
-            doc.text(__('trip_reconciliation') || 'Trip Reconciliation', 14, 14);
+            doc.text(__('trip_reconciliation') || 'Trip Reconciliation', 14, top + 14);
             doc.setFont(undefined, 'normal');
             doc.setFontSize(9);
-            doc.text('#' + this.$route.params.id, pageW - 14, 14, { align: 'right' });
+            doc.text('#' + this.$route.params.id, pageW - 14, top + 14, { align: 'right' });
             doc.setTextColor(0, 0, 0);
 
             // Person / type / date + status summary table
             autoTable(doc, {
-                startY: 28,
+                startY: top + 28,
                 theme: 'plain',
                 styles: { fontSize: 9, cellPadding: 1 },
                 body: [
@@ -1736,6 +1798,27 @@ export default {
                     headStyles: { fillColor: [107, 114, 128] },
                     alternateRowStyles: { fillColor: [249, 250, 251] },
                     columnStyles: { 1: { cellWidth: 35 } },
+                });
+            }
+
+            // Returned Item Summary — one line per product, with an empty "Counted" column to tick
+            // on paper while the goods are checked off the truck.
+            if (this.returnedItemTotals.length) {
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text(__('returned_item_summary') || 'Returned Item Summary', 14, doc.lastAutoTable.finalY + 10);
+                doc.setFont(undefined, 'normal');
+
+                autoTable(doc, {
+                    startY: doc.lastAutoTable.finalY + 13,
+                    head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', __('quantity') || 'Quantity', 'Counted']],
+                    body: this.returnedItemTotals.map((r, i) => [
+                        i + 1, r.product_name + (r.variant_name ? ' — ' + r.variant_name : ''), r.quantity, '',
+                    ]),
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [234, 88, 12] },
+                    alternateRowStyles: { fillColor: [255, 247, 237] },
+                    columnStyles: { 0: { cellWidth: 14, halign: 'center' }, 2: { cellWidth: 25, halign: 'right' }, 3: { cellWidth: 20 } },
                 });
             }
 

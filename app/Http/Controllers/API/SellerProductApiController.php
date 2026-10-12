@@ -65,25 +65,8 @@ class SellerProductApiController extends Controller
         $type   = trim((string) $request->input('type', ''));
         $sort   = trim((string) $request->input('sort', ''));
 
-        $query = MasterProductVariant::query()
+        $query = $this->visibleVariantsQuery($seller)
             ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'unit', 'secondaryUnit'])
-            ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
-            ->leftJoin('seller_products', function ($j) use ($seller) {
-                $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
-                    ->where('seller_products.seller_id', $seller->id);
-            })
-            ->whereExists(function ($q) use ($seller) {
-                $q->select(DB::raw(1))
-                    ->from('brand_distributor_mappings as bdm')
-                    ->whereColumn('bdm.brand_id', 'master_products.brand_id')
-                    ->where('bdm.seller_id', $seller->id)
-                    ->where(function ($q2) {
-                        $q2->whereNull('bdm.brand_line_id')
-                            ->orWhereColumn('bdm.brand_line_id', 'master_products.brand_line_id');
-                    });
-            })
-            ->where('master_products.status', 1)
-            ->where('master_product_variants.status', 1)
             ->select(
                 'master_product_variants.*',
                 'seller_products.id as sp_id',
@@ -233,6 +216,78 @@ class SellerProductApiController extends Controller
         });
 
         return CommonHelper::responseWithData($result, $total);
+    }
+
+    /**
+     * Every active master variant under a brand (and brand line) assigned to this distributor,
+     * left-joined with the distributor's own seller_products row. This is the one place that
+     * decides which products a distributor sees, shared by the list and the stats below.
+     */
+    private function visibleVariantsQuery($seller)
+    {
+        return MasterProductVariant::query()
+            ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->leftJoin('seller_products', function ($j) use ($seller) {
+                $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
+                    ->where('seller_products.seller_id', $seller->id);
+            })
+            ->whereExists(function ($q) use ($seller) {
+                $q->select(DB::raw(1))
+                    ->from('brand_distributor_mappings as bdm')
+                    ->whereColumn('bdm.brand_id', 'master_products.brand_id')
+                    ->where('bdm.seller_id', $seller->id)
+                    ->where(function ($q2) {
+                        $q2->whereNull('bdm.brand_line_id')
+                            ->orWhereColumn('bdm.brand_line_id', 'master_products.brand_line_id');
+                    });
+            })
+            ->where('master_products.status', 1)
+            ->where('master_product_variants.status', 1);
+    }
+
+    /**
+     * Counts for the cards on top of "My Products": distributor-wide, not affected by the
+     * list's search or filters. Same definitions as the list's own filters, so clicking a
+     * card shows exactly the rows it counted:
+     *   active    = status on                      (active_only=1)
+     *   inactive  = status off, or never activated (active_only=0)
+     *   sold_out  = stock <= 0 and status off      (type=sold_out)
+     *   low_stock = 0 < stock <= low_stock_limit, status on (type=low_stock); 0 when no limit is set
+     */
+    public function getMyProductStats()
+    {
+        $seller = $this->seller();
+        if (!$seller) {
+            return CommonHelper::responseError('seller_not_found');
+        }
+
+        $stats = ['total' => 0, 'active' => 0, 'inactive' => 0, 'low_stock' => 0, 'sold_out' => 0];
+
+        if (BrandDistributorMapping::where('seller_id', $seller->id)->exists()) {
+            $lowStockLimit = Setting::where('variable', 'low_stock_limit')->value('value');
+            $hasLimit = $lowStockLimit !== null && $lowStockLimit !== '';
+
+            $query = $this->visibleVariantsQuery($seller)
+                ->toBase()
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw('COALESCE(SUM(seller_products.status = 1), 0) as active')
+                ->selectRaw('COALESCE(SUM(seller_products.stock <= 0 AND seller_products.status = 0), 0) as sold_out');
+            if ($hasLimit) {
+                $query->selectRaw(
+                    'COALESCE(SUM(seller_products.stock > 0 AND seller_products.stock <= ? AND seller_products.status = 1), 0) as low_stock',
+                    [(float) $lowStockLimit]
+                );
+            }
+            $row = $query->first();
+
+            $stats['total'] = (int) $row->total;
+            $stats['active'] = (int) $row->active;
+            $stats['inactive'] = $stats['total'] - $stats['active'];
+            $stats['sold_out'] = (int) $row->sold_out;
+            $stats['low_stock'] = $hasLimit ? (int) $row->low_stock : 0;
+        }
+
+        return CommonHelper::responseWithData($stats, $stats['total']);
     }
 
     /**

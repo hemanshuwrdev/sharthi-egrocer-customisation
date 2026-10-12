@@ -1142,6 +1142,15 @@ class CommonHelper
             return false;
         }
     }
+    /**
+     * Delivered (fully or partly) is the last state of a delivery — the goods are with the retailer,
+     * so the order can no longer be cancelled; anything coming back goes through a return request.
+     */
+    public static function isDeliveredFinal($activeStatus): bool
+    {
+        return in_array((int) $activeStatus, [OrderStatusList::$delivered, OrderStatusList::$partialDelivery], true);
+    }
+
     public static function isOrderItemReturned($active_status, $postStatus)
     {
         if ($active_status != OrderStatusList::$delivered && $postStatus == OrderStatusList::$returned) {

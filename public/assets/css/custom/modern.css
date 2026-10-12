@@ -353,17 +353,17 @@ body.theme-dark .ui-modern {
 .ui-modern .ui-doc img { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; border: 1px solid var(--ui-border); background: var(--ui-soft); }
 
 /* segmented control: b-tabs (pills) and b-form-radio-group (buttons) */
-.ui-modern .ui-seg-nav,
+.ui-modern .ui-seg-nav.nav,
 .ui-modern .ui-seg.btn-group { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 18px; border-radius: 12px; background: var(--ui-slate-bg); }
 .ui-modern .ui-seg.btn-group { margin-bottom: 0; align-self: flex-start; max-width: 100%; }
-.ui-modern .ui-seg-nav .nav-link,
+.ui-modern .ui-seg-nav.nav .nav-link,
 .ui-modern .ui-seg.btn-group > .btn {
     display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border: 0 !important; border-radius: 9px !important;
     background: transparent; color: var(--ui-muted); font-size: 13.5px; font-weight: 600; box-shadow: none !important; cursor: pointer; transition: all 0.15s ease;
 }
-.ui-modern .ui-seg-nav .nav-link:hover,
+.ui-modern .ui-seg-nav.nav .nav-link:hover,
 .ui-modern .ui-seg.btn-group > .btn:hover { background: transparent; color: var(--ui-text); }
-.ui-modern .ui-seg-nav .nav-link.active,
+.ui-modern .ui-seg-nav.nav .nav-link.active,
 .ui-modern .ui-seg.btn-group > .btn.active { background: var(--ui-card); color: var(--ui-text); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12) !important; }
 .ui-modern .ui-seg.btn-group > .btn input { position: absolute; clip: rect(0, 0, 0, 0); pointer-events: none; }
 

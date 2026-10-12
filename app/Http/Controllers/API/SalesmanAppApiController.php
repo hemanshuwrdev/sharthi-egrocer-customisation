@@ -473,7 +473,7 @@ class SalesmanAppApiController extends Controller
             ->limit(5)
             ->select([
                 'id', 'total', 'final_total', 'active_status', 'created_at',
-                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
+                DB::raw('COALESCE((SELECT IF(op.method = "upi", "bank", op.method) FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
             ])
             ->get();
 
@@ -527,7 +527,7 @@ class SalesmanAppApiController extends Controller
                 'op.id as payment_id',
                 'op.order_id',
                 'o.orders_id',
-                'op.method',
+                DB::raw('IF(op.method = "upi", "bank", op.method) as method'),
                 'op.amount',
                 'op.status',
                 'op.proof_photo',
@@ -598,7 +598,7 @@ class SalesmanAppApiController extends Controller
             ->limit(5)
             ->select([
                 'id', 'total', 'final_total', 'active_status', 'created_at',
-                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
+                DB::raw('COALESCE((SELECT IF(op.method = "upi", "bank", op.method) FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method'),
             ])
             ->get();
 
@@ -1089,13 +1089,13 @@ class SalesmanAppApiController extends Controller
 
             // Cash-vs-other-methods price preview (excludes any salesman discount%
             // and tax, which are only known/applied at place-order time).
-            // One instant-payment % covers both cash and bank ("upi" key, shown as "Bank" in the
-            // apps), so both previews carry the same discounted price; "other" gets none.
+            // One instant-payment % covers both cash and bank, so both previews carry the same
+            // discounted price; "other" gets none.
             $cashDiscountPercent = (float) ($seller->cash_discount_percent ?? 0);
             $group['cash_discount_percent'] = $cashDiscountPercent;
             $group['payment_price_preview'] = [
                 'cash'  => round($group['final_total'] * (1 - $cashDiscountPercent / 100), 2),
-                'upi'   => round($group['final_total'] * (1 - $cashDiscountPercent / 100), 2),
+                'bank'  => round($group['final_total'] * (1 - $cashDiscountPercent / 100), 2),
                 'other' => round($group['final_total'], 2),
             ];
             // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
@@ -1543,7 +1543,7 @@ class SalesmanAppApiController extends Controller
                 'users.mobile as retailer_mobile',
                 'retailer_profiles.shop_name',
                 'retailer_profiles.party_name',
-                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method')
+                DB::raw('COALESCE((SELECT IF(op.method = "upi", "bank", op.method) FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method')
             )
             ->orderByDesc('orders.id');
 
@@ -1614,7 +1614,7 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.party_name',
                 'retailer_profiles.address as shop_address',
                 'retailer_profiles.gst_no',
-                DB::raw('COALESCE((SELECT op.method FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method')
+                DB::raw('COALESCE((SELECT IF(op.method = "upi", "bank", op.method) FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method')
             )
             ->first();
 
@@ -1663,7 +1663,7 @@ class SalesmanAppApiController extends Controller
 
         $payments = DB::table('order_payments')
             ->where('order_id', $orderId)
-            ->select('id', 'method', 'amount', 'status', 'proof_photo', 'verified_at', 'created_at')
+            ->select('id', DB::raw('IF(method = "upi", "bank", method) as method'), 'amount', 'status', 'proof_photo', 'verified_at', 'created_at')
             ->orderBy('id')
             ->get()
             ->map(function ($p) {
@@ -1809,7 +1809,7 @@ class SalesmanAppApiController extends Controller
      *
      * Filters (all optional):
      *   retailer_id  — filter by specific retailer
-     *   method       — cash | upi | cheque
+     *   method       — cash | bank | cheque
      *   status       — pending | verified
      *   start_date   — YYYY-MM-DD
      *   end_date     — YYYY-MM-DD
@@ -1836,7 +1836,7 @@ class SalesmanAppApiController extends Controller
                 'op.id as payment_id',
                 'op.order_id',
                 'o.orders_id',
-                'op.method',
+                DB::raw('IF(op.method = "upi", "bank", op.method) as method'),
                 'op.amount',
                 'op.status',
                 'op.proof_photo',
@@ -1853,7 +1853,7 @@ class SalesmanAppApiController extends Controller
             $query->where('o.user_id', (int) $request->retailer_id);
         }
 
-        $filterMethod = $request->input('method');
+        $filterMethod = \App\Models\OrderPayment::storedMethod($request->input('method'));
         if ($filterMethod && in_array($filterMethod, ['cash', 'upi', 'cheque'], true)) {
             $query->where('op.method', $filterMethod);
         }

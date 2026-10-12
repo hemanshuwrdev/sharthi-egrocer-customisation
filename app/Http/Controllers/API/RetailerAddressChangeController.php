@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AdminToken;
+use App\Models\Area;
 use App\Models\BrandDistributorMapping;
 use App\Models\RetailerAddressChangeRequest;
 use App\Models\RetailerProfile;
@@ -43,6 +44,10 @@ class RetailerAddressChangeController extends Controller
             'new_address_line2' => 'nullable|string|max:255',
             'new_city_name'     => 'nullable|string|max:191',
             'new_state'         => 'nullable|string|max:191',
+            // Picked in the app's pincode-search picker, like `area_id` at registration. One pincode
+            // can match several areas, so the area is the id and the pincode is what was entered.
+            'new_area_id'       => 'nullable|integer',
+            'new_pincode'       => 'nullable|string|max:10',
             'new_gps_lat' => 'required|numeric|between:-90,90',
             'new_gps_lng' => 'required|numeric|between:-180,180',
             'reason'      => 'nullable|string|max:500',
@@ -55,6 +60,23 @@ class RetailerAddressChangeController extends Controller
         $newCityId = CommonHelper::getDeliverableCityIds($request->new_gps_lat, $request->new_gps_lng)[0] ?? null;
         if (!$newCityId) {
             return CommonHelper::responseError('location_outside_serviceable_area');
+        }
+
+        // Area is optional and explicitly picked by the retailer (never auto-guessed). It must be an
+        // active area, and when a pincode is sent too it must be that pincode's — same rule as
+        // AddressApiController::resolveAreaId. With only the area sent, the pincode is the area's.
+        $newAreaId  = null;
+        $newPincode = $request->filled('new_pincode') ? trim((string) $request->new_pincode) : null;
+        if ($request->filled('new_area_id')) {
+            $area = Area::where('id', $request->new_area_id)->where('status', 1)->first();
+            if (!$area) {
+                return CommonHelper::responseError('invalid_area');
+            }
+            if ($newPincode !== null && $newPincode !== (string) $area->pincode) {
+                return CommonHelper::responseError('invalid_area_for_pincode');
+            }
+            $newAreaId  = $area->id;
+            $newPincode = $newPincode ?? (string) $area->pincode;
         }
 
         // Block if a pending/assigned request already exists for this retailer
@@ -83,6 +105,8 @@ class RetailerAddressChangeController extends Controller
             'new_address_line2' => $request->new_address_line2,
             'new_city_name'     => $request->new_city_name,
             'new_state'         => $request->new_state,
+            'new_area_id'       => $newAreaId,
+            'new_pincode'       => $newPincode,
             'new_city_id' => $newCityId,
             'new_gps_lat' => (float) $request->new_gps_lat,
             'new_gps_lng' => (float) $request->new_gps_lng,
@@ -125,6 +149,9 @@ class RetailerAddressChangeController extends Controller
             'new_address_line2' => $req->new_address_line2,
             'new_city_name'     => $req->new_city_name,
             'new_state'         => $req->new_state,
+            'new_area_id'       => $req->new_area_id,
+            'new_area_name'     => $req->newArea?->name,
+            'new_pincode'       => $req->new_pincode,
             'new_city_id' => $req->new_city_id,
             'reason'      => $req->reason,
             'verified_at' => $req->verified_at?->toDateTimeString(),
@@ -150,7 +177,7 @@ class RetailerAddressChangeController extends Controller
             return CommonHelper::responseWithData(['total' => 0, 'data' => []]);
         }
 
-        $requests = RetailerAddressChangeRequest::with(['retailer:id,name,mobile', 'newCity:id,name'])
+        $requests = RetailerAddressChangeRequest::with(['retailer:id,name,mobile', 'newCity:id,name', 'newArea:id,name,pincode'])
             ->whereIn('new_city_id', $cityIds)
             ->whereIn('status', ['pending', 'assigned'])
             ->where(function ($q) use ($salesman) {
@@ -166,6 +193,9 @@ class RetailerAddressChangeController extends Controller
                 'retailer'       => ['id' => $r->retailer?->id, 'name' => $r->retailer?->name, 'mobile' => $r->retailer?->mobile],
                 'new_address'    => $r->new_address,
                 'new_city'       => $r->newCity?->name,
+                'new_area_id'    => $r->new_area_id,
+                'new_area'       => $r->newArea?->name,
+                'new_pincode'    => $r->new_pincode,
                 'new_gps_lat'    => $r->new_gps_lat,
                 'new_gps_lng'    => $r->new_gps_lng,
                 'reason'         => $r->reason,
@@ -267,6 +297,12 @@ class RetailerAddressChangeController extends Controller
             'verified_by_salesman_id'  => $salesman->id,
             'verified_at'              => $changeRequest->verified_at,
         ]);
+
+        // The retailer picked a new area for the new address — apply it. Left alone when none was
+        // sent (older app builds), so those keep today's behaviour.
+        if ($changeRequest->new_area_id && Area::whereKey($changeRequest->new_area_id)->exists()) {
+            RetailerProfile::where('user_id', $changeRequest->user_id)->update(['area_id' => $changeRequest->new_area_id]);
+        }
 
         // The shop moved: refresh every zone it now falls in (zones can overlap; city_id holds only the first one).
         try {

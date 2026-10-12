@@ -3,7 +3,7 @@
         <div class="page-head">
             <h3 class="page-head-title">{{ __('my_products') }}</h3>
             <div class="page-head-actions">
-                <button type="button" class="ui-iconbtn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                <button type="button" class="ui-iconbtn" v-b-tooltip.hover :title="__('refresh')" @click="refresh()">
                     <i class="fa fa-sync-alt" :class="{ 'fa-spin': isLoading }" aria-hidden="true"></i>
                 </button>
 
@@ -24,6 +24,19 @@
                 </b-dropdown>
             </div>
         </div>
+
+        <!-- Counts cover the distributor's whole catalogue (not the current search or page); click a card to filter by it -->
+        <section class="ui-cards" v-if="!noBrandsAssigned">
+            <button type="button" v-for="card in statCards" :key="card.key" class="ui-stat"
+                :class="{ 'ui-stat--on': card.on }" @click="applyQuickFilter(card)">
+                <span class="ui-tile" :class="'ui-tone--' + card.tone"><i class="fa" :class="card.icon"></i></span>
+                <span class="ui-stat__body">
+                    <span class="ui-stat__label">{{ card.label }}</span>
+                    <strong class="ui-stat__value">{{ card.count }}</strong>
+                    <span v-if="card.hint" class="ui-stat__hint">{{ card.hint }}</span>
+                </span>
+            </button>
+        </section>
 
         <!-- Filters: everything on one line, search grows to fill the space -->
         <div class="ui-filters">
@@ -75,7 +88,7 @@
         <div class="list-surface">
             <div class="table-responsive">
                 <b-table :items="rows" :fields="visibleFields" :bordered="false" borderless hover :busy="isLoading"
-                    stacked="md" show-empty>
+                    stacked="md" show-empty table-class="mp-table">
                     <template #table-busy>
                         <div class="mp-busy">
                             <b-spinner class="align-middle" small></b-spinner>
@@ -389,6 +402,7 @@ export default {
             availableBrands: [],
             availableCategories: [],
             noBrandsAssigned: false,
+            stats: null,
             isLoading: false,
 
             toggler: false,
@@ -404,6 +418,33 @@ export default {
         visibleFields() {
             return this.fields.filter(f => f.visible);
         },
+        // Each card is one of the list's existing filters, so the card's count and the rows it shows always agree
+        statCards() {
+            const set = v => v !== null && v !== undefined && v !== '';
+            const n = key => (this.stats ? this.stats[key] : '–');
+            const active = this.activeFilter;
+            const stock = this.stockStatusFilter;
+            return [
+                {
+                    key: 'active', label: tr('active', 'Active'), count: n('active'), icon: 'fa-check-circle', tone: 'green',
+                    hint: this.stats ? tr('of_total_products', 'of :total products').replace(':total', this.stats.total) : '',
+                    filter: { active: '1', stock: null }, on: active === '1' && !set(stock),
+                },
+                {
+                    key: 'inactive', label: tr('inactive', 'Inactive'), count: n('inactive'), icon: 'fa-pause-circle', tone: 'slate',
+                    hint: this.stats ? tr('not_live_yet', 'Not live yet') : '',
+                    filter: { active: '0', stock: null }, on: active === '0' && !set(stock),
+                },
+                {
+                    key: 'low_stock', label: tr('low_stock', 'Low stock'), count: n('low_stock'), icon: 'fa-exclamation-triangle', tone: 'amber',
+                    filter: { active: null, stock: 'low_stock' }, on: stock === 'low_stock' && !set(active),
+                },
+                {
+                    key: 'sold_out', label: tr('sold_out', 'Sold out'), count: n('sold_out'), icon: 'fa-ban', tone: 'red',
+                    filter: { active: null, stock: 'sold_out' }, on: stock === 'sold_out' && !set(active),
+                },
+            ];
+        },
         hasActiveFilters() {
             const set = v => v !== null && v !== undefined && v !== '';
             return set(this.filter) || set(this.brandFilter) || set(this.categoryFilter) || set(this.activeFilter)
@@ -412,6 +453,7 @@ export default {
     },
     created() {
         this.getRecords();
+        this.getStats();
         this.getBrands();
         this.getCategories();
     },
@@ -448,6 +490,21 @@ export default {
             return __('inner_pack_price_hint') + ': ' + currency + innerPrice +
                 (item.secondary_unit ? ' / ' + item.secondary_unit : '') +
                 ' (' + step + (item.unit ? ' ' + item.unit : '') + ')';
+        },
+        getStats() {
+            axios.get(this.$sellerApiUrl + '/products/stats')
+                .then(res => { if (res.data && res.data.data) { this.stats = res.data.data; } })
+                .catch(() => {});
+        },
+        refresh() {
+            this.getRecords();
+            this.getStats();
+        },
+        // Clicking the card that is already selected clears it
+        applyQuickFilter(card) {
+            this.activeFilter = card.on ? null : card.filter.active;
+            this.stockStatusFilter = card.on ? null : card.filter.stock;
+            this.applyFilters();
         },
         slabCount(item) {
             return item.slab_prices ? item.slab_prices.length : 0;
@@ -558,6 +615,7 @@ export default {
                         row.seller_product_id = res.data.data.seller_product_id;
                     }
                     this.showMessage('success', res.data.message || __('product_updated_successfully'));
+                    this.getStats();
                 } else {
                     this.showError(res.data.message);
                 }
@@ -573,7 +631,7 @@ export default {
             axios.post(this.$sellerApiUrl + '/products/toggle_status', {
                 product_variant_id: row.product_variant_id,
                 status: newStatus,
-            }).catch(err => {
+            }).then(() => this.getStats()).catch(err => {
                 row.status = newStatus === 1 ? 0 : 1;
                 const msg = (err.response && err.response.data && err.response.data.message) || __('something_went_wrong');
                 this.showError(msg);
@@ -678,6 +736,10 @@ export default {
 .mp-id { font-size: 13px; font-weight: 600; color: var(--ui-muted); white-space: nowrap; }
 .mp-zoom { cursor: zoom-in; }
 .mp-thumb--blank { display: flex; align-items: center; justify-content: center; color: var(--ui-slate); font-size: 16px; }
+
+/* the editable grid is wide; slimmer side padding keeps the save button on screen on laptop widths */
+::v-deep .list-surface table.b-table.mp-table thead th,
+::v-deep .list-surface table.b-table.mp-table tbody td { padding-left: 12px !important; padding-right: 12px !important; }
 
 /* name + brand / free-item tags */
 .mp-name { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
