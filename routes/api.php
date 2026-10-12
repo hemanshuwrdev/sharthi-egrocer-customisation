@@ -812,7 +812,9 @@ Route::middleware('auth:api')->group(function () {
         });
 
         Route::get('/seller_wallet_transactions', [\App\Http\Controllers\API\SellerWalletTransactionsApiController::class, 'getSellerWalletTransactions']);
-        Route::get('/delete_seller_account', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'deleteSellerAccount'])->name('seller.delete_seller_account');
+        // Deleting needs an emailed code (2FA): ask for the code first, then send it back with the delete.
+        Route::post('/delete_seller_account/send_otp', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'sendSellerDeleteOtp'])->name('seller.delete_seller_account.send_otp');
+        Route::post('/delete_seller_account', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'deleteSellerAccount'])->name('seller.delete_seller_account');
         Route::group(['prefix' => 'withdrawal_requests'], function () {
             Route::get('/', [\App\Http\Controllers\API\WithdrawalRequestsApiController::class, 'index']);
             Route::post('update', [\App\Http\Controllers\API\WithdrawalRequestsApiController::class, 'update'])->name('withdrawal_requests.update');

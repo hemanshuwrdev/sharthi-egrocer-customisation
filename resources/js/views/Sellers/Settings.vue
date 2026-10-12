@@ -489,7 +489,7 @@
                                     <h5 class="mb-0">{{ __('delete_account') }}</h5>
                                 </div>
                                 <div class="card-body pt-0">
-                                    <p class="setting-hint mb-0">{{ __('Permanently delete your distributor account. This cannot be undone.') }}</p>
+                                    <p class="setting-hint mb-0">{{ __('Permanently delete your distributor account. This cannot be undone.') }} {{ __('We will email a confirmation code to your registered address first.') }}</p>
                                 </div>
                                 <div class="settings-card-foot">
                                     <button type="button" class="btn btn-danger" :disabled="isDeletingAccount" @click="deleteAccount">
@@ -512,6 +512,60 @@
                 </b-tab>
 
             </b-tabs>
+
+            <!-- Delete account, step by step: a code is emailed first and the account is only deleted once it is entered.
+                 The body sits in .ui-modern because modals mount outside the seller layout root. -->
+            <b-modal v-model="deleteModalShow" hide-header hide-footer centered no-close-on-backdrop size="md" body-class="p-0"
+                @hidden="resetDeleteFlow">
+                <div class="ui-modern del-modal">
+                    <div class="del-modal__head">
+                        <span class="ui-tile ui-tone--red"><i class="fa fa-exclamation-triangle"></i></span>
+                        <div class="del-modal__title">
+                            <h5>{{ __('delete_account') }}</h5>
+                            <p>{{ __('Permanently delete your distributor account. This cannot be undone.') }}</p>
+                        </div>
+                        <button type="button" class="del-modal__close" @click="deleteModalShow = false" aria-label="Close">&times;</button>
+                    </div>
+
+                    <!-- sending the first code -->
+                    <div v-if="deleteSending && !deleteSentTo" class="del-modal__state">
+                        <b-spinner small></b-spinner> {{ __('Sending a code to your email...') }}
+                    </div>
+
+                    <!-- no code could be sent (not allowed, no email on file, mail problem) -->
+                    <div v-else-if="deleteBlocked" class="del-modal__notice ui-tone--red">
+                        <i class="fa fa-info-circle"></i><span>{{ deleteBlocked }}</span>
+                    </div>
+
+                    <!-- enter the code -->
+                    <div v-else class="del-modal__body">
+                        <p class="del-modal__lead">
+                            {{ __('We sent a 6-digit code to') }} <strong>{{ deleteSentTo }}</strong>.
+                            {{ __('Enter it below to delete your account.') }}
+                        </p>
+                        <input ref="deleteOtpInput" v-model="deleteOtp" type="text" inputmode="numeric" maxlength="6"
+                            autocomplete="one-time-code" class="ui-control del-otp" placeholder="------"
+                            :aria-label="__('Verification code')" @input="deleteOtp = deleteOtp.replace(/\D/g, '')"
+                            @keyup.enter="confirmDeleteAccount" />
+                        <p v-if="deleteError" class="ui-error del-modal__error">{{ deleteError }}</p>
+                        <div class="del-modal__resend">
+                            <span v-if="deleteCooldown > 0" class="text-muted">{{ __('resend_code') }} ({{ deleteCooldown }}s)</span>
+                            <a v-else href="javascript:void(0)" :class="{ 'text-muted': deleteSending }" @click="sendDeleteOtp">{{ __('resend_code') }}</a>
+                        </div>
+                    </div>
+
+                    <div class="del-modal__actions">
+                        <button type="button" class="btn btn-light border" @click="deleteModalShow = false">
+                            {{ deleteBlocked ? __('close') : __('cancel') }}
+                        </button>
+                        <button v-if="!deleteBlocked && deleteSentTo" type="button" class="btn btn-danger"
+                            :disabled="deleteOtp.length !== 6 || isDeletingAccount" @click="confirmDeleteAccount">
+                            <b-spinner small v-if="isDeletingAccount"></b-spinner>
+                            {{ __('Delete permanently') }}
+                        </button>
+                    </div>
+                </div>
+            </b-modal>
         </div>
     </div>
 </template>
@@ -587,7 +641,17 @@ export default {
                 confirm_password: "",
             },
             isCredentialsLoading: false,
+
+            // Delete account (2FA by email)
             isDeletingAccount: false,
+            deleteModalShow: false,
+            deleteSending: false,
+            deleteSentTo: '',
+            deleteBlocked: '',
+            deleteOtp: '',
+            deleteError: '',
+            deleteCooldown: 0,
+            deleteTimer: null,
         }
     },
 
@@ -610,6 +674,10 @@ export default {
         this.getLoadingSlipSettings();
         this.getCreditNoteSettings();
         this.getSensitivePasswordStatus();
+    },
+
+    beforeDestroy() {
+        if (this.deleteTimer) clearInterval(this.deleteTimer);
     },
 
     watch: {
@@ -777,53 +845,97 @@ export default {
             });
         },
 
-        // ================= DELETE ACCOUNT =================
+        // ================= DELETE ACCOUNT (email code, then delete) =================
         deleteAccount() {
-            this.$swal.fire({
-                title: __('are_you_sure'),
-                text: __('delete_account_confirmation'),
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: __('yes_delete'),
-                cancelButtonText: __('cancel')
-            }).then((result) => {
-                if (!result.isConfirmed) return;
-                this.$swal.fire({
-                    title: __('final_confirmation'),
-                    text: __('delete_account_final_warning'),
-                    icon: 'error',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: __('yes_delete_permanently'),
-                    cancelButtonText: __('cancel'),
-                    dangerMode: true
-                }).then((secondResult) => {
-                    if (!secondResult.isConfirmed) return;
-                    this.isDeletingAccount = true;
-                    axios.get(this.$sellerApiUrl + '/delete_seller_account').then((response) => {
-                        this.isDeletingAccount = false;
-                        if (response.data.status === 1) {
-                            this.showSuccess(response.data.message);
-                            Auth.logout();
-                            setTimeout(() => { this.$router.push('/login'); }, 1500);
-                        } else {
-                            this.showError(response.data.message);
-                        }
-                    }).catch(error => {
-                        this.isDeletingAccount = false;
-                        if (error.request && error.request.statusText) {
-                            this.showError(error.request.statusText);
-                        } else if (error.message) {
-                            this.showError(error.message);
-                        } else {
-                            this.showError(__('something_went_wrong'));
-                        }
-                    });
+            this.resetDeleteFlow();
+            this.deleteModalShow = true;
+            this.sendDeleteOtp();
+        },
+        resetDeleteFlow() {
+            if (this.deleteTimer) { clearInterval(this.deleteTimer); this.deleteTimer = null; }
+            this.deleteCooldown = 0;
+            this.deleteSending = false;
+            this.deleteSentTo = '';
+            this.deleteBlocked = '';
+            this.deleteOtp = '';
+            this.deleteError = '';
+        },
+        startDeleteCooldown(seconds) {
+            if (this.deleteTimer) clearInterval(this.deleteTimer);
+            this.deleteCooldown = Math.max(0, parseInt(seconds, 10) || 0);
+            if (!this.deleteCooldown) return;
+            this.deleteTimer = setInterval(() => {
+                this.deleteCooldown--;
+                if (this.deleteCooldown <= 0) {
+                    clearInterval(this.deleteTimer);
+                    this.deleteTimer = null;
+                }
+            }, 1000);
+        },
+        // asks the server to email a code (it also refuses up front when the account could not be deleted anyway)
+        sendDeleteOtp() {
+            if (this.deleteSending || this.deleteCooldown > 0) return;
+            this.deleteSending = true;
+            this.deleteError = '';
+            axios.post(this.$sellerApiUrl + '/delete_seller_account/send_otp')
+                .then(res => {
+                    this.deleteSending = false;
+                    const body = res.data || {};
+                    if (body.status === 1 && body.data) {
+                        this.deleteSentTo = body.data.email;
+                        this.startDeleteCooldown(body.data.resend_after);
+                        this.deleteOtp = '';
+                        this.focusDeleteOtp();
+                    } else if (body.data && body.data.code_pending) {
+                        // asked again too soon: the code sent a moment ago still works
+                        this.deleteSentTo = body.data.email;
+                        this.startDeleteCooldown(body.data.resend_after);
+                        this.focusDeleteOtp();
+                    } else if (this.deleteSentTo) {
+                        this.deleteError = body.message || __('something_went_wrong');
+                    } else {
+                        this.deleteBlocked = body.message || __('something_went_wrong');
+                    }
+                })
+                .catch(() => {
+                    this.deleteSending = false;
+                    if (this.deleteSentTo) {
+                        this.deleteError = __('something_went_wrong');
+                    } else {
+                        this.deleteBlocked = __('something_went_wrong');
+                    }
                 });
+        },
+        focusDeleteOtp() {
+            this.$nextTick(() => {
+                const el = this.$refs.deleteOtpInput;
+                if (el && el.focus) el.focus();
             });
+        },
+        confirmDeleteAccount() {
+            if (this.deleteOtp.length !== 6 || this.isDeletingAccount) return;
+            this.isDeletingAccount = true;
+            this.deleteError = '';
+            axios.post(this.$sellerApiUrl + '/delete_seller_account', { otp: this.deleteOtp })
+                .then(response => {
+                    this.isDeletingAccount = false;
+                    if (response.data.status === 1) {
+                        this.deleteModalShow = false;
+                        this.showSuccess(response.data.message);
+                        Auth.logout();
+                        setTimeout(() => { this.$router.push('/login'); }, 1500);
+                    } else {
+                        // wrong or expired code, or the account can no longer be deleted: stay here and say why
+                        this.deleteError = response.data.message || __('something_went_wrong');
+                        this.deleteOtp = '';
+                        this.focusDeleteOtp();
+                    }
+                })
+                .catch(error => {
+                    this.isDeletingAccount = false;
+                    this.deleteError = (error.response && error.response.data && error.response.data.message)
+                        || (error.request && error.request.statusText) || error.message || __('something_went_wrong');
+                });
         },
 
         methodLabel(method) {
@@ -1258,6 +1370,35 @@ export default {
 
 .settings-card--danger {
     border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* delete-account window (colours come from the --ui-* tokens of .ui-modern) */
+.del-modal { color: var(--ui-text); }
+.del-modal__head { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px; }
+.del-modal__title { flex: 1 1 auto; min-width: 0; }
+.del-modal__title h5 { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text); }
+.del-modal__title p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted); }
+.del-modal__close {
+    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;
+    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;
+}
+.del-modal__close:hover { background: var(--ui-soft); color: var(--ui-text); }
+.del-modal__state { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 26px 22px; font-size: 14px; color: var(--ui-muted); }
+.del-modal__body { padding: 4px 22px 0; }
+.del-modal__lead { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--ui-text); }
+.del-modal .del-otp { height: 54px; text-align: center; font-size: 24px; font-weight: 700; letter-spacing: 0.5em; padding-left: 0.5em; font-variant-numeric: tabular-nums; }
+.del-modal__error { margin-top: 10px; }
+.del-modal__resend { margin-top: 12px; font-size: 13px; }
+.del-modal__notice {
+    display: flex; align-items: flex-start; gap: 10px; margin: 4px 22px 0; padding: 12px 14px; border-radius: 12px;
+    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);
+}
+.del-modal__notice i { margin-top: 2px; }
+.del-modal__actions { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px; }
+.del-modal__actions .btn { min-width: 120px; height: 44px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+@media (max-width: 575px) {
+    .del-modal__actions { flex-direction: column-reverse; }
+    .del-modal__actions .btn { width: 100%; }
 }
 
 /* notifications: status name, then a mail switch and an SMS switch */

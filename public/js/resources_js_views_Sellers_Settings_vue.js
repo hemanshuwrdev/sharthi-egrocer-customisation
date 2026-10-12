@@ -546,6 +546,60 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -623,7 +677,16 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
         confirm_password: ""
       },
       isCredentialsLoading: false,
-      isDeletingAccount: false
+      // Delete account (2FA by email)
+      isDeletingAccount: false,
+      deleteModalShow: false,
+      deleteSending: false,
+      deleteSentTo: '',
+      deleteBlocked: '',
+      deleteOtp: '',
+      deleteError: '',
+      deleteCooldown: 0,
+      deleteTimer: null
     };
   },
   created: function created() {
@@ -645,6 +708,9 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
     this.getLoadingSlipSettings();
     this.getCreditNoteSettings();
     this.getSensitivePasswordStatus();
+  },
+  beforeDestroy: function beforeDestroy() {
+    if (this.deleteTimer) clearInterval(this.deleteTimer);
   },
   watch: {
     activeTab: function activeTab(index) {
@@ -821,55 +887,102 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
         }
       });
     },
-    // ================= DELETE ACCOUNT =================
+    // ================= DELETE ACCOUNT (email code, then delete) =================
     deleteAccount: function deleteAccount() {
+      this.resetDeleteFlow();
+      this.deleteModalShow = true;
+      this.sendDeleteOtp();
+    },
+    resetDeleteFlow: function resetDeleteFlow() {
+      if (this.deleteTimer) {
+        clearInterval(this.deleteTimer);
+        this.deleteTimer = null;
+      }
+      this.deleteCooldown = 0;
+      this.deleteSending = false;
+      this.deleteSentTo = '';
+      this.deleteBlocked = '';
+      this.deleteOtp = '';
+      this.deleteError = '';
+    },
+    startDeleteCooldown: function startDeleteCooldown(seconds) {
       var _this5 = this;
-      this.$swal.fire({
-        title: __('are_you_sure'),
-        text: __('delete_account_confirmation'),
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: __('yes_delete'),
-        cancelButtonText: __('cancel')
-      }).then(function (result) {
-        if (!result.isConfirmed) return;
-        _this5.$swal.fire({
-          title: __('final_confirmation'),
-          text: __('delete_account_final_warning'),
-          icon: 'error',
-          showCancelButton: true,
-          confirmButtonColor: '#d33',
-          cancelButtonColor: '#3085d6',
-          confirmButtonText: __('yes_delete_permanently'),
-          cancelButtonText: __('cancel'),
-          dangerMode: true
-        }).then(function (secondResult) {
-          if (!secondResult.isConfirmed) return;
-          _this5.isDeletingAccount = true;
-          axios__WEBPACK_IMPORTED_MODULE_0___default().get(_this5.$sellerApiUrl + '/delete_seller_account').then(function (response) {
-            _this5.isDeletingAccount = false;
-            if (response.data.status === 1) {
-              _this5.showSuccess(response.data.message);
-              _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].logout();
-              setTimeout(function () {
-                _this5.$router.push('/login');
-              }, 1500);
-            } else {
-              _this5.showError(response.data.message);
-            }
-          })["catch"](function (error) {
-            _this5.isDeletingAccount = false;
-            if (error.request && error.request.statusText) {
-              _this5.showError(error.request.statusText);
-            } else if (error.message) {
-              _this5.showError(error.message);
-            } else {
-              _this5.showError(__('something_went_wrong'));
-            }
-          });
-        });
+      if (this.deleteTimer) clearInterval(this.deleteTimer);
+      this.deleteCooldown = Math.max(0, parseInt(seconds, 10) || 0);
+      if (!this.deleteCooldown) return;
+      this.deleteTimer = setInterval(function () {
+        _this5.deleteCooldown--;
+        if (_this5.deleteCooldown <= 0) {
+          clearInterval(_this5.deleteTimer);
+          _this5.deleteTimer = null;
+        }
+      }, 1000);
+    },
+    // asks the server to email a code (it also refuses up front when the account could not be deleted anyway)
+    sendDeleteOtp: function sendDeleteOtp() {
+      var _this6 = this;
+      if (this.deleteSending || this.deleteCooldown > 0) return;
+      this.deleteSending = true;
+      this.deleteError = '';
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/delete_seller_account/send_otp').then(function (res) {
+        _this6.deleteSending = false;
+        var body = res.data || {};
+        if (body.status === 1 && body.data) {
+          _this6.deleteSentTo = body.data.email;
+          _this6.startDeleteCooldown(body.data.resend_after);
+          _this6.deleteOtp = '';
+          _this6.focusDeleteOtp();
+        } else if (body.data && body.data.code_pending) {
+          // asked again too soon: the code sent a moment ago still works
+          _this6.deleteSentTo = body.data.email;
+          _this6.startDeleteCooldown(body.data.resend_after);
+          _this6.focusDeleteOtp();
+        } else if (_this6.deleteSentTo) {
+          _this6.deleteError = body.message || __('something_went_wrong');
+        } else {
+          _this6.deleteBlocked = body.message || __('something_went_wrong');
+        }
+      })["catch"](function () {
+        _this6.deleteSending = false;
+        if (_this6.deleteSentTo) {
+          _this6.deleteError = __('something_went_wrong');
+        } else {
+          _this6.deleteBlocked = __('something_went_wrong');
+        }
+      });
+    },
+    focusDeleteOtp: function focusDeleteOtp() {
+      var _this7 = this;
+      this.$nextTick(function () {
+        var el = _this7.$refs.deleteOtpInput;
+        if (el && el.focus) el.focus();
+      });
+    },
+    confirmDeleteAccount: function confirmDeleteAccount() {
+      var _this8 = this;
+      if (this.deleteOtp.length !== 6 || this.isDeletingAccount) return;
+      this.isDeletingAccount = true;
+      this.deleteError = '';
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/delete_seller_account', {
+        otp: this.deleteOtp
+      }).then(function (response) {
+        _this8.isDeletingAccount = false;
+        if (response.data.status === 1) {
+          _this8.deleteModalShow = false;
+          _this8.showSuccess(response.data.message);
+          _Auth_js__WEBPACK_IMPORTED_MODULE_1__["default"].logout();
+          setTimeout(function () {
+            _this8.$router.push('/login');
+          }, 1500);
+        } else {
+          // wrong or expired code, or the account can no longer be deleted: stay here and say why
+          _this8.deleteError = response.data.message || __('something_went_wrong');
+          _this8.deleteOtp = '';
+          _this8.focusDeleteOtp();
+        }
+      })["catch"](function (error) {
+        _this8.isDeletingAccount = false;
+        _this8.deleteError = error.response && error.response.data && error.response.data.message || error.request && error.request.statusText || error.message || __('something_went_wrong');
       });
     },
     methodLabel: function methodLabel(method) {
@@ -887,19 +1000,19 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
     },
     // ================= LOAD SETTINGS =================
     getSettings: function getSettings() {
-      var _this6 = this;
+      var _this9 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/seller/thermal-settings').then(function (res) {
         if (res.data.status && res.data.data) {
           var settings = res.data.data;
           if (settings.thermal_paper_width) {
-            _this6.thermal_paper_width = parseInt(settings.thermal_paper_width);
+            _this9.thermal_paper_width = parseInt(settings.thermal_paper_width);
           }
           if (settings.invoice_logo) {
-            _this6.thermal_logo_url = _this6.$storageUrl + settings.invoice_logo;
+            _this9.thermal_logo_url = _this9.$storageUrl + settings.invoice_logo;
           }
         }
       })["catch"](function () {
-        _this6.showError('Failed to load thermal settings');
+        _this9.showError('Failed to load thermal settings');
       });
     },
     // ================= FILE UPLOAD =================
@@ -914,7 +1027,7 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
     },
     // ================= SAVE SETTINGS =================
     saveSettings: function saveSettings() {
-      var _this7 = this;
+      var _this10 = this;
       this.isLoading = true;
       var formData = new FormData();
       formData.append('thermal_paper_width', this.thermal_paper_width);
@@ -927,36 +1040,36 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
         }
       }).then(function (res) {
         if (res.data.status) {
-          _this7.showMessage('success', __(res.data.message));
+          _this10.showMessage('success', __(res.data.message));
         } else {
-          _this7.showError(res.data.message || 'Failed to save');
+          _this10.showError(res.data.message || 'Failed to save');
         }
-        _this7.isLoading = false;
+        _this10.isLoading = false;
       })["catch"](function () {
-        _this7.showError('Failed to save settings');
-        _this7.isLoading = false;
+        _this10.showError('Failed to save settings');
+        _this10.isLoading = false;
       });
     },
     // ================= ORDER SETTINGS =================
     getOrderSettings: function getOrderSettings() {
-      var _this8 = this;
+      var _this11 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/order-settings').then(function (res) {
         if (res.data.status && res.data.data) {
           var _res$data$data$min_or;
-          _this8.order_cutoff_time = res.data.data.order_cutoff_time || "";
-          _this8.min_order_amount = (_res$data$data$min_or = res.data.data.min_order_amount) !== null && _res$data$data$min_or !== void 0 ? _res$data$data$min_or : "";
-          _this8.delivery_otp_enabled = res.data.data.delivery_otp_enabled !== undefined ? !!res.data.data.delivery_otp_enabled : true;
+          _this11.order_cutoff_time = res.data.data.order_cutoff_time || "";
+          _this11.min_order_amount = (_res$data$data$min_or = res.data.data.min_order_amount) !== null && _res$data$data$min_or !== void 0 ? _res$data$data$min_or : "";
+          _this11.delivery_otp_enabled = res.data.data.delivery_otp_enabled !== undefined ? !!res.data.data.delivery_otp_enabled : true;
         }
       })["catch"](function () {
-        _this8.showError('Failed to load order settings');
+        _this11.showError('Failed to load order settings');
       });
     },
     // ================= PAYMENT METHODS =================
     getPaymentMethods: function getPaymentMethods() {
-      var _this9 = this;
+      var _this12 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/payment_methods').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this9.paymentMethods = res.data.data.methods.map(function (m) {
+          _this12.paymentMethods = res.data.data.methods.map(function (m) {
             return _objectSpread(_objectSpread({}, m), {}, {
               is_enabled: m.is_enabled ? 1 : 0
             });
@@ -965,12 +1078,12 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
           var cash = res.data.data.methods.find(function (m) {
             return m.method === 'cash';
           });
-          _this9.instantDiscountPercent = cash && cash.discount_percent ? cash.discount_percent : 0;
+          _this12.instantDiscountPercent = cash && cash.discount_percent ? cash.discount_percent : 0;
         }
       })["catch"](function () {});
     },
     savePaymentMethods: function savePaymentMethods() {
-      var _this10 = this;
+      var _this13 = this;
       this.isPaymentLoading = true;
       var formData = new FormData();
       this.paymentMethods.forEach(function (m) {
@@ -980,18 +1093,18 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('cash_discount_percent', this.instantDiscountPercent || 0);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/payment_methods/save', formData).then(function (res) {
         if (res.data.status) {
-          _this10.showMessage('success', __(res.data.message));
+          _this13.showMessage('success', __(res.data.message));
         } else {
-          _this10.showError(res.data.message || 'Failed to save');
+          _this13.showError(res.data.message || 'Failed to save');
         }
-        _this10.isPaymentLoading = false;
+        _this13.isPaymentLoading = false;
       })["catch"](function () {
-        _this10.showError('Failed to save');
-        _this10.isPaymentLoading = false;
+        _this13.showError('Failed to save');
+        _this13.isPaymentLoading = false;
       });
     },
     saveOrderSettings: function saveOrderSettings() {
-      var _this11 = this;
+      var _this14 = this;
       this.isOrderLoading = true;
       var formData = new FormData();
       formData.append('order_cutoff_time', this.order_cutoff_time || '');
@@ -999,31 +1112,31 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('delivery_otp_enabled', this.delivery_otp_enabled ? 1 : 0);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/order-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this11.showMessage('success', __(res.data.message));
+          _this14.showMessage('success', __(res.data.message));
         } else {
-          _this11.showError(res.data.message || 'Failed to save');
+          _this14.showError(res.data.message || 'Failed to save');
         }
-        _this11.isOrderLoading = false;
+        _this14.isOrderLoading = false;
       })["catch"](function () {
-        _this11.showError('Failed to save order settings');
-        _this11.isOrderLoading = false;
+        _this14.showError('Failed to save order settings');
+        _this14.isOrderLoading = false;
       });
     },
     // ================= INVOICE SETTINGS =================
     getInvoiceSettings: function getInvoiceSettings() {
-      var _this12 = this;
+      var _this15 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/invoice-settings').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this12.invoice_prefix = res.data.data.invoice_prefix || "";
-          _this12.invoice_suffix = res.data.data.invoice_suffix || "";
-          _this12.invoice_next_number = res.data.data.invoice_next_number || 1;
+          _this15.invoice_prefix = res.data.data.invoice_prefix || "";
+          _this15.invoice_suffix = res.data.data.invoice_suffix || "";
+          _this15.invoice_next_number = res.data.data.invoice_next_number || 1;
         }
       })["catch"](function () {
-        _this12.showError('Failed to load invoice settings');
+        _this15.showError('Failed to load invoice settings');
       });
     },
     saveInvoiceSettings: function saveInvoiceSettings() {
-      var _this13 = this;
+      var _this16 = this;
       this.isInvoiceLoading = true;
       var formData = new FormData();
       formData.append('invoice_prefix', this.invoice_prefix || '');
@@ -1031,30 +1144,30 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('invoice_next_number', this.invoice_next_number || 1);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/invoice-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this13.showMessage('success', __(res.data.message));
+          _this16.showMessage('success', __(res.data.message));
         } else {
-          _this13.showError(res.data.message || 'Failed to save');
+          _this16.showError(res.data.message || 'Failed to save');
         }
-        _this13.isInvoiceLoading = false;
+        _this16.isInvoiceLoading = false;
       })["catch"](function () {
-        _this13.showError('Failed to save invoice settings');
-        _this13.isInvoiceLoading = false;
+        _this16.showError('Failed to save invoice settings');
+        _this16.isInvoiceLoading = false;
       });
     },
     getLoadingSlipSettings: function getLoadingSlipSettings() {
-      var _this14 = this;
+      var _this17 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/loading-slip-settings').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this14.loading_slip_prefix = res.data.data.loading_slip_prefix || "";
-          _this14.loading_slip_suffix = res.data.data.loading_slip_suffix || "";
-          _this14.loading_slip_next_number = res.data.data.loading_slip_next_number || 1;
+          _this17.loading_slip_prefix = res.data.data.loading_slip_prefix || "";
+          _this17.loading_slip_suffix = res.data.data.loading_slip_suffix || "";
+          _this17.loading_slip_next_number = res.data.data.loading_slip_next_number || 1;
         }
       })["catch"](function () {
-        _this14.showError('Failed to load loading slip settings');
+        _this17.showError('Failed to load loading slip settings');
       });
     },
     saveLoadingSlipSettings: function saveLoadingSlipSettings() {
-      var _this15 = this;
+      var _this18 = this;
       this.isLoadingSlipSettingsLoading = true;
       var formData = new FormData();
       formData.append('loading_slip_prefix', this.loading_slip_prefix || '');
@@ -1062,30 +1175,30 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('loading_slip_next_number', this.loading_slip_next_number || 1);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/loading-slip-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this15.showMessage('success', __(res.data.message));
+          _this18.showMessage('success', __(res.data.message));
         } else {
-          _this15.showError(res.data.message || 'Failed to save');
+          _this18.showError(res.data.message || 'Failed to save');
         }
-        _this15.isLoadingSlipSettingsLoading = false;
+        _this18.isLoadingSlipSettingsLoading = false;
       })["catch"](function () {
-        _this15.showError('Failed to save loading slip settings');
-        _this15.isLoadingSlipSettingsLoading = false;
+        _this18.showError('Failed to save loading slip settings');
+        _this18.isLoadingSlipSettingsLoading = false;
       });
     },
     getCreditNoteSettings: function getCreditNoteSettings() {
-      var _this16 = this;
+      var _this19 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/credit-note-settings').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this16.credit_note_prefix = res.data.data.credit_note_prefix || "";
-          _this16.credit_note_suffix = res.data.data.credit_note_suffix || "";
-          _this16.credit_note_next_number = res.data.data.credit_note_next_number || 1;
+          _this19.credit_note_prefix = res.data.data.credit_note_prefix || "";
+          _this19.credit_note_suffix = res.data.data.credit_note_suffix || "";
+          _this19.credit_note_next_number = res.data.data.credit_note_next_number || 1;
         }
       })["catch"](function () {
-        _this16.showError('Failed to load credit note settings');
+        _this19.showError('Failed to load credit note settings');
       });
     },
     saveCreditNoteSettings: function saveCreditNoteSettings() {
-      var _this17 = this;
+      var _this20 = this;
       this.isCreditNoteLoading = true;
       var formData = new FormData();
       formData.append('credit_note_prefix', this.credit_note_prefix || '');
@@ -1093,22 +1206,22 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('credit_note_next_number', this.credit_note_next_number || 1);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/credit-note-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this17.showMessage('success', __(res.data.message));
+          _this20.showMessage('success', __(res.data.message));
         } else {
-          _this17.showError(res.data.message || 'Failed to save');
+          _this20.showError(res.data.message || 'Failed to save');
         }
-        _this17.isCreditNoteLoading = false;
+        _this20.isCreditNoteLoading = false;
       })["catch"](function () {
-        _this17.showError('Failed to save credit note settings');
-        _this17.isCreditNoteLoading = false;
+        _this20.showError('Failed to save credit note settings');
+        _this20.isCreditNoteLoading = false;
       });
     },
     // ================= SENSITIVE OPERATIONS PASSWORD =================
     getSensitivePasswordStatus: function getSensitivePasswordStatus() {
-      var _this18 = this;
+      var _this21 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/sensitive-password').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this18.sensitivePasswordIsSet = !!res.data.data.is_set;
+          _this21.sensitivePasswordIsSet = !!res.data.data.is_set;
         }
       })["catch"](function () {});
     },
@@ -1127,32 +1240,32 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       this.otpResendCooldown = 0;
     },
     sendSensitiveOtp: function sendSensitiveOtp() {
-      var _this19 = this;
+      var _this22 = this;
       if (this.isSendingOtp || this.otpResendCooldown > 0) return;
       this.isSendingOtp = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/sensitive-password/send-otp').then(function (res) {
         if (res.data.status) {
-          _this19.showMessage('success', __(res.data.message));
-          _this19.otpResendCooldown = 60;
-          if (_this19.otpCooldownTimer) clearInterval(_this19.otpCooldownTimer);
-          _this19.otpCooldownTimer = setInterval(function () {
-            _this19.otpResendCooldown--;
-            if (_this19.otpResendCooldown <= 0) {
-              clearInterval(_this19.otpCooldownTimer);
-              _this19.otpCooldownTimer = null;
+          _this22.showMessage('success', __(res.data.message));
+          _this22.otpResendCooldown = 60;
+          if (_this22.otpCooldownTimer) clearInterval(_this22.otpCooldownTimer);
+          _this22.otpCooldownTimer = setInterval(function () {
+            _this22.otpResendCooldown--;
+            if (_this22.otpResendCooldown <= 0) {
+              clearInterval(_this22.otpCooldownTimer);
+              _this22.otpCooldownTimer = null;
             }
           }, 1000);
         } else {
-          _this19.showError(res.data.message || 'Failed to send OTP');
+          _this22.showError(res.data.message || 'Failed to send OTP');
         }
-        _this19.isSendingOtp = false;
+        _this22.isSendingOtp = false;
       })["catch"](function () {
-        _this19.showError('Failed to send OTP');
-        _this19.isSendingOtp = false;
+        _this22.showError('Failed to send OTP');
+        _this22.isSendingOtp = false;
       });
     },
     saveSensitivePassword: function saveSensitivePassword() {
-      var _this20 = this;
+      var _this23 = this;
       this.isSensitiveLoading = true;
       var formData = new FormData();
       if (this.sensitiveForgotMode) {
@@ -1170,19 +1283,19 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       var endpoint = this.sensitiveForgotMode ? '/sensitive-password/reset-with-otp' : '/sensitive-password/save';
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + endpoint, formData).then(function (res) {
         if (res.data.status) {
-          _this20.showMessage('success', __(res.data.message));
-          _this20.sensitivePasswordIsSet = true;
-          _this20.sensitiveOldPassword = '';
-          _this20.sensitiveNewPassword = '';
-          _this20.sensitiveConfirmPassword = '';
-          _this20.cancelSensitiveForgotMode();
+          _this23.showMessage('success', __(res.data.message));
+          _this23.sensitivePasswordIsSet = true;
+          _this23.sensitiveOldPassword = '';
+          _this23.sensitiveNewPassword = '';
+          _this23.sensitiveConfirmPassword = '';
+          _this23.cancelSensitiveForgotMode();
         } else {
-          _this20.showError(res.data.message || 'Failed to save');
+          _this23.showError(res.data.message || 'Failed to save');
         }
-        _this20.isSensitiveLoading = false;
+        _this23.isSensitiveLoading = false;
       })["catch"](function () {
-        _this20.showError('Failed to save');
-        _this20.isSensitiveLoading = false;
+        _this23.showError('Failed to save');
+        _this23.isSensitiveLoading = false;
       });
     }
   }
@@ -1206,7 +1319,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.custom-image[data-v-7d055d3d] {\n    height: auto;\n    width: 60%;\n    border: 1px solid #ddd;\n    padding: 5px;\n}\n\n/* tabs: same pill look as the Export Center */\n[data-v-7d055d3d] .settings-tabs {\n    flex-wrap: wrap;\n    gap: 8px;\n    border-bottom: 0;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 10px;\n    padding: 10px 18px;\n    font-weight: 600;\n    font-size: 13.5px;\n    color: #64748b;\n    background: transparent;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link:hover {\n    border-color: rgba(128, 128, 128, 0.55);\n}\n[data-v-7d055d3d] .settings-tabs .nav-link.active {\n    background: rgba(16, 185, 129, 0.12);\n    border-color: #10b981;\n    color: #059669;\n}\n.settings-card[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.22);\n    border-radius: 14px;\n}\n.settings-card-head[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n    padding: 18px 20px 14px;\n}\n.settings-icon[data-v-7d055d3d] {\n    width: 38px;\n    height: 38px;\n    border-radius: 10px;\n    background: rgba(37, 99, 235, 0.1);\n    color: #2563eb;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex-shrink: 0;\n}\n.settings-icon--danger[data-v-7d055d3d] {\n    background: rgba(239, 68, 68, 0.12);\n    color: #dc2626;\n}\n.settings-card--danger[data-v-7d055d3d] {\n    border-color: rgba(239, 68, 68, 0.35);\n}\n\n/* notifications: status name, then a mail switch and an SMS switch */\n.notify-row[data-v-7d055d3d] {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) 72px 72px;\n    align-items: center;\n    gap: 8px;\n    padding: 11px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.notify-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.notify-row--head[data-v-7d055d3d] {\n    padding-top: 4px;\n    font-size: 12px;\n    font-weight: 700;\n    letter-spacing: 0.06em;\n    text-transform: uppercase;\n    color: #6c757d;\n}\n.notify-label[data-v-7d055d3d] {\n    margin: 0;\n    font-weight: 600;\n}\n.settings-card-foot[data-v-7d055d3d] {\n    padding: 14px 20px;\n    border-top: 1px solid rgba(128, 128, 128, 0.18);\n    display: flex;\n    justify-content: flex-end;\n}\n.setting-hint[data-v-7d055d3d] {\n    color: #6c757d;\n    font-size: 12.5px;\n    line-height: 1.45;\n}\n\n/* a setting = text on the left, its control on the right */\n.setting-row[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 16px;\n    padding: 14px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.setting-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.setting-text[data-v-7d055d3d] {\n    flex: 1 1 220px;\n    min-width: 0;\n}\n.setting-title[data-v-7d055d3d] {\n    font-weight: 600;\n    margin-bottom: 2px;\n    display: block;\n}\n.setting-control[data-v-7d055d3d] {\n    flex: 0 0 150px;\n}\n.setting-control-switch[data-v-7d055d3d] {\n    flex: 0 0 auto;\n}\n\n/* payment method tiles */\n.method-tile[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 12px;\n    padding: 14px 16px;\n    transition: border-color 0.15s, background 0.15s;\n}\n.method-tile.is-on[data-v-7d055d3d] {\n    border-color: #10b981;\n    background: rgba(16, 185, 129, 0.07);\n}\n.method-tile.is-locked[data-v-7d055d3d] {\n    opacity: 0.65;\n}\n.method-icon[data-v-7d055d3d] {\n    width: 32px;\n    height: 32px;\n    border-radius: 8px;\n    background: rgba(128, 128, 128, 0.14);\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n}\n.method-tile.is-on .method-icon[data-v-7d055d3d] {\n    background: rgba(16, 185, 129, 0.2);\n    color: #059669;\n}\n\n/* numbering preview chip */\n.series-preview[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 12px;\n    padding: 10px 14px;\n    border-radius: 10px;\n    background: rgba(128, 128, 128, 0.1);\n}\n.series-preview strong[data-v-7d055d3d] {\n    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n    font-size: 1.05rem;\n}\n@media (max-width: 575px) {\n.setting-control[data-v-7d055d3d] {\n        flex: 1 1 100%;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.custom-image[data-v-7d055d3d] {\n    height: auto;\n    width: 60%;\n    border: 1px solid #ddd;\n    padding: 5px;\n}\n\n/* tabs: same pill look as the Export Center */\n[data-v-7d055d3d] .settings-tabs {\n    flex-wrap: wrap;\n    gap: 8px;\n    border-bottom: 0;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 10px;\n    padding: 10px 18px;\n    font-weight: 600;\n    font-size: 13.5px;\n    color: #64748b;\n    background: transparent;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link:hover {\n    border-color: rgba(128, 128, 128, 0.55);\n}\n[data-v-7d055d3d] .settings-tabs .nav-link.active {\n    background: rgba(16, 185, 129, 0.12);\n    border-color: #10b981;\n    color: #059669;\n}\n.settings-card[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.22);\n    border-radius: 14px;\n}\n.settings-card-head[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n    padding: 18px 20px 14px;\n}\n.settings-icon[data-v-7d055d3d] {\n    width: 38px;\n    height: 38px;\n    border-radius: 10px;\n    background: rgba(37, 99, 235, 0.1);\n    color: #2563eb;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex-shrink: 0;\n}\n.settings-icon--danger[data-v-7d055d3d] {\n    background: rgba(239, 68, 68, 0.12);\n    color: #dc2626;\n}\n.settings-card--danger[data-v-7d055d3d] {\n    border-color: rgba(239, 68, 68, 0.35);\n}\n\n/* delete-account window (colours come from the --ui-* tokens of .ui-modern) */\n.del-modal[data-v-7d055d3d] { color: var(--ui-text);\n}\n.del-modal__head[data-v-7d055d3d] { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px;\n}\n.del-modal__title[data-v-7d055d3d] { flex: 1 1 auto; min-width: 0;\n}\n.del-modal__title h5[data-v-7d055d3d] { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text);\n}\n.del-modal__title p[data-v-7d055d3d] { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted);\n}\n.del-modal__close[data-v-7d055d3d] {\n    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;\n    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;\n}\n.del-modal__close[data-v-7d055d3d]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n.del-modal__state[data-v-7d055d3d] { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 26px 22px; font-size: 14px; color: var(--ui-muted);\n}\n.del-modal__body[data-v-7d055d3d] { padding: 4px 22px 0;\n}\n.del-modal__lead[data-v-7d055d3d] { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--ui-text);\n}\n.del-modal .del-otp[data-v-7d055d3d] { height: 54px; text-align: center; font-size: 24px; font-weight: 700; letter-spacing: 0.5em; padding-left: 0.5em; font-variant-numeric: tabular-nums;\n}\n.del-modal__error[data-v-7d055d3d] { margin-top: 10px;\n}\n.del-modal__resend[data-v-7d055d3d] { margin-top: 12px; font-size: 13px;\n}\n.del-modal__notice[data-v-7d055d3d] {\n    display: flex; align-items: flex-start; gap: 10px; margin: 4px 22px 0; padding: 12px 14px; border-radius: 12px;\n    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);\n}\n.del-modal__notice i[data-v-7d055d3d] { margin-top: 2px;\n}\n.del-modal__actions[data-v-7d055d3d] { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px;\n}\n.del-modal__actions .btn[data-v-7d055d3d] { min-width: 120px; height: 44px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;\n}\n@media (max-width: 575px) {\n.del-modal__actions[data-v-7d055d3d] { flex-direction: column-reverse;\n}\n.del-modal__actions .btn[data-v-7d055d3d] { width: 100%;\n}\n}\n\n/* notifications: status name, then a mail switch and an SMS switch */\n.notify-row[data-v-7d055d3d] {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) 72px 72px;\n    align-items: center;\n    gap: 8px;\n    padding: 11px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.notify-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.notify-row--head[data-v-7d055d3d] {\n    padding-top: 4px;\n    font-size: 12px;\n    font-weight: 700;\n    letter-spacing: 0.06em;\n    text-transform: uppercase;\n    color: #6c757d;\n}\n.notify-label[data-v-7d055d3d] {\n    margin: 0;\n    font-weight: 600;\n}\n.settings-card-foot[data-v-7d055d3d] {\n    padding: 14px 20px;\n    border-top: 1px solid rgba(128, 128, 128, 0.18);\n    display: flex;\n    justify-content: flex-end;\n}\n.setting-hint[data-v-7d055d3d] {\n    color: #6c757d;\n    font-size: 12.5px;\n    line-height: 1.45;\n}\n\n/* a setting = text on the left, its control on the right */\n.setting-row[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 16px;\n    padding: 14px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.setting-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.setting-text[data-v-7d055d3d] {\n    flex: 1 1 220px;\n    min-width: 0;\n}\n.setting-title[data-v-7d055d3d] {\n    font-weight: 600;\n    margin-bottom: 2px;\n    display: block;\n}\n.setting-control[data-v-7d055d3d] {\n    flex: 0 0 150px;\n}\n.setting-control-switch[data-v-7d055d3d] {\n    flex: 0 0 auto;\n}\n\n/* payment method tiles */\n.method-tile[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 12px;\n    padding: 14px 16px;\n    transition: border-color 0.15s, background 0.15s;\n}\n.method-tile.is-on[data-v-7d055d3d] {\n    border-color: #10b981;\n    background: rgba(16, 185, 129, 0.07);\n}\n.method-tile.is-locked[data-v-7d055d3d] {\n    opacity: 0.65;\n}\n.method-icon[data-v-7d055d3d] {\n    width: 32px;\n    height: 32px;\n    border-radius: 8px;\n    background: rgba(128, 128, 128, 0.14);\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n}\n.method-tile.is-on .method-icon[data-v-7d055d3d] {\n    background: rgba(16, 185, 129, 0.2);\n    color: #059669;\n}\n\n/* numbering preview chip */\n.series-preview[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 12px;\n    padding: 10px 14px;\n    border-radius: 10px;\n    background: rgba(128, 128, 128, 0.1);\n}\n.series-preview strong[data-v-7d055d3d] {\n    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n    font-size: 1.05rem;\n}\n@media (max-width: 575px) {\n.setting-control[data-v-7d055d3d] {\n        flex: 1 1 100%;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -3442,7 +3555,13 @@ var render = function () {
                                 _vm.__(
                                   "Permanently delete your distributor account. This cannot be undone."
                                 )
-                              )
+                              ) +
+                                " " +
+                                _vm._s(
+                                  _vm.__(
+                                    "We will email a confirmation code to your registered address first."
+                                  )
+                                )
                             ),
                           ]),
                         ]),
@@ -3505,6 +3624,229 @@ var render = function () {
             ),
           ],
           1
+        ),
+        _vm._v(" "),
+        _c(
+          "b-modal",
+          {
+            attrs: {
+              "hide-header": "",
+              "hide-footer": "",
+              centered: "",
+              "no-close-on-backdrop": "",
+              size: "md",
+              "body-class": "p-0",
+            },
+            on: { hidden: _vm.resetDeleteFlow },
+            model: {
+              value: _vm.deleteModalShow,
+              callback: function ($$v) {
+                _vm.deleteModalShow = $$v
+              },
+              expression: "deleteModalShow",
+            },
+          },
+          [
+            _c("div", { staticClass: "ui-modern del-modal" }, [
+              _c("div", { staticClass: "del-modal__head" }, [
+                _c("span", { staticClass: "ui-tile ui-tone--red" }, [
+                  _c("i", { staticClass: "fa fa-exclamation-triangle" }),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "del-modal__title" }, [
+                  _c("h5", [_vm._v(_vm._s(_vm.__("delete_account")))]),
+                  _vm._v(" "),
+                  _c("p", [
+                    _vm._v(
+                      _vm._s(
+                        _vm.__(
+                          "Permanently delete your distributor account. This cannot be undone."
+                        )
+                      )
+                    ),
+                  ]),
+                ]),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "del-modal__close",
+                    attrs: { type: "button", "aria-label": "Close" },
+                    on: {
+                      click: function ($event) {
+                        _vm.deleteModalShow = false
+                      },
+                    },
+                  },
+                  [_vm._v("×")]
+                ),
+              ]),
+              _vm._v(" "),
+              _vm.deleteSending && !_vm.deleteSentTo
+                ? _c(
+                    "div",
+                    { staticClass: "del-modal__state" },
+                    [
+                      _c("b-spinner", { attrs: { small: "" } }),
+                      _vm._v(
+                        " " +
+                          _vm._s(_vm.__("Sending a code to your email...")) +
+                          "\n                "
+                      ),
+                    ],
+                    1
+                  )
+                : _vm.deleteBlocked
+                ? _c("div", { staticClass: "del-modal__notice ui-tone--red" }, [
+                    _c("i", { staticClass: "fa fa-info-circle" }),
+                    _c("span", [_vm._v(_vm._s(_vm.deleteBlocked))]),
+                  ])
+                : _c("div", { staticClass: "del-modal__body" }, [
+                    _c("p", { staticClass: "del-modal__lead" }, [
+                      _vm._v(
+                        "\n                        " +
+                          _vm._s(_vm.__("We sent a 6-digit code to")) +
+                          " "
+                      ),
+                      _c("strong", [_vm._v(_vm._s(_vm.deleteSentTo))]),
+                      _vm._v(
+                        ".\n                        " +
+                          _vm._s(
+                            _vm.__("Enter it below to delete your account.")
+                          ) +
+                          "\n                    "
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.deleteOtp,
+                          expression: "deleteOtp",
+                        },
+                      ],
+                      ref: "deleteOtpInput",
+                      staticClass: "ui-control del-otp",
+                      attrs: {
+                        type: "text",
+                        inputmode: "numeric",
+                        maxlength: "6",
+                        autocomplete: "one-time-code",
+                        placeholder: "------",
+                        "aria-label": _vm.__("Verification code"),
+                      },
+                      domProps: { value: _vm.deleteOtp },
+                      on: {
+                        input: [
+                          function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.deleteOtp = $event.target.value
+                          },
+                          function ($event) {
+                            _vm.deleteOtp = _vm.deleteOtp.replace(/\D/g, "")
+                          },
+                        ],
+                        keyup: function ($event) {
+                          if (
+                            !$event.type.indexOf("key") &&
+                            _vm._k(
+                              $event.keyCode,
+                              "enter",
+                              13,
+                              $event.key,
+                              "Enter"
+                            )
+                          ) {
+                            return null
+                          }
+                          return _vm.confirmDeleteAccount.apply(null, arguments)
+                        },
+                      },
+                    }),
+                    _vm._v(" "),
+                    _vm.deleteError
+                      ? _c("p", { staticClass: "ui-error del-modal__error" }, [
+                          _vm._v(_vm._s(_vm.deleteError)),
+                        ])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "del-modal__resend" }, [
+                      _vm.deleteCooldown > 0
+                        ? _c("span", { staticClass: "text-muted" }, [
+                            _vm._v(
+                              _vm._s(_vm.__("resend_code")) +
+                                " (" +
+                                _vm._s(_vm.deleteCooldown) +
+                                "s)"
+                            ),
+                          ])
+                        : _c(
+                            "a",
+                            {
+                              class: { "text-muted": _vm.deleteSending },
+                              attrs: { href: "javascript:void(0)" },
+                              on: { click: _vm.sendDeleteOtp },
+                            },
+                            [_vm._v(_vm._s(_vm.__("resend_code")))]
+                          ),
+                    ]),
+                  ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "del-modal__actions" }, [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-light border",
+                    attrs: { type: "button" },
+                    on: {
+                      click: function ($event) {
+                        _vm.deleteModalShow = false
+                      },
+                    },
+                  },
+                  [
+                    _vm._v(
+                      "\n                        " +
+                        _vm._s(
+                          _vm.deleteBlocked ? _vm.__("close") : _vm.__("cancel")
+                        ) +
+                        "\n                    "
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                !_vm.deleteBlocked && _vm.deleteSentTo
+                  ? _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-danger",
+                        attrs: {
+                          type: "button",
+                          disabled:
+                            _vm.deleteOtp.length !== 6 || _vm.isDeletingAccount,
+                        },
+                        on: { click: _vm.confirmDeleteAccount },
+                      },
+                      [
+                        _vm.isDeletingAccount
+                          ? _c("b-spinner", { attrs: { small: "" } })
+                          : _vm._e(),
+                        _vm._v(
+                          "\n                        " +
+                            _vm._s(_vm.__("Delete permanently")) +
+                            "\n                    "
+                        ),
+                      ],
+                      1
+                    )
+                  : _vm._e(),
+              ]),
+            ]),
+          ]
         ),
       ],
       1

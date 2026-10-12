@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Repository\CategoryRepository;
 use App\Http\Repository\ProductRepository;
+use App\Services\SellerAccountDeletionService;
 use App\Models\Admin;
 use App\Models\Blog;
 use App\Models\BlogCategory;
@@ -1052,22 +1053,69 @@ class BasicApiController extends Controller
         }
     }
 
+    /**
+     * Step 1 of deleting a distributor account: email a confirmation code to the distributor.
+     * Refuses up front (no email sent) when the account could not be deleted anyway.
+     */
+    public function sendSellerDeleteOtp(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            $seller = Seller::where('admin_id', $user->id)->first();
+            if (!$seller) {
+                return CommonHelper::responseError('seller_not_found');
+            }
+
+            $service = new SellerAccountDeletionService();
+            $blocked = $service->blockedReason($seller);
+            if ($blocked) {
+                return CommonHelper::responseError($blocked);
+            }
+
+            return CommonHelper::responseSuccessWithData('otp_sent_to_your_registered_email', $service->sendCode($user, $seller));
+        } catch (\RuntimeException $e) {
+            // Asked again too soon: the earlier code is still valid, so say so and let the page keep its code box open.
+            if ($e->getMessage() === 'please_wait_before_requesting_another_code' && isset($service, $seller, $user)) {
+                return CommonHelper::responseErrorWithData($e->getMessage(), [
+                    'code_pending' => true,
+                    'email' => $service->maskedEmail($seller),
+                    'resend_after' => $service->secondsUntilResend($user),
+                ]);
+            }
+            // any other deliberate refusal (no email on file, mail failed...): the message is a language key
+            return CommonHelper::responseError($e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('Seller delete OTP : ' . $e->getMessage());
+            return CommonHelper::responseError('something_went_wrong');
+        }
+    }
+
+    /**
+     * Step 2: delete the account, but only with the code emailed in step 1 (2FA).
+     */
     public function deleteSellerAccount(Request $request)
     {
         try {
             $seller_admin_id = auth()->user()->id;
             $seller = Seller::where('admin_id', $seller_admin_id)->first();
 
-            if ($seller->email == 'seller@gmail.com' && isDemoMode()) {
-                return CommonHelper::responseError('this_function_is_not_available_in_demo_mode');
-            }
-            if (floatval($seller->balance ?? 0) > 0) {
-                return CommonHelper::responseError('cannot_delete_account_with_balance');
-            }
+            $service = new SellerAccountDeletionService();
             // Must run before the admin row is deleted, or a refused seller delete leaves a login-less seller.
-            if ($seller->hasOrderHistory()) {
-                return CommonHelper::responseError('seller_has_orders_cannot_delete');
+            $blocked = $service->blockedReason($seller);
+            if ($blocked) {
+                return CommonHelper::responseError($blocked);
             }
+
+            // Checked after the refusals above, so a refused delete never uses up the code.
+            $otp = trim((string) $request->input('otp', ''));
+            if ($otp === '') {
+                return CommonHelper::responseError('verification_code_is_required_to_delete_account');
+            }
+            $otpError = $service->verify(auth()->user(), $otp);
+            if ($otpError) {
+                return CommonHelper::responseError($otpError);
+            }
+
             $admin = Admin::where('id', $seller_admin_id)->first();
             $admin->delete();
             $seller->delete();

@@ -162,6 +162,7 @@ class SetLang
             'seller.assign_delivery_boy',
             'seller.mail_settings.save',
             'seller.delete_seller_account',
+            'seller.delete_seller_account.send_otp',
             'delivery_boy.update_status',
             'delivery_boy.mail_settings.save',
             'delivery_boy.delete_delivery_boy_account',

@@ -2561,5 +2561,8 @@
     "confirm_security_change": "Confirm security change",
     "enter_the_code_to_turn_on_two_factor": "To turn two-factor authentication ON, enter the 6-digit code we sent to",
     "enter_the_code_to_turn_off_two_factor": "To turn two-factor authentication OFF, enter the 6-digit code we sent to",
-    "too_many_invalid_attempts_please_try_again": "Too many incorrect codes. Please request a new code and try again."
+    "too_many_invalid_attempts_please_try_again": "Too many incorrect codes. Please request a new code and try again.",
+    "no_email_on_file_cannot_send_verification_code": "There is no email address on your account, so a verification code cannot be sent. Please contact support.",
+    "too_many_codes_requested_try_again_later": "Too many codes were requested. Please try again after an hour.",
+    "verification_code_is_required_to_delete_account": "Enter the verification code we emailed you to delete your account."
 }
