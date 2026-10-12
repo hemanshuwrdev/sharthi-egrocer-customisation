@@ -316,6 +316,52 @@
                     </div>
                 </b-tab>
 
+                <!-- Notifications: which order status changes send a mail / an SMS (moved here from the old /seller/settings page) -->
+                <b-tab>
+                    <template #title>
+                        <span class="tab-title"><i class="fa fa-bell me-2"></i>{{ __('Notifications') }}</span>
+                    </template>
+
+                    <div class="row">
+                        <div class="col-xl-8">
+                            <form @submit.prevent="saveMailSetting">
+                                <div class="card settings-card">
+                                    <div class="settings-card-head">
+                                        <span class="settings-icon"><i class="fa fa-envelope"></i></span>
+                                        <h5 class="mb-0">{{ __('order_mail_settings') }}</h5>
+                                    </div>
+                                    <div class="card-body pt-0">
+                                        <p class="setting-hint">{{ __('Choose which order updates send a mail or an SMS.') }}</p>
+
+                                        <div class="notify-row notify-row--head">
+                                            <span>{{ __('order_status') }}</span>
+                                            <span class="text-center">{{ __('mail') }}</span>
+                                            <span class="text-center">{{ __('sms') }}</span>
+                                        </div>
+                                        <div v-for="status in statuses" :key="status.id" class="notify-row">
+                                            <label class="notify-label">{{ getStatusDisplayName(status) }}</label>
+                                            <div class="form-check form-switch m-0 d-flex justify-content-center">
+                                                <input class="form-check-input" type="checkbox" :id="'checkbox_mail_' + status.id"
+                                                    :value="status.id" v-model="mail_statuses">
+                                            </div>
+                                            <div class="form-check form-switch m-0 d-flex justify-content-center">
+                                                <input class="form-check-input" type="checkbox" :id="'checkbox_sms_' + status.id"
+                                                    :value="status.id" v-model="sms_statuses">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="settings-card-foot">
+                                        <b-button type="submit" variant="primary" :disabled="isNotifyLoading">
+                                            {{ __('save') }}
+                                            <b-spinner small v-if="isNotifyLoading"></b-spinner>
+                                        </b-button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </b-tab>
+
                 <!-- Security -->
                 <b-tab>
                     <template #title>
@@ -389,6 +435,71 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Login username and password (moved here from the old /seller/settings page) -->
+                    <div class="row mt-3">
+                        <div class="col-xl-8">
+                            <form @submit.prevent="saveCredentials">
+                                <div class="card settings-card">
+                                    <div class="settings-card-head">
+                                        <span class="settings-icon"><i class="fa fa-user-lock"></i></span>
+                                        <h5 class="mb-0">{{ __('change_username_and_password') }}</h5>
+                                    </div>
+                                    <div class="card-body pt-0">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label" for="login_username">{{ __('username') }}</label>
+                                                <input type="text" id="login_username" v-model="credentials.username" class="form-control"
+                                                    :placeholder="__('username')" autocomplete="username" required />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label" for="login_current_password">{{ __('current_password') }}</label>
+                                                <input type="password" id="login_current_password" v-model="credentials.current_password" class="form-control"
+                                                    :placeholder="__('current_password')" autocomplete="current-password" required />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label" for="login_new_password">{{ __('new_password') }}</label>
+                                                <input type="password" id="login_new_password" v-model="credentials.password" class="form-control"
+                                                    :placeholder="__('new_password')" autocomplete="new-password" required />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label" for="login_confirm_password">{{ __('confirm_new_password') }}</label>
+                                                <input type="password" id="login_confirm_password" v-model="credentials.confirm_password" class="form-control"
+                                                    :placeholder="__('confirm_new_password')" autocomplete="new-password" required />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="settings-card-foot">
+                                        <b-button type="submit" variant="primary" :disabled="isCredentialsLoading">
+                                            {{ __('save') }}
+                                            <b-spinner small v-if="isCredentialsLoading"></b-spinner>
+                                        </b-button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Delete account -->
+                    <div class="row mt-3">
+                        <div class="col-xl-8">
+                            <div class="card settings-card settings-card--danger">
+                                <div class="settings-card-head">
+                                    <span class="settings-icon settings-icon--danger"><i class="fa fa-exclamation-triangle"></i></span>
+                                    <h5 class="mb-0">{{ __('delete_account') }}</h5>
+                                </div>
+                                <div class="card-body pt-0">
+                                    <p class="setting-hint mb-0">{{ __('Permanently delete your distributor account. This cannot be undone.') }}</p>
+                                </div>
+                                <div class="settings-card-foot">
+                                    <button type="button" class="btn btn-danger" :disabled="isDeletingAccount" @click="deleteAccount">
+                                        {{ __('delete_account') }}
+                                        <b-spinner small v-if="isDeletingAccount"></b-spinner>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </b-tab>
 
                 <!-- My Profile: the same profile form the old My Profile page used, loaded only when this tab is opened -->
@@ -410,7 +521,7 @@ import axios from "axios";
 import Auth from '../../Auth.js';
 
 // tab order = b-tabs index; "?tab=profile" in the URL opens that tab (used by the My Profile menu link)
-const TAB_KEYS = ['orders', 'numbering', 'security', 'profile'];
+const TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
 
 export default {
     components: {
@@ -459,6 +570,24 @@ export default {
             isSendingOtp: false,
             otpResendCooldown: 0,
             otpCooldownTimer: null,
+
+            // Notifications tab (order mail / SMS per status)
+            statuses: [],
+            mail_statuses: [],
+            mobile_statuses: [],
+            sms_statuses: [],
+            isNotifyLoading: false,
+            notificationsLoaded: false,
+
+            // Security tab: login credentials + account deletion
+            credentials: {
+                username: Auth.user.username,
+                current_password: "",
+                password: "",
+                confirm_password: "",
+            },
+            isCredentialsLoading: false,
+            isDeletingAccount: false,
         }
     },
 
@@ -469,10 +598,11 @@ export default {
             this.activeTab = fromUrl;
         } else {
             try {
-                const saved = parseInt(window.localStorage.getItem('sarthi_seller_settings_tab'), 10);
-                if (saved >= 0 && saved < TAB_KEYS.length) this.activeTab = saved;
+                const saved = TAB_KEYS.indexOf(window.localStorage.getItem('sarthi_seller_settings_tab_key'));
+                if (saved >= 0) this.activeTab = saved;
             } catch (e) {}
         }
+        this.ensureNotificationsLoaded();
         this.getSettings();
         this.getOrderSettings();
         this.getPaymentMethods();
@@ -484,7 +614,8 @@ export default {
 
     watch: {
         activeTab(index) {
-            try { window.localStorage.setItem('sarthi_seller_settings_tab', String(index)); } catch (e) {}
+            try { window.localStorage.setItem('sarthi_seller_settings_tab_key', TAB_KEYS[index]); } catch (e) {}
+            this.ensureNotificationsLoaded();
             // keep the address in step with the tab, so a refresh or a shared link lands on it
             if (this.$route.query.tab !== TAB_KEYS[index]) {
                 const nav = this.$router.replace({ query: Object.assign({}, this.$route.query, { tab: TAB_KEYS[index] }) });
@@ -519,6 +650,181 @@ export default {
     },
 
     methods: {
+
+        // ================= NOTIFICATIONS (order mail / SMS) =================
+        // loaded the first time the tab is opened, so the page start-up stays light
+        ensureNotificationsLoaded() {
+            if (this.notificationsLoaded || TAB_KEYS[this.activeTab] !== 'notifications') return;
+            this.notificationsLoaded = true;
+            this.getOrderStatus();
+            this.getMailSetting();
+        },
+        /**
+         * Status label for display. API returns status_name as object by lang code { en: "...", hi: "..." }.
+         * Picks current app locale; fallback to status.status.
+         */
+        getStatusDisplayName(status) {
+            if (!status) return '';
+            const sn = status.status_name;
+            if (sn == null) return status.status || '';
+            if (typeof sn === 'string') return sn.trim() || status.status || '';
+            if (typeof sn === 'object' && !Array.isArray(sn)) {
+                const appLocale = window.appLocale || window.localStorage.getItem('lang') || 'en';
+                const forLocale = sn[appLocale];
+                if (forLocale != null && String(forLocale).trim() !== '') return String(forLocale).trim();
+                const first = Object.values(sn).find(val => val != null && String(val).trim() !== '');
+                return first != null ? String(first).trim() : (status.status || '');
+            }
+            return status.status || '';
+        },
+        getOrderStatus() {
+            this.isNotifyLoading = true;
+            Promise.all([
+                axios.get(this.$apiUrl + '/order_statuses'),
+                axios.get(this.$apiUrl + '/order_statuses/self_pickup')
+            ])
+                .then(([orderResponse, selfPickResponse]) => {
+                    this.isNotifyLoading = false;
+                    // self-pickup statuses 1, 7 and 8 duplicate the normal ones, so they are left out
+                    const selfPickStatuses = selfPickResponse.data.data.filter(item => ![1, 7, 8].includes(item.id));
+                    this.statuses = [...orderResponse.data.data, ...selfPickStatuses];
+                })
+                .catch(error => {
+                    this.isNotifyLoading = false;
+                    if (error.request && error.request.statusText) {
+                        this.showError(error.request.statusText);
+                    } else if (error.message) {
+                        this.showError(error.message);
+                    } else {
+                        this.showError(__('something_went_wrong'));
+                    }
+                });
+        },
+        getMailSetting() {
+            axios.get(this.$apiUrl + '/mail_settings').then((response) => {
+                // rebuilt from scratch so a reload after saving never doubles up
+                const mail = [], mobile = [], sms = [];
+                response.data.data.forEach((status) => {
+                    if (status.mail_status === 1) mail.push(status.order_status_id);
+                    if (status.mobile_status === 1) mobile.push(status.order_status_id);
+                    if (status.sms_status === 1) sms.push(status.order_status_id);
+                });
+                this.mail_statuses = mail;
+                this.mobile_statuses = mobile;
+                this.sms_statuses = sms;
+            }).catch(error => {
+                if (error.request && error.request.statusText) {
+                    this.showError(error.request.statusText);
+                } else if (error.message) {
+                    this.showError(error.message);
+                } else {
+                    this.showError(__('something_went_wrong'));
+                }
+            });
+        },
+        saveMailSetting() {
+            this.isNotifyLoading = true;
+            let formData = new FormData();
+            this.statuses.forEach((status) => {
+                formData.append('status_ids[]', status.id);
+                formData.append('mail_statuses[]', this.mail_statuses.includes(status.id) ? "1" : "0");
+                formData.append('mobile_statuses[]', this.mobile_statuses.includes(status.id) ? "1" : "0");
+                formData.append('sms_statuses[]', this.sms_statuses.includes(status.id) ? "1" : "0");
+            });
+            axios.post(this.$apiUrl + '/mail_settings/save', formData).then(res => {
+                this.isNotifyLoading = false;
+                if (res.data.status === 1) {
+                    this.showMessage("success", res.data.message);
+                    this.getMailSetting();
+                } else {
+                    this.showError(res.data.message);
+                }
+            }).catch(error => {
+                this.isNotifyLoading = false;
+                if (error.request && error.request.statusText) {
+                    this.showError(error.request.statusText);
+                } else if (error.message) {
+                    this.showError(error.message);
+                } else {
+                    this.showError(__('something_went_wrong'));
+                }
+            });
+        },
+
+        // ================= LOGIN USERNAME / PASSWORD =================
+        saveCredentials() {
+            this.isCredentialsLoading = true;
+            axios.post(this.$apiUrl + '/system_users/change_password', this.credentials).then(res => {
+                this.isCredentialsLoading = false;
+                if (res.data.status === 1) {
+                    this.showMessage("success", res.data.message);
+                    // Update Auth.user.username in memory and localStorage so the header reflects immediately
+                    Auth.user.username = this.credentials.username;
+                    window.localStorage.setItem('user', JSON.stringify(Auth.user));
+                    this.$router.push('/seller');
+                } else {
+                    this.showError(res.data.message);
+                }
+            }).catch(error => {
+                this.isCredentialsLoading = false;
+                if (error.request && error.request.statusText) {
+                    this.showError(error.request.statusText);
+                } else if (error.message) {
+                    this.showError(error.message);
+                } else {
+                    this.showError(__('something_went_wrong'));
+                }
+            });
+        },
+
+        // ================= DELETE ACCOUNT =================
+        deleteAccount() {
+            this.$swal.fire({
+                title: __('are_you_sure'),
+                text: __('delete_account_confirmation'),
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: __('yes_delete'),
+                cancelButtonText: __('cancel')
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                this.$swal.fire({
+                    title: __('final_confirmation'),
+                    text: __('delete_account_final_warning'),
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: __('yes_delete_permanently'),
+                    cancelButtonText: __('cancel'),
+                    dangerMode: true
+                }).then((secondResult) => {
+                    if (!secondResult.isConfirmed) return;
+                    this.isDeletingAccount = true;
+                    axios.get(this.$sellerApiUrl + '/delete_seller_account').then((response) => {
+                        this.isDeletingAccount = false;
+                        if (response.data.status === 1) {
+                            this.showSuccess(response.data.message);
+                            Auth.logout();
+                            setTimeout(() => { this.$router.push('/login'); }, 1500);
+                        } else {
+                            this.showError(response.data.message);
+                        }
+                    }).catch(error => {
+                        this.isDeletingAccount = false;
+                        if (error.request && error.request.statusText) {
+                            this.showError(error.request.statusText);
+                        } else if (error.message) {
+                            this.showError(error.message);
+                        } else {
+                            this.showError(__('something_went_wrong'));
+                        }
+                    });
+                });
+            });
+        },
 
         methodLabel(method) {
             // label only: the method key stays 'upi' everywhere else (saving, the driver app, exports)
@@ -943,6 +1249,43 @@ export default {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+}
+
+.settings-icon--danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.settings-card--danger {
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* notifications: status name, then a mail switch and an SMS switch */
+.notify-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px 72px;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 0;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.notify-row:last-child {
+    border-bottom: 0;
+}
+
+.notify-row--head {
+    padding-top: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.notify-label {
+    margin: 0;
+    font-weight: 600;
 }
 
 .settings-card-foot {

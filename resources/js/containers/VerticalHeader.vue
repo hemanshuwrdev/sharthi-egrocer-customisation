@@ -183,7 +183,7 @@
                                         v-if="role == this.$roleSuperAdmin">
                                         <span class="icon-mid me-2" v-html="navIcon('gear')"></span> {{ __('settings') }}
                                     </router-link>
-                                    <router-link class="dropdown-item" to="/seller/settings"
+                                    <router-link class="dropdown-item" to="/seller/setting"
                                         v-if="role == this.$roleSeller">
                                         <span class="icon-mid me-2" v-html="navIcon('gear')"></span> {{ __('settings') }}
                                     </router-link>

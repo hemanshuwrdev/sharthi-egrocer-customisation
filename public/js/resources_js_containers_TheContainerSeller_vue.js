@@ -3301,7 +3301,7 @@ var render = function () {
                                 "router-link",
                                 {
                                   staticClass: "dropdown-item",
-                                  attrs: { to: "/seller/settings" },
+                                  attrs: { to: "/seller/setting" },
                                 },
                                 [
                                   _c("span", {

@@ -98,6 +98,7 @@ const PrivacyPolicySeller = () => import("../views/Setting/PrivacyPolicySeller")
 
 //Setting - Salesman
 const PrivacyPolicySalesman = () => import("../views/Setting/PrivacyPolicySalesman");
+const SellerPrivacyPolicySalesman = () => import("../views/Sellers/PrivacyPolicySalesman");
 
 const FirebaseSettings = () => import("../views/Setting/FirebaseSettings");
 const TaxSettings = () => import("../views/Setting/TaxSettings/TaxSettings");
@@ -250,7 +251,6 @@ const SellerProductRatings = () => import("../views/Product/ProductRatings");
 const SellerCloneProduct = () => import("../views/Product/EditProduct");
 const SellerManageStock = () => import("../views/Sellers/ManageStock");
 // const SellerMedia = () => import("../views/Product/Media");
-const SellerSettings = () => import('../views/Settings');
 // const SellerPointOfSale = () => import("../views/Sellers/PointOfSale");
 // const SellerPosReports = () => import("../views/Sellers/PosReport");
 const SellerPrintSettings = () => import("../views/Sellers/Settings");
@@ -1808,7 +1808,7 @@ function configRoutes() {
                 {
                     path: "privacy_policy_salesman",
                     name: "SellerPrivacyPolicySalesman",
-                    component: PrivacyPolicySalesman,
+                    component: SellerPrivacyPolicySalesman,
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
@@ -2209,7 +2209,8 @@ function configRoutes() {
                 {
                     path: "settings",
                     name: "Settings_setting",
-                    component: SellerSettings,
+                    // the old separate page now lives inside /seller/setting (Notifications and Security tabs)
+                    redirect: { path: '/seller/setting', query: { tab: 'notifications' } },
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
