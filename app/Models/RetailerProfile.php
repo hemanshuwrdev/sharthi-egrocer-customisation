@@ -12,7 +12,8 @@ class RetailerProfile extends Model
     use HasFactory, LogsActivity;
     protected $fillable = [
         'user_id', 'shop_name', 'party_name', 'gst_no',
-        'address', 'city_id', 'area_id', 'gps_lat', 'gps_lng',
+        'address', 'address_line1', 'address_line2', 'city', 'state',
+        'city_id', 'area_id', 'gps_lat', 'gps_lng',
         'verified_lat', 'verified_lng', 'storefront_photo', 'verification_notes',
         'verified_at', 'verified_by_salesman_id',
     ];
@@ -25,11 +26,23 @@ class RetailerProfile extends Model
         'verified_lng' => 'float',
     ];
 
-    // Expose only the area's name on the API; the full `area` relation object
+    // Expose only the area's name and pincode on the API; the full `area` relation object
     // is hidden to keep the response flat.
-    protected $appends = ['area_name'];
+    protected $appends = ['area_name', 'area_pincode'];
 
     protected $hidden = ['area'];
+
+    /**
+     * Single-line `address` text from the structured parts ("line1, line2, city, state"),
+     * skipping blanks. `address` is what invoices, the salesman app and order fallback read.
+     */
+    public static function composeAddress($line1, $line2, $city, $state): string
+    {
+        return collect([$line1, $line2, $city, $state])
+            ->map(fn ($part) => trim((string) $part))
+            ->filter(fn ($part) => $part !== '')
+            ->implode(', ');
+    }
 
     public function getStorefrontPhotoAttribute($value): ?string
     {
@@ -41,6 +54,11 @@ class RetailerProfile extends Model
     public function getAreaNameAttribute(): ?string
     {
         return $this->area?->name;
+    }
+
+    public function getAreaPincodeAttribute(): ?string
+    {
+        return $this->area?->pincode;
     }
 
     public function user()

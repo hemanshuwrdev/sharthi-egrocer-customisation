@@ -36,7 +36,13 @@ class RetailerAddressChangeController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'new_address' => 'required|string|max:500',
+            // The address parts are optional so app builds that only send `new_address` keep
+            // working; one of `new_address` / `new_address_line1` is still needed.
+            'new_address'       => 'required_without:new_address_line1|nullable|string|max:500',
+            'new_address_line1' => 'nullable|string|max:255',
+            'new_address_line2' => 'nullable|string|max:255',
+            'new_city_name'     => 'nullable|string|max:191',
+            'new_state'         => 'nullable|string|max:191',
             'new_gps_lat' => 'required|numeric|between:-90,90',
             'new_gps_lng' => 'required|numeric|between:-180,180',
             'reason'      => 'nullable|string|max:500',
@@ -69,7 +75,14 @@ class RetailerAddressChangeController extends Controller
             'old_city_id' => $profile?->city_id ?? null,
             'old_gps_lat' => $profile?->gps_lat ?? null,
             'old_gps_lng' => $profile?->gps_lng ?? null,
-            'new_address' => $request->new_address,
+            // An explicit `new_address` is stored as sent; otherwise it's built from the parts.
+            'new_address' => $request->filled('new_address')
+                ? $request->new_address
+                : RetailerProfile::composeAddress($request->new_address_line1, $request->new_address_line2, $request->new_city_name, $request->new_state),
+            'new_address_line1' => $request->new_address_line1,
+            'new_address_line2' => $request->new_address_line2,
+            'new_city_name'     => $request->new_city_name,
+            'new_state'         => $request->new_state,
             'new_city_id' => $newCityId,
             'new_gps_lat' => (float) $request->new_gps_lat,
             'new_gps_lng' => (float) $request->new_gps_lng,
@@ -108,6 +121,10 @@ class RetailerAddressChangeController extends Controller
             'id'          => $req->id,
             'status'      => $req->status,
             'new_address' => $req->new_address,
+            'new_address_line1' => $req->new_address_line1,
+            'new_address_line2' => $req->new_address_line2,
+            'new_city_name'     => $req->new_city_name,
+            'new_state'         => $req->new_state,
             'new_city_id' => $req->new_city_id,
             'reason'      => $req->reason,
             'verified_at' => $req->verified_at?->toDateTimeString(),
@@ -234,6 +251,12 @@ class RetailerAddressChangeController extends Controller
         // Update retailer_profiles with new address + GPS
         RetailerProfile::where('user_id', $changeRequest->user_id)->update([
             'address'                  => $changeRequest->new_address,
+            // Always replaced with the request's parts (null when the app sent none), so they
+            // can never keep describing the old address next to the new `address`.
+            'address_line1'            => $changeRequest->new_address_line1,
+            'address_line2'            => $changeRequest->new_address_line2,
+            'city'                     => $changeRequest->new_city_name,
+            'state'                    => $changeRequest->new_state,
             'city_id'                  => $changeRequest->new_city_id,
             'gps_lat'                  => $changeRequest->new_gps_lat,
             'gps_lng'                  => $changeRequest->new_gps_lng,
@@ -244,6 +267,13 @@ class RetailerAddressChangeController extends Controller
             'verified_by_salesman_id'  => $salesman->id,
             'verified_at'              => $changeRequest->verified_at,
         ]);
+
+        // The shop moved: refresh every zone it now falls in (zones can overlap; city_id holds only the first one).
+        try {
+            app(\App\Services\RetailerZoneService::class)->syncRetailer((int) $changeRequest->user_id, $changeRequest->new_gps_lat, $changeRequest->new_gps_lng, $changeRequest->new_city_id);
+        } catch (\Throwable $e) {
+            \Log::error('address change zone sync failed: ' . $e->getMessage());
+        }
 
         // Reassign retailer to the new verifying salesman
         User::where('id', $changeRequest->user_id)->update([

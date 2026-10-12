@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Area;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
@@ -55,7 +56,63 @@ class AreaApiController extends Controller
             ->where('status', 1)
             ->get();
 
+        // Registration screen prefills "city" from this. Areas have no city of their own
+        // (areas.city_id is a legacy delivery-zone link), so it comes from the postal data.
+        if ($areas->isNotEmpty()) {
+            $city = $this->cityForPincode($request->pincode);
+            $areas->each(fn ($area) => $area->city = $city);
+        }
+
         return CommonHelper::responseWithData($areas);
+    }
+
+    /**
+     * City name for a pincode, from the postal API's "Block" (the sub-district / taluka — the
+     * API has no city field, and "District" is a different, larger thing). A pincode can span
+     * several blocks; the most common one wins, first one on a tie. Cached per pincode so the
+     * registration screen doesn't wait on the external API each time. A failed lookup returns
+     * null and is not cached, so the next request retries.
+     */
+    private function cityForPincode($pincode): ?string
+    {
+        $pincode = (string) $pincode;
+        if (!preg_match('/^\d{6}$/', $pincode)) {
+            return null;
+        }
+
+        $cacheKey = 'pincode_block_' . $pincode;
+        $city = Cache::get($cacheKey);
+        if ($city !== null) {
+            return $city;
+        }
+
+        try {
+            $response = Http::withHeaders(['User-Agent' => 'Mozilla/5.0'])
+                ->timeout(5)
+                ->get('https://api.postalpincode.in/pincode/' . $pincode);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $result = $response->ok() ? ($response->json()[0] ?? null) : null;
+        if (!$result || ($result['Status'] ?? null) !== 'Success' || empty($result['PostOffice'])) {
+            return null;
+        }
+
+        $blocks = collect($result['PostOffice'])
+            ->pluck('Block')
+            ->map(fn ($block) => trim((string) $block))
+            ->reject(fn ($block) => $block === '' || strtoupper($block) === 'NA');
+
+        // countBy() keeps first-seen order and max() keeps the first maximum, so ties go to the earliest.
+        $counts = $blocks->countBy();
+        $city = $counts->isEmpty() ? null : $counts->search($counts->max());
+
+        if ($city !== null) {
+            Cache::put($cacheKey, $city, now()->addDays(30));
+        }
+
+        return $city;
     }
 
     public function lookupPincode(Request $request)

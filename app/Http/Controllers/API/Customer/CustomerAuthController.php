@@ -499,8 +499,12 @@ class CustomerAuthController extends Controller
      *    mapped anywhere in the retailer's whole zone via brand_distributor_mappings
      *  - First salesman to verify claims the retailer (atomic, separate endpoint)
      *
-     * Body (required): country_code, mobile, shop_name, party_name, gps_lat, gps_lng, address
-     * Body (optional): gst_no, gps_lat, gps_lng, area_id, fcm_token, platform, language_id
+     * Body (required): country_code, mobile, shop_name, party_name, gps_lat, gps_lng,
+     *                   and an address: either `address` (older app builds) or `address_line1`
+     * Body (optional): address_line2, city, state (text, stored as sent), gst_no, area_id,
+     *                  fcm_token, platform, language_id
+     * `address` is what invoices/salesman app read; when only the parts are sent it is built
+     * from them.
      */
     public function registerRetailer(Request $request)
     {
@@ -516,7 +520,13 @@ class CustomerAuthController extends Controller
             ],
             'shop_name'    => 'required|string|max:160',
             'party_name'   => 'required|string|max:160',
-            'address'      => 'required|string|min:5',
+            // The new address parts are all optional so app builds that don't send them yet
+            // keep registering; one of `address` / `address_line1` is still needed.
+            'address'       => 'required_without:address_line1|nullable|string|min:5',
+            'address_line1' => 'nullable|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'city'          => 'nullable|string|max:191',
+            'state'         => 'nullable|string|max:191',
             'gst_no'       => 'nullable|string|max:32',
             'gps_lat'      => 'required|numeric|between:-90,90',
             'gps_lng'      => 'required|numeric|between:-180,180',
@@ -571,7 +581,14 @@ class CustomerAuthController extends Controller
             $profile->gst_no     = $request->gst_no;
             $profile->city_id    = $matchedCityId;
             $profile->area_id    = $areaId;
-            $profile->address    = $request->address;
+            $profile->address_line1 = $request->address_line1;
+            $profile->address_line2 = $request->address_line2;
+            $profile->city          = $request->city;
+            $profile->state         = $request->state;
+            // An explicit `address` is stored as sent; otherwise it's built from the parts.
+            $profile->address    = $request->filled('address')
+                ? $request->address
+                : RetailerProfile::composeAddress($request->address_line1, $request->address_line2, $request->city, $request->state);
             $profile->gps_lat    = $request->gps_lat;
             $profile->gps_lng    = $request->gps_lng;
             $profile->save();
@@ -587,6 +604,13 @@ class CustomerAuthController extends Controller
             DB::rollBack();
             Log::error('registerRetailer create failed: ' . $e->getMessage());
             return CommonHelper::responseError($e->getMessage());
+        }
+
+        // Keep every zone the shop falls in (zones can overlap; city_id holds only the first one).
+        try {
+            app(\App\Services\RetailerZoneService::class)->syncRetailer((int) $user->id, $request->gps_lat, $request->gps_lng, $matchedCityId);
+        } catch (\Throwable $e) {
+            Log::error('registerRetailer zone sync failed: ' . $e->getMessage());
         }
 
         // Auth + token
@@ -822,6 +846,10 @@ class CustomerAuthController extends Controller
                     ->where(fn($q) => $q->where('country_code', $profileCountryCode))
                     ->whereNull('deleted_at'),
             ],
+            'address_line1' => 'nullable|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'city'          => 'nullable|string|max:191',
+            'state'         => 'nullable|string|max:191',
         ], [
             'email.unique'  => 'email_has_already_taken',
             'mobile.unique' => 'mobile_number_has_already_taken',
@@ -876,9 +904,22 @@ class CustomerAuthController extends Controller
         // from the request — it's always re-derived from gps_lat/gps_lng, same as at
         // registration, so a retailer can't manually reassign their own zone.
         $retailerUpdates = [];
-        foreach (['shop_name', 'party_name', 'gst_no', 'address', 'gps_lat', 'gps_lng'] as $field) {
+        $addressParts = ['address_line1', 'address_line2', 'city', 'state'];
+        foreach (array_merge(['shop_name', 'party_name', 'gst_no', 'address', 'gps_lat', 'gps_lng'], $addressParts) as $field) {
             if ($request->filled($field)) {
                 $retailerUpdates[$field] = $request->input($field);
+            }
+        }
+        // Parts changed without an explicit `address`: rebuild it from the merged old + new
+        // parts. Skipped when the retailer has no address_line1 (registered before the parts
+        // existed), so a lone city/state edit can't replace their full address with a fragment.
+        if (!isset($retailerUpdates['address']) && array_intersect_key($retailerUpdates, array_flip($addressParts))) {
+            $current = (array) DB::table('retailer_profiles')->where('user_id', $userId)->first($addressParts);
+            $merged = array_merge($current, array_intersect_key($retailerUpdates, array_flip($addressParts)));
+            if (!empty($merged['address_line1'])) {
+                $retailerUpdates['address'] = RetailerProfile::composeAddress(
+                    $merged['address_line1'] ?? null, $merged['address_line2'] ?? null, $merged['city'] ?? null, $merged['state'] ?? null
+                );
             }
         }
         if ($request->filled('gps_lat') && $request->filled('gps_lng')) {
@@ -897,6 +938,15 @@ class CustomerAuthController extends Controller
                 $retailerUpdates['user_id']    = $userId;
                 $retailerUpdates['created_at'] = now();
                 DB::table('retailer_profiles')->insert($retailerUpdates);
+            }
+
+            // Location changed: refresh every zone the shop now falls in.
+            if (isset($matchedCityId)) {
+                try {
+                    app(\App\Services\RetailerZoneService::class)->syncRetailer((int) $userId, $request->gps_lat, $request->gps_lng, $matchedCityId);
+                } catch (\Throwable $e) {
+                    Log::error('updateProfile zone sync failed: ' . $e->getMessage());
+                }
             }
         }
 

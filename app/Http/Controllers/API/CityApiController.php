@@ -131,6 +131,8 @@ class CityApiController extends Controller
             'zone' => $request->zone
         ]);
 
+        $this->resyncRetailerZones();
+
         return CommonHelper::responseWithData([
             'id' => $city->id,
             'message' => __('city_saved_successfully')
@@ -194,7 +196,22 @@ class CityApiController extends Controller
             'zone' => $request->zone
         ]);
 
+        $this->resyncRetailerZones();
+
         return CommonHelper::responseSuccess('city_updated_successfully');
+    }
+
+    /**
+     * A zone was added or its boundary changed: re-evaluate which zones each retailer sits in
+     * (see RetailerZoneService). Never blocks saving the zone itself.
+     */
+    private function resyncRetailerZones(): void
+    {
+        try {
+            app(\App\Services\RetailerZoneService::class)->syncAll();
+        } catch (\Throwable $e) {
+            \Log::error('retailer zone resync failed: ' . $e->getMessage());
+        }
     }
 
     public function delete(Request $request)

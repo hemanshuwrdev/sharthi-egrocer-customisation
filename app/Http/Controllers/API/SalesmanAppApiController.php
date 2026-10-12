@@ -71,6 +71,35 @@ class SalesmanAppApiController extends Controller
     }
 
     /**
+     * Restrict a query on retailer_profiles to retailers sitting in any of $cityIds: their stored zone
+     * (retailer_profiles.city_id) or any other zone their shop location falls in. Zones can overlap but
+     * city_id keeps only the first match, so matching on it alone wrongly rejects a distributor whose
+     * territory is another zone covering the same spot — see RetailerZoneService.
+     */
+    private function inTerritoryZones($query, array $cityIds)
+    {
+        return $query->where(function ($q) use ($cityIds) {
+            $q->whereIn('retailer_profiles.city_id', $cityIds)
+              ->orWhereExists(fn ($sub) => $sub->select(DB::raw(1))
+                  ->from('retailer_profile_cities as rpc')
+                  ->whereColumn('rpc.user_id', 'retailer_profiles.user_id')
+                  ->whereIn('rpc.city_id', $cityIds));
+        });
+    }
+
+    /** Single-retailer version of inTerritoryZones(). */
+    private function retailerInTerritoryZones(RetailerProfile $profile, array $cityIds): bool
+    {
+        $cityIds = array_map('intval', $cityIds);
+
+        return in_array((int) $profile->city_id, $cityIds, true)
+            || DB::table('retailer_profile_cities')
+                ->where('user_id', $profile->user_id)
+                ->whereIn('city_id', $cityIds)
+                ->exists();
+    }
+
+    /**
      * Retailers a salesman can see and work with (My Retailers, detail, QR scan, assisted orders).
      *
      * Verification only confirms the shop is legitimate. Once a retailer is verified (by any salesman
@@ -93,7 +122,9 @@ class SalesmanAppApiController extends Controller
                 if (!empty($cityIds)) {
                     $q->orWhere(function ($sub) use ($cityIds, $areaIds) {
                         $sub->where('users.verification_status', '!=', 'pending')
-                            ->whereIn('retailer_profiles.city_id', $cityIds)
+                            ->where(function ($zone) use ($cityIds) {
+                                $this->inTerritoryZones($zone, $cityIds);
+                            })
                             ->when($areaIds, fn ($s) => $s->whereIn('retailer_profiles.area_id', $areaIds));
                     });
                 }
@@ -207,7 +238,9 @@ class SalesmanAppApiController extends Controller
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
             ->where('users.verification_status', 'pending')
             ->whereNull('users.salesman_id')
-            ->whereIn('retailer_profiles.city_id', $cityIds)
+            ->where(function ($zone) use ($cityIds) {
+                $this->inTerritoryZones($zone, $cityIds);
+            })
             ->when($areaIds = $this->territoryAreaIds((int) $salesman->seller_id), fn ($q) => $q->whereIn('retailer_profiles.area_id', $areaIds))
             ->orderByDesc('users.created_at')
             ->get();
@@ -255,7 +288,7 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('not_in_your_territory');
         }
         $profile = RetailerProfile::where('user_id', $request->retailer_id)->first();
-        if (!$profile || !in_array((int) $profile->city_id, array_map('intval', $cityIds), true)) {
+        if (!$profile || !$this->retailerInTerritoryZones($profile, $cityIds)) {
             return CommonHelper::responseError('not_in_your_territory');
         }
 
@@ -596,7 +629,7 @@ class SalesmanAppApiController extends Controller
 
         $profile = $retailer->retailerProfile;
         $cityIds = array_map('intval', $this->territoryCityIds((int) $salesman->seller_id));
-        if (!$profile || !in_array((int) $profile->city_id, $cityIds, true)) {
+        if (!$profile || !$this->retailerInTerritoryZones($profile, $cityIds)) {
             return false;
         }
 
@@ -649,7 +682,9 @@ class SalesmanAppApiController extends Controller
             )
             ->join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
-            ->whereIn('retailer_profiles.city_id', $cityIds);
+            ->where(function ($zone) use ($cityIds) {
+                $this->inTerritoryZones($zone, $cityIds);
+            });
 
         // Distributor's assigned areas narrow the list; retailers this salesman verified always stay visible.
         $areaIds = $this->territoryAreaIds((int) $salesman->seller_id);
@@ -1673,7 +1708,9 @@ class SalesmanAppApiController extends Controller
         $pendingKyc = 0;
         if (!empty($cityIds)) {
             $pendingKyc = User::join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
-                ->whereIn('retailer_profiles.city_id', $cityIds)
+                ->where(function ($zone) use ($cityIds) {
+                    $this->inTerritoryZones($zone, $cityIds);
+                })
                 ->where('users.verification_status', 'pending')
                 ->whereNull('users.salesman_id')
                 ->count();
