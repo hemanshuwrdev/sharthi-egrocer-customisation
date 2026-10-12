@@ -391,6 +391,9 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('salesman_not_found');
         }
 
+        // `filter` (what the app sends) or `search`: shop / party / retailer name or mobile number.
+        $filter = trim((string) ($request->input('filter') ?? $request->input('search', '')));
+
         $rows = $this->visibleRetailersQuery($salesman)
             ->select(
                 'users.id as user_id',
@@ -439,6 +442,25 @@ class SalesmanAppApiController extends Controller
                 ) as due_payments_count')
             )
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
+            ->when($filter !== '', function ($query) use ($filter) {
+                // Name, shop, party name or mobile. A number is matched however it was typed — spaces,
+                // dashes or a +91 in front still find the stored 10-digit mobile.
+                $digits = preg_replace('/\D+/', '', $filter);
+                $mobileTerms = array_values(array_unique(array_filter([
+                    $filter,
+                    $digits,
+                    strlen($digits) > 10 ? substr($digits, -10) : null,
+                ])));
+
+                $query->where(function ($q) use ($filter, $mobileTerms) {
+                    $q->where('users.name', 'like', "%{$filter}%")
+                      ->orWhere('retailer_profiles.shop_name', 'like', "%{$filter}%")
+                      ->orWhere('retailer_profiles.party_name', 'like', "%{$filter}%");
+                    foreach ($mobileTerms as $term) {
+                        $q->orWhere('users.mobile', 'like', "%{$term}%");
+                    }
+                });
+            })
             ->orderByDesc('users.id')
             ->get();
 
