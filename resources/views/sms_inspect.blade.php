@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         :root {
-            --primary: #10b981;
-            --primary-dark: #059669;
+            --primary: #042A5F;
+            --primary-dark: #021B40;
             --dark-bg: #0f172a;
             --card-bg: #ffffff;
             --border-color: #e2e8f0;

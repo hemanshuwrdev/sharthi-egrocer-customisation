@@ -72,7 +72,7 @@ export default {
 }
 
 .settings-card:hover {
-    border-color: #37a279;
+    border-color: var(--brand, #042A5F);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
@@ -83,8 +83,8 @@ export default {
     width: 52px;
     height: 52px;
     border-radius: 0.7rem;
-    background: rgba(55, 162, 121, 0.1);
-    color: #37a279;
+    background: rgba(var(--brand-rgb, 4, 42, 95), 0.1);
+    color: var(--brand, #042A5F);
 }
 
 .settings-card-icon >>> svg {
@@ -101,7 +101,7 @@ export default {
 .settings-card-link {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #37a279;
+    color: var(--brand, #042A5F);
 }
 
 .settings-card-link .arrow {

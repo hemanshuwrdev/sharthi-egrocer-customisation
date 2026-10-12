@@ -516,7 +516,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           }
         },
         fill: {
-          colors: ['#25B076']
+          colors: [document.body.classList.contains('theme-dark') ? '#6f8bf0' : '#042A5F']
         },
         xaxis: {
           categories: [],

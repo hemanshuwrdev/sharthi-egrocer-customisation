@@ -16,7 +16,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="background-color:#37A279; padding:20px; text-align:center;">
+                        <td style="background-color:#042A5F; padding:20px; text-align:center;">
                             <h2 style="margin:0; color:#ffffff; font-size:22px;">
                                 ⚠ Low Stock Alert
                             </h2>

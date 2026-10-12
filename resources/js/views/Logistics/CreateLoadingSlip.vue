@@ -765,8 +765,8 @@ export default {
 }
 .product-filter-select2 .select2-container--default.select2-container--focus .select2-selection--multiple,
 .product-filter-select2 .select2-container--default.select2-container--open .select2-selection--multiple {
-    border-color: #a7ebcb;
-    box-shadow: 0 0 0 0.25rem rgba(86, 199, 146, 0.25);
+    border-color: var(--brand-focus, #042A5F);
+    box-shadow: 0 0 0 0.25rem var(--brand-glow, rgba(4, 42, 95, 0.22));
 }
 .product-filter-select2 .select2-selection__choice {
     background-color: rgba(78, 115, 223, 0.1) !important;

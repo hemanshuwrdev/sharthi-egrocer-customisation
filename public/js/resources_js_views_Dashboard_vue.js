@@ -824,7 +824,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           }
         },
         fill: {
-          colors: ['#25B076']
+          colors: [document.body.classList.contains('theme-dark') ? '#6f8bf0' : '#042A5F']
         },
         xaxis: {
           categories: [],
@@ -1813,7 +1813,7 @@ var render = function () {
             {
               staticClass: "mb-0 header-subtitle text-start",
               staticStyle: {
-                color: "#05cd99",
+                color: "var(--brand, #042A5F)",
                 "font-weight": "500",
                 "font-size": "0.95rem",
                 "text-align": "left !important",

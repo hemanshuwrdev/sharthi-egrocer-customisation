@@ -1253,14 +1253,14 @@ export default {
 }
 
 ::v-deep .export-custom-tabs .nav-link.active {
-    background: #ecfdf5 !important;
-    border-color: #10b981 !important;
-    color: #047857 !important;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+    background: var(--brand-tint, #e3eaf5) !important;
+    border-color: var(--brand, #042A5F) !important;
+    color: var(--brand, #042A5F) !important;
+    box-shadow: 0 2px 8px rgba(var(--brand-rgb, 4, 42, 95), 0.15);
 }
 
 ::v-deep .export-custom-tabs .nav-link.active .tab-icon {
-    color: #10b981;
+    color: var(--brand, #042A5F);
 }
 
 .tab-icon {
@@ -1279,7 +1279,7 @@ export default {
 .step-circle {
     width: 30px;
     height: 30px;
-    background: #10b981;
+    background: var(--brand, #042A5F);
     color: #ffffff;
     border-radius: 50%;
     display: flex;
@@ -1288,7 +1288,7 @@ export default {
     font-weight: 700;
     font-size: 13px;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 6px rgba(var(--brand-rgb, 4, 42, 95), 0.3);
 }
 
 .step-heading {
@@ -1337,11 +1337,11 @@ export default {
 }
 
 .btn-preset.active {
-    background: #10b981 !important;
-    border-color: #10b981 !important;
+    background: var(--brand, #042A5F) !important;
+    border-color: var(--brand, #042A5F) !important;
     color: #ffffff !important;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 2px 6px rgba(var(--brand-rgb, 4, 42, 95), 0.35);
 }
 
 .btn-preset-clear {
@@ -1445,14 +1445,14 @@ export default {
 
 /* Action Download Button */
 .btn-action-download {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, var(--brand, #042A5F) 0%, var(--brand-dark, #021B40) 100%);
     border: none;
     color: #ffffff;
     font-weight: 700;
     font-size: 14px;
     height: 48px;
     border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 4px 12px rgba(var(--brand-rgb, 4, 42, 95), 0.25);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1461,7 +1461,7 @@ export default {
 
 .btn-action-download:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 6px 16px rgba(var(--brand-rgb, 4, 42, 95), 0.35);
     color: #ffffff;
 }
 

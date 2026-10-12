@@ -2501,9 +2501,9 @@ body.pos-active #sidebar:not(.active) ~ #main {
 }
 
 .pos-tab.active {
-    background-color: #37a279;
+    background-color: var(--brand, #042A5F);
     color: white;
-    border-color: #37a279;
+    border-color: var(--brand, #042A5F);
 }
 
 .pos-tab-close {

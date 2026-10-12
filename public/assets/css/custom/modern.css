@@ -23,8 +23,8 @@
     --ui-text: var(--app-ink, #25396f);
     --ui-muted: var(--app-muted, #67748e);
     --ui-soft: var(--app-thead-bg, #f7f9fc);
-    --ui-primary: #37a279;
-    --ui-primary-soft: rgba(55, 162, 121, 0.14);
+    --ui-primary: var(--brand);
+    --ui-primary-soft: rgba(var(--brand-rgb), 0.14);
     --ui-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.04);
 
     --ui-green-bg: #e7f7ef;  --ui-green-fg: #047857;  --ui-green: #10b981;
@@ -390,7 +390,7 @@ body.theme-dark .ui-modern {
 
 /* ---- empty state ---- */
 .ui-modern .ui-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 36px 24px; }
-.ui-modern .ui-empty__icon { width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; background: var(--ui-green-bg); color: var(--ui-green-fg); }
+.ui-modern .ui-empty__icon { width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; background: var(--brand-tint); color: var(--brand); }
 .ui-modern .ui-empty h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--ui-text); }
 .ui-modern .ui-empty p { margin: 0; max-width: 340px; font-size: 14px; color: var(--ui-muted); }
 

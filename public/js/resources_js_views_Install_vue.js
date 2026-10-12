@@ -346,7 +346,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\nspan.error[data-v-ca351768]{\n    color:#e74c3c;\n    font-size:20px;\n    display:flex;\n    justify-content:center;\n}\na[data-v-ca351768]{\n    color: rgb(55, 162, 121);\n}\n.install-wizard-section.auth-section[data-v-ca351768] {\n    max-width: 700px !important;\n    width: 100% !important;\n}\n.auth-card[data-v-ca351768] {\n    max-width: 700px !important;\n    width: 100% !important;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\nspan.error[data-v-ca351768]{\n    color:#e74c3c;\n    font-size:20px;\n    display:flex;\n    justify-content:center;\n}\na[data-v-ca351768]{\n    color: #042A5F;\n}\n.install-wizard-section.auth-section[data-v-ca351768] {\n    max-width: 700px !important;\n    width: 100% !important;\n}\n.auth-card[data-v-ca351768] {\n    max-width: 700px !important;\n    width: 100% !important;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -507,7 +507,7 @@ var render = function () {
                   {
                     attrs: {
                       shape: "circle",
-                      color: "#37a279",
+                      color: "#042A5F",
                       "error-color": "#e74c3c",
                       title: "",
                       subtitle: "",

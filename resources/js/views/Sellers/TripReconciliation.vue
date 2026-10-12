@@ -2040,7 +2040,7 @@ export default {
 
 ::v-deep .trip-tabs .nav-link .trip-tab-icon { color: #94a3b8; }
 ::v-deep .trip-tabs .nav-link:hover:not(.active) .trip-tab-icon { color: #475569; }
-::v-deep .trip-tabs .nav-link.active .trip-tab-icon { color: #059669; }
+::v-deep .trip-tabs .nav-link.active .trip-tab-icon { color: var(--brand, #042A5F); }
 
 .trip-tab-title { display: inline-flex; align-items: center; gap: 8px; }
 .trip-tab-icon { font-size: 14px; transition: color .15s ease; }

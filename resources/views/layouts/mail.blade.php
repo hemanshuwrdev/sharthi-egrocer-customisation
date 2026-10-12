@@ -235,7 +235,7 @@
 
                             <div style="line-height: 35px">
 
-                                Welcome to the <span style="color: #37a279;">{{ $app_name }}</span>
+                                Welcome to the <span style="color: #042A5F;">{{ $app_name }}</span>
 
                             </div>
                         </td>

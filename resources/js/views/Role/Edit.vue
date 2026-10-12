@@ -226,7 +226,7 @@ export default {
 }
 
 input:checked+.slider {
-    background-color: #66bb6a;
+    background-color: var(--brand, #042A5F);
 }
 
 input:checked+.slider:before {

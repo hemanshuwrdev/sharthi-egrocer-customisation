@@ -8,7 +8,7 @@
                                  @on-validate="handleValidation"
                                  @on-error="handleErrorMessage"
                                  shape="circle"
-                                 color="#37a279"
+                                 color="#042A5F"
                                  error-color="#e74c3c"
                                  title=""
                                  subtitle="">
@@ -330,7 +330,7 @@ span.error{
     justify-content:center;
 }
 a{
-    color: rgb(55, 162, 121);
+    color: #042A5F;
 }
 
 .install-wizard-section.auth-section {

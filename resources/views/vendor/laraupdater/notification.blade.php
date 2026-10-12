@@ -7,22 +7,22 @@
 <!--    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>-->
     <style>
         /*.toast-header{
-            background-color: #37a279!important;
+            background-color: #042A5F!important;
             color: #ffffff!important;
         }
 
         .update_btn{
-            background-color: #37a279;
-            border-color: #37a279;
+            background-color: #042A5F;
+            border-color: #042A5F;
         }
 
         .update_btn:hover{
-            background-color: #37a279;
-            border-color: #37a279;
+            background-color: #042A5F;
+            border-color: #042A5F;
         }
 
         #update_description{
-            color: #37a279;
+            color: #042A5F;
         }
 
         .toast-body{

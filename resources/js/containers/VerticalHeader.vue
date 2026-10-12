@@ -828,7 +828,7 @@ export default {
 }
 
 .hdr-accent-btn:hover {
-    background: rgba(34, 197, 94, 0.12);
-    color: #16a34a;
+    background: rgba(var(--brand-rgb, 4, 42, 95), 0.12);
+    color: var(--brand, #042A5F);
 }
 </style>

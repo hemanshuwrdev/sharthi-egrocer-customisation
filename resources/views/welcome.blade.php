@@ -138,8 +138,8 @@ $copyright_details =
     <link rel="stylesheet" href="{{ asset('assets/css/pages/error.css') }}">
     <!-- Styles -->
 
-    <link rel="stylesheet" href="{{ asset('assets/css/custom/common.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/dark-mode/app-dark.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/custom/common.css') }}?v={{ @filemtime(public_path('assets/css/custom/common.css')) }}">
+    <link rel="stylesheet" href="{{ asset('assets/dark-mode/app-dark.css') }}?v={{ @filemtime(public_path('assets/dark-mode/app-dark.css')) }}">
     <link rel="stylesheet" href="{{ asset('assets/css/custom/modern.css') }}?v={{ @filemtime(public_path('assets/css/custom/modern.css')) }}">
 
     @if (isDemoMode())

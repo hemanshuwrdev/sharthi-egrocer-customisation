@@ -8,7 +8,7 @@
         body { font-family: sans-serif; background: #f3f7ff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; text-align: center; }
         h1 { color: #243a6e; }
         p { color: #666; }
-        a.btn { display: inline-block; margin-top: 12px; padding: 10px 24px; border: 1px solid #2f9e6b; color: #2f9e6b; border-radius: 4px; text-decoration: none; }
+        a.btn { display: inline-block; margin-top: 12px; padding: 10px 24px; border: 1px solid #042A5F; color: #042A5F; border-radius: 4px; text-decoration: none; }
     </style>
 </head>
 <body>

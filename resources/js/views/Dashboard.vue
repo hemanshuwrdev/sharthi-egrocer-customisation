@@ -3,7 +3,7 @@
         <div class="page-heading d-flex justify-content-between align-items-center mb-4 text-start">
             <div class="text-start w-100">
                 <h3 class="mb-0 fw-bold header-title text-start" style="color: var(--app-ink); font-size: 1.75rem; letter-spacing: -0.5px; text-align: left !important;">{{ __('welcome') }}, {{ adminName }}</h3>
-                <p class="mb-0 header-subtitle text-start" style="color: #05cd99; font-weight: 500; font-size: 0.95rem; text-align: left !important;">{{ __(greetingKey) }} &bull; {{ currentDate }}</p>
+                <p class="mb-0 header-subtitle text-start" style="color: var(--brand, #042A5F); font-weight: 500; font-size: 0.95rem; text-align: left !important;">{{ __(greetingKey) }} &bull; {{ currentDate }}</p>
             </div>
         </div>
         <div class="page-content">
@@ -717,7 +717,7 @@ export default {
                 },
 
                 fill: {
-                    colors: ['#25B076']
+                    colors: [document.body.classList.contains('theme-dark') ? '#6f8bf0' : '#042A5F']
                 },
 
                 xaxis: {

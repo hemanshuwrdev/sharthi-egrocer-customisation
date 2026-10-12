@@ -734,7 +734,7 @@ export default {
 
 .clp .clp-cta {
     display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 48px; border: 0; border-radius: 12px;
-    background: var(--ui-primary); color: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(55, 162, 121, 0.3);
+    background: var(--ui-primary); color: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(var(--brand-rgb, 4, 42, 95), 0.3);
     transition: filter 0.15s ease, transform 0.1s ease;
 }
 .clp-cta:hover:not(:disabled) { filter: brightness(0.95); }
@@ -817,8 +817,8 @@ export default {
 }
 .product-filter-select2 .select2-container--default.select2-container--focus .select2-selection--multiple,
 .product-filter-select2 .select2-container--default.select2-container--open .select2-selection--multiple {
-    border-color: var(--ui-primary, #37a279);
-    box-shadow: 0 0 0 3px var(--ui-primary-soft, rgba(55, 162, 121, 0.14));
+    border-color: var(--ui-primary, #042A5F);
+    box-shadow: 0 0 0 3px var(--ui-primary-soft, rgba(4, 42, 95, 0.14));
 }
 .product-filter-select2 .select2-selection__choice {
     background-color: var(--ui-blue-bg, rgba(78, 115, 223, 0.1)) !important;

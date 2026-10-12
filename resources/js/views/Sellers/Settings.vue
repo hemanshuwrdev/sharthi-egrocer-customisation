@@ -1334,9 +1334,9 @@ export default {
 }
 
 ::v-deep .settings-tabs .nav-link.active {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: #10b981;
-    color: #059669;
+    background: rgba(var(--brand-rgb, 4, 42, 95), 0.12);
+    border-color: var(--brand, #042A5F);
+    color: var(--brand, #042A5F);
 }
 
 .settings-card {
@@ -1484,8 +1484,8 @@ export default {
 }
 
 .method-tile.is-on {
-    border-color: #10b981;
-    background: rgba(16, 185, 129, 0.07);
+    border-color: var(--brand, #042A5F);
+    background: rgba(var(--brand-rgb, 4, 42, 95), 0.07);
 }
 
 .method-tile.is-locked {
@@ -1503,8 +1503,8 @@ export default {
 }
 
 .method-tile.is-on .method-icon {
-    background: rgba(16, 185, 129, 0.2);
-    color: #059669;
+    background: rgba(var(--brand-rgb, 4, 42, 95), 0.2);
+    color: var(--brand, #042A5F);
 }
 
 /* numbering preview chip */

@@ -56,7 +56,7 @@
     </p>
 
     <a href="{{ $redirect_url }}" style="color: #ffffff; text-decoration: none;">
-        <table border="0" align="center" width="180" cellpadding="0" cellspacing="0" bgcolor="#37a279" style="margin-bottom:20px;">
+        <table border="0" align="center" width="180" cellpadding="0" cellspacing="0" bgcolor="#042A5F" style="margin-bottom:20px;">
             <tr>
                 <td height="10" style="font-size: 10px; line-height: 10px;">&nbsp;</td>
             </tr>
@@ -318,7 +318,7 @@
         @endif
 
         <a href="{{ $redirect_url }}" style="color: #ffffff; text-decoration: none;">
-            <table border="0" align="center" width="180" cellpadding="0" cellspacing="0" bgcolor="#37a279" style="margin-bottom:20px;">
+            <table border="0" align="center" width="180" cellpadding="0" cellspacing="0" bgcolor="#042A5F" style="margin-bottom:20px;">
                 <tr>
                     <td height="10" style="font-size: 10px; line-height: 10px;">&nbsp;</td>
                 </tr>
