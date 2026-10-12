@@ -1035,6 +1035,21 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1203,7 +1218,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
             shortfallValue: item.shortfall_value,
             shortfallReason: item.shortfall_reason,
             damagePhoto: item.damage_photo,
-            verified: item.verified
+            verified: item.verified,
+            restocksStock: !!item.restocks_stock,
+            stockRestored: !!item.stock_restored
           });
         });
       });
@@ -1304,44 +1321,102 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         _this2.$toast.error(((_err$response = err.response) === null || _err$response === void 0 ? void 0 : (_err$response$data = _err$response.data) === null || _err$response$data === void 0 ? void 0 : _err$response$data.message) || __('something_went_wrong'));
       });
     },
-    verifyPartialInvoiceItem: function verifyPartialInvoiceItem(orderItemId) {
+    // Verify now also puts goods back into stock, so ask first and say exactly what will
+    // happen. The restock rule itself lives on the server (restocks_stock / restock_qty come
+    // from it) — this only describes it.
+    confirmVerifyPartial: function confirmVerifyPartial(row) {
       var _this3 = this;
+      if (row.orderItemId == null) return;
+      var h = this.$createElement;
+      var product = row.productName + (row.variantName ? ' (' + row.variantName + ')' : '');
+      var stockLine = row.restocksStock ? h('p', {
+        "class": 'mb-2 text-success fw-semibold'
+      }, '+' + row.shortfallQty + ' ' + __('will_be_added_back_to_stock')) : h('p', {
+        "class": 'mb-2 text-muted'
+      }, __('stock_not_changed_for_reason') + ': ' + (row.shortfallReason ? __(row.shortfallReason) : '-'));
+      this.$bvModal.msgBoxConfirm([h('div', [h('p', {
+        "class": 'mb-2'
+      }, [h('strong', product), ' — ' + __('shortfall') + ': ' + row.shortfallQty]), stockLine, h('p', {
+        "class": 'mb-0 small text-muted'
+      }, __('verify_only_when_goods_back'))])], {
+        title: __('verify_shortfall'),
+        centered: true,
+        okVariant: 'success',
+        okTitle: __('verify'),
+        cancelTitle: __('cancel')
+      }).then(function (ok) {
+        if (ok) _this3.verifyPartialInvoiceItem(row.orderItemId);
+      });
+    },
+    confirmVerifyCancel: function confirmVerifyCancel(row) {
+      var _this4 = this;
+      if (row.order_id == null) return;
+      var h = this.$createElement;
+      var stockLine = row.delivered_before_cancel ? h('p', {
+        "class": 'mb-2 text-warning fw-semibold'
+      }, __('no_stock_added_delivered_before_cancel')) : row.restock_qty > 0 ? h('p', {
+        "class": 'mb-2 text-success fw-semibold'
+      }, '+' + row.restock_qty + ' ' + __('units') + ' (' + row.restock_items + ' ' + __('item') + '(s)) ' + __('will_be_added_back_to_stock')) : h('p', {
+        "class": 'mb-2 text-muted'
+      }, __('no_stock_to_add_back'));
+      this.$bvModal.msgBoxConfirm([h('div', [h('p', {
+        "class": 'mb-2'
+      }, [h('strong', row.invoice_number || '#' + row.order_id), row.retailer ? ' — ' + row.retailer.name : '']), stockLine, h('p', {
+        "class": 'mb-0 small text-muted'
+      }, __('verify_only_when_goods_back'))])], {
+        title: __('verify_cancellation'),
+        centered: true,
+        okVariant: 'success',
+        okTitle: __('verify'),
+        cancelTitle: __('cancel')
+      }).then(function (ok) {
+        if (ok) _this4.verifyCancelInvoice(row.order_id);
+      });
+    },
+    // " — N unit(s) added back to stock" suffix for the success toast, empty when nothing moved.
+    restockedSuffix: function restockedSuffix(res) {
+      var _res$data, _res$data$data;
+      var qty = parseFloat((res === null || res === void 0 ? void 0 : (_res$data = res.data) === null || _res$data === void 0 ? void 0 : (_res$data$data = _res$data.data) === null || _res$data$data === void 0 ? void 0 : _res$data$data.restocked_qty) || 0);
+      return qty > 0 ? ' — ' + qty + ' ' + __('units_added_back_to_stock') : '';
+    },
+    verifyPartialInvoiceItem: function verifyPartialInvoiceItem(orderItemId) {
+      var _this5 = this;
       if (orderItemId == null) return;
       this.verifyingPartialId = orderItemId;
       axios.post(this.$apiUrl + '/seller/trips/' + this.$route.params.id + '/partial-invoices/' + orderItemId + '/verify', {
         type: this.tripType
       }).then(function (res) {
-        _this3.verifyingPartialId = null;
+        _this5.verifyingPartialId = null;
         if (!res.data.status) {
-          _this3.$toast.error(res.data.message || __('something_went_wrong'));
+          _this5.$toast.error(res.data.message || __('something_went_wrong'));
           return;
         }
-        _this3.$toast.success(__('shortfall_verified'));
-        _this3.load();
+        _this5.$toast.success(__('shortfall_verified') + _this5.restockedSuffix(res));
+        _this5.load();
       })["catch"](function (err) {
         var _err$response2, _err$response2$data;
-        _this3.verifyingPartialId = null;
-        _this3.$toast.error(((_err$response2 = err.response) === null || _err$response2 === void 0 ? void 0 : (_err$response2$data = _err$response2.data) === null || _err$response2$data === void 0 ? void 0 : _err$response2$data.message) || __('something_went_wrong'));
+        _this5.verifyingPartialId = null;
+        _this5.$toast.error(((_err$response2 = err.response) === null || _err$response2 === void 0 ? void 0 : (_err$response2$data = _err$response2.data) === null || _err$response2$data === void 0 ? void 0 : _err$response2$data.message) || __('something_went_wrong'));
       });
     },
     verifyCancelInvoice: function verifyCancelInvoice(orderId) {
-      var _this4 = this;
+      var _this6 = this;
       if (orderId == null) return;
       this.verifyingCancelId = orderId;
       axios.post(this.$apiUrl + '/seller/trips/' + this.$route.params.id + '/cancel-invoices/' + orderId + '/verify', {
         type: this.tripType
       }).then(function (res) {
-        _this4.verifyingCancelId = null;
+        _this6.verifyingCancelId = null;
         if (!res.data.status) {
-          _this4.$toast.error(res.data.message || __('something_went_wrong'));
+          _this6.$toast.error(res.data.message || __('something_went_wrong'));
           return;
         }
-        _this4.$toast.success(__('cancellation_verified'));
-        _this4.load();
+        _this6.$toast.success(__('cancellation_verified') + _this6.restockedSuffix(res));
+        _this6.load();
       })["catch"](function (err) {
         var _err$response3, _err$response3$data;
-        _this4.verifyingCancelId = null;
-        _this4.$toast.error(((_err$response3 = err.response) === null || _err$response3 === void 0 ? void 0 : (_err$response3$data = _err$response3.data) === null || _err$response3$data === void 0 ? void 0 : _err$response3$data.message) || __('something_went_wrong'));
+        _this6.verifyingCancelId = null;
+        _this6.$toast.error(((_err$response3 = err.response) === null || _err$response3 === void 0 ? void 0 : (_err$response3$data = _err$response3.data) === null || _err$response3$data === void 0 ? void 0 : _err$response3$data.message) || __('something_went_wrong'));
       });
     },
     updateReceivedAmountLocally: function updateReceivedAmountLocally(paymentId, value) {
@@ -1366,7 +1441,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     saveReceivedAmount: function saveReceivedAmount(paymentId, value) {
-      var _this5 = this;
+      var _this7 = this;
       if (paymentId == null || this.isClosed) return;
       var amount = parseFloat(value);
       if (isNaN(amount) || amount < 0) return;
@@ -1375,43 +1450,43 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         received_amount: amount
       }).then(function (res) {
         if (!res.data.status) {
-          _this5.$toast.error(res.data.message || __('something_went_wrong'));
-          _this5.load();
+          _this7.$toast.error(res.data.message || __('something_went_wrong'));
+          _this7.load();
         }
       })["catch"](function (err) {
         var _err$response4, _err$response4$data;
-        _this5.$toast.error(((_err$response4 = err.response) === null || _err$response4 === void 0 ? void 0 : (_err$response4$data = _err$response4.data) === null || _err$response4$data === void 0 ? void 0 : _err$response4$data.message) || __('something_went_wrong'));
+        _this7.$toast.error(((_err$response4 = err.response) === null || _err$response4 === void 0 ? void 0 : (_err$response4$data = _err$response4.data) === null || _err$response4$data === void 0 ? void 0 : _err$response4$data.message) || __('something_went_wrong'));
       });
     },
     openUnlockModal: function openUnlockModal() {
-      var _this6 = this;
+      var _this8 = this;
       this.unlockPassword = '';
       this.unlockError = '';
       this.unlockModalShow = true;
       this.$nextTick(function () {
-        return _this6.$refs.unlockPasswordInput && _this6.$refs.unlockPasswordInput.focus();
+        return _this8.$refs.unlockPasswordInput && _this8.$refs.unlockPasswordInput.focus();
       });
     },
     submitUnlock: function submitUnlock() {
-      var _this7 = this;
+      var _this9 = this;
       if (!this.unlockPassword) return;
       this.unlocking = true;
       this.unlockError = '';
       axios.post(this.$apiUrl + '/seller/sensitive/verify', {
         password: this.unlockPassword
       }).then(function (res) {
-        _this7.unlocking = false;
+        _this9.unlocking = false;
         if (res.data.status) {
-          _this7.methodEditUnlocked = true;
-          _this7.unlockModalShow = false;
-          _this7.unlockPassword = '';
+          _this9.methodEditUnlocked = true;
+          _this9.unlockModalShow = false;
+          _this9.unlockPassword = '';
           return;
         }
-        _this7.setUnlockError(res.data.message);
+        _this9.setUnlockError(res.data.message);
       })["catch"](function (err) {
         var _err$response5, _err$response5$data;
-        _this7.unlocking = false;
-        _this7.setUnlockError((_err$response5 = err.response) === null || _err$response5 === void 0 ? void 0 : (_err$response5$data = _err$response5.data) === null || _err$response5$data === void 0 ? void 0 : _err$response5$data.message);
+        _this9.unlocking = false;
+        _this9.setUnlockError((_err$response5 = err.response) === null || _err$response5 === void 0 ? void 0 : (_err$response5$data = _err$response5.data) === null || _err$response5$data === void 0 ? void 0 : _err$response5$data.message);
       });
     },
     setUnlockError: function setUnlockError(msg) {
@@ -1445,7 +1520,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     },
     changePaymentMethod: function changePaymentMethod(paymentId, value) {
       var _this$flatRows$find,
-        _this8 = this;
+        _this10 = this;
       if (paymentId == null || !this.methodEditUnlocked) return;
       var previous = (_this$flatRows$find = this.flatRows.find(function (r) {
         return r.paymentId === paymentId;
@@ -1461,7 +1536,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         this.updateMethodLocally(paymentId, 'cheque'); // reflect the pick in the dropdown while the modal is open
         this.chequeModalShow = true;
         this.$nextTick(function () {
-          return _this8.$refs.chequeModalDateInput && _this8.$refs.chequeModalDateInput.focus();
+          return _this10.$refs.chequeModalDateInput && _this10.$refs.chequeModalDateInput.focus();
         });
         return;
       }
@@ -1469,28 +1544,28 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       this.saveMethodChange(paymentId, value, previous);
     },
     saveMethodChange: function saveMethodChange(paymentId, value, previous) {
-      var _this9 = this;
+      var _this11 = this;
       return axios.post(this.$apiUrl + '/seller/payments/update-method', {
         payment_id: paymentId,
         method: value
       }).then(function (res) {
         if (res.data.status) {
-          _this9.$toast.success(__('method_updated'));
-          _this9.load();
+          _this11.$toast.success(__('method_updated'));
+          _this11.load();
           return true;
         }
-        if (previous) _this9.updateMethodLocally(paymentId, previous);
+        if (previous) _this11.updateMethodLocally(paymentId, previous);
         if (res.data.message === 'sensitive_unlock_required') {
-          _this9.methodEditUnlocked = false;
-          _this9.$toast.error(__('Editing session expired — click Edit to unlock again.'));
+          _this11.methodEditUnlocked = false;
+          _this11.$toast.error(__('Editing session expired — click Edit to unlock again.'));
         } else {
-          _this9.$toast.error(res.data.message || __('something_went_wrong'));
+          _this11.$toast.error(res.data.message || __('something_went_wrong'));
         }
         return false;
       })["catch"](function (err) {
         var _err$response6, _err$response6$data;
-        if (previous) _this9.updateMethodLocally(paymentId, previous);
-        _this9.$toast.error(((_err$response6 = err.response) === null || _err$response6 === void 0 ? void 0 : (_err$response6$data = _err$response6.data) === null || _err$response6$data === void 0 ? void 0 : _err$response6$data.message) || __('something_went_wrong'));
+        if (previous) _this11.updateMethodLocally(paymentId, previous);
+        _this11.$toast.error(((_err$response6 = err.response) === null || _err$response6 === void 0 ? void 0 : (_err$response6$data = _err$response6.data) === null || _err$response6$data === void 0 ? void 0 : _err$response6$data.message) || __('something_went_wrong'));
         return false;
       });
     },
@@ -1501,7 +1576,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       this.chequeModalShow = false;
     },
     submitChequeModal: function submitChequeModal() {
-      var _this10 = this;
+      var _this12 = this;
       if (!this.chequeModalDate || !this.chequeModalNumber) return;
       this.chequeModalSaving = true;
       this.chequeModalError = '';
@@ -1512,26 +1587,26 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         cheque_date: this.chequeModalDate,
         cheque_number: this.chequeModalNumber
       }).then(function (res) {
-        _this10.chequeModalSaving = false;
+        _this12.chequeModalSaving = false;
         if (res.data.status) {
-          _this10.$toast.success(__('method_updated'));
-          _this10.chequeModalShow = false;
-          _this10.load();
+          _this12.$toast.success(__('method_updated'));
+          _this12.chequeModalShow = false;
+          _this12.load();
           return;
         }
-        if (_this10.chequeModalPreviousMethod) _this10.updateMethodLocally(paymentId, _this10.chequeModalPreviousMethod);
+        if (_this12.chequeModalPreviousMethod) _this12.updateMethodLocally(paymentId, _this12.chequeModalPreviousMethod);
         if (res.data.message === 'sensitive_unlock_required') {
-          _this10.methodEditUnlocked = false;
-          _this10.chequeModalShow = false;
-          _this10.$toast.error(__('Editing session expired — click Edit to unlock again.'));
+          _this12.methodEditUnlocked = false;
+          _this12.chequeModalShow = false;
+          _this12.$toast.error(__('Editing session expired — click Edit to unlock again.'));
         } else {
-          _this10.chequeModalError = res.data.message || __('something_went_wrong');
+          _this12.chequeModalError = res.data.message || __('something_went_wrong');
         }
       })["catch"](function (err) {
         var _err$response7, _err$response7$data;
-        _this10.chequeModalSaving = false;
-        if (_this10.chequeModalPreviousMethod) _this10.updateMethodLocally(paymentId, _this10.chequeModalPreviousMethod);
-        _this10.chequeModalError = ((_err$response7 = err.response) === null || _err$response7 === void 0 ? void 0 : (_err$response7$data = _err$response7.data) === null || _err$response7$data === void 0 ? void 0 : _err$response7$data.message) || __('something_went_wrong');
+        _this12.chequeModalSaving = false;
+        if (_this12.chequeModalPreviousMethod) _this12.updateMethodLocally(paymentId, _this12.chequeModalPreviousMethod);
+        _this12.chequeModalError = ((_err$response7 = err.response) === null || _err$response7 === void 0 ? void 0 : (_err$response7$data = _err$response7.data) === null || _err$response7$data === void 0 ? void 0 : _err$response7$data.message) || __('something_went_wrong');
       });
     },
     updateChequeDateLocally: function updateChequeDateLocally(paymentId, value) {
@@ -1577,7 +1652,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     // Inline correction of date/number on a row that's already cheque — no modal
     // needed here, mirrors how receivedAmount is edited inline elsewhere on this page.
     saveChequeDetails: function saveChequeDetails(paymentId) {
-      var _this11 = this;
+      var _this13 = this;
       if (paymentId == null || this.isClosed) return;
       var row = this.flatRows.find(function (r) {
         return r.paymentId === paymentId;
@@ -1590,16 +1665,16 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         cheque_number: row.chequeNumber
       }).then(function (res) {
         if (!res.data.status) {
-          _this11.$toast.error(res.data.message || __('something_went_wrong'));
-          _this11.load();
+          _this13.$toast.error(res.data.message || __('something_went_wrong'));
+          _this13.load();
         }
       })["catch"](function (err) {
         var _err$response8, _err$response8$data;
-        _this11.$toast.error(((_err$response8 = err.response) === null || _err$response8 === void 0 ? void 0 : (_err$response8$data = _err$response8.data) === null || _err$response8$data === void 0 ? void 0 : _err$response8$data.message) || __('something_went_wrong'));
+        _this13.$toast.error(((_err$response8 = err.response) === null || _err$response8 === void 0 ? void 0 : (_err$response8$data = _err$response8.data) === null || _err$response8$data === void 0 ? void 0 : _err$response8$data.message) || __('something_went_wrong'));
       });
     },
     closeTrip: function closeTrip() {
-      var _this12 = this;
+      var _this14 = this;
       if (!this.canCloseNow) return;
       this.$bvModal.msgBoxConfirm(__('verify_close_trip') + '?', {
         okVariant: 'primary',
@@ -1607,27 +1682,27 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         cancelTitle: __('cancel')
       }).then(function (ok) {
         if (!ok) return;
-        _this12.closing = true;
-        axios.post(_this12.$apiUrl + '/seller/trips/' + _this12.$route.params.id + '/close', {
-          type: _this12.tripType
+        _this14.closing = true;
+        axios.post(_this14.$apiUrl + '/seller/trips/' + _this14.$route.params.id + '/close', {
+          type: _this14.tripType
         }).then(function (res) {
-          var _res$data, _res$data$data;
-          _this12.closing = false;
+          var _res$data2, _res$data2$data;
+          _this14.closing = false;
           // CommonHelper::responseError() replies with HTTP 200 and status:0 in
           // the body, not an HTTP error — axios lands in .then() either way, so
           // status must be checked here, not inferred from a resolved promise.
           if (!res.data.status) {
-            _this12.$toast.error(res.data.message || __('something_went_wrong'));
-            _this12.load();
+            _this14.$toast.error(res.data.message || __('something_went_wrong'));
+            _this14.load();
             return;
           }
-          var creditNotes = ((_res$data = res.data) === null || _res$data === void 0 ? void 0 : (_res$data$data = _res$data.data) === null || _res$data$data === void 0 ? void 0 : _res$data$data.credit_notes) || [];
-          _this12.$toast.success(creditNotes.length ? __('trip_closed') + ' — ' + creditNotes.length + ' ' + __('credit_notes_generated') : __('trip_closed'));
-          _this12.load();
+          var creditNotes = ((_res$data2 = res.data) === null || _res$data2 === void 0 ? void 0 : (_res$data2$data = _res$data2.data) === null || _res$data2$data === void 0 ? void 0 : _res$data2$data.credit_notes) || [];
+          _this14.$toast.success(creditNotes.length ? __('trip_closed') + ' — ' + creditNotes.length + ' ' + __('credit_notes_generated') : __('trip_closed'));
+          _this14.load();
         })["catch"](function (err) {
           var _err$response9, _err$response9$data;
-          _this12.closing = false;
-          _this12.$toast.error(((_err$response9 = err.response) === null || _err$response9 === void 0 ? void 0 : (_err$response9$data = _err$response9.data) === null || _err$response9$data === void 0 ? void 0 : _err$response9$data.message) || __('something_went_wrong'));
+          _this14.closing = false;
+          _this14.$toast.error(((_err$response9 = err.response) === null || _err$response9 === void 0 ? void 0 : (_err$response9$data = _err$response9.data) === null || _err$response9$data === void 0 ? void 0 : _err$response9$data.message) || __('something_went_wrong'));
         });
       });
     },
@@ -1656,11 +1731,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       URL.revokeObjectURL(url);
     },
     exportReportPdf: function exportReportPdf() {
-      var _this13 = this;
+      var _this15 = this;
       var doc = new jspdf__WEBPACK_IMPORTED_MODULE_1__.jsPDF();
       var pageW = doc.internal.pageSize.getWidth();
       var money = function money(val) {
-        return 'Rs. ' + _this13.fmt(val);
+        return 'Rs. ' + _this15.fmt(val);
       };
       var personName = this.settlement.person ? this.settlement.person.name : '-';
       var typeLabel = this.tripType === 'salesman' ? __('salesman') : __('driver');
@@ -1792,7 +1867,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         total: this.totals.total_signature
       }];
       methodGroups.forEach(function (group) {
-        var rows = _this13.flatRows.filter(function (r) {
+        var rows = _this15.flatRows.filter(function (r) {
           return r.method === group.key;
         });
         if (rows.length === 0) return;
@@ -1899,7 +1974,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           startY: doc.lastAutoTable.finalY + 13,
           head: [['Invoice #', 'Loading Slip', 'Retailer', 'Order Value', 'Cancelled At', 'Status']],
           body: this.cancelInvoices.map(function (r) {
-            return [r.invoice_number || '#' + r.order_id, r.loading_slip_no || '-', r.retailer ? r.retailer.name : '-', money(r.final_total), _this13.fmtDateTime(r.cancelled_at), r.verified ? __('verified') : '-'];
+            return [r.invoice_number || '#' + r.order_id, r.loading_slip_no || '-', r.retailer ? r.retailer.name : '-', money(r.final_total), _this15.fmtDateTime(r.cancelled_at), r.verified ? __('verified') : '-'];
           }),
           styles: {
             fontSize: 8,
@@ -1929,7 +2004,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           startY: doc.lastAutoTable.finalY + 13,
           head: [['Invoice #', 'Retailer', 'Order Value', 'New Delivery Date', 'Reason', 'Rescheduled At', 'Current Status']],
           body: this.rescheduleInvoices.map(function (r) {
-            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', money(r.final_total), _this13.fmtDate(r.new_delivery_date), r.delivery_reason || '-', _this13.fmtDateTime(r.rescheduled_at), _this13.orderStatusLabel(r.current_status)];
+            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', money(r.final_total), _this15.fmtDate(r.new_delivery_date), r.delivery_reason || '-', _this15.fmtDateTime(r.rescheduled_at), _this15.orderStatusLabel(r.current_status)];
           }),
           styles: {
             fontSize: 8,
@@ -1960,7 +2035,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           startY: doc.lastAutoTable.finalY + 13,
           head: [['Invoice #', 'Retailer', 'Product', 'Refund Amount', 'Reason', 'Returned At']],
           body: this.returnItemSummary.map(function (r) {
-            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', r.product_name + (r.source === 'partial_delivery' ? ' (' + __('partial_delivery') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''), money(r.refund_amount), _this13.returnReason(r), _this13.fmtDateTime(r.returned_at)];
+            return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', r.product_name + (r.source === 'partial_delivery' ? ' (' + __('partial_delivery') + ', ' + __('qty') + ': ' + r.quantity + ')' : r.source === 'cancelled_order' ? ' (' + __('cancelled') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''), money(r.refund_amount), _this15.returnReason(r), _this15.fmtDateTime(r.returned_at)];
           }),
           styles: {
             fontSize: 8,
@@ -11197,28 +11272,49 @@ var render = function () {
                                                 { staticClass: "text-center" },
                                                 [
                                                   row.verified
-                                                    ? _c(
-                                                        "span",
-                                                        {
-                                                          staticClass:
-                                                            "text-success small fw-semibold",
-                                                        },
-                                                        [
-                                                          _c("i", {
+                                                    ? [
+                                                        _c(
+                                                          "span",
+                                                          {
                                                             staticClass:
-                                                              "fa fa-check-circle",
-                                                          }),
-                                                          _vm._v(
-                                                            " " +
-                                                              _vm._s(
-                                                                _vm.__(
-                                                                  "verified"
-                                                                )
-                                                              ) +
-                                                              "\n                                        "
-                                                          ),
-                                                        ]
-                                                      )
+                                                              "text-success small fw-semibold",
+                                                          },
+                                                          [
+                                                            _c("i", {
+                                                              staticClass:
+                                                                "fa fa-check-circle",
+                                                            }),
+                                                            _vm._v(
+                                                              " " +
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "verified"
+                                                                  )
+                                                                ) +
+                                                                "\n                                            "
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        row.stockRestored
+                                                          ? _c(
+                                                              "div",
+                                                              {
+                                                                staticClass:
+                                                                  "text-muted small",
+                                                              },
+                                                              [
+                                                                _vm._v(
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "stock_restored"
+                                                                    )
+                                                                  )
+                                                                ),
+                                                              ]
+                                                            )
+                                                          : _vm._e(),
+                                                      ]
                                                     : _c(
                                                         "button",
                                                         {
@@ -11234,8 +11330,8 @@ var render = function () {
                                                             click: function (
                                                               $event
                                                             ) {
-                                                              return _vm.verifyPartialInvoiceItem(
-                                                                row.orderItemId
+                                                              return _vm.confirmVerifyPartial(
+                                                                row
                                                               )
                                                             },
                                                           },
@@ -11262,7 +11358,8 @@ var render = function () {
                                                         ],
                                                         1
                                                       ),
-                                                ]
+                                                ],
+                                                2
                                               ),
                                             ]
                                           )
@@ -11498,11 +11595,37 @@ var render = function () {
                                                 },
                                                 [
                                                   _vm._v(
-                                                    _vm._s(
-                                                      row.invoice_number ||
-                                                        "#" + row.order_id
-                                                    )
+                                                    "\n                                        " +
+                                                      _vm._s(
+                                                        row.invoice_number ||
+                                                          "#" + row.order_id
+                                                      ) +
+                                                      "\n                                        "
                                                   ),
+                                                  row.delivered_before_cancel
+                                                    ? _c(
+                                                        "div",
+                                                        { staticClass: "mt-1" },
+                                                        [
+                                                          _c(
+                                                            "span",
+                                                            {
+                                                              staticClass:
+                                                                "badge bg-warning text-dark fw-normal",
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "cancelled_after_delivery"
+                                                                  )
+                                                                )
+                                                              ),
+                                                            ]
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
                                                 ]
                                               ),
                                               _vm._v(" "),
@@ -11599,28 +11722,49 @@ var render = function () {
                                                 { staticClass: "text-center" },
                                                 [
                                                   row.verified
-                                                    ? _c(
-                                                        "span",
-                                                        {
-                                                          staticClass:
-                                                            "text-success small fw-semibold",
-                                                        },
-                                                        [
-                                                          _c("i", {
+                                                    ? [
+                                                        _c(
+                                                          "span",
+                                                          {
                                                             staticClass:
-                                                              "fa fa-check-circle",
-                                                          }),
-                                                          _vm._v(
-                                                            " " +
-                                                              _vm._s(
-                                                                _vm.__(
-                                                                  "verified"
-                                                                )
-                                                              ) +
-                                                              "\n                                        "
-                                                          ),
-                                                        ]
-                                                      )
+                                                              "text-success small fw-semibold",
+                                                          },
+                                                          [
+                                                            _c("i", {
+                                                              staticClass:
+                                                                "fa fa-check-circle",
+                                                            }),
+                                                            _vm._v(
+                                                              " " +
+                                                                _vm._s(
+                                                                  _vm.__(
+                                                                    "verified"
+                                                                  )
+                                                                ) +
+                                                                "\n                                            "
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        row.stock_restored
+                                                          ? _c(
+                                                              "div",
+                                                              {
+                                                                staticClass:
+                                                                  "text-muted small",
+                                                              },
+                                                              [
+                                                                _vm._v(
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "stock_restored"
+                                                                    )
+                                                                  )
+                                                                ),
+                                                              ]
+                                                            )
+                                                          : _vm._e(),
+                                                      ]
                                                     : _c(
                                                         "button",
                                                         {
@@ -11636,8 +11780,8 @@ var render = function () {
                                                             click: function (
                                                               $event
                                                             ) {
-                                                              return _vm.verifyCancelInvoice(
-                                                                row.order_id
+                                                              return _vm.confirmVerifyCancel(
+                                                                row
                                                               )
                                                             },
                                                           },
@@ -11664,7 +11808,8 @@ var render = function () {
                                                         ],
                                                         1
                                                       ),
-                                                ]
+                                                ],
+                                                2
                                               ),
                                             ]
                                           )
@@ -12302,6 +12447,49 @@ var render = function () {
                                                               _vm._s(
                                                                 _vm.__(
                                                                   "partial_delivery"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "text-muted small ms-1",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__("qty")
+                                                              ) +
+                                                                ": " +
+                                                                _vm._s(
+                                                                  row.quantity
+                                                                )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : row.source ===
+                                                    "cancelled_order"
+                                                  ? _c(
+                                                      "div",
+                                                      { staticClass: "mt-1" },
+                                                      [
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass:
+                                                              "badge bg-danger",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.__(
+                                                                  "cancelled"
                                                                 )
                                                               )
                                                             ),

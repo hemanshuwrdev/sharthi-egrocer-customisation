@@ -698,12 +698,15 @@
                                             <span v-else class="text-muted small">—</span>
                                         </td>
                                         <td class="text-center">
-                                            <span v-if="row.verified" class="text-success small fw-semibold">
-                                                <i class="fa fa-check-circle"></i> {{ __('verified') }}
-                                            </span>
+                                            <template v-if="row.verified">
+                                                <span class="text-success small fw-semibold">
+                                                    <i class="fa fa-check-circle"></i> {{ __('verified') }}
+                                                </span>
+                                                <div v-if="row.stockRestored" class="text-muted small">{{ __('stock_restored') }}</div>
+                                            </template>
                                             <button v-else
                                                 class="btn btn-sm btn-outline-success"
-                                                @click="verifyPartialInvoiceItem(row.orderItemId)"
+                                                @click="confirmVerifyPartial(row)"
                                                 :disabled="isClosed || verifyingPartialId === row.orderItemId">
                                                 <b-spinner v-if="verifyingPartialId === row.orderItemId" small></b-spinner>
                                                 <i v-else class="fa fa-check"></i>
@@ -762,7 +765,12 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="row in cancelInvoices" :key="row.order_id">
-                                        <td class="ps-3 fw-semibold text-primary">{{ row.invoice_number || ('#' + row.order_id) }}</td>
+                                        <td class="ps-3 fw-semibold text-primary">
+                                            {{ row.invoice_number || ('#' + row.order_id) }}
+                                            <div v-if="row.delivered_before_cancel" class="mt-1">
+                                                <span class="badge bg-warning text-dark fw-normal">{{ __('cancelled_after_delivery') }}</span>
+                                            </div>
+                                        </td>
                                         <td>
                                             <span v-if="row.loading_slip_no" class="badge bg-secondary">{{ row.loading_slip_no }}</span>
                                             <span v-else class="text-muted small">—</span>
@@ -774,12 +782,15 @@
                                         <td class="text-end fw-bold">{{ $currency }} {{ fmt(row.final_total) }}</td>
                                         <td>{{ fmtDateTime(row.cancelled_at) }}</td>
                                         <td class="text-center">
-                                            <span v-if="row.verified" class="text-success small fw-semibold">
-                                                <i class="fa fa-check-circle"></i> {{ __('verified') }}
-                                            </span>
+                                            <template v-if="row.verified">
+                                                <span class="text-success small fw-semibold">
+                                                    <i class="fa fa-check-circle"></i> {{ __('verified') }}
+                                                </span>
+                                                <div v-if="row.stock_restored" class="text-muted small">{{ __('stock_restored') }}</div>
+                                            </template>
                                             <button v-else
                                                 class="btn btn-sm btn-outline-success"
-                                                @click="verifyCancelInvoice(row.order_id)"
+                                                @click="confirmVerifyCancel(row)"
                                                 :disabled="isClosed || verifyingCancelId === row.order_id">
                                                 <b-spinner v-if="verifyingCancelId === row.order_id" small></b-spinner>
                                                 <i v-else class="fa fa-check"></i>
@@ -904,6 +915,10 @@
                                             <div class="text-muted small" v-if="row.variant_name">{{ row.variant_name }}</div>
                                             <div v-if="row.source === 'partial_delivery'" class="mt-1">
                                                 <span class="badge bg-warning text-dark">{{ __('partial_delivery') }}</span>
+                                                <span class="text-muted small ms-1">{{ __('qty') }}: {{ row.quantity }}</span>
+                                            </div>
+                                            <div v-else-if="row.source === 'cancelled_order'" class="mt-1">
+                                                <span class="badge bg-danger">{{ __('cancelled') }}</span>
                                                 <span class="text-muted small ms-1">{{ __('qty') }}: {{ row.quantity }}</span>
                                             </div>
                                         </td>
@@ -1144,6 +1159,8 @@ export default {
                         shortfallReason: item.shortfall_reason,
                         damagePhoto: item.damage_photo,
                         verified: item.verified,
+                        restocksStock: !!item.restocks_stock,
+                        stockRestored: !!item.stock_restored,
                     });
                 });
             });
@@ -1220,6 +1237,47 @@ export default {
                     this.$toast.error(err.response?.data?.message || __('something_went_wrong'));
                 });
         },
+        // Verify now also puts goods back into stock, so ask first and say exactly what will
+        // happen. The restock rule itself lives on the server (restocks_stock / restock_qty come
+        // from it) — this only describes it.
+        confirmVerifyPartial(row) {
+            if (row.orderItemId == null) return;
+            const h = this.$createElement;
+            const product = row.productName + (row.variantName ? ' (' + row.variantName + ')' : '');
+            const stockLine = row.restocksStock
+                ? h('p', { class: 'mb-2 text-success fw-semibold' }, '+' + row.shortfallQty + ' ' + __('will_be_added_back_to_stock'))
+                : h('p', { class: 'mb-2 text-muted' }, __('stock_not_changed_for_reason') + ': ' + (row.shortfallReason ? __(row.shortfallReason) : '-'));
+            this.$bvModal.msgBoxConfirm([h('div', [
+                h('p', { class: 'mb-2' }, [h('strong', product), ' — ' + __('shortfall') + ': ' + row.shortfallQty]),
+                stockLine,
+                h('p', { class: 'mb-0 small text-muted' }, __('verify_only_when_goods_back')),
+            ])], {
+                title: __('verify_shortfall'), centered: true,
+                okVariant: 'success', okTitle: __('verify'), cancelTitle: __('cancel'),
+            }).then(ok => { if (ok) this.verifyPartialInvoiceItem(row.orderItemId); });
+        },
+        confirmVerifyCancel(row) {
+            if (row.order_id == null) return;
+            const h = this.$createElement;
+            const stockLine = row.delivered_before_cancel
+                ? h('p', { class: 'mb-2 text-warning fw-semibold' }, __('no_stock_added_delivered_before_cancel'))
+                : row.restock_qty > 0
+                ? h('p', { class: 'mb-2 text-success fw-semibold' }, '+' + row.restock_qty + ' ' + __('units') + ' (' + row.restock_items + ' ' + __('item') + '(s)) ' + __('will_be_added_back_to_stock'))
+                : h('p', { class: 'mb-2 text-muted' }, __('no_stock_to_add_back'));
+            this.$bvModal.msgBoxConfirm([h('div', [
+                h('p', { class: 'mb-2' }, [h('strong', row.invoice_number || ('#' + row.order_id)), row.retailer ? ' — ' + row.retailer.name : '']),
+                stockLine,
+                h('p', { class: 'mb-0 small text-muted' }, __('verify_only_when_goods_back')),
+            ])], {
+                title: __('verify_cancellation'), centered: true,
+                okVariant: 'success', okTitle: __('verify'), cancelTitle: __('cancel'),
+            }).then(ok => { if (ok) this.verifyCancelInvoice(row.order_id); });
+        },
+        // " — N unit(s) added back to stock" suffix for the success toast, empty when nothing moved.
+        restockedSuffix(res) {
+            const qty = parseFloat(res?.data?.data?.restocked_qty || 0);
+            return qty > 0 ? ' — ' + qty + ' ' + __('units_added_back_to_stock') : '';
+        },
         verifyPartialInvoiceItem(orderItemId) {
             if (orderItemId == null) return;
             this.verifyingPartialId = orderItemId;
@@ -1231,7 +1289,7 @@ export default {
                     this.$toast.error(res.data.message || __('something_went_wrong'));
                     return;
                 }
-                this.$toast.success(__('shortfall_verified'));
+                this.$toast.success(__('shortfall_verified') + this.restockedSuffix(res));
                 this.load();
             }).catch(err => {
                 this.verifyingPartialId = null;
@@ -1249,7 +1307,7 @@ export default {
                     this.$toast.error(res.data.message || __('something_went_wrong'));
                     return;
                 }
-                this.$toast.success(__('cancellation_verified'));
+                this.$toast.success(__('cancellation_verified') + this.restockedSuffix(res));
                 this.load();
             }).catch(err => {
                 this.verifyingCancelId = null;
@@ -1694,7 +1752,8 @@ export default {
                     head: [['Invoice #', 'Retailer', 'Product', 'Refund Amount', 'Reason', 'Returned At']],
                     body: this.returnItemSummary.map(r => [
                         r.invoice_number || ('#' + r.order_id), r.retailer ? r.retailer.name : '-',
-                        r.product_name + (r.source === 'partial_delivery' ? ' (' + __('partial_delivery') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''),
+                        r.product_name + (r.source === 'partial_delivery' ? ' (' + __('partial_delivery') + ', ' + __('qty') + ': ' + r.quantity + ')'
+                            : r.source === 'cancelled_order' ? ' (' + __('cancelled') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''),
                         money(r.refund_amount), this.returnReason(r), this.fmtDateTime(r.returned_at),
                     ]),
                     styles: { fontSize: 8, cellPadding: 2 },

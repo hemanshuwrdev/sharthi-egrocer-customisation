@@ -8,53 +8,88 @@
             </router-link>
         </div>
 
-        <div class="list-surface">
-            <div class="list-toolbar">
-                <div class="list-search">
-                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
-                    <b-form-input id="filter-input" v-model="filter" type="search" :placeholder="__('search')"></b-form-input>
-                </div>
-                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getSalesmen()">
-                    <i class="fa fa-refresh" aria-hidden="true"></i>
+        <div class="ui-filters">
+            <div class="ui-search">
+                <i class="fa fa-search" aria-hidden="true"></i>
+                <input id="filter-input" v-model="filter" type="text" :placeholder="__('search')" :aria-label="__('search')">
+                <button v-if="filter" type="button" class="ui-search__clear" :title="__('Clear')" @click="filter = null">
+                    <i class="fa fa-times"></i>
                 </button>
             </div>
-                        <div class="table-responsive">
-                            <b-table :items="salesmen" :fields="fields" :current-page="currentPage" :per-page="perPage" :filter="filter" :filter-included-fields="filterOn" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true" :busy="isLoading" stacked="md" show-empty small>
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
-                                
-                                <template #cell(status)="row">
-                                    <label v-if="row.item.status == 1" class='badge bg-success'>{{ __('active') }}</label>
-                                    <label v-else-if="row.item.status == 0" class='badge bg-danger'>{{ __('deactive') }}</label>
-                                </template>
+            <button type="button" class="ui-iconbtn" v-b-tooltip.hover :title="__('refresh')" @click="getSalesmen()">
+                <i class="fa fa-sync-alt" :class="{ 'fa-spin': isLoading }" aria-hidden="true"></i>
+            </button>
+        </div>
 
-                                <template #cell(allow_payment_collection)="row">
-                                    <span v-if="row.item.allow_payment_collection == 1" class="badge bg-success">{{ __('yes') }}</span>
-                                    <span v-else class="badge bg-danger">{{ __('no') }}</span>
-                                </template>
-
-                                <template #cell(brands)="row">
-                                    <span class="badge bg-secondary me-1" v-for="brand in parseBrands(row.item.brands)" :key="brand">
-                                        {{ getBrandName(brand) }}
-                                    </span>
-                                </template>
-
-                                <template #cell(actions)="row">
-                                    <div class="list-actions">
-                                        <router-link :to="{ name: 'SellerEditSalesman', params: { id: row.item.id } }" v-b-tooltip.hover :title="__('edit')" class="list-action-btn is-edit">
-                                            <i class="fa fa-pencil-alt"></i>
-                                        </router-link>
-                                        <button class="list-action-btn is-delete" @click="deleteSalesman(row.index, row.item.id)" v-b-tooltip.hover :title="__('delete')">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </template>
-                            </b-table>
+        <div class="list-surface">
+            <div class="table-responsive">
+                <b-table :items="salesmen" :fields="fields" :current-page="currentPage" :per-page="perPage" :filter="filter" :filter-included-fields="filterOn" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="false" borderless hover :busy="isLoading" stacked="md" show-empty @filtered="onFiltered">
+                    <template #table-busy>
+                        <div class="ui-busy">
+                            <b-spinner class="align-middle" small></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
+                    </template>
+
+                    <template #empty>
+                        <div class="ui-empty">
+                            <div class="ui-empty__icon"><i class="fa fa-user-tie"></i></div>
+                            <h3>{{ __('No salesmen found') }}</h3>
+                            <p>{{ __('Salesmen you add will show up here.') }}</p>
+                        </div>
+                    </template>
+
+                    <template #emptyfiltered>
+                        <div class="ui-empty">
+                            <div class="ui-empty__icon"><i class="fa fa-user-tie"></i></div>
+                            <h3>{{ __('No salesmen found') }}</h3>
+                            <p>{{ __('Nothing matches this search. Try changing or clearing it.') }}</p>
+                            <button type="button" class="ui-btn" @click="filter = null">
+                                <i class="fa fa-times"></i> {{ __('Clear search') }}
+                            </button>
+                        </div>
+                    </template>
+
+                    <template #cell(id)="row">
+                        <span class="ui-id">#{{ row.item.id }}</span>
+                    </template>
+
+                    <template #cell(name)="row">
+                        <div class="ui-person">
+                            <span class="ui-avatar" :class="'ui-tone--' + avatarTone(row.item.name)">{{ initials(row.item.name) }}</span>
+                            <strong class="ui-strong">{{ row.item.name }}</strong>
+                        </div>
+                    </template>
+
+                    <template #cell(status)="row">
+                        <label v-if="row.item.status == 1" class='badge bg-success'>{{ __('active') }}</label>
+                        <label v-else-if="row.item.status == 0" class='badge bg-danger'>{{ __('deactive') }}</label>
+                    </template>
+
+                    <template #cell(allow_payment_collection)="row">
+                        <span v-if="row.item.allow_payment_collection == 1" class="ui-pill ui-tone--green"><span class="ui-dot"></span>{{ __('yes') }}</span>
+                        <span v-else class="ui-pill ui-tone--slate"><span class="ui-dot"></span>{{ __('no') }}</span>
+                    </template>
+
+                    <template #cell(brands)="row">
+                        <span class="badge bg-secondary me-1" v-for="brand in parseBrands(row.item.brands)" :key="brand">
+                            {{ getBrandName(brand) }}
+                        </span>
+                        <span v-if="!parseBrands(row.item.brands).length" class="ui-dash">-</span>
+                    </template>
+
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <router-link :to="{ name: 'SellerEditSalesman', params: { id: row.item.id } }" v-b-tooltip.hover :title="__('edit')" class="list-action-btn is-edit">
+                                <i class="fa fa-pencil-alt"></i>
+                            </router-link>
+                            <button class="list-action-btn is-delete" @click="deleteSalesman(row.index, row.item.id)" v-b-tooltip.hover :title="__('delete')">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </template>
+                </b-table>
+            </div>
 
             <div class="list-footer">
                 <div class="list-perpage">
@@ -62,7 +97,8 @@
                         <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions" size="sm" class="form-control form-select"></b-form-select>
                     </b-form-group>
                 </div>
-                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm" class="list-pagination"></b-pagination>
+                <span class="ui-count">{{ rangeText(currentPage, perPage, totalRows) }}</span>
+                <b-pagination v-if="totalRows > perPage" v-model="currentPage" :total-rows="totalRows" :per-page="perPage" size="sm" class="list-pagination my-0"></b-pagination>
             </div>
         </div>
     </div>
@@ -113,6 +149,29 @@ export default {
         this.getSalesmen();
     },
     methods: {
+        // The search filters in the browser, so the footer count and pager follow the matching rows
+        onFiltered(filteredItems) {
+            this.totalRows = filteredItems.length;
+            this.currentPage = 1;
+        },
+        rangeText(page, perPage, total) {
+            if (!total) return '';
+            const from = (page - 1) * perPage + 1;
+            const to = Math.min(page * perPage, total);
+            return from + '-' + to + ' / ' + total;
+        },
+        initials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return ((parts[0][0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+        },
+        // Stable colour per name so the same person always gets the same avatar
+        avatarTone(name) {
+            const tones = ['blue', 'green', 'purple', 'amber', 'red'];
+            let hash = 0;
+            String(name || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) % 997; });
+            return tones[hash % tones.length];
+        },
         getBrands() {
             axios.get(this.$sellerApiUrl + '/brands')
                 .then(response => {

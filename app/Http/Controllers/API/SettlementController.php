@@ -12,11 +12,13 @@ use App\Models\LoadingSlip;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
+use App\Models\ProductVariant;
 use App\Models\ReturnRequest;
 use App\Models\ReturnStatusList;
 use App\Models\Salesman;
 use App\Models\SalesmanSettlement;
 use App\Models\Seller;
+use App\Models\SellerProduct;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -518,7 +520,8 @@ class SettlementController extends Controller
             'signature' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Customer signature'],
         ];
 
-        $data = array_map(fn ($m) => array_merge(['method' => $m], $meta[$m]), $enabled);
+        // "upi" is stored internally but shown to the driver app as "bank"
+        $data = array_map(fn ($m) => array_merge(['method' => $m === 'upi' ? 'bank' : $m], $meta[$m]), $enabled);
 
         return CommonHelper::responseWithData(['methods' => array_values($data)]);
     }
@@ -555,6 +558,11 @@ class SettlementController extends Controller
         $seller = $driver->seller_id ? Seller::find($driver->seller_id) : null;
         if (!$seller) {
             return CommonHelper::responseError('driver_not_linked_to_distributor');
+        }
+
+        // The driver app sees "bank" (see driverPaymentMethods); it is stored as "upi".
+        if ($request->input('method') === 'bank') {
+            $request->merge(['method' => 'upi']);
         }
 
         $validator = Validator::make($request->all(), [
@@ -1796,6 +1804,9 @@ class SettlementController extends Controller
                         'shortfall_reason'   => $i->shortfall_reason,
                         'damage_photo'       => $i->damage_photo,
                         'verified'           => $i->shortfall_verified_at !== null,
+                        // What Verify will do to stock, so the confirm modal can say so up front.
+                        'restocks_stock'     => in_array($i->shortfall_reason, DeliveryBoysApiController::RESTOCKABLE_SHORTFALL_REASONS, true),
+                        'stock_restored'     => $i->stock_restored_at !== null,
                     ])->values(),
                 ];
             })
@@ -1834,22 +1845,39 @@ class SettlementController extends Controller
         // "Total Expected" quietly inflates by whatever was cancelled.
         $cancelledOrders = $orders->where('active_status', \App\Models\OrderStatusList::$cancelled)->values();
 
+        // Orders that were already delivered (fully or partly) and cancelled afterwards — the
+        // status dropdown lets a Delivered order be flipped to Cancelled. Their goods are with
+        // the retailer, not back on the truck, so they must not restock or count as returns.
+        $deliveredBeforeCancel = $this->deliveredBeforeCancelOrderIds($cancelledOrders->pluck('id'));
+
         $cancelledAtMap = \App\Models\OrderStatus::whereIn('order_id', $cancelledOrders->pluck('id'))
             ->where('status', (string) \App\Models\OrderStatusList::$cancelled)
             ->get()
             ->groupBy('order_id')
             ->map(fn ($rows) => $rows->sortByDesc('created_at')->first()->created_at);
 
-        $cancelInvoices = $cancelledOrders->map(fn ($o) => [
-            'order_id'        => $o->id,
-            'orders_id'       => $o->orders_id,
-            'invoice_number'  => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
-            'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
-            'retailer'        => $this->retailerPayload($o->user),
-            'final_total'     => $o->final_total,
-            'cancelled_at'    => $cancelledAtMap->get($o->id),
-            'verified'        => $o->cancel_verified_at !== null,
-        ])->values();
+        $cancelInvoices = $cancelledOrders->map(function ($o) use ($cancelledAtMap, $itemsByOrder, $deliveredBeforeCancel) {
+            $orderItems     = $itemsByOrder->get($o->id, collect());
+            $wasDelivered   = $deliveredBeforeCancel->contains($o->id);
+            $restockItems   = $wasDelivered ? collect() : $this->cancelRestockItems($orderItems);
+
+            return [
+                'order_id'        => $o->id,
+                'orders_id'       => $o->orders_id,
+                'invoice_number'  => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
+                'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
+                'retailer'        => $this->retailerPayload($o->user),
+                'final_total'     => $o->final_total,
+                'cancelled_at'    => $cancelledAtMap->get($o->id),
+                'verified'        => $o->cancel_verified_at !== null,
+                // What Verify will put back into stock (items already restocked when they were
+                // cancelled individually before the loading slip are left out).
+                'delivered_before_cancel' => $wasDelivered,
+                'restock_items'   => $restockItems->count(),
+                'restock_qty'     => round((float) $restockItems->sum('quantity'), 3),
+                'stock_restored'  => $orderItems->contains(fn ($i) => $i->stock_restored_at !== null),
+            ];
+        })->values();
 
         // Rescheduled orders detach from the slip immediately (loading_slip_id is
         // nulled), so unlike cancels they can't be found via $tripOrderIds at all —
@@ -1930,8 +1958,27 @@ class SettlementController extends Controller
             'source'         => 'partial_delivery',
         ]));
 
-        $returnItemSummary = $returnItemSummary->concat($shortfallReturnRows)->values();
-        $totalReturns      = round($totalReturns + (float) $shortfallValueByOrder->sum(), 2);
+        // Cancelled orders are goods that went out on the trip and came back whole, so
+        // they belong on the Returns tab the same way a shortfall does. Each item's
+        // sub_total is used as the value, matching the credit note's cancel lines. An
+        // order already listed above as a shortfall is skipped so it can't count twice.
+        $cancelReturnRows = $cancelledOrders->toBase()
+            ->reject(fn ($o) => $shortfallValueByOrder->has($o->id) || $deliveredBeforeCancel->contains($o->id))
+            ->flatMap(fn ($o) => $itemsByOrder->get($o->id, collect())->map(fn ($i) => [
+                'order_id'       => $o->id,
+                'invoice_number' => $o->invoice_number ?: CommonHelper::resolveDistributorInvoiceNumber($o->id),
+                'product_name'   => $i->product_name,
+                'variant_name'   => $i->variant_name,
+                'quantity'       => (float) $i->quantity,
+                'refund_amount'  => round((float) $i->sub_total, 2),
+                'reason'         => $i->cancellation_reason,
+                'retailer'       => $this->retailerPayload($o->user),
+                'returned_at'    => $cancelledAtMap->get($o->id),
+                'source'         => 'cancelled_order',
+            ]));
+
+        $returnItemSummary = $returnItemSummary->concat($shortfallReturnRows)->concat($cancelReturnRows)->values();
+        $totalReturns      = round($totalReturns + (float) $shortfallValueByOrder->sum() + (float) $cancelReturnRows->sum('refund_amount'), 2);
 
         // A salesman is only ever sent to collect on a driver's "signature" IOU for an
         // order (see salesmanCollectPayment's own guard: it requires that signature
@@ -2084,10 +2131,78 @@ class SettlementController extends Controller
     }
 
     /**
+     * Puts units back into the distributor's stock, at most once per order item. Orders take
+     * stock out at placement (MasterCatalogOrderHelper::decrementStock) and nothing on the
+     * trip flow gave it back, so Verify on a Partial / Cancel Invoice row does it. The
+     * stock_restored_at claim is a single atomic UPDATE, so a double-click or a re-verify
+     * can't add the same units twice. Same seller_products / legacy product_variants split as
+     * OrdersApiController::cancelOrderItem. Returns the qty actually restored (0 if skipped).
+     */
+    private function restockOrderItem(OrderItem $item, float $qty): float
+    {
+        if ($qty <= 0) return 0.0;
+
+        $sellerProduct = $item->seller_product_id ? SellerProduct::find($item->seller_product_id) : null;
+        $variant       = !$item->seller_product_id && $item->product_variant_id ? ProductVariant::find($item->product_variant_id) : null;
+        if (!$sellerProduct && !$variant) return 0.0;
+
+        $claimed = OrderItem::where('id', $item->id)
+            ->whereNull('stock_restored_at')
+            ->update(['stock_restored_at' => Carbon::now(), 'stock_restored_qty' => $qty]);
+        if (!$claimed) return 0.0;
+
+        if ($sellerProduct) {
+            $sellerProduct->increment('stock', $qty);
+        } else {
+            $variant->increment('stock', $qty);
+        }
+
+        return $qty;
+    }
+
+    /**
+     * Which of these (now cancelled) orders had already been delivered — fully or partly — before
+     * the cancel. Any one signal is enough: the driver recorded delivered quantities, the order
+     * has a Delivered / Partial Delivery status row (a cancelled order can't move to either
+     * afterwards, so the row proves it came first), or money was collected for it on the trip
+     * (an order cancelled before delivery never gets a payment row).
+     */
+    private function deliveredBeforeCancelOrderIds($orderIds)
+    {
+        $orderIds = collect($orderIds)->values();
+        if ($orderIds->isEmpty()) return collect();
+
+        $viaItems    = OrderItem::whereIn('order_id', $orderIds)->whereNotNull('delivered_quantity')->pluck('order_id');
+        $viaStatus   = \App\Models\OrderStatus::whereIn('order_id', $orderIds)
+            ->whereIn('status', ['Delivered', 'Partial Delivery', (string) \App\Models\OrderStatusList::$delivered, (string) \App\Models\OrderStatusList::$partialDelivery])
+            ->pluck('order_id');
+        $viaPayments = OrderPayment::whereIn('order_id', $orderIds)->pluck('order_id');
+
+        return $viaItems->toBase()->merge($viaStatus->toBase())->merge($viaPayments->toBase())->map(fn ($id) => (int) $id)->unique()->values();
+    }
+
+    /**
+     * The items of a cancelled order that Verify should put back into stock: cancelled with the
+     * order (the generic status update never restocks) and not yet restocked. An item cancelled
+     * on its own before the loading slip has canceled_at set — cancelOrderItem already restored
+     * its stock, so it is left out.
+     */
+    private function cancelRestockItems($items)
+    {
+        return $items->filter(
+            fn ($i) => (int) $i->active_status === \App\Models\OrderStatusList::$cancelled
+                && $i->canceled_at === null
+                && $i->stock_restored_at === null
+        )->values();
+    }
+
+    /**
      * POST /seller/trips/{id}/partial-invoices/{itemId}/verify
-     * Distributor acknowledgment that a shortfall item has been reviewed — a plain
-     * flag (mirrors how order_payments verify already works), feeding the trip's
-     * close-gate. No other side effect.
+     * Distributor acknowledgment that a shortfall item has been reviewed — a flag
+     * (mirrors how order_payments verify already works) feeding the trip's close-gate.
+     * When the driver's reason says the undelivered units came back sellable
+     * (DeliveryBoysApiController::RESTOCKABLE_SHORTFALL_REASONS) the shortfall is also put back
+     * into stock; damaged / shortage / not-available shortfalls leave stock untouched.
      */
     public function sellerVerifyPartialInvoiceItem(Request $request, int $id, int $itemId)
     {
@@ -2112,17 +2227,25 @@ class SettlementController extends Controller
             return CommonHelper::responseError('item_has_no_shortfall');
         }
 
-        $item->shortfall_verified_at = Carbon::now();
-        $item->shortfall_verified_by = auth()->id();
-        $item->save();
+        $restockedQty = 0.0;
+        DB::transaction(function () use ($item, &$restockedQty) {
+            $item->shortfall_verified_at = Carbon::now();
+            $item->shortfall_verified_by = auth()->id();
+            $item->save();
 
-        return CommonHelper::responseSuccess('shortfall_verified');
+            if (in_array($item->shortfall_reason, DeliveryBoysApiController::RESTOCKABLE_SHORTFALL_REASONS, true)) {
+                $restockedQty = $this->restockOrderItem($item, round((float) $item->quantity - (float) $item->delivered_quantity, 3));
+            }
+        });
+
+        return CommonHelper::responseSuccessWithData('shortfall_verified', ['restocked_qty' => $restockedQty]);
     }
 
     /**
      * POST /seller/trips/{id}/cancel-invoices/{orderId}/verify
-     * Distributor acknowledgment that a cancelled order on this trip has been
-     * reviewed — a plain flag, feeding the trip's close-gate. No other side effect.
+     * Distributor acknowledgment that a cancelled order on this trip has been reviewed — a flag
+     * feeding the trip's close-gate. The order's goods came back whole, so verifying also puts
+     * its items back into stock (see cancelRestockItems for which ones).
      */
     /**
      * Whether a driver's settlement is this distributor's to see. The driver must be linked to the
@@ -2159,11 +2282,21 @@ class SettlementController extends Controller
             ->first();
         if (!$order) return CommonHelper::responseError('cancelled_order_not_in_this_trip');
 
-        $order->cancel_verified_at = Carbon::now();
-        $order->cancel_verified_by = auth()->id();
-        $order->save();
+        $restockedQty = 0.0;
+        DB::transaction(function () use ($order, &$restockedQty) {
+            $order->cancel_verified_at = Carbon::now();
+            $order->cancel_verified_by = auth()->id();
+            $order->save();
 
-        return CommonHelper::responseSuccess('cancellation_verified');
+            // A delivered-then-cancelled order's goods are with the retailer — nothing came back.
+            if ($this->deliveredBeforeCancelOrderIds([$order->id])->isEmpty()) {
+                foreach ($this->cancelRestockItems(OrderItem::where('order_id', $order->id)->get()) as $item) {
+                    $restockedQty += $this->restockOrderItem($item, (float) $item->quantity);
+                }
+            }
+        });
+
+        return CommonHelper::responseSuccessWithData('cancellation_verified', ['restocked_qty' => round($restockedQty, 3)]);
     }
 
     /**

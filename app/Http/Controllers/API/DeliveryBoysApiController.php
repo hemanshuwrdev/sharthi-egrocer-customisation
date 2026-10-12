@@ -30,6 +30,15 @@ class DeliveryBoysApiController extends Controller
         'qty_mismatch_packing_issue',
     ];
 
+    // The subset of SHORTFALL_REASONS where the undelivered units are physically back in the
+    // distributor's warehouse in sellable condition, so verifying the shortfall restocks them.
+    // product_damaged (not sellable) and product_shortage / product_not_available (the units
+    // were never physically there — system stock was already overstated) deliberately don't.
+    public const RESTOCKABLE_SHORTFALL_REASONS = [
+        'rejected_by_retailer',
+        'qty_mismatch_packing_issue',
+    ];
+
     protected $languageService;
 
     public function __construct(LanguageService $languageService)

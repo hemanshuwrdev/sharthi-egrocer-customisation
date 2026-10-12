@@ -36,6 +36,8 @@ protected $casts = [
         'seller_id' => 'integer',
         'shortfall_verified_at' => 'datetime',
         'shortfall_verified_by' => 'integer',
+        'stock_restored_at' => 'datetime',
+        'stock_restored_qty' => 'float',
     ];
     protected $appends = ['image_url'];
 

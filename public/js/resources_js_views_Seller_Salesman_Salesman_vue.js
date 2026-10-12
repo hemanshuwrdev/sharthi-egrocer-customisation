@@ -83,6 +83,42 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -159,6 +195,31 @@ __webpack_require__.r(__webpack_exports__);
     this.getSalesmen();
   },
   methods: {
+    // The search filters in the browser, so the footer count and pager follow the matching rows
+    onFiltered: function onFiltered(filteredItems) {
+      this.totalRows = filteredItems.length;
+      this.currentPage = 1;
+    },
+    rangeText: function rangeText(page, perPage, total) {
+      if (!total) return '';
+      var from = (page - 1) * perPage + 1;
+      var to = Math.min(page * perPage, total);
+      return from + '-' + to + ' / ' + total;
+    },
+    initials: function initials(name) {
+      var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '?';
+      return ((parts[0][0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    },
+    // Stable colour per name so the same person always gets the same avatar
+    avatarTone: function avatarTone(name) {
+      var tones = ['blue', 'green', 'purple', 'amber', 'red'];
+      var hash = 0;
+      String(name || '').split('').forEach(function (ch) {
+        hash = (hash * 31 + ch.charCodeAt(0)) % 997;
+      });
+      return tones[hash % tones.length];
+    },
     getBrands: function getBrands() {
       var _this = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/brands').then(function (response) {
@@ -354,62 +415,85 @@ var render = function () {
       1
     ),
     _vm._v(" "),
-    _c("div", { staticClass: "list-surface" }, [
-      _c("div", { staticClass: "list-toolbar" }, [
-        _c(
-          "div",
-          { staticClass: "list-search" },
-          [
-            _c("i", {
-              staticClass: "fa fa-search list-search-icon",
-              attrs: { "aria-hidden": "true" },
-            }),
-            _vm._v(" "),
-            _c("b-form-input", {
-              attrs: {
-                id: "filter-input",
-                type: "search",
-                placeholder: _vm.__("search"),
-              },
-              model: {
-                value: _vm.filter,
-                callback: function ($$v) {
-                  _vm.filter = $$v
-                },
-                expression: "filter",
-              },
-            }),
-          ],
-          1
-        ),
+    _c("div", { staticClass: "ui-filters" }, [
+      _c("div", { staticClass: "ui-search" }, [
+        _c("i", {
+          staticClass: "fa fa-search",
+          attrs: { "aria-hidden": "true" },
+        }),
         _vm._v(" "),
-        _c(
-          "button",
-          {
-            directives: [
-              {
-                name: "b-tooltip",
-                rawName: "v-b-tooltip.hover",
-                modifiers: { hover: true },
-              },
-            ],
-            staticClass: "list-icon-btn",
-            attrs: { title: _vm.__("refresh") },
-            on: {
-              click: function ($event) {
-                return _vm.getSalesmen()
-              },
+        _c("input", {
+          directives: [
+            {
+              name: "model",
+              rawName: "v-model",
+              value: _vm.filter,
+              expression: "filter",
+            },
+          ],
+          attrs: {
+            id: "filter-input",
+            type: "text",
+            placeholder: _vm.__("search"),
+            "aria-label": _vm.__("search"),
+          },
+          domProps: { value: _vm.filter },
+          on: {
+            input: function ($event) {
+              if ($event.target.composing) {
+                return
+              }
+              _vm.filter = $event.target.value
             },
           },
-          [
-            _c("i", {
-              staticClass: "fa fa-refresh",
-              attrs: { "aria-hidden": "true" },
-            }),
-          ]
-        ),
+        }),
+        _vm._v(" "),
+        _vm.filter
+          ? _c(
+              "button",
+              {
+                staticClass: "ui-search__clear",
+                attrs: { type: "button", title: _vm.__("Clear") },
+                on: {
+                  click: function ($event) {
+                    _vm.filter = null
+                  },
+                },
+              },
+              [_c("i", { staticClass: "fa fa-times" })]
+            )
+          : _vm._e(),
       ]),
       _vm._v(" "),
+      _c(
+        "button",
+        {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.hover",
+              modifiers: { hover: true },
+            },
+          ],
+          staticClass: "ui-iconbtn",
+          attrs: { type: "button", title: _vm.__("refresh") },
+          on: {
+            click: function ($event) {
+              return _vm.getSalesmen()
+            },
+          },
+        },
+        [
+          _c("i", {
+            staticClass: "fa fa-sync-alt",
+            class: { "fa-spin": _vm.isLoading },
+            attrs: { "aria-hidden": "true" },
+          }),
+        ]
+      ),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "list-surface" }, [
       _c(
         "div",
         { staticClass: "table-responsive" },
@@ -425,11 +509,12 @@ var render = function () {
               "sort-by": _vm.sortBy,
               "sort-desc": _vm.sortDesc,
               "sort-direction": _vm.sortDirection,
-              bordered: true,
+              bordered: false,
+              borderless: "",
+              hover: "",
               busy: _vm.isLoading,
               stacked: "md",
               "show-empty": "",
-              small: "",
             },
             on: {
               "update:sortBy": function ($event) {
@@ -444,6 +529,7 @@ var render = function () {
               "update:sort-desc": function ($event) {
                 _vm.sortDesc = $event
               },
+              filtered: _vm.onFiltered,
             },
             scopedSlots: _vm._u([
               {
@@ -452,9 +538,12 @@ var render = function () {
                   return [
                     _c(
                       "div",
-                      { staticClass: "text-center text-black my-2" },
+                      { staticClass: "ui-busy" },
                       [
-                        _c("b-spinner", { staticClass: "align-middle" }),
+                        _c("b-spinner", {
+                          staticClass: "align-middle",
+                          attrs: { small: "" },
+                        }),
                         _vm._v(" "),
                         _c("strong", [
                           _vm._v(_vm._s(_vm.__("loading")) + "..."),
@@ -465,6 +554,104 @@ var render = function () {
                   ]
                 },
                 proxy: true,
+              },
+              {
+                key: "empty",
+                fn: function () {
+                  return [
+                    _c("div", { staticClass: "ui-empty" }, [
+                      _c("div", { staticClass: "ui-empty__icon" }, [
+                        _c("i", { staticClass: "fa fa-user-tie" }),
+                      ]),
+                      _vm._v(" "),
+                      _c("h3", [_vm._v(_vm._s(_vm.__("No salesmen found")))]),
+                      _vm._v(" "),
+                      _c("p", [
+                        _vm._v(
+                          _vm._s(_vm.__("Salesmen you add will show up here."))
+                        ),
+                      ]),
+                    ]),
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "emptyfiltered",
+                fn: function () {
+                  return [
+                    _c("div", { staticClass: "ui-empty" }, [
+                      _c("div", { staticClass: "ui-empty__icon" }, [
+                        _c("i", { staticClass: "fa fa-user-tie" }),
+                      ]),
+                      _vm._v(" "),
+                      _c("h3", [_vm._v(_vm._s(_vm.__("No salesmen found")))]),
+                      _vm._v(" "),
+                      _c("p", [
+                        _vm._v(
+                          _vm._s(
+                            _vm.__(
+                              "Nothing matches this search. Try changing or clearing it."
+                            )
+                          )
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "ui-btn",
+                          attrs: { type: "button" },
+                          on: {
+                            click: function ($event) {
+                              _vm.filter = null
+                            },
+                          },
+                        },
+                        [
+                          _c("i", { staticClass: "fa fa-times" }),
+                          _vm._v(
+                            " " +
+                              _vm._s(_vm.__("Clear search")) +
+                              "\n                        "
+                          ),
+                        ]
+                      ),
+                    ]),
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "cell(id)",
+                fn: function (row) {
+                  return [
+                    _c("span", { staticClass: "ui-id" }, [
+                      _vm._v("#" + _vm._s(row.item.id)),
+                    ]),
+                  ]
+                },
+              },
+              {
+                key: "cell(name)",
+                fn: function (row) {
+                  return [
+                    _c("div", { staticClass: "ui-person" }, [
+                      _c(
+                        "span",
+                        {
+                          staticClass: "ui-avatar",
+                          class: "ui-tone--" + _vm.avatarTone(row.item.name),
+                        },
+                        [_vm._v(_vm._s(_vm.initials(row.item.name)))]
+                      ),
+                      _vm._v(" "),
+                      _c("strong", { staticClass: "ui-strong" }, [
+                        _vm._v(_vm._s(row.item.name)),
+                      ]),
+                    ]),
+                  ]
+                },
               },
               {
                 key: "cell(status)",
@@ -487,10 +674,12 @@ var render = function () {
                 fn: function (row) {
                   return [
                     row.item.allow_payment_collection == 1
-                      ? _c("span", { staticClass: "badge bg-success" }, [
+                      ? _c("span", { staticClass: "ui-pill ui-tone--green" }, [
+                          _c("span", { staticClass: "ui-dot" }),
                           _vm._v(_vm._s(_vm.__("yes"))),
                         ])
-                      : _c("span", { staticClass: "badge bg-danger" }, [
+                      : _c("span", { staticClass: "ui-pill ui-tone--slate" }, [
+                          _c("span", { staticClass: "ui-dot" }),
                           _vm._v(_vm._s(_vm.__("no"))),
                         ]),
                   ]
@@ -499,22 +688,25 @@ var render = function () {
               {
                 key: "cell(brands)",
                 fn: function (row) {
-                  return _vm._l(
-                    _vm.parseBrands(row.item.brands),
-                    function (brand) {
+                  return [
+                    _vm._l(_vm.parseBrands(row.item.brands), function (brand) {
                       return _c(
                         "span",
                         { key: brand, staticClass: "badge bg-secondary me-1" },
                         [
                           _vm._v(
-                            "\n                                    " +
+                            "\n                        " +
                               _vm._s(_vm.getBrandName(brand)) +
-                              "\n                                "
+                              "\n                    "
                           ),
                         ]
                       )
-                    }
-                  )
+                    }),
+                    _vm._v(" "),
+                    !_vm.parseBrands(row.item.brands).length
+                      ? _c("span", { staticClass: "ui-dash" }, [_vm._v("-")])
+                      : _vm._e(),
+                  ]
                 },
               },
               {
@@ -624,22 +816,29 @@ var render = function () {
             1
           ),
           _vm._v(" "),
-          _c("b-pagination", {
-            staticClass: "list-pagination",
-            attrs: {
-              "total-rows": _vm.totalRows,
-              "per-page": _vm.perPage,
-              align: "fill",
-              size: "sm",
-            },
-            model: {
-              value: _vm.currentPage,
-              callback: function ($$v) {
-                _vm.currentPage = $$v
-              },
-              expression: "currentPage",
-            },
-          }),
+          _c("span", { staticClass: "ui-count" }, [
+            _vm._v(
+              _vm._s(_vm.rangeText(_vm.currentPage, _vm.perPage, _vm.totalRows))
+            ),
+          ]),
+          _vm._v(" "),
+          _vm.totalRows > _vm.perPage
+            ? _c("b-pagination", {
+                staticClass: "list-pagination my-0",
+                attrs: {
+                  "total-rows": _vm.totalRows,
+                  "per-page": _vm.perPage,
+                  size: "sm",
+                },
+                model: {
+                  value: _vm.currentPage,
+                  callback: function ($$v) {
+                    _vm.currentPage = $$v
+                  },
+                  expression: "currentPage",
+                },
+              })
+            : _vm._e(),
         ],
         1
       ),

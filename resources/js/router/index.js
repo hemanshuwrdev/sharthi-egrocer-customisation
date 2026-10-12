@@ -91,6 +91,7 @@ const AboutUs = () => import("../views/Setting/AboutUs");
 const PrivacyPolicy = () => import("../views/Setting/PrivacyPolicy");
 //Setting - Delivery Boy
 const PrivacyPolicyDeliveryBoy = () => import("../views/Setting/PrivacyPolicyDeliveryBoy");
+const SellerPrivacyPolicyDeliveryBoy = () => import("../views/Sellers/PrivacyPolicyDeliveryBoy");
 
 //Setting - Seller
 const PrivacyPolicySeller = () => import("../views/Setting/PrivacyPolicySeller");
@@ -119,6 +120,7 @@ const PopupOffer = () => import("../views/Offers/PopupOffer");
 const DeliveryBoys = () => import("../views/DeliveryBoys/DeliveryBoys");
 const SellerDeliveryBoys = () => import("../views/Sellers/DeliveryBoys");
 const EditDeliveryBoy = () => import("../views/DeliveryBoys/EditDeliveryBoy");
+const SellerEditDeliveryBoy = () => import("../views/Sellers/EditDeliveryBoy");
 const RegisteredDeliveryBoys = () => import("../views/DeliveryBoys/RegisteredDeliveryBoys");
 
 // Fund Transfers
@@ -246,7 +248,7 @@ const SellerEditScheme = () => import("../views/Seller/Schemes/EditScheme");
 const SellerViewProduct = () => import("../views/Product/ViewProduct");
 const SellerProductRatings = () => import("../views/Product/ProductRatings");
 const SellerCloneProduct = () => import("../views/Product/EditProduct");
-const SellerManageStock = () => import("../views/Product/ManageStock");
+const SellerManageStock = () => import("../views/Sellers/ManageStock");
 // const SellerMedia = () => import("../views/Product/Media");
 const SellerSettings = () => import('../views/Settings');
 // const SellerPointOfSale = () => import("../views/Sellers/PointOfSale");
@@ -1725,7 +1727,7 @@ function configRoutes() {
                 {
                     path: "delivery_boys/create",
                     name: "SellerCreateDeliveryBoy",
-                    component: EditDeliveryBoy,
+                    component: SellerEditDeliveryBoy,
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
@@ -1735,7 +1737,7 @@ function configRoutes() {
                 {
                     path: "delivery_boys/edit/:id",
                     name: "SellerEditDeliveryBoy",
-                    component: EditDeliveryBoy,
+                    component: SellerEditDeliveryBoy,
                     props: true,
                     meta: {
                         permission: 'order_list',
@@ -1796,7 +1798,7 @@ function configRoutes() {
                 {
                     path: "privacy_policy_delivery_boy",
                     name: "SellerPrivacyPolicyDriver",
-                    component: PrivacyPolicyDeliveryBoy,
+                    component: SellerPrivacyPolicyDeliveryBoy,
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,

@@ -108,6 +108,20 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -196,6 +210,12 @@ __webpack_require__.r(__webpack_exports__);
         // Use the total count from API for correct pagination
         _this2.totalRows = data.total;
       });
+    },
+    rangeText: function rangeText(page, perPage, total) {
+      if (!total) return '';
+      var from = (page - 1) * perPage + 1;
+      var to = Math.min(page * perPage, total);
+      return from + '-' + to + ' / ' + total;
     },
     deleteRecord: function deleteRecord(index, id) {
       var _this3 = this;
@@ -319,62 +339,85 @@ var render = function () {
       ]),
     ]),
     _vm._v(" "),
-    _c("div", { staticClass: "list-surface" }, [
-      _c("div", { staticClass: "list-toolbar" }, [
-        _c(
-          "div",
-          { staticClass: "list-search" },
-          [
-            _c("i", {
-              staticClass: "fa fa-search list-search-icon",
-              attrs: { "aria-hidden": "true" },
-            }),
-            _vm._v(" "),
-            _c("b-form-input", {
-              attrs: {
-                id: "filter-input",
-                type: "search",
-                placeholder: _vm.__("search"),
-              },
-              model: {
-                value: _vm.filter,
-                callback: function ($$v) {
-                  _vm.filter = $$v
-                },
-                expression: "filter",
-              },
-            }),
-          ],
-          1
-        ),
+    _c("div", { staticClass: "ui-filters" }, [
+      _c("div", { staticClass: "ui-search" }, [
+        _c("i", {
+          staticClass: "fa fa-search",
+          attrs: { "aria-hidden": "true" },
+        }),
         _vm._v(" "),
-        _c(
-          "button",
-          {
-            directives: [
-              {
-                name: "b-tooltip",
-                rawName: "v-b-tooltip.hover",
-                modifiers: { hover: true },
-              },
-            ],
-            staticClass: "list-icon-btn",
-            attrs: { title: _vm.__("refresh") },
-            on: {
-              click: function ($event) {
-                return _vm.getRecords()
-              },
+        _c("input", {
+          directives: [
+            {
+              name: "model",
+              rawName: "v-model",
+              value: _vm.filter,
+              expression: "filter",
+            },
+          ],
+          attrs: {
+            id: "filter-input",
+            type: "text",
+            placeholder: _vm.__("search"),
+            "aria-label": _vm.__("search"),
+          },
+          domProps: { value: _vm.filter },
+          on: {
+            input: function ($event) {
+              if ($event.target.composing) {
+                return
+              }
+              _vm.filter = $event.target.value
             },
           },
-          [
-            _c("i", {
-              staticClass: "fa fa-refresh",
-              attrs: { "aria-hidden": "true" },
-            }),
-          ]
-        ),
+        }),
+        _vm._v(" "),
+        _vm.filter
+          ? _c(
+              "button",
+              {
+                staticClass: "ui-search__clear",
+                attrs: { type: "button", title: _vm.__("Clear") },
+                on: {
+                  click: function ($event) {
+                    _vm.filter = null
+                  },
+                },
+              },
+              [_c("i", { staticClass: "fa fa-times" })]
+            )
+          : _vm._e(),
       ]),
       _vm._v(" "),
+      _c(
+        "button",
+        {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.hover",
+              modifiers: { hover: true },
+            },
+          ],
+          staticClass: "ui-iconbtn",
+          attrs: { type: "button", title: _vm.__("refresh") },
+          on: {
+            click: function ($event) {
+              return _vm.getRecords()
+            },
+          },
+        },
+        [
+          _c("i", {
+            staticClass: "fa fa-sync-alt",
+            class: { "fa-spin": _vm.isLoading },
+            attrs: { "aria-hidden": "true" },
+          }),
+        ]
+      ),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "list-surface" }, [
       _c(
         "div",
         { staticClass: "table-responsive" },
@@ -386,11 +429,12 @@ var render = function () {
               "sort-by": _vm.sortBy,
               "sort-desc": _vm.sortDesc,
               "sort-direction": _vm.sortDirection,
-              bordered: true,
+              bordered: false,
+              borderless: "",
+              hover: "",
               busy: _vm.isLoading,
               stacked: "md",
               "show-empty": "",
-              small: "",
             },
             on: {
               "update:sortBy": function ($event) {
@@ -413,9 +457,12 @@ var render = function () {
                   return [
                     _c(
                       "div",
-                      { staticClass: "text-center text-black my-2" },
+                      { staticClass: "ui-busy" },
                       [
-                        _c("b-spinner", { staticClass: "align-middle" }),
+                        _c("b-spinner", {
+                          staticClass: "align-middle",
+                          attrs: { small: "" },
+                        }),
                         _vm._v(" "),
                         _c("strong", [
                           _vm._v(_vm._s(_vm.__("loading")) + "..."),
@@ -428,14 +475,72 @@ var render = function () {
                 proxy: true,
               },
               {
+                key: "empty",
+                fn: function () {
+                  return [
+                    _c("div", { staticClass: "ui-empty" }, [
+                      _c("div", { staticClass: "ui-empty__icon" }, [
+                        _c("i", { staticClass: "fa fa-tags" }),
+                      ]),
+                      _vm._v(" "),
+                      _c("h3", [_vm._v(_vm._s(_vm.__("No brands found")))]),
+                      _vm._v(" "),
+                      _c("p", [
+                        _vm._v(
+                          _vm._s(
+                            _vm.filter
+                              ? _vm.__(
+                                  "Nothing matches this search. Try changing or clearing it."
+                                )
+                              : _vm.__("Brands will show up here.")
+                          )
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _vm.filter
+                        ? _c(
+                            "button",
+                            {
+                              staticClass: "ui-btn",
+                              attrs: { type: "button" },
+                              on: {
+                                click: function ($event) {
+                                  _vm.filter = null
+                                },
+                              },
+                            },
+                            [
+                              _c("i", { staticClass: "fa fa-times" }),
+                              _vm._v(
+                                " " +
+                                  _vm._s(_vm.__("Clear search")) +
+                                  "\n                        "
+                              ),
+                            ]
+                          )
+                        : _vm._e(),
+                    ]),
+                  ]
+                },
+                proxy: true,
+              },
+              {
                 key: "cell(id)",
                 fn: function (row) {
                   return [
-                    _vm._v(
-                      "\n                                " +
-                        _vm._s(row.item.id) +
-                        "\n                            "
-                    ),
+                    _c("span", { staticClass: "ui-id" }, [
+                      _vm._v("#" + _vm._s(row.item.id)),
+                    ]),
+                  ]
+                },
+              },
+              {
+                key: "cell(name)",
+                fn: function (row) {
+                  return [
+                    _c("strong", { staticClass: "ui-strong" }, [
+                      _vm._v(_vm._s(row.item.name)),
+                    ]),
                   ]
                 },
               },
@@ -444,11 +549,16 @@ var render = function () {
                 fn: function (row) {
                   return [
                     row.item.image === ""
-                      ? _c("p", [_vm._v("No Image")])
+                      ? _c(
+                          "span",
+                          { staticClass: "ui-thumb ui-thumb--blank" },
+                          [_c("i", { staticClass: "fa fa-tags" })]
+                        )
                       : _c("img", {
+                          staticClass: "ui-thumb",
                           attrs: {
                             src: _vm.$storageUrl + row.item.image,
-                            height: "50",
+                            alt: "",
                           },
                         }),
                   ]
@@ -524,68 +634,74 @@ var render = function () {
         1
       ),
       _vm._v(" "),
-      _c("div", { staticClass: "list-footer" }, [
-        _c(
-          "div",
-          { staticClass: "list-perpage" },
-          [
-            _c(
-              "b-form-group",
-              {
-                staticClass: "mb-0",
-                attrs: {
-                  label: _vm.__("per_page"),
-                  "label-for": "per-page-select",
-                  "label-align-sm": "right",
-                  "label-size": "sm",
-                },
-              },
-              [
-                _c("b-form-select", {
-                  staticClass: "form-control form-select",
+      _c(
+        "div",
+        { staticClass: "list-footer" },
+        [
+          _c(
+            "div",
+            { staticClass: "list-perpage" },
+            [
+              _c(
+                "b-form-group",
+                {
+                  staticClass: "mb-0",
                   attrs: {
-                    id: "per-page-select",
-                    options: _vm.pageOptions,
-                    size: "sm",
+                    label: _vm.__("per_page"),
+                    "label-for": "per-page-select",
+                    "label-align-sm": "right",
+                    "label-size": "sm",
                   },
-                  model: {
-                    value: _vm.perPage,
-                    callback: function ($$v) {
-                      _vm.perPage = $$v
-                    },
-                    expression: "perPage",
-                  },
-                }),
-              ],
-              1
-            ),
-          ],
-          1
-        ),
-        _vm._v(" "),
-        _c(
-          "div",
-          [
-            _c("b-pagination", {
-              staticClass: "list-pagination",
-              attrs: {
-                "total-rows": _vm.totalRows,
-                "per-page": _vm.perPage,
-                align: "fill",
-                size: "sm",
-              },
-              model: {
-                value: _vm.currentPage,
-                callback: function ($$v) {
-                  _vm.currentPage = $$v
                 },
-                expression: "currentPage",
-              },
-            }),
-          ],
-          1
-        ),
-      ]),
+                [
+                  _c("b-form-select", {
+                    staticClass: "form-control form-select",
+                    attrs: {
+                      id: "per-page-select",
+                      options: _vm.pageOptions,
+                      size: "sm",
+                    },
+                    model: {
+                      value: _vm.perPage,
+                      callback: function ($$v) {
+                        _vm.perPage = $$v
+                      },
+                      expression: "perPage",
+                    },
+                  }),
+                ],
+                1
+              ),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c("span", { staticClass: "ui-count" }, [
+            _vm._v(
+              _vm._s(_vm.rangeText(_vm.currentPage, _vm.perPage, _vm.totalRows))
+            ),
+          ]),
+          _vm._v(" "),
+          _vm.totalRows > _vm.perPage
+            ? _c("b-pagination", {
+                staticClass: "list-pagination my-0",
+                attrs: {
+                  "total-rows": _vm.totalRows,
+                  "per-page": _vm.perPage,
+                  size: "sm",
+                },
+                model: {
+                  value: _vm.currentPage,
+                  callback: function ($$v) {
+                    _vm.currentPage = $$v
+                  },
+                  expression: "currentPage",
+                },
+              })
+            : _vm._e(),
+        ],
+        1
+      ),
     ]),
   ])
 }

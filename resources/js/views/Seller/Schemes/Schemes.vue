@@ -8,79 +8,110 @@
             </router-link>
         </div>
 
-        <div class="list-surface">
-            <div class="list-toolbar">
-                <div class="list-search">
-                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
-                    <b-form-input id="filter-input" v-model="filter" type="search" :placeholder="__('search')"></b-form-input>
-                </div>
-                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getSchemes()">
-                    <i class="fa fa-refresh" aria-hidden="true"></i>
+        <div class="ui-filters">
+            <div class="ui-search">
+                <i class="fa fa-search" aria-hidden="true"></i>
+                <input id="filter-input" v-model="filter" type="text" :placeholder="__('search')" :aria-label="__('search')">
+                <button v-if="filter" type="button" class="ui-search__clear" :title="__('Clear')" @click="filter = null">
+                    <i class="fa fa-times"></i>
                 </button>
             </div>
-                        <div class="table-responsive">
-                            <b-table :items="schemes" :fields="fields" :current-page="currentPage" :per-page="perPage" :filter="filter" :filter-included-fields="filterOn" :bordered="true" :busy="isLoading" stacked="md" show-empty small>
-                                <template #table-busy>
-                                    <div class="text-center text-black my-2">
-                                        <b-spinner class="align-middle"></b-spinner>
-                                        <strong>{{ __('loading') }}...</strong>
-                                    </div>
-                                </template>
+            <button type="button" class="ui-iconbtn" v-b-tooltip.hover :title="__('refresh')" @click="getSchemes()">
+                <i class="fa fa-sync-alt" :class="{ 'fa-spin': isLoading }" aria-hidden="true"></i>
+            </button>
+        </div>
 
-                                <template #cell(type)="row">
-                                    <span v-if="row.item.type === 'buy_x_get_y'" class="badge bg-info">{{ __('buy_x_get_y') }}</span>
-                                    <span v-else-if="row.item.type === 'group_discount_qty'" class="badge bg-warning text-dark">{{ __('group_discount_qty') }}</span>
-                                    <span v-else class="badge bg-primary">{{ __('group_discount_price') }}</span>
-                                </template>
-
-                                <template #cell(offer)="row">
-                                    <template v-if="row.item.type === 'buy_x_get_y'">
-                                        {{ t('buy', 'Buy') }} {{ row.item.buy_qty }} {{ row.item.buy_qty_basis === 'outer' ? 'Outer' : (row.item.buy_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.buy_product }}<br>
-                                        <strong>{{ t('get', 'Get') }} {{ row.item.free_qty }} {{ row.item.free_qty_basis === 'outer' ? 'Outer' : (row.item.free_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.free_product }} {{ t('free', 'Free') }}</strong>
-                                    </template>
-                                    <template v-else-if="row.item.is_multi_combo">
-                                        <div class="small mb-1 text-start">
-                                            <span class="badge bg-primary text-white mb-1"><i class="fa fa-layer-group me-1"></i> {{ t('multi_product_combo', 'Multi-Product Combo') }}</span>
-                                            <div><strong>{{ row.item.combo_condition }}</strong> <span class="badge bg-success ms-1">{{ row.item.combo_reward }}</span></div>
-                                            <div class="text-muted small mt-1">{{ t('any_mix_of', 'Any mix of') }}: {{ row.item.products.join(', ') }}</div>
-                                        </div>
-                                    </template>
-                                    <template v-else-if="row.item.products_detail && row.item.products_detail.length">
-                                        <div v-for="(p, i) in row.item.products_detail" :key="'pd' + i" class="small mb-1 text-start">
-                                            <strong>{{ p.product }}</strong>
-                                            <span class="text-muted" v-if="p.conditions"> ({{ p.conditions }})</span>
-                                            <span class="badge bg-success ms-1" v-if="p.reward">{{ p.reward }}</span>
-                                        </div>
-                                    </template>
-                                    <template v-else>
-                                        <span class="badge bg-secondary me-1" v-for="(p, i) in row.item.products" :key="i">{{ p }}</span><br>
-                                        <small v-for="(s, i) in row.item.slabs" :key="'s' + i" class="d-block">
-                                            ≥ {{ s.min_value }}{{ row.item.type === 'group_discount_qty' ? ' units' : ' ₹' }} → {{ s.discount_value }}{{ s.discount_type === 'percentage' ? '%' : ' ₹' }} {{ __('off') }}
-                                        </small>
-                                    </template>
-                                </template>
-
-                                <template #cell(period)="row">
-                                    {{ row.item.start_date }} → {{ row.item.end_date }}
-                                </template>
-
-                                <template #cell(status)="row">
-                                    <label v-if="row.item.status == 1" class='badge bg-success'>{{ __('active') }}</label>
-                                    <label v-else class='badge bg-danger'>{{ __('deactive') }}</label>
-                                </template>
-
-                                <template #cell(actions)="row">
-                                    <div class="list-actions">
-                                        <router-link :to="{ name: 'SellerEditScheme', params: { id: row.item.id } }" v-b-tooltip.hover :title="__('edit')" class="list-action-btn is-edit">
-                                            <i class="fa fa-pencil-alt"></i>
-                                        </router-link>
-                                        <button class="list-action-btn is-delete" @click="deleteScheme(row.index, row.item.id)" v-b-tooltip.hover :title="__('delete')">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </template>
-                            </b-table>
+        <div class="list-surface">
+            <div class="table-responsive">
+                <b-table :items="schemes" :fields="fields" :current-page="currentPage" :per-page="perPage" :filter="filter" :filter-included-fields="filterOn" :bordered="false" borderless hover :busy="isLoading" stacked="md" show-empty @filtered="onFiltered">
+                    <template #table-busy>
+                        <div class="ui-busy">
+                            <b-spinner class="align-middle" small></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
                         </div>
+                    </template>
+
+                    <template #empty>
+                        <div class="ui-empty">
+                            <div class="ui-empty__icon"><i class="fa fa-gift"></i></div>
+                            <h3>{{ __('No schemes found') }}</h3>
+                            <p>{{ __('Schemes you add will show up here.') }}</p>
+                        </div>
+                    </template>
+
+                    <template #emptyfiltered>
+                        <div class="ui-empty">
+                            <div class="ui-empty__icon"><i class="fa fa-gift"></i></div>
+                            <h3>{{ __('No schemes found') }}</h3>
+                            <p>{{ __('Nothing matches this search. Try changing or clearing it.') }}</p>
+                            <button type="button" class="ui-btn" @click="filter = null">
+                                <i class="fa fa-times"></i> {{ __('Clear search') }}
+                            </button>
+                        </div>
+                    </template>
+
+                    <template #cell(id)="row">
+                        <span class="ui-id">#{{ row.item.id }}</span>
+                    </template>
+
+                    <template #cell(name)="row">
+                        <strong class="ui-strong">{{ row.item.name }}</strong>
+                    </template>
+
+                    <template #cell(type)="row">
+                        <span v-if="row.item.type === 'buy_x_get_y'" class="badge bg-info">{{ __('buy_x_get_y') }}</span>
+                        <span v-else-if="row.item.type === 'group_discount_qty'" class="badge bg-warning text-dark">{{ __('group_discount_qty') }}</span>
+                        <span v-else class="badge bg-primary">{{ __('group_discount_price') }}</span>
+                    </template>
+
+                    <template #cell(offer)="row">
+                        <template v-if="row.item.type === 'buy_x_get_y'">
+                            {{ t('buy', 'Buy') }} {{ row.item.buy_qty }} {{ row.item.buy_qty_basis === 'outer' ? 'Outer' : (row.item.buy_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.buy_product }}<br>
+                            <strong>{{ t('get', 'Get') }} {{ row.item.free_qty }} {{ row.item.free_qty_basis === 'outer' ? 'Outer' : (row.item.free_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.free_product }} {{ t('free', 'Free') }}</strong>
+                        </template>
+                        <template v-else-if="row.item.is_multi_combo">
+                            <div class="small mb-1 text-start">
+                                <span class="badge bg-primary text-white mb-1"><i class="fa fa-layer-group me-1"></i> {{ t('multi_product_combo', 'Multi-Product Combo') }}</span>
+                                <div><strong>{{ row.item.combo_condition }}</strong> <span class="badge bg-success ms-1">{{ row.item.combo_reward }}</span></div>
+                                <div class="text-muted small mt-1">{{ t('any_mix_of', 'Any mix of') }}: {{ row.item.products.join(', ') }}</div>
+                            </div>
+                        </template>
+                        <template v-else-if="row.item.products_detail && row.item.products_detail.length">
+                            <div v-for="(p, i) in row.item.products_detail" :key="'pd' + i" class="small mb-1 text-start">
+                                <strong>{{ p.product }}</strong>
+                                <span class="text-muted" v-if="p.conditions"> ({{ p.conditions }})</span>
+                                <span class="badge bg-success ms-1" v-if="p.reward">{{ p.reward }}</span>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <span class="badge bg-secondary me-1" v-for="(p, i) in row.item.products" :key="i">{{ p }}</span><br>
+                            <small v-for="(s, i) in row.item.slabs" :key="'s' + i" class="d-block">
+                                ≥ {{ s.min_value }}{{ row.item.type === 'group_discount_qty' ? ' units' : ' ₹' }} → {{ s.discount_value }}{{ s.discount_type === 'percentage' ? '%' : ' ₹' }} {{ __('off') }}
+                            </small>
+                        </template>
+                    </template>
+
+                    <template #cell(period)="row">
+                        <span class="ui-nowrap">{{ row.item.start_date }} → {{ row.item.end_date }}</span>
+                    </template>
+
+                    <template #cell(status)="row">
+                        <label v-if="row.item.status == 1" class='badge bg-success'>{{ __('active') }}</label>
+                        <label v-else class='badge bg-danger'>{{ __('deactive') }}</label>
+                    </template>
+
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <router-link :to="{ name: 'SellerEditScheme', params: { id: row.item.id } }" v-b-tooltip.hover :title="__('edit')" class="list-action-btn is-edit">
+                                <i class="fa fa-pencil-alt"></i>
+                            </router-link>
+                            <button class="list-action-btn is-delete" @click="deleteScheme(row.index, row.item.id)" v-b-tooltip.hover :title="__('delete')">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </template>
+                </b-table>
+            </div>
 
             <div class="list-footer">
                 <div class="list-perpage">
@@ -88,7 +119,8 @@
                         <b-form-select id="per-page-select" v-model="perPage" :options="pageOptions" size="sm" class="form-control form-select"></b-form-select>
                     </b-form-group>
                 </div>
-                <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm" class="list-pagination"></b-pagination>
+                <span class="ui-count">{{ rangeText(currentPage, perPage, totalRows) }}</span>
+                <b-pagination v-if="totalRows > perPage" v-model="currentPage" :total-rows="totalRows" :per-page="perPage" size="sm" class="list-pagination my-0"></b-pagination>
             </div>
         </div>
     </div>
@@ -126,6 +158,17 @@ export default {
         t(key, fallback) {
             const val = this.__(key);
             return (val && val !== key) ? val : (fallback || key);
+        },
+        // The search filters in the browser, so the footer count and pager follow the matching rows
+        onFiltered(filteredItems) {
+            this.totalRows = filteredItems.length;
+            this.currentPage = 1;
+        },
+        rangeText(page, perPage, total) {
+            if (!total) return '';
+            const from = (page - 1) * perPage + 1;
+            const to = Math.min(page * perPage, total);
+            return from + '-' + to + ' / ' + total;
         },
         getSchemes() {
             this.isLoading = true;

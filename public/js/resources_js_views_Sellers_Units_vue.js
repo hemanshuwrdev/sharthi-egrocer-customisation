@@ -103,6 +103,34 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -186,6 +214,17 @@ __webpack_require__.r(__webpack_exports__);
         _this2.units = data.data;
         _this2.totalRows = _this2.units.length;
       });
+    },
+    // The search filters in the browser, so the footer count and pager follow the matching rows
+    onFiltered: function onFiltered(filteredItems) {
+      this.totalRows = filteredItems.length;
+      this.currentPage = 1;
+    },
+    rangeText: function rangeText(page, perPage, total) {
+      if (!total) return '';
+      var from = (page - 1) * perPage + 1;
+      var to = Math.min(page * perPage, total);
+      return from + '-' + to + ' / ' + total;
     }
   }
 });
@@ -276,214 +315,344 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "list-page" }, [
-      _c("div", { staticClass: "page-head" }, [
-        _c("h3", { staticClass: "page-head-title" }, [
-          _vm._v(_vm._s(_vm.__("units"))),
-        ]),
+  return _c("div", { staticClass: "list-page" }, [
+    _c("div", { staticClass: "page-head" }, [
+      _c("h3", { staticClass: "page-head-title" }, [
+        _vm._v(_vm._s(_vm.__("units"))),
+      ]),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "ui-filters" }, [
+      _c("div", { staticClass: "ui-search" }, [
+        _c("i", {
+          staticClass: "fa fa-search",
+          attrs: { "aria-hidden": "true" },
+        }),
+        _vm._v(" "),
+        _c("input", {
+          directives: [
+            {
+              name: "model",
+              rawName: "v-model",
+              value: _vm.filter,
+              expression: "filter",
+            },
+          ],
+          attrs: {
+            id: "filter-input",
+            type: "text",
+            placeholder: _vm.__("search"),
+            "aria-label": _vm.__("search"),
+          },
+          domProps: { value: _vm.filter },
+          on: {
+            input: function ($event) {
+              if ($event.target.composing) {
+                return
+              }
+              _vm.filter = $event.target.value
+            },
+          },
+        }),
+        _vm._v(" "),
+        _vm.filter
+          ? _c(
+              "button",
+              {
+                staticClass: "ui-search__clear",
+                attrs: { type: "button", title: _vm.__("Clear") },
+                on: {
+                  click: function ($event) {
+                    _vm.filter = null
+                  },
+                },
+              },
+              [_c("i", { staticClass: "fa fa-times" })]
+            )
+          : _vm._e(),
       ]),
       _vm._v(" "),
-      _c("div", { staticClass: "list-surface" }, [
-        _c("div", { staticClass: "list-toolbar" }, [
+      _c(
+        "button",
+        {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.hover",
+              modifiers: { hover: true },
+            },
+          ],
+          staticClass: "ui-iconbtn",
+          attrs: { type: "button", title: _vm.__("refresh") },
+          on: {
+            click: function ($event) {
+              return _vm.getUnits()
+            },
+          },
+        },
+        [
+          _c("i", {
+            staticClass: "fa fa-sync-alt",
+            class: { "fa-spin": _vm.isLoading },
+            attrs: { "aria-hidden": "true" },
+          }),
+        ]
+      ),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "list-surface" }, [
+      _c(
+        "div",
+        { staticClass: "table-responsive" },
+        [
+          _c("b-table", {
+            attrs: {
+              items: _vm.units,
+              fields: _vm.fields,
+              "current-page": _vm.currentPage,
+              "per-page": _vm.perPage,
+              filter: _vm.filter,
+              "filter-included-fields": _vm.filterOn,
+              "sort-by": _vm.sortBy,
+              "sort-desc": _vm.sortDesc,
+              "sort-direction": _vm.sortDirection,
+              bordered: false,
+              borderless: "",
+              hover: "",
+              busy: _vm.isLoading,
+              stacked: "md",
+              "show-empty": "",
+            },
+            on: {
+              "update:sortBy": function ($event) {
+                _vm.sortBy = $event
+              },
+              "update:sort-by": function ($event) {
+                _vm.sortBy = $event
+              },
+              "update:sortDesc": function ($event) {
+                _vm.sortDesc = $event
+              },
+              "update:sort-desc": function ($event) {
+                _vm.sortDesc = $event
+              },
+              filtered: _vm.onFiltered,
+            },
+            scopedSlots: _vm._u([
+              {
+                key: "table-busy",
+                fn: function () {
+                  return [
+                    _c(
+                      "div",
+                      { staticClass: "ui-busy" },
+                      [
+                        _c("b-spinner", {
+                          staticClass: "align-middle",
+                          attrs: { small: "" },
+                        }),
+                        _vm._v(" "),
+                        _c("strong", [
+                          _vm._v(_vm._s(_vm.__("loading")) + "..."),
+                        ]),
+                      ],
+                      1
+                    ),
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "empty",
+                fn: function () {
+                  return [
+                    _c("div", { staticClass: "ui-empty" }, [
+                      _c("div", { staticClass: "ui-empty__icon" }, [
+                        _c("i", { staticClass: "fa fa-ruler" }),
+                      ]),
+                      _vm._v(" "),
+                      _c("h3", [_vm._v(_vm._s(_vm.__("No units found")))]),
+                      _vm._v(" "),
+                      _c("p", [
+                        _vm._v(_vm._s(_vm.__("Units will show up here."))),
+                      ]),
+                    ]),
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "emptyfiltered",
+                fn: function () {
+                  return [
+                    _c("div", { staticClass: "ui-empty" }, [
+                      _c("div", { staticClass: "ui-empty__icon" }, [
+                        _c("i", { staticClass: "fa fa-ruler" }),
+                      ]),
+                      _vm._v(" "),
+                      _c("h3", [_vm._v(_vm._s(_vm.__("No units found")))]),
+                      _vm._v(" "),
+                      _c("p", [
+                        _vm._v(
+                          _vm._s(
+                            _vm.__(
+                              "Nothing matches this search. Try changing or clearing it."
+                            )
+                          )
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "ui-btn",
+                          attrs: { type: "button" },
+                          on: {
+                            click: function ($event) {
+                              _vm.filter = null
+                            },
+                          },
+                        },
+                        [
+                          _c("i", { staticClass: "fa fa-times" }),
+                          _vm._v(
+                            " " +
+                              _vm._s(_vm.__("Clear search")) +
+                              "\n                        "
+                          ),
+                        ]
+                      ),
+                    ]),
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "cell(id)",
+                fn: function (row) {
+                  return [
+                    _c("span", { staticClass: "ui-id" }, [
+                      _vm._v("#" + _vm._s(row.item.id)),
+                    ]),
+                  ]
+                },
+              },
+              {
+                key: "cell(name)",
+                fn: function (row) {
+                  return [
+                    _c("strong", { staticClass: "ui-strong" }, [
+                      _vm._v(_vm._s(row.item.name)),
+                    ]),
+                  ]
+                },
+              },
+              {
+                key: "cell(short_code)",
+                fn: function (row) {
+                  return [
+                    row.item.short_code
+                      ? _c("span", { staticClass: "ui-tag" }, [
+                          _vm._v(_vm._s(row.item.short_code)),
+                        ])
+                      : _c("span", { staticClass: "ui-dash" }, [_vm._v("-")]),
+                  ]
+                },
+              },
+              {
+                key: "cell(parent_id)",
+                fn: function (row) {
+                  return [
+                    row.item.parent_id !== null
+                      ? _c("span", [_vm._v(_vm._s(row.item.parent_id))])
+                      : _c("span", { staticClass: "ui-dash" }, [_vm._v("-")]),
+                  ]
+                },
+              },
+              {
+                key: "cell(conversion)",
+                fn: function (row) {
+                  return [
+                    row.item.conversion !== null
+                      ? _c("span", [_vm._v(_vm._s(row.item.conversion))])
+                      : _c("span", { staticClass: "ui-dash" }, [_vm._v("-")]),
+                  ]
+                },
+              },
+            ]),
+          }),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "list-footer" },
+        [
           _c(
             "div",
-            { staticClass: "list-search" },
+            { staticClass: "list-perpage" },
             [
-              _c("i", {
-                staticClass: "fa fa-search list-search-icon",
-                attrs: { "aria-hidden": "true" },
-              }),
-              _vm._v(" "),
-              _c("b-form-input", {
-                attrs: {
-                  id: "filter-input",
-                  type: "search",
-                  placeholder: _vm.__("search"),
-                },
-                model: {
-                  value: _vm.filter,
-                  callback: function ($$v) {
-                    _vm.filter = $$v
+              _c(
+                "b-form-group",
+                {
+                  staticClass: "mb-0",
+                  attrs: {
+                    label: _vm.__("per_page"),
+                    "label-for": "per-page-select",
+                    "label-align-sm": "right",
+                    "label-size": "sm",
                   },
-                  expression: "filter",
                 },
-              }),
+                [
+                  _c("b-form-select", {
+                    staticClass: "form-control form-select",
+                    attrs: {
+                      id: "per-page-select",
+                      options: _vm.pageOptions,
+                      size: "sm",
+                    },
+                    model: {
+                      value: _vm.perPage,
+                      callback: function ($$v) {
+                        _vm.perPage = $$v
+                      },
+                      expression: "perPage",
+                    },
+                  }),
+                ],
+                1
+              ),
             ],
             1
           ),
           _vm._v(" "),
-          _c(
-            "button",
-            {
-              directives: [
-                {
-                  name: "b-tooltip",
-                  rawName: "v-b-tooltip.hover",
-                  modifiers: { hover: true },
-                },
-              ],
-              staticClass: "list-icon-btn",
-              attrs: { title: _vm.__("refresh") },
-              on: {
-                click: function ($event) {
-                  return _vm.getUnits()
-                },
-              },
-            },
-            [
-              _c("i", {
-                staticClass: "fa fa-refresh",
-                attrs: { "aria-hidden": "true" },
-              }),
-            ]
-          ),
-        ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "table-responsive" },
-          [
-            _c("b-table", {
-              attrs: {
-                items: _vm.units,
-                fields: _vm.fields,
-                "current-page": _vm.currentPage,
-                "per-page": _vm.perPage,
-                filter: _vm.filter,
-                "filter-included-fields": _vm.filterOn,
-                "sort-by": _vm.sortBy,
-                "sort-desc": _vm.sortDesc,
-                "sort-direction": _vm.sortDirection,
-                bordered: true,
-                busy: _vm.isLoading,
-                stacked: "md",
-                "show-empty": "",
-                small: "",
-              },
-              on: {
-                "update:sortBy": function ($event) {
-                  _vm.sortBy = $event
-                },
-                "update:sort-by": function ($event) {
-                  _vm.sortBy = $event
-                },
-                "update:sortDesc": function ($event) {
-                  _vm.sortDesc = $event
-                },
-                "update:sort-desc": function ($event) {
-                  _vm.sortDesc = $event
-                },
-              },
-              scopedSlots: _vm._u([
-                {
-                  key: "table-busy",
-                  fn: function () {
-                    return [
-                      _c(
-                        "div",
-                        { staticClass: "text-center text-black my-2" },
-                        [
-                          _c("b-spinner", { staticClass: "align-middle" }),
-                          _vm._v(" "),
-                          _c("strong", [
-                            _vm._v(_vm._s(_vm.__("loading")) + "..."),
-                          ]),
-                        ],
-                        1
-                      ),
-                    ]
-                  },
-                  proxy: true,
-                },
-                {
-                  key: "cell(parent_id)",
-                  fn: function (row) {
-                    return [
-                      row.item.parent_id !== null
-                        ? _c("p", [_vm._v(_vm._s(row.item.parent_id))])
-                        : _c("p", [_vm._v("-")]),
-                    ]
-                  },
-                },
-                {
-                  key: "cell(conversion)",
-                  fn: function (row) {
-                    return [
-                      row.item.conversion !== null
-                        ? _c("p", [_vm._v(_vm._s(row.item.conversion))])
-                        : _c("p", [_vm._v("-")]),
-                    ]
-                  },
-                },
-              ]),
-            }),
-          ],
-          1
-        ),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "list-footer" },
-          [
-            _c(
-              "div",
-              { staticClass: "list-perpage" },
-              [
-                _c(
-                  "b-form-group",
-                  {
-                    staticClass: "mb-0",
-                    attrs: {
-                      label: _vm.__("per_page"),
-                      "label-for": "per-page-select",
-                      "label-align-sm": "right",
-                      "label-size": "sm",
-                    },
-                  },
-                  [
-                    _c("b-form-select", {
-                      staticClass: "form-control form-select",
-                      attrs: {
-                        id: "per-page-select",
-                        options: _vm.pageOptions,
-                        size: "sm",
-                      },
-                      model: {
-                        value: _vm.perPage,
-                        callback: function ($$v) {
-                          _vm.perPage = $$v
-                        },
-                        expression: "perPage",
-                      },
-                    }),
-                  ],
-                  1
-                ),
-              ],
-              1
+          _c("span", { staticClass: "ui-count" }, [
+            _vm._v(
+              _vm._s(_vm.rangeText(_vm.currentPage, _vm.perPage, _vm.totalRows))
             ),
-            _vm._v(" "),
-            _c("b-pagination", {
-              staticClass: "list-pagination",
-              attrs: {
-                "total-rows": _vm.totalRows,
-                "per-page": _vm.perPage,
-                align: "fill",
-                size: "sm",
-              },
-              model: {
-                value: _vm.currentPage,
-                callback: function ($$v) {
-                  _vm.currentPage = $$v
+          ]),
+          _vm._v(" "),
+          _vm.totalRows > _vm.perPage
+            ? _c("b-pagination", {
+                staticClass: "list-pagination my-0",
+                attrs: {
+                  "total-rows": _vm.totalRows,
+                  "per-page": _vm.perPage,
+                  size: "sm",
                 },
-                expression: "currentPage",
-              },
-            }),
-          ],
-          1
-        ),
-      ]),
+                model: {
+                  value: _vm.currentPage,
+                  callback: function ($$v) {
+                    _vm.currentPage = $$v
+                  },
+                  expression: "currentPage",
+                },
+              })
+            : _vm._e(),
+        ],
+        1
+      ),
     ]),
   ])
 }

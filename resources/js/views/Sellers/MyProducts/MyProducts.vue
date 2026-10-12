@@ -2,241 +2,272 @@
     <div class="list-page">
         <div class="page-head">
             <h3 class="page-head-title">{{ __('my_products') }}</h3>
-        </div>
-
-        <div class="list-surface">
-            <div class="list-toolbar">
-                <div class="mb-0">
-                    <select v-model="brandFilter" @change="getRecords()" class="form-control form-select">
-                        <option :value="null">{{ __('all') }}</option>
-                        <option v-for="b in availableBrands" :key="b.id" :value="b.id">{{ b.name }}</option>
-                    </select>
-                </div>
-                <div class="mb-0">
-                    <select v-model="categoryFilter" @change="getRecords()" class="form-control form-select">
-                        <option :value="null">{{ __('all_categories') }}</option>
-                        <option v-for="c in availableCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                    </select>
-                </div>
-                <div class="mb-0">
-                    <select v-model="activeFilter" @change="getRecords()" class="form-control form-select">
-                        <option :value="null">{{ __('all_products') }}</option>
-                        <option value="1">{{ __('activated_only') }}</option>
-                        <option value="0">{{ __('deactivated_only') }}</option>
-                    </select>
-                </div>
-                <div class="mb-0">
-                    <select v-model="stockStatusFilter" @change="getRecords()" class="form-control form-select">
-                        <option :value="null">{{ __('all_stock_levels') }}</option>
-                        <option value="in_stock">{{ __('in_stock') }}</option>
-                        <option value="low_stock">{{ __('low_stock') }}</option>
-                        <option value="sold_out">{{ __('sold_out') }}</option>
-                    </select>
-                </div>
-                <div class="mb-0 d-flex align-items-center gap-1">
-                    <b-form-input v-model="minPriceFilter" type="number" min="0" style="width:90px"
-                        :placeholder="__('min_price')" @change="getRecords()"></b-form-input>
-                    <span class="text-muted">-</span>
-                    <b-form-input v-model="maxPriceFilter" type="number" min="0" style="width:90px"
-                        :placeholder="__('max_price')" @change="getRecords()"></b-form-input>
-                </div>
-                <div class="list-search">
-                    <i class="fa fa-search list-search-icon" aria-hidden="true"></i>
-                    <b-form-input id="filter-input" v-model="filter" type="search"
-                        :placeholder="__('search_by_name_sku_hsn')" @input="onFilterChange()"></b-form-input>
-                </div>
-                <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
-                    <i class="fa fa-refresh" aria-hidden="true"></i>
+            <div class="page-head-actions">
+                <button type="button" class="ui-iconbtn" v-b-tooltip.hover :title="__('refresh')" @click="getRecords()">
+                    <i class="fa fa-sync-alt" :class="{ 'fa-spin': isLoading }" aria-hidden="true"></i>
                 </button>
-                <b-dropdown dropleft menu-class="w-100 border dropdownOverflow"
+
+                <b-dropdown right no-caret variant="outline-secondary" toggle-class="ui-iconbtn" menu-class="ui-colmenu"
                     v-b-tooltip.hover :title="__('columns')">
                     <template #button-content>
-                        <i class="fa fa-th-list"></i>
+                        <i class="fa fa-th-list" aria-hidden="true"></i>
                     </template>
-                    <li class="m-1" v-for="field in fields" :key="field.key">
-                        <input type="checkbox" :id="'col_' + field.key"
-                            :disabled="visibleFields.length == 1 && field.visible"
-                            v-model="field.visible" class="form-check-input">
-                        <label :for="'col_' + field.key">{{ field.label }}</label>
-                        <b-dropdown-divider></b-dropdown-divider>
+                    <li class="ui-colmenu__title">{{ __('columns') }}</li>
+                    <li v-for="field in fields" :key="field.key">
+                        <label class="ui-colmenu__item" :for="'col_' + field.key">
+                            <input type="checkbox" :id="'col_' + field.key"
+                                :disabled="visibleFields.length == 1 && field.visible"
+                                v-model="field.visible" class="form-check-input">
+                            {{ field.label }}
+                        </label>
                     </li>
                 </b-dropdown>
             </div>
+        </div>
 
-                            <div v-if="!isLoading && !rows.length && noBrandsAssigned" class="alert alert-info">
-                                {{ __('no_brands_assigned_yet') }}
+        <!-- Filters: everything on one line, search grows to fill the space -->
+        <div class="ui-filters">
+            <div class="ui-search">
+                <i class="fa fa-search" aria-hidden="true"></i>
+                <input id="filter-input" v-model="filter" type="text" :placeholder="__('search_by_name_sku_hsn')"
+                    :aria-label="__('search')" @input="onFilterChange()">
+                <button v-if="filter" type="button" class="ui-search__clear" :title="__('Clear')" @click="clearSearch()">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <select v-model="brandFilter" @change="applyFilters()" class="ui-select" :aria-label="__('brand')">
+                <option :value="null">{{ tr('all_brands', 'All brands') }}</option>
+                <option v-for="b in availableBrands" :key="b.id" :value="b.id">{{ b.name }}</option>
+            </select>
+
+            <select v-model="categoryFilter" @change="applyFilters()" class="ui-select" :aria-label="__('category')">
+                <option :value="null">{{ __('all_categories') }}</option>
+                <option v-for="c in availableCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+
+            <select v-model="activeFilter" @change="applyFilters()" class="ui-select" :aria-label="__('status')">
+                <option :value="null">{{ __('all_products') }}</option>
+                <option value="1">{{ __('activated_only') }}</option>
+                <option value="0">{{ __('deactivated_only') }}</option>
+            </select>
+
+            <select v-model="stockStatusFilter" @change="applyFilters()" class="ui-select" :aria-label="__('stock')">
+                <option :value="null">{{ __('all_stock_levels') }}</option>
+                <option value="in_stock">{{ __('in_stock') }}</option>
+                <option value="low_stock">{{ __('low_stock') }}</option>
+                <option value="sold_out">{{ __('sold_out') }}</option>
+            </select>
+
+            <div class="ui-range">
+                <input v-model="minPriceFilter" type="number" min="0" :placeholder="__('min_price')"
+                    :aria-label="__('min_price')" @change="applyFilters()">
+                <span>&ndash;</span>
+                <input v-model="maxPriceFilter" type="number" min="0" :placeholder="__('max_price')"
+                    :aria-label="__('max_price')" @change="applyFilters()">
+            </div>
+
+            <button v-if="hasActiveFilters" type="button" class="ui-linkbtn" v-b-tooltip.hover :title="__('Clear all filters')" @click="clearAllFilters()">
+                <i class="fa fa-times-circle"></i> {{ __('Clear') }}
+            </button>
+        </div>
+
+        <div class="list-surface">
+            <div class="table-responsive">
+                <b-table :items="rows" :fields="visibleFields" :bordered="false" borderless hover :busy="isLoading"
+                    stacked="md" show-empty>
+                    <template #table-busy>
+                        <div class="mp-busy">
+                            <b-spinner class="align-middle" small></b-spinner>
+                            <strong>{{ __('loading') }}...</strong>
+                        </div>
+                    </template>
+
+                    <template #empty>
+                        <div class="ui-empty">
+                            <div class="ui-empty__icon"><i class="fa fa-box-open"></i></div>
+                            <template v-if="noBrandsAssigned">
+                                <h3>{{ __('No brands assigned') }}</h3>
+                                <p>{{ __('no_brands_assigned_yet') }}</p>
+                            </template>
+                            <template v-else>
+                                <h3>{{ __('no_products_found') }}</h3>
+                                <p v-if="hasActiveFilters">{{ __('Nothing matches these filters. Try changing or clearing them.') }}</p>
+                            </template>
+                            <button v-if="hasActiveFilters && !noBrandsAssigned" type="button" class="mp-btn" @click="clearAllFilters()">
+                                <i class="fa fa-times"></i> {{ __('Clear all filters') }}
+                            </button>
+                        </div>
+                    </template>
+
+                    <template #cell(product_variant_id)="row">
+                        <span class="mp-id">#{{ row.item.product_variant_id }}</span>
+                    </template>
+
+                    <template #cell(image)="row">
+                        <img v-if="row.item.image" :src="$storageUrl + row.item.image" class="ui-thumb mp-zoom"
+                            @click="openLightbox($storageUrl + row.item.image)" alt="Image" />
+                        <span v-else class="ui-thumb mp-thumb--blank"><i class="fa fa-box"></i></span>
+                    </template>
+
+                    <template #cell(name)="row">
+                        <div class="mp-name">
+                            <strong :title="row.item.master_product_name">{{ row.item.master_product_name }}</strong>
+                            <div v-if="row.item.brand || row.item.is_free_only" class="mp-name__meta">
+                                <span v-if="row.item.brand" class="ui-tag">{{ row.item.brand }}</span>
+                                <span v-if="row.item.is_free_only" class="ui-pill ui-tone--purple">{{ tr('free_item', 'Free item') }}</span>
                             </div>
-                            <div v-else-if="!isLoading && !rows.length" class="alert alert-secondary">
-                                {{ __('no_products_found') }}
+                        </div>
+                    </template>
+
+
+                    <template #cell(sku)="row">
+                        <span v-if="row.item.sku">{{ row.item.sku }}</span>
+                        <span v-else class="ui-dash">—</span>
+                    </template>
+
+                    <template #cell(unit)="row">
+                        <span v-if="row.item.unit" class="ui-tag">{{ row.item.unit }}</span>
+                        <span v-else class="ui-dash">—</span>
+                    </template>
+
+                    <template #cell(secondary_unit)="row">
+                        <span v-if="row.item.secondary_unit_value && row.item.secondary_unit" class="ui-nowrap">
+                            {{ row.item.secondary_unit_value }} / {{ row.item.secondary_unit }}
+                        </span>
+                        <span v-else class="ui-dash">—</span>
+                    </template>
+
+                    <template #cell(mrp)="row">
+                        <div class="mp-money">
+                            <span v-if="$currency">{{ $currency }}</span>
+                            <input type="number" min="0" step="0.01" :disabled="row.item.is_free_only"
+                                class="mp-input" v-model.number="row.item.mrp" />
+                        </div>
+                    </template>
+
+                    <template #cell(selling_price)="row">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="mp-money">
+                                <span v-if="$currency">{{ $currency }}</span>
+                                <input type="number" min="0" step="0.01" :disabled="row.item.is_free_only"
+                                    class="mp-input" v-model.number="row.item.selling_price" />
                             </div>
+                            <i v-if="innerPackPriceHint(row.item)" class="fa fa-info-circle mp-info"
+                                v-b-tooltip.hover :title="innerPackPriceHint(row.item)"></i>
+                        </div>
+                    </template>
 
-                            <div class="table-responsive">
-                                <b-table :items="rows" :fields="visibleFields" :bordered="true" :busy="isLoading"
-                                    stacked="md" show-empty small>
-                                    <template #table-busy>
-                                        <div class="text-center text-black my-2">
-                                            <b-spinner class="align-middle"></b-spinner>
-                                            <strong>{{ __('loading') }}...</strong>
-                                        </div>
-                                    </template>
+                    <template #cell(stock)="row">
+                        <input type="number" min="0" step="0.001"
+                            class="mp-input mp-input--plain" v-model.number="row.item.stock" />
+                    </template>
 
-                                    <template #cell(product_variant_id)="row">
-                                        {{ row.item.product_variant_id }}
-                                    </template>
+                    <template #cell(allow_loose_qty)="row">
+                        <div class="form-check form-switch mp-switch">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                v-model="row.item.allow_loose_qty" :disabled="row.item.is_free_only"
+                                :title="__('allow_loose_qty_hint')" />
+                        </div>
+                    </template>
 
-                                    <template #cell(image)="row">
-                                        <img v-if="row.item.image" :src="$storageUrl + row.item.image"
-                                            @click="openLightbox($storageUrl + row.item.image)" alt="Image"
-                                            height="50" style="cursor:pointer;" />
-                                        <span v-else class="text-muted">—</span>
-                                        <FsLightbox :toggler="toggler" :sources="lightboxSources" :onClose="handleClose"></FsLightbox>
-                                    </template>
+                    <template #cell(cancelable_status)="row">
+                        <div class="form-check form-switch mp-switch">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                v-model="row.item.cancelable_status" :disabled="row.item.is_free_only"
+                                :title="__('cancelable_hint')" />
+                        </div>
+                    </template>
 
-                                    <template #cell(name)="row">
-                                        <strong>{{ row.item.master_product_name }}</strong>
-                                        <span v-if="row.item.brand" class="badge bg-light text-dark border ms-1">{{ row.item.brand }}</span>
-                                        <!-- <div class="text-muted small" v-if="row.item.parent_company">
-                                            {{ row.item.parent_company }}
-                                        </div> -->
-                                    </template>
-
-
-                                    <template #cell(sku)="row">
-                                        {{ row.item.sku || '—' }}
-                                    </template>
-
-                                    <template #cell(unit)="row">
-                                        <span v-if="row.item.unit">{{ row.item.unit }}</span>
-                                        <span v-else>—</span>
-                                    </template>
-
-                                    <template #cell(secondary_unit)="row">
-                                        <span v-if="row.item.secondary_unit_value && row.item.secondary_unit">
-                                            {{ row.item.secondary_unit_value }} / {{ row.item.secondary_unit }}
-                                        </span>
-                                        <span v-else>—</span>
-                                    </template>
-
-                                    <template #cell(mrp)="row">
-                                        <input type="number" min="0" step="0.01" :disabled="row.item.is_free_only"
-                                            class="form-control form-control-sm" v-model.number="row.item.mrp" />
-                                    </template>
-
-                                    <template #cell(selling_price)="row">
-                                        <div class="d-flex align-items-center gap-1">
-                                            <input type="number" min="0" step="0.01" :disabled="row.item.is_free_only"
-                                                class="form-control form-control-sm" v-model.number="row.item.selling_price" />
-                                            <i v-if="innerPackPriceHint(row.item)" class="fa fa-info-circle text-muted"
-                                                v-b-tooltip.hover :title="innerPackPriceHint(row.item)"></i>
-                                        </div>
-                                    </template>
-
-                                    <template #cell(stock)="row">
-                                        <input type="number" min="0" step="0.001"
-                                            class="form-control form-control-sm" v-model.number="row.item.stock" />
-                                    </template>
-
-                                    <template #cell(allow_loose_qty)="row">
-                                        <div class="form-check form-switch d-flex justify-content-center">
-                                            <input class="form-check-input" type="checkbox" role="switch"
-                                                v-model="row.item.allow_loose_qty" :disabled="row.item.is_free_only"
-                                                :title="__('allow_loose_qty_hint')" />
-                                        </div>
-                                    </template>
-
-                                    <template #cell(cancelable_status)="row">
-                                        <div class="form-check form-switch d-flex justify-content-center">
-                                            <input class="form-check-input" type="checkbox" role="switch"
-                                                v-model="row.item.cancelable_status" :disabled="row.item.is_free_only"
-                                                :title="__('cancelable_hint')" />
-                                        </div>
-                                    </template>
-
-                                    <template #cell(return_status)="row">
-                                        <div class="d-flex flex-column align-items-center gap-1">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch"
-                                                    v-model="row.item.return_status" :disabled="row.item.is_free_only"
-                                                    :title="__('returnable_hint')" />
-                                            </div>
-                                            <div v-if="row.item.return_status" class="d-flex align-items-center gap-1">
-                                                <input type="number" min="1" step="1"
-                                                    class="form-control form-control-sm" style="width:70px" :disabled="row.item.is_free_only"
-                                                    v-model.number="row.item.return_days" />
-                                                <span class="text-muted small">{{ __('days') }}</span>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <template #head(max_qty)>
-                                        <div class="max-qty-head">
-                                            <div>{{ __('max') }}</div>
-                                            <div>
-                                                {{ __('allowed_qty') }}
-                                                <i class="fa fa-info-circle" v-b-tooltip.hover :title="__('max_allowed_qty_hint')"></i>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <template #cell(max_qty)="row">
-                                        <div class="max-qty-cell">
-                                            <select class="form-control max-qty-select" :disabled="row.item.is_free_only" v-model="row.item.max_qty_mode"
-                                                @change="row.item.max_qty_mode || (row.item.max_qty_value = null)">
-                                                <option :value="null">{{ __('no_limit') }}</option>
-                                                <option value="per_order">{{ __('per_order') }}</option>
-                                                <option value="per_day">{{ __('per_day') }}</option>
-                                            </select>
-                                            <input v-if="row.item.max_qty_mode" type="number" class="form-control max-qty-input" :disabled="row.item.is_free_only"
-                                                min="1" step="1" v-model.number="row.item.max_qty_value" />
-                                            <div v-if="row.item.max_qty_mode" class="max-qty-hint">
-                                                {{ __('max_quantity_allowed') }}<br>
-                                                {{ row.item.max_qty_mode === 'per_day' ? __('per_day') : __('per_order') }}
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <template #cell(slab_count)="row">
-                                        <button class="btn btn-sm btn-outline-secondary" @click="openSlabs(row.item)" :disabled="row.item.is_free_only">
-                                            <i class="fa fa-list"></i>
-                                            {{ row.item.slab_prices ? row.item.slab_prices.length : 0 }}
-                                        </button>
-                                    </template>
-
-                                    <template #cell(min_qty)="row">
-                                        <input type="number" min="1" step="1"
-                                            class="form-control form-control-sm text-center"
-                                            placeholder="—" :disabled="row.item.is_free_only"
-                                            v-model.number="row.item.min_qty" />
-                                    </template>
-
-                                    <template #cell(status)="row">
-                                        <div class="form-check form-switch d-flex justify-content-center">
-                                            <input class="form-check-input" type="checkbox" role="switch"
-                                                :checked="row.item.status == 1"
-                                                @change="toggleStatus(row.item, $event)">
-                                        </div>
-                                    </template>
-
-                                    <template #cell(is_free_only)="row">
-                                        <div class="form-check form-switch d-flex justify-content-center">
-                                            <input class="form-check-input" type="checkbox" role="switch"
-                                                :checked="row.item.is_free_only"
-                                                @change="onFreeItemToggle(row.item, $event)"
-                                                :title="tr('free_item_hint', 'Free item only: schemes can give it away, but it is hidden from the app and cannot be bought separately, so it has no price (prices are set to 0 on Save).')" />
-                                        </div>
-                                    </template>
-
-                                    <template #cell(actions)="row">
-                                        <div class="list-actions">
-                                            <button class="btn btn-sm btn-primary" @click="saveRow(row.item)"
-                                                :disabled="row.item._saving" v-b-tooltip.hover :title="__('save')">
-                                                <b-spinner small v-if="row.item._saving"></b-spinner>
-                                                <i v-else class="fa fa-save"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                </b-table>
+                    <template #cell(return_status)="row">
+                        <div class="d-flex flex-column align-items-start gap-2">
+                            <div class="form-check form-switch mp-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    v-model="row.item.return_status" :disabled="row.item.is_free_only"
+                                    :title="__('returnable_hint')" />
                             </div>
+                            <div v-if="row.item.return_status" class="d-flex align-items-center gap-2">
+                                <input type="number" min="1" step="1"
+                                    class="mp-input mp-input--plain mp-input--days" :disabled="row.item.is_free_only"
+                                    v-model.number="row.item.return_days" />
+                                <span class="mp-muted">{{ __('days') }}</span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template #head(max_qty)>
+                        <div class="max-qty-head">
+                            <div>{{ __('max') }}</div>
+                            <div>
+                                {{ __('allowed_qty') }}
+                                <i class="fa fa-info-circle" v-b-tooltip.hover :title="__('max_allowed_qty_hint')"></i>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template #cell(max_qty)="row">
+                        <div class="max-qty-cell">
+                            <select class="mp-input mp-input--plain max-qty-select" :disabled="row.item.is_free_only" v-model="row.item.max_qty_mode"
+                                @change="row.item.max_qty_mode || (row.item.max_qty_value = null)">
+                                <option :value="null">{{ __('no_limit') }}</option>
+                                <option value="per_order">{{ __('per_order') }}</option>
+                                <option value="per_day">{{ __('per_day') }}</option>
+                            </select>
+                            <input v-if="row.item.max_qty_mode" type="number" class="mp-input mp-input--plain max-qty-input" :disabled="row.item.is_free_only"
+                                min="1" step="1" v-model.number="row.item.max_qty_value" />
+                            <div v-if="row.item.max_qty_mode" class="max-qty-hint">
+                                {{ __('max_quantity_allowed') }}<br>
+                                {{ row.item.max_qty_mode === 'per_day' ? __('per_day') : __('per_order') }}
+                            </div>
+                        </div>
+                    </template>
+
+                    <template #cell(slab_count)="row">
+                        <button type="button" class="mp-slabs" :class="{ 'mp-slabs--set': slabCount(row.item) }"
+                            @click="openSlabs(row.item)" :disabled="row.item.is_free_only">
+                            <i class="fa fa-list"></i>
+                            {{ slabCount(row.item) }}
+                        </button>
+                    </template>
+
+                    <template #cell(min_qty)="row">
+                        <input type="number" min="1" step="1"
+                            class="mp-input mp-input--plain mp-input--narrow"
+                            placeholder="—" :disabled="row.item.is_free_only"
+                            v-model.number="row.item.min_qty" />
+                    </template>
+
+                    <template #cell(status)="row">
+                        <div class="form-check form-switch mp-switch">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                :checked="row.item.status == 1"
+                                @change="toggleStatus(row.item, $event)">
+                        </div>
+                    </template>
+
+                    <template #cell(is_free_only)="row">
+                        <div class="form-check form-switch mp-switch">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                :checked="row.item.is_free_only"
+                                @change="onFreeItemToggle(row.item, $event)"
+                                :title="tr('free_item_hint', 'Free item only: schemes can give it away, but it is hidden from the app and cannot be bought separately, so it has no price (prices are set to 0 on Save).')" />
+                        </div>
+                    </template>
+
+                    <template #cell(actions)="row">
+                        <div class="list-actions">
+                            <button type="button" class="mp-save" @click="saveRow(row.item)"
+                                :disabled="row.item._saving" v-b-tooltip.hover :title="__('save')">
+                                <b-spinner small v-if="row.item._saving"></b-spinner>
+                                <i v-else class="fa fa-save"></i>
+                            </button>
+                        </div>
+                    </template>
+                </b-table>
+            </div>
+
+            <!-- One lightbox for the whole table (it used to be rendered inside every image cell) -->
+            <FsLightbox :toggler="toggler" :sources="lightboxSources" :onClose="handleClose"></FsLightbox>
 
             <div class="list-footer">
                 <div class="list-perpage">
@@ -246,10 +277,9 @@
                             size="sm" class="form-control form-select"></b-form-select>
                     </b-form-group>
                 </div>
-                <div>
-                    <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage"
-                        align="fill" size="sm" class="list-pagination"></b-pagination>
-                </div>
+                <span class="mp-count">{{ rangeText(currentPage, perPage, totalRows) }}</span>
+                <b-pagination v-if="totalRows > perPage" v-model="currentPage" :total-rows="totalRows"
+                    :per-page="perPage" size="sm" class="list-pagination my-0"></b-pagination>
             </div>
         </div>
 
@@ -337,9 +367,9 @@ export default {
                 { key: 'cancelable_status', label: __('cancelable'), visible: false, class: 'text-center', thStyle: { width: '100px' } },
                 { key: 'return_status', label: __('returnable'), visible: false, class: 'text-center', thStyle: { width: '100px' } },
                 { key: 'slab_count', label: __('slabs'), visible: true, class: 'text-center', thStyle: { width: '80px' } },
-                { key: 'min_qty', label: __('min_quantity'), visible: true, class: 'text-center', thStyle: { minWidth: '95px', width: '95px' } },
+                { key: 'min_qty', label: __('min_quantity'), visible: false, class: 'text-center', thStyle: { minWidth: '95px', width: '95px' } },
                 { key: 'status', label: __('status'), visible: true, class: 'text-center', thStyle: { width: '90px' } },
-                { key: 'is_free_only', label: tr('free_item', 'Free item'), visible: true, class: 'text-center', thStyle: { width: '90px' } },
+                { key: 'is_free_only', label: tr('free_item', 'Free item'), visible: false, class: 'text-center', thStyle: { width: '90px' } },
                 { key: 'actions', label: __('actions'), visible: true, class: 'text-center', thStyle: { width: '80px' } },
             ],
             rows: [],
@@ -373,6 +403,11 @@ export default {
     computed: {
         visibleFields() {
             return this.fields.filter(f => f.visible);
+        },
+        hasActiveFilters() {
+            const set = v => v !== null && v !== undefined && v !== '';
+            return set(this.filter) || set(this.brandFilter) || set(this.categoryFilter) || set(this.activeFilter)
+                || set(this.stockStatusFilter) || set(this.minPriceFilter) || set(this.maxPriceFilter);
         },
     },
     created() {
@@ -414,9 +449,41 @@ export default {
                 (item.secondary_unit ? ' / ' + item.secondary_unit : '') +
                 ' (' + step + (item.unit ? ' ' + item.unit : '') + ')';
         },
+        slabCount(item) {
+            return item.slab_prices ? item.slab_prices.length : 0;
+        },
+        rangeText(page, perPage, total) {
+            if (!total) return '';
+            const from = (page - 1) * perPage + 1;
+            const to = Math.min(page * perPage, total);
+            return from + '-' + to + ' / ' + total;
+        },
+        // A changed filter always starts again from page 1; the currentPage watcher does the fetch
+        // when that moves us, otherwise fetch directly (never both, or the list loads twice).
+        applyFilters() {
+            if (this.currentPage !== 1) {
+                this.currentPage = 1;
+            } else {
+                this.getRecords();
+            }
+        },
         onFilterChange() {
             clearTimeout(this.filterDebounce);
-            this.filterDebounce = setTimeout(() => this.getRecords(), 250);
+            this.filterDebounce = setTimeout(() => this.applyFilters(), 250);
+        },
+        clearSearch() {
+            this.filter = null;
+            this.applyFilters();
+        },
+        clearAllFilters() {
+            this.filter = null;
+            this.brandFilter = null;
+            this.categoryFilter = null;
+            this.activeFilter = null;
+            this.stockStatusFilter = null;
+            this.minPriceFilter = null;
+            this.maxPriceFilter = null;
+            this.applyFilters();
         },
         getRecords() {
             this.isLoading = true;
@@ -605,8 +672,74 @@ export default {
 </script>
 
 <style scoped>
+/* Colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout) */
+.mp-busy { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 36px 0; color: var(--ui-muted); font-size: 14px; }
+.mp-muted { font-size: 13px; color: var(--ui-muted); }
+.mp-id { font-size: 13px; font-weight: 600; color: var(--ui-muted); white-space: nowrap; }
+.mp-zoom { cursor: zoom-in; }
+.mp-thumb--blank { display: flex; align-items: center; justify-content: center; color: var(--ui-slate); font-size: 16px; }
+
+/* name + brand / free-item tags */
+.mp-name { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
+.mp-name strong { font-size: 14px; font-weight: 700; color: var(--ui-text); }
+.mp-name__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* inline-edit inputs */
+.mp-input {
+    height: 38px; width: 100%; padding: 0 10px; border-radius: 10px; border: 1px solid var(--ui-border);
+    background: var(--ui-card); color: var(--ui-text); font-size: 14px; outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mp-input:focus { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft); }
+.mp-input:disabled { background: var(--ui-soft); color: var(--ui-muted); cursor: not-allowed; }
+.mp-input--plain { min-width: 84px; max-width: 110px; }
+.mp-input--narrow { min-width: 70px; max-width: 90px; }
+.mp-input--days { min-width: 64px; width: 70px; }
+/* currency prefix + input that read as one field */
+.mp-money {
+    display: flex; align-items: center; min-width: 100px; max-width: 130px; height: 38px; padding-left: 10px; border-radius: 10px;
+    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-muted); font-size: 13px; font-weight: 600;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mp-money:focus-within { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft); }
+.mp-money .mp-input { border: 0; box-shadow: none; background: transparent; padding-left: 6px; height: 100%; }
+.mp-money .mp-input:disabled { background: transparent; }
+.mp-info { color: var(--ui-slate); cursor: help; }
+
+/* switches line up under their (left-aligned) column header */
+.mp-switch { margin: 0; min-height: 0; }
+
+/* slab count button */
+.mp-slabs {
+    display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 10px;
+    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-muted); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.mp-slabs:hover:not(:disabled) { background: var(--ui-soft); color: var(--ui-text); }
+.mp-slabs--set { background: var(--ui-blue-bg); border-color: transparent; color: var(--ui-blue-fg); }
+.mp-slabs:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* row save */
+.mp-save {
+    width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 10px;
+    background: var(--ui-primary); color: #fff; font-size: 14px; cursor: pointer; transition: filter 0.15s ease;
+}
+.mp-save:hover:not(:disabled) { filter: brightness(0.92); }
+.mp-save:disabled { opacity: 0.7; cursor: default; }
+
+/* empty-state button */
+.mp-btn {
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; margin-top: 8px; padding: 0 16px; border-radius: 12px;
+    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-text); font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.mp-btn:hover { background: var(--ui-soft); }
+
+/* footer count sits right after the page-size picker */
+.mp-count { flex: 1; font-size: 13px; color: var(--ui-muted); white-space: nowrap; }
+
+/* max allowed qty */
 .max-qty-head {
-    text-align: center;
+    text-align: left;
     line-height: 1.3;
 }
 
@@ -614,7 +747,7 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 8px;
     min-width: 150px;
     padding: 4px 0;
 }
@@ -622,16 +755,18 @@ export default {
 .max-qty-select,
 .max-qty-input {
     width: 100%;
-    height: 42px;
-    border-radius: 8px;
-    padding: 0 10px;
-    font-size: 0.875rem;
+    max-width: none;
 }
 
 .max-qty-hint {
     font-size: 12px;
-    color: #6c757d;
-    text-align: center;
+    color: var(--ui-muted);
     line-height: 1.4;
+}
+
+@media (max-width: 767px) {
+    .mp-count { flex: none; margin-left: auto; }
+    .mp-name { min-width: 0; }
+    .mp-input--plain, .mp-input--narrow { max-width: none; }
 }
 </style>
