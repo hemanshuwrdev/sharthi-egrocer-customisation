@@ -114,6 +114,9 @@ class SellerApiController extends Controller
             'mobile' => 'required|numeric|unique:sellers,mobile',
             'password' => 'min:6|required_with:confirm_password|same:confirm_password',
             'store_name' => 'required',
+            // Typed address printed on every document; Line 1 is required for a new distributor.
+            'address_line1' => 'required|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
             'brand_zone_mappings' => 'required',
             'area_ids' => 'nullable',
             'commission' => 'required',
@@ -130,6 +133,8 @@ class SellerApiController extends Controller
             'upi_id'     => ['nullable', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/'],
             'upi_mobile' => 'nullable|digits:10',
             'upi_name'   => 'nullable|string|max:100',
+        ], [
+            'address_line1.required' => 'Address Line 1 is required.',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -171,6 +176,8 @@ class SellerApiController extends Controller
             $record->store_url = $request->store_url;
             $record->store_name = $request->store_name;
             $record->street = $request->street;
+            $record->address_line1 = $request->address_line1;
+            $record->address_line2 = $request->address_line2;
             $record->pincode_id = ($request->pincode_id) ?? 0;
             $record->city_id = implode(',', $unionCityIds);
             $record->state = $request->state;
@@ -358,6 +365,9 @@ class SellerApiController extends Controller
             'mobile' => 'required|numeric|unique:sellers,mobile,' . $request->id,
             'confirm_password' => 'same:password',
             'store_name' => 'required',
+            // Optional on edit so distributors created before these fields existed can still be saved.
+            'address_line1' => 'nullable|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
             'brand_zone_mappings' => $isSellerCaller ? 'nullable' : 'required',
             'area_ids' => 'nullable',
             'commission' => 'required',
@@ -473,6 +483,9 @@ class SellerApiController extends Controller
 
                 $record->store_url = $request->store_url;
                 $record->street = $request->street;
+                // Only when sent, so a client that predates these fields can't blank them.
+                if ($request->has('address_line1')) $record->address_line1 = $request->address_line1;
+                if ($request->has('address_line2')) $record->address_line2 = $request->address_line2;
                 $record->pincode_id = ($request->pincode_id) ?? 0;
                 if (!$isSellerCaller) {
                     $record->city_id = implode(',', $unionCityIds);

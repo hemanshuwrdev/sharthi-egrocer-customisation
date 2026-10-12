@@ -1223,6 +1223,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1297,6 +1316,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       loginOtpCooldownTimer: null,
       store_name: "",
       street: "",
+      address_line1: "",
+      address_line2: "",
       pincode_id: "",
       city_id: [],
       brand_ids: [],
@@ -1474,6 +1495,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (!this.id) this.debouncedSave();
     },
     street: function street() {
+      if (!this.id) this.debouncedSave();
+    },
+    address_line1: function address_line1() {
+      if (!this.id) this.debouncedSave();
+    },
+    address_line2: function address_line2() {
       if (!this.id) this.debouncedSave();
     },
     city_id: {
@@ -2473,6 +2500,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         confirm_password: "",
         store_name: "",
         street: "",
+        address_line1: "",
+        address_line2: "",
         pincode_id: "",
         city_id: [],
         brand_ids: [],
@@ -2540,6 +2569,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           store_url: this.store_url,
           store_name: defaultTranslation ? defaultTranslation.store_name : this.store_name,
           street: this.street,
+          address_line1: this.address_line1,
+          address_line2: this.address_line2,
           pincode_id: this.pincode_id,
           city_id: this.city_id,
           brand_ids: this.brand_ids,
@@ -2734,6 +2765,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           // Single assignment for reactivity
           _this21.translations = updatedTranslations;
           _this21.street = emptyIfNull(_this21.record.street);
+          _this21.address_line1 = emptyIfNull(_this21.record.address_line1);
+          _this21.address_line2 = emptyIfNull(_this21.record.address_line2);
           _this21.pincode_id = "";
           _this21.city_id = emptyIfNull(_this21.record.city_id) ? _this21.record.city_id.split(",") : [];
           _this21.brand_ids = Array.isArray(_this21.record.brand_ids) ? _this21.record.brand_ids.map(String) : [];
@@ -2866,6 +2899,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     saveRecord: function saveRecord() {
       // Validate default language fields
       if (!this.validateDefaultLanguage()) {
+        return;
+      }
+      if (!this.id && !String(this.address_line1 || '').trim()) {
+        this.showError(__('address_line_1') + ' ' + __('is_required'));
         return;
       }
       if (!this.isSellerRole && !this.brandZoneRows.length) {
@@ -3037,6 +3074,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
                   // Non-translatable fields
                   formData.append('street', _this24.street);
+                  formData.append('address_line1', _this24.address_line1 || '');
+                  formData.append('address_line2', _this24.address_line2 || '');
                   formData.append('pincode_id', _this24.pincode_id);
                   if (!_this24.isSellerRole) {
                     formData.append('brand_zone_mappings', JSON.stringify(_this24.brandZoneRows.map(function (r) {
@@ -3088,34 +3127,34 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   if (_this24.address_proof) {
                     formData.append('address_proof', _this24.address_proof);
                   }
-                  _context2.prev = 47;
-                  _context2.next = 50;
+                  _context2.prev = 49;
+                  _context2.next = 52;
                   return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, formData, {
                     headers: {
                       'Content-Type': 'multipart/form-data'
                     }
                   });
-                case 50:
+                case 52:
                   response = _context2.sent;
                   apiStatus = response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.status;
                   if (!(apiStatus !== 1)) {
-                    _context2.next = 55;
+                    _context2.next = 57;
                     break;
                   }
                   apiMessage = (response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.message) || __('something_went_wrong');
                   throw new Error(apiMessage);
-                case 55:
+                case 57:
                   return _context2.abrupt("return", response);
-                case 58:
-                  _context2.prev = 58;
-                  _context2.t0 = _context2["catch"](47);
+                case 60:
+                  _context2.prev = 60;
+                  _context2.t0 = _context2["catch"](49);
                   throw _context2.t0;
-                case 61:
+                case 63:
                 case "end":
                   return _context2.stop();
               }
             }
-          }, _callee2, null, [[47, 58]]);
+          }, _callee2, null, [[49, 60]]);
         }));
         return function saveAll() {
           return _ref.apply(this, arguments);
@@ -8437,6 +8476,168 @@ var render = function () {
                                                   "div",
                                                   { staticClass: "row" },
                                                   [
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-6",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                " " +
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "address_line_1"
+                                                                    )
+                                                                  )
+                                                              ),
+                                                              !_vm.id
+                                                                ? _c(
+                                                                    "i",
+                                                                    {
+                                                                      staticClass:
+                                                                        "text-danger",
+                                                                    },
+                                                                    [
+                                                                      _vm._v(
+                                                                        "*"
+                                                                      ),
+                                                                    ]
+                                                                  )
+                                                                : _vm._e(),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
+                                                                {
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.address_line1,
+                                                                  expression:
+                                                                    "address_line1",
+                                                                },
+                                                              ],
+                                                              staticClass:
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                maxlength:
+                                                                  "255",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "address_line_1"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.address_line1,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.address_line1 =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-6",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                " " +
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "address_line_2"
+                                                                    )
+                                                                  )
+                                                              ),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
+                                                                {
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.address_line2,
+                                                                  expression:
+                                                                    "address_line2",
+                                                                },
+                                                              ],
+                                                              staticClass:
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                maxlength:
+                                                                  "255",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "address_line_2"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.address_line2,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.address_line2 =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
                                                     _c(
                                                       "div",
                                                       {

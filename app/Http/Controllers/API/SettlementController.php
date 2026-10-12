@@ -1694,7 +1694,7 @@ class SettlementController extends Controller
      */
     private function sellerHeaderPayload(Seller $seller): array
     {
-        $address = $seller->formatted_address
+        $address = Seller::composeDisplayAddress($seller->address_line1, $seller->address_line2, $seller->formatted_address)
             ?: ($seller->street ? $seller->street . ($seller->city?->name ? ', ' . $seller->city->name : '') : null);
 
         return [

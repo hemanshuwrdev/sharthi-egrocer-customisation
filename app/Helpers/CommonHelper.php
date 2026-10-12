@@ -2758,6 +2758,108 @@ class CommonHelper
         return max(0, round($amount, 2));
     }
 
+    /**
+     * A retailer's address as the exports and apps show it. The retailer's own Address Line 1 / 2
+     * (from their profile — set at registration and on an approved address change) come first, with
+     * their typed city / state and their area's pincode and name. Retailers who registered before
+     * those lines existed keep what was shown before — the order's saved delivery address — and,
+     * where they have none (the retailer app doesn't create one), their one-line profile address
+     * instead of a blank. Any piece the chosen source lacks is filled from the other.
+     *
+     * $row carries rp_address_line1 / rp_address_line2 / rp_profile_address / rp_profile_city /
+     * rp_profile_state / rp_area_pincode / rp_area_name (profile + area) and ua_address /
+     * ua_landmark / ua_city / ua_state / ua_pincode / ua_area (saved delivery address), any of
+     * them optional. Returns ['line1', 'line2', 'line3' (City, State - PIN), 'pincode', 'area'].
+     */
+    public static function partyAddress($row): array
+    {
+        $first = function (...$values) {
+            foreach ($values as $value) {
+                $value = trim((string) $value);
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+            return '';
+        };
+
+        if (trim((string) ($row->rp_address_line1 ?? '')) !== '') {
+            $line1   = trim((string) $row->rp_address_line1);
+            $line2   = trim((string) ($row->rp_address_line2 ?? ''));
+            $city    = $first($row->rp_profile_city ?? null, $row->ua_city ?? null);
+            $state   = $first($row->rp_profile_state ?? null, $row->ua_state ?? null);
+            $pincode = $first($row->rp_area_pincode ?? null, $row->ua_pincode ?? null);
+            $area    = $first($row->rp_area_name ?? null, $row->ua_area ?? null);
+        } else {
+            $line1   = $first($row->ua_address ?? null, $row->rp_profile_address ?? null);
+            $line2   = $first($row->ua_landmark ?? null);
+            $city    = $first($row->ua_city ?? null, $row->rp_profile_city ?? null);
+            $state   = $first($row->ua_state ?? null, $row->rp_profile_state ?? null);
+            $pincode = $first($row->ua_pincode ?? null, $row->rp_area_pincode ?? null);
+            $area    = $first($row->ua_area ?? null, $row->rp_area_name ?? null);
+        }
+
+        $cityState = implode(', ', array_filter([$city, $state]));
+        $line3     = $cityState !== '' ? $cityState . ($pincode !== '' ? ' - ' . $pincode : '') : $pincode;
+
+        return ['line1' => $line1, 'line2' => $line2, 'line3' => $line3, 'pincode' => $pincode, 'area' => $area];
+    }
+
+    /**
+     * Puts the retailer's own address on each order row (anything with a user_id): retailer_address_line1,
+     * retailer_address_line2, retailer_city, retailer_state, retailer_area and retailer_pincode, taken from
+     * their profile and area — null where they have none. With $fillCustomerAddress the row's
+     * customer_address (the line documents print, normally the saved delivery address, which retailers
+     * rarely have) is also set: to "line 1, line 2, city, state - pincode" when the retailer has Address
+     * Line 1; otherwise left as it is, or — when blank — the order's own address, then their profile address.
+     */
+    public static function attachRetailerAddress($orders, bool $fillCustomerAddress = false): void
+    {
+        $orders = collect($orders)->filter(fn ($order) => is_object($order))->values();
+        $userIds = $orders->map(fn ($order) => $order->user_id ?? null)->filter()->unique()->values();
+        if ($userIds->isEmpty()) {
+            return;
+        }
+
+        $profiles = DB::table('retailer_profiles as rp')
+            ->leftJoin('areas as a', 'a.id', '=', 'rp.area_id')
+            ->whereIn('rp.user_id', $userIds)
+            ->get(['rp.user_id', 'rp.address', 'rp.address_line1', 'rp.address_line2', 'rp.city', 'rp.state', 'a.name as area_name', 'a.pincode as area_pincode'])
+            ->keyBy('user_id');
+
+        foreach ($orders as $order) {
+            $profile = $profiles->get($order->user_id ?? null);
+
+            $order->retailer_address_line1 = $profile->address_line1 ?? null;
+            $order->retailer_address_line2 = $profile->address_line2 ?? null;
+            $order->retailer_city          = $profile->city ?? null;
+            $order->retailer_state         = $profile->state ?? null;
+            $order->retailer_area          = $profile->area_name ?? null;
+            $order->retailer_pincode       = $profile->area_pincode ?? null;
+
+            if (!$fillCustomerAddress) {
+                continue;
+            }
+
+            $line1 = trim((string) ($profile->address_line1 ?? ''));
+            if ($line1 !== '') {
+                $pincode  = trim((string) ($profile->area_pincode ?? ''));
+                $composed = implode(', ', array_filter([
+                    $line1,
+                    trim((string) ($profile->address_line2 ?? '')),
+                    trim((string) ($profile->city ?? '')),
+                    trim((string) ($profile->state ?? '')),
+                ], fn ($part) => $part !== ''));
+                $order->customer_address = $pincode !== '' ? $composed . ' - ' . $pincode : $composed;
+            } elseif (trim((string) ($order->customer_address ?? '')) === '') {
+                $fallback = trim((string) ($order->address ?? '')) ?: trim((string) ($profile->address ?? ''));
+                if ($fallback !== '') {
+                    $order->customer_address = $fallback;
+                }
+            }
+        }
+    }
+
     public static function getOrderDetails($order_id, $exclude_cancelled_returned = false)
     {
         $order = Order::select(
@@ -2791,7 +2893,8 @@ class CommonHelper
             'sellers.mobile as seller_mobile',
             'sellers.email as seller_email',
             'sellers.store_name',
-            'sellers.formatted_address as seller_formatted_address',
+            // Typed Address Line 1 + 2 (else the Google address) — read by the invoice, invoice PDF and credit note.
+            DB::raw(\App\Models\Seller::displayAddressSql('sellers') . ' as seller_formatted_address'),
             'sellers.place_name as seller_place_name',
             'sellers.latitude as seller_latitude',
             'sellers.longitude as seller_longitude',
@@ -3150,6 +3253,10 @@ class CommonHelper
             $newOtp = mt_rand(100000, 999999);
             \App\Models\Order::where('id', $order->order_id)->update(['otp' => $newOtp]);
             $order->otp = $newOtp;
+        }
+
+        if ($order) {
+            self::attachRetailerAddress([$order]);
         }
 
         return array("order" => $order, "order_items" => $order_items);

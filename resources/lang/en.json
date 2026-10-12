@@ -2139,6 +2139,8 @@
     "shortfall_verified": "Shortfall verified successfully",
     "cheque_date_and_number_required_before_verification": "Enter cheque date and number before verifying",
     "cancellation_verified": "Cancellation verified successfully",
+    "address_line_1": "Address Line 1",
+    "address_line_2": "Address Line 2",
     "verify_shortfall": "Verify shortfall",
     "verify_cancellation": "Verify cancellation",
     "stock_restored": "Stock restored",

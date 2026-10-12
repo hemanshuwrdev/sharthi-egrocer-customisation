@@ -1,120 +1,117 @@
 <template>
-    <div>
-        <div class="page-heading">
-            <div class="row">
-                <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>{{ id ? __('edit_salesman') : __('add_salesman') }}</h3>
-                </div>
-                <div class="col-12 col-md-6 order-md-2 order-first">
-                    <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><router-link to="/seller/dashboard">{{ __('dashboard') }}</router-link></li>
-                            <li class="breadcrumb-item"><router-link to="/seller/salesman">{{ __('salesman') }}</router-link></li>
-                            <li class="breadcrumb-item active" aria-current="page">{{ id ? __('edit') : __('add') }}</li>
-                        </ol>
-                    </nav>
-                </div>
+    <div class="list-page">
+        <div class="page-head">
+            <h3 class="page-head-title">{{ id ? __('edit_salesman') : __('add_salesman') }}</h3>
+            <div class="page-head-actions">
+                <router-link to="/seller/salesman" class="ui-backbtn">
+                    <i class="fa fa-arrow-left" aria-hidden="true"></i> {{ __('salesman') }}
+                </router-link>
             </div>
         </div>
-        <div class="row">
-            <div class="col-12 col-md-12 col-lg-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>{{ __('salesman_details') }}</h4>
-                    </div>
-                    <div class="card-body">
-                        <form ref="my-form" @submit.prevent="saveRecord">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="name">{{ __('salesman_name') }}</label>
-                                        <input type="text" v-model="record.name" class="form-control" id="name" :placeholder="__('enter_salesman_name')" required>
-                                    </div>
+
+        <form ref="my-form" class="ui-card" @submit.prevent="saveRecord">
+            <div class="ui-card__body">
+
+                <section class="ui-section">
+                    <h3 class="ui-section__title"><i class="fa fa-user"></i> {{ __('salesman_details') }}</h3>
+                    <div class="ui-grid">
+                        <div class="ui-field">
+                            <label class="ui-label" for="name">{{ __('salesman_name') }}<span class="ui-req">*</span></label>
+                            <input type="text" v-model="record.name" class="ui-control" id="name" :placeholder="__('enter_salesman_name')" required>
+                        </div>
+
+                        <div class="ui-field">
+                            <label class="ui-label" for="mobile">{{ __('mobile') }}<span class="ui-req">*</span></label>
+                            <div class="ui-phone">
+                                <div class="ui-phone__code" ref="countryDropdown">
+                                    <button type="button" class="ui-phone__toggle" @click="countryDropdownOpen = !countryDropdownOpen">
+                                        <span>{{ record.country_code }}</span>
+                                        <span class="ui-phone__caret"></span>
+                                    </button>
+                                    <ul v-if="countryDropdownOpen" class="ui-phone__menu">
+                                        <li v-for="c in countries" :key="c.id" @click="record.country_code = c.dial_code; countryDropdownOpen = false">
+                                            {{ c.dial_code }}
+                                        </li>
+                                    </ul>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="mobile">{{ __('mobile') }}</label>
-                                        <div class="input-group mobile-input-group">
-                                            <div class="country-code-dropdown" ref="countryDropdown">
-                                                <button type="button" class="country-code-toggle" @click="countryDropdownOpen = !countryDropdownOpen">
-                                                    <span>{{ record.country_code }}</span>
-                                                    <span class="country-code-caret"></span>
-                                                </button>
-                                                <ul v-if="countryDropdownOpen" class="country-code-menu">
-                                                    <li v-for="c in countries" :key="c.id" @click="record.country_code = c.dial_code; countryDropdownOpen = false">
-                                                        {{ c.dial_code }}
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <input type="number" v-model="record.mobile" class="form-control" id="mobile" :placeholder="__('enter_mobile')" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="email">{{ __('email') }}</label>
-                                        <input type="email" v-model="record.email" class="form-control" id="email" :placeholder="__('enter_email')" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="password">{{ __('password') }} <span v-if="id" class="text-muted small">({{ __('leave_blank_to_keep_unchanged') }})</span></label>
-                                        <input type="password" v-model="record.password" class="form-control" id="password" :placeholder="__('enter_password')" :required="!id" autocomplete="new-password">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="brands">{{ __('assigned_brands') }}</label>
-                                        <multiselect
-                                            v-model="record.brands"
-                                            :options="availableBrands"
-                                            :multiple="true"
-                                            :close-on-select="false"
-                                            :clear-on-select="false"
-                                            :preserve-search="true"
-                                            placeholder="Select Brands"
-                                            label="name"
-                                            track-by="id"
-                                            required>
-                                        </multiselect>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="allow_price_edit">{{ __('allow_price_edit') }}</label><br>
-                                        <input type="checkbox" v-model="record.allow_price_edit" id="allow_price_edit" class="form-check-input mt-2">
-                                        <label for="allow_price_edit" class="form-check-label mt-2 ml-2">{{ __('yes') }}</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="allow_payment_collection">{{ __('allow_payment_collection') }}</label><br>
-                                        <input type="checkbox" v-model="record.allow_payment_collection" id="allow_payment_collection" class="form-check-input mt-2">
-                                        <label for="allow_payment_collection" class="form-check-label mt-2 ml-2">{{ __('yes') }}</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="discount">{{ __('discount') }} (%)</label>
-                                        <input type="number" step="0.01" v-model="record.discount" class="form-control" id="discount" :placeholder="__('enter_discount')">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="status">{{ __('status') }}</label>
-                                        <select class="form-control" v-model="record.status" required>
-                                            <option value="1">{{ __('active') }}</option>
-                                            <option value="0">{{ __('deactive') }}</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                <input type="number" v-model="record.mobile" class="ui-phone__input" id="mobile" :placeholder="__('enter_mobile')" required>
                             </div>
-                            <button type="submit" class="btn btn-primary" :disabled="isLoading">{{ __('save') }}</button>
-                        </form>
+                        </div>
+
+                        <div class="ui-field">
+                            <label class="ui-label" for="email">{{ __('email') }}<span class="ui-req">*</span></label>
+                            <input type="email" v-model="record.email" class="ui-control" id="email" :placeholder="__('enter_email')" required>
+                        </div>
+
+                        <div class="ui-field">
+                            <label class="ui-label" for="password">
+                                {{ __('password') }}<span class="ui-req" v-if="!id">*</span>
+                                <span v-if="id" class="ui-hint">({{ __('leave_blank_to_keep_unchanged') }})</span>
+                            </label>
+                            <input type="password" v-model="record.password" class="ui-control" id="password" :placeholder="__('enter_password')" :required="!id" autocomplete="new-password">
+                        </div>
                     </div>
-                </div>
+                </section>
+
+                <section class="ui-section">
+                    <h3 class="ui-section__title"><i class="fa fa-tags"></i> {{ __('Brands & pricing') }}</h3>
+                    <div class="ui-grid">
+                        <div class="ui-field ui-span-all">
+                            <label class="ui-label" for="brands">{{ __('assigned_brands') }}<span class="ui-req">*</span></label>
+                            <multiselect
+                                class="ui-multi"
+                                v-model="record.brands"
+                                :options="availableBrands"
+                                :multiple="true"
+                                :close-on-select="false"
+                                :clear-on-select="false"
+                                :preserve-search="true"
+                                placeholder="Select Brands"
+                                label="name"
+                                track-by="id"
+                                required>
+                            </multiselect>
+                        </div>
+
+                        <div class="ui-field">
+                            <label class="ui-label" for="discount">{{ __('discount') }} (%)</label>
+                            <input type="number" step="0.01" v-model="record.discount" class="ui-control" id="discount" :placeholder="__('enter_discount')">
+                        </div>
+
+                        <div class="ui-field">
+                            <label class="ui-label">{{ __('status') }}<span class="ui-req">*</span></label>
+                            <b-form-radio-group v-model="record.status" :options="[
+                                { text: __('active'), value: 1 },
+                                { text: __('deactive'), value: 0 },
+                            ]" buttons button-variant="outline-primary" class="ui-seg" required></b-form-radio-group>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ui-section">
+                    <h3 class="ui-section__title"><i class="fa fa-user-shield"></i> {{ __('Permissions') }}</h3>
+                    <div class="ui-grid">
+                        <label class="ui-switch" :class="{ 'is-on': record.allow_price_edit }" for="allow_price_edit">
+                            <input type="checkbox" v-model="record.allow_price_edit" id="allow_price_edit">
+                            <span class="ui-switch__track"></span>
+                            <span class="ui-switch__text">{{ __('allow_price_edit') }}</span>
+                        </label>
+                        <label class="ui-switch" :class="{ 'is-on': record.allow_payment_collection }" for="allow_payment_collection">
+                            <input type="checkbox" v-model="record.allow_payment_collection" id="allow_payment_collection">
+                            <span class="ui-switch__track"></span>
+                            <span class="ui-switch__text">{{ __('allow_payment_collection') }}</span>
+                        </label>
+                    </div>
+                </section>
             </div>
-        </div>
+
+            <div class="ui-card__foot">
+                <b-button type="submit" variant="primary" :disabled="isLoading">
+                    {{ __('save') }}
+                    <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
+                </b-button>
+            </div>
+        </form>
     </div>
 </template>
 
@@ -267,75 +264,74 @@ export default {
     }
 }
 </script>
+
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 <style scoped>
-.input-group.mobile-input-group {
-    flex-wrap: nowrap;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
-    background: #fff;
+/* All colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout). */
+.ui-span-all { grid-column: 1 / -1; }
+.ui-hint { margin-left: 4px; font-size: 12px; font-weight: 500; color: var(--ui-muted); text-decoration: none; border-bottom: 0; }
+
+/* mobile number: country-code dropdown + number as one control */
+.ui-phone {
+    display: flex; align-items: stretch; flex-wrap: nowrap; height: 44px; border-radius: 12px; border: 1px solid var(--ui-border); background: var(--ui-soft);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
-.mobile-input-group .country-code-dropdown {
-    position: relative;
-    flex: 0 0 auto;
-    width: 72px;
-    border-right: 1px solid #ced4da;
+.ui-phone:focus-within { background: var(--ui-card); border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft); }
+.ui-phone__code { position: relative; flex: 0 0 auto; width: 84px; border-right: 1px solid var(--ui-border); }
+.ui-phone__toggle {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 12px; border: 0;
+    border-radius: 11px 0 0 11px; background: transparent; color: var(--ui-text); font-size: 14px; font-weight: 600; cursor: pointer;
 }
-.mobile-input-group .country-code-toggle {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2px;
-    padding: 0.375rem 0.5rem;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-top-left-radius: 0.375rem;
-    border-bottom-left-radius: 0.375rem;
+.ui-phone__caret { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--ui-muted); }
+.ui-phone__menu {
+    position: absolute; top: 100%; left: 0; z-index: 1050; width: 130px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; padding: 6px;
+    list-style: none; background: var(--ui-card); border: 1px solid var(--ui-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
 }
-.mobile-input-group input.form-control {
-    flex: 1 1 auto;
-    min-width: 0;
-    border: none;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 0.375rem;
-    border-bottom-right-radius: 0.375rem;
-    box-shadow: none;
+.ui-phone__menu li { padding: 7px 10px; border-radius: 8px; font-size: 14px; color: var(--ui-text); cursor: pointer; }
+.ui-phone__menu li:hover { background: var(--ui-soft); }
+.ui-phone__input {
+    flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 14px; border: 0; border-radius: 0 11px 11px 0; background: transparent;
+    color: var(--ui-text); font-size: 14px; outline: none; box-shadow: none;
 }
-.mobile-input-group input.form-control:focus {
-    box-shadow: none;
+.ui-phone__input::placeholder { color: var(--ui-muted); }
+
+/* on / off switch rows */
+.ui-switch {
+    position: relative; display: flex; align-items: center; gap: 12px; margin: 0; padding: 12px 14px; border: 1px solid var(--ui-border); border-radius: 12px;
+    background: var(--ui-soft); color: var(--ui-text); font-size: 14px; font-weight: 600; cursor: pointer; user-select: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
 }
-.country-code-caret {
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid #6c757d;
+.ui-switch:hover { border-color: var(--ui-primary); }
+.ui-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.ui-switch__track { position: relative; flex: 0 0 auto; width: 40px; height: 22px; border-radius: 999px; background: var(--ui-border); transition: background-color 0.15s ease; }
+.ui-switch__track::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3); transition: transform 0.15s ease;
 }
-.country-code-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 1050;
-    width: 130px;
-    max-height: 220px;
-    overflow-y: auto;
-    margin: 2px 0 0;
-    padding: 4px 0;
-    list-style: none;
-    background: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.ui-switch input:checked + .ui-switch__track { background: var(--ui-primary); }
+.ui-switch input:checked + .ui-switch__track::after { transform: translateX(18px); }
+.ui-switch input:focus-visible + .ui-switch__track { box-shadow: 0 0 0 3px var(--ui-primary-soft); }
+.ui-switch.is-on { border-color: var(--ui-primary); background: var(--ui-primary-soft); }
+
+/* vue-multiselect, dressed like .ui-control */
+.ui-multi ::v-deep .multiselect__tags {
+    min-height: 44px; padding: 7px 40px 0 10px; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-soft);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
-.country-code-menu li {
-    padding: 6px 12px;
-    cursor: pointer;
+.ui-multi.multiselect--active ::v-deep .multiselect__tags { background: var(--ui-card); border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft); }
+.ui-multi ::v-deep .multiselect__placeholder { margin: 0 0 8px 4px; padding-top: 2px; font-size: 14px; color: var(--ui-muted); }
+.ui-multi ::v-deep .multiselect__input,
+.ui-multi ::v-deep .multiselect__single { background: transparent; color: var(--ui-text); font-size: 14px; }
+.ui-multi ::v-deep .multiselect__tag { margin: 0 6px 7px 0; padding: 5px 26px 5px 10px; border-radius: 8px; background: var(--ui-primary-soft); color: var(--ui-primary); font-size: 13px; font-weight: 600; }
+.ui-multi ::v-deep .multiselect__tag-icon:after { color: var(--ui-primary); }
+.ui-multi ::v-deep .multiselect__tag-icon:hover { background: var(--ui-primary); }
+.ui-multi ::v-deep .multiselect__tag-icon:hover:after { color: #fff; }
+.ui-multi ::v-deep .multiselect__select { height: 42px; }
+.ui-multi ::v-deep .multiselect__content-wrapper {
+    margin-top: 6px; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-card); box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
 }
-.country-code-menu li:hover {
-    background: #f1f3f5;
-}
+.ui-multi ::v-deep .multiselect__option { padding: 10px 14px; font-size: 14px; color: var(--ui-text); }
+.ui-multi ::v-deep .multiselect__option--highlight { background: var(--ui-primary-soft); color: var(--ui-primary); }
+.ui-multi ::v-deep .multiselect__option--selected { background: var(--ui-soft); color: var(--ui-text); font-weight: 700; }
+.ui-multi ::v-deep .multiselect__option--selected.multiselect__option--highlight { background: var(--ui-red-bg); color: var(--ui-red-fg); }
 </style>

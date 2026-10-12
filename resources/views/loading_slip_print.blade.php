@@ -447,8 +447,16 @@
                 {{ strtoupper($app_name) }} ({{ date('Y') }}-{{ date('y', strtotime('+1 year')) }})
             @endif
         </div>
+        @php
+            // Typed Address Line 1 + 2 when filled; otherwise the Google address as before.
+            $sellerTypedAddress = isset($seller)
+                ? \App\Models\Seller::composeDisplayAddress($seller->address_line1 ?? null, $seller->address_line2 ?? null)
+                : null;
+        @endphp
         <div class="distributor-address">
-            @if (isset($seller) && $seller->formatted_address)
+            @if ($sellerTypedAddress)
+                {{ strtoupper($sellerTypedAddress) }}
+            @elseif (isset($seller) && $seller->formatted_address)
                 {{ strtoupper($seller->formatted_address) }}
             @elseif(isset($seller) && $seller->street)
                 {{ strtoupper($seller->street) }}{{ $seller->city_name ? ', ' . strtoupper($seller->city_name) : '' }}
@@ -615,7 +623,7 @@
                     <div class="udaan-address-col">
                         <h4>Ship From:</h4>
                         <p><strong>{{ $seller->store_name }}</strong></p>
-                        <p>{{ $seller->street }}</p>
+                        <p>{{ $sellerTypedAddress ?: $seller->street }}</p>
                         <p>{{ $seller->city_name }}, {{ $seller->state }}</p>
                         <p>Place of Supply: {{ strtoupper($seller->city_name) }}</p>
                         <p>Supply Type: INTRA_STATE</p>

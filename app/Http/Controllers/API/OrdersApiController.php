@@ -505,7 +505,7 @@ class OrdersApiController extends Controller
             $rescheduleValidator = Validator::make($request->all(), [
                 'delivery_date'   => 'required|date|date_format:Y-m-d|after_or_equal:today',
                 'delivery_reason' => 'required|string|max:255',
-                'delivery_time'   => 'required|string|max:100',
+                'delivery_time'   => 'nullable|string|max:100',
             ]);
             if ($rescheduleValidator->fails()) {
                 return CommonHelper::responseError($rescheduleValidator->errors()->first());
@@ -527,7 +527,10 @@ class OrdersApiController extends Controller
 
                 $order->delivery_date   = $request->delivery_date;
                 $order->delivery_reason = $request->delivery_reason;
-                $order->delivery_time   = $request->delivery_time;
+                // The time is optional. orders.delivery_time cannot be empty, so when none is sent the order keeps its current one.
+                if ($request->filled('delivery_time')) {
+                    $order->delivery_time = $request->delivery_time;
+                }
                 $order->active_status   = OrderStatusList::$rescheduled;
                 $order->loading_slip_id = null;
                 $order->delivery_boy_id = null;
@@ -1763,7 +1766,7 @@ class OrdersApiController extends Controller
             if ($request->has('delivery_reason')) {
                 $order->delivery_reason = $request->delivery_reason;
             }
-            if ($request->has('delivery_time')) {
+            if ($request->filled('delivery_time')) {
                 $order->delivery_time = $request->delivery_time;
             }
             $order->active_status = OrderStatusList::$rescheduled;

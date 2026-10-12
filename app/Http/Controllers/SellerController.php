@@ -453,6 +453,7 @@ class SellerController extends BaseController
         } else {
             $orders = $orders->groupBy('orders.id')->orderBy('orders.id', 'DESC')->get();
         }
+        CommonHelper::attachRetailerAddress($orders);
         foreach ($orders as $order) {
             $order->order_status_name = OrderStatusList::getTranslatedName((int) $order->active_status);
         }
@@ -954,6 +955,14 @@ class SellerController extends BaseController
             'retailer_profiles.gst_no',
             'retailer_profiles.area_id as rp_area_id',
             'users.name as user_name',
+            // The retailer's own address (profile) — the retailer app creates no saved delivery
+            // address, so these are what fills the Party Address columns for them.
+            'retailer_profiles.address as rp_profile_address',
+            'retailer_profiles.address_line1 as rp_address_line1',
+            'retailer_profiles.address_line2 as rp_address_line2',
+            'retailer_profiles.city as rp_profile_city',
+            'retailer_profiles.state as rp_profile_state',
+            'rp_area.pincode as rp_area_pincode',
             'ua.address as ua_address',
             'ua.landmark as ua_landmark',
             'ua.area as ua_area',
@@ -1088,8 +1097,7 @@ class SellerController extends BaseController
                 ? $row->salesman_name . ' (Salesman)'
                 : 'Self - Retailer App Order';
 
-            $addressLine3 = trim(($row->ua_city ?: '') . ($row->ua_state ? ', ' . $row->ua_state : '')
-                . ($row->ua_pincode ? ' - ' . $row->ua_pincode : ''), ', ');
+            $partyAddress = $this->tallyPartyAddress($row);
 
             $sheetRows[] = [
                 'Sales',
@@ -1115,13 +1123,13 @@ class SellerController extends BaseController
                 $row->tax_percentage,
                 '',
                 'Order ' . $row->order_id,
-                $row->ua_address,
-                $row->ua_landmark,
-                $addressLine3,
-                $row->ua_pincode,
+                $partyAddress['line1'],
+                $partyAddress['line2'],
+                $partyAddress['line3'],
+                $partyAddress['pincode'],
                 $slip->vehicle_number ?? '',
                 $slip->slip_no ?? '',
-                $row->ua_area,
+                $partyAddress['area'],
                 $dispatchedThrough,
                 $slip->driver_name ?? '',
                 'Online order #' . $row->order_id,
@@ -1216,6 +1224,14 @@ class SellerController extends BaseController
             'orders.mobile as order_mobile',
             'retailer_profiles.gst_no',
             'users.name as user_name',
+            // The retailer's own address (profile) — the retailer app creates no saved delivery
+            // address, so these are what fills the Party Address columns for them.
+            'retailer_profiles.address as rp_profile_address',
+            'retailer_profiles.address_line1 as rp_address_line1',
+            'retailer_profiles.address_line2 as rp_address_line2',
+            'retailer_profiles.city as rp_profile_city',
+            'retailer_profiles.state as rp_profile_state',
+            'rp_area.pincode as rp_area_pincode',
             'ua.address as ua_address',
             'ua.landmark as ua_landmark',
             'ua.area as ua_area',
@@ -1354,8 +1370,7 @@ class SellerController extends BaseController
                 ? $row->salesman_name . ' (Salesman)'
                 : 'Self - Retailer App Order';
 
-            $addressLine3 = trim(($row->ua_city ?: '') . ($row->ua_state ? ', ' . $row->ua_state : '')
-                . ($row->ua_pincode ? ' - ' . $row->ua_pincode : ''), ', ');
+            $partyAddress = $this->tallyPartyAddress($row);
 
             $narration = match ($row->reason_type) {
                 'return'  => $row->return_reason ?: ('Sales Return - Order #' . $row->order_id),
@@ -1389,13 +1404,13 @@ class SellerController extends BaseController
                 $row->tax_percentage,
                 '',
                 'Order ' . $row->order_id,
-                $row->ua_address,
-                $row->ua_landmark,
-                $addressLine3,
-                $row->ua_pincode,
+                $partyAddress['line1'],
+                $partyAddress['line2'],
+                $partyAddress['line3'],
+                $partyAddress['pincode'],
                 $slip->vehicle_number ?? '',
                 $slip->slip_no ?? '',
-                $row->ua_area,
+                $partyAddress['area'],
                 $dispatchedThrough,
                 $slip->driver_name ?? '',
                 $narration,
@@ -1726,6 +1741,15 @@ class SellerController extends BaseController
         }
 
         return '';
+    }
+
+    /**
+     * Party Address Line 1 / 2 / 3, Pincode and Destination (Area) for the Sales and Credit Note
+     * vouchers — the shared retailer-address rule, see CommonHelper::partyAddress().
+     */
+    private function tallyPartyAddress($row): array
+    {
+        return CommonHelper::partyAddress($row);
     }
 
     /**

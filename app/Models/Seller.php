@@ -47,6 +47,40 @@ class Seller extends Model
         });
     }
 
+    /**
+     * The distributor's address as printed on documents and returned to the apps: the typed
+     * Address Line 1 + Line 2, or — for distributors who haven't filled them in yet — the Google
+     * address they were created with. Null when there is neither.
+     */
+    public static function composeDisplayAddress($line1, $line2, $fallback = null): ?string
+    {
+        $typed = collect([$line1, $line2])
+            ->map(fn ($part) => trim((string) $part))
+            ->filter(fn ($part) => $part !== '')
+            ->implode(', ');
+
+        if ($typed !== '') {
+            return $typed;
+        }
+
+        $fallback = trim((string) $fallback);
+        return $fallback !== '' ? $fallback : null;
+    }
+
+    /**
+     * Same rule as composeDisplayAddress, as a SQL expression for queries that join the sellers
+     * table under `$alias` (so one query change switches every document that reads it).
+     */
+    public static function displayAddressSql(string $alias = 'sellers'): string
+    {
+        return "COALESCE(NULLIF(CONCAT_WS(', ', NULLIF(TRIM({$alias}.address_line1), ''), NULLIF(TRIM({$alias}.address_line2), '')), ''), {$alias}.formatted_address)";
+    }
+
+    public function getDisplayAddressAttribute(): ?string
+    {
+        return self::composeDisplayAddress($this->address_line1, $this->address_line2, $this->formatted_address);
+    }
+
     public function hasOrderHistory(): bool
     {
         return OrderItem::where('seller_id', $this->id)->exists();

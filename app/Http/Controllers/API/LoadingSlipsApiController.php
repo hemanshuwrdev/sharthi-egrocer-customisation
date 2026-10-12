@@ -609,6 +609,10 @@ class LoadingSlipsApiController extends Controller
             ->where('orders.loading_slip_id', $slipId)
             ->get();
 
+        // Retailers have no saved delivery address, so customer_address came out blank — fill it from
+        // their Address Line 1 / 2, and pass the parts too.
+        CommonHelper::attachRetailerAddress($orders, true);
+
         foreach ($orders as $order) {
             $order->items = OrderItem::where('order_id', $order->id)
                 ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
@@ -792,6 +796,9 @@ class LoadingSlipsApiController extends Controller
             ->leftJoin('salesmen as placing_salesman', 'orders.placed_by_salesman_id', '=', 'placing_salesman.id')
             ->where('orders.loading_slip_id', $id)
             ->get();
+
+        // Same as the view: the Bill to / Ship to address must not be blank for retailers.
+        CommonHelper::attachRetailerAddress($orders, true);
 
         // Load seller details
         $sellerId = null;

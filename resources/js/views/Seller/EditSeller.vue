@@ -718,6 +718,25 @@
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="row">
+                                                            <div class="form-group col-md-6">
+                                                                <div class="form-group">
+                                                                    <label> {{ __('address_line_1') }}<i v-if="!id"
+                                                                            class="text-danger">*</i></label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="address_line1" maxlength="255"
+                                                                        :placeholder="__('address_line_1')">
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="form-group col-md-6">
+                                                                <div class="form-group">
+                                                                    <label> {{ __('address_line_2') }}</label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="address_line2" maxlength="255"
+                                                                        :placeholder="__('address_line_2')">
+                                                                </div>
+                                                            </div>
+
                                                             <div class="form-group col-md-4">
                                                                 <div class="form-group">
                                                                     <label> {{ __('state') }}</label>
@@ -1257,6 +1276,8 @@ export default {
 
             store_name: "",
             street: "",
+            address_line1: "",
+            address_line2: "",
             pincode_id: "",
             city_id: [],
             brand_ids: [],
@@ -1407,6 +1428,8 @@ export default {
         store_url: function () { if (!this.id) this.debouncedSave(); },
         store_name: function () { if (!this.id) this.debouncedSave(); },
         street: function () { if (!this.id) this.debouncedSave(); },
+        address_line1: function () { if (!this.id) this.debouncedSave(); },
+        address_line2: function () { if (!this.id) this.debouncedSave(); },
         city_id: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         brand_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         area_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
@@ -2201,7 +2224,7 @@ export default {
             if (this.$refs['my-form']) this.$refs['my-form'].reset();
             Object.assign(this, {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
-                store_name: "", street: "", pincode_id: "", city_id: [], brand_ids: [], brandZoneRows: [], area_ids: [],
+                store_name: "", street: "", address_line1: "", address_line2: "", pincode_id: "", city_id: [], brand_ids: [], brandZoneRows: [], area_ids: [],
                 state: "", remark: "", bank_name: "", account_number: "", bank_ifsc_code: "", account_name: "", upi_id: "", upi_mobile: "", upi_name: "",
                 commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
@@ -2229,7 +2252,7 @@ export default {
                     name: defaultTranslation ? defaultTranslation.name : this.name,
                     email: this.email, mobile: this.mobile, store_url: this.store_url,
                     store_name: defaultTranslation ? defaultTranslation.store_name : this.store_name,
-                    street: this.street, pincode_id: this.pincode_id,
+                    street: this.street, address_line1: this.address_line1, address_line2: this.address_line2, pincode_id: this.pincode_id,
                     city_id: this.city_id, brand_ids: this.brand_ids, area_ids: this.area_ids, state: this.state,
                     remark: this.remark, bank_name: this.bank_name, account_number: this.account_number, bank_ifsc_code: this.bank_ifsc_code, account_name: this.account_name, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
                     upi_name: this.upi_name, commission: this.commission,
@@ -2390,6 +2413,8 @@ export default {
                         // Single assignment for reactivity
                         this.translations = updatedTranslations;
                         this.street = emptyIfNull(this.record.street);
+                        this.address_line1 = emptyIfNull(this.record.address_line1);
+                        this.address_line2 = emptyIfNull(this.record.address_line2);
                         this.pincode_id = "";
                         this.city_id = emptyIfNull(this.record.city_id) ? this.record.city_id.split(",") : [];
                         this.brand_ids = Array.isArray(this.record.brand_ids) ? this.record.brand_ids.map(String) : [];
@@ -2522,6 +2547,11 @@ export default {
         saveRecord: function () {
             // Validate default language fields
             if (!this.validateDefaultLanguage()) {
+                return;
+            }
+
+            if (!this.id && !String(this.address_line1 || '').trim()) {
+                this.showError(__('address_line_1') + ' ' + __('is_required'));
                 return;
             }
 
@@ -2703,6 +2733,8 @@ export default {
 
                 // Non-translatable fields
                 formData.append('street', this.street);
+                formData.append('address_line1', this.address_line1 || '');
+                formData.append('address_line2', this.address_line2 || '');
                 formData.append('pincode_id', this.pincode_id);
                 if (!this.isSellerRole) {
                     formData.append('brand_zone_mappings', JSON.stringify(

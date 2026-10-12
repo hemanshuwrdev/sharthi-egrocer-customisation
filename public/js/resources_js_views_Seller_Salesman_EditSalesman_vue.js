@@ -137,9 +137,6 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
-//
-//
-//
 
 
 
@@ -335,7 +332,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.input-group.mobile-input-group[data-v-4ef66428] {\n    flex-wrap: nowrap;\n    border: 1px solid #ced4da;\n    border-radius: 0.375rem;\n    background: #fff;\n}\n.mobile-input-group .country-code-dropdown[data-v-4ef66428] {\n    position: relative;\n    flex: 0 0 auto;\n    width: 72px;\n    border-right: 1px solid #ced4da;\n}\n.mobile-input-group .country-code-toggle[data-v-4ef66428] {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 2px;\n    padding: 0.375rem 0.5rem;\n    border: none;\n    background: transparent;\n    cursor: pointer;\n    border-top-left-radius: 0.375rem;\n    border-bottom-left-radius: 0.375rem;\n}\n.mobile-input-group input.form-control[data-v-4ef66428] {\n    flex: 1 1 auto;\n    min-width: 0;\n    border: none;\n    border-top-left-radius: 0;\n    border-bottom-left-radius: 0;\n    border-top-right-radius: 0.375rem;\n    border-bottom-right-radius: 0.375rem;\n    box-shadow: none;\n}\n.mobile-input-group input.form-control[data-v-4ef66428]:focus {\n    box-shadow: none;\n}\n.country-code-caret[data-v-4ef66428] {\n    width: 0;\n    height: 0;\n    border-left: 4px solid transparent;\n    border-right: 4px solid transparent;\n    border-top: 5px solid #6c757d;\n}\n.country-code-menu[data-v-4ef66428] {\n    position: absolute;\n    top: 100%;\n    left: 0;\n    z-index: 1050;\n    width: 130px;\n    max-height: 220px;\n    overflow-y: auto;\n    margin: 2px 0 0;\n    padding: 4px 0;\n    list-style: none;\n    background: #fff;\n    border: 1px solid #ced4da;\n    border-radius: 4px;\n    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\n}\n.country-code-menu li[data-v-4ef66428] {\n    padding: 6px 12px;\n    cursor: pointer;\n}\n.country-code-menu li[data-v-4ef66428]:hover {\n    background: #f1f3f5;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* All colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout). */\n.ui-span-all[data-v-4ef66428] { grid-column: 1 / -1;\n}\n.ui-hint[data-v-4ef66428] { margin-left: 4px; font-size: 12px; font-weight: 500; color: var(--ui-muted); text-decoration: none; border-bottom: 0;\n}\n\n/* mobile number: country-code dropdown + number as one control */\n.ui-phone[data-v-4ef66428] {\n    display: flex; align-items: stretch; flex-wrap: nowrap; height: 44px; border-radius: 12px; border: 1px solid var(--ui-border); background: var(--ui-soft);\n    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;\n}\n.ui-phone[data-v-4ef66428]:focus-within { background: var(--ui-card); border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.ui-phone__code[data-v-4ef66428] { position: relative; flex: 0 0 auto; width: 84px; border-right: 1px solid var(--ui-border);\n}\n.ui-phone__toggle[data-v-4ef66428] {\n    width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 12px; border: 0;\n    border-radius: 11px 0 0 11px; background: transparent; color: var(--ui-text); font-size: 14px; font-weight: 600; cursor: pointer;\n}\n.ui-phone__caret[data-v-4ef66428] { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--ui-muted);\n}\n.ui-phone__menu[data-v-4ef66428] {\n    position: absolute; top: 100%; left: 0; z-index: 1050; width: 130px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; padding: 6px;\n    list-style: none; background: var(--ui-card); border: 1px solid var(--ui-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);\n}\n.ui-phone__menu li[data-v-4ef66428] { padding: 7px 10px; border-radius: 8px; font-size: 14px; color: var(--ui-text); cursor: pointer;\n}\n.ui-phone__menu li[data-v-4ef66428]:hover { background: var(--ui-soft);\n}\n.ui-phone__input[data-v-4ef66428] {\n    flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 14px; border: 0; border-radius: 0 11px 11px 0; background: transparent;\n    color: var(--ui-text); font-size: 14px; outline: none; box-shadow: none;\n}\n.ui-phone__input[data-v-4ef66428]::-moz-placeholder { color: var(--ui-muted);\n}\n.ui-phone__input[data-v-4ef66428]::placeholder { color: var(--ui-muted);\n}\n\n/* on / off switch rows */\n.ui-switch[data-v-4ef66428] {\n    position: relative; display: flex; align-items: center; gap: 12px; margin: 0; padding: 12px 14px; border: 1px solid var(--ui-border); border-radius: 12px;\n    background: var(--ui-soft); color: var(--ui-text); font-size: 14px; font-weight: 600; cursor: pointer; -webkit-user-select: none; -moz-user-select: none; user-select: none;\n    transition: border-color 0.15s ease, background-color 0.15s ease;\n}\n.ui-switch[data-v-4ef66428]:hover { border-color: var(--ui-primary);\n}\n.ui-switch input[data-v-4ef66428] { position: absolute; opacity: 0; pointer-events: none;\n}\n.ui-switch__track[data-v-4ef66428] { position: relative; flex: 0 0 auto; width: 40px; height: 22px; border-radius: 999px; background: var(--ui-border); transition: background-color 0.15s ease;\n}\n.ui-switch__track[data-v-4ef66428]::after {\n    content: \"\"; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff;\n    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3); transition: transform 0.15s ease;\n}\n.ui-switch input:checked + .ui-switch__track[data-v-4ef66428] { background: var(--ui-primary);\n}\n.ui-switch input:checked + .ui-switch__track[data-v-4ef66428]::after { transform: translateX(18px);\n}\n.ui-switch input:focus-visible + .ui-switch__track[data-v-4ef66428] { box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.ui-switch.is-on[data-v-4ef66428] { border-color: var(--ui-primary); background: var(--ui-primary-soft);\n}\n\n/* vue-multiselect, dressed like .ui-control */\n.ui-multi[data-v-4ef66428]  .multiselect__tags {\n    min-height: 44px; padding: 7px 40px 0 10px; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-soft);\n    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;\n}\n.ui-multi.multiselect--active[data-v-4ef66428]  .multiselect__tags { background: var(--ui-card); border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.ui-multi[data-v-4ef66428]  .multiselect__placeholder { margin: 0 0 8px 4px; padding-top: 2px; font-size: 14px; color: var(--ui-muted);\n}\n.ui-multi[data-v-4ef66428]  .multiselect__input,\n.ui-multi[data-v-4ef66428]  .multiselect__single { background: transparent; color: var(--ui-text); font-size: 14px;\n}\n.ui-multi[data-v-4ef66428]  .multiselect__tag { margin: 0 6px 7px 0; padding: 5px 26px 5px 10px; border-radius: 8px; background: var(--ui-primary-soft); color: var(--ui-primary); font-size: 13px; font-weight: 600;\n}\n.ui-multi[data-v-4ef66428]  .multiselect__tag-icon:after { color: var(--ui-primary);\n}\n.ui-multi[data-v-4ef66428]  .multiselect__tag-icon:hover { background: var(--ui-primary);\n}\n.ui-multi[data-v-4ef66428]  .multiselect__tag-icon:hover:after { color: #fff;\n}\n.ui-multi[data-v-4ef66428]  .multiselect__select { height: 42px;\n}\n.ui-multi[data-v-4ef66428]  .multiselect__content-wrapper {\n    margin-top: 6px; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-card); box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);\n}\n.ui-multi[data-v-4ef66428]  .multiselect__option { padding: 10px 14px; font-size: 14px; color: var(--ui-text);\n}\n.ui-multi[data-v-4ef66428]  .multiselect__option--highlight { background: var(--ui-primary-soft); color: var(--ui-primary);\n}\n.ui-multi[data-v-4ef66428]  .multiselect__option--selected { background: var(--ui-soft); color: var(--ui-text); font-weight: 700;\n}\n.ui-multi[data-v-4ef66428]  .multiselect__option--selected.multiselect__option--highlight { background: var(--ui-red-bg); color: var(--ui-red-fg);\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -544,594 +541,558 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "page-heading" }, [
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-12 col-md-6 order-md-1 order-last" }, [
-          _c("h3", [
-            _vm._v(
-              _vm._s(_vm.id ? _vm.__("edit_salesman") : _vm.__("add_salesman"))
-            ),
-          ]),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "col-12 col-md-6 order-md-2 order-first" }, [
+  return _c("div", { staticClass: "list-page" }, [
+    _c("div", { staticClass: "page-head" }, [
+      _c("h3", { staticClass: "page-head-title" }, [
+        _vm._v(
+          _vm._s(_vm.id ? _vm.__("edit_salesman") : _vm.__("add_salesman"))
+        ),
+      ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "page-head-actions" },
+        [
           _c(
-            "nav",
-            {
-              staticClass: "breadcrumb-header float-start float-lg-end",
-              attrs: { "aria-label": "breadcrumb" },
-            },
+            "router-link",
+            { staticClass: "ui-backbtn", attrs: { to: "/seller/salesman" } },
             [
-              _c("ol", { staticClass: "breadcrumb" }, [
-                _c(
-                  "li",
-                  { staticClass: "breadcrumb-item" },
-                  [
-                    _c("router-link", { attrs: { to: "/seller/dashboard" } }, [
-                      _vm._v(_vm._s(_vm.__("dashboard"))),
-                    ]),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "li",
-                  { staticClass: "breadcrumb-item" },
-                  [
-                    _c("router-link", { attrs: { to: "/seller/salesman" } }, [
-                      _vm._v(_vm._s(_vm.__("salesman"))),
-                    ]),
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "li",
-                  {
-                    staticClass: "breadcrumb-item active",
-                    attrs: { "aria-current": "page" },
-                  },
-                  [_vm._v(_vm._s(_vm.id ? _vm.__("edit") : _vm.__("add")))]
-                ),
-              ]),
+              _c("i", {
+                staticClass: "fa fa-arrow-left",
+                attrs: { "aria-hidden": "true" },
+              }),
+              _vm._v(" " + _vm._s(_vm.__("salesman")) + "\n            "),
             ]
           ),
-        ]),
-      ]),
+        ],
+        1
+      ),
     ]),
     _vm._v(" "),
-    _c("div", { staticClass: "row" }, [
-      _c("div", { staticClass: "col-12 col-md-12 col-lg-12" }, [
-        _c("div", { staticClass: "card" }, [
-          _c("div", { staticClass: "card-header" }, [
-            _c("h4", [_vm._v(_vm._s(_vm.__("salesman_details")))]),
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "card-body" }, [
-            _c(
-              "form",
-              {
-                ref: "my-form",
-                on: {
-                  submit: function ($event) {
-                    $event.preventDefault()
-                    return _vm.saveRecord.apply(null, arguments)
+    _c(
+      "form",
+      {
+        ref: "my-form",
+        staticClass: "ui-card",
+        on: {
+          submit: function ($event) {
+            $event.preventDefault()
+            return _vm.saveRecord.apply(null, arguments)
+          },
+        },
+      },
+      [
+        _c("div", { staticClass: "ui-card__body" }, [
+          _c("section", { staticClass: "ui-section" }, [
+            _c("h3", { staticClass: "ui-section__title" }, [
+              _c("i", { staticClass: "fa fa-user" }),
+              _vm._v(" " + _vm._s(_vm.__("salesman_details"))),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "ui-grid" }, [
+              _c("div", { staticClass: "ui-field" }, [
+                _c(
+                  "label",
+                  { staticClass: "ui-label", attrs: { for: "name" } },
+                  [
+                    _vm._v(_vm._s(_vm.__("salesman_name"))),
+                    _c("span", { staticClass: "ui-req" }, [_vm._v("*")]),
+                  ]
+                ),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.record.name,
+                      expression: "record.name",
+                    },
+                  ],
+                  staticClass: "ui-control",
+                  attrs: {
+                    type: "text",
+                    id: "name",
+                    placeholder: _vm.__("enter_salesman_name"),
+                    required: "",
                   },
-                },
-              },
-              [
-                _c("div", { staticClass: "row" }, [
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("label", { attrs: { for: "name" } }, [
-                        _vm._v(_vm._s(_vm.__("salesman_name"))),
-                      ]),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.record.name,
-                            expression: "record.name",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "text",
-                          id: "name",
-                          placeholder: _vm.__("enter_salesman_name"),
-                          required: "",
-                        },
-                        domProps: { value: _vm.record.name },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.$set(_vm.record, "name", $event.target.value)
-                          },
-                        },
-                      }),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("label", { attrs: { for: "mobile" } }, [
-                        _vm._v(_vm._s(_vm.__("mobile"))),
-                      ]),
-                      _vm._v(" "),
+                  domProps: { value: _vm.record.name },
+                  on: {
+                    input: function ($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.record, "name", $event.target.value)
+                    },
+                  },
+                }),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "ui-field" }, [
+                _c(
+                  "label",
+                  { staticClass: "ui-label", attrs: { for: "mobile" } },
+                  [
+                    _vm._v(_vm._s(_vm.__("mobile"))),
+                    _c("span", { staticClass: "ui-req" }, [_vm._v("*")]),
+                  ]
+                ),
+                _vm._v(" "),
+                _c("div", { staticClass: "ui-phone" }, [
+                  _c(
+                    "div",
+                    { ref: "countryDropdown", staticClass: "ui-phone__code" },
+                    [
                       _c(
-                        "div",
-                        { staticClass: "input-group mobile-input-group" },
-                        [
-                          _c(
-                            "div",
-                            {
-                              ref: "countryDropdown",
-                              staticClass: "country-code-dropdown",
+                        "button",
+                        {
+                          staticClass: "ui-phone__toggle",
+                          attrs: { type: "button" },
+                          on: {
+                            click: function ($event) {
+                              _vm.countryDropdownOpen = !_vm.countryDropdownOpen
                             },
-                            [
-                              _c(
-                                "button",
+                          },
+                        },
+                        [
+                          _c("span", [_vm._v(_vm._s(_vm.record.country_code))]),
+                          _vm._v(" "),
+                          _c("span", { staticClass: "ui-phone__caret" }),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _vm.countryDropdownOpen
+                        ? _c(
+                            "ul",
+                            { staticClass: "ui-phone__menu" },
+                            _vm._l(_vm.countries, function (c) {
+                              return _c(
+                                "li",
                                 {
-                                  staticClass: "country-code-toggle",
-                                  attrs: { type: "button" },
+                                  key: c.id,
                                   on: {
                                     click: function ($event) {
-                                      _vm.countryDropdownOpen =
-                                        !_vm.countryDropdownOpen
+                                      _vm.record.country_code = c.dial_code
+                                      _vm.countryDropdownOpen = false
                                     },
                                   },
                                 },
                                 [
-                                  _c("span", [
-                                    _vm._v(_vm._s(_vm.record.country_code)),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("span", {
-                                    staticClass: "country-code-caret",
-                                  }),
+                                  _vm._v(
+                                    "\n                                        " +
+                                      _vm._s(c.dial_code) +
+                                      "\n                                    "
+                                  ),
                                 ]
-                              ),
-                              _vm._v(" "),
-                              _vm.countryDropdownOpen
-                                ? _c(
-                                    "ul",
-                                    { staticClass: "country-code-menu" },
-                                    _vm._l(_vm.countries, function (c) {
-                                      return _c(
-                                        "li",
-                                        {
-                                          key: c.id,
-                                          on: {
-                                            click: function ($event) {
-                                              _vm.record.country_code =
-                                                c.dial_code
-                                              _vm.countryDropdownOpen = false
-                                            },
-                                          },
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                                    " +
-                                              _vm._s(c.dial_code) +
-                                              "\n                                                "
-                                          ),
-                                        ]
-                                      )
-                                    }),
-                                    0
-                                  )
-                                : _vm._e(),
-                            ]
-                          ),
-                          _vm._v(" "),
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.record.mobile,
-                                expression: "record.mobile",
-                              },
-                            ],
-                            staticClass: "form-control",
-                            attrs: {
-                              type: "number",
-                              id: "mobile",
-                              placeholder: _vm.__("enter_mobile"),
-                              required: "",
-                            },
-                            domProps: { value: _vm.record.mobile },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.record,
-                                  "mobile",
-                                  $event.target.value
-                                )
-                              },
-                            },
-                          }),
-                        ]
-                      ),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("label", { attrs: { for: "email" } }, [
-                        _vm._v(_vm._s(_vm.__("email"))),
-                      ]),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.record.email,
-                            expression: "record.email",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "email",
-                          id: "email",
-                          placeholder: _vm.__("enter_email"),
-                          required: "",
-                        },
-                        domProps: { value: _vm.record.email },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.$set(_vm.record, "email", $event.target.value)
-                          },
-                        },
-                      }),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("label", { attrs: { for: "password" } }, [
-                        _vm._v(_vm._s(_vm.__("password")) + " "),
-                        _vm.id
-                          ? _c("span", { staticClass: "text-muted small" }, [
-                              _vm._v(
-                                "(" +
-                                  _vm._s(
-                                    _vm.__("leave_blank_to_keep_unchanged")
-                                  ) +
-                                  ")"
-                              ),
-                            ])
-                          : _vm._e(),
-                      ]),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.record.password,
-                            expression: "record.password",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "password",
-                          id: "password",
-                          placeholder: _vm.__("enter_password"),
-                          required: !_vm.id,
-                          autocomplete: "new-password",
-                        },
-                        domProps: { value: _vm.record.password },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.$set(
-                              _vm.record,
-                              "password",
-                              $event.target.value
-                            )
-                          },
-                        },
-                      }),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c(
-                      "div",
-                      { staticClass: "form-group" },
-                      [
-                        _c("label", { attrs: { for: "brands" } }, [
-                          _vm._v(_vm._s(_vm.__("assigned_brands"))),
-                        ]),
-                        _vm._v(" "),
-                        _c("multiselect", {
-                          attrs: {
-                            options: _vm.availableBrands,
-                            multiple: true,
-                            "close-on-select": false,
-                            "clear-on-select": false,
-                            "preserve-search": true,
-                            placeholder: "Select Brands",
-                            label: "name",
-                            "track-by": "id",
-                            required: "",
-                          },
-                          model: {
-                            value: _vm.record.brands,
-                            callback: function ($$v) {
-                              _vm.$set(_vm.record, "brands", $$v)
-                            },
-                            expression: "record.brands",
-                          },
-                        }),
-                      ],
-                      1
-                    ),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("label", { attrs: { for: "allow_price_edit" } }, [
-                        _vm._v(_vm._s(_vm.__("allow_price_edit"))),
-                      ]),
-                      _c("br"),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.record.allow_price_edit,
-                            expression: "record.allow_price_edit",
-                          },
-                        ],
-                        staticClass: "form-check-input mt-2",
-                        attrs: { type: "checkbox", id: "allow_price_edit" },
-                        domProps: {
-                          checked: Array.isArray(_vm.record.allow_price_edit)
-                            ? _vm._i(_vm.record.allow_price_edit, null) > -1
-                            : _vm.record.allow_price_edit,
-                        },
-                        on: {
-                          change: function ($event) {
-                            var $$a = _vm.record.allow_price_edit,
-                              $$el = $event.target,
-                              $$c = $$el.checked ? true : false
-                            if (Array.isArray($$a)) {
-                              var $$v = null,
-                                $$i = _vm._i($$a, $$v)
-                              if ($$el.checked) {
-                                $$i < 0 &&
-                                  _vm.$set(
-                                    _vm.record,
-                                    "allow_price_edit",
-                                    $$a.concat([$$v])
-                                  )
-                              } else {
-                                $$i > -1 &&
-                                  _vm.$set(
-                                    _vm.record,
-                                    "allow_price_edit",
-                                    $$a.slice(0, $$i).concat($$a.slice($$i + 1))
-                                  )
-                              }
-                            } else {
-                              _vm.$set(_vm.record, "allow_price_edit", $$c)
-                            }
-                          },
-                        },
-                      }),
-                      _vm._v(" "),
-                      _c(
-                        "label",
-                        {
-                          staticClass: "form-check-label mt-2 ml-2",
-                          attrs: { for: "allow_price_edit" },
-                        },
-                        [_vm._v(_vm._s(_vm.__("yes")))]
-                      ),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c(
-                        "label",
-                        { attrs: { for: "allow_payment_collection" } },
-                        [_vm._v(_vm._s(_vm.__("allow_payment_collection")))]
-                      ),
-                      _c("br"),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.record.allow_payment_collection,
-                            expression: "record.allow_payment_collection",
-                          },
-                        ],
-                        staticClass: "form-check-input mt-2",
-                        attrs: {
-                          type: "checkbox",
-                          id: "allow_payment_collection",
-                        },
-                        domProps: {
-                          checked: Array.isArray(
-                            _vm.record.allow_payment_collection
+                              )
+                            }),
+                            0
                           )
-                            ? _vm._i(
-                                _vm.record.allow_payment_collection,
-                                null
-                              ) > -1
-                            : _vm.record.allow_payment_collection,
-                        },
-                        on: {
-                          change: function ($event) {
-                            var $$a = _vm.record.allow_payment_collection,
-                              $$el = $event.target,
-                              $$c = $$el.checked ? true : false
-                            if (Array.isArray($$a)) {
-                              var $$v = null,
-                                $$i = _vm._i($$a, $$v)
-                              if ($$el.checked) {
-                                $$i < 0 &&
-                                  _vm.$set(
-                                    _vm.record,
-                                    "allow_payment_collection",
-                                    $$a.concat([$$v])
-                                  )
-                              } else {
-                                $$i > -1 &&
-                                  _vm.$set(
-                                    _vm.record,
-                                    "allow_payment_collection",
-                                    $$a.slice(0, $$i).concat($$a.slice($$i + 1))
-                                  )
-                              }
-                            } else {
+                        : _vm._e(),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.record.mobile,
+                        expression: "record.mobile",
+                      },
+                    ],
+                    staticClass: "ui-phone__input",
+                    attrs: {
+                      type: "number",
+                      id: "mobile",
+                      placeholder: _vm.__("enter_mobile"),
+                      required: "",
+                    },
+                    domProps: { value: _vm.record.mobile },
+                    on: {
+                      input: function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.$set(_vm.record, "mobile", $event.target.value)
+                      },
+                    },
+                  }),
+                ]),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "ui-field" }, [
+                _c(
+                  "label",
+                  { staticClass: "ui-label", attrs: { for: "email" } },
+                  [
+                    _vm._v(_vm._s(_vm.__("email"))),
+                    _c("span", { staticClass: "ui-req" }, [_vm._v("*")]),
+                  ]
+                ),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.record.email,
+                      expression: "record.email",
+                    },
+                  ],
+                  staticClass: "ui-control",
+                  attrs: {
+                    type: "email",
+                    id: "email",
+                    placeholder: _vm.__("enter_email"),
+                    required: "",
+                  },
+                  domProps: { value: _vm.record.email },
+                  on: {
+                    input: function ($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.record, "email", $event.target.value)
+                    },
+                  },
+                }),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "ui-field" }, [
+                _c(
+                  "label",
+                  { staticClass: "ui-label", attrs: { for: "password" } },
+                  [
+                    _vm._v(
+                      "\n                            " +
+                        _vm._s(_vm.__("password"))
+                    ),
+                    !_vm.id
+                      ? _c("span", { staticClass: "ui-req" }, [_vm._v("*")])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.id
+                      ? _c("span", { staticClass: "ui-hint" }, [
+                          _vm._v(
+                            "(" +
+                              _vm._s(_vm.__("leave_blank_to_keep_unchanged")) +
+                              ")"
+                          ),
+                        ])
+                      : _vm._e(),
+                  ]
+                ),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.record.password,
+                      expression: "record.password",
+                    },
+                  ],
+                  staticClass: "ui-control",
+                  attrs: {
+                    type: "password",
+                    id: "password",
+                    placeholder: _vm.__("enter_password"),
+                    required: !_vm.id,
+                    autocomplete: "new-password",
+                  },
+                  domProps: { value: _vm.record.password },
+                  on: {
+                    input: function ($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.record, "password", $event.target.value)
+                    },
+                  },
+                }),
+              ]),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c("section", { staticClass: "ui-section" }, [
+            _c("h3", { staticClass: "ui-section__title" }, [
+              _c("i", { staticClass: "fa fa-tags" }),
+              _vm._v(" " + _vm._s(_vm.__("Brands & pricing"))),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "ui-grid" }, [
+              _c(
+                "div",
+                { staticClass: "ui-field ui-span-all" },
+                [
+                  _c(
+                    "label",
+                    { staticClass: "ui-label", attrs: { for: "brands" } },
+                    [
+                      _vm._v(_vm._s(_vm.__("assigned_brands"))),
+                      _c("span", { staticClass: "ui-req" }, [_vm._v("*")]),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("multiselect", {
+                    staticClass: "ui-multi",
+                    attrs: {
+                      options: _vm.availableBrands,
+                      multiple: true,
+                      "close-on-select": false,
+                      "clear-on-select": false,
+                      "preserve-search": true,
+                      placeholder: "Select Brands",
+                      label: "name",
+                      "track-by": "id",
+                      required: "",
+                    },
+                    model: {
+                      value: _vm.record.brands,
+                      callback: function ($$v) {
+                        _vm.$set(_vm.record, "brands", $$v)
+                      },
+                      expression: "record.brands",
+                    },
+                  }),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c("div", { staticClass: "ui-field" }, [
+                _c(
+                  "label",
+                  { staticClass: "ui-label", attrs: { for: "discount" } },
+                  [_vm._v(_vm._s(_vm.__("discount")) + " (%)")]
+                ),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.record.discount,
+                      expression: "record.discount",
+                    },
+                  ],
+                  staticClass: "ui-control",
+                  attrs: {
+                    type: "number",
+                    step: "0.01",
+                    id: "discount",
+                    placeholder: _vm.__("enter_discount"),
+                  },
+                  domProps: { value: _vm.record.discount },
+                  on: {
+                    input: function ($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.record, "discount", $event.target.value)
+                    },
+                  },
+                }),
+              ]),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "ui-field" },
+                [
+                  _c("label", { staticClass: "ui-label" }, [
+                    _vm._v(_vm._s(_vm.__("status"))),
+                    _c("span", { staticClass: "ui-req" }, [_vm._v("*")]),
+                  ]),
+                  _vm._v(" "),
+                  _c("b-form-radio-group", {
+                    staticClass: "ui-seg",
+                    attrs: {
+                      options: [
+                        { text: _vm.__("active"), value: 1 },
+                        { text: _vm.__("deactive"), value: 0 },
+                      ],
+                      buttons: "",
+                      "button-variant": "outline-primary",
+                      required: "",
+                    },
+                    model: {
+                      value: _vm.record.status,
+                      callback: function ($$v) {
+                        _vm.$set(_vm.record, "status", $$v)
+                      },
+                      expression: "record.status",
+                    },
+                  }),
+                ],
+                1
+              ),
+            ]),
+          ]),
+          _vm._v(" "),
+          _c("section", { staticClass: "ui-section" }, [
+            _c("h3", { staticClass: "ui-section__title" }, [
+              _c("i", { staticClass: "fa fa-user-shield" }),
+              _vm._v(" " + _vm._s(_vm.__("Permissions"))),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "ui-grid" }, [
+              _c(
+                "label",
+                {
+                  staticClass: "ui-switch",
+                  class: { "is-on": _vm.record.allow_price_edit },
+                  attrs: { for: "allow_price_edit" },
+                },
+                [
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.record.allow_price_edit,
+                        expression: "record.allow_price_edit",
+                      },
+                    ],
+                    attrs: { type: "checkbox", id: "allow_price_edit" },
+                    domProps: {
+                      checked: Array.isArray(_vm.record.allow_price_edit)
+                        ? _vm._i(_vm.record.allow_price_edit, null) > -1
+                        : _vm.record.allow_price_edit,
+                    },
+                    on: {
+                      change: function ($event) {
+                        var $$a = _vm.record.allow_price_edit,
+                          $$el = $event.target,
+                          $$c = $$el.checked ? true : false
+                        if (Array.isArray($$a)) {
+                          var $$v = null,
+                            $$i = _vm._i($$a, $$v)
+                          if ($$el.checked) {
+                            $$i < 0 &&
+                              _vm.$set(
+                                _vm.record,
+                                "allow_price_edit",
+                                $$a.concat([$$v])
+                              )
+                          } else {
+                            $$i > -1 &&
+                              _vm.$set(
+                                _vm.record,
+                                "allow_price_edit",
+                                $$a.slice(0, $$i).concat($$a.slice($$i + 1))
+                              )
+                          }
+                        } else {
+                          _vm.$set(_vm.record, "allow_price_edit", $$c)
+                        }
+                      },
+                    },
+                  }),
+                  _vm._v(" "),
+                  _c("span", { staticClass: "ui-switch__track" }),
+                  _vm._v(" "),
+                  _c("span", { staticClass: "ui-switch__text" }, [
+                    _vm._v(_vm._s(_vm.__("allow_price_edit"))),
+                  ]),
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "label",
+                {
+                  staticClass: "ui-switch",
+                  class: { "is-on": _vm.record.allow_payment_collection },
+                  attrs: { for: "allow_payment_collection" },
+                },
+                [
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.record.allow_payment_collection,
+                        expression: "record.allow_payment_collection",
+                      },
+                    ],
+                    attrs: { type: "checkbox", id: "allow_payment_collection" },
+                    domProps: {
+                      checked: Array.isArray(
+                        _vm.record.allow_payment_collection
+                      )
+                        ? _vm._i(_vm.record.allow_payment_collection, null) > -1
+                        : _vm.record.allow_payment_collection,
+                    },
+                    on: {
+                      change: function ($event) {
+                        var $$a = _vm.record.allow_payment_collection,
+                          $$el = $event.target,
+                          $$c = $$el.checked ? true : false
+                        if (Array.isArray($$a)) {
+                          var $$v = null,
+                            $$i = _vm._i($$a, $$v)
+                          if ($$el.checked) {
+                            $$i < 0 &&
                               _vm.$set(
                                 _vm.record,
                                 "allow_payment_collection",
-                                $$c
+                                $$a.concat([$$v])
                               )
-                            }
-                          },
-                        },
-                      }),
-                      _vm._v(" "),
-                      _c(
-                        "label",
-                        {
-                          staticClass: "form-check-label mt-2 ml-2",
-                          attrs: { for: "allow_payment_collection" },
-                        },
-                        [_vm._v(_vm._s(_vm.__("yes")))]
-                      ),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("label", { attrs: { for: "discount" } }, [
-                        _vm._v(_vm._s(_vm.__("discount")) + " (%)"),
-                      ]),
-                      _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.record.discount,
-                            expression: "record.discount",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: {
-                          type: "number",
-                          step: "0.01",
-                          id: "discount",
-                          placeholder: _vm.__("enter_discount"),
-                        },
-                        domProps: { value: _vm.record.discount },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.$set(
-                              _vm.record,
-                              "discount",
-                              $event.target.value
-                            )
-                          },
-                        },
-                      }),
-                    ]),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-6" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("label", { attrs: { for: "status" } }, [
-                        _vm._v(_vm._s(_vm.__("status"))),
-                      ]),
-                      _vm._v(" "),
-                      _c(
-                        "select",
-                        {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.record.status,
-                              expression: "record.status",
-                            },
-                          ],
-                          staticClass: "form-control",
-                          attrs: { required: "" },
-                          on: {
-                            change: function ($event) {
-                              var $$selectedVal = Array.prototype.filter
-                                .call($event.target.options, function (o) {
-                                  return o.selected
-                                })
-                                .map(function (o) {
-                                  var val = "_value" in o ? o._value : o.value
-                                  return val
-                                })
+                          } else {
+                            $$i > -1 &&
                               _vm.$set(
                                 _vm.record,
-                                "status",
-                                $event.target.multiple
-                                  ? $$selectedVal
-                                  : $$selectedVal[0]
+                                "allow_payment_collection",
+                                $$a.slice(0, $$i).concat($$a.slice($$i + 1))
                               )
-                            },
-                          },
-                        },
-                        [
-                          _c("option", { attrs: { value: "1" } }, [
-                            _vm._v(_vm._s(_vm.__("active"))),
-                          ]),
-                          _vm._v(" "),
-                          _c("option", { attrs: { value: "0" } }, [
-                            _vm._v(_vm._s(_vm.__("deactive"))),
-                          ]),
-                        ]
-                      ),
-                    ]),
+                          }
+                        } else {
+                          _vm.$set(_vm.record, "allow_payment_collection", $$c)
+                        }
+                      },
+                    },
+                  }),
+                  _vm._v(" "),
+                  _c("span", { staticClass: "ui-switch__track" }),
+                  _vm._v(" "),
+                  _c("span", { staticClass: "ui-switch__text" }, [
+                    _vm._v(_vm._s(_vm.__("allow_payment_collection"))),
                   ]),
-                ]),
-                _vm._v(" "),
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-primary",
-                    attrs: { type: "submit", disabled: _vm.isLoading },
-                  },
-                  [_vm._v(_vm._s(_vm.__("save")))]
-                ),
-              ]
-            ),
+                ]
+              ),
+            ]),
           ]),
         ]),
-      ]),
-    ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "ui-card__foot" },
+          [
+            _c(
+              "b-button",
+              {
+                attrs: {
+                  type: "submit",
+                  variant: "primary",
+                  disabled: _vm.isLoading,
+                },
+              },
+              [
+                _vm._v(
+                  "\n                " +
+                    _vm._s(_vm.__("save")) +
+                    "\n                "
+                ),
+                _vm.isLoading
+                  ? _c("b-spinner", { attrs: { small: "", label: "Spinning" } })
+                  : _vm._e(),
+              ],
+              1
+            ),
+          ],
+          1
+        ),
+      ]
+    ),
   ])
 }
 var staticRenderFns = []

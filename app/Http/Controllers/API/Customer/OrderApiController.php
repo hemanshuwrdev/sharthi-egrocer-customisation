@@ -2069,7 +2069,7 @@ class OrderApiController extends Controller
                 // Deleted distributors leave order_items.seller_id dangling, so the LEFT JOIN yields NULL —
                 // never hand the app a null name for a past order.
                 DB::raw("COALESCE(NULLIF(TRIM(s.name), ''), NULLIF(TRIM(s.store_name), ''), 'Unavailable seller') as seller_name"),
-                's.formatted_address as seller_address',
+                DB::raw(\App\Models\Seller::displayAddressSql('s') . ' as seller_address'),
                 's.place_name as seller_place_name',
                 's.latitude as seller_latitude',
                 's.longitude as seller_longitude',
@@ -2601,7 +2601,7 @@ class OrderApiController extends Controller
             if ($request->has('delivery_reason')) {
                 $order->delivery_reason = $request->delivery_reason;
             }
-            if ($request->has('delivery_time')) {
+            if ($request->filled('delivery_time')) {
                 $order->delivery_time = $request->delivery_time;
             }
             $order->active_status = OrderStatusList::$rescheduled;
