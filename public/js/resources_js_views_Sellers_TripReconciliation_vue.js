@@ -22,6 +22,13 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToAr
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+//
+//
+//
+//
 //
 //
 //
@@ -1286,7 +1293,16 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }).then(function (res) {
         var d = res.data.data;
         _this.settlement = d.settlement;
-        _this.orders = d.orders;
+        // Payments come back with "bank" for UPI (what the apps use); this page groups on "upi".
+        _this.orders = (d.orders || []).map(function (o) {
+          return _objectSpread(_objectSpread({}, o), {}, {
+            payments: (o.payments || []).map(function (p) {
+              return p.method === 'bank' ? _objectSpread(_objectSpread({}, p), {}, {
+                method: 'upi'
+              }) : p;
+            })
+          });
+        });
         _this.totals = d.totals;
         _this.partialInvoices = d.partial_invoices || [];
         _this.cancelInvoices = d.cancel_invoices || [];
@@ -1772,6 +1788,111 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       a.click();
       URL.revokeObjectURL(url);
     },
+    // Top of every trip PDF, laid out like the Loading Slip print: distributor name + address
+    // centred, an underlined title, a Date / Trip No / Status line and a Type / Name line under
+    // a thick rule. Plain black on white. Returns the y of that rule so the caller can start below it.
+    drawPdfHeader: function drawPdfHeader(doc, title) {
+      var pageW = doc.internal.pageSize.getWidth();
+      var personName = this.settlement.person ? this.settlement.person.name : '-';
+      var typeLabel = this.tripType === 'salesman' ? __('salesman') : __('driver');
+      var tripNo = this.settlement.trip_no || '#' + this.$route.params.id;
+      doc.setTextColor(0, 0, 0);
+      doc.setDrawColor(0, 0, 0);
+
+      // Distributor name with the year, then the address, centred and upper-case.
+      var y = 6;
+      if (this.sellerInfo && this.sellerInfo.name) {
+        var year = new Date().getFullYear();
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(13);
+        y = 11;
+        doc.text(this.sellerInfo.name.toUpperCase() + ' (' + year + '-' + String((year + 1) % 100).padStart(2, '0') + ')', pageW / 2, y, {
+          align: 'center'
+        });
+        if (this.sellerInfo.address) {
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(8.5);
+          var addressLines = doc.splitTextToSize(this.sellerInfo.address.toUpperCase(), pageW - 28);
+          doc.text(addressLines, pageW / 2, y + 5, {
+            align: 'center'
+          });
+          y += 5 + (addressLines.length - 1) * 4;
+        }
+      }
+
+      // Title — bold, upper-case, underlined.
+      y += 9;
+      var heading = String(title).toUpperCase();
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text(heading, pageW / 2, y, {
+        align: 'center'
+      });
+      var headingHalf = doc.getTextWidth(heading) / 2;
+      doc.setLineWidth(0.3);
+      doc.line(pageW / 2 - headingHalf, y + 1.2, pageW / 2 + headingHalf, y + 1.2);
+
+      // Date / Trip No / Status
+      y += 10;
+      doc.setFontSize(9);
+      doc.text(__('date') + ' : ' + this.fmtDate(this.settlement.date), 14, y);
+      doc.text('Trip No : ' + tripNo, pageW / 2, y, {
+        align: 'center'
+      });
+      doc.text(__('status') + ' : ' + this.settlement.status_text, pageW - 14, y, {
+        align: 'right'
+      });
+
+      // Type / Name, then the thick rule
+      y += 6;
+      doc.text(__('type') + ' : ' + typeLabel, 14, y);
+      doc.text(__('name') + ' : ' + personName, pageW - 14, y, {
+        align: 'right'
+      });
+      y += 3;
+      doc.setLineWidth(0.6);
+      doc.line(14, y, pageW - 14, y);
+      doc.setFont(undefined, 'normal');
+      doc.setLineWidth(0.2);
+      return y;
+    },
+    // Shared look for every table in the trip PDFs — the Loading Slip's: thin grey grid, light-grey
+    // bold header, no coloured fills or striping. `extra` overrides / adds options; its `styles` merge in.
+    pdfTable: function pdfTable(extra) {
+      var base = {
+        theme: 'grid',
+        styles: {
+          fontSize: 8,
+          cellPadding: 2,
+          textColor: [0, 0, 0],
+          lineColor: [119, 119, 119],
+          lineWidth: 0.1
+        },
+        headStyles: {
+          fillColor: [242, 242, 242],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold'
+        },
+        footStyles: {
+          fillColor: [242, 242, 242],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold'
+        }
+      };
+      return _objectSpread(_objectSpread(_objectSpread({}, base), extra), {}, {
+        styles: _objectSpread(_objectSpread({}, base.styles), extra.styles || {})
+      });
+    },
+    // Bold section heading under the previous table; returns the y the next table should start at.
+    pdfSection: function pdfSection(doc, text) {
+      var y = doc.lastAutoTable.finalY + 10;
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(text, 14, y);
+      doc.setFont(undefined, 'normal');
+      return y + 3;
+    },
     exportReportPdf: function exportReportPdf() {
       var _this15 = this;
       var doc = new jspdf__WEBPACK_IMPORTED_MODULE_1__.jsPDF();
@@ -1779,81 +1900,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var money = function money(val) {
         return 'Rs. ' + _this15.fmt(val);
       };
-      var personName = this.settlement.person ? this.settlement.person.name : '-';
-      var typeLabel = this.tripType === 'salesman' ? __('salesman') : __('driver');
-
-      // Distributor header — name with the year, then the address, centred and upper-case,
-      // the same as the top of the Loading Slip print. `top` is where the bar below starts.
-      var top = 0;
-      if (this.sellerInfo && this.sellerInfo.name) {
-        var year = new Date().getFullYear();
-        doc.setTextColor(0, 0, 0);
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(13);
-        doc.text(this.sellerInfo.name.toUpperCase() + ' (' + year + '-' + String((year + 1) % 100).padStart(2, '0') + ')', pageW / 2, 11, {
-          align: 'center'
-        });
-        top = 15;
-        if (this.sellerInfo.address) {
-          doc.setFont(undefined, 'normal');
-          doc.setFontSize(8.5);
-          var addressLines = doc.splitTextToSize(this.sellerInfo.address.toUpperCase(), pageW - 28);
-          doc.text(addressLines, pageW / 2, top + 1, {
-            align: 'center'
-          });
-          top += addressLines.length * 4 + 2;
-        }
-        top += 3;
-      }
-
-      // Header bar
-      doc.setFillColor(52, 58, 64);
-      doc.rect(0, top, pageW, 22, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(15);
-      doc.setFont(undefined, 'bold');
-      doc.text(__('trip_reconciliation') || 'Trip Reconciliation', 14, top + 14);
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(9);
-      doc.text('#' + this.$route.params.id, pageW - 14, top + 14, {
-        align: 'right'
-      });
-      doc.setTextColor(0, 0, 0);
-
-      // Person / type / date + status summary table
-      (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-        startY: top + 28,
-        theme: 'plain',
-        styles: {
-          fontSize: 9,
-          cellPadding: 1
-        },
-        body: [[{
-          content: __('type'),
-          styles: {
-            fontStyle: 'bold'
-          }
-        }, typeLabel, {
-          content: __('date'),
-          styles: {
-            fontStyle: 'bold'
-          }
-        }, this.fmtDate(this.settlement.date)], [{
-          content: __('name'),
-          styles: {
-            fontStyle: 'bold'
-          }
-        }, personName, {
-          content: __('status'),
-          styles: {
-            fontStyle: 'bold'
-          }
-        }, this.settlement.status_text]]
-      });
+      var headerEnd = this.drawPdfHeader(doc, __('trip_reconciliation') || 'Trip Reconciliation');
 
       // Reconciliation totals
-      (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-        startY: doc.lastAutoTable.finalY + 4,
+      (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+        startY: headerEnd + 6,
         head: [[__('total_expected'), __('digital_verified'), __('cash_expected')]],
         body: [[money(this.totals.total_expected), money(this.totals.digital_verified), money(this.totals.cash_expected)]],
         styles: {
@@ -1861,15 +1912,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           halign: 'center',
           cellPadding: 3
         },
-        headStyles: {
-          fillColor: [233, 236, 239],
-          textColor: [52, 58, 64],
-          fontStyle: 'bold'
-        },
         bodyStyles: {
           fontStyle: 'bold'
         }
-      });
+      }));
 
       // Shortfall / return calculation — up top, right under the totals, so it's the
       // first thing a distributor sees when checking whether a trip closed clean.
@@ -1881,29 +1927,20 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         styles: {
           fontSize: 10,
           cellPadding: 2,
-          fontStyle: 'bold'
+          fontStyle: 'bold',
+          textColor: [0, 0, 0]
         },
         body: [[{
           content: __('shortfall') + ':',
           styles: {
             halign: 'right'
           }
-        }, {
-          content: money(shortfall),
-          styles: {
-            textColor: shortfall > 0 ? [220, 53, 69] : [22, 163, 74]
-          }
-        }], [{
+        }, money(shortfall)], [{
           content: (__('total_returns') || 'Total Returns') + ':',
           styles: {
             halign: 'right'
           }
-        }, {
-          content: money(totalReturns),
-          styles: {
-            textColor: totalReturns > 0 ? [234, 88, 12] : [0, 0, 0]
-          }
-        }]],
+        }, money(totalReturns)]],
         columnStyles: {
           0: {
             cellWidth: pageW - 14 - 40 - 14
@@ -1937,32 +1974,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           return r.method === group.key;
         });
         if (rows.length === 0) return;
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text(group.label + ' — ' + money(group.total), 14, doc.lastAutoTable.finalY + 10);
-        doc.setFont(undefined, 'normal');
-        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-          startY: doc.lastAutoTable.finalY + 13,
-          head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Collected', 'Status']],
+
+        // Cash is never verified by the distributor (no Verify button on screen), so its
+        // raw status would always print as a stale "pending" — leave the column off.
+        var showStatus = group.key !== 'cash';
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, _this15.pdfTable({
+          startY: _this15.pdfSection(doc, group.label + ' — ' + money(group.total)),
+          head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Collected'].concat(showStatus ? ['Status'] : [])],
           body: rows.map(function (r) {
-            return [r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName, money(r.finalTotal), money(r.amount), r.paymentStatus || '-'];
+            return [r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName, money(r.finalTotal), money(r.amount)].concat(showStatus ? [r.paymentStatus || '-'] : []);
           }),
-          styles: {
-            fontSize: 8,
-            cellPadding: 2
-          },
-          headStyles: {
-            fillColor: [52, 58, 64]
-          },
-          alternateRowStyles: {
-            fillColor: [248, 249, 250]
-          },
           columnStyles: {
             3: {
               cellWidth: 40
             }
           }
-        });
+        }));
       });
 
       // Orders with no payment recorded at all — flatRows skips these entirely (it's
@@ -1972,147 +1999,82 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         return (o.payments || []).length === 0;
       });
       if (noPaymentRows.length) {
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text(__('no_payment_collected') || 'No Payment Collected', 14, doc.lastAutoTable.finalY + 10);
-        doc.setFont(undefined, 'normal');
-        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-          startY: doc.lastAutoTable.finalY + 13,
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+          startY: this.pdfSection(doc, __('no_payment_collected') || 'No Payment Collected'),
           head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value']],
           body: noPaymentRows.map(function (o) {
             return [o.orders_id, o.loading_slip_no || '-', o.invoice_number || '-', o.retailer ? o.retailer.name : '-', money(o.final_total)];
           }),
-          styles: {
-            fontSize: 8,
-            cellPadding: 2
-          },
-          headStyles: {
-            fillColor: [52, 58, 64]
-          },
-          alternateRowStyles: {
-            fillColor: [248, 249, 250]
-          },
           columnStyles: {
             3: {
               cellWidth: 40
             }
           }
-        });
+        }));
       }
 
       // Partial Invoices — order items delivered short of what was ordered.
       if (this.partialInvoiceRows.length) {
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text((__('partial_invoices') || 'Partial Invoices') + ' — ' + money(this.totalShortfallValue), 14, doc.lastAutoTable.finalY + 10);
-        doc.setFont(undefined, 'normal');
-        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-          startY: doc.lastAutoTable.finalY + 13,
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+          startY: this.pdfSection(doc, (__('partial_invoices') || 'Partial Invoices') + ' — ' + money(this.totalShortfallValue)),
           head: [['Invoice #', 'Loading Slip', 'Retailer', 'Product', 'Ordered Qty', 'Delivered Qty', 'Shortfall Qty', 'Shortfall Value', 'Status']],
           body: this.partialInvoiceRows.map(function (r) {
             return [r.invoiceNumber || '#' + r.orderId, r.loadingSlipNo || '-', r.retailerName, r.productName, r.quantity, r.deliveredQuantity, r.shortfallQty, money(r.shortfallValue), r.verified ? __('verified') : '-'];
           }),
-          styles: {
-            fontSize: 8,
-            cellPadding: 2
-          },
-          headStyles: {
-            fillColor: [217, 119, 6]
-          },
-          alternateRowStyles: {
-            fillColor: [255, 251, 235]
-          },
           columnStyles: {
             2: {
               cellWidth: 35
             }
           }
-        });
+        }));
       }
 
       // Cancel Invoices — orders cancelled while out on this trip.
       if (this.cancelInvoices.length) {
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text(__('cancel_invoices') || 'Cancel Invoices', 14, doc.lastAutoTable.finalY + 10);
-        doc.setFont(undefined, 'normal');
-        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-          startY: doc.lastAutoTable.finalY + 13,
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+          startY: this.pdfSection(doc, __('cancel_invoices') || 'Cancel Invoices'),
           head: [['Invoice #', 'Loading Slip', 'Retailer', 'Order Value', 'Cancelled At', 'Status']],
           body: this.cancelInvoices.map(function (r) {
             return [r.invoice_number || '#' + r.order_id, r.loading_slip_no || '-', r.retailer ? r.retailer.name : '-', money(r.final_total), _this15.fmtDateTime(r.cancelled_at), r.verified ? __('verified') : '-'];
           }),
-          styles: {
-            fontSize: 8,
-            cellPadding: 2
-          },
-          headStyles: {
-            fillColor: [220, 53, 69]
-          },
-          alternateRowStyles: {
-            fillColor: [253, 242, 242]
-          },
           columnStyles: {
             2: {
               cellWidth: 35
             }
           }
-        });
+        }));
       }
 
       // Reschedule Invoices — orders whose delivery was pushed to a later date.
       if (this.rescheduleInvoices.length) {
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text(__('reschedule_invoices') || 'Reschedule Invoices', 14, doc.lastAutoTable.finalY + 10);
-        doc.setFont(undefined, 'normal');
-        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-          startY: doc.lastAutoTable.finalY + 13,
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+          startY: this.pdfSection(doc, __('reschedule_invoices') || 'Reschedule Invoices'),
           head: [['Invoice #', 'Retailer', 'Order Value', 'New Delivery Date', 'Reason', 'Rescheduled At', 'Current Status']],
           body: this.rescheduleInvoices.map(function (r) {
             return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', money(r.final_total), _this15.fmtDate(r.new_delivery_date), r.delivery_reason || '-', _this15.fmtDateTime(r.rescheduled_at), _this15.orderStatusLabel(r.current_status)];
           }),
-          styles: {
-            fontSize: 8,
-            cellPadding: 2
-          },
-          headStyles: {
-            fillColor: [107, 114, 128]
-          },
-          alternateRowStyles: {
-            fillColor: [249, 250, 251]
-          },
           columnStyles: {
             1: {
               cellWidth: 35
             }
           }
-        });
+        }));
       }
 
       // Returned Item Summary — one line per product, with an empty "Counted" column to tick
       // on paper while the goods are checked off the truck.
       if (this.returnedItemTotals.length) {
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text(__('returned_item_summary') || 'Returned Item Summary', 14, doc.lastAutoTable.finalY + 10);
-        doc.setFont(undefined, 'normal');
-        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-          startY: doc.lastAutoTable.finalY + 13,
-          head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', __('quantity') || 'Quantity', 'Counted']],
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+          startY: this.pdfSection(doc, __('returned_item_summary') || 'Returned Item Summary'),
+          head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', {
+            content: __('quantity') || 'Quantity',
+            styles: {
+              halign: 'right'
+            }
+          }, 'Counted']],
           body: this.returnedItemTotals.map(function (r, i) {
             return [i + 1, r.product_name + (r.variant_name ? ' — ' + r.variant_name : ''), r.quantity, ''];
           }),
-          styles: {
-            fontSize: 8,
-            cellPadding: 2
-          },
-          headStyles: {
-            fillColor: [234, 88, 12]
-          },
-          alternateRowStyles: {
-            fillColor: [255, 247, 237]
-          },
           columnStyles: {
             0: {
               cellWidth: 14,
@@ -2126,40 +2088,72 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
               cellWidth: 20
             }
           }
-        });
+        }));
       }
 
       // Returns — approved return requests against orders in this trip. Refund is
       // wallet-credited, not cash the driver hands back, so it's a separate table.
       if (this.returnItemSummary.length) {
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text((__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0), 14, doc.lastAutoTable.finalY + 10);
-        doc.setFont(undefined, 'normal');
-        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, {
-          startY: doc.lastAutoTable.finalY + 13,
+        (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+          startY: this.pdfSection(doc, (__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0)),
           head: [['Invoice #', 'Retailer', 'Product', 'Refund Amount', 'Reason', 'Returned At']],
           body: this.returnItemSummary.map(function (r) {
             return [r.invoice_number || '#' + r.order_id, r.retailer ? r.retailer.name : '-', r.product_name + (r.source === 'partial_delivery' ? ' (' + __('partial_delivery') + ', ' + __('qty') + ': ' + r.quantity + ')' : r.source === 'cancelled_order' ? ' (' + __('cancelled') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''), money(r.refund_amount), _this15.returnReason(r), _this15.fmtDateTime(r.returned_at)];
           }),
-          styles: {
-            fontSize: 8,
-            cellPadding: 2
-          },
-          headStyles: {
-            fillColor: [234, 88, 12]
-          },
-          alternateRowStyles: {
-            fillColor: [255, 247, 237]
-          },
           columnStyles: {
             1: {
               cellWidth: 35
             }
           }
-        });
+        }));
       }
       doc.save('settlement-' + this.tripType + '-' + this.$route.params.id + '.pdf');
+    },
+    // Standalone Returned Item Summary — just the per-product return counts (no payments),
+    // with the same empty "Counted" column to tick while the goods come off the truck.
+    exportReturnedItemsPdf: function exportReturnedItemsPdf() {
+      if (!this.returnedItemTotals.length) return;
+      var doc = new jspdf__WEBPACK_IMPORTED_MODULE_1__.jsPDF();
+      var headerEnd = this.drawPdfHeader(doc, __('returned_item_summary') || 'Returned Item Summary');
+      var totalQty = this.returnedItemTotals.reduce(function (s, r) {
+        return s + parseFloat(r.quantity || 0);
+      }, 0);
+      (0,jspdf_autotable__WEBPACK_IMPORTED_MODULE_2__["default"])(doc, this.pdfTable({
+        startY: headerEnd + 6,
+        head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', {
+          content: __('quantity') || 'Quantity',
+          styles: {
+            halign: 'right'
+          }
+        }, 'Counted']],
+        body: this.returnedItemTotals.map(function (r, i) {
+          return [i + 1, r.product_name + (r.variant_name ? ' — ' + r.variant_name : ''), r.quantity, ''];
+        }),
+        foot: [['', __('total') || 'Total', {
+          content: parseFloat(totalQty.toFixed(3)),
+          styles: {
+            halign: 'right'
+          }
+        }, '']],
+        styles: {
+          fontSize: 9,
+          cellPadding: 2.5
+        },
+        columnStyles: {
+          0: {
+            cellWidth: 16,
+            halign: 'center'
+          },
+          2: {
+            cellWidth: 28,
+            halign: 'right'
+          },
+          3: {
+            cellWidth: 28
+          }
+        }
+      }));
+      doc.save('returned-items-' + this.tripType + '-' + this.$route.params.id + '.pdf');
     },
     // Mirrors Sellers/Dashboard.vue's getStatusTranslationKey — same OrderStatusList ids.
     orderStatusLabel: function orderStatusLabel(id) {
@@ -7809,6 +7803,28 @@ var render = function () {
                             _c("i", { staticClass: "fa fa-download" }),
                             _vm._v(
                               _vm._s(_vm.__("Export PDF")) +
+                                "\n                        "
+                            ),
+                          ]
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.returnedItemTotals.length
+                      ? _c(
+                          "button",
+                          {
+                            staticClass:
+                              "trip-header__btn trip-header__btn--secondary",
+                            attrs: { type: "button" },
+                            on: { click: _vm.exportReturnedItemsPdf },
+                          },
+                          [
+                            _c("i", {
+                              staticClass:
+                                "fa fa-download trip-header__btn-icon",
+                            }),
+                            _vm._v(
+                              _vm._s(_vm.__("returned_item_summary")) +
                                 "\n                        "
                             ),
                           ]

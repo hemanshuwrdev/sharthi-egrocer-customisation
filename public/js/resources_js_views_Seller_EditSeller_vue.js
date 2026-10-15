@@ -1,5 +1,426 @@
 (self["webpackChunk"] = self["webpackChunk"] || []).push([["resources_js_views_Seller_EditSeller_vue"],{
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=script&lang=js":
+/*!******************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=script&lang=js ***!
+  \******************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function _iterableToArrayLimit(arr, i) { var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]; if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+// Searchable checklist for assigning many areas to a distributor. v-model is an array of area ids (strings),
+// the same shape the Select2 it replaces produced, so saving/autosave on the parent is unchanged.
+var PAGE = 150;
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: 'AreaPicker',
+  props: {
+    value: {
+      type: Array,
+      "default": function _default() {
+        return [];
+      }
+    },
+    areas: {
+      type: Array,
+      "default": function _default() {
+        return [];
+      }
+    },
+    // City names of the zones this distributor serves; used to offer a "match zone cities" shortcut.
+    zoneCities: {
+      type: Array,
+      "default": function _default() {
+        return [];
+      }
+    }
+  },
+  data: function data() {
+    return {
+      PAGE: PAGE,
+      searchInput: '',
+      search: '',
+      district: null,
+      // null = all districts
+      zoneOnly: false,
+      selectedOnly: false,
+      showPaste: false,
+      pasteText: '',
+      pasteResult: null,
+      limit: PAGE,
+      searchTimer: null
+    };
+  },
+  computed: {
+    // Sorted once; each row carries a lower-cased haystack so typing doesn't rebuild strings per keystroke.
+    rows: function rows() {
+      return (Array.isArray(this.areas) ? this.areas : []).map(function (a) {
+        var district = (a.district || '').trim();
+        var pincode = (a.pincode || '').toString().trim();
+        var name = (a.name || '').trim();
+        return {
+          id: String(a.id),
+          name: name,
+          pincode: pincode,
+          district: district,
+          hay: [name, pincode, district, a.state || ''].join(' ').toLowerCase()
+        };
+      }).sort(function (x, y) {
+        return x.district.localeCompare(y.district) || x.name.localeCompare(y.name) || x.pincode.localeCompare(y.pincode);
+      });
+    },
+    rowById: function rowById() {
+      var map = new Map();
+      this.rows.forEach(function (r) {
+        return map.set(r.id, r);
+      });
+      return map;
+    },
+    pincodeIndex: function pincodeIndex() {
+      var map = new Map();
+      this.rows.forEach(function (r) {
+        if (!r.pincode) return;
+        if (!map.has(r.pincode)) map.set(r.pincode, []);
+        map.get(r.pincode).push(r.id);
+      });
+      return map;
+    },
+    districtList: function districtList() {
+      var _this = this;
+      var counts = new Map();
+      this.rows.forEach(function (r) {
+        return counts.set(r.district, (counts.get(r.district) || 0) + 1);
+      });
+      return Array.from(counts, function (_ref) {
+        var _ref2 = _slicedToArray(_ref, 2),
+          key = _ref2[0],
+          count = _ref2[1];
+        return {
+          key: key,
+          count: count,
+          label: key || _this.__('area_picker_other_district')
+        };
+      });
+    },
+    zoneDistrictSet: function zoneDistrictSet() {
+      var wanted = new Set((this.zoneCities || []).map(function (c) {
+        return String(c).trim().toLowerCase();
+      }).filter(Boolean));
+      var matched = new Set();
+      if (!wanted.size) return matched;
+      this.districtList.forEach(function (d) {
+        if (wanted.has(d.key.toLowerCase())) matched.add(d.key.toLowerCase());
+      });
+      return matched;
+    },
+    zoneMatchLabel: function zoneMatchLabel() {
+      var _this2 = this;
+      return this.districtList.filter(function (d) {
+        return _this2.zoneDistrictSet.has(d.key.toLowerCase());
+      }).map(function (d) {
+        return d.label;
+      }).join(', ');
+    },
+    selectedSet: function selectedSet() {
+      return new Set((this.value || []).map(String));
+    },
+    selectedCount: function selectedCount() {
+      return this.selectedSet.size;
+    },
+    isFiltering: function isFiltering() {
+      return !!this.search || this.district !== null || this.zoneOnly || this.selectedOnly;
+    },
+    filtered: function filtered() {
+      var _this3 = this;
+      var tokens = this.search.toLowerCase().split(/\s+/).filter(Boolean);
+      var zoneSet = this.zoneOnly ? this.zoneDistrictSet : null;
+      return this.rows.filter(function (r) {
+        if (_this3.district !== null && r.district !== _this3.district) return false;
+        if (zoneSet && !zoneSet.has(r.district.toLowerCase())) return false;
+        if (_this3.selectedOnly && !_this3.selectedSet.has(r.id)) return false;
+        return tokens.every(function (t) {
+          return r.hay.indexOf(t) !== -1;
+        });
+      });
+    },
+    filteredSelectedCount: function filteredSelectedCount() {
+      var _this4 = this;
+      var n = 0;
+      this.filtered.forEach(function (r) {
+        if (_this4.selectedSet.has(r.id)) n++;
+      });
+      return n;
+    },
+    shown: function shown() {
+      return this.filtered.slice(0, this.limit);
+    },
+    // Per-district totals across ALL filtered rows (not just the rendered slice) so the group checkbox is accurate.
+    groupMeta: function groupMeta() {
+      var _this5 = this;
+      var meta = {};
+      this.filtered.forEach(function (r) {
+        var m = meta[r.district] || (meta[r.district] = {
+          total: 0,
+          selected: 0,
+          ids: []
+        });
+        m.total++;
+        m.ids.push(r.id);
+        if (_this5.selectedSet.has(r.id)) m.selected++;
+      });
+      return meta;
+    },
+    groups: function groups() {
+      var out = [];
+      var current = null;
+      this.shown.forEach(function (r) {
+        if (!current || current.key !== r.district) {
+          current = {
+            key: r.district,
+            rows: []
+          };
+          out.push(current);
+        }
+        current.rows.push(r);
+      });
+      return out;
+    },
+    chips: function chips() {
+      var _this6 = this;
+      return (this.value || []).map(String).map(function (id) {
+        var r = _this6.rowById.get(id);
+        if (!r) return {
+          id: id,
+          label: _this6.fmt('area_picker_unknown', {
+            id: id
+          }),
+          missing: true
+        };
+        return {
+          id: id,
+          label: r.pincode ? r.name + ' · ' + r.pincode : r.name,
+          missing: false
+        };
+      });
+    }
+  },
+  watch: {
+    search: function search() {
+      this.limit = PAGE;
+    },
+    district: function district() {
+      this.limit = PAGE;
+    },
+    zoneOnly: function zoneOnly() {
+      this.limit = PAGE;
+    },
+    selectedOnly: function selectedOnly() {
+      this.limit = PAGE;
+    },
+    selectedCount: function selectedCount(n) {
+      if (n === 0) this.selectedOnly = false;
+    }
+  },
+  beforeDestroy: function beforeDestroy() {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+  },
+  methods: {
+    // __() has no placeholders, so substitute {name} tokens here.
+    fmt: function fmt(key, vars) {
+      return Object.keys(vars).reduce(function (s, k) {
+        return s.replace('{' + k + '}', vars[k]);
+      }, this.__(key));
+    },
+    onSearchInput: function onSearchInput(value) {
+      var _this7 = this;
+      this.searchInput = value;
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(function () {
+        _this7.search = value.trim();
+      }, 150);
+    },
+    clearSearch: function clearSearch() {
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.searchInput = '';
+      this.search = '';
+    },
+    emit: function emit(set) {
+      this.$emit('input', Array.from(set));
+    },
+    toggle: function toggle(id, on) {
+      var next = new Set(this.selectedSet);
+      if (on) next.add(id);else next["delete"](id);
+      this.emit(next);
+    },
+    remove: function remove(id) {
+      this.toggle(id, false);
+    },
+    toggleGroup: function toggleGroup(key, on) {
+      var next = new Set(this.selectedSet);
+      ((this.groupMeta[key] || {}).ids || []).forEach(function (id) {
+        if (on) next.add(id);else next["delete"](id);
+      });
+      this.emit(next);
+    },
+    selectFiltered: function selectFiltered() {
+      var next = new Set(this.selectedSet);
+      this.filtered.forEach(function (r) {
+        return next.add(r.id);
+      });
+      this.emit(next);
+    },
+    deselectFiltered: function deselectFiltered() {
+      var next = new Set(this.selectedSet);
+      this.filtered.forEach(function (r) {
+        return next["delete"](r.id);
+      });
+      this.emit(next);
+    },
+    clearAll: function clearAll() {
+      this.emit(new Set());
+    },
+    applyPaste: function applyPaste() {
+      var _this8 = this;
+      var tokens = Array.from(new Set(this.pasteText.split(/[^0-9A-Za-z]+/).filter(Boolean)));
+      var next = new Set(this.selectedSet);
+      var before = next.size;
+      var missing = [];
+      var matched = 0;
+      tokens.forEach(function (pin) {
+        var ids = _this8.pincodeIndex.get(pin);
+        if (!ids) {
+          missing.push(pin);
+          return;
+        }
+        matched++;
+        ids.forEach(function (id) {
+          return next.add(id);
+        });
+      });
+      this.pasteResult = {
+        added: next.size - before,
+        matched: matched,
+        missing: missing.slice(0, 10).concat(missing.length > 10 ? ['…'] : [])
+      };
+      this.emit(next);
+      if (!missing.length) this.pasteText = '';
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=script&lang=js":
 /*!******************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=script&lang=js ***!
@@ -17,12 +438,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var v_select2_component__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! v-select2-component */ "./node_modules/v-select2-component/dist/Select2.esm.js");
-/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue-multiselect */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.js");
-/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var vue2_google_maps__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue2-google-maps */ "./node_modules/vue2-google-maps/dist/main.js");
-/* harmony import */ var _tinymce_tinymce_vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @tinymce/tinymce-vue */ "./node_modules/@tinymce/tinymce-vue/lib/es2015/main/ts/index.js");
-/* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
-/* harmony import */ var _mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../mixins/TranslationHelper.js */ "./resources/js/mixins/TranslationHelper.js");
+/* harmony import */ var _AreaPicker_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./AreaPicker.vue */ "./resources/js/views/Seller/AreaPicker.vue");
+/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue-multiselect */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.js");
+/* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var vue2_google_maps__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue2-google-maps */ "./node_modules/vue2-google-maps/dist/main.js");
+/* harmony import */ var _tinymce_tinymce_vue__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @tinymce/tinymce-vue */ "./node_modules/@tinymce/tinymce-vue/lib/es2015/main/ts/index.js");
+/* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
+/* harmony import */ var _mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../../mixins/TranslationHelper.js */ "./resources/js/mixins/TranslationHelper.js");
 var _watch;
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
@@ -1242,6 +1664,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 
 
 
@@ -1252,7 +1684,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  mixins: [_mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_8__["default"]],
+  mixins: [_mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_9__["default"]],
   // embedded: shown inside the seller Settings page's "My Profile" tab, which already has a page
   // title, so the form hides its own title/breadcrumb and stays on the tab after saving.
   props: {
@@ -1264,12 +1696,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   components: {
     VuejsDatatableFactory: vuejs_datatable__WEBPACK_IMPORTED_MODULE_1__.VuejsDatatableFactory,
     Select2: v_select2_component__WEBPACK_IMPORTED_MODULE_3__["default"],
-    Multiselect: (vue_multiselect__WEBPACK_IMPORTED_MODULE_4___default()),
-    'editor': _tinymce_tinymce_vue__WEBPACK_IMPORTED_MODULE_6__["default"]
+    AreaPicker: _AreaPicker_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
+    Multiselect: (vue_multiselect__WEBPACK_IMPORTED_MODULE_5___default()),
+    'editor': _tinymce_tinymce_vue__WEBPACK_IMPORTED_MODULE_7__["default"]
   },
   data: function data() {
     return {
-      login_user: _Auth_js__WEBPACK_IMPORTED_MODULE_7__["default"].user,
+      login_user: _Auth_js__WEBPACK_IMPORTED_MODULE_8__["default"].user,
       cacheTimer: null,
       cachedData: null,
       skipCache: false,
@@ -1318,6 +1751,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       street: "",
       address_line1: "",
       address_line2: "",
+      pincode: "",
       pincode_id: "",
       city_id: [],
       brand_ids: [],
@@ -1503,6 +1937,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     address_line2: function address_line2() {
       if (!this.id) this.debouncedSave();
     },
+    pincode: function pincode() {
+      if (!this.id) this.debouncedSave();
+    },
     city_id: {
       handler: function handler() {
         if (!this.id) this.debouncedSave();
@@ -1671,18 +2108,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         return selected.includes(String(area.id));
       });
     },
-    areas_options: function areas_options() {
-      if (!Array.isArray(this.areas) || this.areas.length === 0) {
-        return [];
-      }
-      return this.areas.map(function (area) {
-        return {
-          id: area.id,
-          text: (area.name || '') + (area.pincode ? ' (' + area.pincode + ')' : '') + (area.district ? ' - ' + area.district : '') + (area.state ? ', ' + area.state : '')
-        };
+    // City names of every zone this distributor is tied to (assigned, defined on this page, or in a brand-zone row);
+    // AreaPicker uses them to offer a "match zone cities" filter against area districts.
+    areaZoneCityNames: function areaZoneCityNames() {
+      var ids = new Set((this.createdCityIds || []).map(String));
+      this.brandZoneRows.forEach(function (r) {
+        return (r.city_ids || []).forEach(function (id) {
+          return ids.add(String(id));
+        });
       });
+      (Array.isArray(this.city_id) ? this.city_id : []).forEach(function (id) {
+        return ids.add(String(id));
+      });
+      return this.cities.filter(function (city) {
+        return ids.has(String(city.id));
+      }).map(function (city) {
+        return city.name;
+      }).filter(Boolean);
     },
-    google: vue2_google_maps__WEBPACK_IMPORTED_MODULE_5__.gmapApi,
+    google: vue2_google_maps__WEBPACK_IMPORTED_MODULE_6__.gmapApi,
     // Computed property to safely access $roleSeller
     roleSeller: function roleSeller() {
       return this.$roleSeller !== undefined ? this.$roleSeller : '';
@@ -2299,6 +2743,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         if (stateName) {
           this.state = stateName;
         }
+
+        // The store's pincode from the same place (left as it is when Google gives none) — editable.
+        var postal = (this.currentPlace.address_components || []).find(function (c) {
+          return c.types && c.types.includes('postal_code');
+        });
+        if (postal && /^\d{6}$/.test(String(postal.long_name).trim())) {
+          this.pincode = String(postal.long_name).trim();
+        }
         this.place_name = this.currentPlace.name;
         this.formatted_address = this.currentPlace.formatted_address;
         this.infoWindow.position = {
@@ -2502,6 +2954,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         street: "",
         address_line1: "",
         address_line2: "",
+        pincode: "",
         pincode_id: "",
         city_id: [],
         brand_ids: [],
@@ -2571,6 +3024,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           street: this.street,
           address_line1: this.address_line1,
           address_line2: this.address_line2,
+          pincode: this.pincode,
           pincode_id: this.pincode_id,
           city_id: this.city_id,
           brand_ids: this.brand_ids,
@@ -2767,6 +3221,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           _this21.street = emptyIfNull(_this21.record.street);
           _this21.address_line1 = emptyIfNull(_this21.record.address_line1);
           _this21.address_line2 = emptyIfNull(_this21.record.address_line2);
+          _this21.pincode = emptyIfNull(_this21.record.pincode);
           _this21.pincode_id = "";
           _this21.city_id = emptyIfNull(_this21.record.city_id) ? _this21.record.city_id.split(",") : [];
           _this21.brand_ids = Array.isArray(_this21.record.brand_ids) ? _this21.record.brand_ids.map(String) : [];
@@ -2903,6 +3358,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
       if (!this.id && !String(this.address_line1 || '').trim()) {
         this.showError(__('address_line_1') + ' ' + __('is_required'));
+        return;
+      }
+
+      // The store's pincode: 6 digits, required for a new distributor (optional when editing an old one).
+      var pin = String(this.pincode || '').trim();
+      if (!this.id && !pin || pin && !/^\d{6}$/.test(pin)) {
+        this.showError(pin ? __('pincode') + ' must be 6 digits' : __('pincode') + ' ' + __('is_required'));
         return;
       }
       if (!this.isSellerRole && !this.brandZoneRows.length) {
@@ -3076,6 +3538,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   formData.append('street', _this24.street);
                   formData.append('address_line1', _this24.address_line1 || '');
                   formData.append('address_line2', _this24.address_line2 || '');
+                  formData.append('pincode', String(_this24.pincode || '').trim());
                   formData.append('pincode_id', _this24.pincode_id);
                   if (!_this24.isSellerRole) {
                     formData.append('brand_zone_mappings', JSON.stringify(_this24.brandZoneRows.map(function (r) {
@@ -3127,34 +3590,34 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
                   if (_this24.address_proof) {
                     formData.append('address_proof', _this24.address_proof);
                   }
-                  _context2.prev = 49;
-                  _context2.next = 52;
+                  _context2.prev = 50;
+                  _context2.next = 53;
                   return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, formData, {
                     headers: {
                       'Content-Type': 'multipart/form-data'
                     }
                   });
-                case 52:
+                case 53:
                   response = _context2.sent;
                   apiStatus = response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.status;
                   if (!(apiStatus !== 1)) {
-                    _context2.next = 57;
+                    _context2.next = 58;
                     break;
                   }
                   apiMessage = (response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.message) || __('something_went_wrong');
                   throw new Error(apiMessage);
-                case 57:
+                case 58:
                   return _context2.abrupt("return", response);
-                case 60:
-                  _context2.prev = 60;
-                  _context2.t0 = _context2["catch"](49);
+                case 61:
+                  _context2.prev = 61;
+                  _context2.t0 = _context2["catch"](50);
                   throw _context2.t0;
-                case 63:
+                case 64:
                 case "end":
                   return _context2.stop();
               }
             }
-          }, _callee2, null, [[49, 60]]);
+          }, _callee2, null, [[50, 61]]);
         }));
         return function saveAll() {
           return _ref.apply(this, arguments);
@@ -3593,6 +4056,30 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 /***/ }),
 
+/***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css":
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__);
+// Imports
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, "\n.ap-muted[data-v-2ba6e8c8] { color: var(--app-muted, #67748e); font-size: 0.85em;\n}\n.ap-empty[data-v-2ba6e8c8] { padding: 18px 12px; text-align: center; color: var(--app-muted, #67748e);\n}\n.ap-toolbar[data-v-2ba6e8c8] { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;\n}\n.ap-search[data-v-2ba6e8c8] { position: relative; flex: 1 1 220px; min-width: 0;\n}\n.ap-search .form-control[data-v-2ba6e8c8] { padding-left: 34px; padding-right: 32px;\n}\n.ap-search__icon[data-v-2ba6e8c8] { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--app-muted, #67748e); pointer-events: none;\n}\n.ap-search__clear[data-v-2ba6e8c8] { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--app-muted, #67748e); padding: 4px 8px; cursor: pointer;\n}\n.ap-district[data-v-2ba6e8c8] { flex: 0 1 240px;\n}\n.ap-btn[data-v-2ba6e8c8] { border: 1px solid var(--app-control-border, #d9dde3); background: transparent; color: var(--app-ink, #25396f); border-radius: 6px; padding: 7px 12px; cursor: pointer; white-space: nowrap;\n}\n.ap-btn[data-v-2ba6e8c8]:hover { background: var(--app-hover, rgba(67, 94, 190, 0.08));\n}\n.ap-btn--on[data-v-2ba6e8c8] { border-color: var(--brand, #042A5F); color: var(--brand, #042A5F); background: var(--brand-tint, #e3eaf5);\n}\n.ap-btn--solid[data-v-2ba6e8c8] { background: var(--brand, #042A5F); border-color: var(--brand, #042A5F); color: #fff;\n}\n.ap-btn--solid[data-v-2ba6e8c8]:hover { background: var(--brand-dark, #021B40);\n}\n.ap-btn--solid[data-v-2ba6e8c8]:disabled { opacity: 0.5; cursor: not-allowed;\n}\n.ap-checks[data-v-2ba6e8c8] { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px;\n}\n.ap-check[data-v-2ba6e8c8] { display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;\n}\n.ap-paste[data-v-2ba6e8c8] { margin-top: 10px;\n}\n.ap-paste__row[data-v-2ba6e8c8] { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px;\n}\n.ap-paste__result[data-v-2ba6e8c8] { font-size: 0.9em;\n}\n.ap-paste__missing[data-v-2ba6e8c8] { color: #dc3545;\n}\n.ap-selected[data-v-2ba6e8c8] { margin-top: 14px; padding: 10px 12px; border: 1px dashed var(--app-card-border, #e6eaf2); border-radius: 8px; background: var(--app-thead-bg, #f7f9fc);\n}\n.ap-selected__head[data-v-2ba6e8c8] { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;\n}\n.ap-chips[data-v-2ba6e8c8] { display: flex; flex-wrap: wrap; gap: 6px; max-height: 120px; overflow-y: auto;\n}\n.ap-chip[data-v-2ba6e8c8] { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--brand-tint, #e3eaf5); color: var(--brand, #042A5F); font-size: 0.85em;\n}\n.ap-chip--missing[data-v-2ba6e8c8] { background: rgba(220, 53, 69, 0.12); color: #dc3545;\n}\n.ap-chip button[data-v-2ba6e8c8] { border: 0; background: transparent; color: inherit; padding: 0 6px; cursor: pointer; line-height: 1;\n}\n.ap-chip button[data-v-2ba6e8c8]:hover { opacity: 0.7;\n}\n.ap-link[data-v-2ba6e8c8] { border: 0; background: transparent; color: var(--brand, #042A5F); padding: 0; margin-left: 12px; cursor: pointer; font-size: 0.9em;\n}\n.ap-link[data-v-2ba6e8c8]:hover { text-decoration: underline;\n}\n.ap-listhead[data-v-2ba6e8c8] { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 14px 0 6px;\n}\n.ap-listhead__actions .ap-link[data-v-2ba6e8c8]:first-child { margin-left: 0;\n}\n.ap-hint[data-v-2ba6e8c8] { margin: 0 0 6px; font-size: 0.85em; color: var(--app-muted, #67748e);\n}\n.ap-list[data-v-2ba6e8c8] { max-height: 360px; overflow-y: auto; border: 1px solid var(--app-card-border, #e6eaf2); border-radius: 8px; background: var(--app-card-bg, #fff);\n}\n.ap-group[data-v-2ba6e8c8] { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; margin: 0; padding: 7px 12px; background: var(--app-thead-bg, #f7f9fc); border-bottom: 1px solid var(--app-card-border, #e6eaf2); font-weight: 600; cursor: pointer;\n}\n.ap-group__name[data-v-2ba6e8c8] { flex: 1 1 auto;\n}\n.ap-row[data-v-2ba6e8c8] { display: flex; align-items: center; gap: 8px; margin: 0; padding: 7px 12px 7px 32px; cursor: pointer; border-bottom: 1px solid var(--app-card-border, #e6eaf2);\n}\n.ap-row[data-v-2ba6e8c8]:last-child { border-bottom: 0;\n}\n.ap-row[data-v-2ba6e8c8]:hover { background: var(--app-hover, rgba(67, 94, 190, 0.08));\n}\n.ap-row--on[data-v-2ba6e8c8] { background: var(--brand-tint, #e3eaf5);\n}\n.ap-row__name[data-v-2ba6e8c8] { flex: 1 1 auto; min-width: 0;\n}\n.ap-row__pin[data-v-2ba6e8c8] { color: var(--app-muted, #67748e); font-variant-numeric: tabular-nums;\n}\n.ap-more[data-v-2ba6e8c8] { display: block; width: 100%; border: 0; border-top: 1px solid var(--app-card-border, #e6eaf2); background: transparent; color: var(--brand, #042A5F); padding: 10px; cursor: pointer;\n}\n.ap-more[data-v-2ba6e8c8]:hover { background: var(--app-hover, rgba(67, 94, 190, 0.08));\n}\n", ""]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ }),
+
 /***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css":
 /*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css ***!
@@ -3644,6 +4131,36 @@ ___CSS_LOADER_EXPORT___.push([module.id, "fieldset[disabled] .multiselect{pointe
 
 /***/ }),
 
+/***/ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css":
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../../../node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_style_index_0_id_2ba6e8c8_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../../../node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css */ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css");
+
+            
+
+var options = {};
+
+options.insert = "head";
+options.singleton = false;
+
+var update = _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_style_index_0_id_2ba6e8c8_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__["default"], options);
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_style_index_0_id_2ba6e8c8_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__["default"].locals || {});
+
+/***/ }),
+
 /***/ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css":
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css ***!
@@ -3671,6 +4188,47 @@ var update = _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_EditSeller_vue_vue_type_style_index_0_id_0c56d16c_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_1__["default"].locals || {});
+
+/***/ }),
+
+/***/ "./resources/js/views/Seller/AreaPicker.vue":
+/*!**************************************************!*\
+  !*** ./resources/js/views/Seller/AreaPicker.vue ***!
+  \**************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _AreaPicker_vue_vue_type_template_id_2ba6e8c8_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true */ "./resources/js/views/Seller/AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true");
+/* harmony import */ var _AreaPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AreaPicker.vue?vue&type=script&lang=js */ "./resources/js/views/Seller/AreaPicker.vue?vue&type=script&lang=js");
+/* harmony import */ var _AreaPicker_vue_vue_type_style_index_0_id_2ba6e8c8_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css */ "./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+;
+
+
+/* normalize component */
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _AreaPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _AreaPicker_vue_vue_type_template_id_2ba6e8c8_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _AreaPicker_vue_vue_type_template_id_2ba6e8c8_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "2ba6e8c8",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/views/Seller/AreaPicker.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
 
 /***/ }),
 
@@ -3715,6 +4273,22 @@ component.options.__file = "resources/js/views/Seller/EditSeller.vue"
 
 /***/ }),
 
+/***/ "./resources/js/views/Seller/AreaPicker.vue?vue&type=script&lang=js":
+/*!**************************************************************************!*\
+  !*** ./resources/js/views/Seller/AreaPicker.vue?vue&type=script&lang=js ***!
+  \**************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./AreaPicker.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
 /***/ "./resources/js/views/Seller/EditSeller.vue?vue&type=script&lang=js":
 /*!**************************************************************************!*\
   !*** ./resources/js/views/Seller/EditSeller.vue?vue&type=script&lang=js ***!
@@ -3731,6 +4305,19 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css":
+/*!**********************************************************************************************************!*\
+  !*** ./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css ***!
+  \**********************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_style_loader_dist_cjs_js_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_style_index_0_id_2ba6e8c8_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/style-loader/dist/cjs.js!../../../../node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css */ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=style&index=0&id=2ba6e8c8&scoped=true&lang=css");
+
+
+/***/ }),
+
 /***/ "./resources/js/views/Seller/EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css":
 /*!**********************************************************************************************************!*\
   !*** ./resources/js/views/Seller/EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css ***!
@@ -3740,6 +4327,23 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _node_modules_style_loader_dist_cjs_js_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_EditSeller_vue_vue_type_style_index_0_id_0c56d16c_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/style-loader/dist/cjs.js!../../../../node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css */ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=style&index=0&id=0c56d16c&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/views/Seller/AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true":
+/*!********************************************************************************************!*\
+  !*** ./resources/js/views/Seller/AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true ***!
+  \********************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_template_id_2ba6e8c8_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_template_id_2ba6e8c8_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_AreaPicker_vue_vue_type_template_id_2ba6e8c8_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true");
 
 
 /***/ }),
@@ -3757,6 +4361,564 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditSeller_vue_vue_type_template_id_0c56d16c_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_EditSeller_vue_vue_type_template_id_0c56d16c_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./EditSeller.vue?vue&type=template&id=0c56d16c&scoped=true */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/EditSeller.vue?vue&type=template&id=0c56d16c&scoped=true");
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true":
+/*!***********************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Seller/AreaPicker.vue?vue&type=template&id=2ba6e8c8&scoped=true ***!
+  \***********************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render),
+/* harmony export */   staticRenderFns: () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "ap" },
+    [
+      !_vm.rows.length
+        ? _c("div", { staticClass: "ap-empty" }, [
+            _vm._v(_vm._s(_vm.__("area_picker_no_areas"))),
+          ])
+        : [
+            _c("div", { staticClass: "ap-toolbar" }, [
+              _c("div", { staticClass: "ap-search" }, [
+                _c("i", { staticClass: "fa fa-search ap-search__icon" }),
+                _vm._v(" "),
+                _c("input", {
+                  staticClass: "form-control",
+                  attrs: {
+                    type: "text",
+                    placeholder: _vm.__("area_picker_search_placeholder"),
+                  },
+                  domProps: { value: _vm.searchInput },
+                  on: {
+                    input: function ($event) {
+                      return _vm.onSearchInput($event.target.value)
+                    },
+                  },
+                }),
+                _vm._v(" "),
+                _vm.searchInput
+                  ? _c(
+                      "button",
+                      {
+                        staticClass: "ap-search__clear",
+                        attrs: {
+                          type: "button",
+                          "aria-label": _vm.__("clear"),
+                        },
+                        on: { click: _vm.clearSearch },
+                      },
+                      [_c("i", { staticClass: "fa fa-times" })]
+                    )
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c(
+                "select",
+                {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.district,
+                      expression: "district",
+                    },
+                  ],
+                  staticClass: "form-control ap-district",
+                  on: {
+                    change: function ($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function (o) {
+                          return o.selected
+                        })
+                        .map(function (o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.district = $event.target.multiple
+                        ? $$selectedVal
+                        : $$selectedVal[0]
+                    },
+                  },
+                },
+                [
+                  _c("option", { domProps: { value: null } }, [
+                    _vm._v(
+                      _vm._s(_vm.__("area_picker_all_districts")) +
+                        " (" +
+                        _vm._s(_vm.rows.length) +
+                        ")"
+                    ),
+                  ]),
+                  _vm._v(" "),
+                  _vm._l(_vm.districtList, function (d) {
+                    return _c(
+                      "option",
+                      { key: d.key, domProps: { value: d.key } },
+                      [_vm._v(_vm._s(d.label) + " (" + _vm._s(d.count) + ")")]
+                    )
+                  }),
+                ],
+                2
+              ),
+              _vm._v(" "),
+              _c(
+                "button",
+                {
+                  staticClass: "ap-btn",
+                  class: { "ap-btn--on": _vm.showPaste },
+                  attrs: { type: "button" },
+                  on: {
+                    click: function ($event) {
+                      _vm.showPaste = !_vm.showPaste
+                    },
+                  },
+                },
+                [
+                  _c("i", { staticClass: "fa fa-paste" }),
+                  _vm._v(
+                    " " +
+                      _vm._s(_vm.__("area_picker_paste_pincodes")) +
+                      "\n            "
+                  ),
+                ]
+              ),
+            ]),
+            _vm._v(" "),
+            _vm.zoneDistrictSet.size || _vm.selectedCount
+              ? _c("div", { staticClass: "ap-checks" }, [
+                  _vm.zoneDistrictSet.size
+                    ? _c("label", { staticClass: "ap-check" }, [
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.zoneOnly,
+                              expression: "zoneOnly",
+                            },
+                          ],
+                          attrs: { type: "checkbox" },
+                          domProps: {
+                            checked: Array.isArray(_vm.zoneOnly)
+                              ? _vm._i(_vm.zoneOnly, null) > -1
+                              : _vm.zoneOnly,
+                          },
+                          on: {
+                            change: function ($event) {
+                              var $$a = _vm.zoneOnly,
+                                $$el = $event.target,
+                                $$c = $$el.checked ? true : false
+                              if (Array.isArray($$a)) {
+                                var $$v = null,
+                                  $$i = _vm._i($$a, $$v)
+                                if ($$el.checked) {
+                                  $$i < 0 && (_vm.zoneOnly = $$a.concat([$$v]))
+                                } else {
+                                  $$i > -1 &&
+                                    (_vm.zoneOnly = $$a
+                                      .slice(0, $$i)
+                                      .concat($$a.slice($$i + 1)))
+                                }
+                              } else {
+                                _vm.zoneOnly = $$c
+                              }
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c("span", [
+                          _vm._v(
+                            _vm._s(_vm.__("area_picker_match_zone_cities")) +
+                              "\n                    "
+                          ),
+                          _c("span", { staticClass: "ap-muted" }, [
+                            _vm._v("(" + _vm._s(_vm.zoneMatchLabel) + ")"),
+                          ]),
+                        ]),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm.selectedCount
+                    ? _c("label", { staticClass: "ap-check" }, [
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.selectedOnly,
+                              expression: "selectedOnly",
+                            },
+                          ],
+                          attrs: { type: "checkbox" },
+                          domProps: {
+                            checked: Array.isArray(_vm.selectedOnly)
+                              ? _vm._i(_vm.selectedOnly, null) > -1
+                              : _vm.selectedOnly,
+                          },
+                          on: {
+                            change: function ($event) {
+                              var $$a = _vm.selectedOnly,
+                                $$el = $event.target,
+                                $$c = $$el.checked ? true : false
+                              if (Array.isArray($$a)) {
+                                var $$v = null,
+                                  $$i = _vm._i($$a, $$v)
+                                if ($$el.checked) {
+                                  $$i < 0 &&
+                                    (_vm.selectedOnly = $$a.concat([$$v]))
+                                } else {
+                                  $$i > -1 &&
+                                    (_vm.selectedOnly = $$a
+                                      .slice(0, $$i)
+                                      .concat($$a.slice($$i + 1)))
+                                }
+                              } else {
+                                _vm.selectedOnly = $$c
+                              }
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c("span", [
+                          _vm._v(_vm._s(_vm.__("area_picker_selected_only"))),
+                        ]),
+                      ])
+                    : _vm._e(),
+                ])
+              : _vm._e(),
+            _vm._v(" "),
+            _vm.showPaste
+              ? _c("div", { staticClass: "ap-paste" }, [
+                  _c("textarea", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.pasteText,
+                        expression: "pasteText",
+                      },
+                    ],
+                    staticClass: "form-control",
+                    attrs: {
+                      rows: "2",
+                      placeholder: _vm.__("area_picker_paste_placeholder"),
+                    },
+                    domProps: { value: _vm.pasteText },
+                    on: {
+                      input: function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.pasteText = $event.target.value
+                      },
+                    },
+                  }),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "ap-paste__row" }, [
+                    _c(
+                      "button",
+                      {
+                        staticClass: "ap-btn ap-btn--solid",
+                        attrs: {
+                          type: "button",
+                          disabled: !_vm.pasteText.trim(),
+                        },
+                        on: { click: _vm.applyPaste },
+                      },
+                      [_vm._v(_vm._s(_vm.__("area_picker_paste_add")))]
+                    ),
+                    _vm._v(" "),
+                    _vm.pasteResult
+                      ? _c("span", { staticClass: "ap-paste__result" }, [
+                          _c("strong", [_vm._v(_vm._s(_vm.pasteResult.added))]),
+                          _vm._v(
+                            " " +
+                              _vm._s(_vm.__("area_picker_paste_added")) +
+                              "\n                    · " +
+                              _vm._s(_vm.pasteResult.matched) +
+                              " " +
+                              _vm._s(_vm.__("area_picker_paste_matched")) +
+                              "\n                    "
+                          ),
+                          _vm.pasteResult.missing.length
+                            ? _c("span", { staticClass: "ap-paste__missing" }, [
+                                _vm._v(
+                                  "\n                        · " +
+                                    _vm._s(
+                                      _vm.__("area_picker_paste_not_found")
+                                    ) +
+                                    ": " +
+                                    _vm._s(_vm.pasteResult.missing.join(", ")) +
+                                    "\n                    "
+                                ),
+                              ])
+                            : _vm._e(),
+                        ])
+                      : _vm._e(),
+                  ]),
+                ])
+              : _vm._e(),
+            _vm._v(" "),
+            _c("div", { staticClass: "ap-selected" }, [
+              _c("div", { staticClass: "ap-selected__head" }, [
+                _c("strong", [
+                  _vm._v(
+                    _vm._s(_vm.__("area_picker_selected")) +
+                      " (" +
+                      _vm._s(_vm.selectedCount) +
+                      ")"
+                  ),
+                ]),
+                _vm._v(" "),
+                _vm.selectedCount
+                  ? _c(
+                      "button",
+                      {
+                        staticClass: "ap-link",
+                        attrs: { type: "button" },
+                        on: { click: _vm.clearAll },
+                      },
+                      [_vm._v(_vm._s(_vm.__("area_picker_clear_all")))]
+                    )
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _vm.selectedCount
+                ? _c(
+                    "div",
+                    { staticClass: "ap-chips" },
+                    _vm._l(_vm.chips, function (chip) {
+                      return _c(
+                        "span",
+                        {
+                          key: chip.id,
+                          staticClass: "ap-chip",
+                          class: { "ap-chip--missing": chip.missing },
+                        },
+                        [
+                          _vm._v(
+                            "\n                    " +
+                              _vm._s(chip.label) +
+                              "\n                    "
+                          ),
+                          _c(
+                            "button",
+                            {
+                              attrs: {
+                                type: "button",
+                                "aria-label": _vm.__("remove"),
+                              },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.remove(chip.id)
+                                },
+                              },
+                            },
+                            [_c("i", { staticClass: "fa fa-times" })]
+                          ),
+                        ]
+                      )
+                    }),
+                    0
+                  )
+                : _c("p", { staticClass: "ap-muted mb-0" }, [
+                    _vm._v(_vm._s(_vm.__("area_picker_none_selected"))),
+                  ]),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "ap-listhead" }, [
+              _c("span", { staticClass: "ap-muted" }, [
+                _vm._v(
+                  _vm._s(
+                    _vm.fmt("area_picker_showing", {
+                      shown: _vm.shown.length,
+                      total: _vm.filtered.length,
+                    })
+                  )
+                ),
+              ]),
+              _vm._v(" "),
+              _c("span", { staticClass: "ap-listhead__actions" }, [
+                _vm.isFiltering &&
+                _vm.filtered.length &&
+                _vm.filteredSelectedCount < _vm.filtered.length
+                  ? _c(
+                      "button",
+                      {
+                        staticClass: "ap-link",
+                        attrs: { type: "button" },
+                        on: { click: _vm.selectFiltered },
+                      },
+                      [
+                        _vm._v(
+                          _vm._s(
+                            _vm.fmt("area_picker_select_matches", {
+                              n: _vm.filtered.length,
+                            })
+                          )
+                        ),
+                      ]
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.isFiltering && _vm.filteredSelectedCount
+                  ? _c(
+                      "button",
+                      {
+                        staticClass: "ap-link",
+                        attrs: { type: "button" },
+                        on: { click: _vm.deselectFiltered },
+                      },
+                      [_vm._v(_vm._s(_vm.__("area_picker_deselect_matches")))]
+                    )
+                  : _vm._e(),
+              ]),
+            ]),
+            _vm._v(" "),
+            !_vm.isFiltering
+              ? _c("p", { staticClass: "ap-hint" }, [
+                  _vm._v(_vm._s(_vm.__("area_picker_narrow_hint"))),
+                ])
+              : _vm._e(),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "ap-list" },
+              [
+                !_vm.filtered.length
+                  ? _c("div", { staticClass: "ap-empty" }, [
+                      _vm._v(_vm._s(_vm.__("area_picker_no_matches"))),
+                    ])
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm._l(_vm.groups, function (group) {
+                  return [
+                    _c(
+                      "label",
+                      { key: "h" + group.key, staticClass: "ap-group" },
+                      [
+                        _c("input", {
+                          attrs: { type: "checkbox" },
+                          domProps: {
+                            checked:
+                              _vm.groupMeta[group.key].selected ===
+                              _vm.groupMeta[group.key].total,
+                            indeterminate:
+                              _vm.groupMeta[group.key].selected > 0 &&
+                              _vm.groupMeta[group.key].selected <
+                                _vm.groupMeta[group.key].total,
+                          },
+                          on: {
+                            change: function ($event) {
+                              return _vm.toggleGroup(
+                                group.key,
+                                $event.target.checked
+                              )
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "ap-group__name" }, [
+                          _vm._v(
+                            _vm._s(
+                              group.key || _vm.__("area_picker_other_district")
+                            )
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "ap-muted" }, [
+                          _vm._v(
+                            _vm._s(_vm.groupMeta[group.key].selected) +
+                              "/" +
+                              _vm._s(_vm.groupMeta[group.key].total)
+                          ),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _vm._l(group.rows, function (row) {
+                      return _c(
+                        "label",
+                        {
+                          key: row.id,
+                          staticClass: "ap-row",
+                          class: { "ap-row--on": _vm.selectedSet.has(row.id) },
+                        },
+                        [
+                          _c("input", {
+                            attrs: { type: "checkbox" },
+                            domProps: { checked: _vm.selectedSet.has(row.id) },
+                            on: {
+                              change: function ($event) {
+                                return _vm.toggle(row.id, $event.target.checked)
+                              },
+                            },
+                          }),
+                          _vm._v(" "),
+                          _c("span", { staticClass: "ap-row__name" }, [
+                            _vm._v(_vm._s(row.name)),
+                          ]),
+                          _vm._v(" "),
+                          _c("span", { staticClass: "ap-row__pin" }, [
+                            _vm._v(_vm._s(row.pincode)),
+                          ]),
+                        ]
+                      )
+                    }),
+                  ]
+                }),
+                _vm._v(" "),
+                _vm.shown.length < _vm.filtered.length
+                  ? _c(
+                      "button",
+                      {
+                        staticClass: "ap-more",
+                        attrs: { type: "button" },
+                        on: {
+                          click: function ($event) {
+                            _vm.limit += _vm.PAGE
+                          },
+                        },
+                      },
+                      [
+                        _vm._v(
+                          "\n                " +
+                            _vm._s(
+                              _vm.fmt("area_picker_show_more", {
+                                n: Math.min(
+                                  _vm.PAGE,
+                                  _vm.filtered.length - _vm.shown.length
+                                ),
+                              })
+                            ) +
+                            "\n            "
+                        ),
+                      ]
+                    )
+                  : _vm._e(),
+              ],
+              2
+            ),
+          ],
+    ],
+    2
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
 
 
 /***/ }),
@@ -8313,18 +9475,11 @@ var render = function () {
                                                       staticClass: "card-body",
                                                     },
                                                     [
-                                                      _c("Select2", {
+                                                      _c("AreaPicker", {
                                                         attrs: {
-                                                          placeholder:
-                                                            _vm.__(
-                                                              "select_areas"
-                                                            ),
-                                                          options:
-                                                            _vm.areas_options,
-                                                          settings: {
-                                                            multiple:
-                                                              "multiple",
-                                                          },
+                                                          areas: _vm.areas,
+                                                          "zone-cities":
+                                                            _vm.areaZoneCityNames,
                                                         },
                                                         model: {
                                                           value: _vm.area_ids,
@@ -8480,7 +9635,7 @@ var render = function () {
                                                       "div",
                                                       {
                                                         staticClass:
-                                                          "form-group col-md-6",
+                                                          "form-group col-md-4",
                                                       },
                                                       [
                                                         _c(
@@ -8568,7 +9723,7 @@ var render = function () {
                                                       "div",
                                                       {
                                                         staticClass:
-                                                          "form-group col-md-6",
+                                                          "form-group col-md-4",
                                                       },
                                                       [
                                                         _c(
@@ -8629,6 +9784,95 @@ var render = function () {
                                                                       return
                                                                     }
                                                                     _vm.address_line2 =
+                                                                      $event.target.value
+                                                                  },
+                                                              },
+                                                            }),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "div",
+                                                      {
+                                                        staticClass:
+                                                          "form-group col-md-4",
+                                                      },
+                                                      [
+                                                        _c(
+                                                          "div",
+                                                          {
+                                                            staticClass:
+                                                              "form-group",
+                                                          },
+                                                          [
+                                                            _c("label", [
+                                                              _vm._v(
+                                                                " " +
+                                                                  _vm._s(
+                                                                    _vm.__(
+                                                                      "pincode"
+                                                                    )
+                                                                  )
+                                                              ),
+                                                              !_vm.id
+                                                                ? _c(
+                                                                    "i",
+                                                                    {
+                                                                      staticClass:
+                                                                        "text-danger",
+                                                                    },
+                                                                    [
+                                                                      _vm._v(
+                                                                        "*"
+                                                                      ),
+                                                                    ]
+                                                                  )
+                                                                : _vm._e(),
+                                                            ]),
+                                                            _vm._v(" "),
+                                                            _c("input", {
+                                                              directives: [
+                                                                {
+                                                                  name: "model",
+                                                                  rawName:
+                                                                    "v-model",
+                                                                  value:
+                                                                    _vm.pincode,
+                                                                  expression:
+                                                                    "pincode",
+                                                                },
+                                                              ],
+                                                              staticClass:
+                                                                "form-control",
+                                                              attrs: {
+                                                                type: "text",
+                                                                maxlength: "6",
+                                                                inputmode:
+                                                                  "numeric",
+                                                                placeholder:
+                                                                  _vm.__(
+                                                                    "pincode"
+                                                                  ),
+                                                              },
+                                                              domProps: {
+                                                                value:
+                                                                  _vm.pincode,
+                                                              },
+                                                              on: {
+                                                                input:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    if (
+                                                                      $event
+                                                                        .target
+                                                                        .composing
+                                                                    ) {
+                                                                      return
+                                                                    }
+                                                                    _vm.pincode =
                                                                       $event.target.value
                                                                   },
                                                               },

@@ -1037,8 +1037,10 @@ export default {
             axios.get(this.$sellerApiUrl + '/payment_methods')
                 .then(res => {
                     if (res.data.status && res.data.data) {
+                        // The list says "bank" (what the apps use); this page is built on the key "upi".
                         this.paymentMethods = res.data.data.methods.map(m => ({
                             ...m,
+                            method: m.method === 'bank' ? 'upi' : m.method,
                             is_enabled: m.is_enabled ? 1 : 0
                         }));
                         // cash and bank rows carry the same shared %

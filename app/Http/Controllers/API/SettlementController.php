@@ -85,6 +85,29 @@ class SettlementController extends Controller
     }
 
     /**
+     * Payments this distributor may act on — the same ownership the trips list / detail use:
+     * a driver payment when the driver is linked to the distributor (delivery_boy_sellers — a driver
+     * can be shared by several, so delivery_boys.seller_id alone is not enough) and the order is this
+     * distributor's own, or (unless $driversOnly) a payment collected by one of the distributor's salesmen.
+     */
+    private function sellerPaymentsQuery(Seller $seller, bool $driversOnly = false)
+    {
+        return OrderPayment::where(function ($q) use ($seller, $driversOnly) {
+            $q->where(function ($qq) use ($seller) {
+                $qq->whereIn('order_payments.delivery_boy_id', DB::table('delivery_boy_sellers')
+                        ->where('seller_id', $seller->id)
+                        ->select('delivery_boy_id'))
+                   ->whereExists(fn ($e) => $e->select(DB::raw(1))->from('order_items')
+                        ->whereColumn('order_items.order_id', 'order_payments.order_id')
+                        ->where('order_items.seller_id', $seller->id));
+            });
+            if (!$driversOnly) {
+                $q->orWhereHas('salesman', fn ($qq) => $qq->where('seller_id', $seller->id));
+            }
+        });
+    }
+
+    /**
      * Cheap "needs_rereconcile" detection for the trips LIST (not the full legacy-close
      * upgrade logic sellerTripDetailUpdated() does, which needs per-order/loading-slip
      * queries that don't scale to a paginated list). A trip flips to needs_rereconcile
@@ -197,7 +220,8 @@ class SettlementController extends Controller
         $data = array_map(function ($m) use ($seller, $adminEnabled) {
             $adminOn = in_array($m, $adminEnabled, true);
             $row = [
-                'method'      => $m,
+                // "upi" is the stored key; the apps see "bank" (same as the driver / salesman lists)
+                'method'      => OrderPayment::appMethod($m),
                 'is_enabled'  => $adminOn && (int) ($seller->{'payment_method_' . $m} ?? 0) === 1,
                 'is_editable' => $adminOn, // false = admin disabled, shown greyed-out
             ];
@@ -214,7 +238,7 @@ class SettlementController extends Controller
 
     /**
      * POST /seller/payment_methods/save
-     * Body: { cash: 0|1, upi: 0|1, cheque: 0|1, signature: 0|1, cash_discount_percent?: 0-100 }
+     * Body: { cash: 0|1, bank (or upi): 0|1, cheque: 0|1, signature: 0|1, cash_discount_percent?: 0-100 }
      * Silently ignores values for methods admin has disabled.
      * cash_discount_percent is the ONE instant-payment discount shared by cash and bank; left out of the
      * body it keeps its saved value, sent blank it clears to 0.
@@ -224,6 +248,11 @@ class SettlementController extends Controller
         $seller = $this->currentSeller();
         if (!$seller) {
             return CommonHelper::responseError('seller_not_found');
+        }
+
+        // The list now says "bank", so an app sends `bank` for the stored `upi`; either field name works.
+        if ($request->has('bank') && !$request->has('upi')) {
+            $request->merge(['upi' => $request->input('bank')]);
         }
 
         $validator = Validator::make($request->all(), [
@@ -264,8 +293,8 @@ class SettlementController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        $query = OrderPayment::with(['order:id,orders_id,final_total', 'deliveryBoy:id,name,mobile'])
-            ->whereHas('deliveryBoy', fn ($q) => $q->where('seller_id', $seller->id))
+        $query = $this->sellerPaymentsQuery($seller, true)
+            ->with(['order:id,orders_id,final_total', 'deliveryBoy:id,name,mobile'])
             ->where('status', 'pending')
             ->orderByDesc('created_at');
 
@@ -301,11 +330,7 @@ class SettlementController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $payment = OrderPayment::where(function ($q) use ($seller) {
-                $q->whereHas('deliveryBoy', fn ($qq) => $qq->where('seller_id', $seller->id))
-                  ->orWhereHas('salesman', fn ($qq) => $qq->where('seller_id', $seller->id));
-            })
-            ->find($request->payment_id);
+        $payment = $this->sellerPaymentsQuery($seller)->find($request->payment_id);
 
         if (!$payment) {
             return CommonHelper::responseError('payment_not_found');
@@ -371,11 +396,7 @@ class SettlementController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $payment = OrderPayment::where(function ($q) use ($seller) {
-                $q->whereHas('deliveryBoy', fn ($qq) => $qq->where('seller_id', $seller->id))
-                  ->orWhereHas('salesman', fn ($qq) => $qq->where('seller_id', $seller->id));
-            })
-            ->find($request->payment_id);
+        $payment = $this->sellerPaymentsQuery($seller)->find($request->payment_id);
 
         if (!$payment) {
             return CommonHelper::responseError('payment_not_found');
@@ -444,6 +465,11 @@ class SettlementController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
+        // Apps send "bank" for what is stored as "upi" (OrderPayment::storedMethod); both are accepted.
+        if ($request->has('method')) {
+            $request->merge(['method' => OrderPayment::storedMethod($request->input('method'))]);
+        }
+
         $validator = Validator::make($request->all(), [
             'payment_id'    => 'required|integer|exists:order_payments,id',
             'method'        => 'required|string|in:' . implode(',', self::METHODS),
@@ -454,11 +480,7 @@ class SettlementController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $payment = OrderPayment::where(function ($q) use ($seller) {
-                $q->whereHas('deliveryBoy', fn ($qq) => $qq->where('seller_id', $seller->id))
-                  ->orWhereHas('salesman', fn ($qq) => $qq->where('seller_id', $seller->id));
-            })
-            ->find($request->payment_id);
+        $payment = $this->sellerPaymentsQuery($seller)->find($request->payment_id);
 
         if (!$payment) {
             return CommonHelper::responseError('payment_not_found');
@@ -2116,7 +2138,11 @@ class SettlementController extends Controller
                 'loading_slip_no' => $o->loadingSlip ? $o->loadingSlip->slip_no : null,
                 'invoice_number'  => $o->invoice_number,
                 'retailer'        => $this->retailerPayload($o->user),
-                'payments'        => $paymentMap->get($o->id, collect())->values(),
+                // "upi" is the stored method; every app shows and sends "bank" (OrderPayment::appMethod). Copied,
+                // not changed in place — the same payment rows still feed the totals below.
+                'payments'        => $paymentMap->get($o->id, collect())->map(
+                    fn ($p) => array_merge($p->toArray(), ['method' => OrderPayment::appMethod($p->method)])
+                )->values(),
                 'returns'         => $returnMap->get($o->id, collect())->map(fn ($r) => [
                     'product_name'  => $r->orderItem->product_name ?? '-',
                     'refund_amount' => (float) ($r->orderItem->refund_amount ?? 0),
@@ -2132,9 +2158,11 @@ class SettlementController extends Controller
                 'has_cash'          => $hasCash,
                 'total_cash'        => round($payments->where('method', 'cash')->sum('amount'), 2),
                 'total_upi'         => round($payments->where('method', 'upi')->sum('amount'), 2),
+                'total_bank'        => round($payments->where('method', 'upi')->sum('amount'), 2),
                 'total_cheque'      => round($payments->where('method', 'cheque')->sum('amount'), 2),
                 'total_signature'   => round($payments->where('method', 'signature')->sum('amount'), 2),
                 'verified_upi'      => round($payments->where('method', 'upi')->where('status', 'verified')->sum('amount'), 2),
+                'verified_bank'     => round($payments->where('method', 'upi')->where('status', 'verified')->sum('amount'), 2),
                 'verified_cheque'   => round($payments->where('method', 'cheque')->where('status', 'verified')->sum('amount'), 2),
                 'verified_signature'=> round($payments->where('method', 'signature')->where('status', 'verified')->sum('amount'), 2),
                 'unverified_digital'=> $unverifiedDigital,

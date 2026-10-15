@@ -189,6 +189,14 @@
                                             <p class="lsv-stop__addr" v-if="order.customer_address">
                                                 <i class="fa fa-map-marker"></i> {{ order.customer_address }}
                                             </p>
+                                            <!-- Rescheduled off this slip: it stays listed, with where it went -->
+                                            <p class="lsv-stop__resched" v-if="order.rescheduled_off_slip">
+                                                <i class="fa fa-calendar-alt"></i>
+                                                {{ __('Rescheduled') }}
+                                                <template v-if="order.rescheduled_at">{{ __('on') }} {{ formatDay(order.rescheduled_at) }}</template>
+                                                <template v-if="order.delivery_date"> &middot; {{ __('New delivery') }}: {{ formatDay(order.delivery_date) }}<template v-if="order.delivery_time"> ({{ order.delivery_time }})</template></template>
+                                                <template v-if="order.delivery_reason"> &middot; {{ __('Reason') }}: {{ order.delivery_reason }}</template>
+                                            </p>
                                         </div>
                                     </div>
 
@@ -347,7 +355,7 @@ export default {
         },
         // Stops that still count towards the run (a cancelled / returned order won't be delivered)
         activeStops() {
-            return this.orders.filter(o => ![ORDER_STATUS.cancelled, ORDER_STATUS.returned].includes(Number(o.active_status)));
+            return this.orders.filter(o => !o.rescheduled_off_slip && ![ORDER_STATUS.cancelled, ORDER_STATUS.returned].includes(Number(o.active_status)));
         },
         activeStopCount() {
             return this.activeStops.length;
@@ -463,6 +471,9 @@ export default {
         formatDate(dateStr) {
             return moment(dateStr).format('DD-MM-YYYY hh:mm A');
         },
+        formatDay(dateStr) {
+            return moment(dateStr).format('DD-MM-YYYY');
+        },
         formatNumber(value) {
             const n = parseFloat(value);
             return isNaN(n) ? '0' : n.toLocaleString('en-IN', { maximumFractionDigits: 1 });
@@ -477,6 +488,10 @@ export default {
         // Where this stop stands: label + colour for its pill and route node.
         // `muted` dims stops that will not be delivered.
         stopStatus(order) {
+            // Taken off this run by a reschedule — whatever the order's status is now belongs to its new run.
+            if (order.rescheduled_off_slip) {
+                return { key: 'rescheduled', label: __('Rescheduled'), tone: 'purple' };
+            }
             switch (Number(order.active_status)) {
                 case ORDER_STATUS.delivered:
                     return { key: 'delivered', label: __('Delivered'), tone: 'green' };
@@ -800,6 +815,8 @@ export default {
 .lsv-stop__title h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--lsv-text); }
 .lsv-stop__addr { margin: 8px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--lsv-muted); }
 .lsv-stop__addr .fa { color: var(--lsv-red); margin-right: 6px; }
+.lsv-stop__resched { margin: 6px 0 0; font-size: 13px; line-height: 1.5; font-weight: 600; color: var(--lsv-purple-fg); }
+.lsv-stop__resched .fa { margin-right: 6px; }
 
 .lsv-items { margin-top: 14px; border: 1px solid var(--lsv-border); border-radius: 12px; overflow: hidden; background: var(--lsv-soft); }
 .lsv-items__toggle {

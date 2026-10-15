@@ -171,6 +171,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 //
 //
 //
+//
 
 
 
@@ -439,7 +440,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue2_daterange_picker_dist_vue2_daterange_picker_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.trip-type-toggle .btn[data-v-a90058fc]:first-child { border-top-left-radius: 50rem; border-bottom-left-radius: 50rem;\n}\n.trip-type-toggle .btn[data-v-a90058fc]:last-child  { border-top-right-radius: 50rem; border-bottom-right-radius: 50rem;\n}\n.vue-daterange-picker[data-v-a90058fc] {\n    min-width: 220px;\n}\n.recon-pill[data-v-a90058fc] {\n    display: inline-flex; align-items: center;\n    font-size: 11px; font-weight: 700;\n    padding: 4px 10px; border-radius: 20px;\n}\n.recon-pill--grey[data-v-a90058fc]   { background: #f3f4f6; color: #6b7280;\n}\n.recon-pill--orange[data-v-a90058fc] { background: #fff7ed; color: #ea580c;\n}\n.recon-pill--green[data-v-a90058fc]  { background: #dcfce7; color: #16a34a;\n}\n.recon-pill--blue[data-v-a90058fc]   { background: #e0f2fe; color: #0284c7;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n/* Type switch: one rounded track holding the options, the active one filled with the brand colour.\n   Same height as the other filters (42px) so the toolbar lines up. */\n.trip-seg[data-v-a90058fc] { display: inline-flex; gap: 4px; padding: 4px; height: 42px; border-radius: 12px; background: var(--ui-slate-bg, #eef1f6);\n}\n.trip-seg .trip-seg__btn[data-v-a90058fc] {\n    padding: 0 16px; border: 0; border-radius: 9px; background: transparent; color: var(--ui-muted, #67748e);\n    font-size: 13.5px; font-weight: 600; line-height: 1; white-space: nowrap; cursor: pointer;\n    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;\n}\n.trip-seg .trip-seg__btn[data-v-a90058fc]:hover { color: var(--ui-text, #25396f);\n}\n.trip-seg .trip-seg__btn--on[data-v-a90058fc],\n.trip-seg .trip-seg__btn--on[data-v-a90058fc]:hover { background: var(--brand, #042A5F); color: #fff; box-shadow: 0 1px 3px rgba(var(--brand-rgb, 4, 42, 95), 0.35);\n}\n.vue-daterange-picker[data-v-a90058fc] {\n    min-width: 220px;\n}\n.recon-pill[data-v-a90058fc] {\n    display: inline-flex; align-items: center;\n    font-size: 11px; font-weight: 700;\n    padding: 4px 10px; border-radius: 20px;\n}\n.recon-pill--grey[data-v-a90058fc]   { background: #f3f4f6; color: #6b7280;\n}\n.recon-pill--orange[data-v-a90058fc] { background: #fff7ed; color: #ea580c;\n}\n.recon-pill--green[data-v-a90058fc]  { background: #dcfce7; color: #16a34a;\n}\n.recon-pill--blue[data-v-a90058fc]   { background: #e0f2fe; color: #0284c7;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -637,20 +638,21 @@ var render = function () {
             _c(
               "div",
               {
-                staticClass: "btn-group btn-group-sm trip-type-toggle",
-                attrs: { role: "group" },
+                staticClass: "trip-seg",
+                attrs: { role: "group", "aria-label": _vm.__("type") },
               },
               _vm._l(_vm.typeOptions, function (t) {
                 return _c(
                   "button",
                   {
                     key: t.value,
-                    staticClass: "btn",
-                    class:
-                      _vm.typeFilter === t.value
-                        ? "btn-primary"
-                        : "btn-outline-secondary",
-                    attrs: { type: "button" },
+                    staticClass: "trip-seg__btn",
+                    class: { "trip-seg__btn--on": _vm.typeFilter === t.value },
+                    attrs: {
+                      type: "button",
+                      "aria-pressed":
+                        _vm.typeFilter === t.value ? "true" : "false",
+                    },
                     on: {
                       click: function ($event) {
                         return _vm.setType(t.value)

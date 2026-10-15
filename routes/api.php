@@ -659,8 +659,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('orders/export_csv', [\App\Http\Controllers\SellerController::class, 'exportOrdersCsv']);
         Route::get('receipts/cash/export_csv', [\App\Http\Controllers\SellerController::class, 'exportCashReceiptCsv']);
         Route::get('receipts/pdc/export_csv', [\App\Http\Controllers\SellerController::class, 'exportPdcReceiptCsv']);
+        Route::get('receipts/export_csv', [\App\Http\Controllers\SellerController::class, 'exportReceiptsCsv']);
         Route::get('products/export_xlsx', [\App\Http\Controllers\SellerController::class, 'exportProductMasterXlsx']);
         Route::get('credit-notes/export_csv', [\App\Http\Controllers\SellerController::class, 'exportCreditNotesCsv']);
+        Route::get('sales-credit-notes/export_csv', [\App\Http\Controllers\SellerController::class, 'exportSalesAndCreditNotesCsv']);
         Route::get('credit-notes/preview', [\App\Http\Controllers\SellerController::class, 'previewCreditNotes']);
         Route::get('self_pickup_orders', [\App\Http\Controllers\SellerController::class, 'getSelfPickupOrders']);
         Route::post('update_self_pickup_status', [\App\Http\Controllers\API\OrdersApiController::class, 'updateSelfPickupOrderStatus'])->name('orders.update_self_pickup_status');
@@ -905,6 +907,8 @@ Route::middleware('auth:api')->group(function () {
         // Partial delivery itself goes through orders/update_status with status_id=13 —
         // see OrdersApiController::updateStatus. This is just the reason picklist for it.
         Route::get('order/shortfall_reasons', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'shortfallReasons'])->name('delivery_boy.order.shortfall_reasons');
+        // The reason picklist for cancelling — sent as delivery_reason on orders/update_status with status_id=7.
+        Route::get('order/cancellation_reasons', [\App\Http\Controllers\API\DeliveryBoysApiController::class, 'cancellationReasons'])->name('delivery_boy.order.cancellation_reasons');
     });
 
     /*salesman app (login session)*/

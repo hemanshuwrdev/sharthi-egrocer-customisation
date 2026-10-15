@@ -39,6 +39,17 @@ class DeliveryBoysApiController extends Controller
         'qty_mismatch_packing_issue',
     ];
 
+    // Reasons a driver can give when cancelling an order at the door. Sent as `delivery_reason` (plus an
+    // optional `reason_note`) on update_status with status_id 7 — the app gets the list, with labels, from
+    // GET delivery_boy/order/cancellation_reasons. Labels are the delivery_reason_<key> language entries.
+    public const CANCELLATION_REASONS = [
+        'shop_closed',
+        'refused',
+        'retailer_not_reachable',
+        'address_not_found',
+        'other',
+    ];
+
     protected $languageService;
 
     public function __construct(LanguageService $languageService)
@@ -851,6 +862,16 @@ class DeliveryBoysApiController extends Controller
     public function shortfallReasons()
     {
         $reasons = array_map(fn ($key) => ['key' => $key, 'label' => __($key)], self::SHORTFALL_REASONS);
+        return CommonHelper::responseWithData(['reasons' => $reasons]);
+    }
+
+    /**
+     * GET /delivery_boy/order/cancellation_reasons
+     * Picklist for the driver's cancel: the reason is sent as `delivery_reason` on update_status (status_id 7).
+     */
+    public function cancellationReasons()
+    {
+        $reasons = array_map(fn ($key) => ['key' => $key, 'label' => __('delivery_reason_' . $key)], self::CANCELLATION_REASONS);
         return CommonHelper::responseWithData(['reasons' => $reasons]);
     }
 }

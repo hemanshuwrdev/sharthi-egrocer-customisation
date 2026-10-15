@@ -617,292 +617,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -920,24 +634,14 @@ __webpack_require__.r(__webpack_exports__);
         startDate: null,
         endDate: null
       },
-      cashBankDateRange: {
-        startDate: null,
-        endDate: null
-      },
-      pdcDateRange: {
-        startDate: null,
-        endDate: null
-      },
-      creditNoteDateRange: {
+      receiptDateRange: {
         startDate: null,
         endDate: null
       },
       downloading: {
-        sales: false,
-        cashBank: false,
-        pdc: false,
-        products: false,
-        creditNote: false
+        salesCredit: false,
+        receipts: false,
+        products: false
       },
       showGuideModal: false,
       recentExports: []
@@ -958,15 +662,7 @@ __webpack_require__.r(__webpack_exports__);
       startDate: thisMonth[0],
       endDate: thisMonth[1]
     };
-    this.cashBankDateRange = {
-      startDate: thisMonth[0],
-      endDate: thisMonth[1]
-    };
-    this.pdcDateRange = {
-      startDate: thisMonth[0],
-      endDate: thisMonth[1]
-    };
-    this.creditNoteDateRange = {
+    this.receiptDateRange = {
       startDate: thisMonth[0],
       endDate: thisMonth[1]
     };
@@ -1505,12 +1201,12 @@ var render = function () {
                               _c("div", { staticClass: "tab-title-content" }, [
                                 _c("i", {
                                   staticClass:
-                                    "fa fa-shopping-cart tab-icon me-2",
+                                    "fa fa-file-invoice tab-icon me-2",
                                 }),
                                 _vm._v(" "),
                                 _c("span", [
                                   _vm._v(
-                                    _vm._s(_vm.__("sales_invoice_export"))
+                                    _vm._s(_vm.__("sales_credit_note_export"))
                                   ),
                                 ]),
                               ]),
@@ -1538,7 +1234,9 @@ var render = function () {
                                 ]),
                                 _vm._v(" "),
                                 _c("div", { staticClass: "step-subheading" }, [
-                                  _vm._v("Choose invoice date range to export"),
+                                  _vm._v(
+                                    "Choose invoice and credit note date range to export"
+                                  ),
                                 ]),
                               ]),
                             ]
@@ -1836,10 +1534,10 @@ var render = function () {
                                             [
                                               _c("i", {
                                                 staticClass:
-                                                  "fa fa-shopping-cart text-primary me-1",
+                                                  "fa fa-file-invoice text-primary me-1",
                                               }),
                                               _vm._v(
-                                                " Sales Invoices\n                                                    "
+                                                " Sales + Credit Notes\n                                                    "
                                               ),
                                             ]
                                           ),
@@ -1972,23 +1670,23 @@ var render = function () {
                                         disabled:
                                           !_vm.salesDateRange.startDate ||
                                           !_vm.salesDateRange.endDate ||
-                                          _vm.downloading.sales,
+                                          _vm.downloading.salesCredit,
                                       },
                                       on: {
                                         click: function ($event) {
                                           return _vm.downloadXlsx(
-                                            "/orders/export_csv",
+                                            "/sales-credit-notes/export_csv",
                                             _vm.salesDateRange,
-                                            "Sales",
+                                            "SalesCreditNote",
                                             _vm.downloading,
-                                            "sales",
-                                            "Sales Invoice"
+                                            "salesCredit",
+                                            "Sales + Credit Note"
                                           )
                                         },
                                       },
                                     },
                                     [
-                                      _vm.downloading.sales
+                                      _vm.downloading.salesCredit
                                         ? _c("span", [
                                             _c("i", {
                                               staticClass:
@@ -2044,11 +1742,12 @@ var render = function () {
                             return [
                               _c("div", { staticClass: "tab-title-content" }, [
                                 _c("i", {
-                                  staticClass: "fa fa-reply tab-icon me-2",
+                                  staticClass:
+                                    "fa fa-money-bill-wave tab-icon me-2",
                                 }),
                                 _vm._v(" "),
                                 _c("span", [
-                                  _vm._v(_vm._s(_vm.__("credit_note_export"))),
+                                  _vm._v(_vm._s(_vm.__("receipts_export"))),
                                 ]),
                               ]),
                             ]
@@ -2076,7 +1775,7 @@ var render = function () {
                                 _vm._v(" "),
                                 _c("div", { staticClass: "step-subheading" }, [
                                   _vm._v(
-                                    "Choose credit note date range to export"
+                                    "Choose cash, bank and PDC receipt date range to export"
                                   ),
                                 ]),
                               ]),
@@ -2122,11 +1821,11 @@ var render = function () {
                                         maxDate: _vm.maxDate,
                                       },
                                       model: {
-                                        value: _vm.creditNoteDateRange,
+                                        value: _vm.receiptDateRange,
                                         callback: function ($$v) {
-                                          _vm.creditNoteDateRange = $$v
+                                          _vm.receiptDateRange = $$v
                                         },
-                                        expression: "creditNoteDateRange",
+                                        expression: "receiptDateRange",
                                       },
                                     }),
                                   ],
@@ -2159,7 +1858,7 @@ var render = function () {
                                         staticClass: "btn btn-preset",
                                         class: {
                                           active: _vm.isPresetActive(
-                                            _vm.creditNoteDateRange,
+                                            _vm.receiptDateRange,
                                             "today"
                                           ),
                                         },
@@ -2167,7 +1866,7 @@ var render = function () {
                                         on: {
                                           click: function ($event) {
                                             return _vm.applyPreset(
-                                              "creditNoteDateRange",
+                                              "receiptDateRange",
                                               "today"
                                             )
                                           },
@@ -2186,7 +1885,7 @@ var render = function () {
                                         staticClass: "btn btn-preset",
                                         class: {
                                           active: _vm.isPresetActive(
-                                            _vm.creditNoteDateRange,
+                                            _vm.receiptDateRange,
                                             "yesterday"
                                           ),
                                         },
@@ -2194,7 +1893,7 @@ var render = function () {
                                         on: {
                                           click: function ($event) {
                                             return _vm.applyPreset(
-                                              "creditNoteDateRange",
+                                              "receiptDateRange",
                                               "yesterday"
                                             )
                                           },
@@ -2213,7 +1912,7 @@ var render = function () {
                                         staticClass: "btn btn-preset",
                                         class: {
                                           active: _vm.isPresetActive(
-                                            _vm.creditNoteDateRange,
+                                            _vm.receiptDateRange,
                                             "this_week"
                                           ),
                                         },
@@ -2221,7 +1920,7 @@ var render = function () {
                                         on: {
                                           click: function ($event) {
                                             return _vm.applyPreset(
-                                              "creditNoteDateRange",
+                                              "receiptDateRange",
                                               "this_week"
                                             )
                                           },
@@ -2240,7 +1939,7 @@ var render = function () {
                                         staticClass: "btn btn-preset",
                                         class: {
                                           active: _vm.isPresetActive(
-                                            _vm.creditNoteDateRange,
+                                            _vm.receiptDateRange,
                                             "this_month"
                                           ),
                                         },
@@ -2248,7 +1947,7 @@ var render = function () {
                                         on: {
                                           click: function ($event) {
                                             return _vm.applyPreset(
-                                              "creditNoteDateRange",
+                                              "receiptDateRange",
                                               "this_month"
                                             )
                                           },
@@ -2267,7 +1966,7 @@ var render = function () {
                                         staticClass: "btn btn-preset",
                                         class: {
                                           active: _vm.isPresetActive(
-                                            _vm.creditNoteDateRange,
+                                            _vm.receiptDateRange,
                                             "last_month"
                                           ),
                                         },
@@ -2275,7 +1974,7 @@ var render = function () {
                                         on: {
                                           click: function ($event) {
                                             return _vm.applyPreset(
-                                              "creditNoteDateRange",
+                                              "receiptDateRange",
                                               "last_month"
                                             )
                                           },
@@ -2296,7 +1995,7 @@ var render = function () {
                                         on: {
                                           click: function ($event) {
                                             return _vm.clearRange(
-                                              "creditNoteDateRange"
+                                              "receiptDateRange"
                                             )
                                           },
                                         },
@@ -2375,10 +2074,10 @@ var render = function () {
                                             [
                                               _c("i", {
                                                 staticClass:
-                                                  "fa fa-reply text-danger me-1",
+                                                  "fa fa-money-bill-wave text-success me-1",
                                               }),
                                               _vm._v(
-                                                " Credit Notes\n                                                    "
+                                                " Cash / Bank / PDC\n                                                    "
                                               ),
                                             ]
                                           ),
@@ -2401,8 +2100,8 @@ var render = function () {
                                             [_vm._v("Selected Period")]
                                           ),
                                           _vm._v(" "),
-                                          _vm.creditNoteDateRange.startDate &&
-                                          _vm.creditNoteDateRange.endDate
+                                          _vm.receiptDateRange.startDate &&
+                                          _vm.receiptDateRange.endDate
                                             ? _c(
                                                 "div",
                                                 {
@@ -2414,7 +2113,7 @@ var render = function () {
                                                     "\n                                                        " +
                                                       _vm._s(
                                                         _vm.formatDateRange(
-                                                          _vm.creditNoteDateRange
+                                                          _vm.receiptDateRange
                                                         )
                                                       ) +
                                                       "\n                                                        "
@@ -2429,7 +2128,7 @@ var render = function () {
                                                       _vm._v(
                                                         _vm._s(
                                                           _vm.getRangeDays(
-                                                            _vm.creditNoteDateRange
+                                                            _vm.receiptDateRange
                                                           )
                                                         )
                                                       ),
@@ -2509,25 +2208,25 @@ var render = function () {
                                         "btn btn-action-download w-100",
                                       attrs: {
                                         disabled:
-                                          !_vm.creditNoteDateRange.startDate ||
-                                          !_vm.creditNoteDateRange.endDate ||
-                                          _vm.downloading.creditNote,
+                                          !_vm.receiptDateRange.startDate ||
+                                          !_vm.receiptDateRange.endDate ||
+                                          _vm.downloading.receipts,
                                       },
                                       on: {
                                         click: function ($event) {
                                           return _vm.downloadXlsx(
-                                            "/credit-notes/export_csv",
-                                            _vm.creditNoteDateRange,
-                                            "CreditNote",
+                                            "/receipts/export_csv",
+                                            _vm.receiptDateRange,
+                                            "Receipts",
                                             _vm.downloading,
-                                            "creditNote",
-                                            "Credit Note"
+                                            "receipts",
+                                            "Receipts"
                                           )
                                         },
                                       },
                                     },
                                     [
-                                      _vm.downloading.creditNote
+                                      _vm.downloading.receipts
                                         ? _c("span", [
                                             _c("i", {
                                               staticClass:
@@ -2549,1087 +2248,8 @@ var render = function () {
                                     ]
                                   ),
                                   _vm._v(" "),
-                                  !_vm.creditNoteDateRange.startDate ||
-                                  !_vm.creditNoteDateRange.endDate
-                                    ? _c(
-                                        "div",
-                                        {
-                                          staticClass:
-                                            "text-center text-muted small mt-1",
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Select date range to enable download\n                                        "
-                                          ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                ]
-                              ),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-tab",
-                    {
-                      scopedSlots: _vm._u([
-                        {
-                          key: "title",
-                          fn: function () {
-                            return [
-                              _c("div", { staticClass: "tab-title-content" }, [
-                                _c("i", {
-                                  staticClass: "fa fa-money tab-icon me-2",
-                                }),
-                                _vm._v(" "),
-                                _c("span", [
-                                  _vm._v(_vm._s(_vm.__("receipt_cash_export"))),
-                                ]),
-                              ]),
-                            ]
-                          },
-                          proxy: true,
-                        },
-                      ]),
-                    },
-                    [
-                      _vm._v(" "),
-                      _c("div", { staticClass: "step-card mb-4" }, [
-                        _c("div", { staticClass: "step-card-header mb-3" }, [
-                          _c(
-                            "div",
-                            { staticClass: "d-flex align-items-center" },
-                            [
-                              _c("span", { staticClass: "step-circle" }, [
-                                _vm._v("1"),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "ms-3" }, [
-                                _c("h6", { staticClass: "step-heading mb-0" }, [
-                                  _vm._v("Select Date Range & Period"),
-                                ]),
-                                _vm._v(" "),
-                                _c("div", { staticClass: "step-subheading" }, [
-                                  _vm._v(
-                                    "Choose cash/bank receipt date range to export"
-                                  ),
-                                ]),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "step-card-body" }, [
-                          _c(
-                            "div",
-                            { staticClass: "row align-items-end g-3" },
-                            [
-                              _c("div", { staticClass: "col-12 col-md-5" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "field-label mb-2" },
-                                  [
-                                    _c("i", {
-                                      staticClass:
-                                        "fa fa-calendar me-1 text-primary",
-                                    }),
-                                    _vm._v(
-                                      " " +
-                                        _vm._s(_vm.__("from_and_to_date")) +
-                                        "\n                                        "
-                                    ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  { staticClass: "date-picker-wrap" },
-                                  [
-                                    _c("date-range-picker", {
-                                      attrs: {
-                                        "append-to-body": true,
-                                        "single-date-picker": "range",
-                                        "locale-data":
-                                          _vm.dateRangePickerLocale,
-                                        ranges: _vm.dateRangePickerRanges,
-                                        autoApply: false,
-                                        showDropdowns: true,
-                                        maxDate: _vm.maxDate,
-                                      },
-                                      model: {
-                                        value: _vm.cashBankDateRange,
-                                        callback: function ($$v) {
-                                          _vm.cashBankDateRange = $$v
-                                        },
-                                        expression: "cashBankDateRange",
-                                      },
-                                    }),
-                                  ],
-                                  1
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "col-12 col-md-7" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "field-label mb-2" },
-                                  [
-                                    _c("i", {
-                                      staticClass:
-                                        "fa fa-bolt me-1 text-warning",
-                                    }),
-                                    _vm._v(
-                                      " Quick Presets\n                                        "
-                                    ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  { staticClass: "presets-btn-group" },
-                                  [
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.cashBankDateRange,
-                                            "today"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "cashBankDateRange",
-                                              "today"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                Today\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.cashBankDateRange,
-                                            "yesterday"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "cashBankDateRange",
-                                              "yesterday"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                Yesterday\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.cashBankDateRange,
-                                            "this_week"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "cashBankDateRange",
-                                              "this_week"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                This Week\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.cashBankDateRange,
-                                            "this_month"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "cashBankDateRange",
-                                              "this_month"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                This Month\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.cashBankDateRange,
-                                            "last_month"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "cashBankDateRange",
-                                              "last_month"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                Last Month\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset-clear",
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.clearRange(
-                                              "cashBankDateRange"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _c("i", {
-                                          staticClass: "fa fa-times me-1",
-                                        }),
-                                        _vm._v(
-                                          " " +
-                                            _vm._s(_vm.__("clear")) +
-                                            "\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                  ]
-                                ),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "step-card" }, [
-                        _c("div", { staticClass: "step-card-header mb-3" }, [
-                          _c(
-                            "div",
-                            { staticClass: "d-flex align-items-center" },
-                            [
-                              _c("span", { staticClass: "step-circle" }, [
-                                _vm._v("2"),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "ms-3" }, [
-                                _c("h6", { staticClass: "step-heading mb-0" }, [
-                                  _vm._v("Generate Export File"),
-                                ]),
-                                _vm._v(" "),
-                                _c("div", { staticClass: "step-subheading" }, [
-                                  _vm._v(
-                                    "Review summary and download Tally-ready Excel file"
-                                  ),
-                                ]),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "step-card-body" }, [
-                          _c(
-                            "div",
-                            { staticClass: "row align-items-stretch g-3" },
-                            [
-                              _c("div", { staticClass: "col-12 col-lg-8" }, [
-                                _c("div", { staticClass: "row g-3 h-100" }, [
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12 col-sm-4" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "summary-box" },
-                                        [
-                                          _c(
-                                            "span",
-                                            { staticClass: "summary-label" },
-                                            [_vm._v("Voucher Type")]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "summary-value text-dark",
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass:
-                                                  "fa fa-money text-success me-1",
-                                              }),
-                                              _vm._v(
-                                                " Cash / Bank Receipts\n                                                    "
-                                              ),
-                                            ]
-                                          ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12 col-sm-5" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "summary-box" },
-                                        [
-                                          _c(
-                                            "span",
-                                            { staticClass: "summary-label" },
-                                            [_vm._v("Selected Period")]
-                                          ),
-                                          _vm._v(" "),
-                                          _vm.cashBankDateRange.startDate &&
-                                          _vm.cashBankDateRange.endDate
-                                            ? _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "summary-value text-primary",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "\n                                                        " +
-                                                      _vm._s(
-                                                        _vm.formatDateRange(
-                                                          _vm.cashBankDateRange
-                                                        )
-                                                      ) +
-                                                      "\n                                                        "
-                                                  ),
-                                                  _c(
-                                                    "span",
-                                                    {
-                                                      staticClass:
-                                                        "badge duration-pill ms-1",
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.getRangeDays(
-                                                            _vm.cashBankDateRange
-                                                          )
-                                                        )
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              )
-                                            : _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "summary-value text-warning",
-                                                },
-                                                [
-                                                  _c("i", {
-                                                    staticClass:
-                                                      "fa fa-exclamation-circle me-1",
-                                                  }),
-                                                  _vm._v(
-                                                    " Date required\n                                                    "
-                                                  ),
-                                                ]
-                                              ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12 col-sm-3" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "summary-box" },
-                                        [
-                                          _c(
-                                            "span",
-                                            { staticClass: "summary-label" },
-                                            [_vm._v("Output Format")]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "summary-value text-success",
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass:
-                                                  "fa fa-file-excel-o me-1",
-                                              }),
-                                              _vm._v(
-                                                " Excel (.xlsx)\n                                                    "
-                                              ),
-                                            ]
-                                          ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                ]),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-12 col-lg-4 d-flex flex-column justify-content-center",
-                                },
-                                [
-                                  _c(
-                                    "button",
-                                    {
-                                      staticClass:
-                                        "btn btn-action-download w-100",
-                                      attrs: {
-                                        disabled:
-                                          !_vm.cashBankDateRange.startDate ||
-                                          !_vm.cashBankDateRange.endDate ||
-                                          _vm.downloading.cashBank,
-                                      },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.downloadXlsx(
-                                            "/receipts/cash/export_csv",
-                                            _vm.cashBankDateRange,
-                                            "ReceiptCashBank",
-                                            _vm.downloading,
-                                            "cashBank",
-                                            "Cash / Bank Receipt"
-                                          )
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _vm.downloading.cashBank
-                                        ? _c("span", [
-                                            _c("i", {
-                                              staticClass:
-                                                "fa fa-spinner fa-spin me-2",
-                                            }),
-                                            _vm._v(
-                                              " Generating File...\n                                            "
-                                            ),
-                                          ])
-                                        : _c("span", [
-                                            _c("i", {
-                                              staticClass:
-                                                "fa fa-download me-2",
-                                            }),
-                                            _vm._v(
-                                              " Download Tally File (.xlsx)\n                                            "
-                                            ),
-                                          ]),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  !_vm.cashBankDateRange.startDate ||
-                                  !_vm.cashBankDateRange.endDate
-                                    ? _c(
-                                        "div",
-                                        {
-                                          staticClass:
-                                            "text-center text-muted small mt-1",
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Select date range to enable download\n                                        "
-                                          ),
-                                        ]
-                                      )
-                                    : _vm._e(),
-                                ]
-                              ),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                    ]
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-tab",
-                    {
-                      scopedSlots: _vm._u([
-                        {
-                          key: "title",
-                          fn: function () {
-                            return [
-                              _c("div", { staticClass: "tab-title-content" }, [
-                                _c("i", {
-                                  staticClass:
-                                    "fa fa-credit-card tab-icon me-2",
-                                }),
-                                _vm._v(" "),
-                                _c("span", [
-                                  _vm._v(_vm._s(_vm.__("receipt_pdc_export"))),
-                                ]),
-                              ]),
-                            ]
-                          },
-                          proxy: true,
-                        },
-                      ]),
-                    },
-                    [
-                      _vm._v(" "),
-                      _c("div", { staticClass: "step-card mb-4" }, [
-                        _c("div", { staticClass: "step-card-header mb-3" }, [
-                          _c(
-                            "div",
-                            { staticClass: "d-flex align-items-center" },
-                            [
-                              _c("span", { staticClass: "step-circle" }, [
-                                _vm._v("1"),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "ms-3" }, [
-                                _c("h6", { staticClass: "step-heading mb-0" }, [
-                                  _vm._v("Select Date Range & Period"),
-                                ]),
-                                _vm._v(" "),
-                                _c("div", { staticClass: "step-subheading" }, [
-                                  _vm._v(
-                                    "Choose PDC receipt date range to export"
-                                  ),
-                                ]),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "step-card-body" }, [
-                          _c(
-                            "div",
-                            { staticClass: "row align-items-end g-3" },
-                            [
-                              _c("div", { staticClass: "col-12 col-md-5" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "field-label mb-2" },
-                                  [
-                                    _c("i", {
-                                      staticClass:
-                                        "fa fa-calendar me-1 text-primary",
-                                    }),
-                                    _vm._v(
-                                      " " +
-                                        _vm._s(_vm.__("from_and_to_date")) +
-                                        "\n                                        "
-                                    ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  { staticClass: "date-picker-wrap" },
-                                  [
-                                    _c("date-range-picker", {
-                                      attrs: {
-                                        "append-to-body": true,
-                                        "single-date-picker": "range",
-                                        "locale-data":
-                                          _vm.dateRangePickerLocale,
-                                        ranges: _vm.dateRangePickerRanges,
-                                        autoApply: false,
-                                        showDropdowns: true,
-                                        maxDate: _vm.maxDate,
-                                      },
-                                      model: {
-                                        value: _vm.pdcDateRange,
-                                        callback: function ($$v) {
-                                          _vm.pdcDateRange = $$v
-                                        },
-                                        expression: "pdcDateRange",
-                                      },
-                                    }),
-                                  ],
-                                  1
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "col-12 col-md-7" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "field-label mb-2" },
-                                  [
-                                    _c("i", {
-                                      staticClass:
-                                        "fa fa-bolt me-1 text-warning",
-                                    }),
-                                    _vm._v(
-                                      " Quick Presets\n                                        "
-                                    ),
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  { staticClass: "presets-btn-group" },
-                                  [
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.pdcDateRange,
-                                            "today"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "pdcDateRange",
-                                              "today"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                Today\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.pdcDateRange,
-                                            "yesterday"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "pdcDateRange",
-                                              "yesterday"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                Yesterday\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.pdcDateRange,
-                                            "this_week"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "pdcDateRange",
-                                              "this_week"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                This Week\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.pdcDateRange,
-                                            "this_month"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "pdcDateRange",
-                                              "this_month"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                This Month\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset",
-                                        class: {
-                                          active: _vm.isPresetActive(
-                                            _vm.pdcDateRange,
-                                            "last_month"
-                                          ),
-                                        },
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.applyPreset(
-                                              "pdcDateRange",
-                                              "last_month"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _vm._v(
-                                          "\n                                                Last Month\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "button",
-                                      {
-                                        staticClass: "btn btn-preset-clear",
-                                        attrs: { type: "button" },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.clearRange(
-                                              "pdcDateRange"
-                                            )
-                                          },
-                                        },
-                                      },
-                                      [
-                                        _c("i", {
-                                          staticClass: "fa fa-times me-1",
-                                        }),
-                                        _vm._v(
-                                          " " +
-                                            _vm._s(_vm.__("clear")) +
-                                            "\n                                            "
-                                        ),
-                                      ]
-                                    ),
-                                  ]
-                                ),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "step-card" }, [
-                        _c("div", { staticClass: "step-card-header mb-3" }, [
-                          _c(
-                            "div",
-                            { staticClass: "d-flex align-items-center" },
-                            [
-                              _c("span", { staticClass: "step-circle" }, [
-                                _vm._v("2"),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "ms-3" }, [
-                                _c("h6", { staticClass: "step-heading mb-0" }, [
-                                  _vm._v("Generate Export File"),
-                                ]),
-                                _vm._v(" "),
-                                _c("div", { staticClass: "step-subheading" }, [
-                                  _vm._v(
-                                    "Review summary and download Tally-ready Excel file"
-                                  ),
-                                ]),
-                              ]),
-                            ]
-                          ),
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "step-card-body" }, [
-                          _c(
-                            "div",
-                            { staticClass: "row align-items-stretch g-3" },
-                            [
-                              _c("div", { staticClass: "col-12 col-lg-8" }, [
-                                _c("div", { staticClass: "row g-3 h-100" }, [
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12 col-sm-4" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "summary-box" },
-                                        [
-                                          _c(
-                                            "span",
-                                            { staticClass: "summary-label" },
-                                            [_vm._v("Voucher Type")]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "summary-value text-dark",
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass:
-                                                  "fa fa-credit-card text-info me-1",
-                                              }),
-                                              _vm._v(
-                                                " PDC Receipts\n                                                    "
-                                              ),
-                                            ]
-                                          ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12 col-sm-5" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "summary-box" },
-                                        [
-                                          _c(
-                                            "span",
-                                            { staticClass: "summary-label" },
-                                            [_vm._v("Selected Period")]
-                                          ),
-                                          _vm._v(" "),
-                                          _vm.pdcDateRange.startDate &&
-                                          _vm.pdcDateRange.endDate
-                                            ? _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "summary-value text-primary",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "\n                                                        " +
-                                                      _vm._s(
-                                                        _vm.formatDateRange(
-                                                          _vm.pdcDateRange
-                                                        )
-                                                      ) +
-                                                      "\n                                                        "
-                                                  ),
-                                                  _c(
-                                                    "span",
-                                                    {
-                                                      staticClass:
-                                                        "badge duration-pill ms-1",
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        _vm._s(
-                                                          _vm.getRangeDays(
-                                                            _vm.pdcDateRange
-                                                          )
-                                                        )
-                                                      ),
-                                                    ]
-                                                  ),
-                                                ]
-                                              )
-                                            : _c(
-                                                "div",
-                                                {
-                                                  staticClass:
-                                                    "summary-value text-warning",
-                                                },
-                                                [
-                                                  _c("i", {
-                                                    staticClass:
-                                                      "fa fa-exclamation-circle me-1",
-                                                  }),
-                                                  _vm._v(
-                                                    " Date required\n                                                    "
-                                                  ),
-                                                ]
-                                              ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12 col-sm-3" },
-                                    [
-                                      _c(
-                                        "div",
-                                        { staticClass: "summary-box" },
-                                        [
-                                          _c(
-                                            "span",
-                                            { staticClass: "summary-label" },
-                                            [_vm._v("Output Format")]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "div",
-                                            {
-                                              staticClass:
-                                                "summary-value text-success",
-                                            },
-                                            [
-                                              _c("i", {
-                                                staticClass:
-                                                  "fa fa-file-excel-o me-1",
-                                              }),
-                                              _vm._v(
-                                                " Excel (.xlsx)\n                                                    "
-                                              ),
-                                            ]
-                                          ),
-                                        ]
-                                      ),
-                                    ]
-                                  ),
-                                ]),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass:
-                                    "col-12 col-lg-4 d-flex flex-column justify-content-center",
-                                },
-                                [
-                                  _c(
-                                    "button",
-                                    {
-                                      staticClass:
-                                        "btn btn-action-download w-100",
-                                      attrs: {
-                                        disabled:
-                                          !_vm.pdcDateRange.startDate ||
-                                          !_vm.pdcDateRange.endDate ||
-                                          _vm.downloading.pdc,
-                                      },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.downloadXlsx(
-                                            "/receipts/pdc/export_csv",
-                                            _vm.pdcDateRange,
-                                            "ReceiptPDC",
-                                            _vm.downloading,
-                                            "pdc",
-                                            "Receipt PDC"
-                                          )
-                                        },
-                                      },
-                                    },
-                                    [
-                                      _vm.downloading.pdc
-                                        ? _c("span", [
-                                            _c("i", {
-                                              staticClass:
-                                                "fa fa-spinner fa-spin me-2",
-                                            }),
-                                            _vm._v(
-                                              " Generating File...\n                                            "
-                                            ),
-                                          ])
-                                        : _c("span", [
-                                            _c("i", {
-                                              staticClass:
-                                                "fa fa-download me-2",
-                                            }),
-                                            _vm._v(
-                                              " Download Tally File (.xlsx)\n                                            "
-                                            ),
-                                          ]),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  !_vm.pdcDateRange.startDate ||
-                                  !_vm.pdcDateRange.endDate
+                                  !_vm.receiptDateRange.startDate ||
+                                  !_vm.receiptDateRange.endDate
                                     ? _c(
                                         "div",
                                         {
@@ -4126,12 +2746,12 @@ var render = function () {
                   _c("strong", [_vm._v("Recommended Import Sequence:")]),
                   _vm._v(" Always import "),
                   _c("strong", [_vm._v("Product Master")]),
-                  _vm._v(" first into your Tally Company, followed by "),
-                  _c("strong", [_vm._v("Sales Vouchers")]),
-                  _vm._v(", "),
+                  _vm._v(" first into your Tally Company, followed by the "),
+                  _c("strong", [_vm._v("Sales + Credit Note")]),
+                  _vm._v(
+                    " file (invoices and credit notes in one import) and then "
+                  ),
                   _c("strong", [_vm._v("Receipts")]),
-                  _vm._v(", and "),
-                  _c("strong", [_vm._v("Credit Notes")]),
                   _vm._v(".\n                "),
                 ]),
               ]
@@ -4192,6 +2812,28 @@ var render = function () {
                     _vm._v(" "),
                     _c("code", [_vm._v("Sales Account")]),
                     _vm._v(" configured with GST Applicable."),
+                  ]),
+                  _vm._v(" "),
+                  _c("li", [
+                    _c("strong", [_vm._v("Sales Return Ledger:")]),
+                    _vm._v(" "),
+                    _c("code", [_vm._v("Sales Returns")]),
+                    _vm._v(
+                      ", used by the credit note rows in the Sales + Credit Note file."
+                    ),
+                  ]),
+                  _vm._v(" "),
+                  _c("li", [
+                    _c("strong", [_vm._v("Receipt Ledgers:")]),
+                    _vm._v(" "),
+                    _c("code", [_vm._v("Cash")]),
+                    _vm._v(", "),
+                    _c("code", [_vm._v("Bank")]),
+                    _vm._v(" and "),
+                    _c("code", [_vm._v("PDC CHQ")]),
+                    _vm._v(
+                      ", used by the cash, bank and cheque rows in the Receipts file."
+                    ),
                   ]),
                 ]),
               ]),

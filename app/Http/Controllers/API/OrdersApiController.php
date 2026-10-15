@@ -492,6 +492,29 @@ class OrdersApiController extends Controller
             return CommonHelper::responseError('delivered_order_cannot_be_cancelled');
         }
 
+        // Cancelling: the reason comes in `delivery_reason`, a key from DeliveryBoysApiController::CANCELLATION_REASONS
+        // (+ optional `reason_note`), checked before anything changes — the same idea as the shortfall reasons.
+        // A driver must give one; admin / distributor callers may leave it out. It is saved on the order the way
+        // not-delivered is ("key" or "key: note"), and as readable text on the items it cancels so the order page
+        // and the trip's Cancel / Returns tabs show it.
+        $cancelOrderReason = null;
+        $cancelItemReason = null;
+        if ((int) $request->status_id === OrderStatusList::$cancelled) {
+            $reasonKey = trim((string) $request->input('delivery_reason', ''));
+            if ($reasonKey === '' && (int) (auth()->user()->role_id ?? 0) === Role::$roleDeliveryBoy) {
+                return CommonHelper::responseError('cancellation_reason_required');
+            }
+            if ($reasonKey !== '') {
+                if (!in_array($reasonKey, \App\Http\Controllers\API\DeliveryBoysApiController::CANCELLATION_REASONS, true)) {
+                    return CommonHelper::responseError('invalid_cancellation_reason');
+                }
+                $reasonNote = trim((string) $request->input('reason_note', ''));
+                $cancelOrderReason = $reasonNote !== '' ? $reasonKey . ': ' . $reasonNote : $reasonKey;
+                $label = __('delivery_reason_' . $reasonKey);
+                $cancelItemReason = $reasonNote !== '' ? $label . ': ' . $reasonNote : $label;
+            }
+        }
+
         if (auth()->user()->role_id != Role::$roleSuperAdmin) {
             if ($order->active_status != OrderStatusList::$rescheduled) {
                 if ($order->active_status > $request->status_id) {
@@ -503,7 +526,7 @@ class OrdersApiController extends Controller
         // Handle reschedule inline when status_id = 12
         if ((int)$request->status_id === OrderStatusList::$rescheduled) {
             $rescheduleValidator = Validator::make($request->all(), [
-                'delivery_date'   => 'required|date|date_format:Y-m-d|after_or_equal:today',
+                'delivery_date'   => 'nullable|date|date_format:Y-m-d|after_or_equal:today',
                 'delivery_reason' => 'required|string|max:255',
                 'delivery_time'   => 'nullable|string|max:100',
             ]);
@@ -525,7 +548,11 @@ class OrdersApiController extends Controller
             try {
                 $loadingSlipIdAtReschedule = $order->loading_slip_id;
 
-                $order->delivery_date   = $request->delivery_date;
+                // The date is optional: the order goes back to the pool to be planned again, so when none is sent it keeps
+                // its current one. Not nulled — OrderCutoffJob re-fills any order with no delivery_date from its created_at.
+                if ($request->filled('delivery_date')) {
+                    $order->delivery_date = $request->delivery_date;
+                }
                 $order->delivery_reason = $request->delivery_reason;
                 // The time is optional. orders.delivery_time cannot be empty, so when none is sent the order keeps its current one.
                 if ($request->filled('delivery_time')) {
@@ -733,6 +760,9 @@ class OrdersApiController extends Controller
                 }
 
                 $order->active_status = $request->status_id;
+                if ($cancelOrderReason !== null) {
+                    $order->delivery_reason = $cancelOrderReason;
+                }
                 $order->save();
 
                 // Persist per-item delivered qty / shortfall reason / damage photo
@@ -824,10 +854,12 @@ class OrdersApiController extends Controller
 
                 $excludedStatuses = [OrderStatusList::$cancelled, OrderStatusList::$returned];
 
-                // Update the order items
+                // Update the order items. A cancel's reason goes on every item it takes down; canceled_at is
+                // deliberately left alone — it marks items cancelled on their own before the loading slip
+                // (stock already restored then), see SettlementController::cancelRestockItems.
                 $query = OrderItem::where("order_id", $request->order_id)
                     ->whereNotIn("active_status", $excludedStatuses)
-                    ->update(['active_status' => $request->status_id]);
+                    ->update(['active_status' => $request->status_id] + ($cancelItemReason !== null ? ['cancellation_reason' => $cancelItemReason] : []));
 
                 $orderStatus = array();
                 $orderStatus["order_id"] = $request->order_id;
@@ -1714,7 +1746,7 @@ class OrdersApiController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'delivery_date'   => 'required|date|date_format:Y-m-d|after_or_equal:today',
+            'delivery_date'   => 'nullable|date|date_format:Y-m-d|after_or_equal:today',
             'delivery_reason' => 'nullable|string|max:255',
             'delivery_time'   => 'nullable|string|max:100',
         ]);
@@ -1762,7 +1794,11 @@ class OrdersApiController extends Controller
         try {
             $loadingSlipIdAtReschedule = $order->loading_slip_id;
 
-            $order->delivery_date = $request->delivery_date;
+            // The date is optional: when none is sent the order keeps its current one (not nulled —
+            // OrderCutoffJob re-fills any order with no delivery_date from its created_at).
+            if ($request->filled('delivery_date')) {
+                $order->delivery_date = $request->delivery_date;
+            }
             if ($request->has('delivery_reason')) {
                 $order->delivery_reason = $request->delivery_reason;
             }

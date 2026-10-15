@@ -229,13 +229,21 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.party_name',
                 'retailer_profiles.gst_no',
                 'retailer_profiles.address',
+                'retailer_profiles.address_line1',
+                'retailer_profiles.address_line2',
+                'retailer_profiles.city',
+                'retailer_profiles.state',
                 'retailer_profiles.city_id',
                 'retailer_profiles.gps_lat',
                 'retailer_profiles.gps_lng',
-                'cities.name as city_name'
+                'cities.name as city_name',
+                'retailer_profiles.area_id',
+                'rp_area.name as area_name',
+                'rp_area.pincode as area_pincode'
             )
             ->join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
+            ->leftJoin('areas as rp_area', 'rp_area.id', '=', 'retailer_profiles.area_id')
             ->where('users.verification_status', 'pending')
             ->whereNull('users.salesman_id')
             ->where(function ($zone) use ($cityIds) {
@@ -413,6 +421,9 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.gst_no',
                 'retailer_profiles.verified_at',
                 'cities.name as city_name',
+                'retailer_profiles.area_id',
+                'rp_area.name as area_name',
+                'rp_area.pincode as area_pincode',
                 DB::raw('(SELECT MAX(orders.created_at) FROM orders WHERE orders.user_id = users.id) as last_order_at'),
                 DB::raw('(
                     SELECT COALESCE(SUM(op.amount), 0) - COALESCE((
@@ -446,6 +457,7 @@ class SalesmanAppApiController extends Controller
                 ) as due_payments_count')
             )
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
+            ->leftJoin('areas as rp_area', 'rp_area.id', '=', 'retailer_profiles.area_id')
             ->when($filter !== '', function ($query) use ($filter) {
                 // Name, shop, party name or mobile. A number is matched however it was typed — spaces,
                 // dashes or a +91 in front still find the stored 10-digit mobile.
@@ -708,10 +720,14 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.gps_lng',
                 'retailer_profiles.verified_at',
                 'cities.name as city_name',
-                'cities.zone as zone'
+                'cities.zone as zone',
+                'retailer_profiles.area_id',
+                'rp_area.name as area_name',
+                'rp_area.pincode as area_pincode'
             )
             ->join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
+            ->leftJoin('areas as rp_area', 'rp_area.id', '=', 'retailer_profiles.area_id')
             ->where(function ($zone) use ($cityIds) {
                 $this->inTerritoryZones($zone, $cityIds);
             });
@@ -735,9 +751,9 @@ class SalesmanAppApiController extends Controller
 
         $rows = $query->orderByDesc('users.id')->get();
 
-        // Pending address change requests in this salesman's territory
+        // Pending address change requests in this salesman's territory (any zone covering the new location)
         $addressChangeRequests = \App\Models\RetailerAddressChangeRequest::with(['retailer:id,name,mobile'])
-            ->whereIn('new_city_id', $cityIds)
+            ->whereIn('id', app(\App\Services\RetailerZoneService::class)->openAddressChangeRequestIdsInZones($cityIds))
             ->whereIn('status', ['pending', 'assigned'])
             ->where(function ($q) use ($salesman) {
                 $q->whereNull('assigned_salesman_id')
@@ -1282,7 +1298,9 @@ class SalesmanAppApiController extends Controller
         // Resolve address/coords with retailer profile fallback.
         $profile = $retailer->retailerProfile;
         $mobile  = $request->mobile ?? $retailer->mobile;
-        $address = $request->address ?? ($profile->address ?? '');
+        // An address the salesman typed wins; otherwise the retailer's own (Address Line 1 / 2 from their profile).
+        $orderAddress = CommonHelper::orderAddressFor($retailer->id, $request->address, true);
+        $address = $orderAddress['address'];
         $lat     = $request->latitude ?? ($profile->gps_lat ?? null);
         $lng     = $request->longitude ?? ($profile->gps_lng ?? null);
         if (empty($address) || $lat === null || $lng === null) {
@@ -1304,7 +1322,7 @@ class SalesmanAppApiController extends Controller
         $createdOrders = [];
 
         try {
-            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $lat, $lng, $areaId, $cashDiscountBySeller, &$createdOrders) {
+            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $retailer, $salesman, $discountPc, $mobile, $address, $orderAddress, $lat, $lng, $areaId, $cashDiscountBySeller, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerSubtotal = 0;
                     $sellerTaxAmount = 0;
@@ -1379,7 +1397,7 @@ class SalesmanAppApiController extends Controller
                         'updated_at'              => now(),
                     // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
                     // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
-                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount));
+                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
 
                     // Insert initial order_status row so customer order tracking works
                     \App\Models\OrderStatus::create([
@@ -1621,6 +1639,7 @@ class SalesmanAppApiController extends Controller
         $order = DB::table('orders')
             ->join('users', 'users.id', '=', 'orders.user_id')
             ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'orders.user_id')
+            ->leftJoin('areas as shop_area', 'shop_area.id', '=', 'retailer_profiles.area_id')
             ->where('orders.id', $orderId)
             ->where('orders.placed_by_salesman_id', $salesman->id)
             ->select(
@@ -1647,13 +1666,53 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.shop_name',
                 'retailer_profiles.party_name',
                 'retailer_profiles.address as shop_address',
+                'retailer_profiles.address_line1 as shop_address_line1',
+                'retailer_profiles.address_line2 as shop_address_line2',
+                'retailer_profiles.city as shop_city',
+                'retailer_profiles.state as shop_state',
+                'shop_area.name as shop_area',
+                'shop_area.pincode as shop_pincode',
                 'retailer_profiles.gst_no',
                 DB::raw('COALESCE((SELECT IF(op.method = "upi", "bank", op.method) FROM order_payments op WHERE op.order_id = orders.id ORDER BY op.id DESC LIMIT 1), orders.payment_method) as payment_method')
+            )
+            // The order's own saved lines — only once the orders table has them (code deployed before the migration).
+            ->when(
+                \Illuminate\Support\Facades\Schema::hasColumn('orders', 'address_line1') && \Illuminate\Support\Facades\Schema::hasColumn('orders', 'address_line2'),
+                fn ($q) => $q->addSelect('orders.address_line1', 'orders.address_line2')
             )
             ->first();
 
         if (!$order) {
             return CommonHelper::responseError('order_not_found');
+        }
+
+        // The two addresses in lines: address_line1/2 (the order's) and shop_address_line1/2 (the retailer's). An
+        // order placed before its own lines were saved gets the retailer's when its address text is the retailer's.
+        $order->address_line1 = $order->address_line1 ?? null;
+        $order->address_line2 = $order->address_line2 ?? null;
+        if (trim((string) $order->address_line1) === '' && trim((string) $order->address) !== ''
+            && trim((string) $order->address) === trim((string) $order->shop_address)) {
+            $order->address_line1 = $order->shop_address_line1;
+            $order->address_line2 = $order->shop_address_line2;
+        }
+
+        // The single strings the app already shows now read "line 1, line 2, area, city, state - pincode", so the app
+        // needs no update. The area, city, state and pincode are the retailer's current ones, so the order's address
+        // gets them only while it is still the retailer's address (not after they moved); one without lines keeps
+        // its text.
+        if (trim((string) $order->address_line1) !== '') {
+            $sameAsShop = trim((string) $order->address_line1) === trim((string) $order->shop_address_line1);
+            $order->address = CommonHelper::lineAddress(
+                $order->address_line1, $order->address_line2,
+                $sameAsShop ? $order->shop_area : null, $sameAsShop ? $order->shop_city : null,
+                $sameAsShop ? $order->shop_state : null, $sameAsShop ? $order->shop_pincode : null
+            );
+        }
+        if (trim((string) $order->shop_address_line1) !== '') {
+            $order->shop_address = CommonHelper::lineAddress(
+                $order->shop_address_line1, $order->shop_address_line2, $order->shop_area, $order->shop_city,
+                $order->shop_state, $order->shop_pincode
+            );
         }
 
         $order->status_label = OrderStatusList::getTranslatedName((int) $order->active_status);

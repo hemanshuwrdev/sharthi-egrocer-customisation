@@ -68,6 +68,10 @@
                             <button v-if="isClosed" type="button" class="trip-header__btn trip-header__btn--primary" @click="exportReport('pdf')">
                                 <i class="fa fa-download"></i>{{ __('Export PDF') }}
                             </button>
+                            <!-- Only when something came back — a second, returns-only PDF for counting the goods off the truck. -->
+                            <button v-if="returnedItemTotals.length" type="button" class="trip-header__btn trip-header__btn--secondary" @click="exportReturnedItemsPdf">
+                                <i class="fa fa-download trip-header__btn-icon"></i>{{ __('returned_item_summary') }}
+                            </button>
                             <!-- CSV export is hidden for now (not useful for distributors). To bring it back, remove the button above
                                  and uncomment this dropdown; exportReportCsv() is still in the script.
                             <b-dropdown v-if="isClosed" right boundary="window" class="export-dropdown"
@@ -1219,7 +1223,11 @@ export default {
             }).then(res => {
                 const d              = res.data.data;
                 this.settlement      = d.settlement;
-                this.orders          = d.orders;
+                // Payments come back with "bank" for UPI (what the apps use); this page groups on "upi".
+                this.orders          = (d.orders || []).map(o => ({
+                    ...o,
+                    payments: (o.payments || []).map(p => p.method === 'bank' ? { ...p, method: 'upi' } : p),
+                }));
                 this.totals          = d.totals;
                 this.partialInvoices    = d.partial_invoices || [];
                 this.cancelInvoices     = d.cancel_invoices || [];
@@ -1593,61 +1601,95 @@ export default {
             a.click();
             URL.revokeObjectURL(url);
         },
-        exportReportPdf() {
-            const doc     = new jsPDF();
-            const pageW   = doc.internal.pageSize.getWidth();
-            const money   = (val) => 'Rs. ' + this.fmt(val);
+        // Top of every trip PDF, laid out like the Loading Slip print: distributor name + address
+        // centred, an underlined title, a Date / Trip No / Status line and a Type / Name line under
+        // a thick rule. Plain black on white. Returns the y of that rule so the caller can start below it.
+        drawPdfHeader(doc, title) {
+            const pageW      = doc.internal.pageSize.getWidth();
             const personName = this.settlement.person ? this.settlement.person.name : '-';
             const typeLabel  = this.tripType === 'salesman' ? __('salesman') : __('driver');
+            const tripNo     = this.settlement.trip_no || ('#' + this.$route.params.id);
 
-            // Distributor header — name with the year, then the address, centred and upper-case,
-            // the same as the top of the Loading Slip print. `top` is where the bar below starts.
-            let top = 0;
+            doc.setTextColor(0, 0, 0);
+            doc.setDrawColor(0, 0, 0);
+
+            // Distributor name with the year, then the address, centred and upper-case.
+            let y = 6;
             if (this.sellerInfo && this.sellerInfo.name) {
                 const year = new Date().getFullYear();
-                doc.setTextColor(0, 0, 0);
                 doc.setFont(undefined, 'bold');
                 doc.setFontSize(13);
-                doc.text(this.sellerInfo.name.toUpperCase() + ' (' + year + '-' + String((year + 1) % 100).padStart(2, '0') + ')', pageW / 2, 11, { align: 'center' });
-                top = 15;
+                y = 11;
+                doc.text(this.sellerInfo.name.toUpperCase() + ' (' + year + '-' + String((year + 1) % 100).padStart(2, '0') + ')', pageW / 2, y, { align: 'center' });
                 if (this.sellerInfo.address) {
                     doc.setFont(undefined, 'normal');
                     doc.setFontSize(8.5);
                     const addressLines = doc.splitTextToSize(this.sellerInfo.address.toUpperCase(), pageW - 28);
-                    doc.text(addressLines, pageW / 2, top + 1, { align: 'center' });
-                    top += addressLines.length * 4 + 2;
+                    doc.text(addressLines, pageW / 2, y + 5, { align: 'center' });
+                    y += 5 + (addressLines.length - 1) * 4;
                 }
-                top += 3;
             }
 
-            // Header bar
-            doc.setFillColor(52, 58, 64);
-            doc.rect(0, top, pageW, 22, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(15);
+            // Title — bold, upper-case, underlined.
+            y += 9;
+            const heading = String(title).toUpperCase();
             doc.setFont(undefined, 'bold');
-            doc.text(__('trip_reconciliation') || 'Trip Reconciliation', 14, top + 14);
-            doc.setFont(undefined, 'normal');
-            doc.setFontSize(9);
-            doc.text('#' + this.$route.params.id, pageW - 14, top + 14, { align: 'right' });
-            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.text(heading, pageW / 2, y, { align: 'center' });
+            const headingHalf = doc.getTextWidth(heading) / 2;
+            doc.setLineWidth(0.3);
+            doc.line(pageW / 2 - headingHalf, y + 1.2, pageW / 2 + headingHalf, y + 1.2);
 
-            // Person / type / date + status summary table
-            autoTable(doc, {
-                startY: top + 28,
-                theme: 'plain',
-                styles: { fontSize: 9, cellPadding: 1 },
-                body: [
-                    [{ content: __('type'), styles: { fontStyle: 'bold' } }, typeLabel,
-                     { content: __('date'), styles: { fontStyle: 'bold' } }, this.fmtDate(this.settlement.date)],
-                    [{ content: __('name'), styles: { fontStyle: 'bold' } }, personName,
-                     { content: __('status'), styles: { fontStyle: 'bold' } }, this.settlement.status_text],
-                ],
-            });
+            // Date / Trip No / Status
+            y += 10;
+            doc.setFontSize(9);
+            doc.text(__('date') + ' : ' + this.fmtDate(this.settlement.date), 14, y);
+            doc.text('Trip No : ' + tripNo, pageW / 2, y, { align: 'center' });
+            doc.text(__('status') + ' : ' + this.settlement.status_text, pageW - 14, y, { align: 'right' });
+
+            // Type / Name, then the thick rule
+            y += 6;
+            doc.text(__('type') + ' : ' + typeLabel, 14, y);
+            doc.text(__('name') + ' : ' + personName, pageW - 14, y, { align: 'right' });
+            y += 3;
+            doc.setLineWidth(0.6);
+            doc.line(14, y, pageW - 14, y);
+
+            doc.setFont(undefined, 'normal');
+            doc.setLineWidth(0.2);
+            return y;
+        },
+        // Shared look for every table in the trip PDFs — the Loading Slip's: thin grey grid, light-grey
+        // bold header, no coloured fills or striping. `extra` overrides / adds options; its `styles` merge in.
+        pdfTable(extra) {
+            const base = {
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2, textColor: [0, 0, 0], lineColor: [119, 119, 119], lineWidth: 0.1 },
+                headStyles: { fillColor: [242, 242, 242], textColor: [0, 0, 0], fontStyle: 'bold' },
+                footStyles: { fillColor: [242, 242, 242], textColor: [0, 0, 0], fontStyle: 'bold' },
+            };
+            return { ...base, ...extra, styles: { ...base.styles, ...(extra.styles || {}) } };
+        },
+        // Bold section heading under the previous table; returns the y the next table should start at.
+        pdfSection(doc, text) {
+            const y = doc.lastAutoTable.finalY + 10;
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text(text, 14, y);
+            doc.setFont(undefined, 'normal');
+            return y + 3;
+        },
+        exportReportPdf() {
+            const doc     = new jsPDF();
+            const pageW   = doc.internal.pageSize.getWidth();
+            const money   = (val) => 'Rs. ' + this.fmt(val);
+
+            const headerEnd = this.drawPdfHeader(doc, __('trip_reconciliation') || 'Trip Reconciliation');
 
             // Reconciliation totals
-            autoTable(doc, {
-                startY: doc.lastAutoTable.finalY + 4,
+            autoTable(doc, this.pdfTable({
+                startY: headerEnd + 6,
                 head: [[__('total_expected'), __('digital_verified'), __('cash_expected')]],
                 body: [[
                     money(this.totals.total_expected),
@@ -1655,9 +1697,8 @@ export default {
                     money(this.totals.cash_expected),
                 ]],
                 styles: { fontSize: 10, halign: 'center', cellPadding: 3 },
-                headStyles: { fillColor: [233, 236, 239], textColor: [52, 58, 64], fontStyle: 'bold' },
                 bodyStyles: { fontStyle: 'bold' },
-            });
+            }));
 
             // Shortfall / return calculation — up top, right under the totals, so it's the
             // first thing a distributor sees when checking whether a trip closed clean.
@@ -1668,16 +1709,10 @@ export default {
             autoTable(doc, {
                 startY: doc.lastAutoTable.finalY + 3,
                 theme: 'plain',
-                styles: { fontSize: 10, cellPadding: 2, fontStyle: 'bold' },
+                styles: { fontSize: 10, cellPadding: 2, fontStyle: 'bold', textColor: [0, 0, 0] },
                 body: [
-                    [
-                        { content: __('shortfall') + ':', styles: { halign: 'right' } },
-                        { content: money(shortfall), styles: { textColor: shortfall > 0 ? [220, 53, 69] : [22, 163, 74] } },
-                    ],
-                    [
-                        { content: (__('total_returns') || 'Total Returns') + ':', styles: { halign: 'right' } },
-                        { content: money(totalReturns), styles: { textColor: totalReturns > 0 ? [234, 88, 12] : [0, 0, 0] } },
-                    ],
+                    [{ content: __('shortfall') + ':', styles: { halign: 'right' } }, money(shortfall)],
+                    [{ content: (__('total_returns') || 'Total Returns') + ':', styles: { halign: 'right' } }, money(totalReturns)],
                 ],
                 columnStyles: { 0: { cellWidth: pageW - 14 - 40 - 14 }, 1: { cellWidth: 40 } },
             });
@@ -1693,23 +1728,18 @@ export default {
                 const rows = this.flatRows.filter(r => r.method === group.key);
                 if (rows.length === 0) return;
 
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text(group.label + ' — ' + money(group.total), 14, doc.lastAutoTable.finalY + 10);
-                doc.setFont(undefined, 'normal');
-
-                autoTable(doc, {
-                    startY: doc.lastAutoTable.finalY + 13,
-                    head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Collected', 'Status']],
+                // Cash is never verified by the distributor (no Verify button on screen), so its
+                // raw status would always print as a stale "pending" — leave the column off.
+                const showStatus = group.key !== 'cash';
+                autoTable(doc, this.pdfTable({
+                    startY: this.pdfSection(doc, group.label + ' — ' + money(group.total)),
+                    head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value', 'Collected'].concat(showStatus ? ['Status'] : [])],
                     body: rows.map(r => [
                         r.ordersId, r.loadingSlipNo || '-', r.invoiceNumber || '-', r.retailerName,
-                        money(r.finalTotal), money(r.amount), r.paymentStatus || '-',
-                    ]),
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [52, 58, 64] },
-                    alternateRowStyles: { fillColor: [248, 249, 250] },
+                        money(r.finalTotal), money(r.amount),
+                    ].concat(showStatus ? [r.paymentStatus || '-'] : [])),
                     columnStyles: { 3: { cellWidth: 40 } },
-                });
+                }));
             });
 
             // Orders with no payment recorded at all — flatRows skips these entirely (it's
@@ -1717,121 +1747,76 @@ export default {
             // from this.orders instead, which always has every order regardless.
             const noPaymentRows = this.orders.filter(o => (o.payments || []).length === 0);
             if (noPaymentRows.length) {
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text(__('no_payment_collected') || 'No Payment Collected', 14, doc.lastAutoTable.finalY + 10);
-                doc.setFont(undefined, 'normal');
-
-                autoTable(doc, {
-                    startY: doc.lastAutoTable.finalY + 13,
+                autoTable(doc, this.pdfTable({
+                    startY: this.pdfSection(doc, __('no_payment_collected') || 'No Payment Collected'),
                     head: [['Order #', 'Loading Slip', 'Invoice #', 'Retailer', 'Order Value']],
                     body: noPaymentRows.map(o => [
                         o.orders_id, o.loading_slip_no || '-', o.invoice_number || '-',
                         o.retailer ? o.retailer.name : '-', money(o.final_total),
                     ]),
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [52, 58, 64] },
-                    alternateRowStyles: { fillColor: [248, 249, 250] },
                     columnStyles: { 3: { cellWidth: 40 } },
-                });
+                }));
             }
 
             // Partial Invoices — order items delivered short of what was ordered.
             if (this.partialInvoiceRows.length) {
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text((__('partial_invoices') || 'Partial Invoices') + ' — ' + money(this.totalShortfallValue), 14, doc.lastAutoTable.finalY + 10);
-                doc.setFont(undefined, 'normal');
-
-                autoTable(doc, {
-                    startY: doc.lastAutoTable.finalY + 13,
+                autoTable(doc, this.pdfTable({
+                    startY: this.pdfSection(doc, (__('partial_invoices') || 'Partial Invoices') + ' — ' + money(this.totalShortfallValue)),
                     head: [['Invoice #', 'Loading Slip', 'Retailer', 'Product', 'Ordered Qty', 'Delivered Qty', 'Shortfall Qty', 'Shortfall Value', 'Status']],
                     body: this.partialInvoiceRows.map(r => [
                         r.invoiceNumber || ('#' + r.orderId), r.loadingSlipNo || '-', r.retailerName, r.productName,
                         r.quantity, r.deliveredQuantity, r.shortfallQty, money(r.shortfallValue), r.verified ? __('verified') : '-',
                     ]),
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [217, 119, 6] },
-                    alternateRowStyles: { fillColor: [255, 251, 235] },
                     columnStyles: { 2: { cellWidth: 35 } },
-                });
+                }));
             }
 
             // Cancel Invoices — orders cancelled while out on this trip.
             if (this.cancelInvoices.length) {
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text(__('cancel_invoices') || 'Cancel Invoices', 14, doc.lastAutoTable.finalY + 10);
-                doc.setFont(undefined, 'normal');
-
-                autoTable(doc, {
-                    startY: doc.lastAutoTable.finalY + 13,
+                autoTable(doc, this.pdfTable({
+                    startY: this.pdfSection(doc, __('cancel_invoices') || 'Cancel Invoices'),
                     head: [['Invoice #', 'Loading Slip', 'Retailer', 'Order Value', 'Cancelled At', 'Status']],
                     body: this.cancelInvoices.map(r => [
                         r.invoice_number || ('#' + r.order_id), r.loading_slip_no || '-',
                         r.retailer ? r.retailer.name : '-', money(r.final_total),
                         this.fmtDateTime(r.cancelled_at), r.verified ? __('verified') : '-',
                     ]),
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [220, 53, 69] },
-                    alternateRowStyles: { fillColor: [253, 242, 242] },
                     columnStyles: { 2: { cellWidth: 35 } },
-                });
+                }));
             }
 
             // Reschedule Invoices — orders whose delivery was pushed to a later date.
             if (this.rescheduleInvoices.length) {
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text(__('reschedule_invoices') || 'Reschedule Invoices', 14, doc.lastAutoTable.finalY + 10);
-                doc.setFont(undefined, 'normal');
-
-                autoTable(doc, {
-                    startY: doc.lastAutoTable.finalY + 13,
+                autoTable(doc, this.pdfTable({
+                    startY: this.pdfSection(doc, __('reschedule_invoices') || 'Reschedule Invoices'),
                     head: [['Invoice #', 'Retailer', 'Order Value', 'New Delivery Date', 'Reason', 'Rescheduled At', 'Current Status']],
                     body: this.rescheduleInvoices.map(r => [
                         r.invoice_number || ('#' + r.order_id), r.retailer ? r.retailer.name : '-',
                         money(r.final_total), this.fmtDate(r.new_delivery_date), r.delivery_reason || '-',
                         this.fmtDateTime(r.rescheduled_at), this.orderStatusLabel(r.current_status),
                     ]),
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [107, 114, 128] },
-                    alternateRowStyles: { fillColor: [249, 250, 251] },
                     columnStyles: { 1: { cellWidth: 35 } },
-                });
+                }));
             }
 
             // Returned Item Summary — one line per product, with an empty "Counted" column to tick
             // on paper while the goods are checked off the truck.
             if (this.returnedItemTotals.length) {
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text(__('returned_item_summary') || 'Returned Item Summary', 14, doc.lastAutoTable.finalY + 10);
-                doc.setFont(undefined, 'normal');
-
-                autoTable(doc, {
-                    startY: doc.lastAutoTable.finalY + 13,
-                    head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', __('quantity') || 'Quantity', 'Counted']],
+                autoTable(doc, this.pdfTable({
+                    startY: this.pdfSection(doc, __('returned_item_summary') || 'Returned Item Summary'),
+                    head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', { content: __('quantity') || 'Quantity', styles: { halign: 'right' } }, 'Counted']],
                     body: this.returnedItemTotals.map((r, i) => [
                         i + 1, r.product_name + (r.variant_name ? ' — ' + r.variant_name : ''), r.quantity, '',
                     ]),
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [234, 88, 12] },
-                    alternateRowStyles: { fillColor: [255, 247, 237] },
                     columnStyles: { 0: { cellWidth: 14, halign: 'center' }, 2: { cellWidth: 25, halign: 'right' }, 3: { cellWidth: 20 } },
-                });
+                }));
             }
 
             // Returns — approved return requests against orders in this trip. Refund is
             // wallet-credited, not cash the driver hands back, so it's a separate table.
             if (this.returnItemSummary.length) {
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text((__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0), 14, doc.lastAutoTable.finalY + 10);
-                doc.setFont(undefined, 'normal');
-
-                autoTable(doc, {
-                    startY: doc.lastAutoTable.finalY + 13,
+                autoTable(doc, this.pdfTable({
+                    startY: this.pdfSection(doc, (__('returns') || 'Returns') + ' — ' + money(this.totals.total_returns || 0)),
                     head: [['Invoice #', 'Retailer', 'Product', 'Refund Amount', 'Reason', 'Returned At']],
                     body: this.returnItemSummary.map(r => [
                         r.invoice_number || ('#' + r.order_id), r.retailer ? r.retailer.name : '-',
@@ -1839,14 +1824,33 @@ export default {
                             : r.source === 'cancelled_order' ? ' (' + __('cancelled') + ', ' + __('qty') + ': ' + r.quantity + ')' : ''),
                         money(r.refund_amount), this.returnReason(r), this.fmtDateTime(r.returned_at),
                     ]),
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [234, 88, 12] },
-                    alternateRowStyles: { fillColor: [255, 247, 237] },
                     columnStyles: { 1: { cellWidth: 35 } },
-                });
+                }));
             }
 
             doc.save('settlement-' + this.tripType + '-' + this.$route.params.id + '.pdf');
+        },
+        // Standalone Returned Item Summary — just the per-product return counts (no payments),
+        // with the same empty "Counted" column to tick while the goods come off the truck.
+        exportReturnedItemsPdf() {
+            if (!this.returnedItemTotals.length) return;
+
+            const doc       = new jsPDF();
+            const headerEnd = this.drawPdfHeader(doc, __('returned_item_summary') || 'Returned Item Summary');
+
+            const totalQty = this.returnedItemTotals.reduce((s, r) => s + parseFloat(r.quantity || 0), 0);
+            autoTable(doc, this.pdfTable({
+                startY: headerEnd + 6,
+                head: [[__('si_no') || 'SI No.', __('item_name') || 'Item Name', { content: __('quantity') || 'Quantity', styles: { halign: 'right' } }, 'Counted']],
+                body: this.returnedItemTotals.map((r, i) => [
+                    i + 1, r.product_name + (r.variant_name ? ' — ' + r.variant_name : ''), r.quantity, '',
+                ]),
+                foot: [['', __('total') || 'Total', { content: parseFloat(totalQty.toFixed(3)), styles: { halign: 'right' } }, '']],
+                styles: { fontSize: 9, cellPadding: 2.5 },
+                columnStyles: { 0: { cellWidth: 16, halign: 'center' }, 2: { cellWidth: 28, halign: 'right' }, 3: { cellWidth: 28 } },
+            }));
+
+            doc.save('returned-items-' + this.tripType + '-' + this.$route.params.id + '.pdf');
         },
         // Mirrors Sellers/Dashboard.vue's getStatusTranslationKey — same OrderStatusList ids.
         orderStatusLabel(id) {

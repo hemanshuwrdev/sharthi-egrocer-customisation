@@ -428,6 +428,7 @@ class AdminAuthController extends Controller
             'formatted_address' => 'required',
             'address_line1' => 'nullable|string|max:255',
             'address_line2' => 'nullable|string|max:255',
+            'pincode' => ['nullable', 'regex:/^\d{6}$/'],
             'store_description' => 'required'
         ], [
             'email.unique' => 'The :attribute has already been taken.',
@@ -444,6 +445,7 @@ class AdminAuthController extends Controller
         $record->street = $request->street;
         if ($request->has('address_line1')) $record->address_line1 = $request->address_line1;
         if ($request->has('address_line2')) $record->address_line2 = $request->address_line2;
+        if ($request->has('pincode')) $record->pincode = trim((string) $request->pincode);
         $record->pincode_id = ($request->pincode_id) ?? 0;
         $record->city_id = $request->city_id;
         $record->state = $request->state;

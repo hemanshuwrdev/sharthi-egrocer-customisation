@@ -178,7 +178,7 @@ class RetailerAddressChangeController extends Controller
         }
 
         $requests = RetailerAddressChangeRequest::with(['retailer:id,name,mobile', 'newCity:id,name', 'newArea:id,name,pincode'])
-            ->whereIn('new_city_id', $cityIds)
+            ->whereIn('id', app(\App\Services\RetailerZoneService::class)->openAddressChangeRequestIdsInZones($cityIds))
             ->whereIn('status', ['pending', 'assigned'])
             ->where(function ($q) use ($salesman) {
                 // Show unassigned requests + ones assigned to this salesman
@@ -192,6 +192,10 @@ class RetailerAddressChangeController extends Controller
                 'status'         => $r->status,
                 'retailer'       => ['id' => $r->retailer?->id, 'name' => $r->retailer?->name, 'mobile' => $r->retailer?->mobile],
                 'new_address'    => $r->new_address,
+                'new_address_line1' => $r->new_address_line1,
+                'new_address_line2' => $r->new_address_line2,
+                'new_city_name'     => $r->new_city_name,
+                'new_state'         => $r->new_state,
                 'new_city'       => $r->newCity?->name,
                 'new_area_id'    => $r->new_area_id,
                 'new_area'       => $r->newArea?->name,
@@ -228,7 +232,7 @@ class RetailerAddressChangeController extends Controller
 
         $cityIds = $this->territoryCityIds((int) $salesman->seller_id);
 
-        $changeRequest = RetailerAddressChangeRequest::whereIn('new_city_id', $cityIds)
+        $changeRequest = RetailerAddressChangeRequest::whereIn('id', app(\App\Services\RetailerZoneService::class)->openAddressChangeRequestIdsInZones($cityIds))
             ->whereIn('status', ['pending', 'assigned'])
             ->find($id);
 

@@ -76,6 +76,17 @@ class Seller extends Model
         return "COALESCE(NULLIF(CONCAT_WS(', ', NULLIF(TRIM({$alias}.address_line1), ''), NULLIF(TRIM({$alias}.address_line2), '')), ''), {$alias}.formatted_address)";
     }
 
+    /**
+     * The store's own pincode. A distributor has one store, so one pincode — but it isn't stored on its own:
+     * it only exists inside the Google address the store was picked with ("…, Gujarat 382210, India"). Read
+     * as the last 6-digit number in that text; empty when there is none. Not the pincodes of the areas the
+     * distributor is assigned to — that is a separate thing (see SellerApiController::edit).
+     */
+    public static function pincodeFromAddress(?string $address): string
+    {
+        return preg_match_all('/(?<!\d)\d{6}(?!\d)/', (string) $address, $matches) ? end($matches[0]) : '';
+    }
+
     public function getDisplayAddressAttribute(): ?string
     {
         return self::composeDisplayAddress($this->address_line1, $this->address_line2, $this->formatted_address);

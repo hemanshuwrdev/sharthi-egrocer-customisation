@@ -488,8 +488,10 @@
         <tbody>
             @foreach ($itemSummary as $index => $item)
                 @php
-                    $displayName = strtoupper($item->product_name) . ' ' . strtoupper($item->variant_name);
-                    if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1 && $item->secondary_unit_name) {
+                    $displayName = strtoupper(\App\Helpers\CommonHelper::itemNameWithVariant($item->product_name, $item->variant_name));
+                    // New orders already carry the pack in the variant name ("20 NOS/BAG"); only older ones need it added.
+                    if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1 && $item->secondary_unit_name
+                        && !str_contains((string) $item->variant_name, '/')) {
                         $displayName .= ' | ' . (int) $item->secondary_unit_value . ' ' . strtoupper($item->secondary_unit_name);
                     }
 
@@ -534,6 +536,21 @@
                         @endif
                         <br><span
                             style="font-size: 10.5px; color: #555; font-weight: normal;">{{ $order->customer_address }}</span>
+                        {{-- The order was on this slip but has since been rescheduled off it: keep it listed, with when it
+                             happened and where it went, so the slip still matches what was loaded and dispatched. --}}
+                        @if ($order->rescheduled_off_slip)
+                            <br><span style="font-size: 10.5px; font-weight: bold; color: #b45309;">RESCHEDULED
+                                @if ($order->rescheduled_at)
+                                    on {{ \Carbon\Carbon::parse($order->rescheduled_at)->format('d-M-y') }}
+                                @endif
+                                @if ($order->delivery_date)
+                                    &middot; New delivery: {{ \Carbon\Carbon::parse($order->delivery_date)->format('d-M-y') }}
+                                @endif
+                                @if (!empty($order->delivery_reason))
+                                    &middot; Reason: {{ $order->delivery_reason }}
+                                @endif
+                            </span>
+                        @endif
                     </td>
                     <td class="center">{{ $order->invoice_number ?: '-' }}</td>
                     <td class="right" style="font-weight: bold; font-size: 13px;">
@@ -546,6 +563,15 @@
                 <td class="center" style="font-weight: bold; font-size: 13px;">{{ count($orders) }}</td>
                 <td class="right" style="font-weight: bold; font-size: 13px;">₹{{ number_format($orders->sum('final_total'), 2) }}</td>
             </tr>
+            @php $rescheduledOffOrders = $orders->where('rescheduled_off_slip', true); @endphp
+            @if ($rescheduledOffOrders->isNotEmpty())
+                <tr>
+                    <td></td>
+                    <td class="right" style="font-size: 12px; color: #b45309;">Of which rescheduled (not delivered on this run) :</td>
+                    <td class="center" style="font-size: 12px; color: #b45309;">{{ $rescheduledOffOrders->count() }}</td>
+                    <td class="right" style="font-size: 12px; color: #b45309;">₹{{ number_format($rescheduledOffOrders->sum('final_total'), 2) }}</td>
+                </tr>
+            @endif
         </tbody>
     </table>
 
@@ -562,8 +588,10 @@
     </div>
 
     <!-- 3. Party Name Wise Bills (1 page per party) in high-fidelity Udaan style -->
-    @foreach ($orders as $orderIndex => $order)
-        @if (!$order->is_rescheduled)
+    {{-- Bills still on this slip only: orders rescheduled off it are listed above but have no bill page. An order
+         that was rescheduled earlier and has since been planned onto this slip is back on it, so it gets its bill. --}}
+    @php $billOrders = $orders->reject(fn ($o) => $o->rescheduled_off_slip)->values(); @endphp
+    @foreach ($billOrders as $orderIndex => $order)
         <div class="party-bill-page">
             <div class="udaan-invoice">
                 <!-- Header -->
@@ -589,10 +617,12 @@
                     <div class="udaan-meta-grid">
                         <span class="udaan-meta-label">Invoice ID:</span>
                         {{-- The real distributor invoice number (same one the "Bill No." column on the first page shows),
-                             assigned when the loading slip is created. Slips made before that was added can still have
-                             orders without one, so say so rather than printing a made-up INV/year/order-id number. --}}
+                             assigned when the loading slip is dispatched. Until then a slip (status 0) has none, so say
+                             to dispatch rather than printing a made-up INV/year/order-id number. An order that already
+                             has one (e.g. rescheduled earlier) shows it. A dispatched slip made before numbers were
+                             assigned at dispatch can still have orders without one — those get it later. --}}
                         <span
-                            class="udaan-meta-val">{{ $order->invoice_number ?: 'Pending (after delivery)' }}</span>
+                            class="udaan-meta-val">{{ $order->invoice_number ?: ((int) $slip->status === 0 ? 'Please dispatch to generate inv no' : 'Pending (after delivery)') }}</span>
 
                         <span class="udaan-meta-label">Invoice Date:</span>
                         <span class="udaan-meta-val">{{ $order->created_at->format('Y-m-d') }}</span>
@@ -604,7 +634,7 @@
                         <span class="udaan-meta-val">{{ $slip->slip_no }}</span>
 
                         <span class="udaan-meta-label">Page No:</span>
-                        <span class="udaan-meta-val">{{ $orderIndex + 1 }} / {{ count($orders) }}</span>
+                        <span class="udaan-meta-val">{{ $orderIndex + 1 }} / {{ count($billOrders) }}</span>
 
                         <span class="udaan-meta-label">Order By:</span>
                         <span class="udaan-meta-val">
@@ -898,7 +928,6 @@
                 </div>
             </div>
         </div>
-        @endif
     @endforeach
 
     <div style="text-align: center; margin-top: 40px;" class="no-print">

@@ -117,6 +117,8 @@ class SellerApiController extends Controller
             // Typed address printed on every document; Line 1 is required for a new distributor.
             'address_line1' => 'required|string|max:255',
             'address_line2' => 'nullable|string|max:255',
+            // The store's own pincode (6 digits), required for a new distributor.
+            'pincode' => ['required', 'regex:/^\d{6}$/'],
             'brand_zone_mappings' => 'required',
             'area_ids' => 'nullable',
             'commission' => 'required',
@@ -135,6 +137,8 @@ class SellerApiController extends Controller
             'upi_name'   => 'nullable|string|max:100',
         ], [
             'address_line1.required' => 'Address Line 1 is required.',
+            'pincode.required' => 'Pincode is required.',
+            'pincode.regex' => 'Pincode must be 6 digits.',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -178,6 +182,7 @@ class SellerApiController extends Controller
             $record->street = $request->street;
             $record->address_line1 = $request->address_line1;
             $record->address_line2 = $request->address_line2;
+            $record->pincode = trim((string) $request->pincode);
             $record->pincode_id = ($request->pincode_id) ?? 0;
             $record->city_id = implode(',', $unionCityIds);
             $record->state = $request->state;
@@ -335,6 +340,19 @@ class SellerApiController extends Controller
         $seller->brands = Brand::whereIn('id', $seller->brand_ids)->get(['id', 'name', 'image']);
 
         $seller->area_ids = DistributorArea::where('seller_id', $seller->id)->pluck('area_id');
+        // `areas`: the names of the areas assigned to this distributor (its service territory) — a list in the same
+        // order as area_ids, so areas[0] is the name of area_ids[0]. An assigned area that no longer exists keeps its
+        // slot as an empty string so the two lists stay lined up.
+        $areasById = $seller->area_ids->isNotEmpty()
+            ? Area::whereIn('id', $seller->area_ids)->get(['id', 'name'])->keyBy('id')
+            : collect();
+        $seller->areas = $seller->area_ids->map(fn ($areaId) => (string) ($areasById->get($areaId)->name ?? ''))->values();
+
+        // `pincode`: the STORE's pincode (one store, one address) — separate from the areas above. Distributors
+        // created before the field existed have none stored yet, so it is read from their Google address.
+        $seller->pincode = trim((string) $seller->pincode) !== ''
+            ? trim((string) $seller->pincode)
+            : Seller::pincodeFromAddress($seller->formatted_address);
 
         Seller::setOptimizedResponse(false);
 
@@ -368,6 +386,7 @@ class SellerApiController extends Controller
             // Optional on edit so distributors created before these fields existed can still be saved.
             'address_line1' => 'nullable|string|max:255',
             'address_line2' => 'nullable|string|max:255',
+            'pincode' => ['nullable', 'regex:/^\d{6}$/'],
             'brand_zone_mappings' => $isSellerCaller ? 'nullable' : 'required',
             'area_ids' => 'nullable',
             'commission' => 'required',
@@ -486,6 +505,7 @@ class SellerApiController extends Controller
                 // Only when sent, so a client that predates these fields can't blank them.
                 if ($request->has('address_line1')) $record->address_line1 = $request->address_line1;
                 if ($request->has('address_line2')) $record->address_line2 = $request->address_line2;
+                if ($request->has('pincode')) $record->pincode = trim((string) $request->pincode);
                 $record->pincode_id = ($request->pincode_id) ?? 0;
                 if (!$isSellerCaller) {
                     $record->city_id = implode(',', $unionCityIds);

@@ -194,7 +194,7 @@ class SchemesApiController extends Controller
 
         $rules = [
             'name'        => 'required|string|max:255',
-            'type'        => 'required|string',
+            'type'        => 'required|in:buy_x_get_y,group_discount,group_discount_price,group_discount_qty,product_conditions',
             'description' => 'nullable|string',
             'tax_option'  => 'nullable|in:inclusive,exclusive',
             'start_date'  => 'required|date',
@@ -203,6 +203,18 @@ class SchemesApiController extends Controller
         ];
 
         $isBxgy = $request->type === 'buy_x_get_y';
+
+        // Slab-based types (older app builds) carry no per-product conditions, so the slabs
+        // are the whole offer — without them the scheme saves but can never apply.
+        if (in_array($request->type, [Scheme::TYPE_GROUP_DISCOUNT_PRICE, Scheme::TYPE_GROUP_DISCOUNT_QTY], true)) {
+            $rules += [
+                'slabs'                  => 'required|array|min:1',
+                'slabs.*.min_value'      => 'required|numeric|min:1',
+                'slabs.*.discount_type'  => 'required|in:percentage,flat',
+                'slabs.*.discount_value' => 'required|numeric|min:0.01',
+                'slabs.*.tax_option'     => 'nullable|in:inclusive,exclusive',
+            ];
+        }
 
         if ($isBxgy) {
             $rules += [
@@ -228,6 +240,16 @@ class SchemesApiController extends Controller
         if (!$isBxgy) {
             if ((!is_array($productsInput) || count($productsInput) === 0) && !$request->filled('product_ids')) {
                 return CommonHelper::responseError('Please select at least one product.');
+            }
+
+            // An update that only sends product_ids / slabs would delete and rebuild the
+            // scheme's rows without their min/max qty, basis and discount, silently turning an
+            // advanced scheme into one that never applies. Refuse instead of corrupting it.
+            $sendsRowConditions = is_array($productsInput) && count($productsInput) > 0;
+            if ($scheme && !$sendsRowConditions && $scheme->schemeProducts()
+                    ->where(fn ($q) => $q->whereNotNull('min_qty')->orWhereNotNull('discount_type'))
+                    ->exists()) {
+                return CommonHelper::responseError('This scheme uses quantity conditions this app version cannot edit. Please edit it from the web panel.');
             }
         }
 
@@ -265,6 +287,15 @@ class SchemesApiController extends Controller
             if ($owned !== count($referenced)) {
                 return CommonHelper::responseError('product_not_owned_by_seller');
             }
+
+            // A free-item-only product can't be bought, so it can never trigger a scheme. The web
+            // form hides them from the buy / group pickers; enforce it here for clients that don't.
+            // (As the BXGY *free* product it is fine.)
+            $triggerIds = $isBxgy ? [(int) $request->buy_seller_product_id] : $referenced;
+            if (SellerProduct::hasFreeOnlyColumn()
+                && SellerProduct::whereIn('id', $triggerIds)->where('is_free_only', 1)->exists()) {
+                return CommonHelper::responseError('A free-item-only product cannot be used as a buy or group product.');
+            }
         }
 
         try {
@@ -277,10 +308,13 @@ class SchemesApiController extends Controller
                     'tax_option'             => $request->tax_option ?? 'inclusive',
                     'buy_seller_product_id'  => $isBxgy ? $request->buy_seller_product_id : null,
                     'buy_qty'                => $isBxgy ? $request->buy_qty : null,
-                    'buy_qty_basis'          => $isBxgy ? ($request->buy_qty_basis ?: 'outer') : null,
+                    // Basis omitted = a client that predates it, whose quantities were always units
+                    // ('inner'). On update keep what is stored rather than flipping it. The web form
+                    // always sends an explicit basis, so it is unaffected.
+                    'buy_qty_basis'          => $isBxgy ? ($request->buy_qty_basis ?: ($scheme?->buy_qty_basis ?: 'inner')) : null,
                     'free_seller_product_id' => $isBxgy ? $request->free_seller_product_id : null,
                     'free_qty'               => $isBxgy ? $request->free_qty : null,
-                    'free_qty_basis'         => $isBxgy ? ($request->free_qty_basis ?: 'outer') : null,
+                    'free_qty_basis'         => $isBxgy ? ($request->free_qty_basis ?: ($scheme?->free_qty_basis ?: 'inner')) : null,
                     'start_date'             => $request->start_date,
                     'end_date'               => $request->end_date,
                     'status'                 => $request->status,

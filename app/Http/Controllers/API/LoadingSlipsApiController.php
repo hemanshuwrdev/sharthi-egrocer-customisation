@@ -275,7 +275,7 @@ class LoadingSlipsApiController extends Controller
 
                 if (!isset($rows[$key])) {
                     $rows[$key] = [
-                        'name'       => trim($item->product_name . ($item->variant_name ? ' (' . $item->variant_name . ')' : '')),
+                        'name'       => CommonHelper::itemNameWithVariant($item->product_name, $item->variant_name, true),
                         'qty'        => 0,
                         // box_unit = the bulk grouping (e.g. "Box") — confusingly this is the
                         // *secondary* unit / "Inner Pack Unit" in this app's own Master Catalog
@@ -427,7 +427,7 @@ class LoadingSlipsApiController extends Controller
                         $variantQuantities[$key] = [
                             'type' => 'master',
                             'id' => $item->master_product_variant_id,
-                            'name' => $item->product_name . ($item->variant_name ? ' (' . $item->variant_name . ')' : ''),
+                            'name' => CommonHelper::itemNameWithVariant($item->product_name, $item->variant_name, true),
                             'qty' => 0,
                         ];
                     }
@@ -438,7 +438,7 @@ class LoadingSlipsApiController extends Controller
                         $variantQuantities[$key] = [
                             'type' => 'legacy',
                             'id' => $item->product_variant_id,
-                            'name' => $item->product_name . ($item->variant_name ? ' (' . $item->variant_name . ')' : ''),
+                            'name' => CommonHelper::itemNameWithVariant($item->product_name, $item->variant_name, true),
                             'qty' => 0,
                         ];
                     }
@@ -564,13 +564,6 @@ class LoadingSlipsApiController extends Controller
                 $order->save();
             }
 
-            // The driver carries each invoice, so its number must exist before the slip leaves —
-            // assigned here, in the same order the slip prints (order id), rather than lazily after
-            // delivery. Idempotent: an order that already has one (e.g. rescheduled) keeps it.
-            foreach ($orders->sortBy('id') as $order) {
-                CommonHelper::resolveDistributorInvoiceNumber($order->id);
-            }
-
             DB::commit();
 
             return CommonHelper::responseWithData([
@@ -583,6 +576,34 @@ class LoadingSlipsApiController extends Controller
             DB::rollBack();
             Log::error("Error saving loading slip: " . $e->getMessage());
             return CommonHelper::responseError('Something went wrong during loading slip planning.');
+        }
+    }
+
+    /**
+     * Orders that were on this slip and have since been rescheduled off it, as [order_id => when it was
+     * rescheduled]. Reschedule nulls orders.loading_slip_id the instant it saves, so the slip would otherwise
+     * lose the order entirely; the only trace left is the "Rescheduled" order_statuses row, which snapshots
+     * the slip id it happened on. Used to keep the slip whole (view + print) with the reschedule shown on it.
+     */
+    private function rescheduledOffSlip($slipId)
+    {
+        return DB::table('order_statuses')
+            ->where('status', 'Rescheduled')
+            ->where('loading_slip_id', $slipId)
+            ->orderBy('created_at')
+            ->pluck('created_at', 'order_id'); // an order rescheduled twice off one slip keeps its latest row
+    }
+
+    /**
+     * Flag each order as rescheduled off this slip (it is no longer linked to it) and attach the reschedule
+     * details: when, the new delivery date / time and the reason.
+     */
+    private function markRescheduledOff($orders, $slipId, $rescheduledOff)
+    {
+        foreach ($orders as $order) {
+            $off = $rescheduledOff->has($order->id) && (int) $order->loading_slip_id !== (int) $slipId;
+            $order->rescheduled_off_slip = $off;
+            $order->rescheduled_at       = $off ? $rescheduledOff->get($order->id) : null;
         }
     }
 
@@ -601,13 +622,23 @@ class LoadingSlipsApiController extends Controller
             return CommonHelper::responseError('Access denied to this loading slip.');
         }
 
+        // Orders rescheduled off this slip stay on it (flagged), so the slip isn't emptied by a reschedule.
+        $rescheduledOff = $this->rescheduledOffSlip($slipId);
+
         // Fetch associated orders in sequential route order if sequenced, or order id asc
         $orders = Order::select('orders.*', 'users.name as user_name', 'user_addresses.address as customer_address', 'cities.zone as city_zone')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
             ->leftJoin('cities', 'user_addresses.city_id', '=', 'cities.id')
-            ->where('orders.loading_slip_id', $slipId)
+            ->where(function ($q) use ($slipId, $rescheduledOff) {
+                $q->where('orders.loading_slip_id', $slipId);
+                if ($rescheduledOff->isNotEmpty()) {
+                    $q->orWhereIn('orders.id', $rescheduledOff->keys());
+                }
+            })
+            ->orderBy('orders.id')
             ->get();
+        $this->markRescheduledOff($orders, $slipId, $rescheduledOff);
 
         // Retailers have no saved delivery address, so customer_address came out blank — fill it from
         // their Address Line 1 / 2, and pass the parts too.
@@ -657,6 +688,16 @@ class LoadingSlipsApiController extends Controller
         try {
             $slip->status = 1; // Dispatched
             $slip->save();
+
+            // The driver carries each invoice, so every order's number is assigned now — at dispatch,
+            // not when the slip is saved (a slip can still be cancelled before this point, and the
+            // numbers shouldn't be used up until the goods actually leave). Done in order id
+            // order, the same order the slip prints. Idempotent: an order that already has a number
+            // (e.g. rescheduled earlier) keeps it. Inside the transaction, so a failure here rolls
+            // the whole dispatch back.
+            foreach ($orders->sortBy('id') as $order) {
+                CommonHelper::resolveDistributorInvoiceNumber($order->id);
+            }
 
             foreach ($orders as $order) {
                 // Update Order Status to Out For Delivery (5)
@@ -774,6 +815,9 @@ class LoadingSlipsApiController extends Controller
             return response()->json(['error' => 'Loading slip not found.'], 404);
         }
 
+        // Orders rescheduled off this slip are still printed on it, marked as rescheduled.
+        $rescheduledOff = $this->rescheduledOffSlip($id);
+
         $orders = Order::select(
                 'orders.*',
                 'users.name as user_name',
@@ -794,8 +838,15 @@ class LoadingSlipsApiController extends Controller
             ->leftJoin('areas', 'user_addresses.area_id', '=', 'areas.id')
             ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
             ->leftJoin('salesmen as placing_salesman', 'orders.placed_by_salesman_id', '=', 'placing_salesman.id')
-            ->where('orders.loading_slip_id', $id)
+            ->where(function ($q) use ($id, $rescheduledOff) {
+                $q->where('orders.loading_slip_id', $id);
+                if ($rescheduledOff->isNotEmpty()) {
+                    $q->orWhereIn('orders.id', $rescheduledOff->keys());
+                }
+            })
+            ->orderBy('orders.id')
             ->get();
+        $this->markRescheduledOff($orders, $id, $rescheduledOff);
 
         // Same as the view: the Bill to / Ship to address must not be blank for retailers.
         CommonHelper::attachRetailerAddress($orders, true);

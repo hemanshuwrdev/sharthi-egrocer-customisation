@@ -65,12 +65,12 @@
                     <!-- Navigation Tabs -->
                     <b-tabs pills nav-class="export-custom-tabs mb-4" content-class="mt-2">
 
-                        <!-- Tab 1: Sales Invoices -->
+                        <!-- Tab 1: Sales Invoices + Credit Notes (one file, one Tally import) -->
                         <b-tab active>
                             <template #title>
                                 <div class="tab-title-content">
-                                    <i class="fa fa-shopping-cart tab-icon me-2"></i>
-                                    <span>{{ __('sales_invoice_export') }}</span>
+                                    <i class="fa fa-file-invoice tab-icon me-2"></i>
+                                    <span>{{ __('sales_credit_note_export') }}</span>
                                 </div>
                             </template>
 
@@ -81,7 +81,7 @@
                                         <span class="step-circle">1</span>
                                         <div class="ms-3">
                                             <h6 class="step-heading mb-0">Select Date Range & Period</h6>
-                                            <div class="step-subheading">Choose invoice date range to export</div>
+                                            <div class="step-subheading">Choose invoice and credit note date range to export</div>
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@
                                                     <div class="summary-box">
                                                         <span class="summary-label">Voucher Type</span>
                                                         <div class="summary-value text-dark">
-                                                            <i class="fa fa-shopping-cart text-primary me-1"></i> Sales Invoices
+                                                            <i class="fa fa-file-invoice text-primary me-1"></i> Sales + Credit Notes
                                                         </div>
                                                     </div>
                                                 </div>
@@ -191,9 +191,9 @@
                                         </div>
                                         <div class="col-12 col-lg-4 d-flex flex-column justify-content-center">
                                             <button class="btn btn-action-download w-100"
-                                                :disabled="!salesDateRange.startDate || !salesDateRange.endDate || downloading.sales"
-                                                @click="downloadXlsx('/orders/export_csv', salesDateRange, 'Sales', downloading, 'sales', 'Sales Invoice')">
-                                                <span v-if="downloading.sales">
+                                                :disabled="!salesDateRange.startDate || !salesDateRange.endDate || downloading.salesCredit"
+                                                @click="downloadXlsx('/sales-credit-notes/export_csv', salesDateRange, 'SalesCreditNote', downloading, 'salesCredit', 'Sales + Credit Note')">
+                                                <span v-if="downloading.salesCredit">
                                                     <i class="fa fa-spinner fa-spin me-2"></i> Generating File...
                                                 </span>
                                                 <span v-else>
@@ -209,12 +209,12 @@
                             </div>
                         </b-tab>
 
-                        <!-- Tab 2: Credit Notes -->
+                        <!-- Tab 2: Receipts — Cash, Bank and PDC in one file (one Tally import) -->
                         <b-tab>
                             <template #title>
                                 <div class="tab-title-content">
-                                    <i class="fa fa-reply tab-icon me-2"></i>
-                                    <span>{{ __('credit_note_export') }}</span>
+                                    <i class="fa fa-money-bill-wave tab-icon me-2"></i>
+                                    <span>{{ __('receipts_export') }}</span>
                                 </div>
                             </template>
 
@@ -225,7 +225,7 @@
                                         <span class="step-circle">1</span>
                                         <div class="ms-3">
                                             <h6 class="step-heading mb-0">Select Date Range & Period</h6>
-                                            <div class="step-subheading">Choose credit note date range to export</div>
+                                            <div class="step-subheading">Choose cash, bank and PDC receipt date range to export</div>
                                         </div>
                                     </div>
                                 </div>
@@ -243,7 +243,7 @@
                                                     :ranges="dateRangePickerRanges"
                                                     :autoApply="false"
                                                     :showDropdowns="true"
-                                                    v-model="creditNoteDateRange"
+                                                    v-model="receiptDateRange"
                                                     :maxDate="maxDate"
                                                 ></date-range-picker>
                                             </div>
@@ -254,32 +254,32 @@
                                             </label>
                                             <div class="presets-btn-group">
                                                 <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(creditNoteDateRange, 'today') }"
-                                                    @click="applyPreset('creditNoteDateRange', 'today')">
+                                                    :class="{ active: isPresetActive(receiptDateRange, 'today') }"
+                                                    @click="applyPreset('receiptDateRange', 'today')">
                                                     Today
                                                 </button>
                                                 <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(creditNoteDateRange, 'yesterday') }"
-                                                    @click="applyPreset('creditNoteDateRange', 'yesterday')">
+                                                    :class="{ active: isPresetActive(receiptDateRange, 'yesterday') }"
+                                                    @click="applyPreset('receiptDateRange', 'yesterday')">
                                                     Yesterday
                                                 </button>
                                                 <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(creditNoteDateRange, 'this_week') }"
-                                                    @click="applyPreset('creditNoteDateRange', 'this_week')">
+                                                    :class="{ active: isPresetActive(receiptDateRange, 'this_week') }"
+                                                    @click="applyPreset('receiptDateRange', 'this_week')">
                                                     This Week
                                                 </button>
                                                 <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(creditNoteDateRange, 'this_month') }"
-                                                    @click="applyPreset('creditNoteDateRange', 'this_month')">
+                                                    :class="{ active: isPresetActive(receiptDateRange, 'this_month') }"
+                                                    @click="applyPreset('receiptDateRange', 'this_month')">
                                                     This Month
                                                 </button>
                                                 <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(creditNoteDateRange, 'last_month') }"
-                                                    @click="applyPreset('creditNoteDateRange', 'last_month')">
+                                                    :class="{ active: isPresetActive(receiptDateRange, 'last_month') }"
+                                                    @click="applyPreset('receiptDateRange', 'last_month')">
                                                     Last Month
                                                 </button>
                                                 <button type="button" class="btn btn-preset-clear"
-                                                    @click="clearRange('creditNoteDateRange')">
+                                                    @click="clearRange('receiptDateRange')">
                                                     <i class="fa fa-times me-1"></i> {{ __('clear') }}
                                                 </button>
                                             </div>
@@ -307,16 +307,16 @@
                                                     <div class="summary-box">
                                                         <span class="summary-label">Voucher Type</span>
                                                         <div class="summary-value text-dark">
-                                                            <i class="fa fa-reply text-danger me-1"></i> Credit Notes
+                                                            <i class="fa fa-money-bill-wave text-success me-1"></i> Cash / Bank / PDC
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-12 col-sm-5">
                                                     <div class="summary-box">
                                                         <span class="summary-label">Selected Period</span>
-                                                        <div class="summary-value text-primary" v-if="creditNoteDateRange.startDate && creditNoteDateRange.endDate">
-                                                            {{ formatDateRange(creditNoteDateRange) }}
-                                                            <span class="badge duration-pill ms-1">{{ getRangeDays(creditNoteDateRange) }}</span>
+                                                        <div class="summary-value text-primary" v-if="receiptDateRange.startDate && receiptDateRange.endDate">
+                                                            {{ formatDateRange(receiptDateRange) }}
+                                                            <span class="badge duration-pill ms-1">{{ getRangeDays(receiptDateRange) }}</span>
                                                         </div>
                                                         <div class="summary-value text-warning" v-else>
                                                             <i class="fa fa-exclamation-circle me-1"></i> Date required
@@ -335,16 +335,16 @@
                                         </div>
                                         <div class="col-12 col-lg-4 d-flex flex-column justify-content-center">
                                             <button class="btn btn-action-download w-100"
-                                                :disabled="!creditNoteDateRange.startDate || !creditNoteDateRange.endDate || downloading.creditNote"
-                                                @click="downloadXlsx('/credit-notes/export_csv', creditNoteDateRange, 'CreditNote', downloading, 'creditNote', 'Credit Note')">
-                                                <span v-if="downloading.creditNote">
+                                                :disabled="!receiptDateRange.startDate || !receiptDateRange.endDate || downloading.receipts"
+                                                @click="downloadXlsx('/receipts/export_csv', receiptDateRange, 'Receipts', downloading, 'receipts', 'Receipts')">
+                                                <span v-if="downloading.receipts">
                                                     <i class="fa fa-spinner fa-spin me-2"></i> Generating File...
                                                 </span>
                                                 <span v-else>
                                                     <i class="fa fa-download me-2"></i> Download Tally File (.xlsx)
                                                 </span>
                                             </button>
-                                            <div class="text-center text-muted small mt-1" v-if="!creditNoteDateRange.startDate || !creditNoteDateRange.endDate">
+                                            <div class="text-center text-muted small mt-1" v-if="!receiptDateRange.startDate || !receiptDateRange.endDate">
                                                 Select date range to enable download
                                             </div>
                                         </div>
@@ -353,295 +353,7 @@
                             </div>
                         </b-tab>
 
-                        <!-- Tab 3: Receipt Cash / Bank -->
-                        <b-tab>
-                            <template #title>
-                                <div class="tab-title-content">
-                                    <i class="fa fa-money tab-icon me-2"></i>
-                                    <span>{{ __('receipt_cash_export') }}</span>
-                                </div>
-                            </template>
-
-                            <!-- Step 1: Date Range -->
-                            <div class="step-card mb-4">
-                                <div class="step-card-header mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <span class="step-circle">1</span>
-                                        <div class="ms-3">
-                                            <h6 class="step-heading mb-0">Select Date Range & Period</h6>
-                                            <div class="step-subheading">Choose cash/bank receipt date range to export</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="step-card-body">
-                                    <div class="row align-items-end g-3">
-                                        <div class="col-12 col-md-5">
-                                            <label class="field-label mb-2">
-                                                <i class="fa fa-calendar me-1 text-primary"></i> {{ __('from_and_to_date') }}
-                                            </label>
-                                            <div class="date-picker-wrap">
-                                                <date-range-picker
-                                                    :append-to-body="true"
-                                                    :single-date-picker="'range'"
-                                                    :locale-data="dateRangePickerLocale"
-                                                    :ranges="dateRangePickerRanges"
-                                                    :autoApply="false"
-                                                    :showDropdowns="true"
-                                                    v-model="cashBankDateRange"
-                                                    :maxDate="maxDate"
-                                                ></date-range-picker>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-md-7">
-                                            <label class="field-label mb-2">
-                                                <i class="fa fa-bolt me-1 text-warning"></i> Quick Presets
-                                            </label>
-                                            <div class="presets-btn-group">
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(cashBankDateRange, 'today') }"
-                                                    @click="applyPreset('cashBankDateRange', 'today')">
-                                                    Today
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(cashBankDateRange, 'yesterday') }"
-                                                    @click="applyPreset('cashBankDateRange', 'yesterday')">
-                                                    Yesterday
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(cashBankDateRange, 'this_week') }"
-                                                    @click="applyPreset('cashBankDateRange', 'this_week')">
-                                                    This Week
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(cashBankDateRange, 'this_month') }"
-                                                    @click="applyPreset('cashBankDateRange', 'this_month')">
-                                                    This Month
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(cashBankDateRange, 'last_month') }"
-                                                    @click="applyPreset('cashBankDateRange', 'last_month')">
-                                                    Last Month
-                                                </button>
-                                                <button type="button" class="btn btn-preset-clear"
-                                                    @click="clearRange('cashBankDateRange')">
-                                                    <i class="fa fa-times me-1"></i> {{ __('clear') }}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 2: Review & Generate File -->
-                            <div class="step-card">
-                                <div class="step-card-header mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <span class="step-circle">2</span>
-                                        <div class="ms-3">
-                                            <h6 class="step-heading mb-0">Generate Export File</h6>
-                                            <div class="step-subheading">Review summary and download Tally-ready Excel file</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="step-card-body">
-                                    <div class="row align-items-stretch g-3">
-                                        <div class="col-12 col-lg-8">
-                                            <div class="row g-3 h-100">
-                                                <div class="col-12 col-sm-4">
-                                                    <div class="summary-box">
-                                                        <span class="summary-label">Voucher Type</span>
-                                                        <div class="summary-value text-dark">
-                                                            <i class="fa fa-money text-success me-1"></i> Cash / Bank Receipts
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-5">
-                                                    <div class="summary-box">
-                                                        <span class="summary-label">Selected Period</span>
-                                                        <div class="summary-value text-primary" v-if="cashBankDateRange.startDate && cashBankDateRange.endDate">
-                                                            {{ formatDateRange(cashBankDateRange) }}
-                                                            <span class="badge duration-pill ms-1">{{ getRangeDays(cashBankDateRange) }}</span>
-                                                        </div>
-                                                        <div class="summary-value text-warning" v-else>
-                                                            <i class="fa fa-exclamation-circle me-1"></i> Date required
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-3">
-                                                    <div class="summary-box">
-                                                        <span class="summary-label">Output Format</span>
-                                                        <div class="summary-value text-success">
-                                                            <i class="fa fa-file-excel-o me-1"></i> Excel (.xlsx)
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-lg-4 d-flex flex-column justify-content-center">
-                                            <button class="btn btn-action-download w-100"
-                                                :disabled="!cashBankDateRange.startDate || !cashBankDateRange.endDate || downloading.cashBank"
-                                                @click="downloadXlsx('/receipts/cash/export_csv', cashBankDateRange, 'ReceiptCashBank', downloading, 'cashBank', 'Cash / Bank Receipt')">
-                                                <span v-if="downloading.cashBank">
-                                                    <i class="fa fa-spinner fa-spin me-2"></i> Generating File...
-                                                </span>
-                                                <span v-else>
-                                                    <i class="fa fa-download me-2"></i> Download Tally File (.xlsx)
-                                                </span>
-                                            </button>
-                                            <div class="text-center text-muted small mt-1" v-if="!cashBankDateRange.startDate || !cashBankDateRange.endDate">
-                                                Select date range to enable download
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </b-tab>
-
-                        <!-- Tab 4: Receipt PDC -->
-                        <b-tab>
-                            <template #title>
-                                <div class="tab-title-content">
-                                    <i class="fa fa-credit-card tab-icon me-2"></i>
-                                    <span>{{ __('receipt_pdc_export') }}</span>
-                                </div>
-                            </template>
-
-                            <!-- Step 1: Date Range -->
-                            <div class="step-card mb-4">
-                                <div class="step-card-header mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <span class="step-circle">1</span>
-                                        <div class="ms-3">
-                                            <h6 class="step-heading mb-0">Select Date Range & Period</h6>
-                                            <div class="step-subheading">Choose PDC receipt date range to export</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="step-card-body">
-                                    <div class="row align-items-end g-3">
-                                        <div class="col-12 col-md-5">
-                                            <label class="field-label mb-2">
-                                                <i class="fa fa-calendar me-1 text-primary"></i> {{ __('from_and_to_date') }}
-                                            </label>
-                                            <div class="date-picker-wrap">
-                                                <date-range-picker
-                                                    :append-to-body="true"
-                                                    :single-date-picker="'range'"
-                                                    :locale-data="dateRangePickerLocale"
-                                                    :ranges="dateRangePickerRanges"
-                                                    :autoApply="false"
-                                                    :showDropdowns="true"
-                                                    v-model="pdcDateRange"
-                                                    :maxDate="maxDate"
-                                                ></date-range-picker>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-md-7">
-                                            <label class="field-label mb-2">
-                                                <i class="fa fa-bolt me-1 text-warning"></i> Quick Presets
-                                            </label>
-                                            <div class="presets-btn-group">
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(pdcDateRange, 'today') }"
-                                                    @click="applyPreset('pdcDateRange', 'today')">
-                                                    Today
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(pdcDateRange, 'yesterday') }"
-                                                    @click="applyPreset('pdcDateRange', 'yesterday')">
-                                                    Yesterday
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(pdcDateRange, 'this_week') }"
-                                                    @click="applyPreset('pdcDateRange', 'this_week')">
-                                                    This Week
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(pdcDateRange, 'this_month') }"
-                                                    @click="applyPreset('pdcDateRange', 'this_month')">
-                                                    This Month
-                                                </button>
-                                                <button type="button" class="btn btn-preset"
-                                                    :class="{ active: isPresetActive(pdcDateRange, 'last_month') }"
-                                                    @click="applyPreset('pdcDateRange', 'last_month')">
-                                                    Last Month
-                                                </button>
-                                                <button type="button" class="btn btn-preset-clear"
-                                                    @click="clearRange('pdcDateRange')">
-                                                    <i class="fa fa-times me-1"></i> {{ __('clear') }}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 2: Review & Generate File -->
-                            <div class="step-card">
-                                <div class="step-card-header mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <span class="step-circle">2</span>
-                                        <div class="ms-3">
-                                            <h6 class="step-heading mb-0">Generate Export File</h6>
-                                            <div class="step-subheading">Review summary and download Tally-ready Excel file</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="step-card-body">
-                                    <div class="row align-items-stretch g-3">
-                                        <div class="col-12 col-lg-8">
-                                            <div class="row g-3 h-100">
-                                                <div class="col-12 col-sm-4">
-                                                    <div class="summary-box">
-                                                        <span class="summary-label">Voucher Type</span>
-                                                        <div class="summary-value text-dark">
-                                                            <i class="fa fa-credit-card text-info me-1"></i> PDC Receipts
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-5">
-                                                    <div class="summary-box">
-                                                        <span class="summary-label">Selected Period</span>
-                                                        <div class="summary-value text-primary" v-if="pdcDateRange.startDate && pdcDateRange.endDate">
-                                                            {{ formatDateRange(pdcDateRange) }}
-                                                            <span class="badge duration-pill ms-1">{{ getRangeDays(pdcDateRange) }}</span>
-                                                        </div>
-                                                        <div class="summary-value text-warning" v-else>
-                                                            <i class="fa fa-exclamation-circle me-1"></i> Date required
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-3">
-                                                    <div class="summary-box">
-                                                        <span class="summary-label">Output Format</span>
-                                                        <div class="summary-value text-success">
-                                                            <i class="fa fa-file-excel-o me-1"></i> Excel (.xlsx)
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-lg-4 d-flex flex-column justify-content-center">
-                                            <button class="btn btn-action-download w-100"
-                                                :disabled="!pdcDateRange.startDate || !pdcDateRange.endDate || downloading.pdc"
-                                                @click="downloadXlsx('/receipts/pdc/export_csv', pdcDateRange, 'ReceiptPDC', downloading, 'pdc', 'Receipt PDC')">
-                                                <span v-if="downloading.pdc">
-                                                    <i class="fa fa-spinner fa-spin me-2"></i> Generating File...
-                                                </span>
-                                                <span v-else>
-                                                    <i class="fa fa-download me-2"></i> Download Tally File (.xlsx)
-                                                </span>
-                                            </button>
-                                            <div class="text-center text-muted small mt-1" v-if="!pdcDateRange.startDate || !pdcDateRange.endDate">
-                                                Select date range to enable download
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </b-tab>
-
-                        <!-- Tab 5: Product Master -->
+                        <!-- Tab 3: Product Master -->
                         <b-tab>
                             <template #title>
                                 <div class="tab-title-content">
@@ -821,7 +533,7 @@
                 <div class="alert alert-info d-flex align-items-center mb-4">
                     <i class="fa fa-info-circle fa-2x me-3 text-info"></i>
                     <div>
-                        <strong>Recommended Import Sequence:</strong> Always import <strong>Product Master</strong> first into your Tally Company, followed by <strong>Sales Vouchers</strong>, <strong>Receipts</strong>, and <strong>Credit Notes</strong>.
+                        <strong>Recommended Import Sequence:</strong> Always import <strong>Product Master</strong> first into your Tally Company, followed by the <strong>Sales + Credit Note</strong> file (invoices and credit notes in one import) and then <strong>Receipts</strong>.
                     </div>
                 </div>
 
@@ -846,6 +558,8 @@
                             <li><strong>Party Ledgers (Sundry Debtors):</strong> Retailer shop names with valid GSTIN matching the customer profiles.</li>
                             <li><strong>Tax Ledgers (Duties & Taxes):</strong> <code>Output CGST</code>, <code>Output SGST</code>, and <code>Output IGST</code>.</li>
                             <li><strong>Sales Ledger:</strong> <code>Sales Account</code> configured with GST Applicable.</li>
+                            <li><strong>Sales Return Ledger:</strong> <code>Sales Returns</code>, used by the credit note rows in the Sales + Credit Note file.</li>
+                            <li><strong>Receipt Ledgers:</strong> <code>Cash</code>, <code>Bank</code> and <code>PDC CHQ</code>, used by the cash, bank and cheque rows in the Receipts file.</li>
                         </ul>
                     </div>
                 </div>
@@ -898,10 +612,8 @@ export default {
         return {
             maxDate: new Date(),
             salesDateRange: {startDate: null, endDate: null},
-            cashBankDateRange: {startDate: null, endDate: null},
-            pdcDateRange: {startDate: null, endDate: null},
-            creditNoteDateRange: {startDate: null, endDate: null},
-            downloading: {sales: false, cashBank: false, pdc: false, products: false, creditNote: false},
+            receiptDateRange: {startDate: null, endDate: null},
+            downloading: {salesCredit: false, receipts: false, products: false},
             showGuideModal: false,
             recentExports: [],
         }
@@ -918,9 +630,7 @@ export default {
         // Default ranges to 'this_month' for instant 1-click readiness
         const thisMonth = this.getThisMonthRange();
         this.salesDateRange = {startDate: thisMonth[0], endDate: thisMonth[1]};
-        this.cashBankDateRange = {startDate: thisMonth[0], endDate: thisMonth[1]};
-        this.pdcDateRange = {startDate: thisMonth[0], endDate: thisMonth[1]};
-        this.creditNoteDateRange = {startDate: thisMonth[0], endDate: thisMonth[1]};
+        this.receiptDateRange = {startDate: thisMonth[0], endDate: thisMonth[1]};
     },
     methods: {
         applyPreset(rangeKey, presetKey) {

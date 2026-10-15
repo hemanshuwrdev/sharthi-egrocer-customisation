@@ -161,6 +161,11 @@ class DeliveryBoyController extends BaseController
         $expectedCash = 0;
         $totalStops = 0;
 
+        // customer_address is what the driver reads to find the shop: "line 1, line 2, area, city, state - pincode"
+        // from the retailer's own address, instead of the order's older one-line text. Orders for a retailer
+        // without Address Line 1 keep what they had.
+        CommonHelper::attachRetailerAddress($orders, true);
+
         foreach ($orders as $order) {
             $order->resolved_latitude = floatval($order->latitude ?: ($order->user_address_latitude ?: ($order->verified_lat ?: ($order->gps_lat ?: 0))));
             $order->resolved_longitude = floatval($order->longitude ?: ($order->user_address_longitude ?: ($order->verified_lng ?: ($order->gps_lng ?: 0))));

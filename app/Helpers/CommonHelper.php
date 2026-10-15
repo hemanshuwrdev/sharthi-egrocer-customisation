@@ -2769,7 +2769,7 @@ class CommonHelper
      * $row carries rp_address_line1 / rp_address_line2 / rp_profile_address / rp_profile_city /
      * rp_profile_state / rp_area_pincode / rp_area_name (profile + area) and ua_address /
      * ua_landmark / ua_city / ua_state / ua_pincode / ua_area (saved delivery address), any of
-     * them optional. Returns ['line1', 'line2', 'line3' (City, State - PIN), 'pincode', 'area'].
+     * them optional. Returns ['line1', 'line2', 'line3' (City, State - PIN), 'pincode', 'area', 'city', 'state'].
      */
     public static function partyAddress($row): array
     {
@@ -2802,16 +2802,17 @@ class CommonHelper
         $cityState = implode(', ', array_filter([$city, $state]));
         $line3     = $cityState !== '' ? $cityState . ($pincode !== '' ? ' - ' . $pincode : '') : $pincode;
 
-        return ['line1' => $line1, 'line2' => $line2, 'line3' => $line3, 'pincode' => $pincode, 'area' => $area];
+        return ['line1' => $line1, 'line2' => $line2, 'line3' => $line3, 'pincode' => $pincode, 'area' => $area, 'city' => $city, 'state' => $state];
     }
 
     /**
      * Puts the retailer's own address on each order row (anything with a user_id): retailer_address_line1,
      * retailer_address_line2, retailer_city, retailer_state, retailer_area and retailer_pincode, taken from
      * their profile and area — null where they have none. With $fillCustomerAddress the row's
-     * customer_address (the line documents print, normally the saved delivery address, which retailers
-     * rarely have) is also set: to "line 1, line 2, city, state - pincode" when the retailer has Address
-     * Line 1; otherwise left as it is, or — when blank — the order's own address, then their profile address.
+     * customer_address (the line documents and the apps show, normally the saved delivery address, which retailers
+     * rarely have) is also set: to "line 1, line 2, area, city, state - pincode" when there is an Address Line 1
+     * (the order's own saved one, else the retailer's); otherwise left as it is, or — when blank — the order's own
+     * address, then their profile address.
      */
     public static function attachRetailerAddress($orders, bool $fillCustomerAddress = false): void
     {
@@ -2841,16 +2842,23 @@ class CommonHelper
                 continue;
             }
 
-            $line1 = trim((string) ($profile->address_line1 ?? ''));
+            // The order's own saved lines (the address when it was placed) first, then the retailer's current ones.
+            $ownLine1     = trim((string) ($order->address_line1 ?? ''));
+            $profileLine1 = trim((string) ($profile->address_line1 ?? ''));
+            $line1        = $ownLine1 !== '' ? $ownLine1 : $profileLine1;
+            $line2        = $ownLine1 !== '' ? trim((string) ($order->address_line2 ?? '')) : trim((string) ($profile->address_line2 ?? ''));
             if ($line1 !== '') {
-                $pincode  = trim((string) ($profile->area_pincode ?? ''));
-                $composed = implode(', ', array_filter([
-                    $line1,
-                    trim((string) ($profile->address_line2 ?? '')),
-                    trim((string) ($profile->city ?? '')),
-                    trim((string) ($profile->state ?? '')),
-                ], fn ($part) => $part !== ''));
-                $order->customer_address = $pincode !== '' ? $composed . ' - ' . $pincode : $composed;
+                // "line 1, line 2, area, city, state - pincode". Area, city, state and pincode are the retailer's
+                // current ones, so they are added only while this is still the retailer's address — an order from
+                // before they moved keeps just its own lines.
+                $sameAsShop = $ownLine1 === '' || $ownLine1 === $profileLine1;
+                $order->customer_address = self::lineAddress(
+                    $line1, $line2,
+                    $sameAsShop ? ($profile->area_name ?? null) : null,
+                    $sameAsShop ? ($profile->city ?? null) : null,
+                    $sameAsShop ? ($profile->state ?? null) : null,
+                    $sameAsShop ? ($profile->area_pincode ?? null) : null
+                );
             } elseif (trim((string) ($order->customer_address ?? '')) === '') {
                 $fallback = trim((string) ($order->address ?? '')) ?: trim((string) ($profile->address ?? ''));
                 if ($fallback !== '') {
@@ -3281,6 +3289,87 @@ class CommonHelper
      * @param  array|null $scheme         result of SchemeEngine::evaluate()
      * @param  float      $schemeDiscount ₹ taken off by the scheme (0 = no scheme applied)
      */
+    /**
+     * The delivery address to put on an order a retailer places. Their own registered address wins: Address Line 1 / 2
+     * plus city and state from their profile — the address every document and export shows — so the retailer app doesn't
+     * have to send it and an order can't carry a different, older-style string. With $sentWins (a salesman who typed an
+     * address on purpose) a non-empty sent address is kept instead. A retailer who registered before the lines existed
+     * keeps what was sent, else their one-line profile address, and has no lines.
+     *
+     * Returns ['address' => text, 'columns' => the two snapshot line columns to merge into the order insert — or []
+     * when the orders table doesn't have them yet, so code deployed before `php artisan migrate` still places orders].
+     */
+    /**
+     * "Product + variant" as one label, without saying the size twice.
+     * An order item keeps product_name and variant_name apart, and variant_name starts with the variant's
+     * SKU / size ("1KG | 20 NOS/BAG") — which many master products already carry in their own name
+     * ("CHARMINAR STEAM RICE 1KG"), so joining them plainly reads "CHARMINAR STEAM RICE 1KG 1KG | 20 NOS/BAG".
+     * When the variant's leading part already appears in the product name as a whole word, it is left out:
+     * "CHARMINAR STEAM RICE 1KG | 20 NOS/BAG" (or "… 1KG (20 NOS/BAG)" with $parenthesise). Otherwise the
+     * names are joined exactly as before.
+     */
+    public static function itemNameWithVariant($productName, $variantName, bool $parenthesise = false): string
+    {
+        $product = trim((string) $productName);
+        $variant = trim((string) $variantName);
+        if ($variant === '') {
+            return $product;
+        }
+
+        $parts = array_map('trim', explode('|', $variant));
+        $first = array_shift($parts);
+        $repeated = $first !== ''
+            && preg_match('/(?<![\p{L}\p{N}])' . preg_quote($first, '/') . '(?![\p{L}\p{N}])/iu', $product) === 1;
+
+        if (!$repeated) {
+            return trim($parenthesise ? $product . ' (' . $variant . ')' : $product . ' ' . $variant);
+        }
+
+        $rest = trim(implode(' | ', array_filter($parts, fn ($part) => $part !== '')));
+        if ($rest === '') {
+            return $product;
+        }
+
+        return $parenthesise ? $product . ' (' . $rest . ')' : $product . ' | ' . $rest;
+    }
+
+    /**
+     * One printable line from Address Line 1 / 2, area, city, state and pincode:
+     * "Time square empire, mirzapar road, Mirjapar, Bhuj, Gujarat - 370001". Blank parts are skipped.
+     * For screens that show a single address string.
+     */
+    public static function lineAddress(?string $line1, ?string $line2, ?string $area, ?string $city, ?string $state, ?string $pincode): string
+    {
+        $text = implode(', ', array_filter([trim((string) $line1), trim((string) $line2), trim((string) $area), trim((string) $city), trim((string) $state)], fn ($part) => $part !== ''));
+        $pin  = trim((string) $pincode);
+
+        return $pin !== '' ? ($text !== '' ? $text . ' - ' . $pin : $pin) : $text;
+    }
+
+    public static function orderAddressFor($retailerId, ?string $sentAddress, bool $sentWins = false): array
+    {
+        static $columnsExist = null;
+        if ($columnsExist === null) {
+            $columnsExist = \Illuminate\Support\Facades\Schema::hasColumn('orders', 'address_line1')
+                && \Illuminate\Support\Facades\Schema::hasColumn('orders', 'address_line2');
+        }
+
+        $sent    = trim((string) $sentAddress);
+        $profile = $retailerId ? \App\Models\RetailerProfile::where('user_id', $retailerId)->first() : null;
+        $line1   = trim((string) ($profile->address_line1 ?? ''));
+
+        if ($line1 !== '' && !($sentWins && $sent !== '')) {
+            $line2   = trim((string) ($profile->address_line2 ?? ''));
+            $address = \App\Models\RetailerProfile::composeAddress($line1, $line2, $profile->city, $profile->state);
+            $lines   = ['address_line1' => $line1, 'address_line2' => $line2 !== '' ? $line2 : null];
+        } else {
+            $address = $sent !== '' ? $sent : trim((string) ($profile->address ?? ''));
+            $lines   = ['address_line1' => null, 'address_line2' => null];
+        }
+
+        return ['address' => $address, 'columns' => $columnsExist ? $lines : []];
+    }
+
     public static function schemeSnapshotColumns(?array $scheme, float $schemeDiscount): array
     {
         static $columnsExist = null;
@@ -3381,8 +3470,15 @@ class CommonHelper
     {
         return DB::transaction(function () use ($seller) {
             $locked = \App\Models\Seller::where('id', $seller->id)->lockForUpdate()->first();
-            $number = self::formatDistributorSequenceNumber($locked->loading_slip_prefix, $locked->loading_slip_next_number, $locked->loading_slip_suffix);
-            $locked->loading_slip_next_number = $locked->loading_slip_next_number + 1;
+
+            // loading_slips.slip_no is unique across ALL distributors, yet each keeps its own counter and
+            // most share the default "LS/" prefix — so another distributor (or an earlier reset of this
+            // counter) may already hold the next number. Skip taken ones instead of failing the insert.
+            do {
+                $number = self::formatDistributorSequenceNumber($locked->loading_slip_prefix, $locked->loading_slip_next_number, $locked->loading_slip_suffix);
+                $locked->loading_slip_next_number = $locked->loading_slip_next_number + 1;
+            } while (\App\Models\LoadingSlip::where('slip_no', $number)->exists());
+
             $locked->save();
             return $number;
         });

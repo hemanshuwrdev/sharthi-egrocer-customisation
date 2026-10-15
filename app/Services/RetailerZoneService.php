@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\CommonHelper;
 use App\Models\City;
+use App\Models\RetailerAddressChangeRequest;
 use App\Models\RetailerProfile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +52,40 @@ class RetailerZoneService
         }
 
         return $ids;
+    }
+
+    /**
+     * Ids of the open (pending / assigned) address-change requests whose NEW location sits in any of $zoneIds.
+     *
+     * A request stores only the first zone that matched its point (new_city_id), but zones overlap — so
+     * matching new_city_id alone hides it from a distributor whose territory is another zone covering the
+     * same spot, even though salesmen of every overlapping zone are notified. The stored zone is the cheap
+     * check; otherwise every zone containing the point is worked out (open requests are few).
+     *
+     * @param  int[] $zoneIds the salesman's distributor's zones
+     * @return int[]
+     */
+    public function openAddressChangeRequestIdsInZones(array $zoneIds): array
+    {
+        $zoneIds = array_map('intval', $zoneIds);
+        if (empty($zoneIds)) {
+            return [];
+        }
+
+        $cities = null;
+
+        return RetailerAddressChangeRequest::whereIn('status', ['pending', 'assigned'])
+            ->get(['id', 'new_city_id', 'new_gps_lat', 'new_gps_lng'])
+            ->filter(function ($request) use ($zoneIds, &$cities) {
+                if (in_array((int) $request->new_city_id, $zoneIds, true)) {
+                    return true;
+                }
+                $cities = $cities ?? City::all();
+
+                return !empty(array_intersect($this->zoneIdsForPoint($request->new_gps_lat, $request->new_gps_lng, $cities), $zoneIds));
+            })
+            ->pluck('id')
+            ->all();
     }
 
     /**

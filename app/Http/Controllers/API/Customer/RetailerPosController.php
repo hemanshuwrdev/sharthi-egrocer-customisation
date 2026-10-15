@@ -185,7 +185,9 @@ class RetailerPosController extends Controller
             // 'address'              => 'required_unless:order_type,selfpickup',
             // 'latitude'             => 'required_unless:order_type,selfpickup',
             // 'longitude'            => 'required_unless:order_type,selfpickup',
-            'address'              => 'required',
+            // Taken from the retailer's own profile (CommonHelper::orderAddressFor); one sent still works for retailers
+            // without Address Line 1 yet.
+            'address'              => 'nullable|string',
             'latitude'             => 'required',
             'longitude'            => 'required',
             'address_id'           => 'nullable|integer',
@@ -203,6 +205,11 @@ class RetailerPosController extends Controller
         // Verification gate — same as regular retailer placeOrder.
         if (!in_array($user->verification_status, ['approved', 'active'], true)) {
             return CommonHelper::responseError('retailer_pending_verification');
+        }
+
+        $orderAddress = CommonHelper::orderAddressFor($user->id, $request->address);
+        if ($orderAddress['address'] === '') {
+            return CommonHelper::responseError('The address field is required.');
         }
 
         $sellerId = (int) $request->seller_id;
@@ -245,7 +252,7 @@ class RetailerPosController extends Controller
         try {
             DB::transaction(function () use (
                 $resolved, $request, $user, $sellerId,
-                $sellerTotal, $sellerTaxTotal, $sellerTaxPercentage, $schemeDiscount, $scheme, $ordersId, &$orderId
+                $sellerTotal, $sellerTaxTotal, $sellerTaxPercentage, $schemeDiscount, $scheme, $ordersId, $orderAddress, &$orderId
             ) {
                 $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
                     ? CommonHelper::computeDeliveryDate(now(), $sellerId)
@@ -269,7 +276,7 @@ class RetailerPosController extends Controller
                     'final_total'     => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
                     'remaining_final' => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
                     'payment_method'  => $request->payment_method,
-                    'address'         => $request->address,
+                    'address'         => $orderAddress['address'],
                     'latitude'        => $request->latitude,
                     'longitude'       => $request->longitude,
                     'delivery_time'   => $request->delivery_time ?? '',
@@ -282,7 +289,7 @@ class RetailerPosController extends Controller
                     'address_id'      => $request->address_id ?? 0,
                     'created_at'      => now(),
                     'updated_at'      => now(),
-                ]);
+                ] + $orderAddress['columns']);
 
                 foreach ($resolved as $r) {
                     $sp        = $r['line']['seller_product'];

@@ -687,8 +687,7 @@
                                                         <h4 class="mb-0">{{ __('assigned_areas') }}</h4>
                                                     </div>
                                                     <div class="card-body">
-                                                        <Select2 v-model="area_ids" :placeholder="__('select_areas')"
-                                                            :options="areas_options" :settings="{ multiple: 'multiple' }" />
+                                                        <AreaPicker v-model="area_ids" :areas="areas" :zone-cities="areaZoneCityNames" />
                                                     </div>
                                                 </div>
                                                 <!-- ── END Assigned Areas Card ── -->
@@ -718,7 +717,7 @@
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="row">
-                                                            <div class="form-group col-md-6">
+                                                            <div class="form-group col-md-4">
                                                                 <div class="form-group">
                                                                     <label> {{ __('address_line_1') }}<i v-if="!id"
                                                                             class="text-danger">*</i></label>
@@ -728,12 +727,22 @@
                                                                 </div>
                                                             </div>
 
-                                                            <div class="form-group col-md-6">
+                                                            <div class="form-group col-md-4">
                                                                 <div class="form-group">
                                                                     <label> {{ __('address_line_2') }}</label>
                                                                     <input type="text" class="form-control"
                                                                         v-model="address_line2" maxlength="255"
                                                                         :placeholder="__('address_line_2')">
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="form-group col-md-4">
+                                                                <div class="form-group">
+                                                                    <label> {{ __('pincode') }}<i v-if="!id"
+                                                                            class="text-danger">*</i></label>
+                                                                    <input type="text" class="form-control"
+                                                                        v-model="pincode" maxlength="6" inputmode="numeric"
+                                                                        :placeholder="__('pincode')">
                                                                 </div>
                                                             </div>
 
@@ -1206,6 +1215,7 @@
 import { VuejsDatatableFactory } from 'vuejs-datatable';
 import axios from "axios";
 import Select2 from 'v-select2-component';
+import AreaPicker from './AreaPicker.vue';
 
 import Multiselect from 'vue-multiselect';
 import { gmapApi } from 'vue2-google-maps';
@@ -1224,6 +1234,7 @@ export default {
     components: {
         VuejsDatatableFactory,
         Select2,
+        AreaPicker,
         Multiselect,
         'editor': Editor
     },
@@ -1278,6 +1289,7 @@ export default {
             street: "",
             address_line1: "",
             address_line2: "",
+            pincode: "",
             pincode_id: "",
             city_id: [],
             brand_ids: [],
@@ -1430,6 +1442,7 @@ export default {
         street: function () { if (!this.id) this.debouncedSave(); },
         address_line1: function () { if (!this.id) this.debouncedSave(); },
         address_line2: function () { if (!this.id) this.debouncedSave(); },
+        pincode: function () { if (!this.id) this.debouncedSave(); },
         city_id: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         brand_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
         area_ids: { handler: function () { if (!this.id) this.debouncedSave(); }, deep: true },
@@ -1526,15 +1539,13 @@ export default {
             const selected = this.area_ids.map(String);
             return this.areas.filter(area => selected.includes(String(area.id)));
         },
-        areas_options: function () {
-            if (!Array.isArray(this.areas) || this.areas.length === 0) {
-                return [];
-            }
-            return this.areas.map(area => ({
-                id: area.id,
-                text: (area.name || '') + (area.pincode ? ' (' + area.pincode + ')' : '') +
-                    (area.district ? ' - ' + area.district : '') + (area.state ? ', ' + area.state : '')
-            }));
+        // City names of every zone this distributor is tied to (assigned, defined on this page, or in a brand-zone row);
+        // AreaPicker uses them to offer a "match zone cities" filter against area districts.
+        areaZoneCityNames: function () {
+            const ids = new Set((this.createdCityIds || []).map(String));
+            this.brandZoneRows.forEach(r => (r.city_ids || []).forEach(id => ids.add(String(id))));
+            (Array.isArray(this.city_id) ? this.city_id : []).forEach(id => ids.add(String(id)));
+            return this.cities.filter(city => ids.has(String(city.id))).map(city => city.name).filter(Boolean);
         },
         google: gmapApi,
         // Computed property to safely access $roleSeller
@@ -2042,6 +2053,12 @@ export default {
                     this.state = stateName;
                 }
 
+                // The store's pincode from the same place (left as it is when Google gives none) — editable.
+                const postal = (this.currentPlace.address_components || []).find(c => c.types && c.types.includes('postal_code'));
+                if (postal && /^\d{6}$/.test(String(postal.long_name).trim())) {
+                    this.pincode = String(postal.long_name).trim();
+                }
+
                 this.place_name = this.currentPlace.name;
                 this.formatted_address = this.currentPlace.formatted_address;
 
@@ -2224,7 +2241,7 @@ export default {
             if (this.$refs['my-form']) this.$refs['my-form'].reset();
             Object.assign(this, {
                 name: "", email: "", mobile: "", store_url: "", password: "", confirm_password: "",
-                store_name: "", street: "", address_line1: "", address_line2: "", pincode_id: "", city_id: [], brand_ids: [], brandZoneRows: [], area_ids: [],
+                store_name: "", street: "", address_line1: "", address_line2: "", pincode: "", pincode_id: "", city_id: [], brand_ids: [], brandZoneRows: [], area_ids: [],
                 state: "", remark: "", bank_name: "", account_number: "", bank_ifsc_code: "", account_name: "", upi_id: "", upi_mobile: "", upi_name: "",
                 commission: "", tax_name: "", tax_number: "", pan_number: "",
                 latitude: "", longitude: "", store_description: "", require_products_approval: 0,
@@ -2252,7 +2269,7 @@ export default {
                     name: defaultTranslation ? defaultTranslation.name : this.name,
                     email: this.email, mobile: this.mobile, store_url: this.store_url,
                     store_name: defaultTranslation ? defaultTranslation.store_name : this.store_name,
-                    street: this.street, address_line1: this.address_line1, address_line2: this.address_line2, pincode_id: this.pincode_id,
+                    street: this.street, address_line1: this.address_line1, address_line2: this.address_line2, pincode: this.pincode, pincode_id: this.pincode_id,
                     city_id: this.city_id, brand_ids: this.brand_ids, area_ids: this.area_ids, state: this.state,
                     remark: this.remark, bank_name: this.bank_name, account_number: this.account_number, bank_ifsc_code: this.bank_ifsc_code, account_name: this.account_name, upi_id: this.upi_id, upi_mobile: this.upi_mobile,
                     upi_name: this.upi_name, commission: this.commission,
@@ -2415,6 +2432,7 @@ export default {
                         this.street = emptyIfNull(this.record.street);
                         this.address_line1 = emptyIfNull(this.record.address_line1);
                         this.address_line2 = emptyIfNull(this.record.address_line2);
+                        this.pincode = emptyIfNull(this.record.pincode);
                         this.pincode_id = "";
                         this.city_id = emptyIfNull(this.record.city_id) ? this.record.city_id.split(",") : [];
                         this.brand_ids = Array.isArray(this.record.brand_ids) ? this.record.brand_ids.map(String) : [];
@@ -2552,6 +2570,13 @@ export default {
 
             if (!this.id && !String(this.address_line1 || '').trim()) {
                 this.showError(__('address_line_1') + ' ' + __('is_required'));
+                return;
+            }
+
+            // The store's pincode: 6 digits, required for a new distributor (optional when editing an old one).
+            const pin = String(this.pincode || '').trim();
+            if ((!this.id && !pin) || (pin && !/^\d{6}$/.test(pin))) {
+                this.showError(pin ? __('pincode') + ' must be 6 digits' : __('pincode') + ' ' + __('is_required'));
                 return;
             }
 
@@ -2735,6 +2760,7 @@ export default {
                 formData.append('street', this.street);
                 formData.append('address_line1', this.address_line1 || '');
                 formData.append('address_line2', this.address_line2 || '');
+                formData.append('pincode', String(this.pincode || '').trim());
                 formData.append('pincode_id', this.pincode_id);
                 if (!this.isSellerRole) {
                     formData.append('brand_zone_mappings', JSON.stringify(

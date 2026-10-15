@@ -533,7 +533,9 @@ class RetailerCartOrderApiController extends Controller
             // 'address' => 'required_unless:order_type,selfpickup',
             // 'latitude' => 'required_unless:order_type,selfpickup',
             // 'longitude' => 'required_unless:order_type,selfpickup',
-            'address' => 'required',
+            // The delivery address is taken from the retailer's own profile (see CommonHelper::orderAddressFor), so the
+            // app no longer has to send it; one that is sent still works for retailers without Address Line 1 yet.
+            'address' => 'nullable|string',
             'latitude' => 'required',
             'longitude' => 'required',
             'payment_method' => 'nullable|string',
@@ -552,6 +554,11 @@ class RetailerCartOrderApiController extends Controller
         // Pending + salesman_verified can browse but not order (per spec Status System rules).
         if (!in_array($user->verification_status, ['approved', 'active'], true)) {
             return CommonHelper::responseError('retailer_pending_verification');
+        }
+
+        $orderAddress = CommonHelper::orderAddressFor($user->id, $request->address);
+        if ($orderAddress['address'] === '') {
+            return CommonHelper::responseError('The address field is required.');
         }
 
         $items = Cart::where('user_id', $user->id)
@@ -601,7 +608,7 @@ class RetailerCartOrderApiController extends Controller
         $createdOrders = [];
 
         try {
-            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $user, $minOrderAmountBySeller, $sellerNamesForMinCheck, &$createdOrders) {
+            DB::transaction(function () use ($items, $resolved, $bySeller, $request, $user, $minOrderAmountBySeller, $sellerNamesForMinCheck, $orderAddress, &$createdOrders) {
                 foreach ($bySeller as $sellerId => $sellerItems) {
                     $sellerTotal = 0;
                     $sellerTaxTotal = 0;
@@ -675,7 +682,7 @@ class RetailerCartOrderApiController extends Controller
                         'final_total' => $finalTotal,
                         'remaining_final' => $finalTotal,
                         'payment_method' => $request->payment_method ?? 'COD',
-                        'address' => $request->address,
+                        'address' => $orderAddress['address'],
                         'latitude' => $request->latitude,
                         'longitude' => $request->longitude,
                         'delivery_time' => $request->delivery_time ?? '',
@@ -700,7 +707,7 @@ class RetailerCartOrderApiController extends Controller
                         'updated_at' => now(),
                     // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
                     // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
-                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount));
+                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
 
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];

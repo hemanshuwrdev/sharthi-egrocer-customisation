@@ -1069,8 +1069,10 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       var _this12 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/payment_methods').then(function (res) {
         if (res.data.status && res.data.data) {
+          // The list says "bank" (what the apps use); this page is built on the key "upi".
           _this12.paymentMethods = res.data.data.methods.map(function (m) {
             return _objectSpread(_objectSpread({}, m), {}, {
+              method: m.method === 'bank' ? 'upi' : m.method,
               is_enabled: m.is_enabled ? 1 : 0
             });
           });

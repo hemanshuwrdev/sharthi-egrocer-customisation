@@ -910,16 +910,35 @@ class SellerController extends BaseController
 
     /**
      * Sales Invoice export — Tally "Sales Voucher" import template, one row per
-     * order item. Column layout matches the client's Sales.xlsx sample exactly.
-     * Only invoices with at least one verified payment are included (2026-09-30
+     * order item. Column layout is the shared Sales / Credit Note one, see
+     * tallyVoucherHeaders(). Only invoices with at least one verified payment are included (2026-09-30
      * spec: exports 2-6 gate on settled + verified); a cash payment counts as
      * verified, see the gate below.
      */
     public function exportOrdersCsv(Request $request)
     {
+        $startDate = $request->filled('startDate')
+            ? Carbon::parse($request->input('startDate'))->startOfDay()
+            : null;
+        $endDate = $request->filled('endDate')
+            ? Carbon::parse($request->input('endDate'))->endOfDay()
+            : null;
+
+        [$headers, $sheetRows] = $this->buildSalesSheet(auth()->user()->seller->id, $startDate, $endDate);
+
+        return $this->downloadXlsx($headers, $sheetRows, 'Sales.xlsx');
+    }
+
+    /**
+     * Sales Invoice + Credit Note in one Tally import file. Both vouchers already share one
+     * column layout (the Voucher Type column tells Tally which is which), so this is just the
+     * Sales rows followed by the Credit Note rows under a single header. Sales go first so each
+     * credit note's "Against Invoice No" finds its invoice already in Tally. The one date range
+     * is applied to each side's own date (invoice date / credit note generated date).
+     */
+    public function exportSalesAndCreditNotesCsv(Request $request)
+    {
         $seller_id = auth()->user()->seller->id;
-        $seller = DB::table('sellers')->where('id', $seller_id)->first();
-        $sellerState = $seller->state ?? null;
 
         $startDate = $request->filled('startDate')
             ? Carbon::parse($request->input('startDate'))->startOfDay()
@@ -927,6 +946,22 @@ class SellerController extends BaseController
         $endDate = $request->filled('endDate')
             ? Carbon::parse($request->input('endDate'))->endOfDay()
             : null;
+
+        [$headers, $salesRows] = $this->buildSalesSheet($seller_id, $startDate, $endDate);
+        [, $creditNoteRows] = $this->buildCreditNoteSheet($seller_id, $startDate, $endDate);
+
+        return $this->downloadXlsx($headers, array_merge($salesRows, $creditNoteRows), 'SalesCreditNote.xlsx');
+    }
+
+    /**
+     * Header + data rows of the Sales sheet (see exportOrdersCsv for the rules). Shared by the
+     * Sales-only download and the combined Sales + Credit Note download. Discounts are exported
+     * as positive amounts / percentages — Tally reads them positive for every voucher type.
+     */
+    private function buildSalesSheet(int $seller_id, ?Carbon $startDate, ?Carbon $endDate): array
+    {
+        $seller = DB::table('sellers')->where('id', $seller_id)->first();
+        $sellerState = $seller->state ?? null;
 
         $rows = OrderItem::select(
             'order_items.id as order_item_id',
@@ -1028,41 +1063,7 @@ class SellerController extends BaseController
             ->get(['ls.id', 'ls.slip_no', 'v.vehicle_number', 'db.name as driver_name'])
             ->keyBy('id');
 
-        $headers = [
-            "Voucher Type\n(exact Tally name)",
-            "Voucher Date\n(DD-MM-YYYY text)",
-            'Voucher No',
-            "Party Ledger\n(exact Tally name)",
-            "Party Alias\n(used if Party blank)",
-            'MOBILE NO',
-            'Party GSTIN',
-            "Place of Supply\n(STATE e.g. Gujarat)",
-            "Supply Type\nINTRA_STATE / INTER_STATE",
-            "Bill Ref No\nSales: blank = Voucher No\nCN: Against Invoice No",
-            "Bill Ref Date\nCN: Orig. Invoice Date",
-            'Sales / Sales Return Ledger',
-            "Stock Item Name\n(exact Tally name)",
-            "HSN/SAC\n(needed for new item)",
-            'Quantity',
-            "Unit\n(Tally unit symbol;\nneeded for new item)",
-            'Rate',
-            "Item Discount %\n(negative, 2 = -2%)",
-            "Invoice Discount (amt)\n(negative, first row\nof the order)(negative, 100 = -100)",
-            'COD DISCOUNT',
-            "GST Rate %\n(5 = 5%)",
-            "Godown\n(blank = Main Location)",
-            'Order Ref',
-            'Party Address Line 1',
-            'Party Address Line 2',
-            'Party Address Line 3\n(City, State, PIN)',
-            'Party Pincode (6 digits)',
-            'Vehicle No',
-            'Loading Slip No',
-            'Destination (Area)',
-            'Dispatched Through\n(Salesman / Self - Retailer App Order)',
-            'Driver Name\n(Carrier Name/Agent)',
-            'Narration',
-        ];
+        $headers = $this->tallyVoucherHeaders();
 
         $itemNames = $this->tallyItemNames($rows->pluck('master_product_variant_id')->all());
 
@@ -1084,7 +1085,7 @@ class SellerController extends BaseController
             $codDiscountAmt = '';
             if ($isFirstRowOfOrder) {
                 $orderDiscount = (float) $row->order_discount + (float) $row->order_promo_discount + (float) $row->order_scheme_discount;
-                $invoiceDiscountAmt = $orderDiscount > 0 ? -$orderDiscount : '';
+                $invoiceDiscountAmt = $orderDiscount > 0 ? $orderDiscount : '';
 
                 // Cash discount is booked at collection and already taken off final_total, so it
                 // must be exported (own column, as in the client's sheet, positive amount) or the
@@ -1117,15 +1118,14 @@ class SellerController extends BaseController
                 $row->quantity,
                 $row->unit_symbol,
                 $row->price,
-                $row->discount ? -abs($row->discount) : 0,
+                $row->discount ? abs($row->discount) : 0,
                 $invoiceDiscountAmt,
                 $codDiscountAmt,
+                '', // Delivery Charge — no delivery charge in the system; the column is kept blank for Tally
                 $row->tax_percentage,
                 '',
                 'Order ' . $row->order_id,
                 $partyAddress['line1'],
-                $partyAddress['line2'],
-                $partyAddress['line3'],
                 $partyAddress['pincode'],
                 $slip->vehicle_number ?? '',
                 $slip->slip_no ?? '',
@@ -1136,7 +1136,7 @@ class SellerController extends BaseController
             ];
         }
 
-        return $this->downloadXlsx($headers, $sheetRows, 'Sales.xlsx');
+        return [$headers, $sheetRows];
     }
 
     /**
@@ -1286,45 +1286,7 @@ class SellerController extends BaseController
             ->get(['ls.id', 'ls.slip_no', 'v.vehicle_number', 'db.name as driver_name'])
             ->keyBy('id');
 
-        // Column layout + wording matches the client's CreditNote.xlsx sample exactly
-        // (verbatim header text, including which columns use \n vs a plain space) —
-        // a few of these intentionally differ from exportOrdersCsv()'s Sales headers,
-        // which use a different (negative) discount sign convention than this sample.
-        $headers = [
-            "Voucher Type\n(exact Tally name)",
-            "Voucher Date\n(DD-MM-YYYY text)",
-            'Voucher No',
-            "Party Ledger\n(exact Tally name)",
-            "Party Alias\n(used if Party blank)",
-            'MOBILE NO',
-            'Party GSTIN',
-            "Place of Supply\n(STATE e.g. Gujarat)",
-            "Supply Type\nINTRA_STATE / INTER_STATE",
-            "Bill Ref No\nSales: blank = Voucher No\nCN: Against Invoice No",
-            "Bill Ref Date\nCN: Orig. Invoice Date",
-            'Sales / Sales Return Ledger',
-            "Stock Item Name\n(exact Tally name)",
-            "HSN/SAC\n(needed for new item)",
-            'Quantity',
-            "Unit\n(Tally unit symbol;\nneeded for new item)",
-            'Rate',
-            "Item Discount %\n(2 = 2% off)",
-            "Invoice Discount (amt)\n(first row of the order;\n100 = Rs 100 off)",
-            'COD DISCOUNT',
-            "GST Rate %\n(5 = 5%)",
-            "Godown\n(blank = Main Location)",
-            'Order Ref',
-            'Party Address Line 1',
-            'Party Address Line 2',
-            "Party Address Line 3\n(City, State, PIN)",
-            'Party Pincode (6 digits)',
-            'Vehicle No',
-            'Loading Slip No',
-            'Destination (Area)',
-            'Dispatched Through (Salesman / Self - Retailer App Order)',
-            'Driver Name (Carrier Name/Agent)',
-            'Narration',
-        ];
+        $headers = $this->tallyVoucherHeaders();
 
         // A short-delivery credit note is stored net of the cash discount share on the missing
         // goods (qty x unit price - stored amount). That share goes in the COD DISCOUNT column,
@@ -1401,12 +1363,11 @@ class SellerController extends BaseController
                 $row->discount ?: 0,
                 $invoiceDiscountAmt,
                 $codDiscountAmt,
+                '',
                 $row->tax_percentage,
                 '',
                 'Order ' . $row->order_id,
                 $partyAddress['line1'],
-                $partyAddress['line2'],
-                $partyAddress['line3'],
                 $partyAddress['pincode'],
                 $slip->vehicle_number ?? '',
                 $slip->slip_no ?? '',
@@ -1728,6 +1689,190 @@ class SellerController extends BaseController
     }
 
     /**
+     * Receipts export — Cash, Bank and PDC (cheque) receipts in one Tally "Receipt Voucher"
+     * import file, on the PDC layout (ReceiptPDC.xlsx). The Bank Ledger / Payment Mode columns say
+     * which kind a row is: Cash / Cash, Bank / Bank, PDC CHQ / Cheque. Cash and bank rows leave the
+     * cheque columns (Cheque No, Cheque Date, Drawee Bank, Post Dated) blank — those are cheque
+     * facts only. Same gate as the separate exports: cash always (it's reconciled at trip level and
+     * never gets verified), bank (stored as 'upi') and cheque only once the distributor verified them.
+     */
+    public function exportReceiptsCsv(Request $request)
+    {
+        $seller_id = auth()->user()->seller->id;
+
+        $startDate = $request->filled('startDate')
+            ? Carbon::parse($request->input('startDate'))->startOfDay()
+            : null;
+        $endDate = $request->filled('endDate')
+            ? Carbon::parse($request->input('endDate'))->endOfDay()
+            : null;
+
+        $rows = OrderPayment::select(
+            'order_payments.id',
+            'order_payments.order_id',
+            'order_payments.method',
+            'order_payments.amount',
+            'order_payments.cheque_number',
+            'order_payments.cheque_date',
+            'order_payments.created_at as payment_created_at',
+            'orders.invoice_number',
+            'retailer_profiles.party_name',
+            'retailer_profiles.shop_name',
+            'rp_area.name as rp_area_name',
+            'users.mobile as user_mobile',
+            'orders.mobile as order_mobile',
+            'users.name as user_name',
+            'delivery_boys.name as delivery_boy_name',
+            'salesmen.name as salesman_name'
+        )
+            ->join('orders', 'order_payments.order_id', '=', 'orders.id')
+            ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->leftJoin('retailer_profiles', 'orders.user_id', '=', 'retailer_profiles.user_id')
+            ->leftJoin('areas as rp_area', 'retailer_profiles.area_id', '=', 'rp_area.id')
+            ->leftJoin('delivery_boys', 'order_payments.delivery_boy_id', '=', 'delivery_boys.id')
+            ->leftJoin('salesmen', 'order_payments.salesman_id', '=', 'salesmen.id')
+            // orders carry no seller_id of their own — an order can hold items from
+            // several distributors, so scoping is via order_items.seller_id instead.
+            ->whereExists(function ($q) use ($seller_id) {
+                $q->select(DB::raw(1))
+                    ->from('order_items')
+                    ->whereColumn('order_items.order_id', 'orders.id')
+                    ->where('order_items.seller_id', $seller_id);
+            })
+            ->where(function ($q) {
+                $q->where('order_payments.method', 'cash')
+                    ->orWhere(function ($q2) {
+                        $q2->whereIn('order_payments.method', ['upi', 'cheque'])
+                            ->where('order_payments.status', 'verified');
+                    });
+            });
+
+        if ($startDate && $endDate) {
+            $rows = $rows->whereBetween('order_payments.created_at', [$startDate, $endDate]);
+        }
+
+        $rows = $rows->orderBy('order_payments.created_at')->orderBy('order_payments.id')->get();
+
+        $headers = [
+            "Voucher Type\n(exact Tally name)",
+            "Voucher Date\n(DD-MM-YYYY text)",
+            'Receipt No',
+            "Party Ledger\n(exact Tally name)",
+            'Party Alias',
+            'MOBILE NO',
+            'Receipt Amount',
+            "Cash / Bank Ledger\n(exact Tally name)",
+            "Payment Mode\n(Cash / Bank / Cheque)",
+            'UTR / Txn ID',
+            'Payer VPA',
+            'Against Invoice No',
+            "Bill-wise Amount\n(blank = full amount)",
+            'On Account Amount',
+            'Narration',
+            'Order Ref',
+            'Received By',
+            'Cheque No',
+            "Cheque Date\n(DD-MM-YYYY text)",
+            "Drawee Bank\n(party's bank)",
+            "Post Dated\n(Yes / No, cheques only)",
+        ];
+
+        $sheetRows = [];
+        foreach ($rows as $row) {
+            $partyName = $this->tallyPartyLedgerName($row);
+            $invoiceNo = $row->invoice_number ?: ('#' . $row->order_id);
+            $receivedBy = $row->delivery_boy_name ?: ($row->salesman_name ?: '');
+            $voucherDate = Carbon::parse($row->payment_created_at);
+
+            $isCheque = $row->method === 'cheque';
+            $mode = match ($row->method) {
+                'cash'   => 'Cash',
+                'cheque' => 'Cheque',
+                default  => 'Bank',
+            };
+
+            $chequeDate = $isCheque && $row->cheque_date ? Carbon::parse($row->cheque_date) : null;
+            $postDated = '';
+            if ($isCheque) {
+                $postDated = $chequeDate && $chequeDate->gt($voucherDate) ? 'Yes' : 'No';
+            }
+
+            $sheetRows[] = [
+                'Receipt',
+                $voucherDate->format('d-m-Y'),
+                ($isCheque ? 'RP-' : 'RC-') . $row->id,
+                $partyName,
+                $this->tallyPartyMobile($row),
+                $this->tallyPartyMobile($row),
+                (float) $row->amount,
+                $isCheque ? 'PDC CHQ' : $mode,
+                $mode,
+                '',
+                '',
+                $invoiceNo,
+                '',
+                '',
+                $isCheque
+                    ? 'PDC against ' . $invoiceNo . ' - cheque ' . $row->cheque_number
+                        . ($chequeDate ? ' dated ' . $chequeDate->format('d-m-Y') : '')
+                    : 'Received against ' . $invoiceNo,
+                'Order ' . $row->order_id,
+                $receivedBy,
+                $isCheque ? $row->cheque_number : '',
+                $chequeDate ? $chequeDate->format('d-m-Y') : '',
+                '',
+                $postDated,
+            ];
+        }
+
+        return $this->downloadXlsx($headers, $sheetRows, 'Receipts.xlsx');
+    }
+
+    /**
+     * Header row shared by the Sales and Credit Note vouchers (one 32-column Tally layout, the
+     * Voucher Type column says which voucher a row is). Wording is verbatim from the client's
+     * CreditNote.xlsx sample, including which columns use \n vs a plain space. Discount columns
+     * are positive for both vouchers — Tally reads positive for all.
+     */
+    private function tallyVoucherHeaders(): array
+    {
+        return [
+            "Voucher Type\n(exact Tally name)",
+            "Voucher Date\n(DD-MM-YYYY text)",
+            'Voucher No',
+            "Party Ledger\n(exact Tally name)",
+            "Party Alias\n(used if Party blank)",
+            'MOBILE NO',
+            'Party GSTIN',
+            "Place of Supply\n(STATE e.g. Gujarat)",
+            "Supply Type\nINTRA_STATE / INTER_STATE",
+            "Bill Ref No\nSales: blank = Voucher No\nCN: Against Invoice No",
+            "Bill Ref Date\nCN: Orig. Invoice Date",
+            'Sales / Sales Return Ledger',
+            "Stock Item Name\n(exact Tally name)",
+            "HSN/SAC\n(needed for new item)",
+            'Quantity',
+            "Unit\n(Tally unit symbol;\nneeded for new item)",
+            'Rate',
+            "Item Discount %\n(2 = 2% off)",
+            "Invoice Discount (amt)\n(first row of the order;\n100 = Rs 100 off)",
+            'COD DISCOUNT',
+            'Delivery Charge',
+            "GST Rate %\n(5 = 5%)",
+            "Godown\n(blank = Main Location)",
+            'Order Ref',
+            "Party Address Line 1\n(address, city, state, PIN)",
+            'Party Pincode (6 digits)',
+            'Vehicle No',
+            'Loading Slip No',
+            'Destination (Area)',
+            'Dispatched Through (Salesman / Self - Retailer App Order)',
+            'Driver Name (Carrier Name/Agent)',
+            'Narration',
+        ];
+    }
+
+    /**
      * Retailer's mobile number for the Party Alias column: digits only, the account's own number
      * first, then the one on the order. Blank when neither is known.
      */
@@ -1744,12 +1889,26 @@ class SellerController extends BaseController
     }
 
     /**
-     * Party Address Line 1 / 2 / 3, Pincode and Destination (Area) for the Sales and Credit Note
-     * vouchers — the shared retailer-address rule, see CommonHelper::partyAddress().
+     * Party Address Line 1, Pincode and Destination (Area) for the Sales and Credit Note vouchers —
+     * the shared retailer-address rule, see CommonHelper::partyAddress(). Tally can't import
+     * Address Line 2 / 3, so Line 1 carries the whole address: line 1, line 2, city, state, pincode.
+     * A part Line 1 already contains is skipped (a retailer whose profile address is one full
+     * Google address already ends with its own city / state / PIN), so nothing is repeated.
      */
     private function tallyPartyAddress($row): array
     {
-        return CommonHelper::partyAddress($row);
+        $address = CommonHelper::partyAddress($row);
+
+        $parts = [];
+        foreach ([$address['line1'], $address['line2'], $address['city'], $address['state'], $address['pincode']] as $part) {
+            $part = trim((string) $part);
+            if ($part !== '' && !preg_match('/\b' . preg_quote($part, '/') . '\b/iu', implode(', ', $parts))) {
+                $parts[] = $part;
+            }
+        }
+        $address['line1'] = implode(', ', $parts);
+
+        return $address;
     }
 
     /**

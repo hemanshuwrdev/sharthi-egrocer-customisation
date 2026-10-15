@@ -850,6 +850,7 @@ class CustomerAuthController extends Controller
             'address_line2' => 'nullable|string|max:255',
             'city'          => 'nullable|string|max:191',
             'state'         => 'nullable|string|max:191',
+            'area_id'       => 'nullable|integer',
         ], [
             'email.unique'  => 'email_has_already_taken',
             'mobile.unique' => 'mobile_number_has_already_taken',
@@ -857,6 +858,12 @@ class CustomerAuthController extends Controller
 
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        // Area is picked by the retailer, as at registration: it must be an active one. Checked before anything
+        // is saved, so a bad area doesn't leave the rest of the profile half-updated. Left alone when not sent.
+        if ($request->filled('area_id') && !Area::where('id', $request->area_id)->where('status', 1)->exists()) {
+            return CommonHelper::responseError('invalid_area');
         }
 
         if ($currentUser->mobile == '9876543210') {
@@ -905,7 +912,7 @@ class CustomerAuthController extends Controller
         // registration, so a retailer can't manually reassign their own zone.
         $retailerUpdates = [];
         $addressParts = ['address_line1', 'address_line2', 'city', 'state'];
-        foreach (array_merge(['shop_name', 'party_name', 'gst_no', 'address', 'gps_lat', 'gps_lng'], $addressParts) as $field) {
+        foreach (array_merge(['shop_name', 'party_name', 'gst_no', 'address', 'gps_lat', 'gps_lng', 'area_id'], $addressParts) as $field) {
             if ($request->filled($field)) {
                 $retailerUpdates[$field] = $request->input($field);
             }

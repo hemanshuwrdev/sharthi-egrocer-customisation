@@ -15,12 +15,13 @@
                 <div class="list-toolbar-start">
                     <div class="list-filter">
                         <span class="list-filter-label">{{ __('type') }}</span>
-                        <div class="btn-group btn-group-sm trip-type-toggle" role="group">
+                        <div class="trip-seg" role="group" :aria-label="__('type')">
                             <button
                                 v-for="t in typeOptions" :key="t.value"
                                 type="button"
-                                class="btn"
-                                :class="typeFilter === t.value ? 'btn-primary' : 'btn-outline-secondary'"
+                                class="trip-seg__btn"
+                                :class="{ 'trip-seg__btn--on': typeFilter === t.value }"
+                                :aria-pressed="typeFilter === t.value ? 'true' : 'false'"
                                 @click="setType(t.value)">
                                 {{ t.label }}
                             </button>
@@ -283,8 +284,17 @@ export default {
 <style scoped>
 @import "../../../../node_modules/vue2-daterange-picker/dist/vue2-daterange-picker.css";
 
-.trip-type-toggle .btn:first-child { border-top-left-radius: 50rem; border-bottom-left-radius: 50rem; }
-.trip-type-toggle .btn:last-child  { border-top-right-radius: 50rem; border-bottom-right-radius: 50rem; }
+/* Type switch: one rounded track holding the options, the active one filled with the brand colour.
+   Same height as the other filters (42px) so the toolbar lines up. */
+.trip-seg { display: inline-flex; gap: 4px; padding: 4px; height: 42px; border-radius: 12px; background: var(--ui-slate-bg, #eef1f6); }
+.trip-seg .trip-seg__btn {
+    padding: 0 16px; border: 0; border-radius: 9px; background: transparent; color: var(--ui-muted, #67748e);
+    font-size: 13.5px; font-weight: 600; line-height: 1; white-space: nowrap; cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.trip-seg .trip-seg__btn:hover { color: var(--ui-text, #25396f); }
+.trip-seg .trip-seg__btn--on,
+.trip-seg .trip-seg__btn--on:hover { background: var(--brand, #042A5F); color: #fff; box-shadow: 0 1px 3px rgba(var(--brand-rgb, 4, 42, 95), 0.35); }
 
 .vue-daterange-picker {
     min-width: 220px;
