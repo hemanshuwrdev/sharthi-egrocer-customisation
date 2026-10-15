@@ -2687,9 +2687,10 @@ class CommonHelper
 
         if (isset($seller_id) && $seller_id != "" && $seller_id != 0) {
             $orderIds = OrderItem::where('seller_id', $seller_id)->get()->pluck('order_id')->toArray();
-            if (count($orderIds) > 0) {
-                $query = '(select count(orders.id) from orders where orders.active_status = order_status_lists.id and orders.id IN (' . implode(",", array_unique($orderIds)) . ')) AS order_count';
-            }
+            // A distributor with no orders must count 0 — not fall back to the all-orders count above,
+            // which showed every other distributor's totals on an empty account.
+            $idList = count($orderIds) > 0 ? implode(",", array_map('intval', array_unique($orderIds))) : '0';
+            $query = '(select count(orders.id) from orders where orders.active_status = order_status_lists.id and orders.id IN (' . $idList . ')) AS order_count';
         }
 
         if ($order_type == 'doorstep') {
