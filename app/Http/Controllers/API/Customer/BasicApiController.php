@@ -1138,6 +1138,10 @@ class BasicApiController extends Controller
             if (floatval($delivery_boy->balance ?? 0) > 0) {
                 return CommonHelper::responseError('cannot_delete_account_with_balance');
             }
+            // The delete cascades through his loading slips, collected payments and settlements.
+            if ($delivery_boy->hasHistory()) {
+                return CommonHelper::responseError('delivery_boy_has_history_cannot_delete');
+            }
             $admin = Admin::where('id', $delivery_boy_admin_id)->first();
             $admin->delete();
             $delivery_boy->delete();

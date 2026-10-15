@@ -383,8 +383,12 @@ __webpack_require__.r(__webpack_exports__);
           };
           axios.post(_this2.$apiUrl + '/system_users/delete', postData).then(function (response) {
             _this2.isLoading = false;
-            _this2.system_users.splice(index, 1);
-            _this2.showMessage("success", response.data.message);
+            if (response.data.status === 1) {
+              _this2.system_users.splice(index, 1);
+              _this2.showMessage("success", response.data.message);
+            } else {
+              _this2.showMessage("error", response.data.message);
+            }
           });
         }
       });

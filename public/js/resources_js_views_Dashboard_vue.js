@@ -1156,8 +1156,12 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           axios__WEBPACK_IMPORTED_MODULE_3___default().post(_this7.$apiUrl + '/orders/delete', postData).then(function (response) {
             _this7.isLoading = false;
             var data = response.data;
-            _this7.orders.splice(index, 1);
-            _this7.showSuccess(data.message);
+            if (data.status) {
+              _this7.orders.splice(index, 1);
+              _this7.showSuccess(data.message);
+            } else {
+              _this7.showError(data.message);
+            }
           });
         }
       });

@@ -35,6 +35,35 @@ class Order extends Model
 
     }
 
+    /**
+     * Language key explaining why this order can't be deleted from the panel, or null when it can.
+     * An order that was dispatched, delivered, paid or credited is part of the books — the Tally
+     * exports, receipts, trip settlements and credit notes all hang off it — so deleting it would
+     * hide it from all of them. Only an order that never left the warehouse and has no money or
+     * credit note against it may go (cancel it instead if it was raised by mistake).
+     */
+    public function deletionBlockReason(): ?string
+    {
+        $dispatched = [
+            OrderStatusList::$outForDelivery,
+            OrderStatusList::$delivered,
+            OrderStatusList::$returned,
+            OrderStatusList::$rescheduled,
+            OrderStatusList::$selfPickupPicked,
+            OrderStatusList::$partialDelivery,
+            OrderStatusList::$notDelivered,
+        ];
+
+        if (in_array((int) $this->active_status, $dispatched, true)
+            || $this->loading_slip_id
+            || OrderPayment::where('order_id', $this->id)->exists()
+            || CreditNote::where('order_id', $this->id)->exists()) {
+            return 'order_has_history_cannot_delete';
+        }
+
+        return null;
+    }
+
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id', 'id');

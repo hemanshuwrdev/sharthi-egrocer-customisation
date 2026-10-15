@@ -372,8 +372,12 @@ export default {
                     axios.post(this.$apiUrl + '/delivery_boys/delete', postData)
                         .then((response) => {
                             this.isLoading = false
-                            this.deliveryBoys.splice(index, 1)
-                            this.showSuccess(response.data.message)
+                            if (response.data.status === 1) {
+                                this.deliveryBoys.splice(index, 1)
+                                this.showSuccess(response.data.message)
+                            } else {
+                                this.showError(response.data.message)
+                            }
                         });
                 }
             });

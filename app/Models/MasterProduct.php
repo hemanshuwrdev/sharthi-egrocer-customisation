@@ -77,6 +77,19 @@ class MasterProduct extends Model
         return $this->hasMany(MasterProductVariant::class);
     }
 
+    /**
+     * Language key when any variant of this product is listed by a distributor or sits on an order,
+     * else null. Deleting it would cascade away every distributor's listing, price and stock for it
+     * (seller_products are ON DELETE CASCADE from the variants) and leave old orders without their
+     * HSN / unit in the Tally exports. An unlisted, never-ordered product can still be deleted.
+     */
+    public function inUseBlockReason(): ?string
+    {
+        $variantIds = MasterProductVariant::where('master_product_id', $this->id)->pluck('id');
+
+        return MasterProductVariant::anyInUse($variantIds) ? 'master_product_in_use_cannot_delete' : null;
+    }
+
     // legacy tax_id path disabled — use tax_category_id/TaxRule instead (no longer read anywhere live)
     public function tax()
     {

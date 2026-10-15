@@ -42,8 +42,8 @@ class OrdersApiController extends Controller
         $sellerId = (isset($request->seller) && $request->seller != '') ? (int) $request->seller : null;
 
         $sellerNameSubquery = $sellerId
-            ? DB::raw("(SELECT s.name FROM sellers s INNER JOIN order_items oi ON s.id = oi.seller_id WHERE oi.order_id = orders.id AND oi.seller_id = {$sellerId} LIMIT 1) as seller_name")
-            : DB::raw('(SELECT s.name FROM sellers s INNER JOIN order_items oi ON s.id = oi.seller_id WHERE oi.order_id = orders.id LIMIT 1) as seller_name');
+            ? DB::raw("(SELECT s.name FROM sellers s INNER JOIN order_items oi ON s.id = oi.seller_id WHERE oi.order_id = orders.id AND oi.deleted_at IS NULL AND oi.seller_id = {$sellerId} LIMIT 1) as seller_name")
+            : DB::raw('(SELECT s.name FROM sellers s INNER JOIN order_items oi ON s.id = oi.seller_id WHERE oi.order_id = orders.id AND oi.deleted_at IS NULL LIMIT 1) as seller_name');
 
         $ordersQuery = Order::select(
             'orders.id',
@@ -73,7 +73,7 @@ class OrdersApiController extends Controller
             // Use whereExists for better performance than join
             $ordersQuery = $ordersQuery->whereExists(function ($query) use ($startDate, $endDate) {
                 $query->select(DB::raw(1))
-                    ->from('order_items')
+                    ->from('order_items')->whereNull('order_items.deleted_at')
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->whereBetween('order_items.created_at', [$startDate, $endDate]);
             });
@@ -94,7 +94,7 @@ class OrdersApiController extends Controller
             // Use whereExists for seller filter to avoid join issues
             $ordersQuery = $ordersQuery->whereExists(function ($query) use ($request) {
                 $query->select(DB::raw(1))
-                    ->from('order_items')
+                    ->from('order_items')->whereNull('order_items.deleted_at')
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->where('order_items.seller_id', $request->seller);
             });
@@ -123,14 +123,14 @@ class OrdersApiController extends Controller
                     })
                     ->orWhereExists(function ($subQuery) use ($search) {
                         $subQuery->select(DB::raw(1))
-                            ->from('order_items')
+                            ->from('order_items')->whereNull('order_items.deleted_at')
                             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
                             ->whereColumn('order_items.order_id', 'orders.id')
                             ->where('sellers.name', 'like', "%{$search}%");
                     })
                     ->orWhereExists(function ($subQuery) use ($search) {
                         $subQuery->select(DB::raw(1))
-                            ->from('order_items')
+                            ->from('order_items')->whereNull('order_items.deleted_at')
                             ->whereColumn('order_items.order_id', 'orders.id')
                             ->where('order_items.active_status', 'like', "%{$search}%");
                     });
@@ -193,7 +193,7 @@ class OrdersApiController extends Controller
             'orders.additional_charges',
             'orders.active_status',
             'users.name as user_name',
-            DB::raw('(SELECT s.name FROM sellers s INNER JOIN order_items oi ON s.id = oi.seller_id WHERE oi.order_id = orders.id LIMIT 1) as seller_name')
+            DB::raw('(SELECT s.name FROM sellers s INNER JOIN order_items oi ON s.id = oi.seller_id WHERE oi.order_id = orders.id AND oi.deleted_at IS NULL LIMIT 1) as seller_name')
         )
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->where('orders.order_type', 'selfpickup');
@@ -206,7 +206,7 @@ class OrdersApiController extends Controller
             // Use whereExists for better performance than join
             $ordersQuery = $ordersQuery->whereExists(function ($query) use ($startDate, $endDate) {
                 $query->select(DB::raw(1))
-                    ->from('order_items')
+                    ->from('order_items')->whereNull('order_items.deleted_at')
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->whereBetween('order_items.created_at', [$startDate, $endDate]);
             });
@@ -227,7 +227,7 @@ class OrdersApiController extends Controller
             // Use whereExists for seller filter to avoid join issues
             $ordersQuery = $ordersQuery->whereExists(function ($query) use ($request) {
                 $query->select(DB::raw(1))
-                    ->from('order_items')
+                    ->from('order_items')->whereNull('order_items.deleted_at')
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->where('order_items.seller_id', $request->seller);
             });
@@ -256,14 +256,14 @@ class OrdersApiController extends Controller
                     })
                     ->orWhereExists(function ($subQuery) use ($search) {
                         $subQuery->select(DB::raw(1))
-                            ->from('order_items')
+                            ->from('order_items')->whereNull('order_items.deleted_at')
                             ->leftJoin('sellers', 'order_items.seller_id', '=', 'sellers.id')
                             ->whereColumn('order_items.order_id', 'orders.id')
                             ->where('sellers.name', 'like', "%{$search}%");
                     })
                     ->orWhereExists(function ($subQuery) use ($search) {
                         $subQuery->select(DB::raw(1))
-                            ->from('order_items')
+                            ->from('order_items')->whereNull('order_items.deleted_at')
                             ->whereColumn('order_items.order_id', 'orders.id')
                             ->where('order_items.active_status', 'like', "%{$search}%");
                     });
@@ -403,11 +403,36 @@ class OrdersApiController extends Controller
         return CommonHelper::downloadCreditNotePdf($creditNoteId);
     }
 
+    /**
+     * Role + history guard shared by order and order-item delete. A distributor may only remove an
+     * order that is entirely its own, and nobody may remove one that was dispatched, paid or
+     * credited (Order::deletionBlockReason()). Returns a language key, or null when it may go ahead.
+     */
+    private function orderDeleteBlockReason(Order $order): ?string
+    {
+        $authUser = auth()->user();
+        if ($authUser->role_id == Role::$roleSeller) {
+            $sellerId = $authUser->seller->id ?? 0;
+            $hasOwn = OrderItem::where('order_id', $order->id)->where('seller_id', $sellerId)->exists();
+            $hasOthers = OrderItem::where('order_id', $order->id)->where('seller_id', '!=', $sellerId)->exists();
+            if (!$sellerId || !$hasOwn || $hasOthers) {
+                return 'unauthorized';
+            }
+        }
+
+        return $order->deletionBlockReason();
+    }
+
     public function delete(Request $request)
     {
         if (isset($request->id)) {
             $order = Order::find($request->id);
             if ($order) {
+                $blockReason = $this->orderDeleteBlockReason($order);
+                if ($blockReason) {
+                    return CommonHelper::responseError($blockReason);
+                }
+                // Soft delete — the order's items follow it (Order's deleting hook), both recoverable.
                 $order->delete();
                 return CommonHelper::responseSuccess('order_deleted_successfully');
             } else {
@@ -421,6 +446,11 @@ class OrdersApiController extends Controller
         if (isset($request->id)) {
             $orderItem = OrderItem::find($request->id);
             if ($orderItem) {
+                $order = Order::find($orderItem->order_id);
+                $blockReason = $order ? $this->orderDeleteBlockReason($order) : null;
+                if ($blockReason) {
+                    return CommonHelper::responseError($blockReason);
+                }
                 $orderItem->delete();
                 return CommonHelper::responseSuccess('order_item_deleted_successfully');
             } else {

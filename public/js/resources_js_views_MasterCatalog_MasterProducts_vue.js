@@ -270,8 +270,12 @@ __webpack_require__.r(__webpack_exports__);
             id: id
           }).then(function (response) {
             _this4.isLoading = false;
-            _this4.products.splice(index, 1);
-            _this4.showMessage('success', response.data.message);
+            if (response.data.status === 1) {
+              _this4.products.splice(index, 1);
+              _this4.showMessage('success', response.data.message);
+            } else {
+              _this4.showMessage('error', response.data.message);
+            }
           })["catch"](function () {
             _this4.isLoading = false;
           });

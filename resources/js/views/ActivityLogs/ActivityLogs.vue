@@ -153,10 +153,10 @@ export default {
             clearing: false,
             clearOlderThan: '90',
             clearOlderThanOptions: [
+                // The last 90 days are never cleared (see ActivityLogsApiController::clearLogs).
                 { value: '90', text: '90 ' + __('days') },
-                { value: '30', text: '30 ' + __('days') },
-                { value: '7', text: '7 ' + __('days') },
-                { value: 'everything', text: __('everything') },
+                { value: '180', text: '180 ' + __('days') },
+                { value: '365', text: '365 ' + __('days') },
             ],
         }
     },
@@ -255,6 +255,10 @@ export default {
             axios.post(this.$apiUrl + '/activity_logs/clear', { older_than: this.clearOlderThan })
                 .then(response => {
                     this.clearing = false;
+                    if (response.data && response.data.status === 0) {
+                        this.showMessage('error', response.data.message);
+                        return;
+                    }
                     this.showClearModal = false;
                     this.showMessage('success', (response.data && response.data.message) || __('logs_cleared_successfully'));
                     this.fetchLogs(1);

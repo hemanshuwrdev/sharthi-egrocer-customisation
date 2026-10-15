@@ -911,8 +911,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           };
           axios.post(_this6.$apiUrl + '/delivery_boys/delete', postData).then(function (response) {
             _this6.isLoading = false;
-            _this6.deliveryBoys.splice(index, 1);
-            _this6.showSuccess(response.data.message);
+            if (response.data.status === 1) {
+              _this6.deliveryBoys.splice(index, 1);
+              _this6.showSuccess(response.data.message);
+            } else {
+              _this6.showError(response.data.message);
+            }
           });
         }
       });

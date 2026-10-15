@@ -72,16 +72,16 @@ class ActivityLogsApiController extends Controller
 
     public function clearLogs(Request $request)
     {
-        $olderThan = $request->get('older_than', '90');
-
-        $query = Activity::query();
-
-        if ($olderThan !== 'everything') {
-            $days = (int) $olderThan;
-            $query->where('created_at', '<', now()->subDays($days));
+        // The audit log is the only record of who changed or deleted what, so it can be trimmed but
+        // never wiped: the last 90 days always stay ("everything" and non-numbers fail this check).
+        $days = (int) $request->get('older_than', 90);
+        if ($days < 90) {
+            return CommonHelper::responseError('audit_log_keep_minimum_days');
         }
 
-        $deleted = $query->delete();
+        $deleted = Activity::query()
+            ->where('created_at', '<', now()->subDays($days))
+            ->delete();
 
         return CommonHelper::responseSuccessWithData(__('logs_cleared_successfully'), ['deleted' => $deleted]);
     }

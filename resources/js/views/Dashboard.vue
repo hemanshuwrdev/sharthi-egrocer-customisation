@@ -1036,8 +1036,12 @@ export default {
                         .then((response) => {
                             this.isLoading = false
                             let data = response.data;
-                            this.orders.splice(index, 1)
-                            this.showSuccess(data.message)
+                            if (data.status) {
+                                this.orders.splice(index, 1)
+                                this.showSuccess(data.message)
+                            } else {
+                                this.showError(data.message)
+                            }
                         });
                 }
             });

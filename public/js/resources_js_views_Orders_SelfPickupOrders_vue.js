@@ -504,8 +504,12 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           axios__WEBPACK_IMPORTED_MODULE_3___default().post(_this4.$apiUrl + '/orders/delete', postData).then(function (response) {
             _this4.isLoading = false;
             var data = response.data;
-            _this4.orders.splice(index, 1);
-            _this4.showSuccess(data.message);
+            if (data.status) {
+              _this4.orders.splice(index, 1);
+              _this4.showSuccess(data.message);
+            } else {
+              _this4.showError(data.message);
+            }
           });
         }
       });

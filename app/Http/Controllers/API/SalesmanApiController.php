@@ -230,6 +230,14 @@ class SalesmanApiController extends Controller
             ]);
         }
 
+        // His orders / payments / settlements must stay attributable — deactivate him instead.
+        if ($salesman->hasHistory()) {
+            return response()->json([
+                'status' => 0,
+                'message' => __('salesman_has_history_cannot_delete')
+            ]);
+        }
+
         DB::beginTransaction();
         try {
             $adminId = $salesman->admin_id;

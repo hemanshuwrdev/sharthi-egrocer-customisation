@@ -186,18 +186,17 @@ __webpack_require__.r(__webpack_exports__);
       showClearModal: false,
       clearing: false,
       clearOlderThan: '90',
-      clearOlderThanOptions: [{
+      clearOlderThanOptions: [
+      // The last 90 days are never cleared (see ActivityLogsApiController::clearLogs).
+      {
         value: '90',
         text: '90 ' + __('days')
       }, {
-        value: '30',
-        text: '30 ' + __('days')
+        value: '180',
+        text: '180 ' + __('days')
       }, {
-        value: '7',
-        text: '7 ' + __('days')
-      }, {
-        value: 'everything',
-        text: __('everything')
+        value: '365',
+        text: '365 ' + __('days')
       }]
     };
   },
@@ -325,6 +324,10 @@ __webpack_require__.r(__webpack_exports__);
         older_than: this.clearOlderThan
       }).then(function (response) {
         _this5.clearing = false;
+        if (response.data && response.data.status === 0) {
+          _this5.showMessage('error', response.data.message);
+          return;
+        }
         _this5.showClearModal = false;
         _this5.showMessage('success', response.data && response.data.message || __('logs_cleared_successfully'));
         _this5.fetchLogs(1);

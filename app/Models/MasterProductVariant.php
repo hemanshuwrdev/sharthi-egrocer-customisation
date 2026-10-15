@@ -12,6 +12,21 @@ class MasterProductVariant extends Model
     use HasFactory, LogsActivity;
     protected $table = 'master_product_variants';
 
+    /**
+     * True when any of these variants is listed by a distributor (seller_products) or appears on an
+     * order line — soft-deleted lines included, they are still history.
+     */
+    public static function anyInUse($variantIds): bool
+    {
+        $variantIds = collect($variantIds)->filter()->values();
+        if ($variantIds->isEmpty()) {
+            return false;
+        }
+
+        return \Illuminate\Support\Facades\DB::table('seller_products')->whereIn('master_product_variant_id', $variantIds)->exists()
+            || \Illuminate\Support\Facades\DB::table('order_items')->whereIn('master_product_variant_id', $variantIds)->exists();
+    }
+
     protected $fillable = [
         'master_product_id',
         'sku',

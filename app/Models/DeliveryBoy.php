@@ -116,6 +116,21 @@ class DeliveryBoy extends Model
         return $this->belongsToMany(Seller::class, 'delivery_boy_sellers', 'delivery_boy_id', 'seller_id')->withTimestamps();
     }
 
+    /**
+     * True when this driver appears in the books: loading slips, collected payments, settlements,
+     * wallet transactions or orders. The driver foreign keys on loading_slips, order_payments and
+     * driver_settlements are ON DELETE CASCADE, so deleting such a driver erases the trips and the
+     * cash he collected. A driver with any of this can only be deactivated.
+     */
+    public function hasHistory(): bool
+    {
+        return DB::table('loading_slips')->where('driver_id', $this->id)->exists()
+            || DB::table('order_payments')->where('delivery_boy_id', $this->id)->exists()
+            || DB::table('driver_settlements')->where('delivery_boy_id', $this->id)->exists()
+            || DB::table('delivery_boy_transactions')->where('delivery_boy_id', $this->id)->exists()
+            || DB::table('orders')->where('delivery_boy_id', $this->id)->exists();
+    }
+
     /** Drivers linked to the given distributor. */
     public function scopeForSeller($query, $sellerId)
     {
@@ -143,7 +158,7 @@ class DeliveryBoy extends Model
         $ownCod = DB::table('delivery_boy_transactions as t')
             ->whereIn('t.delivery_boy_id', $sharedDriverIds)
             ->where('t.type', DeliveryBoyTransaction::$paymentTypeCod)
-            ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('order_items as oi')
+            ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('order_items as oi')->whereNull('oi.deleted_at')
                 ->whereColumn('oi.order_id', 't.order_id')
                 ->where('oi.seller_id', $sellerId))
             ->groupBy('t.delivery_boy_id')

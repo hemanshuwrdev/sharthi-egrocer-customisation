@@ -550,8 +550,18 @@ class DeliveryBoysApiController extends Controller
                 return CommonHelper::responseError(__($blockReason));
             }
 
-            // A driver shared with other distributors is only unlinked from this one.
+            // A driver shared with other distributors is only unlinked from this one. Otherwise this is
+            // the real delete, which cascades through his loading slips, collected payments and
+            // settlements — so a driver with any history is refused (deactivate him instead).
             $seller = Seller::where('admin_id', auth()->id())->first();
+            $sharedWithOthers = $seller && DB::table('delivery_boy_sellers')
+                ->where('delivery_boy_id', $deliveryBoy->id)
+                ->where('seller_id', '!=', $seller->id)
+                ->exists();
+            if (!$sharedWithOthers && $deliveryBoy->hasHistory()) {
+                return CommonHelper::responseError('delivery_boy_has_history_cannot_delete');
+            }
+
             if ($seller) {
                 $deliveryBoy->sellers()->detach($seller->id);
                 $remainingSellerId = DB::table('delivery_boy_sellers')->where('delivery_boy_id', $deliveryBoy->id)->value('seller_id');

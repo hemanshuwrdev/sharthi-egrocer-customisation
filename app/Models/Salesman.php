@@ -36,6 +36,20 @@ class Salesman extends Model
         return $this->belongsTo(Seller::class, 'seller_id', 'id');
     }
 
+    /**
+     * True when this salesman appears in the books: orders he placed, payments he collected, or
+     * settlements. orders.placed_by_salesman_id has no foreign key, so deleting him would leave
+     * those orders reading as "Self - Retailer App Order" in the Tally export, and his settlements
+     * cascade away. A salesman with any of it can only be deactivated.
+     */
+    public function hasHistory(): bool
+    {
+        return \Illuminate\Support\Facades\DB::table('orders')->where('placed_by_salesman_id', $this->id)->exists()
+            || \Illuminate\Support\Facades\DB::table('order_payments')->where('salesman_id', $this->id)->exists()
+            || \Illuminate\Support\Facades\DB::table('salesman_settlements')->where('salesman_id', $this->id)->exists()
+            || ($this->admin_id && \Illuminate\Support\Facades\DB::table('loading_slips')->where('created_by', $this->admin_id)->exists());
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

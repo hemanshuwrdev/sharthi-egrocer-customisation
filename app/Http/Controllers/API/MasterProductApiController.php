@@ -294,6 +294,11 @@ class MasterProductApiController extends Controller
                             ->where('master_product_id', $product->id)
                             ->first();
                         if ($existing) {
+                            // Listed by a distributor or on an order: removing it would cascade away their
+                            // listings / prices / stock. Thrown inside the transaction, so the whole edit rolls back.
+                            if (MasterProductVariant::anyInUse([$existing->id])) {
+                                throw new \RuntimeException(__('master_product_variant_in_use_cannot_delete'));
+                            }
                             if ($existing->image) {
                                 Storage::disk('public')->delete($existing->image);
                             }
@@ -348,6 +353,12 @@ class MasterProductApiController extends Controller
         $product = MasterProduct::with('variants')->find($request->id);
         if (!$product) {
             return CommonHelper::responseError('master_product_not_found');
+        }
+
+        // Before touching any image — a refused delete must leave the product as it was.
+        $blockReason = $product->inUseBlockReason();
+        if ($blockReason) {
+            return CommonHelper::responseError($blockReason);
         }
 
         if ($product->image) {

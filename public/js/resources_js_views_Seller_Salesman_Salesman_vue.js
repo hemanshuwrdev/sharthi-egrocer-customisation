@@ -278,8 +278,12 @@ __webpack_require__.r(__webpack_exports__);
           axios__WEBPACK_IMPORTED_MODULE_0___default().post(_this3.$sellerApiUrl + '/salesman/delete', postData).then(function (response) {
             _this3.isLoading = false;
             var data = response.data;
-            _this3.salesmen.splice(index, 1);
-            _this3.showMessage("success", data.message);
+            if (data.status === 1) {
+              _this3.salesmen.splice(index, 1);
+              _this3.showMessage("success", data.message);
+            } else {
+              _this3.showMessage("error", data.message);
+            }
           })["catch"](function (error) {
             _this3.isLoading = false;
             _this3.showError(_this3.__('something_went_wrong'));

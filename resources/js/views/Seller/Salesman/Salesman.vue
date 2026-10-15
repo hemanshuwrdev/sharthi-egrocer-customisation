@@ -224,8 +224,12 @@ export default {
                         .then((response) => {
                             this.isLoading = false;
                             let data = response.data;
-                            this.salesmen.splice(index, 1);
-                            this.showMessage("success", data.message);
+                            if (data.status === 1) {
+                                this.salesmen.splice(index, 1);
+                                this.showMessage("success", data.message);
+                            } else {
+                                this.showMessage("error", data.message);
+                            }
                         }).catch(error => {
                             this.isLoading = false;
                             this.showError(this.__('something_went_wrong'));

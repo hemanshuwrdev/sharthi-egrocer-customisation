@@ -44,6 +44,27 @@ class Admin extends Authenticatable
         return $this->belongsTo(Seller::class,'id','admin_id');
     }
 
+    /**
+     * Language key explaining why this login can't be deleted as a System User, or null when it can.
+     * A distributor / driver / salesman login is removed through that person's own delete (which has
+     * its own history checks), and loading_slips.created_by is ON DELETE CASCADE — deleting the
+     * admin who created slips erases those slips and unlinks their orders.
+     */
+    public function deletionBlockReason(): ?string
+    {
+        foreach (['sellers', 'delivery_boys', 'salesmen'] as $table) {
+            if (\Illuminate\Support\Facades\DB::table($table)->where('admin_id', $this->id)->exists()) {
+                return 'admin_is_linked_account_cannot_delete';
+            }
+        }
+
+        if (\Illuminate\Support\Facades\DB::table('loading_slips')->where('created_by', $this->id)->exists()) {
+            return 'admin_has_history_cannot_delete';
+        }
+
+        return null;
+    }
+
     public function getSellerStatusAttribute()
     {
         $status = 0;

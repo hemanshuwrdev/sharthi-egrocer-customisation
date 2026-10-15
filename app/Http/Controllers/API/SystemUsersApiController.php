@@ -104,6 +104,10 @@ class SystemUsersApiController extends Controller
         if(isset($request->id)){
             $admin = Admin::find($request->id);
             if($admin){
+                $blockReason = $admin->deletionBlockReason();
+                if ($blockReason) {
+                    return CommonHelper::responseError($blockReason);
+                }
                 $admin->delete();
                 return CommonHelper::responseSuccess(__('system_user_deleted_successfully'));
             }else{

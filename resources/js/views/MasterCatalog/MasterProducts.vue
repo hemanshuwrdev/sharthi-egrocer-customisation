@@ -218,8 +218,12 @@ export default {
                     axios.post(this.$apiUrl + '/master_catalog/products/delete', { id })
                         .then((response) => {
                             this.isLoading = false;
-                            this.products.splice(index, 1);
-                            this.showMessage('success', response.data.message);
+                            if (response.data.status === 1) {
+                                this.products.splice(index, 1);
+                                this.showMessage('success', response.data.message);
+                            } else {
+                                this.showMessage('error', response.data.message);
+                            }
                         }).catch(() => {
                             this.isLoading = false;
                         });
