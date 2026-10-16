@@ -169,14 +169,28 @@
 
                                     <!-- One instant-payment discount shared by Cash and Bank -->
                                     <div class="mt-4">
-                                        <label class="form-label small text-muted mb-1">{{ __('Cash / Bank discount %') }}</label>
-                                        <input type="number" min="0" max="100" step="0.01"
-                                            class="form-control form-control-sm" style="max-width: 220px"
-                                            v-model="instantDiscountPercent"
-                                            :disabled="!instantDiscountEditable"
-                                            :placeholder="__('e.g. 2')"
-                                        >
-                                        <small class="setting-hint d-block mt-1">{{ __('Knocked off the order total when the retailer pays the whole amount in one go by Cash or Bank, so the money comes in instantly at delivery. No discount if the payment is split across types.') }}</small>
+                                        <div class="row g-3">
+                                            <div class="col-md-5">
+                                                <label class="form-label small text-muted mb-1">{{ __('Cash / Bank discount %') }}</label>
+                                                <input type="number" min="0" max="100" step="0.01"
+                                                    class="form-control form-control-sm"
+                                                    v-model="instantDiscountPercent"
+                                                    :disabled="!instantDiscountEditable"
+                                                    :placeholder="__('e.g. 2')"
+                                                >
+                                            </div>
+                                            <div class="col-md-7">
+                                                <label class="form-label small text-muted mb-1">{{ __('Discount Applicable On') }}</label>
+                                                <select class="form-select form-select-sm"
+                                                    v-model="cashDiscountApplicableOn"
+                                                    :disabled="!instantDiscountEditable">
+                                                    <option value="driver">{{ __('Driver App only (On delivery)') }}</option>
+                                                    <option value="both">{{ __('Both (Driver on delivery & Salesman collection)') }}</option>
+                                                    <option value="salesman">{{ __('Salesman App only (Collection)') }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <small class="setting-hint d-block mt-2">{{ __('Knocked off the order total when the retailer pays the whole amount in one go by Cash or Bank. No discount if the payment is split across types.') }}</small>
                                     </div>
 
                                 </div>
@@ -602,6 +616,7 @@ export default {
             isPaymentLoading: false,
             paymentMethods: [],
             instantDiscountPercent: 0,
+            cashDiscountApplicableOn: 'driver',
             isInvoiceLoading: false,
             invoice_prefix: "",
             invoice_suffix: "",
@@ -1046,6 +1061,7 @@ export default {
                         // cash and bank rows carry the same shared %
                         const cash = res.data.data.methods.find(m => m.method === 'cash');
                         this.instantDiscountPercent = cash && cash.discount_percent ? cash.discount_percent : 0;
+                        this.cashDiscountApplicableOn = res.data.data.cash_discount_applicable_on || 'driver';
                     }
                 })
                 .catch(() => {});
@@ -1059,6 +1075,7 @@ export default {
             });
             // one shared Cash / Bank discount (stored as cash_discount_percent)
             formData.append('cash_discount_percent', this.instantDiscountPercent || 0);
+            formData.append('cash_discount_applicable_on', this.cashDiscountApplicableOn || 'driver');
             axios.post(this.$sellerApiUrl + '/payment_methods/save', formData)
                 .then(res => {
                     if (res.data.status) {

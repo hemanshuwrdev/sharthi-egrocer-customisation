@@ -215,7 +215,7 @@ class RetailerCartOrderApiController extends Controller
         // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
         // $globalSelfPickup = (int) \App\Models\Setting::where('variable', 'self_pickup_mode')->value('value');
         $sellers = \App\Models\Seller::whereIn('id', array_keys($groups))
-            ->get(['id', 'name', 'min_order_amount', 'cash_discount_percent'])
+            ->get(['id', 'name', 'min_order_amount', 'cash_discount_percent', 'cash_discount_applicable_on'])
             ->keyBy('id');
 
         // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
@@ -247,7 +247,8 @@ class RetailerCartOrderApiController extends Controller
             // app can show "Cash / Bank X% off". Only given when the whole order is paid in ONE go by
             // cash or bank at delivery — a split payment gets none — and it is booked at collection,
             // so it is NOT taken off final_total here.
-            $group['cash_discount_percent'] = $seller ? (float) ($seller->cash_discount_percent ?? 0) : 0;
+            $driverDiscountAllowed = in_array($seller->cash_discount_applicable_on ?? 'driver', ['driver', 'both'], true);
+            $group['cash_discount_percent'] = ($seller && $driverDiscountAllowed) ? (float) ($seller->cash_discount_percent ?? 0) : 0;
             // Self-pickup removed for Sarthi (all orders go out via driver/vehicle dispatch) — kept commented for reference.
             // $sellerSelfPickup = (int) ($seller->self_pickup_mode ?? 0);
             // $sellerDoorstep   = (int) ($seller->door_step_mode ?? 1);

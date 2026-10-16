@@ -326,7 +326,9 @@ class OrdersApiController extends Controller
         // "pay cash: X, pay bank: Y" before collectPayment() actually books the discount.
         $sellerId = $data["order"]->seller_id ?? null;
         if ($sellerId) {
-            $cashDiscountPercent = (float) (Seller::find($sellerId)->cash_discount_percent ?? 0);
+            $seller              = Seller::find($sellerId);
+            $driverDiscountAllowed = in_array($seller->cash_discount_applicable_on ?? 'driver', ['driver', 'both'], true);
+            $cashDiscountPercent = ($seller && $driverDiscountAllowed) ? (float) ($seller->cash_discount_percent ?? 0) : 0.0;
             $alreadyCollected    = (float) OrderPayment::where('order_id', $id)->sum('amount');
             $outstanding         = max(0, (float) $data["order"]->final_total - $alreadyCollected);
             // One instant-payment % covers both cash and bank (paid in full, in one go) — so both

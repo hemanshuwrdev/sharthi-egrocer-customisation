@@ -233,7 +233,10 @@ class SettlementController extends Controller
             return $row;
         }, self::METHODS);
 
-        return CommonHelper::responseWithData(['methods' => array_values($data)]);
+        return CommonHelper::responseWithData([
+            'methods' => array_values($data),
+            'cash_discount_applicable_on' => $seller->cash_discount_applicable_on ?? 'driver',
+        ]);
     }
 
     /**
@@ -259,8 +262,9 @@ class SettlementController extends Controller
             'cash'                  => 'required|in:0,1',
             'upi'                   => 'required|in:0,1',
             'cheque'                => 'required|in:0,1',
-            'signature'             => 'required|in:0,1',
-            'cash_discount_percent' => 'nullable|numeric|min:0|max:100',
+            'signature'                   => 'required|in:0,1',
+            'cash_discount_percent'       => 'nullable|numeric|min:0|max:100',
+            'cash_discount_applicable_on' => 'nullable|in:driver,both,salesman',
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
@@ -275,6 +279,9 @@ class SettlementController extends Controller
         }
         if ($request->has('cash_discount_percent')) {
             $seller->cash_discount_percent = $request->filled('cash_discount_percent') ? $request->cash_discount_percent : 0;
+        }
+        if ($request->has('cash_discount_applicable_on')) {
+            $seller->cash_discount_applicable_on = $request->input('cash_discount_applicable_on') ?: 'driver';
         }
         $seller->save();
 
@@ -535,9 +542,12 @@ class SettlementController extends Controller
 
         $enabled = array_values($this->sellerEnabledMethods($seller));
 
+        $driverDiscountAllowed = in_array($seller->cash_discount_applicable_on ?? 'driver', ['driver', 'both'], true);
+        $driverDiscountPercent = $driverDiscountAllowed ? (float) ($seller->cash_discount_percent ?? 0) : 0.0;
+
         $meta = [
-            'cash'      => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
-            'upi'       => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Bank screenshot', 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
+            'cash'      => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => $driverDiscountPercent],
+            'upi'       => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Bank screenshot', 'discount_percent' => $driverDiscountPercent],
             'cheque'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
             'signature' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Customer signature'],
         ];
@@ -625,11 +635,12 @@ class SettlementController extends Controller
         // so it is only given when the retailer settles the WHOLE order in ONE payment of ONE type.
         // A split across types, or a part payment, gets no discount. It books here, at collection —
         // order.final_total was fixed at placement without knowing which method the customer would pick.
-        $cashDiscountAmount  = 0;
-        $revokedDiscount     = 0;
-        $discountPercent     = in_array($method, ['cash', 'upi'], true) ? (float) ($seller->cash_discount_percent ?? 0) : 0.0;
-        $hasEarlierPayment   = OrderPayment::where('order_id', $order->id)->exists();
-        $alreadyDiscounted   = (float) ($order->cash_discount_amount ?? 0) > 0;
+        $cashDiscountAmount    = 0;
+        $revokedDiscount       = 0;
+        $driverDiscountAllowed = in_array($seller->cash_discount_applicable_on ?? 'driver', ['driver', 'both'], true);
+        $discountPercent       = ($driverDiscountAllowed && in_array($method, ['cash', 'upi'], true)) ? (float) ($seller->cash_discount_percent ?? 0) : 0.0;
+        $hasEarlierPayment     = OrderPayment::where('order_id', $order->id)->exists();
+        $alreadyDiscounted     = (float) ($order->cash_discount_amount ?? 0) > 0;
 
         if ($discountPercent > 0 && !$alreadyDiscounted && !$hasEarlierPayment) {
             // Discount base stays the whole order (as before); what must be paid to qualify is the
@@ -1193,9 +1204,12 @@ class SettlementController extends Controller
         $seller = $salesman->seller_id ? Seller::find($salesman->seller_id) : null;
         if (!$seller) return CommonHelper::responseError('salesman_not_linked_to_distributor');
 
+        $salesmanDiscountAllowed = in_array($seller->cash_discount_applicable_on ?? 'driver', ['salesman', 'both'], true);
+        $salesmanDiscountPercent = $salesmanDiscountAllowed ? (float) ($seller->cash_discount_percent ?? 0) : 0.0;
+
         $allMeta = [
-            'cash'   => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
-            'upi'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Bank screenshot', 'discount_percent' => (float) ($seller->cash_discount_percent ?? 0)],
+            'cash'   => ['requires_amount' => true, 'requires_photo' => false, 'photo_label' => null, 'discount_percent' => $salesmanDiscountPercent],
+            'upi'    => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Bank screenshot', 'discount_percent' => $salesmanDiscountPercent],
             'cheque' => ['requires_amount' => true, 'requires_photo' => true,  'photo_label' => 'Cheque photo'],
         ];
 
@@ -1263,6 +1277,25 @@ class SettlementController extends Controller
 
         if ($remaining <= 0) {
             return CommonHelper::responseError('payment_already_fully_collected_for_this_order');
+        }
+
+        $salesmanDiscountAllowed = in_array($seller->cash_discount_applicable_on ?? 'driver', ['salesman', 'both'], true);
+        $discountPercent         = ($salesmanDiscountAllowed && in_array($method, ['cash', 'upi'], true)) ? (float) ($seller->cash_discount_percent ?? 0) : 0.0;
+        $alreadyDiscounted       = (float) ($order->cash_discount_amount ?? 0) > 0;
+        $hasEarlierPayment       = $alreadyCollected > 0;
+
+        if ($discountPercent > 0 && !$alreadyDiscounted && !$hasEarlierPayment) {
+            $discountAmt   = round($remaining * ($discountPercent / 100), 2);
+            $requiredToPay = round($remaining * (1 - $discountPercent / 100), 2);
+            if ($discountAmt > 0 && $requiredToPay > 0 && (float) $request->amount + 1 >= $requiredToPay) {
+                $order->final_total = max(0, (float) $order->final_total - $discountAmt);
+                if ($order->remaining_final !== null) {
+                    $order->remaining_final = max(0, (float) $order->remaining_final - $discountAmt);
+                }
+                $order->cash_discount_amount = $discountAmt;
+                $order->save();
+                $remaining = round($remaining - $discountAmt, 2);
+            }
         }
 
         if ((float) $request->amount > $remaining) {

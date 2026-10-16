@@ -600,6 +600,20 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -640,6 +654,7 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       isPaymentLoading: false,
       paymentMethods: [],
       instantDiscountPercent: 0,
+      cashDiscountApplicableOn: 'driver',
       isInvoiceLoading: false,
       invoice_prefix: "",
       invoice_suffix: "",
@@ -1081,6 +1096,7 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
             return m.method === 'cash';
           });
           _this12.instantDiscountPercent = cash && cash.discount_percent ? cash.discount_percent : 0;
+          _this12.cashDiscountApplicableOn = res.data.data.cash_discount_applicable_on || 'driver';
         }
       })["catch"](function () {});
     },
@@ -1093,6 +1109,7 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       });
       // one shared Cash / Bank discount (stored as cash_discount_percent)
       formData.append('cash_discount_percent', this.instantDiscountPercent || 0);
+      formData.append('cash_discount_applicable_on', this.cashDiscountApplicableOn || 'driver');
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/payment_methods/save', formData).then(function (res) {
         if (res.data.status) {
           _this13.showMessage('success', __(res.data.message));
@@ -1942,50 +1959,147 @@ var render = function () {
                         ),
                         _vm._v(" "),
                         _c("div", { staticClass: "mt-4" }, [
-                          _c(
-                            "label",
-                            { staticClass: "form-label small text-muted mb-1" },
-                            [_vm._v(_vm._s(_vm.__("Cash / Bank discount %")))]
-                          ),
-                          _vm._v(" "),
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.instantDiscountPercent,
-                                expression: "instantDiscountPercent",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            staticStyle: { "max-width": "220px" },
-                            attrs: {
-                              type: "number",
-                              min: "0",
-                              max: "100",
-                              step: "0.01",
-                              disabled: !_vm.instantDiscountEditable,
-                              placeholder: _vm.__("e.g. 2"),
-                            },
-                            domProps: { value: _vm.instantDiscountPercent },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.instantDiscountPercent = $event.target.value
-                              },
-                            },
-                          }),
+                          _c("div", { staticClass: "row g-3" }, [
+                            _c("div", { staticClass: "col-md-5" }, [
+                              _c(
+                                "label",
+                                {
+                                  staticClass:
+                                    "form-label small text-muted mb-1",
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.__("Cash / Bank discount %"))
+                                  ),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.instantDiscountPercent,
+                                    expression: "instantDiscountPercent",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: {
+                                  type: "number",
+                                  min: "0",
+                                  max: "100",
+                                  step: "0.01",
+                                  disabled: !_vm.instantDiscountEditable,
+                                  placeholder: _vm.__("e.g. 2"),
+                                },
+                                domProps: { value: _vm.instantDiscountPercent },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.instantDiscountPercent =
+                                      $event.target.value
+                                  },
+                                },
+                              }),
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "col-md-7" }, [
+                              _c(
+                                "label",
+                                {
+                                  staticClass:
+                                    "form-label small text-muted mb-1",
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.__("Discount Applicable On"))
+                                  ),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "select",
+                                {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.cashDiscountApplicableOn,
+                                      expression: "cashDiscountApplicableOn",
+                                    },
+                                  ],
+                                  staticClass: "form-select form-select-sm",
+                                  attrs: {
+                                    disabled: !_vm.instantDiscountEditable,
+                                  },
+                                  on: {
+                                    change: function ($event) {
+                                      var $$selectedVal = Array.prototype.filter
+                                        .call(
+                                          $event.target.options,
+                                          function (o) {
+                                            return o.selected
+                                          }
+                                        )
+                                        .map(function (o) {
+                                          var val =
+                                            "_value" in o ? o._value : o.value
+                                          return val
+                                        })
+                                      _vm.cashDiscountApplicableOn = $event
+                                        .target.multiple
+                                        ? $$selectedVal
+                                        : $$selectedVal[0]
+                                    },
+                                  },
+                                },
+                                [
+                                  _c("option", { attrs: { value: "driver" } }, [
+                                    _vm._v(
+                                      _vm._s(
+                                        _vm.__("Driver App only (On delivery)")
+                                      )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("option", { attrs: { value: "both" } }, [
+                                    _vm._v(
+                                      _vm._s(
+                                        _vm.__(
+                                          "Both (Driver on delivery & Salesman collection)"
+                                        )
+                                      )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "option",
+                                    { attrs: { value: "salesman" } },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          _vm.__(
+                                            "Salesman App only (Collection)"
+                                          )
+                                        )
+                                      ),
+                                    ]
+                                  ),
+                                ]
+                              ),
+                            ]),
+                          ]),
                           _vm._v(" "),
                           _c(
                             "small",
-                            { staticClass: "setting-hint d-block mt-1" },
+                            { staticClass: "setting-hint d-block mt-2" },
                             [
                               _vm._v(
                                 _vm._s(
                                   _vm.__(
-                                    "Knocked off the order total when the retailer pays the whole amount in one go by Cash or Bank, so the money comes in instantly at delivery. No discount if the payment is split across types."
+                                    "Knocked off the order total when the retailer pays the whole amount in one go by Cash or Bank. No discount if the payment is split across types."
                                   )
                                 )
                               ),

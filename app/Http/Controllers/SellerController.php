@@ -1930,17 +1930,19 @@ class SellerController extends BaseController
     }
 
     /**
-     * Party ledger name for every Tally export: "Shop name - Area" (just the shop name when the
-     * retailer has no area). Falls back to the party name, then the user's name, when there is
-     * no shop name. Area is the retailer's profile area, not the order's, so one retailer is
-     * always the same ledger across Sales, Credit Note and Receipts.
+     * Party ledger name for every Tally export: "Shop name - Owner name" (just the shop name when the
+     * retailer has no owner name). Falls back to party name or user name when there is no shop name.
      */
     private function tallyPartyLedgerName($row): string
     {
-        $name = trim((string) ($row->shop_name ?: ($row->party_name ?: $row->user_name)));
-        $area = trim((string) ($row->rp_area_name ?? ''));
+        $shopName = trim((string) ($row->shop_name ?: ($row->party_name ?: '')));
+        $owner = trim((string) ($row->user_name ?? ''));
 
-        return $area !== '' ? $name . ' - ' . $area : $name;
+        if ($shopName !== '' && $owner !== '' && strcasecmp($shopName, $owner) !== 0) {
+            return $shopName . ' - ' . $owner;
+        }
+
+        return $shopName !== '' ? $shopName : $owner;
     }
 
     /**
